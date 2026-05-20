@@ -79,15 +79,16 @@ role Term::Fabulous::Render {
 		my $bg_int = $background_color->rgb_int;
 		my $x0 = $bbox->{x};
 		my $y0 = $bbox->{y};
-		my $x1 = $x0 + $bbox->{width};
+		my $w  = $bbox->{width};
+		return if $w <= 0;
+		my $x1 = $x0 + $w;
 		my $y1 = $y0 + $bbox->{height};
+		my $fill = ' ' x $w;
 
 		for (my $y = $y0; $y < $y1; $y++) {
 			my $row = ($buffer->[$y] //= []);
-			for (my $x = $x0; $x < $x1; $x++) {
-				$row->[$x] = $background_color;
-				tb_set_cell($x, $y, ' ', $fg_int, $bg_int);
-			}
+			@{$row}[$x0 .. $x1 - 1] = ($background_color) x $w;
+			tb_print($x0, $y, $fg_int, $bg_int, $fill);
 		}
 	}
 
@@ -145,7 +146,8 @@ role Term::Fabulous::Render {
 		my $top_row    = ($buffer->[$y0] //= []);
 		my $bottom_row = ($buffer->[$y1] //= []);
 
-		# Top + Bottom border
+		# Top + Bottom border (kept per-cell: borders are low-volume and
+		# tb_print with UTF-8 box-drawing chars exposed a termbox crash).
 		for (my $x = $x0; $x <= $x1; $x++) {
 			my $top_bg = $top_row->[$x]    // $default_bg;
 			my $bot_bg = $bottom_row->[$x] // $default_bg;
