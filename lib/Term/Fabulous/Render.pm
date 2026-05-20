@@ -6,7 +6,6 @@ use Object::Pad 0.825;
 use utf8;
 
 use Termbox 2 qw(:all);
-use Data::Printer;
 use Clay::UI;
 use Clay::XS qw(
 	CLAY_RENDER_COMMAND_TYPE_NONE
@@ -50,18 +49,10 @@ role Term::Fabulous::Render {
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM() => 'CUSTOM',
 	};
 
+	state $default_bg = Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
+
 	ADJUST {
 		$self->_initialize();
-	}
-
-	method _set_cell($x, $y, $char, $fg_color, $bg_color) {
-		$buffer->[$y][$x] = {
-			char => $char,
-			fg_color => $fg_color,
-			bg_color => $bg_color,
-		};
-
-		tb_set_cell($x, $y, $char, $fg_color->rgb_int, $bg_color->rgb_int);
 	}
 
 	method _initialize() {
@@ -70,6 +61,34 @@ role Term::Fabulous::Render {
 		$self->height(tb_height());
 		tb_set_output_mode($output_mode);
 		tb_hide_cursor();
+	}
+
+	method _set_cell($x, $y, $char, $fg_color, $bg_color) {
+		$buffer->[$y][$x] = $bg_color;
+		tb_set_cell($x, $y, $char, $fg_color->rgb_int, $bg_color->rgb_int);
+	}
+
+	method _render_rectangle($command, $widget) {
+		my $bbox = $command->{boundingBox};
+		my $data = $command->{renderData};
+
+		my $foreground_color = Term::Fabulous::Color->new(color => ($data->{color} // {r => 255, g => 255, b => 255, a => 255}));
+		my $background_color = Term::Fabulous::Color->new(color => ($data->{backgroundColor} // {r => 0, g => 0, b => 0, a => 0}));
+
+		my $fg_int = $foreground_color->rgb_int;
+		my $bg_int = $background_color->rgb_int;
+		my $x0 = $bbox->{x};
+		my $y0 = $bbox->{y};
+		my $x1 = $x0 + $bbox->{width};
+		my $y1 = $y0 + $bbox->{height};
+
+		for (my $y = $y0; $y < $y1; $y++) {
+			my $row = ($buffer->[$y] //= []);
+			for (my $x = $x0; $x < $x1; $x++) {
+				$row->[$x] = $background_color;
+				tb_set_cell($x, $y, ' ', $fg_int, $bg_int);
+			}
+		}
 	}
 
 	method _render_text($command, $widget) {
@@ -81,74 +100,76 @@ role Term::Fabulous::Render {
 			? Term::Fabulous::Color->new(color => $data->{backgroundColor})
 			: undef;
 
+		my $fg_int = $foreground_color->rgb_int;
+		my $bg_int_const = defined($background_color) ? $background_color->rgb_int : undef;
+
 		my $text = $data->{stringContents} // '';
+		my $y = $bbox->{y} + 1;
+		my $row = ($buffer->[$y] //= []);
+		my $x0 = $bbox->{x} + 1;
 
 		for my $i (0 .. length($text) - 1) {
 			my $char = substr($text, $i, 1);
-			my $old_background = $buffer->[$bbox->{y} + 1][$bbox->{x} + $i + 1]{bg_color} // Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
-			$self->_set_cell($bbox->{x} + $i +1, $bbox->{y} + 1, $char, $foreground_color, $background_color // $old_background);
-			#tb_set_cell_ex($bbox->{x} + $i, $bbox->{y}, $char, 1, $foreground_color, $background_color);
-		}
-	}
-
-	method _render_rectangle($command, $widget) {
-		my $bbox = $command->{boundingBox};
-		my $data = $command->{renderData};
-
-		my $foreground_color = Term::Fabulous::Color->new(color => ($data->{color} // {r => 255, g => 255, b => 255, a => 255}));
-		my $background_color = Term::Fabulous::Color->new(color => ($data->{backgroundColor} // {r => 0, g => 0, b => 0, a => 0}));
-
-		for(my $x = $bbox->{x}; $x < $bbox->{x} + $bbox->{width}; $x++) {
-			for(my $y = $bbox->{y}; $y < $bbox->{y} + $bbox->{height}; $y++) {
-				$self->_set_cell($x, $y, ' ', $foreground_color, $background_color);
-			}
+			my $x = $x0 + $i;
+			my $bg_color = $background_color // $row->[$x] // $default_bg;
+			my $bg_int = $bg_int_const // $bg_color->rgb_int;
+			$row->[$x] = $bg_color;
+			tb_set_cell($x, $y, $char, $fg_int, $bg_int);
 		}
 	}
 
 	method _render_border($command, $widget) {
+		return unless $widget->DOES('Term::Fabulous::Role::HasBorderStyle');
+
 		my $bbox = $command->{boundingBox};
 		my $data = $command->{renderData};
 		my $foreground_color = Term::Fabulous::Color->new(color => ($data->{color} // {r => 255, g => 255, b => 255, a => 255}));
+		my $fg_int = $foreground_color->rgb_int;
 
-
-
-		if(!$widget->DOES('Term::Fabulous::Role::HasBorderStyle')) {
-			return;
-		}
-
-		my $top_style = $widget->border_style_top;
-		my $right_style = $widget->border_style_right;
+		my $top_style    = $widget->border_style_top;
+		my $right_style  = $widget->border_style_right;
 		my $bottom_style = $widget->border_style_bottom;
-		my $left_style = $widget->border_style_left;
+		my $left_style   = $widget->border_style_left;
 
 		# Glyph slot order: TL, T, TR, L, R, BL, B, BR.
-		my ($topLeft, $top, $topRight) = $top_style ? $top_style->get_top_glyphs : (' ', ' ', ' ');
-		my ($left, $right) = ($left_style ? $left_style->get_left_glyphs : ' ', $right_style ? $right_style->get_right_glyphs : ' ');
-		my ($bottomLeft, $bottom, $bottomRight) = ($bottom_style ? $bottom_style->get_bottom_glyphs : (' ', ' ', ' '));
+		my ($topLeft, $top, $topRight)          = $top_style    ? $top_style->get_top_glyphs       : (' ', ' ', ' ');
+		my ($left, $right)                      = ($left_style  ? $left_style->get_left_glyphs    : ' ',
+		                                           $right_style ? $right_style->get_right_glyphs  : ' ');
+		my ($bottomLeft, $bottom, $bottomRight) = $bottom_style ? $bottom_style->get_bottom_glyphs : (' ', ' ', ' ');
+
+		my $x0 = $bbox->{x};
+		my $x1 = $x0 + $bbox->{width} - 1;
+		my $y0 = $bbox->{y};
+		my $y1 = $y0 + $bbox->{height} - 1;
+
+		my $top_row    = ($buffer->[$y0] //= []);
+		my $bottom_row = ($buffer->[$y1] //= []);
 
 		# Top + Bottom border
-		for(my $x = $bbox->{x}; $x < $bbox->{x} + $bbox->{width}; $x++) {
-			my $top_background_color = $buffer->[$bbox->{y}][$x]{bg_color} // Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
-			my $bottom_background_color = $buffer->[$bbox->{y} + $bbox->{height} - 1][$x]{bg_color} // Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
+		for (my $x = $x0; $x <= $x1; $x++) {
+			my $top_bg = $top_row->[$x]    // $default_bg;
+			my $bot_bg = $bottom_row->[$x] // $default_bg;
 
-			if($x == $bbox->{x}) {
-				$self->_set_cell($x, $bbox->{y}, $topLeft, $foreground_color, $top_background_color);
-				$self->_set_cell($x, $bbox->{y} + $bbox->{height} - 1, $bottomLeft, $foreground_color, $bottom_background_color);
-			} elsif($x == $bbox->{x} + $bbox->{width} - 1) {
-				$self->_set_cell($x, $bbox->{y}, $topRight, $foreground_color, $top_background_color);
-				$self->_set_cell($x, $bbox->{y} + $bbox->{height} - 1, $bottomRight, $foreground_color, $bottom_background_color);
-			} else {
-				$self->_set_cell($x, $bbox->{y}, $top, $foreground_color, $top_background_color);
-				$self->_set_cell($x, $bbox->{y} + $bbox->{height} - 1, $bottom, $foreground_color, $bottom_background_color);
-			}
+			my ($top_glyph, $bot_glyph) =
+				  $x == $x0 ? ($topLeft,  $bottomLeft)
+				: $x == $x1 ? ($topRight, $bottomRight)
+				:             ($top,      $bottom);
+
+			$top_row->[$x]    = $top_bg;
+			$bottom_row->[$x] = $bot_bg;
+			tb_set_cell($x, $y0, $top_glyph, $fg_int, $top_bg->rgb_int);
+			tb_set_cell($x, $y1, $bot_glyph, $fg_int, $bot_bg->rgb_int);
 		}
 
 		# Left + Right border
-		for(my $y = $bbox->{y}+1; $y < $bbox->{y} + $bbox->{height} - 1; $y++) {
-			my $background_color = $buffer->[$y][$bbox->{x}]{bg_color} // Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
-			$self->_set_cell($bbox->{x}, $y, $left, $foreground_color, $background_color);
-			$background_color = $buffer->[$y][$bbox->{x} + $bbox->{width} - 1]{bg_color} // Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
-			$self->_set_cell($bbox->{x} + $bbox->{width} - 1, $y, $right, $foreground_color, $background_color);
+		for (my $y = $y0 + 1; $y < $y1; $y++) {
+			my $row = ($buffer->[$y] //= []);
+			my $left_bg  = $row->[$x0] // $default_bg;
+			my $right_bg = $row->[$x1] // $default_bg;
+			$row->[$x0] = $left_bg;
+			$row->[$x1] = $right_bg;
+			tb_set_cell($x0, $y, $left,  $fg_int, $left_bg->rgb_int);
+			tb_set_cell($x1, $y, $right, $fg_int, $right_bg->rgb_int);
 		}
 	}
 
@@ -166,7 +187,7 @@ role Term::Fabulous::Render {
 	}
 
 	method draw() {
-		if($first_draw) {
+		if ($first_draw) {
 			Clay_SetMeasureTextFunction(sub ($text, $config, $userdata) {
 				return { width => length($text), height => 1 };
 			});
