@@ -119,24 +119,47 @@ role Term::Fabulous::Render {
 		}
 	}
 
+	# Resolve (fg_int, bg_int) for a border cell from its location code (0..3).
+	# Location semantics mirror Textual's BORDER_LOCATIONS:
+	#   0 = fg on widget's own bg
+	#   1 = fg on parent's bg
+	#   2 = swap of 1   (parent_bg painted as fg, widget_fg as bg)
+	#   3 = parent_fg painted as bg, widget_bg as fg
+	method _resolve_border_colors($loc, $widget_fg_int, $parent_fg_int, $widget_bg, $parent_bg) {
+		return ($widget_fg_int, $widget_bg->rgb_int) if $loc == 0;
+		return ($widget_fg_int, $parent_bg->rgb_int) if $loc == 1;
+		return ($parent_bg->rgb_int, $widget_fg_int) if $loc == 2;
+		return ($widget_bg->rgb_int, $parent_fg_int) if $loc == 3;
+		die "Invalid border location code: $loc";
+	}
+
 	method _render_border($command, $widget) {
 		return unless $widget->DOES('Term::Fabulous::Role::HasBorderStyle');
 
 		my $bbox = $command->{boundingBox};
 		my $data = $command->{renderData};
-		my $foreground_color = Term::Fabulous::Color->new(color => ($data->{color} // {r => 255, g => 255, b => 255, a => 255}));
-		my $fg_int = $foreground_color->rgb_int;
+		my $widget_fg_color = Term::Fabulous::Color->new(color => ($data->{color} // {r => 255, g => 255, b => 255, a => 255}));
+		my $widget_fg_int   = $widget_fg_color->rgb_int;
+
+		my $parent = $widget->parent;
+		my $parent_fg_int = ($parent && $parent->border_color)
+			? Term::Fabulous::Color->new(color => $parent->border_color)->rgb_int
+			: $widget_fg_int;
 
 		my $top_style    = $widget->border_style_top;
 		my $right_style  = $widget->border_style_right;
 		my $bottom_style = $widget->border_style_bottom;
 		my $left_style   = $widget->border_style_left;
 
-		# Glyph slot order: TL, T, TR, L, R, BL, B, BR.
+		# Glyph + location slot order: TL, T, TR, L, R, BL, B, BR.
 		my ($topLeft, $top, $topRight)          = $top_style    ? $top_style->get_top_glyphs       : (' ', ' ', ' ');
-		my ($left, $right)                      = ($left_style  ? $left_style->get_left_glyphs    : ' ',
-		                                           $right_style ? $right_style->get_right_glyphs  : ' ');
-		my ($bottomLeft, $bottom, $bottomRight) = $bottom_style ? $bottom_style->get_bottom_glyphs : (' ', ' ', ' ');
+		my ($tlLoc,   $tLoc, $trLoc)            = $top_style    ? $top_style->get_top_locations    : (0, 0, 0);
+		my $left  = $left_style  ? $left_style->get_left_glyphs    : ' ';
+		my $right = $right_style ? $right_style->get_right_glyphs  : ' ';
+		my $lLoc  = $left_style  ? $left_style->get_left_locations : 0;
+		my $rLoc  = $right_style ? $right_style->get_right_locations : 0;
+		my ($bottomLeft, $bottom, $bottomRight) = $bottom_style ? $bottom_style->get_bottom_glyphs    : (' ', ' ', ' ');
+		my ($blLoc, $bLoc, $brLoc)              = $bottom_style ? $bottom_style->get_bottom_locations : (0, 0, 0);
 
 		my $x0 = $bbox->{x};
 		my $x1 = $x0 + $bbox->{width} - 1;
@@ -145,33 +168,48 @@ role Term::Fabulous::Render {
 
 		my $top_row    = ($buffer->[$y0] //= []);
 		my $bottom_row = ($buffer->[$y1] //= []);
+		my $above_row  = ($y0 > 0) ? ($buffer->[$y0 - 1] // []) : [];
+		my $below_row  = ($buffer->[$y1 + 1] // []);
 
 		# Top + Bottom border (kept per-cell: borders are low-volume and
 		# tb_print with UTF-8 box-drawing chars exposed a termbox crash).
 		for (my $x = $x0; $x <= $x1; $x++) {
-			my $top_bg = $top_row->[$x]    // $default_bg;
-			my $bot_bg = $bottom_row->[$x] // $default_bg;
+			my ($top_glyph, $top_loc, $bot_glyph, $bot_loc) =
+				  $x == $x0 ? ($topLeft,  $tlLoc, $bottomLeft,  $blLoc)
+				: $x == $x1 ? ($topRight, $trLoc, $bottomRight, $brLoc)
+				:             ($top,      $tLoc,  $bottom,      $bLoc);
 
-			my ($top_glyph, $bot_glyph) =
-				  $x == $x0 ? ($topLeft,  $bottomLeft)
-				: $x == $x1 ? ($topRight, $bottomRight)
-				:             ($top,      $bottom);
+			my $top_widget_bg = $top_row->[$x]    // $default_bg;
+			my $bot_widget_bg = $bottom_row->[$x] // $default_bg;
+			my $top_parent_bg = $above_row->[$x]  // $default_bg;
+			my $bot_parent_bg = $below_row->[$x]  // $default_bg;
 
-			$top_row->[$x]    = $top_bg;
-			$bottom_row->[$x] = $bot_bg;
-			tb_set_cell($x, $y0, $top_glyph, $fg_int, $top_bg->rgb_int);
-			tb_set_cell($x, $y1, $bot_glyph, $fg_int, $bot_bg->rgb_int);
+			my ($t_fg, $t_bg) = $self->_resolve_border_colors($top_loc, $widget_fg_int, $parent_fg_int, $top_widget_bg, $top_parent_bg);
+			my ($b_fg, $b_bg) = $self->_resolve_border_colors($bot_loc, $widget_fg_int, $parent_fg_int, $bot_widget_bg, $bot_parent_bg);
+
+			$top_row->[$x]    = $top_widget_bg;
+			$bottom_row->[$x] = $bot_widget_bg;
+			tb_set_cell($x, $y0, $top_glyph, $t_fg, $t_bg);
+			tb_set_cell($x, $y1, $bot_glyph, $b_fg, $b_bg);
 		}
 
 		# Left + Right border
+		my $left_parent_x  = $x0 - 1;
+		my $right_parent_x = $x1 + 1;
 		for (my $y = $y0 + 1; $y < $y1; $y++) {
 			my $row = ($buffer->[$y] //= []);
-			my $left_bg  = $row->[$x0] // $default_bg;
-			my $right_bg = $row->[$x1] // $default_bg;
-			$row->[$x0] = $left_bg;
-			$row->[$x1] = $right_bg;
-			tb_set_cell($x0, $y, $left,  $fg_int, $left_bg->rgb_int);
-			tb_set_cell($x1, $y, $right, $fg_int, $right_bg->rgb_int);
+			my $left_widget_bg  = $row->[$x0] // $default_bg;
+			my $right_widget_bg = $row->[$x1] // $default_bg;
+			my $left_parent_bg  = ($left_parent_x >= 0 ? $row->[$left_parent_x] : undef) // $default_bg;
+			my $right_parent_bg = $row->[$right_parent_x] // $default_bg;
+
+			my ($l_fg, $l_bg) = $self->_resolve_border_colors($lLoc, $widget_fg_int, $parent_fg_int, $left_widget_bg,  $left_parent_bg);
+			my ($r_fg, $r_bg) = $self->_resolve_border_colors($rLoc, $widget_fg_int, $parent_fg_int, $right_widget_bg, $right_parent_bg);
+
+			$row->[$x0] = $left_widget_bg;
+			$row->[$x1] = $right_widget_bg;
+			tb_set_cell($x0, $y, $left,  $l_fg, $l_bg);
+			tb_set_cell($x1, $y, $right, $r_fg, $r_bg);
 		}
 	}
 

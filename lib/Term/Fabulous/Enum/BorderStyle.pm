@@ -244,6 +244,22 @@ enum Term::Fabulous::Enum::BorderStyle {
 	method get_left_glyphs () {
 		return @{$self->glyphs}[3];
 	}
+
+	method get_top_locations () {
+		return @{$locations}[0, 1, 2];
+	}
+
+	method get_right_locations () {
+		return @{$locations}[4];
+	}
+
+	method get_bottom_locations () {
+		return @{$locations}[5, 6, 7];
+	}
+
+	method get_left_locations () {
+		return @{$locations}[3];
+	}
 }
 
 1;
