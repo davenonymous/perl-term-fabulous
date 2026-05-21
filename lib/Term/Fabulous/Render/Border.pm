@@ -55,10 +55,11 @@ role Term::Fabulous::Render::Border {
 		my ($bottomLeft, $bottom, $bottomRight) = $bottom_style ? $bottom_style->get_bottom_glyphs    : (' ', ' ', ' ');
 		my ($blLoc, $bLoc, $brLoc)              = $bottom_style ? $bottom_style->get_bottom_locations : (0, 0, 0);
 
-		my $x0 = $bbox->{x};
-		my $x1 = $x0 + $bbox->{width} - 1;
-		my $y0 = $bbox->{y};
-		my $y1 = $y0 + $bbox->{height} - 1;
+		my $x0 = int $bbox->{x};
+		my $y0 = int $bbox->{y};
+		my $x1 = int($bbox->{x} + $bbox->{width})  - 1;
+		my $y1 = int($bbox->{y} + $bbox->{height}) - 1;
+		return if $x1 < $x0 || $y1 < $y0;
 
 		my $top_row    = ($buffer->[$y0] //= []);
 		my $bottom_row = ($buffer->[$y1] //= []);

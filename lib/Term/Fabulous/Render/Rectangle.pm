@@ -20,12 +20,12 @@ role Term::Fabulous::Render::Rectangle {
 
 		my $fg_int = $foreground_color->rgb_int;
 		my $bg_int = $background_color->rgb_int;
-		my $x0 = $bbox->{x};
-		my $y0 = $bbox->{y};
-		my $w  = $bbox->{width};
+		my $x0 = int $bbox->{x};
+		my $y0 = int $bbox->{y};
+		my $x1 = int($bbox->{x} + $bbox->{width});
+		my $y1 = int($bbox->{y} + $bbox->{height});
+		my $w  = $x1 - $x0;
 		return if $w <= 0;
-		my $x1 = $x0 + $w;
-		my $y1 = $y0 + $bbox->{height};
 		my $fill = ' ' x $w;
 
 		for (my $y = $y0; $y < $y1; $y++) {
