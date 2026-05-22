@@ -22,7 +22,7 @@ use Clay::XS qw(
 
 use Term::Fabulous::Color;
 use Clay::XS qw(Clay_SetMeasureTextFunction);
-use Unicode::GCString;
+use Term::Fabulous::Unicode qw(string_columns);
 use Encode qw(decode);
 
 role Term::Fabulous::Render
@@ -92,13 +92,11 @@ role Term::Fabulous::Render
 			Clay_SetMeasureTextFunction(sub ($text, $config, $userdata) {
 				my $decoded = decode('UTF-8', $text, Encode::FB_DEFAULT);
 				my $width = 0;
-				my $height = 1;
-				my $line_width = 0;
 				for my $line (split /\n/, $decoded, -1) {
-					my $cols = length($line) ? Unicode::GCString->new($line)->columns : 0;
+					my $cols = string_columns($line);
 					$width = $cols if $cols > $width;
 				}
-				$height = ($decoded =~ tr/\n//) + 1;
+				my $height = ($decoded =~ tr/\n//) + 1;
 				return { width => $width, height => $height };
 			});
 			$first_draw = 0;

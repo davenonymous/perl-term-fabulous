@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Unicode::GCString;
 use Encode qw(decode);
+use Term::Fabulous::Unicode qw(cluster_columns);
 use Object::Pad 0.800;
 
 role Term::Fabulous::Render::Text {
@@ -39,7 +40,7 @@ role Term::Fabulous::Render::Text {
 
 		for my $i (0 .. $gcstring->length - 1) {
 			my $cluster = $gcstring->item($i);
-			my $cols = $cluster->columns;
+			my $cols = cluster_columns($cluster);
 			last if $x + $cols > $x_limit;
 
 			my @chars = split //, "$cluster";
