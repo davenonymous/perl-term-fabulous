@@ -19,6 +19,7 @@ class Term::Fabulous::Widget
 
 	:does(Clay::UI::Role::Style::HasBorder)
 	:does(Term::Fabulous::Role::HasBorderStyle)
+	:abstract
 {
 	field $classes :param = [];
 

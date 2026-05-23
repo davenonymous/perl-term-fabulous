@@ -49,6 +49,8 @@ class Term::Fabulous::Color {
 		} elsif ( $color =~ /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d+)\s*\)$/ ) {
 			( $red, $green, $blue ) = ( $1, $2, $3 );
 			$alpha = int( $4 * 255 );
+		} elsif ( $color =~ /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/ ) {
+			( $red, $green, $blue, $alpha ) = ( $1, $2, $3, $4 );
 		} elsif ( $color =~ /^hsl\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*\)$/ ) {
 			( $red, $green, $blue ) = Term::Fabulous::Color->hsl_to_rgb( $1, $2, $3 );
 		} elsif ( $color =~ /^hsla\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*,\s*(0|1|0?\.\d+)\s*\)$/ ) {

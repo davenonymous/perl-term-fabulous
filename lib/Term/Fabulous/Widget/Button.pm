@@ -8,11 +8,12 @@ our $VERSION = '0.01';
 
 
 class Term::Fabulous::Widget::Button
-	:isa(Term::Fabulous::Widget)
+	:isa(Term::Fabulous::Widget::Box)
 	:does(Clay::UI::Role::Interaction::Focusable)
 	:does(Clay::UI::Role::Interaction::Pressable)
 	:does(Clay::UI::Role::Interaction::Hoverable)
 {
+
 
 }
 
