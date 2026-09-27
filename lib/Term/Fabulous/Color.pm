@@ -1,64 +1,185 @@
 package Term::Fabulous::Color;
 
-use 5.038;
+use v5.22;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
-use Object::Pad;
-use Object::Pad::FieldAttr::Isa;
-use Object::Pad::FieldAttr::Checked;
-use Data::Checks qw( Str Isa NumRange );
+use Object::Pad 0.825;
 
-class Term::Fabulous::Color {
-	field $red :reader :param :Checked( NumRange(0, 255) ) = 0;
-	field $green :reader :param :Checked( NumRange(0, 255) ) = 0;
-	field $blue :reader :param :Checked( NumRange(0, 255) ) = 0;
-	field $alpha :reader :param :Checked( NumRange(0, 256) ) = 255;
+class Term::Fabulous::Color :strict(params) {
+	use List::Util qw( min max );
+	use POSIX qw( floor );
+	use Scalar::Util qw( blessed looks_like_number );
+
+	my @CHANNEL_NAMES = qw( red green blue alpha );
+
+	# Accepted hash shapes, keyed by their sorted key list.
+	my %CHANNEL_KEYS_BY_HASH_SHAPE = (
+		'b g r'                => [qw( r g b )],
+		'a b g r'              => [qw( r g b a )],
+		'blue green red'       => [qw( red green blue )],
+		'alpha blue green red' => [qw( red green blue alpha )],
+	);
+
+	my $HEX_SPEC = qr/\A#?([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)\z/;
+	my $NUMBER   = qr/[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
+	my $COMMA    = qr/\s*,\s*/;
+
+	field $red   :reader;
+	field $green :reader;
+	field $blue  :reader;
+	field $alpha :reader;
 
 	# INVARIANT: Color is immutable post-ADJUST; lazy memo slots are safe.
+	field $_rgb_int_cache;
 	field $_rgba_int_cache;
 	field $_fg_sgr_cache;
 	field $_bg_sgr_cache;
 
 	ADJUST :params ( :$color ) {
-		if ( ref( $color ) eq 'HASH' ) {
-			if ( exists $color->{ r } && exists $color->{ g } && exists $color->{ b } ) {
-				$red   = $color->{ r };
-				$green = $color->{ g };
-				$blue  = $color->{ b };
-				$alpha = $color->{ a } // 255;
-			} elsif ( exists $color->{ red } && exists $color->{ green } && exists $color->{ blue } ) {
-				$red   = $color->{ red };
-				$green = $color->{ green };
-				$blue  = $color->{ blue };
-				$alpha = $color->{ alpha } // 255;
-			}
-		} elsif ( ref( $color ) eq 'ARRAY' ) {
-			$red   = $color->[ 0 ];
-			$green = $color->[ 1 ];
-			$blue  = $color->[ 2 ];
-			$alpha = $color->[ 3 ] // 255;
-		} elsif ( $color =~ /^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/ ) {
+		my @channels = _channels_from_input($color);
+		( $red, $green, $blue, $alpha ) = map { _checked_channel( $CHANNEL_NAMES[$_], $channels[$_] ) } 0 .. 3;
+	}
 
-			# 6-hex (#rrggbb) lacks alpha; default to 255 to avoid undef passing the NumRange check.
-			my @parts = map { hex( $_ ) } ( $1 =~ /(..)/g );
-			( $red, $green, $blue ) = @parts[ 0 .. 2 ];
-			$alpha = $parts[ 3 ] // 255;
-		# } elsif ( my $web_color = Term::Fabulous::Enum::WebColor->from_name( lc($color) ) ) {
-		# 	( $red, $green, $blue, $alpha ) = $web_color->to_rgba;
-		} elsif ( $color =~ /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/ ) {
-			( $red, $green, $blue ) = ( $1, $2, $3 );
-		} elsif ( $color =~ /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0|1|0?\.\d+)\s*\)$/ ) {
-			( $red, $green, $blue ) = ( $1, $2, $3 );
-			$alpha = int( $4 * 255 );
-		} elsif ( $color =~ /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/ ) {
-			( $red, $green, $blue, $alpha ) = ( $1, $2, $3, $4 );
-		} elsif ( $color =~ /^hsl\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*\)$/ ) {
-			( $red, $green, $blue ) = Term::Fabulous::Color->hsl_to_rgb( $1, $2, $3 );
-		} elsif ( $color =~ /^hsla\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*,\s*(0|1|0?\.\d+)\s*\)$/ ) {
-			( $red, $green, $blue ) = Term::Fabulous::Color->hsl_to_rgb( $1, $2, $3 );
-			$alpha = int( $4 * 255 );
-		} else {
-			die "Invalid color input: $color";
+	sub _describe ($value) {
+		return 'undef' unless defined $value;
+		return ref($value) . ' reference' if ref $value;
+		return "'$value'";
+	}
+
+	sub _is_finite_number ($value) {
+		return 0 unless defined $value && !ref $value && looks_like_number($value);
+		return 0 if $value != $value;    # NaN
+		return abs($value) != 9**9**9;   # +/- Inf
+	}
+
+	sub _round ($value) {
+		return floor( $value + 0.5 );
+	}
+
+	# Rounds to the nearest integer; the rounded value must lie in 0..255.
+	sub _checked_channel ( $name, $value ) {
+		my $rounded = _is_finite_number($value) ? _round($value) : undef;
+		die "Term::Fabulous::Color: $name must be a number in 0..255, got " . _describe($value)
+			unless defined $rounded && $rounded >= 0 && $rounded <= 255;
+		return $rounded;
+	}
+
+	sub _checked_range ( $name, $value, $low, $high ) {
+		die "Term::Fabulous::Color: $name must be a number in $low..$high, got " . _describe($value)
+			unless _is_finite_number($value) && $value >= $low && $value <= $high;
+		return $value;
+	}
+
+	sub _channels_from_input ($color) {
+		return $color->to_rgba if blessed $color && $color->isa('Term::Fabulous::Color');
+		return _channels_from_hash($color)   if ref $color eq 'HASH';
+		return _channels_from_array($color)  if ref $color eq 'ARRAY';
+		return _channels_from_string($color) if defined $color && !ref $color;
+		die "Term::Fabulous::Color: invalid color input " . _describe($color);
+	}
+
+	sub _channels_from_hash ($hash) {
+		my $shape = join ' ', sort keys %$hash;
+		my $keys  = $CHANNEL_KEYS_BY_HASH_SHAPE{$shape}
+			// die "Term::Fabulous::Color: a color hash needs exactly the keys r, g, b[, a] or red, green, blue[, alpha], got {$shape}";
+		my @channels = @{$hash}{@$keys};
+		return @channels == 3 ? ( @channels, 255 ) : @channels;
+	}
+
+	sub _channels_from_array ($array) {
+		my $count = @$array;
+		die "Term::Fabulous::Color: a color array needs 3 or 4 elements, got $count"
+			unless $count == 3 || $count == 4;
+		return $count == 3 ? ( @$array, 255 ) : @$array;
+	}
+
+	sub _channels_from_string ($spec) {
+		if ( my ($hex) = $spec =~ $HEX_SPEC ) {
+			my @channels = map { CORE::hex($_) } unpack '(A2)*', $hex;
+			return @channels == 3 ? ( @channels, 255 ) : @channels;
 		}
+		if ( my @rgb = $spec =~ /\Argb\(\s*($NUMBER)$COMMA($NUMBER)$COMMA($NUMBER)\s*\)\z/ ) {
+			return ( @rgb, 255 );
+		}
+		if ( my @rgba = $spec =~ /\Argba\(\s*($NUMBER)$COMMA($NUMBER)$COMMA($NUMBER)$COMMA($NUMBER%?)\s*\)\z/ ) {
+			return ( @rgba[ 0 .. 2 ], _alpha_from_token( $rgba[3] ) );
+		}
+		if ( my @hsl = $spec =~ /\Ahsl\(\s*($NUMBER)$COMMA($NUMBER)%$COMMA($NUMBER)%\s*\)\z/ ) {
+			return ( _hsl_to_rgb_float( _normalized_hsl(@hsl) ), 255 );
+		}
+		if ( my @hsla = $spec =~ /\Ahsla\(\s*($NUMBER)$COMMA($NUMBER)%$COMMA($NUMBER)%$COMMA($NUMBER%?)\s*\)\z/ ) {
+			return ( _hsl_to_rgb_float( _normalized_hsl( @hsla[ 0 .. 2 ] ) ), _alpha_from_token( $hsla[3] ) );
+		}
+		die "Term::Fabulous::Color: unrecognized color string '$spec'";
+	}
+
+	# Alpha grammar of rgba()/hsla(): "N%" is a percentage, a number with a
+	# decimal point is a fraction of 1, a bare integer is the 0..255 channel.
+	sub _alpha_from_token ($token) {
+		if ( my ($percent) = $token =~ /\A(.+)%\z/ ) {
+			return _checked_range( 'alpha percentage', $percent, 0, 100 ) / 100 * 255;
+		}
+		if ( $token =~ /\./ ) {
+			return _checked_range( 'alpha fraction', $token, 0, 1 ) * 255;
+		}
+		return $token;
+	}
+
+	sub _normalized_hsl ( $h, $s, $l ) {
+		die "Term::Fabulous::Color: hue must be a number, got " . _describe($h)
+			unless _is_finite_number($h);
+		_checked_range( 'saturation', $s, 0, 100 );
+		_checked_range( 'lightness',  $l, 0, 100 );
+		return ( $h - 360 * floor( $h / 360 ), $s, $l );
+	}
+
+	# Unrounded HSL -> RGB. Hue in [0, 360), saturation and lightness in
+	# 0..100; returns three channels in 0..255 as floats.
+	sub _hsl_to_rgb_float ( $h, $s, $l ) {
+		$s /= 100;
+		$l /= 100;
+		return ( $l * 255 ) x 3 if $s == 0;
+
+		my $q = $l < 0.5 ? $l * ( 1 + $s ) : $l + $s - $l * $s;
+		my $p = 2 * $l - $q;
+
+		my @channels;
+		foreach my $offset ( 1 / 3, 0, -1 / 3 ) {
+			my $t = $h / 360 + $offset;
+			$t += 1 if $t < 0;
+			$t -= 1 if $t >= 1;
+
+			my $value
+				= $t < 1 / 6 ? $p + ( $q - $p ) * 6 * $t
+				: $t < 1 / 2 ? $q
+				: $t < 2 / 3 ? $p + ( $q - $p ) * 6 * ( 2 / 3 - $t )
+				:              $p;
+			push @channels, $value * 255;
+		}
+		return @channels;
+	}
+
+	# Unrounded RGB -> HSL. Channels in 0..255; returns hue in [0, 360) and
+	# saturation / lightness in 0..100 as floats.
+	sub _rgb_to_hsl_float ( $r, $g, $b ) {
+		( $r, $g, $b ) = map { $_ / 255 } ( $r, $g, $b );
+
+		my $max       = max( $r, $g, $b );
+		my $min       = min( $r, $g, $b );
+		my $lightness = ( $max + $min ) / 2;
+		return ( 0, 0, $lightness * 100 ) if $max == $min;
+
+		my $delta      = $max - $min;
+		my $saturation = $lightness < 0.5 ? $delta / ( $max + $min ) : $delta / ( 2 - $max - $min );
+		my $hue
+			= $max == $r ? 60 * ( ( $g - $b ) / $delta )
+			: $max == $g ? 60 * ( 2 + ( $b - $r ) / $delta )
+			:              60 * ( 4 + ( $r - $g ) / $delta );
+		$hue += 360 if $hue < 0;
+
+		return ( $hue, $saturation * 100, $lightness * 100 );
 	}
 
 	method blend ( $other, $ratio ) {
@@ -79,15 +200,18 @@ class Term::Fabulous::Color {
 	}
 
 	method lighten ($amount) {
-		my ( $h, $s, $l ) = Term::Fabulous::Color->rgb_to_hsl( $red, $green, $blue );
-		my $new_l = $l + $amount * 100;
-		$new_l = 0   if $new_l < 0;
-		$new_l = 100 if $new_l > 100;
-		my ( $r, $g, $b ) = Term::Fabulous::Color->hsl_to_rgb( $h, $s, $new_l );
-		return Term::Fabulous::Color->new( color => [ $r, $g, $b, $alpha ] );
+		die "Term::Fabulous::Color: lighten amount must be a number, got " . _describe($amount)
+			unless _is_finite_number($amount);
+
+		my ( $h, $s, $l ) = _rgb_to_hsl_float( $red, $green, $blue );
+		my $lightness = min( 100, max( 0, $l + $amount * 100 ) );
+		return Term::Fabulous::Color->new( color => [ _hsl_to_rgb_float( $h, $s, $lightness ), $alpha ] );
 	}
 
 	method darken ($amount) {
+		die "Term::Fabulous::Color: darken amount must be a number, got " . _describe($amount)
+			unless _is_finite_number($amount);
+
 		return $self->lighten( -$amount );
 	}
 
@@ -132,7 +256,7 @@ class Term::Fabulous::Color {
 	}
 
 	method rgb_int () {
-		return ( $red << 16 ) | ( $green << 8 ) | $blue;
+		return $_rgb_int_cache //= ( $red << 16 ) | ( $green << 8 ) | $blue;
 	}
 
 	method rgba_float () {
@@ -144,34 +268,16 @@ class Term::Fabulous::Color {
 	}
 
 	method hsl_to_rgb :common ( $h, $s, $l ) {
-		$s /= 100;
-		$l /= 100;
-		my $color = [];
+		return map { _round($_) } _hsl_to_rgb_float( _normalized_hsl( $h, $s, $l ) );
+	}
 
-		if ( $s == 0 ) {
-			$color->[ 0 ] = $color->[ 1 ] = $color->[ 2 ] = int( $l * 255 );
-		} else {
-			my $q = $l < 0.5 ? $l * ( 1 + $s ) : $l + $s - $l * $s;
-			my $p = 2 * $l - $q;
-			my @t = map { $_ / 360 } ( $h + 120, $h, $h - 120 );
+	method rgb_to_hsl :common ( $r, $g, $b ) {
+		_checked_range( 'red',   $r, 0, 255 );
+		_checked_range( 'green', $g, 0, 255 );
+		_checked_range( 'blue',  $b, 0, 255 );
 
-			for my $i ( 0 .. 2 ) {
-				if ( $t[ $i ] < 0 ) { $t[ $i ] += 1 }
-				if ( $t[ $i ] > 1 ) { $t[ $i ] -= 1 }
-
-				if ( $t[ $i ] < 1 / 6 ) {
-					$color->[ $i ] = int( ( $p + 6 * ( $q - $p ) * $t[ $i ] ) * 255 );
-				} elsif ( $t[ $i ] < 1 / 2 ) {
-					$color->[ $i ] = int( ( $q * 255 ) );
-				} elsif ( $t[ $i ] < 2 / 3 ) {
-					$color->[ $i ] = int( ( $p + 6 * ( $q - $p ) * ( 2 / 3 - $t[ $i ] ) ) * 255 );
-				} else {
-					$color->[ $i ] = int( ( $p * 255 ) );
-				}
-			}
-		}
-
-		return @$color;
+		my ( $h, $s, $l ) = map { _round($_) } _rgb_to_hsl_float( $r, $g, $b );
+		return ( $h % 360, $s, $l );
 	}
 
 	method rgb :common ( $r, $g, $b ) {
@@ -183,41 +289,18 @@ class Term::Fabulous::Color {
 	}
 
 	method hex :common ( $spec ) {
+		die "Term::Fabulous::Color: hex expects '#rrggbb' or '#rrggbbaa', got " . _describe($spec)
+			unless defined $spec && !ref $spec && $spec =~ $HEX_SPEC;
 		return Term::Fabulous::Color->new( color => $spec );
 	}
 
 	method hsl :common ( $h, $s, $l ) {
-		return Term::Fabulous::Color->new( color => "hsl($h, $s%, $l%)", );
+		return Term::Fabulous::Color->new( color => [ _hsl_to_rgb_float( _normalized_hsl( $h, $s, $l ) ), 255 ] );
 	}
 
 	method hsla :common ( $h, $s, $l, $a ) {
-		return Term::Fabulous::Color->new( color => "hsla($h, $s%, $l%, $a)", );
-	}
-
-	method rgb_to_hsl :common ( $r, $g, $b ) {
-		$r /= 255;
-		$g /= 255;
-		$b /= 255;
-
-		my $max = List::Util::max( $r, $g, $b );
-		my $min = List::Util::min( $r, $g, $b );
-		my ( $h, $s, $l ) = ( 0, 0, ( $max + $min ) / 2 );
-
-		if ( $max != $min ) {
-			$s = $l < 0.5 ? ( $max - $min ) / ( $max + $min ) : ( $max - $min ) / ( 2 - $max - $min );
-
-			if ( $max == $r ) {
-				$h = 60 * ( ( $g - $b ) / ( $max - $min ) );
-			} elsif ( $max == $g ) {
-				$h = 60 * ( 2 + ( $b - $r ) / ( $max - $min ) );
-			} else {
-				$h = 60 * ( 4 + ( $r - $g ) / ( $max - $min ) );
-			}
-
-			if ( $h < 0 ) { $h += 360 }
-		}
-
-		return ( int( $h ), int( $s * 100 ), int( $l * 100 ) );
+		my $alpha_fraction = _checked_range( 'alpha fraction', $a, 0, 1 );
+		return Term::Fabulous::Color->new( color => [ _hsl_to_rgb_float( _normalized_hsl( $h, $s, $l ) ), $alpha_fraction * 255 ] );
 	}
 
 }
@@ -228,124 +311,208 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Color - RGB(A) color value with parser-driven construction
+Term::Fabulous::Color - Immutable RGBA color value with parser-driven construction
 
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Color;
 
-	# Generic constructor (string / hashref / arrayref / named CSS).
-	my $a = Term::Fabulous::Color->new( color => '#ff00ff' );
-	my $b = Term::Fabulous::Color->new( color => 'rgb(255, 0, 128)' );
-	my $c = Term::Fabulous::Color->new( color => 'white' );
+	# Generic constructor (string / hashref / arrayref / another Color).
+	my $a     = Term::Fabulous::Color->new( color => '#ff00ff' );
+	my $b     = Term::Fabulous::Color->new( color => 'rgba(255, 0, 128, 0.5)' );
+	my $c     = Term::Fabulous::Color->new( color => { r => 1, g => 2, b => 3 } );
+	my $copy  = Term::Fabulous::Color->new( color => $a );
 
 	# Positional factories.
-	my $red    = Term::Fabulous::Color->rgb(255, 0, 0);
-	my $half   = Term::Fabulous::Color->rgba(255, 0, 0, 128);
-	my $hex    = Term::Fabulous::Color->hex('#7c3aed');
-	my $teal   = Term::Fabulous::Color->hsl(174, 72, 56);
-	my $faded  = Term::Fabulous::Color->hsla(174, 72, 56, 0.5);
+	my $red   = Term::Fabulous::Color->rgb(255, 0, 0);
+	my $half  = Term::Fabulous::Color->rgba(255, 0, 0, 128);
+	my $hex   = Term::Fabulous::Color->hex('#7c3aed');
+	my $teal  = Term::Fabulous::Color->hsl(174, 72, 56);
+	my $faded = Term::Fabulous::Color->hsla(174, 72, 56, 0.5);
 
-	# Tuple accessors (renamed from `rgba` / `hsl` so the names are
-	# free for the factories above).
-	my @rgba   = $red->to_rgba;   # (255, 0, 0, 255)
-	my @hsl    = $red->to_hsl;    # (h, s, l) tuple
+	my @rgba  = $red->to_rgba;   # (255, 0, 0, 255)
+	my @hsl   = $red->to_hsl;    # (0, 100, 50)
 
 =head1 DESCRIPTION
 
-A color value carrying red, green, blue, and alpha channels (each
-0..255). Construction goes through one of three doors:
+A color value carrying red, green, blue and alpha channels, each an
+integer in C<0..255>. Colors are immutable: every transformation
+(L</lighten>, L</blend>, L</with_alpha>, ...) returns a new object.
+
+=head2 Channel rules
+
+Every channel is rounded to the nearest integer once, at construction,
+and the rounded value must lie in C<0..255> inclusive. Anything else
+(undef, non-numeric strings, NaN, infinities, out-of-range numbers)
+dies with a message naming the channel and the offending value, e.g.
+
+	Term::Fabulous::Color: red must be a number in 0..255, got '300'
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $color = Term::Fabulous::Color->new( color => $spec );
+
+C<color> is the only (and required) parameter; unknown parameters die.
+C<$spec> may be:
 
 =over
 
-=item * The generic C<new> constructor, with a single C<color>
-parameter that accepts strings (C<#rrggbb>, C<rgb(...)>, C<rgba(...)>,
-C<hsl(...)>, C<hsla(...)>, named CSS colors), hashrefs
-(C<< { r => N, g => N, b => N } >> or C<< { red => ... } >>),
-arrayrefs (C<[ R, G, B ]> or C<[ R, G, B, A ]>), or another
-C<Term::Fabulous::Color> instance for clone-style copying.
+=item * Another C<Term::Fabulous::Color> (or subclass) instance, whose
+four channels are copied.
 
-=item * Positional class-method factories: L</rgb>, L</rgba>,
-L</hex>, L</hsl>, L</hsla>. These are thin wrappers around C<new>
-that take typed positional arguments instead of a freeform spec.
+=item * A hashref with exactly the keys C<r, g, b> or C<r, g, b, a>, or
+exactly C<red, green, blue> or C<red, green, blue, alpha>. Alpha
+defaults to 255. Any other key set dies.
 
-=item * The companion L<Term::Fabulous::TF/color> facade, which is
-the recommended user-facing entry point.
+=item * An arrayref C<[ R, G, B ]> or C<[ R, G, B, A ]>. Other lengths
+die. Alpha defaults to 255.
+
+=item * A string in one of these forms (no surrounding whitespace):
+
+	#rrggbb  #rrggbbaa        hex digits, leading '#' optional
+	rgb(r, g, b)              channels 0..255, decimals are rounded
+	rgba(r, g, b, a)          alpha per the alpha grammar below
+	hsl(h, s%, l%)            hue in degrees, s and l in 0..100
+	hsla(h, s%, l%, a)        alpha per the alpha grammar below
+
+The alpha token of C<rgba()> and C<hsla()> is read as follows:
+
+=over
+
+=item * a bare integer (C<128>) is the C<0..255> channel value;
+
+=item * a number containing a decimal point (C<0.5>, C<1.0>, C<.25>) is a
+fraction in C<0..1>, multiplied by 255;
+
+=item * a number followed by C<%> (C<50%>) is a percentage in C<0..100>.
 
 =back
 
+So C<rgba(0, 0, 0, 1)> has alpha 1 (nearly transparent) while
+C<rgba(0, 0, 0, 1.0)> has alpha 255. The hue is taken modulo 360, so
+C<720> equals C<0> and C<-90> equals C<270>.
+
+=back
+
+Any other value (undef, other references, other blessed objects,
+unrecognized strings) dies with the offending value in the message.
+
 =head1 METHODS
+
+=head2 red, green, blue, alpha
+
+Channel readers; integers in C<0..255>.
 
 =head2 rgb
 
 	my $color = Term::Fabulous::Color->rgb($r, $g, $b);
 
-Build an opaque color from raw 0..255 components. Out-of-range
-values are rejected by the underlying field-checks (Law 4: fail
-loud at the boundary).
+Opaque color from three channels (see L</Channel rules>).
 
 =head2 rgba
 
 	my $color = Term::Fabulous::Color->rgba($r, $g, $b, $a);
 
-As L</rgb> with an explicit alpha 0..255. Use the L</hsla> /
-generic C<new> entry points if you have a 0..1 alpha from CSS-like
-input.
+As L</rgb> with an explicit alpha channel in C<0..255>.
 
 =head2 hex
 
 	my $color = Term::Fabulous::Color->hex('#7c3aed');
 	my $color = Term::Fabulous::Color->hex('7c3aedff');
 
-Accepts six- or eight-hex strings with an optional leading C<#>.
+Accepts six- or eight-digit hex strings with an optional leading C<#>;
+anything else dies.
 
 =head2 hsl
 
 	my $color = Term::Fabulous::Color->hsl($h, $s, $l);
 
-Hue C<0..360>, saturation/lightness as percentages C<0..100>.
+Hue in degrees (taken modulo 360), saturation and lightness as
+percentages in C<0..100>. The conversion runs in floating point and
+rounds each channel once.
 
 =head2 hsla
 
 	my $color = Term::Fabulous::Color->hsla($h, $s, $l, $a);
 
-As L</hsl> plus an alpha component in the C<0..1> range (CSS
-convention).
+As L</hsl> plus an alpha fraction in C<0..1> (CSS convention).
+
+=head2 hsl_to_rgb, rgb_to_hsl
+
+	my ($r, $g, $b) = Term::Fabulous::Color->hsl_to_rgb($h, $s, $l);
+	my ($h, $s, $l) = Term::Fabulous::Color->rgb_to_hsl($r, $g, $b);
+
+Class-method conversions. Both compute in floating point and round each
+result once to the nearest integer; the returned hue is in C<0..359>.
 
 =head2 to_rgba
 
 	my ($r, $g, $b, $a) = $color->to_rgba;
 
-Returns the raw 0..255 component tuple.
+Returns the four channels.
 
 =head2 to_hsl
 
 	my ($h, $s, $l) = $color->to_hsl;
 
-Returns the C<(hue, saturation, lightness)> tuple converted from
-the stored RGB.
+Returns the rounded C<(hue, saturation, lightness)> tuple of the stored
+RGB channels.
 
 =head2 lighten
 
 	my $brighter = $color->lighten(0.15);
 
-HSL-space lightness adjustment matching Textual's
-C<Color.lighten>. C<$amount> is a C<0..1> fraction added to the
-HSL lightness component; the result is clamped at the
-C<0%>..C<100%> boundaries. Hue and saturation are preserved (unlike
-L</blend> against white, which desaturates as it brightens). Alpha
-rides through unchanged. Negative amounts darken.
+HSL-space lightness adjustment matching Textual's C<Color.lighten>.
+C<$amount> is a fraction added to the HSL lightness (so C<0.15> adds 15
+percentage points); the result is clamped at C<0%>..C<100%>. The
+adjustment works on unrounded HSL values, so C<lighten(0)> returns an
+identical color. Hue, saturation and alpha are preserved. Negative
+amounts darken. A non-numeric amount dies.
 
 =head2 darken
 
 	my $shadow = $color->darken(0.15);
 
-Symmetric counterpart to L</lighten>. C<< $color->darken($n) >> is
-identically C<< $color->lighten(-$n) >>; the named method exists so
-call sites read in the direction the author intended.
+Identical to C<< $color->lighten(-$amount) >>.
+
+=head2 blend
+
+	my $mix = $color->blend($other, $ratio);
+
+Linear per-channel mix: C<$ratio> 0 returns this color, 1 returns
+C<$other>. Channels are truncated to integers.
+
+=head2 with_alpha
+
+	my $translucent = $color->with_alpha(128);
+
+Copy with a different alpha channel (C<0..255>).
+
+=head2 rgb_int, rgba_int
+
+Packed integers C<0xRRGGBB> and C<0xRRGGBBAA>. Both are memoized.
+
+=head2 rgb_float, rgba_float
+
+Channels scaled to C<0..1>.
+
+=head2 hexString
+
+C<#rrggbbaa> string.
+
+=head2 ansi, ansi_bg
+
+24-bit SGR foreground / background escape sequences.
+
+=head2 fg_sgr, bg_sgr
+
+Like C<ansi> / C<ansi_bg>, but a color with alpha 0 yields the
+terminal default reset (C<\e[39m> / C<\e[49m>). Memoized.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::TF>, L<Term::Fabulous>.
+L<Term::Fabulous>, L<Term::Fabulous::Render::Attr>.
 
 =cut

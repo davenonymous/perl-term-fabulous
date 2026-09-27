@@ -11,13 +11,13 @@ use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
 use Term::Fabulous;
-use Term::Fabulous::Widget;
+use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
 
 use Clay::XS qw(:all);
 
-my $root = Term::Fabulous::Widget->new(
+my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [20, 25, 35, 255],
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
@@ -33,7 +33,7 @@ my $title = Term::Fabulous::Widget::Text->new(
 );
 $root->add_child($title);
 
-my $row = Term::Fabulous::Widget->new(
+my $row = Term::Fabulous::Widget::Box->new(
 	layout => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
 		child_gap => 2,
@@ -77,7 +77,7 @@ my @texts = (
 use Encode qw(encode);
 
 foreach my $text (@texts) {
-	my $cell = Term::Fabulous::Widget->new(
+	my $cell = Term::Fabulous::Widget::Box->new(
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
@@ -99,10 +99,9 @@ foreach my $text (@texts) {
 }
 
 my $ui = Term::Fabulous->new(
-	width       => 100,
-	height      => 32,
-	root        => $root,
-	use_termbox => 1,
+	width  => 100,
+	height => 32,
+	root   => $root,
 );
 
 $ui->run();

@@ -8,6 +8,18 @@ no warnings 'experimental::signatures';
 use Object::PadX::Enum;
 
 enum Term::Fabulous::Enum::BorderStyle {
+	use List::Util qw(pairmap);
+	use Scalar::Util qw(blessed);
+
+	state $heavy_joints = [
+		"\x{2501}",    # h_line  ━
+		"\x{2503}",    # v_line  ┃
+		"\x{254B}",    # cross   ╋
+		"\x{2533}",    # t_down  ┳
+		"\x{253B}",    # t_up    ┻
+		"\x{2523}",    # t_right ┣
+		"\x{252B}",    # t_left  ┫
+	];
 	state $solid_joints = [
 		"\x{2500}",    # h_line  ─
 		"\x{2502}",    # v_line  │
@@ -38,7 +50,7 @@ enum Term::Fabulous::Enum::BorderStyle {
 	item Dashed (
 		glyphs => [ "\x{250F}", "\x{254D}", "\x{2513}", "\x{254F}", "\x{254F}", "\x{2517}", "\x{254D}", "\x{251B}" ],
 		locations => [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-		joints => $solid_joints,
+		joints => $heavy_joints,
 	);
 	item Double (
 		glyphs => [ "\x{2554}", "\x{2550}", "\x{2557}", "\x{2551}", "\x{2551}", "\x{255A}", "\x{2550}", "\x{255D}" ],
@@ -65,15 +77,7 @@ enum Term::Fabulous::Enum::BorderStyle {
 	item Heavy (
 		glyphs => [ "\x{250F}", "\x{2501}", "\x{2513}", "\x{2503}", "\x{2503}", "\x{2517}", "\x{2501}", "\x{251B}" ],
 		locations => [ 0, 0, 0, 0, 0, 0, 0, 0 ],
-		joints => [
-			"\x{2501}",    # h_line  ━
-			"\x{2503}",    # v_line  ┃
-			"\x{254B}",    # cross   ╋
-			"\x{2533}",    # t_down  ┳
-			"\x{253B}",    # t_up    ┻
-			"\x{2523}",    # t_right ┣
-			"\x{252B}",    # t_left  ┫
-		],
+		joints => $heavy_joints,
 		mixed_joints => sub {
 			Term::Fabulous::Enum::BorderStyle->Solid, [
 				"\x{253F}",    # cross   ┿  horizontal heavy, vertical light
@@ -162,7 +166,7 @@ enum Term::Fabulous::Enum::BorderStyle {
 	);
 
 
-	# Renderer-side glyph tables for each `Term::Fabulous::Border` style.
+	# Renderer-side glyph tables for each border style item above.
 	# Sourced from Textualize/textual's `_border.py`:
 	#   https://raw.githubusercontent.com/Textualize/textual/refs/heads/main/src/textual/_border.py
 	#
@@ -218,14 +222,30 @@ enum Term::Fabulous::Enum::BorderStyle {
 		return grep { $_->joints } Term::Fabulous::Enum::BorderStyle->values;
 	}
 
-	# Accessor to get the mixed joint glyph for a given vertical style.
-	method get_mixed_joint ( $vertical_style ) {
-		return unless $self->mixed_joints && $self->mixed_joints->{$vertical_style};
-		return $self->mixed_joints->{$vertical_style}
+	# `mixed_joints` is a code ref because its tables name items declared
+	# later in this enum; it is expanded into this map on first use.
+	field $_mixed_joint_by_style_name;
+
+	sub _check_style ( $role, $style ) {
+		die "Term::Fabulous::Enum::BorderStyle: the $role style must be a Term::Fabulous::Enum::BorderStyle, got "
+			. ( defined $style ? ( ref $style || "'$style'" ) : 'undef' )
+			unless blessed $style && $style->isa('Term::Fabulous::Enum::BorderStyle');
+		return;
 	}
 
-	# Static helper to get the mixed joint glyph for a given horizontal to vertical style.
+	# 5-element joint table for grid lines of this (horizontal) style
+	# crossing lines of the given vertical style, or undef if there is none.
+	method get_mixed_joint ( $vertical_style ) {
+		_check_style( 'vertical', $vertical_style );
+		return undef unless defined $mixed_joints;
+
+		$_mixed_joint_by_style_name //= { pairmap { $a->name => $b } $mixed_joints->() };
+		return $_mixed_joint_by_style_name->{ $vertical_style->name };
+	}
+
+	# Class-method form of get_mixed_joint.
 	method get_mixed_joints :common ( $horizontal_style, $vertical_style ) {
+		_check_style( 'horizontal', $horizontal_style );
 		return $horizontal_style->get_mixed_joint( $vertical_style );
 	}
 
@@ -263,3 +283,65 @@ enum Term::Fabulous::Enum::BorderStyle {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Term::Fabulous::Enum::BorderStyle - Terminal border glyph styles
+
+=head1 SYNOPSIS
+
+	use Term::Fabulous::Enum::BorderStyle;
+
+	my $round = Term::Fabulous::Enum::BorderStyle->Round;
+	my $style = Term::Fabulous::Enum::BorderStyle->from_name('Heavy');
+
+	my ($top_left, $top, $top_right) = $round->get_top_glyphs;
+	my $joint = $style->get_mixed_joint( Term::Fabulous::Enum::BorderStyle->Solid );
+
+=head1 DESCRIPTION
+
+An L<Object::PadX::Enum> of border styles ported from Textual's
+C<_border.py>: C<Ascii>, C<Blank>, C<Block>, C<DarkShade>, C<Dashed>,
+C<Double>, C<Heavy>, C<Hidden>, C<Hkey>, C<Inner>, C<LightShade>,
+C<MediumShade>, C<Outer>, C<Panel>, C<Round>, C<Solid>, C<Tab>, C<Tall>,
+C<Thick>, C<Vkey> and C<Wide>. Each item carries its glyphs and the
+location codes that decide how a glyph is colored (see
+L<Term::Fabulous::Render::Border>).
+
+=head1 METHODS
+
+=head2 get_top_glyphs, get_bottom_glyphs, get_left_glyphs, get_right_glyphs
+
+Glyphs of one side; top and bottom return three (corner, edge, corner).
+
+=head2 get_top_locations, get_bottom_locations, get_left_locations, get_right_locations
+
+Location codes in the same order as the glyphs.
+
+=head2 joints
+
+Seven grid-joint glyphs (h_line, v_line, cross, t_down, t_up, t_right,
+t_left) or undef. C<Dashed> shares the heavy joints of C<Heavy>.
+
+=head2 get_grid_styles
+
+Class method: the styles that have C<joints>.
+
+=head2 get_mixed_joint
+
+	my $table = $horizontal_style->get_mixed_joint($vertical_style);
+
+The five joint glyphs (cross, t_down, t_up, t_right, t_left) where grid
+lines of this style meet lines of C<$vertical_style>, or undef when this
+style has no table for it. Dies unless C<$vertical_style> is a
+Term::Fabulous::Enum::BorderStyle item.
+
+=head2 get_mixed_joints
+
+	my $table = Term::Fabulous::Enum::BorderStyle->get_mixed_joints($horizontal_style, $vertical_style);
+
+Class-method form of L</get_mixed_joint>.
+
+=cut

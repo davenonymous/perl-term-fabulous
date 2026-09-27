@@ -10,7 +10,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
 use Term::Fabulous;
-use Term::Fabulous::Widget;
+use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
 
@@ -19,7 +19,7 @@ use Clay::XS qw(:all);
 my @styles  = Term::Fabulous::Enum::BorderStyle->values;
 my $columns = 4;
 
-my $root = Term::Fabulous::Widget->new(
+my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [20, 25, 35, 255],
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
@@ -38,7 +38,7 @@ $root->add_child($title);
 my $row;
 for my $i (0 .. $#styles) {
 	if ($i % $columns == 0) {
-		$row = Term::Fabulous::Widget->new(
+		$row = Term::Fabulous::Widget::Box->new(
 			layout => {
 				sizing    => { width => sizing_grow(), height => sizing_grow() },
 				child_gap => 2,
@@ -49,7 +49,7 @@ for my $i (0 .. $#styles) {
 
 	my $style = $styles[$i];
 
-	my $cell = Term::Fabulous::Widget->new(
+	my $cell = Term::Fabulous::Widget::Box->new(
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
@@ -71,10 +71,9 @@ for my $i (0 .. $#styles) {
 }
 
 my $ui = Term::Fabulous->new(
-	width       => 100,
-	height      => 32,
-	root        => $root,
-	use_termbox => 1,
+	width  => 100,
+	height => 32,
+	root   => $root,
 );
 
 $ui->run();

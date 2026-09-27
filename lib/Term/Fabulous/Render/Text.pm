@@ -5,55 +5,63 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-use Unicode::GCString;
-use Encode qw(decode);
-use Term::Fabulous::Unicode qw(cluster_columns);
-use Object::Pad 0.800;
+use Object::Pad 0.825;
 
 role Term::Fabulous::Render::Text {
-	use Term::Fabulous::Color;
-	use Termbox 2 qw(:all);
+	use Encode qw(decode);
+	use List::Util qw(min);
+	use Termbox 2 qw(tb_set_cell tb_extend_cell TB_DEFAULT);
+	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
+	use Term::Fabulous::Render::Geometry qw(cell_rect);
+	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
-	state $default_bg = Term::Fabulous::Color->new(color => {r => 0, g => 0, b => 0, a => 0});
+	use constant CLUSTER_CACHE_LIMIT => 4096;
 
-	method render_text($command, $widget, $buffer) {
-		my $bbox = $command->{boundingBox};
-		my $data = $command->{renderData};
+	# Text contents rarely change between frames: memoize the decoded,
+	# sanitized clusters and their widths per UTF-8 string.
+	my %clusters_by_text;
 
-		my $foreground_color = Term::Fabulous::Color->new(color => ($data->{textColor} // {r => 255, g => 255, b => 255, a => 255}));
-		my $background_color = defined($data->{backgroundColor})
-			? Term::Fabulous::Color->new(color => $data->{backgroundColor})
-			: undef;
+	sub _clusters_with_columns ($utf8_text) {
+		my $clusters = $clusters_by_text{$utf8_text};
+		return $clusters if defined $clusters;
 
-		my $fg_int = $foreground_color->rgb_int;
-		my $bg_int_const = defined($background_color) ? $background_color->rgb_int : undef;
+		%clusters_by_text = () if keys(%clusters_by_text) >= CLUSTER_CACHE_LIMIT;
+		my $text = decode( 'UTF-8', $utf8_text, Encode::FB_DEFAULT );
+		return $clusters_by_text{$utf8_text} = [ map { [ $_, cluster_columns($_) ] } grapheme_clusters($text) ];
+	}
 
-		my $raw = $data->{stringContents} // '';
-		my $text = decode('UTF-8', $raw, Encode::FB_DEFAULT);
-		my $y = $bbox->{y} + 1;
-		my $row = ($buffer->[$y] //= []);
-		my $x0 = $bbox->{x} + 1;
-		my $x_limit = $x0 + $bbox->{width};
+	method width;
+	method height;
 
-		my $gcstring = Unicode::GCString->new($text);
-		my $x = $x0;
+	# Draws one line of text from the top-left cell of its bounding box.
+	# Clusters are sanitized (no control characters reach the terminal) and
+	# advance by the same widths the measure callback reported. Drawing stops
+	# before a cluster that would cross the box's right edge or the viewport;
+	# clusters left of the viewport are skipped but still advance.
+	method render_text ( $command, $widget, $buffer ) {
+		my ( $x, $y, $x1 ) = cell_rect( $command->{boundingBox} );
+		return if $y < 0 || $y >= $self->height;
 
-		for my $i (0 .. $gcstring->length - 1) {
-			my $cluster = $gcstring->item($i);
-			my $cols = cluster_columns($cluster);
-			last if $x + $cols > $x_limit;
+		my $right_limit = min( $x1, $self->width );
+		my $data        = $command->{renderData};
+		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) );
+		my $row         = $buffer->[$y] //= [];
 
-			my @chars = split //, "$cluster";
-			next unless @chars;
+		foreach my $cluster_with_columns ( @{ _clusters_with_columns( $data->{stringContents} ) } ) {
+			my ( $cluster, $columns ) = @$cluster_with_columns;
+			last if $x + $columns > $right_limit;
 
-			my $bg_color = $background_color // $row->[$x] // $default_bg;
-			my $bg_int = $bg_int_const // $bg_color->rgb_int;
-			$row->[$x] = $bg_color;
-
-			tb_set_cell($x, $y, $chars[0], $fg_int, $bg_int);
-			tb_extend_cell($x, $y, $chars[$_]) for 1 .. $#chars;
-
-			$x += $cols > 0 ? $cols : 1;
+			if ( $x >= 0 ) {
+				my $bg_attr = $row->[$x] // TB_DEFAULT;
+				my ( $base, @extenders ) = split //, $cluster;
+				tb_set_cell( $x, $y, $base, $fg_attr, $bg_attr );
+				tb_extend_cell( $x, $y, $_ ) foreach @extenders;
+				$row->[$_] = $bg_attr foreach $x .. $x + $columns - 1;
+			}
+			$x += $columns;
 		}
+		return;
 	}
 }
+
+1;
