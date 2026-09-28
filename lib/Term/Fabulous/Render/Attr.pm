@@ -5,6 +5,8 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
+our $VERSION = '0.01';
+
 use Exporter 'import';
 our @EXPORT_OK = qw(color_attr clay_color);
 

@@ -5,6 +5,8 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
+our $VERSION = '0.01';
+
 use Object::Pad 0.825;
 use Object::Pad::FieldAttr::Checked;
 use Data::Checks qw(Isa Maybe);

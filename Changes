@@ -1,0 +1,7 @@
+Revision history for Term::Fabulous
+
+0.01    Unreleased
+        - First version. Terminal UIs from Clay layouts, drawn with
+          termbox2: Box, Text and Button widgets, border styles,
+          truecolor rendering, KDL layout files and an IO::Async
+          driven event loop with key, mouse and resize events

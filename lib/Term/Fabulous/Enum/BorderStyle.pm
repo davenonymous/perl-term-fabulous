@@ -5,6 +5,8 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
+our $VERSION = '0.01';
+
 use Object::PadX::Enum;
 
 enum Term::Fabulous::Enum::BorderStyle {

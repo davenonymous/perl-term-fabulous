@@ -5,6 +5,8 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
+our $VERSION = '0.01';
+
 use Object::Pad 0.825;
 
 use Clay::UI;
@@ -413,5 +415,16 @@ returns.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Clay::UI>, L<Termbox>.
+
+=head1 AUTHOR
+
+davenonymous E<lt>perl@davenonymous.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2026 davenonymous
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

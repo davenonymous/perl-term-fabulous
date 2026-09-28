@@ -5,6 +5,8 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
+our $VERSION = '0.01';
+
 use Object::Pad 0.825;
 
 # Loaded first: dies with a clear message when termbox2 lacks truecolor,

@@ -3,6 +3,8 @@ package Term::Fabulous::Widget;
 use v5.22;
 use warnings;
 
+our $VERSION = '0.01';
+
 use Object::Pad 0.825;
 
 class Term::Fabulous::Widget
