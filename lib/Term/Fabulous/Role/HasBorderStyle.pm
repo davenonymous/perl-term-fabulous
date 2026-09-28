@@ -55,10 +55,11 @@ role Term::Fabulous::Role::HasBorderStyle {
 
 	# Clay draws borders over the content box, so the border width is added
 	# to the padding: borders occupy cells inside the widget and the user's
-	# padding starts after them. Runs after contribute_layout and
-	# contribute_border (role composition order) and writes fresh hashes, so
-	# the widget's own layout is never modified.
-	method contribute_border_inset ($config) {
+	# padding starts after them. Clay::UI runs contribute_* methods in
+	# alphabetical order, so the name sorts after contribute_layout; that
+	# way the inset is applied to the final layout slice. Writes fresh
+	# hashes, so the widget's own layout is never modified.
+	method contribute_layout_inset ($config) {
 		return unless $self->can('border_width') && $self->can('layout');
 
 		my $insets = _border_insets( $self->border_width );

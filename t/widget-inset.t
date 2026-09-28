@@ -22,7 +22,7 @@ subtest 'border width is added to the padding' => sub {
 	is $button->to_config->{layout}{padding}, { left => 1, right => 1, top => 1, bottom => 1 }, 'subclasses get the inset too';
 
 	my $plain = Term::Fabulous::Widget::Box->new( layout => { padding => { left => 2 } } );
-	ref_is $plain->to_config->{layout}, $plain->layout, 'without a border the layout is passed through';
+	is $plain->to_config->{layout}, $plain->layout, 'without a border the layout is passed through';
 
 	like dies { Term::Fabulous::Widget::Box->new( border_width => -1 )->to_config }, qr/border_width left must be a non-negative number/, 'negative width dies';
 };
