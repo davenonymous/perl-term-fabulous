@@ -28,6 +28,10 @@ out a widget tree with Clay and draws it into the terminal through
 termbox2, redrawing continuously at 30 frames per second while
 ["run"](#run) is active.
 
+To render the same widget tree once, as text for a pipe or a report,
+use [Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic) instead; it paints with the same render
+roles but never opens the terminal.
+
 # CONSTRUCTOR
 
 ## new
@@ -129,7 +133,7 @@ returns.
 
 # SEE ALSO
 
-[Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
+[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
 
 # AUTHOR
 

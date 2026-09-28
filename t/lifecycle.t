@@ -44,9 +44,9 @@ my $tty_was_nonblocking;
 	);
 	*{"Term::Fabulous::$_"} = $termbox_stubs{$_} foreach keys %termbox_stubs;
 
-	*Term::Fabulous::Render::tb_clear   = sub { die "draw failed\n" if $draw_dies; return };
-	*Term::Fabulous::Render::tb_present = sub {return};
-	*Term::Fabulous::Render::Rectangle::tb_print = sub {0};
+	*Term::Fabulous::Render::Target::Termbox::tb_clear   = sub { die "draw failed\n" if $draw_dies; return };
+	*Term::Fabulous::Render::Target::Termbox::tb_present = sub {return};
+	*Term::Fabulous::Render::Target::Termbox::tb_print = sub {0};
 }
 
 my $loop = IO::Async::Loop->new;

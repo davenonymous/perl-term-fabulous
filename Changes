@@ -5,3 +5,8 @@ Revision history for Term::Fabulous
           termbox2: Box, Text and Button widgets, border styles,
           truecolor rendering, KDL layout files and an IO::Async
           driven event loop with key, mouse and resize events
+        - Term::Fabulous::Static renders a widget tree once, to text
+          with optional ANSI truecolor, without opening the terminal.
+          The render roles paint through a cell target role
+          (Render::Target::Termbox for the terminal, Render::Target::Grid
+          for memory) instead of calling termbox2 directly

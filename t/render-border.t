@@ -9,20 +9,19 @@ use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Render::Border;
 use Term::Fabulous::Widget::Box;
 
+# A cell target that records every painted cell once; painting a cell
+# twice is a bug.
 my %cells;
-{
-	no warnings 'redefine';
-	*Term::Fabulous::Render::Border::tb_set_cell = sub {
-		my ( $x, $y, $glyph, $fg, $bg ) = @_;
-		die "cell ($x, $y) painted twice\n" if exists $cells{"$x,$y"};
-		$cells{"$x,$y"} = [ $glyph, $fg, $bg ];
-		return 0;
-	};
-}
 
 class BorderCanvas :does(Term::Fabulous::Render::Border) {
 	field $width  :param :reader = 10;
 	field $height :param :reader = 6;
+
+	method set_cell ( $x, $y, $glyph, $fg, $bg ) {
+		die "cell ($x, $y) painted twice\n" if exists $cells{"$x,$y"};
+		$cells{"$x,$y"} = [ $glyph, $fg, $bg ];
+		return;
+	}
 }
 
 my $canvas = BorderCanvas->new;

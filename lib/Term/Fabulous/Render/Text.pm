@@ -12,7 +12,7 @@ use Object::Pad 0.825;
 role Term::Fabulous::Render::Text {
 	use Encode qw(decode);
 	use List::Util qw(min);
-	use Termbox 2 qw(tb_set_cell tb_extend_cell TB_DEFAULT);
+	use Termbox 2 qw(TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
@@ -34,6 +34,8 @@ role Term::Fabulous::Render::Text {
 
 	method width;
 	method height;
+	method set_cell;
+	method extend_cell;
 
 	# Draws one line of text from the top-left cell of its bounding box.
 	# Clusters are sanitized (no control characters reach the terminal) and
@@ -56,8 +58,8 @@ role Term::Fabulous::Render::Text {
 			if ( $x >= 0 ) {
 				my $bg_attr = $row->[$x] // TB_DEFAULT;
 				my ( $base, @extenders ) = split //, $cluster;
-				tb_set_cell( $x, $y, $base, $fg_attr, $bg_attr );
-				tb_extend_cell( $x, $y, $_ ) foreach @extenders;
+				$self->set_cell( $x, $y, $base, $fg_attr, $bg_attr );
+				$self->extend_cell( $x, $y, $_ ) foreach @extenders;
 				$row->[$_] = $bg_attr foreach $x .. $x + $columns - 1;
 			}
 			$x += $columns;

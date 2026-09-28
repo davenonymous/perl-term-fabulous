@@ -7,15 +7,17 @@ use Object::Pad 0.825;
 use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
 use Term::Fabulous::Render::Rectangle;
 
+# A cell target that records every fill_row call as [ $x, $y, $columns, $bg ].
 my @prints;
-{
-	no warnings 'redefine';
-	*Term::Fabulous::Render::Rectangle::tb_print = sub { push @prints, [@_]; 0 };
-}
 
 class RectangleCanvas :does(Term::Fabulous::Render::Rectangle) {
 	field $width  :param :reader = 10;
 	field $height :param :reader = 5;
+
+	method fill_row ( @args ) {
+		push @prints, [@args];
+		return;
+	}
 }
 
 my $canvas = RectangleCanvas->new;
@@ -25,7 +27,7 @@ sub fill {
 	my $color = delete $bbox{color} // { r => 1, g => 2, b => 3, a => 255 };
 	@prints = ();
 	$canvas->render_rectangle( { boundingBox => \%bbox, renderData => { backgroundColor => $color } }, undef, $buffer );
-	return [ map { [ $_->[0], $_->[1], length $_->[4] ] } @prints ];
+	return [ map { [ $_->[0], $_->[1], $_->[2] ] } @prints ];
 }
 
 subtest 'negative origin is clipped' => sub {

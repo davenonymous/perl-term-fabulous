@@ -36,7 +36,7 @@ role Term::Fabulous::Render
 	);
 	use Encode qw(decode);
 	use Scalar::Util qw(looks_like_number);
-	use Termbox 2 qw(tb_clear tb_present TB_OUTPUT_TRUECOLOR);
+	use Termbox 2 qw(TB_OUTPUT_TRUECOLOR);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	my %handler_by_command_type = (
@@ -72,6 +72,13 @@ role Term::Fabulous::Render
 	# Provided by the consumer: undef, or { x, y, down } of the pointer.
 	method pointer_state;
 
+	# Provided by a cell target role (Term::Fabulous::Render::Target::*).
+	method begin_frame;
+	method end_frame;
+	method set_cell;
+	method extend_cell;
+	method fill_row;
+
 	ADJUST {
 		die "Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR (" . TB_OUTPUT_TRUECOLOR . "), got '$output_mode'"
 			unless looks_like_number($output_mode) && $output_mode == TB_OUTPUT_TRUECOLOR;
@@ -101,10 +108,10 @@ role Term::Fabulous::Render
 		my $commands = $self->render( defined $pointer ? ( pointer_state => $pointer ) : () );
 		@last_commands = @$commands;
 
-		tb_clear();
+		$self->begin_frame;
 		$buffer = [];
 		$self->_dispatch_command($_) foreach @$commands;
-		tb_present();
+		$self->end_frame;
 		return;
 	}
 }
@@ -119,7 +126,7 @@ Term::Fabulous::Render - Draw Clay render commands with termbox2
 
 =head1 SYNOPSIS
 
-	class My::UI :isa(Clay::UI) :does(Term::Fabulous::Render) {
+	class My::UI :isa(Clay::UI) :does(Term::Fabulous::Render) :does(Term::Fabulous::Render::Target::Termbox) {
 		method pointer_state () { return undef }
 	}
 
@@ -130,6 +137,8 @@ Term::Fabulous::Render - Draw Clay render commands with termbox2
 Role for a L<Clay::UI> subclass (usually L<Term::Fabulous>). On
 construction it validates C<output_mode> and installs a measure-text
 callback that reports terminal columns (L<Term::Fabulous::Unicode>).
+The role decides which cells to paint; where they go is up to a cell
+target role the consumer composes as well (see L</CELL TARGET>).
 
 =head2 output_mode
 
@@ -139,11 +148,12 @@ because colors are always emitted as 24-bit values. Anything else dies.
 =head2 draw
 
 Renders the layout (passing the consumer's C<pointer_state>, when
-defined, to C<render>), clears termbox2's back buffer, draws every
-render command and presents the frame. Rectangle, border and text
-commands are supported; any other command type dies. The terminal must
-be initialized (L<Term::Fabulous/run> does that); otherwise termbox2
-ignores the drawing calls.
+defined, to C<render>), calls the target's C<begin_frame>, paints every
+render command through the target and calls C<end_frame>. Rectangle,
+border and text commands are supported; any other command type dies.
+With the termbox2 target the terminal must be initialized
+(L<Term::Fabulous/run> does that); otherwise termbox2 ignores the
+drawing calls.
 
 =head2 get_last_commands
 
@@ -185,5 +195,37 @@ reverse video, which also inverts terminal-default colors correctly.
 =head2 pointer_state
 
 Required from the consumer: C<undef> or C<< { x => ..., y => ..., down => 0|1 } >>.
+
+=head1 CELL TARGET
+
+The render roles compute glyphs and termbox2 attributes
+(L<Term::Fabulous::Render::Attr>) and hand them to these methods, which
+the consumer must provide by composing a target role:
+L<Term::Fabulous::Render::Target::Termbox> draws into the terminal,
+L<Term::Fabulous::Render::Target::Grid> collects the cells in memory
+(used by L<Term::Fabulous::Static> and by tests).
+
+=over
+
+=item C<begin_frame>, C<end_frame>
+
+Called once before and once after the commands of a frame are painted.
+
+=item C<< set_cell($x, $y, $glyph, $fg, $bg) >>
+
+One cell: a base character and its foreground and background attributes.
+
+=item C<< extend_cell($x, $y, $codepoint) >>
+
+Appends a combining codepoint to the cell set last at that position.
+
+=item C<< fill_row($x, $y, $columns, $bg) >>
+
+C<$columns> cells of spaces in the background C<$bg>, starting at C<$x>.
+
+=back
+
+Coordinates are always inside the viewport; clipping happens before a
+target method is called.
 
 =cut

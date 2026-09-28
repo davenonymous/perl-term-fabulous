@@ -12,12 +12,13 @@ use Object::Pad 0.825;
 role Term::Fabulous::Render::Border {
 	use List::Util qw(min max);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);    # checks truecolor support first
-	use Termbox 2 qw(tb_set_cell TB_DEFAULT TB_TRUECOLOR_REVERSE);
+	use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_REVERSE);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 
 	method width;
 	method height;
+	method set_cell;
 
 	# Attributes for a border cell from its location code, following
 	# Textual's get_box styles: 0 = border color on the widget's background,
@@ -64,7 +65,7 @@ role Term::Fabulous::Render::Border {
 		my $paint = sub ( $x, $y, $glyph, $location, $outer_x, $outer_y ) {
 			return if $y < 0 || $y >= $viewport_height;
 			my ( $fg, $bg ) = _location_attrs( $location, $border_attr, $shade_at->( $x, $y ), $shade_at->( $outer_x, $outer_y ) );
-			tb_set_cell( $x, $y, $glyph, $fg, $bg );
+			$self->set_cell( $x, $y, $glyph, $fg, $bg );
 		};
 		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations ) {
 			foreach my $x ( max( $x0, 0 ) .. min( $last_x, $viewport_width - 1 ) ) {

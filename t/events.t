@@ -12,9 +12,9 @@ use Term::Fabulous::Widget::Text;
 
 {
 	no warnings 'redefine';
-	*Term::Fabulous::Render::tb_clear            = sub {return};
-	*Term::Fabulous::Render::tb_present          = sub {return};
-	*Term::Fabulous::Render::Rectangle::tb_print = sub {0};
+	*Term::Fabulous::Render::Target::Termbox::tb_clear            = sub {return};
+	*Term::Fabulous::Render::Target::Termbox::tb_present          = sub {return};
+	*Term::Fabulous::Render::Target::Termbox::tb_print = sub {0};
 }
 
 my $root = Term::Fabulous::Widget::Box->new(

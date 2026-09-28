@@ -11,8 +11,14 @@ use Object::Pad 0.825;
 
 use Clay::UI;
 use Term::Fabulous::Render;
+use Term::Fabulous::Render::Target::Termbox;
 
-class Term::Fabulous :isa(Clay::UI) :does(Term::Fabulous::Render) :strict(params) {
+class Term::Fabulous
+	:isa(Clay::UI)
+	:does(Term::Fabulous::Render)
+	:does(Term::Fabulous::Render::Target::Termbox)
+	:strict(params)
+{
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_BORDER
 		CLAY_RENDER_COMMAND_TYPE_RECTANGLE
@@ -307,6 +313,10 @@ out a widget tree with Clay and draws it into the terminal through
 termbox2, redrawing continuously at 30 frames per second while
 L</run> is active.
 
+To render the same widget tree once, as text for a pipe or a report,
+use L<Term::Fabulous::Static> instead; it paints with the same render
+roles but never opens the terminal.
+
 =head1 CONSTRUCTOR
 
 =head2 new
@@ -414,7 +424,7 @@ returns.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Clay::UI>, L<Termbox>.
 
 =head1 AUTHOR
 

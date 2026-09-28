@@ -10,16 +10,22 @@ use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
 use Term::Fabulous::Render::Text;
 use Term::Fabulous::Unicode qw(cluster_columns);
 
+# A cell target that records every call in order.
 my @calls;
-{
-	no warnings 'redefine';
-	*Term::Fabulous::Render::Text::tb_set_cell    = sub { push @calls, [ set    => @_ ]; 0 };
-	*Term::Fabulous::Render::Text::tb_extend_cell = sub { push @calls, [ extend => @_ ]; 0 };
-}
 
 class TextCanvas :does(Term::Fabulous::Render::Text) {
 	field $width  :param :reader = 20;
 	field $height :param :reader = 5;
+
+	method set_cell ( @args ) {
+		push @calls, [ set => @args ];
+		return;
+	}
+
+	method extend_cell ( @args ) {
+		push @calls, [ extend => @args ];
+		return;
+	}
 }
 
 my $canvas = TextCanvas->new;
