@@ -10,6 +10,12 @@ Revision history for Term::Fabulous
           The render roles paint through a cell target role
           (Render::Target::Termbox for the terminal, Render::Target::Grid
           for memory) instead of calling termbox2 directly
+        - Scroll containers: the renderer honors Clay's scissor commands
+          (Render::Clip), Widget::ScrollBox is a Box that scrolls, and
+          the mouse wheel scrolls the box under the pointer by three
+          rows per notch. Hit testing ignores content scrolled out of
+          view
+        - Tab and Shift-Tab move the keyboard focus after their KeyPress
         - Requires the Clay::UI interaction tracker: focus is read
           through $ui->interaction, and border_width is validated by
           Clay::UI when it is set

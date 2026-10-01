@@ -40,10 +40,16 @@ role Term::Fabulous::Render
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	my %handler_by_command_type = (
-		CLAY_RENDER_COMMAND_TYPE_RECTANGLE() => 'render_rectangle',
-		CLAY_RENDER_COMMAND_TYPE_BORDER()    => 'render_border',
-		CLAY_RENDER_COMMAND_TYPE_TEXT()      => 'render_text',
+		CLAY_RENDER_COMMAND_TYPE_RECTANGLE()     => 'render_rectangle',
+		CLAY_RENDER_COMMAND_TYPE_BORDER()        => 'render_border',
+		CLAY_RENDER_COMMAND_TYPE_TEXT()          => 'render_text',
+		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START() => 'render_scissor_start',
+		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END()   => 'render_scissor_end',
 	);
+
+	# Clay_UpdateScrollContainers moves a scroll container by ten layout
+	# units, here cells, per unit of scroll delta.
+	use constant CELLS_PER_CLAY_SCROLL_UNIT => 10;
 
 	my %command_type_name = (
 		CLAY_RENDER_COMMAND_TYPE_NONE()                => 'NONE',
@@ -63,6 +69,10 @@ role Term::Fabulous::Render
 	# Background attribute of every cell painted this frame, indexed [y][x].
 	field $buffer = [];
 	field @last_commands;
+
+	# The clip rect each of @last_commands was painted under; shorter than
+	# @last_commands when painting the frame died.
+	field @last_clip_rects;
 
 	# Provided by Clay::UI.
 	method render;
@@ -95,21 +105,41 @@ role Term::Fabulous::Render
 		return @last_commands;
 	}
 
+	method get_last_clip_rects () {
+		return @last_clip_rects;
+	}
+
 	method _dispatch_command ($command) {
 		my $type    = $command->{commandType};
 		my $handler = $handler_by_command_type{$type}
 			// die sprintf( "Term::Fabulous::Render: unhandled render command type %s", $command_type_name{$type} // $type );
+		push @last_clip_rects, $self->clip_rect;
 		$self->$handler( $command, $self->widget_for( $command->{userData} ), $buffer );
 		return;
 	}
 
-	method draw () {
+	sub _clay_scroll_delta ($scroll_cells) {
+		die "Term::Fabulous::Render: scroll_cells must be [columns, rows] of numbers"
+			unless ref $scroll_cells eq 'ARRAY' && @$scroll_cells == 2 && !grep { !looks_like_number($_) } @$scroll_cells;
+		my ( $columns, $rows ) = @$scroll_cells;
+		return { x => $columns / CELLS_PER_CLAY_SCROLL_UNIT, y => $rows / CELLS_PER_CLAY_SCROLL_UNIT };
+	}
+
+	method draw (%args) {
+		my @unknown = grep { $_ ne 'scroll_cells' } sort keys %args;
+		die "Term::Fabulous::Render: draw got unknown argument(s): @unknown" if @unknown;
+
 		my $pointer  = $self->pointer_state;
-		my $commands = $self->render( defined $pointer ? ( pointer_state => $pointer ) : () );
-		@last_commands = @$commands;
+		my $commands = $self->render(
+			( defined $pointer            ? ( pointer_state => $pointer )                                    : () ),
+			( defined $args{scroll_cells} ? ( scroll_delta  => _clay_scroll_delta( $args{scroll_cells} ) ) : () ),
+		);
+		@last_commands   = @$commands;
+		@last_clip_rects = ();
 
 		$self->begin_frame;
 		$buffer = [];
+		$self->close_scissors;
 		$self->_dispatch_command($_) foreach @$commands;
 		$self->end_frame;
 		return;
@@ -147,10 +177,20 @@ because colors are always emitted as 24-bit values. Anything else dies.
 
 =head2 draw
 
+	$ui->draw;
+	$ui->draw( scroll_cells => [ $columns, $rows ] );
+
 Renders the layout (passing the consumer's C<pointer_state>, when
 defined, to C<render>), calls the target's C<begin_frame>, paints every
 render command through the target and calls C<end_frame>. Rectangle,
-border and text commands are supported; any other command type dies.
+border, text and scissor commands are supported; any other command type
+dies.
+
+C<scroll_cells> scrolls the scroll container under the pointer (see
+L<Clay::UI::Role::Layout::HasScroll>) by that many cells before the
+layout pass. Positive values scroll toward the top and left, as a mouse
+wheel turned up does; Clay clamps the result to the content. Any other
+argument dies.
 With the termbox2 target the terminal must be initialized
 (L<Term::Fabulous/run> does that); otherwise termbox2 ignores the
 drawing calls.
@@ -159,10 +199,20 @@ drawing calls.
 
 The render commands of the most recent C<draw>.
 
+=head2 get_last_clip_rects
+
+The clip rect (L<Term::Fabulous::Render::Clip/clip_rect>) each of
+L</get_last_commands> was painted under, in the same order. A command
+outside its clip rect, such as content scrolled out of a scroll
+container, was not drawn. When painting the frame died, the list ends
+at the command that failed.
+
 =head1 RENDERING
 
 Bounding boxes are snapped to cells with C<floor> and clipped to the
-viewport (C<width> x C<height>); nothing outside it is drawn. Colors map
+viewport (C<width> x C<height>) and to the innermost open scissor
+(L<Term::Fabulous::Render::Clip>); nothing outside them is drawn. Clay
+opens a scissor around the content of a scroll container. Colors map
 to termbox2 attributes as described in L<Term::Fabulous::Render::Attr>.
 
 =over
@@ -225,7 +275,7 @@ C<$columns> cells of spaces in the background C<$bg>, starting at C<$x>.
 
 =back
 
-Coordinates are always inside the viewport; clipping happens before a
-target method is called.
+Coordinates are always inside the viewport and the open scissors;
+clipping happens before a target method is called.
 
 =cut

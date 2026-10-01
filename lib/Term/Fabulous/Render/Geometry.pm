@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(cell_rect visible_cell_rect);
+our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect);
 
 use List::Util qw(min max);
 use POSIX qw(floor);
@@ -18,12 +18,16 @@ sub cell_rect ($bbox) {
 	return ( floor($x), floor($y), floor( $x + $bbox->{width} ), floor( $y + $bbox->{height} ) );
 }
 
-sub visible_cell_rect ( $bbox, $viewport_width, $viewport_height ) {
-	my ( $x0, $y0, $x1, $y1 ) = cell_rect($bbox);
-	$x0 = max( $x0, 0 );
-	$y0 = max( $y0, 0 );
-	$x1 = min( $x1, $viewport_width );
-	$y1 = min( $y1, $viewport_height );
+sub intersect_cell_rects ( $first, $second ) {
+	my $x0 = max( $first->[0], $second->[0] );
+	my $y0 = max( $first->[1], $second->[1] );
+	my $x1 = max( $x0, min( $first->[2], $second->[2] ) );
+	my $y1 = max( $y0, min( $first->[3], $second->[3] ) );
+	return [ $x0, $y0, $x1, $y1 ];
+}
+
+sub visible_cell_rect ( $bbox, $clip ) {
+	my ( $x0, $y0, $x1, $y1 ) = @{ intersect_cell_rects( [ cell_rect($bbox) ], $clip ) };
 	return if $x0 >= $x1 || $y0 >= $y1;
 	return ( $x0, $y0, $x1, $y1 );
 }
@@ -38,10 +42,11 @@ Term::Fabulous::Render::Geometry - Map Clay bounding boxes to terminal cells
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Render::Geometry qw(cell_rect visible_cell_rect);
+	use Term::Fabulous::Render::Geometry qw(cell_rect intersect_cell_rects visible_cell_rect);
 
 	my ($x0, $y0, $x1, $y1) = cell_rect($command->{boundingBox});
-	my @visible = visible_cell_rect($command->{boundingBox}, $width, $height);
+	my $clip    = intersect_cell_rects([0, 0, $width, $height], [cell_rect($scissor_box)]);
+	my @visible = visible_cell_rect($command->{boundingBox}, $clip);
 
 =head1 DESCRIPTION
 
@@ -58,11 +63,20 @@ C<x1> / C<y1> exclusive.
 
 Unclipped cell bounds of a C<{ x, y, width, height }> box.
 
+=head2 intersect_cell_rects
+
+	my $both = intersect_cell_rects([$x0, $y0, $x1, $y1], [$x0, $y0, $x1, $y1]);
+
+The cells two C<[x0, y0, x1, y1]> rects have in common, as a new rect.
+When they do not overlap, the result is empty: C<x1 == x0> or
+C<y1 == y0>.
+
 =head2 visible_cell_rect
 
-	my ($x0, $y0, $x1, $y1) = visible_cell_rect($bbox, $viewport_width, $viewport_height);
+	my ($x0, $y0, $x1, $y1) = visible_cell_rect($bbox, $clip);
 
-L</cell_rect> intersected with C<[0, width) x [0, height)>. Returns the
-empty list when nothing is visible.
+L</cell_rect> intersected with the C<[x0, y0, x1, y1]> rect C<$clip>
+(usually L<Term::Fabulous::Render::Clip/clip_rect>). Returns the empty
+list when nothing is visible.
 
 =cut

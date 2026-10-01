@@ -9,15 +9,15 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-role Term::Fabulous::Render::Border {
+use Term::Fabulous::Render::Clip;
+
+role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 	use List::Util qw(min max);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);    # checks truecolor support first
 	use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_REVERSE);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 
-	method width;
-	method height;
 	method set_cell;
 
 	# Attributes for a border cell from its location code, following
@@ -53,7 +53,7 @@ role Term::Fabulous::Render::Border {
 		$bottom = 0 if $top  && $last_y == $y0;
 		$right  = 0 if $left && $last_x == $x0;
 
-		my ( $viewport_width, $viewport_height ) = ( $self->width, $self->height );
+		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
 		my $border_attr = color_attr( clay_color( $data->{color} ) );
 		my $blank       = Term::Fabulous::Enum::BorderStyle->Blank;
 
@@ -63,21 +63,21 @@ role Term::Fabulous::Render::Border {
 			return $shade_row->[$x] // TB_DEFAULT;
 		};
 		my $paint = sub ( $x, $y, $glyph, $location, $outer_x, $outer_y ) {
-			return if $y < 0 || $y >= $viewport_height;
+			return if $y < $clip_y0 || $y >= $clip_y1;
 			my ( $fg, $bg ) = _location_attrs( $location, $border_attr, $shade_at->( $x, $y ), $shade_at->( $outer_x, $outer_y ) );
 			$self->set_cell( $x, $y, $glyph, $fg, $bg );
 		};
 		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations ) {
-			foreach my $x ( max( $x0, 0 ) .. min( $last_x, $viewport_width - 1 ) ) {
+			foreach my $x ( max( $x0, $clip_x0 ) .. min( $last_x, $clip_x1 - 1 ) ) {
 				my $slot = $x == $x0 && $left ? 0 : $x == $last_x && $right ? 2 : 1;
 				$paint->( $x, $y, $glyphs->[$slot], $locations->[$slot], $x, $outer_y );
 			}
 		};
 		my $paint_column = sub ( $x, $outer_x, $glyph, $location ) {
-			return if $x < 0 || $x >= $viewport_width;
+			return if $x < $clip_x0 || $x >= $clip_x1;
 			my $from = $top    ? $y0 + 1     : $y0;
 			my $to   = $bottom ? $last_y - 1 : $last_y;
-			foreach my $y ( max( $from, 0 ) .. min( $to, $viewport_height - 1 ) ) {
+			foreach my $y ( max( $from, $clip_y0 ) .. min( $to, $clip_y1 - 1 ) ) {
 				$paint->( $x, $y, $glyph, $location, $outer_x, $y );
 			}
 		};

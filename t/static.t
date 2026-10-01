@@ -8,6 +8,7 @@ use Encode qw(decode encode);
 use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
 
@@ -62,6 +63,21 @@ subtest 'colors' => sub {
 
 	$root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } }, border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Panel, border_color => [ 9, 9, 9, 255 ] );
 	like [ Term::Fabulous::Static->new( root => $root, width => 2 )->render_lines ]->[0], qr/\e\[7;38;2;9;9;9m/, 'reverse video locations use SGR 7';
+};
+
+subtest 'scroll box' => sub {
+	my $log = Term::Fabulous::Widget::ScrollBox->new(
+		id           => 'log',
+		layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_fixed(4) } },
+		border_width => 1,
+		border_style => Term::Fabulous::Enum::BorderStyle->Round,
+	);
+	$log->add_child( Term::Fabulous::Widget::Text->new( text => "line $_" ) ) foreach 1 .. 9;
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
+	$root->add_child($_) foreach $log, Term::Fabulous::Widget::Text->new( text => 'below' );
+
+	is [ Term::Fabulous::Static->new( root => $root, width => 8 )->render_lines( colors => 0 ) ], [ "╭──────╮", "│line 1│", "│line 2│", "╰──────╯", "below" ],
+		'content beyond the box is clipped and the layout continues after it';
 };
 
 subtest 'print' => sub {

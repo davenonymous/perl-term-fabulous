@@ -9,7 +9,9 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-role Term::Fabulous::Render::Text {
+use Term::Fabulous::Render::Clip;
+
+role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 	use Encode qw(decode);
 	use List::Util qw(min);
 	use Termbox 2 qw(TB_DEFAULT);
@@ -32,21 +34,20 @@ role Term::Fabulous::Render::Text {
 		return $clusters_by_text{$utf8_text} = [ map { [ $_, cluster_columns($_) ] } grapheme_clusters($text) ];
 	}
 
-	method width;
-	method height;
 	method set_cell;
 	method extend_cell;
 
 	# Draws one line of text from the top-left cell of its bounding box.
 	# Clusters are sanitized (no control characters reach the terminal) and
 	# advance by the same widths the measure callback reported. Drawing stops
-	# before a cluster that would cross the box's right edge or the viewport;
-	# clusters left of the viewport are skipped but still advance.
+	# before a cluster that would cross the box's right edge or the clip
+	# rect; clusters left of the clip rect are skipped but still advance.
 	method render_text ( $command, $widget, $buffer ) {
 		my ( $x, $y, $x1 ) = cell_rect( $command->{boundingBox} );
-		return if $y < 0 || $y >= $self->height;
+		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
+		return if $y < $clip_y0 || $y >= $clip_y1;
 
-		my $right_limit = min( $x1, $self->width );
+		my $right_limit = min( $x1, $clip_x1 );
 		my $data        = $command->{renderData};
 		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) );
 		my $row         = $buffer->[$y] //= [];
@@ -55,7 +56,7 @@ role Term::Fabulous::Render::Text {
 			my ( $cluster, $columns ) = @$cluster_with_columns;
 			last if $x + $columns > $right_limit;
 
-			if ( $x >= 0 ) {
+			if ( $x >= $clip_x0 ) {
 				my $bg_attr = $row->[$x] // TB_DEFAULT;
 				my ( $base, @extenders ) = split //, $cluster;
 				$self->set_cell( $x, $y, $base, $fg_attr, $bg_attr );

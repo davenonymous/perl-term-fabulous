@@ -72,6 +72,12 @@ subtest 'properties' => sub {
 	is $root->border_width, { left => 1, top => 2 }, 'properties form a hash';
 };
 
+subtest 'scroll box' => sub {
+	my $scroll_box = build(qq{use Term::Fabulous::Widget::ScrollBox as ScrollBox\nScrollBox "log" {\n\thorizontal #true\n\tvertical #false\n}});
+	is [ $scroll_box->horizontal, $scroll_box->vertical ], [ 1, 0 ], 'horizontal and vertical';
+	like dies { build("use Term::Fabulous::Widget::ScrollBox as ScrollBox\nScrollBox") }, qr/requires an explicit 'id'/, 'a ScrollBox needs an id';
+};
+
 subtest 'text' => sub {
 	my $root = build( <<'KDL' );
 use Term::Fabulous::Widget::Box as Box

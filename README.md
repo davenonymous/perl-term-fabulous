@@ -120,7 +120,8 @@ parent chain as described in [Clay::UI::Role::Events::Emitter](https://metacpan.
 
     Fired on the topmost event emitter painted at the pointer's cell in the
     last frame (a widget's background or text, or the edge cells of its
-    border), or on the root when there is none.
+    border), or on the root when there is none. Content scrolled out of a
+    scroll container is not painted, so it never receives the event.
 
 - [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize)
 
@@ -131,9 +132,23 @@ parent chain as described in [Clay::UI::Role::Events::Emitter](https://metacpan.
 Ctrl+C fires a KeyPress (key 3) and then stops the loop, so ["run"](#run)
 returns.
 
+# KEYBOARD FOCUS AND SCROLLING
+
+Tab and Shift-Tab fire their KeyPress like any key and then move the
+focus to the next or previous focusable widget
+(`$ui->interaction->focus_next` / `focus_previous`, which wrap
+around), for example a [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton). Listeners see
+the key but cannot keep the focus from moving.
+
+Every mouse-wheel notch scrolls the scroll container under the pointer,
+for example a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), by three rows. The
+notches since the last frame are applied together when the next frame
+is drawn (["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw)), and the Mouse event for each
+notch is fired as usual.
+
 # SEE ALSO
 
-[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
+[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
 
 # AUTHOR
 

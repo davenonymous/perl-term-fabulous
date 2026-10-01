@@ -2,6 +2,7 @@ Changes
 cpanfile
 examples/border-showcase.pl
 examples/kdl-layout.pl
+examples/scroll-box.pl
 examples/static-report.pl
 examples/text-sizing.pl
 lib/Term/Fabulous.pm
@@ -15,6 +16,7 @@ lib/Term/Fabulous/Layout.pm
 lib/Term/Fabulous/Render.pm
 lib/Term/Fabulous/Render/Attr.pm
 lib/Term/Fabulous/Render/Border.pm
+lib/Term/Fabulous/Render/Clip.pm
 lib/Term/Fabulous/Render/Geometry.pm
 lib/Term/Fabulous/Render/Rectangle.pm
 lib/Term/Fabulous/Render/Target/Grid.pm
@@ -27,6 +29,7 @@ lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/Box.pm
 lib/Term/Fabulous/Widget/Button.pm
+lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Text.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -38,6 +41,7 @@ t/layout.t
 t/lifecycle.t
 t/render-attr.t
 t/render-border.t
+t/render-clip.t
 t/render-rectangle.t
 t/render-text.t
 t/static.t

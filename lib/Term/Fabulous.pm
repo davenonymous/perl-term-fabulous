@@ -38,7 +38,8 @@ class Term::Fabulous
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
-		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE
+		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
+		TB_KEY_BACK_TAB
 	);
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Event::Mouse;
@@ -46,8 +47,11 @@ class Term::Fabulous
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
 
-	# Termbox.pm exports no TB_KEY_CTRL_* constants.
+	# Termbox.pm exports no TB_KEY_CTRL_* or TB_KEY_TAB constants.
 	use constant KEY_CTRL_C => 0x03;
+	use constant KEY_TAB    => 0x09;
+
+	use constant WHEEL_NOTCH_ROWS => 3;
 
 	field $mouse :param :reader = 1;
 	field $loop :reader;
@@ -59,6 +63,7 @@ class Term::Fabulous
 	field $_resize_timer;
 	field $_pending_resize;
 	field $_pointer;
+	field $_wheel_rows = 0;    # wheel scrolling since the last frame
 
 	ADJUST {
 		die "Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got " . ref( $self->root )
@@ -116,8 +121,12 @@ class Term::Fabulous
 		return $handle;
 	}
 
-	# Rectangles and text paint their whole box, a border only its edges.
-	sub _command_paints_cell ( $command, $x, $y ) {
+	# Rectangles and text paint their whole box, a border only its edges;
+	# nothing is painted outside the clip rect.
+	sub _command_paints_cell ( $command, $clip, $x, $y ) {
+		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @$clip;
+		return 0 unless $x >= $clip_x0 && $x < $clip_x1 && $y >= $clip_y0 && $y < $clip_y1;
+
 		my ( $x0, $y0, $x1, $y1 ) = cell_rect( $command->{boundingBox} );
 		return 0 unless $x >= $x0 && $x < $x1 && $y >= $y0 && $y < $y1;
 
@@ -195,12 +204,15 @@ class Term::Fabulous
 		@_notifiers      = ();
 		$_resize_timer   = undef;
 		$_pending_resize = undef;
+		$_wheel_rows     = 0;
 		return;
 	}
 
 	method _draw_frame () {
 		return if $_resize_timer->is_running;
-		$self->draw;
+		my $rows = $_wheel_rows;
+		$_wheel_rows = 0;
+		$self->draw( scroll_cells => [ 0, $rows ] );
 		return;
 	}
 
@@ -232,7 +244,11 @@ class Term::Fabulous
 	method _on_key ($event) {
 		my $target = $self->interaction->get_focused_widget // $self->root;
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
-		$loop->stop if $event->key == KEY_CTRL_C && $event->ch == 0;
+
+		my ( $key, $is_special_key ) = ( $event->key, $event->ch == 0 );
+		$loop->stop                        if $is_special_key && $key == KEY_CTRL_C;
+		$self->interaction->focus_next     if $is_special_key && $key == KEY_TAB;
+		$self->interaction->focus_previous if $is_special_key && $key == TB_KEY_BACK_TAB;
 		return;
 	}
 
@@ -243,6 +259,8 @@ class Term::Fabulous
 			: $key == TB_KEY_MOUSE_RELEASE ? 0
 			:                                ( defined $_pointer ? $_pointer->{down} : 0 );
 		$_pointer = { x => $x, y => $y, down => $down };
+		$_wheel_rows += WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_UP;
+		$_wheel_rows -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
 
 		my $target = $self->_emitter_at( $x, $y ) // $self->root;
 		$target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
@@ -272,8 +290,11 @@ class Term::Fabulous
 
 	# Topmost event emitter painted at the cell in the last frame.
 	method _emitter_at ( $x, $y ) {
-		foreach my $command ( reverse $self->get_last_commands ) {
-			next unless _command_paints_cell( $command, $x, $y );
+		my @commands   = $self->get_last_commands;
+		my @clip_rects = $self->get_last_clip_rects;
+		foreach my $index ( reverse 0 .. $#clip_rects ) {
+			my $command = $commands[$index];
+			next unless _command_paints_cell( $command, $clip_rects[$index], $x, $y );
 			my $widget = $self->widget_for( $command->{userData} );
 			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter');
 		}
@@ -409,7 +430,8 @@ or on the root when nothing has focus.
 
 Fired on the topmost event emitter painted at the pointer's cell in the
 last frame (a widget's background or text, or the edge cells of its
-border), or on the root when there is none.
+border), or on the root when there is none. Content scrolled out of a
+scroll container is not painted, so it never receives the event.
 
 =item L<Term::Fabulous::Event::Resize>
 
@@ -422,9 +444,23 @@ Resizes to a zero width or height are ignored.
 Ctrl+C fires a KeyPress (key 3) and then stops the loop, so L</run>
 returns.
 
+=head1 KEYBOARD FOCUS AND SCROLLING
+
+Tab and Shift-Tab fire their KeyPress like any key and then move the
+focus to the next or previous focusable widget
+(C<< $ui->interaction->focus_next >> / C<focus_previous>, which wrap
+around), for example a L<Term::Fabulous::Widget::Button>. Listeners see
+the key but cannot keep the focus from moving.
+
+Every mouse-wheel notch scrolls the scroll container under the pointer,
+for example a L<Term::Fabulous::Widget::ScrollBox>, by three rows. The
+notches since the last frame are applied together when the next frame
+is drawn (L<Term::Fabulous::Render/draw>), and the Mouse event for each
+notch is fired as usual.
+
 =head1 SEE ALSO
 
-L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Clay::UI>, L<Termbox>.
 
 =head1 AUTHOR
 
