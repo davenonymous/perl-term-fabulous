@@ -12,7 +12,7 @@ use Object::Pad::FieldAttr::Checked;
 use Data::Checks qw(Isa Maybe);
 
 role Term::Fabulous::Role::HasBorderStyle {
-	use Scalar::Util qw(blessed looks_like_number);
+	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my @SIDES = qw(left right top bottom);
@@ -35,22 +35,14 @@ role Term::Fabulous::Role::HasBorderStyle {
 		}
 	}
 
-	sub _side_width ( $side, $width ) {
-		return 0 unless defined $width;
-		die "Term::Fabulous::Role::HasBorderStyle: border_width $side must be a non-negative number, got '$width'"
-			unless looks_like_number($width) && $width >= 0;
-		return $width;
-	}
-
 	# Per-side widths of a Clay border_width (a number for all sides, or a
-	# hashref); undef when no side has a width.
+	# hashref); undef when no side has a width. Clay::UI's HasBorder has
+	# already validated the value when it was set.
 	sub _border_insets ($border_width) {
 		return undef unless defined $border_width;
-		die "Term::Fabulous::Role::HasBorderStyle: border_width must be a number or a hash reference, got " . ref($border_width) . " reference"
-			if ref $border_width && ref $border_width ne 'HASH';
 
 		my %width_by_side = ref $border_width ? %$border_width : map { $_ => $border_width } @SIDES;
-		my %inset         = map { $_ => _side_width( $_, $width_by_side{$_} ) } @SIDES;
+		my %inset         = map { $_ => $width_by_side{$_} // 0 } @SIDES;
 
 		return ( grep { $_ > 0 } values %inset ) ? \%inset : undef;
 	}
@@ -121,7 +113,8 @@ C<right>, C<top>, C<bottom>; missing sides count as 0 and
 C<between_children> is ignored), the width of each side is added to
 that side's padding in the Clay configuration. The padding given in
 C<layout> therefore starts inside the border, and children never
-overlap it. The widget's stored C<layout> is not modified. Widths must
-be non-negative numbers.
+overlap it. The widget's stored C<layout> is not modified. Clay::UI
+validates C<border_width> when it is set: each width is an integer in
+0..65535.
 
 =cut

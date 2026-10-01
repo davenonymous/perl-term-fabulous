@@ -47,10 +47,10 @@ subtest 'KeyPress targets the focused widget' => sub {
 	dispatch( type => TB_EVENT_KEY, ch => ord 'a' );
 	ref_is $targets{KeyPress}[0], $root, 'nothing focused: the root';
 
-	$ui->set_focused_widget($button);
+	$ui->interaction->set_focused_widget($button);
 	dispatch( type => TB_EVENT_KEY, ch => ord 'a' );
 	ref_is $targets{KeyPress}[1], $button, 'the focused button';
-	$ui->set_focused_widget(undef);
+	$ui->interaction->set_focused_widget(undef);
 };
 
 subtest 'Mouse targets the widget under the pointer' => sub {

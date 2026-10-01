@@ -10,3 +10,6 @@ Revision history for Term::Fabulous
           The render roles paint through a cell target role
           (Render::Target::Termbox for the terminal, Render::Target::Grid
           for memory) instead of calling termbox2 directly
+        - Requires the Clay::UI interaction tracker: focus is read
+          through $ui->interaction, and border_width is validated by
+          Clay::UI when it is set

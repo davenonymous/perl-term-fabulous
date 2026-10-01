@@ -230,7 +230,7 @@ class Term::Fabulous
 	}
 
 	method _on_key ($event) {
-		my $target = $self->get_focused_widget // $self->root;
+		my $target = $self->interaction->get_focused_widget // $self->root;
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 		$loop->stop if $event->key == KEY_CTRL_C && $event->ch == 0;
 		return;
@@ -402,8 +402,8 @@ parent chain as described in L<Clay::UI::Role::Events::Emitter>.
 
 =item L<Term::Fabulous::Event::KeyPress>
 
-Fired on the focused widget (C<get_focused_widget>), or on the root
-when nothing has focus.
+Fired on the focused widget (C<< $ui->interaction->get_focused_widget >>),
+or on the root when nothing has focus.
 
 =item L<Term::Fabulous::Event::Mouse>
 

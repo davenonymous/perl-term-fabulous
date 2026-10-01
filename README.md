@@ -113,8 +113,8 @@ parent chain as described in [Clay::UI::Role::Events::Emitter](https://metacpan.
 
 - [Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress)
 
-    Fired on the focused widget (`get_focused_widget`), or on the root
-    when nothing has focus.
+    Fired on the focused widget (`$ui->interaction->get_focused_widget`),
+    or on the root when nothing has focus.
 
 - [Term::Fabulous::Event::Mouse](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouse)
 

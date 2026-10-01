@@ -24,7 +24,7 @@ subtest 'border width is added to the padding' => sub {
 	my $plain = Term::Fabulous::Widget::Box->new( layout => { padding => { left => 2 } } );
 	is $plain->to_config->{layout}, $plain->layout, 'without a border the layout is passed through';
 
-	like dies { Term::Fabulous::Widget::Box->new( border_width => -1 )->to_config }, qr/border_width left must be a non-negative number/, 'negative width dies';
+	like dies { Term::Fabulous::Widget::Box->new( border_width => -1 ) }, qr/'border_width'.*'-1'/, 'Clay::UI rejects a negative width when it is set';
 };
 
 subtest 'the stored layout is never modified' => sub {
