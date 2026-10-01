@@ -150,7 +150,7 @@ notch is fired as usual.
 
 # SEE ALSO
 
-[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
+[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas), [Term::Fabulous::Widget::PixelCanvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APixelCanvas), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
 
 # AUTHOR
 

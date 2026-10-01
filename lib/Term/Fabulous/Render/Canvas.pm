@@ -92,6 +92,7 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 		my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 		my @content = ( $x0 + $left, $y0 + $top );
 		push @content, max( $content[0], $x1 - $right ), max( $content[1], $y1 - $bottom );
+		$canvas->set_content_origin( @content[ 0, 1 ] );
 		$canvas->fit_to( $content[2] - $content[0], $content[3] - $content[1] );
 
 		my $visible = intersect_cell_rects( \@content, $clip );
@@ -212,8 +213,9 @@ command.
 
 	my @kept_rects = $ui->plan_canvases( \@commands );
 
-Before a frame is painted: resizes every canvas buffer to its content
-box (which may fire L<Term::Fabulous::Event::CanvasResize>) and decides
+Before a frame is painted: records where every canvas's content box
+starts and resizes its buffer to the box (which may fire
+L<Term::Fabulous::Event::CanvasResize>), and decides
 for every visible canvas whether the cells of the previous frame can
 stay. That is the case when the canvas has the same origin, visible
 rect and background as in the last completely painted frame and no

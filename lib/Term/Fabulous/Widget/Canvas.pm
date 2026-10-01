@@ -17,15 +17,12 @@ class Term::Fabulous::Widget::Canvas
 {
 	use List::Util qw(max min);
 	use POSIX qw(ceil);
-	use Scalar::Util qw(blessed looks_like_number);
-	use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
-	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::CanvasResize;
-	use Term::Fabulous::Render::Attr qw(color_attr);
+	use Term::Fabulous::Render::Attr qw(cell_color_attr);
+	use Term::Fabulous::Render::Geometry qw(cell_coordinate);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	use constant GLYPH_CACHE_LIMIT => 4096;
-	use constant MAX_RGB           => 0xFFFFFF;
 
 	# Stored in the cells a wide glyph covers to the right of its own cell.
 	use constant TAIL => '';
@@ -37,6 +34,9 @@ class Term::Fabulous::Widget::Canvas
 
 	field $columns :reader = 0;
 	field $rows    :reader = 0;
+
+	# Viewport cell of buffer cell (0, 0) in the last frame that laid it out.
+	field @content_origin;
 
 	# Cells by [y][x]: a glyph record, TAIL, or undef for an unset cell; the
 	# attributes are undef where the cell has none of its own.
@@ -54,14 +54,6 @@ class Term::Fabulous::Widget::Canvas
 
 	sub _is_tail ($cell) {
 		return defined $cell && !ref $cell;
-	}
-
-	# Rounds down; int() and a comparison are much cheaper than POSIX::floor.
-	sub _coordinate ( $what, $value ) {
-		die "Term::Fabulous::Widget::Canvas: $what must be a number, got " . _describe($value)
-			unless looks_like_number($value) && $value == $value;
-		my $whole = int $value;
-		return $whole <= $value ? $whole : $whole - 1;
 	}
 
 	sub _glyph_of_cluster ($cluster) {
@@ -85,32 +77,20 @@ class Term::Fabulous::Widget::Canvas
 		return _glyph_of_cluster( $clusters[0] );
 	}
 
-	# undef, and colors with alpha 0, leave the cell without a color of its own.
-	sub _color_attr ( $what, $color ) {
-		return undef unless defined $color;
-		if ( !ref $color && $color =~ /\A[0-9]+\z/ ) {
-			die "Term::Fabulous::Widget::Canvas: $what must be a packed 0xRRGGBB value, got $color" if $color > MAX_RGB;
-			return $color == 0 ? TB_TRUECOLOR_BLACK : $color + 0;
-		}
-		my $object = blessed $color && $color->isa('Term::Fabulous::Color') ? $color : Term::Fabulous::Color->new( color => $color );
-		my $attr   = color_attr($object);
-		return $attr == TB_DEFAULT ? undef : $attr;
-	}
-
 	method contribute_custom ($config) {
 		$config->{custom} = { custom_data => 1 };
 		return;
 	}
 
 	method put ( $x, $y, $glyph, $fg = undef, $bg = undef ) {
-		$self->_store( _coordinate( x => $x ), _coordinate( y => $y ), _glyph($glyph), _color_attr( fg => $fg ), _color_attr( bg => $bg ) );
+		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), _glyph($glyph), cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
 		return $self;
 	}
 
 	method put_text ( $x, $y, $text, $fg = undef, $bg = undef ) {
 		die "Term::Fabulous::Widget::Canvas: text must be a string, got " . _describe($text) unless defined $text && !ref $text;
-		my ( $column, $row ) = ( _coordinate( x => $x ), _coordinate( y => $y ) );
-		my ( $fg_attr, $bg_attr ) = ( _color_attr( fg => $fg ), _color_attr( bg => $bg ) );
+		my ( $column, $row ) = ( cell_coordinate( x => $x ), cell_coordinate( y => $y ) );
+		my ( $fg_attr, $bg_attr ) = ( cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
 
 		foreach my $cluster ( grapheme_clusters($text) ) {
 			last if $column >= $columns;
@@ -122,10 +102,10 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	method fill ( $x, $y, $width, $height, $glyph, $fg = undef, $bg = undef ) {
-		my ( $x0, $y0 ) = ( _coordinate( x => $x ), _coordinate( y => $y ) );
-		my ( $x1, $y1 ) = ( $x0 + _coordinate( width => $width ), $y0 + _coordinate( height => $height ) );
+		my ( $x0, $y0 ) = ( cell_coordinate( x => $x ), cell_coordinate( y => $y ) );
+		my ( $x1, $y1 ) = ( $x0 + cell_coordinate( width => $width ), $y0 + cell_coordinate( height => $height ) );
 		my $record = _glyph($glyph);
-		my ( $fg_attr, $bg_attr ) = ( _color_attr( fg => $fg ), _color_attr( bg => $bg ) );
+		my ( $fg_attr, $bg_attr ) = ( cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
 
 		# Glyphs repeat from x0 on; skip the repeats left of the buffer.
 		my $step  = $record->[1];
@@ -138,8 +118,13 @@ class Term::Fabulous::Widget::Canvas
 		return $self;
 	}
 
+	method put_attrs ( $x, $y, $glyph, $fg_attr, $bg_attr ) {
+		$self->_store( $x, $y, defined $glyph ? _glyph($glyph) : undef, $fg_attr, $bg_attr );
+		return $self;
+	}
+
 	method erase ( $x, $y ) {
-		$self->_store( _coordinate( x => $x ), _coordinate( y => $y ), undef, undef, undef );
+		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), undef, undef, undef );
 		return $self;
 	}
 
@@ -150,12 +135,28 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	method cell ( $x, $y ) {
-		my ( $column, $row ) = ( _coordinate( x => $x ), _coordinate( y => $y ) );
+		my ( $column, $row ) = ( cell_coordinate( x => $x ), cell_coordinate( y => $y ) );
 		return undef if $row < 0 || $row >= $rows || $column < 0 || $column >= $columns;
 
 		my $glyph = $glyph_rows[$row][$column];
 		return undef unless ref $glyph;
 		return [ $glyph->[0], $fg_rows[$row][$column], $bg_rows[$row][$column] ];
+	}
+
+	method cell_at ($event) {
+		return () unless @content_origin;
+		my ( $column, $row ) = ( $event->x - $content_origin[0], $event->y - $content_origin[1] );
+		return () if $row < 0 || $row >= $rows || $column < 0 || $column >= $columns;
+		return ( $column, $row );
+	}
+
+	method set_content_origin ( $x, $y ) {
+		@content_origin = ( $x, $y );
+		return;
+	}
+
+	method content_origin () {
+		return @content_origin;
 	}
 
 	method cell_row ($y) {
@@ -274,8 +275,8 @@ Term::Fabulous::Widget::Canvas - Free-drawing cell buffer widget
 A L<Term::Fabulous::Widget::Box> that holds a buffer of cells and draws
 it inside its content box (the box without its border and padding). Any
 grapheme cluster with any foreground and background color can be put at
-any cell; it is a base for plotters, half-block pixel images and other
-text art. Unknown constructor parameters die.
+any cell; it is a base for plotters, half-block pixel images (see
+L<Term::Fabulous::Widget::PixelCanvas>) and other text art. Unknown constructor parameters die.
 
 =head2 Buffer size
 
@@ -325,8 +326,9 @@ colors die.
 =head2 Coordinates
 
 C<$x> counts columns from the left, C<$y> rows from the top of the
-buffer, both from 0. Coordinates must be numbers and are rounded down,
-so a plotter can pass computed positions directly. Anything else dies.
+buffer, both from 0. Coordinates must be finite numbers and are rounded
+down, so a plotter can pass computed positions directly. Anything else
+dies.
 
 =head1 METHODS
 
@@ -375,9 +377,37 @@ termbox2 attributes (see L<Term::Fabulous::Render::Attr>), C<undef> for
 a missing color. C<undef> for an unset cell, a cell covered by a wide
 glyph to its left, or a cell outside the buffer.
 
+=head2 cell_at
+
+	my ( $x, $y ) = $canvas->cell_at($mouse_event);
+
+The buffer cell under a L<Term::Fabulous::Event::Mouse> (anything with
+C<x> and C<y> in viewport cells), as of the last frame that laid the
+canvas out. The empty list when the pointer is outside the buffer (on
+the border or padding, for example) or before the first frame.
+
+=head2 content_origin
+
+	my ( $x, $y ) = $canvas->content_origin;
+
+The viewport cell that showed buffer cell (0, 0) in the last frame that
+laid the canvas out; the empty list before the first frame. It may lie
+outside the viewport when the canvas is scrolled or clipped.
+
 =head2 columns, rows
 
 The size of the buffer in cells.
+
+=head1 SUBCLASS INTERFACE
+
+=head2 put_attrs
+
+	$canvas->put_attrs( $x, $y, $glyph, $fg_attr, $bg_attr );
+
+Like L</put>, without parsing: C<$x> and C<$y> must be integers and the
+colors termbox2 attributes or C<undef> (as L</cell> returns them). An
+C<undef> glyph unsets the cell. For subclasses that draw in their own
+units, such as L<Term::Fabulous::Widget::PixelCanvas>.
 
 =head1 RENDERER INTERFACE
 
@@ -390,6 +420,10 @@ these.
 
 C<($left, $top, $right, $bottom)>: the cells between the widget's box
 and its content box (padding plus border width).
+
+=item C<< set_content_origin($x, $y) >>
+
+Records where the content box starts in the viewport, for L</cell_at>.
 
 =item C<< fit_to($columns, $rows) >>
 

@@ -8,10 +8,11 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside);
+our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside cell_coordinate);
 
 use List::Util qw(min max);
 use POSIX qw(floor);
+use Scalar::Util qw(looks_like_number);
 
 sub cell_rect ($bbox) {
 	my ( $x, $y ) = @{$bbox}{qw(x y)};
@@ -30,6 +31,14 @@ sub visible_cell_rect ( $bbox, $clip ) {
 	my ( $x0, $y0, $x1, $y1 ) = @{ intersect_cell_rects( [ cell_rect($bbox) ], $clip ) };
 	return if $x0 >= $x1 || $y0 >= $y1;
 	return ( $x0, $y0, $x1, $y1 );
+}
+
+# Rounds down; int() and a comparison are much cheaper than POSIX::floor.
+sub cell_coordinate ( $what, $value ) {
+	die "Term::Fabulous::Render::Geometry: $what must be a finite number, got " . ( defined $value ? "'$value'" : 'undef' )
+		unless looks_like_number($value) && $value == $value && $value - $value == 0;
+	my $whole = int $value;
+	return $whole <= $value ? $whole : $whole - 1;
 }
 
 sub rects_overlap ( $first, $second ) {
@@ -96,6 +105,14 @@ C<y1 == y0>.
 L</cell_rect> intersected with the C<[x0, y0, x1, y1]> rect C<$clip>
 (usually L<Term::Fabulous::Render::Clip/clip_rect>). Returns the empty
 list when nothing is visible.
+
+=head2 cell_coordinate
+
+	my $column = cell_coordinate( x => $x );
+
+A coordinate or size given to the canvas drawing methods, rounded down
+to a whole cell. Dies when it is not a finite number (C<NaN> and
+infinities included); C<$what> names the argument in the error.
 
 =head2 rects_overlap
 

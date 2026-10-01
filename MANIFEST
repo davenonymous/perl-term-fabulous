@@ -3,6 +3,7 @@ cpanfile
 examples/border-showcase.pl
 examples/canvas.pl
 examples/kdl-layout.pl
+examples/pixel-paint.pl
 examples/scroll-box.pl
 examples/static-report.pl
 examples/text-sizing.pl
@@ -34,6 +35,7 @@ lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/Box.pm
 lib/Term/Fabulous/Widget/Button.pm
 lib/Term/Fabulous/Widget/Canvas.pm
+lib/Term/Fabulous/Widget/PixelCanvas.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Text.pm
 Makefile.PL
@@ -54,3 +56,4 @@ t/static.t
 t/unicode.t
 t/widget-canvas.t
 t/widget-inset.t
+t/widget-pixel-canvas.t

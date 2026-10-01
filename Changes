@@ -24,3 +24,6 @@ Revision history for Term::Fabulous
           (CanvasResize event). Frames keep the cells of canvases that
           did not move and that nothing covers (Render::Target::Mask),
           so only their changed cells are painted
+        - Widget::PixelCanvas: a canvas of half-block pixels, two per
+          cell, with pixel, rect, line and circle drawing. Canvas::cell_at
+          and PixelCanvas::pixel_at map mouse events to cells and pixels

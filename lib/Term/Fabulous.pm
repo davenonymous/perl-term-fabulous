@@ -464,7 +464,7 @@ notch is fired as usual.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>, L<Clay::UI>, L<Termbox>.
 
 =head1 AUTHOR
 

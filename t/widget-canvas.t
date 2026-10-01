@@ -46,7 +46,7 @@ subtest 'invalid input dies' => sub {
 	my $canvas = canvas( 3, 1 );
 	like dies { $canvas->put( 0, 0, 'ab' ) },         qr/exactly one grapheme cluster, got 2/, 'two clusters';
 	like dies { $canvas->put( 0, 0, '' ) },           qr/non-empty string/,                    'an empty glyph';
-	like dies { $canvas->put( 'left', 0, 'a' ) },     qr/x must be a number/,                  'a non-numeric coordinate';
+	like dies { $canvas->put( 'left', 0, 'a' ) },     qr/x must be a finite number/,           'a non-numeric coordinate';
 	like dies { $canvas->put( 0, 0, 'a', 0x1000000 ) }, qr/fg must be a packed 0xRRGGBB/,      'an integer color out of range';
 	like dies { $canvas->put( 0, 0, 'a', undef, 'nope' ) }, qr/unrecognized color string/,     'an invalid color string';
 };

@@ -8,8 +8,9 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(color_attr clay_color);
+our @EXPORT_OK = qw(color_attr clay_color cell_color_attr);
 
+use Scalar::Util qw(blessed);
 use Termbox 2 qw(TB_DEFAULT);
 
 BEGIN {
@@ -22,6 +23,7 @@ use Termbox 2 qw(TB_TRUECOLOR_BLACK);
 use Term::Fabulous::Color;
 
 use constant CACHE_LIMIT => 4096;
+use constant MAX_RGB     => 0xFFFFFF;
 
 my %attr_by_rgba;
 my %color_by_clay_rgba;
@@ -45,6 +47,18 @@ sub clay_color ($clay_rgba) {
 
 	%color_by_clay_rgba = () if keys(%color_by_clay_rgba) >= CACHE_LIMIT;
 	return $color_by_clay_rgba{$key} = Term::Fabulous::Color->new( color => $clay_rgba );
+}
+
+# undef, and colors with alpha 0, leave a cell without a color of its own.
+sub cell_color_attr ( $what, $color ) {
+	return undef unless defined $color;
+	if ( !ref $color && $color =~ /\A[0-9]+\z/ ) {
+		die "Term::Fabulous::Render::Attr: $what must be a packed 0xRRGGBB value, got $color" if $color > MAX_RGB;
+		return $color == 0 ? TB_TRUECOLOR_BLACK : $color + 0;
+	}
+	my $object = blessed $color && $color->isa('Term::Fabulous::Color') ? $color : Term::Fabulous::Color->new( color => $color );
+	my $attr   = color_attr($object);
+	return $attr == TB_DEFAULT ? undef : $attr;
 }
 
 # termbox2 in truecolor mode reads 0x000000 as "terminal default", so opaque
@@ -110,6 +124,20 @@ Returns the L<Term::Fabulous::Color> for a Clay render-data color hash.
 Colors are memoized by their channel values (bounded cache), so
 rendering a frame does not re-parse and re-validate colors it has seen
 before. Dies unless given a hash reference; invalid channels die in
+L<Term::Fabulous::Color>.
+
+=head2 cell_color_attr
+
+	my $attr = cell_color_attr( fg => $color );
+
+The color argument of the canvas drawing methods
+(L<Term::Fabulous::Widget::Canvas/Colors>) as an attribute: a packed
+C<0xRRGGBB> integer is taken as it is (0 becomes C<TB_TRUECOLOR_BLACK>),
+anything else goes through L</color_attr> after
+C<< Term::Fabulous::Color->new >> unless it already is a
+L<Term::Fabulous::Color>. Returns C<undef> for C<undef> and for colors
+with alpha 0. C<$what> names the argument in the error raised for
+integers above C<0xFFFFFF>; invalid colors die in
 L<Term::Fabulous::Color>.
 
 =head1 SEE ALSO
