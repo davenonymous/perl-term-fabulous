@@ -19,3 +19,8 @@ Revision history for Term::Fabulous
         - Requires the Clay::UI interaction tracker: focus is read
           through $ui->interaction, and border_width is validated by
           Clay::UI when it is set
+        - Widget::Canvas: a free-drawing buffer of grapheme clusters
+          with any foreground and background color, sized by the layout
+          (CanvasResize event). Frames keep the cells of canvases that
+          did not move and that nothing covers (Render::Target::Mask),
+          so only their changed cells are painted

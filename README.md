@@ -26,7 +26,9 @@ Term::Fabulous - Terminal UIs from Clay layouts, drawn with termbox2
 A [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) subclass that composes [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender): it lays
 out a widget tree with Clay and draws it into the terminal through
 termbox2, redrawing continuously at 30 frames per second while
-["run"](#run) is active.
+["run"](#run) is active. termbox2 writes only the cells that changed to the
+terminal, and a [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas) sends only its changed
+cells to termbox2 while nothing moves or covers it.
 
 To render the same widget tree once, as text for a pipe or a report,
 use [Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic) instead; it paints with the same render
@@ -119,8 +121,8 @@ parent chain as described in [Clay::UI::Role::Events::Emitter](https://metacpan.
 - [Term::Fabulous::Event::Mouse](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouse)
 
     Fired on the topmost event emitter painted at the pointer's cell in the
-    last frame (a widget's background or text, or the edge cells of its
-    border), or on the root when there is none. Content scrolled out of a
+    last frame (a widget's background, text or canvas, or the edge cells of
+    its border), or on the root when there is none. Content scrolled out of a
     scroll container is not painted, so it never receives the event.
 
 - [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize)
@@ -148,7 +150,7 @@ notch is fired as usual.
 
 # SEE ALSO
 
-[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
+[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
 
 # AUTHOR
 

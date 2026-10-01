@@ -9,6 +9,7 @@ use Termbox 2 qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELE
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
+use Term::Fabulous::Widget::Canvas;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
 
@@ -68,6 +69,19 @@ subtest 'Mouse targets the widget under the pointer' => sub {
 	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 10, y => 3 );
 	ref_is $targets{Mouse}[1], $root, 'outside the button: the root';
 	is $ui->pointer_state->{down}, 0, 'release clears the pointer';
+};
+
+subtest 'Mouse targets a canvas without a background' => sub {
+	my $canvas_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $canvas      = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(2) } } );
+	$canvas_root->add_child($canvas);
+	my $canvas_ui = Term::Fabulous->new( width => 20, height => 5, root => $canvas_root );
+	my @mouse_targets;
+	$canvas_root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
+
+	$canvas_ui->draw;
+	dispatch( $canvas_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 1 );
+	ref_is $mouse_targets[0], $canvas, 'the canvas paints its box';
 };
 
 subtest 'Tab and Shift-Tab move focus' => sub {

@@ -1,6 +1,7 @@
 Changes
 cpanfile
 examples/border-showcase.pl
+examples/canvas.pl
 examples/kdl-layout.pl
 examples/scroll-box.pl
 examples/static-report.pl
@@ -9,6 +10,7 @@ lib/Term/Fabulous.pm
 lib/Term/Fabulous/Color.pm
 lib/Term/Fabulous/Enum/BorderStyle.pm
 lib/Term/Fabulous/Enum/WebColor.pm
+lib/Term/Fabulous/Event/CanvasResize.pm
 lib/Term/Fabulous/Event/KeyPress.pm
 lib/Term/Fabulous/Event/Mouse.pm
 lib/Term/Fabulous/Event/Resize.pm
@@ -16,10 +18,12 @@ lib/Term/Fabulous/Layout.pm
 lib/Term/Fabulous/Render.pm
 lib/Term/Fabulous/Render/Attr.pm
 lib/Term/Fabulous/Render/Border.pm
+lib/Term/Fabulous/Render/Canvas.pm
 lib/Term/Fabulous/Render/Clip.pm
 lib/Term/Fabulous/Render/Geometry.pm
 lib/Term/Fabulous/Render/Rectangle.pm
 lib/Term/Fabulous/Render/Target/Grid.pm
+lib/Term/Fabulous/Render/Target/Mask.pm
 lib/Term/Fabulous/Render/Target/Termbox.pm
 lib/Term/Fabulous/Render/Text.pm
 lib/Term/Fabulous/Role/CanParseLayout.pm
@@ -29,6 +33,7 @@ lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/Box.pm
 lib/Term/Fabulous/Widget/Button.pm
+lib/Term/Fabulous/Widget/Canvas.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Text.pm
 Makefile.PL
@@ -41,9 +46,11 @@ t/layout.t
 t/lifecycle.t
 t/render-attr.t
 t/render-border.t
+t/render-canvas.t
 t/render-clip.t
 t/render-rectangle.t
 t/render-text.t
 t/static.t
 t/unicode.t
+t/widget-canvas.t
 t/widget-inset.t

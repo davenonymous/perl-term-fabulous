@@ -9,34 +9,44 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-role Term::Fabulous::Render::Target::Grid {
+use Term::Fabulous::Render::Target::Mask;
+
+role Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::Mask) {
 
 	# Painted cells, indexed [y][x]; a cell is [ $glyph, $fg, $bg ] or undef
 	# when nothing has been painted there. A wide cluster occupies only the
 	# cell it starts in; its continuation cells stay undef.
 	field @rows;
 
-	method begin_frame () {
-		@rows = ();
+	method clear_cells (@kept_rects) {
+		my @kept_rows;
+		foreach my $rect (@kept_rects) {
+			my ( $x0, $y0, $x1, $y1 ) = @$rect;
+			foreach my $y ( $y0 .. $y1 - 1 ) {
+				my $row = $rows[$y] // next;
+				( $kept_rows[$y] //= [] )->[$_] = $row->[$_] foreach $x0 .. $x1 - 1;
+			}
+		}
+		@rows = @kept_rows;
 		return;
 	}
 
-	method end_frame () {
+	method present_cells () {
 		return;
 	}
 
-	method set_cell ( $x, $y, $glyph, $fg, $bg ) {
+	method put_cell ( $x, $y, $glyph, $fg, $bg ) {
 		( $rows[$y] //= [] )->[$x] = [ $glyph, $fg, $bg ];
 		return;
 	}
 
-	method extend_cell ( $x, $y, $codepoint ) {
+	method put_extension ( $x, $y, $codepoint ) {
 		my $cell = $rows[$y][$x] // die "Term::Fabulous::Render::Target::Grid: extend_cell($x, $y) on a cell that was never set";
 		$cell->[0] .= $codepoint;
 		return;
 	}
 
-	method fill_row ( $x, $y, $columns, $bg ) {
+	method put_row ( $x, $y, $columns, $bg ) {
 		my $row = $rows[$y] //= [];
 		$row->[$_] = [ ' ', 0, $bg ] foreach $x .. $x + $columns - 1;
 		return;
@@ -105,6 +115,10 @@ row nothing was painted in.
 
 =head2 begin_frame
 
-Forgets every cell. C<end_frame> does nothing.
+	$target->begin_frame(@kept_rects);
+
+Forgets every cell outside the kept C<[x0, y0, x1, y1]> rects (all of
+them without rects); see L<Term::Fabulous::Render::Target::Mask>.
+C<end_frame> only releases the kept rects.
 
 =cut

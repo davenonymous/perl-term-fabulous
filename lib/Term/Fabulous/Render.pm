@@ -16,11 +16,13 @@ use Term::Fabulous::Render::Attr ();
 use Term::Fabulous::Render::Rectangle;
 use Term::Fabulous::Render::Border;
 use Term::Fabulous::Render::Text;
+use Term::Fabulous::Render::Canvas;
 
 role Term::Fabulous::Render
 	:does(Term::Fabulous::Render::Rectangle)
 	:does(Term::Fabulous::Render::Border)
 	:does(Term::Fabulous::Render::Text)
+	:does(Term::Fabulous::Render::Canvas)
 {
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_NONE
@@ -43,6 +45,7 @@ role Term::Fabulous::Render
 		CLAY_RENDER_COMMAND_TYPE_RECTANGLE()     => 'render_rectangle',
 		CLAY_RENDER_COMMAND_TYPE_BORDER()        => 'render_border',
 		CLAY_RENDER_COMMAND_TYPE_TEXT()          => 'render_text',
+		CLAY_RENDER_COMMAND_TYPE_CUSTOM()        => 'render_custom',
 		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START() => 'render_scissor_start',
 		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END()   => 'render_scissor_end',
 	);
@@ -88,6 +91,7 @@ role Term::Fabulous::Render
 	method set_cell;
 	method extend_cell;
 	method fill_row;
+	method release_rect;
 
 	ADJUST {
 		die "Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR (" . TB_OUTPUT_TRUECOLOR . "), got '$output_mode'"
@@ -125,6 +129,19 @@ role Term::Fabulous::Render
 		return { x => $columns / CELLS_PER_CLAY_SCROLL_UNIT, y => $rows / CELLS_PER_CLAY_SCROLL_UNIT };
 	}
 
+	# Clay emits an element's custom command before its background
+	# rectangle; paint the background first, below the custom content.
+	sub _backgrounds_first (@commands) {
+		foreach my $index ( 0 .. $#commands - 1 ) {
+			my ( $custom, $next ) = @commands[ $index, $index + 1 ];
+			next unless $custom->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM
+				&& $next->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
+				&& $next->{id} == $custom->{id};
+			@commands[ $index, $index + 1 ] = ( $next, $custom );
+		}
+		return @commands;
+	}
+
 	method draw (%args) {
 		my @unknown = grep { $_ ne 'scroll_cells' } sort keys %args;
 		die "Term::Fabulous::Render: draw got unknown argument(s): @unknown" if @unknown;
@@ -134,14 +151,15 @@ role Term::Fabulous::Render
 			( defined $pointer            ? ( pointer_state => $pointer )                                    : () ),
 			( defined $args{scroll_cells} ? ( scroll_delta  => _clay_scroll_delta( $args{scroll_cells} ) ) : () ),
 		);
-		@last_commands   = @$commands;
+		@last_commands   = _backgrounds_first(@$commands);
 		@last_clip_rects = ();
 
-		$self->begin_frame;
+		$self->begin_frame( $self->plan_canvases( \@last_commands ) );
 		$buffer = [];
 		$self->close_scissors;
-		$self->_dispatch_command($_) foreach @$commands;
+		$self->_dispatch_command($_) foreach @last_commands;
 		$self->end_frame;
+		$self->finish_canvases;
 		return;
 	}
 }
@@ -181,10 +199,12 @@ because colors are always emitted as 24-bit values. Anything else dies.
 	$ui->draw( scroll_cells => [ $columns, $rows ] );
 
 Renders the layout (passing the consumer's C<pointer_state>, when
-defined, to C<render>), calls the target's C<begin_frame>, paints every
-render command through the target and calls C<end_frame>. Rectangle,
-border, text and scissor commands are supported; any other command type
-dies.
+defined, to C<render>), plans the canvases
+(L<Term::Fabulous::Render::Canvas/plan_canvases>), calls the target's
+C<begin_frame> with the rects of the canvases whose cells stay, paints
+every render command through the target and calls C<end_frame>.
+Rectangle, border, text, scissor and custom (canvas) commands are
+supported; any other command type dies.
 
 C<scroll_cells> scrolls the scroll container under the pointer (see
 L<Clay::UI::Role::Layout::HasScroll>) by that many cells before the
@@ -197,7 +217,8 @@ drawing calls.
 
 =head2 get_last_commands
 
-The render commands of the most recent C<draw>.
+The render commands of the most recent C<draw>, in the order they were
+painted.
 
 =head2 get_last_clip_rects
 
@@ -230,6 +251,14 @@ agree. A cluster that would cross the right edge of the box or the
 viewport ends the line. The background is the one already painted below
 the text.
 
+=item Canvases
+
+L<Term::Fabulous::Widget::Canvas> widgets get a custom render command.
+Their background rectangle, which Clay emits after it, is painted first.
+The canvas then paints its buffer into its content box: every visible
+cell, or only the changed ones when the cells of the previous frame
+stay (see L<Term::Fabulous::Render::Canvas>).
+
 =item Borders
 
 Drawn for widgets composing L<Term::Fabulous::Role::HasBorderStyle>. A
@@ -253,13 +282,22 @@ The render roles compute glyphs and termbox2 attributes
 the consumer must provide by composing a target role:
 L<Term::Fabulous::Render::Target::Termbox> draws into the terminal,
 L<Term::Fabulous::Render::Target::Grid> collects the cells in memory
-(used by L<Term::Fabulous::Static> and by tests).
+(used by L<Term::Fabulous::Static> and by tests). Both get the cell
+methods and the kept rects from L<Term::Fabulous::Render::Target::Mask>.
 
 =over
 
-=item C<begin_frame>, C<end_frame>
+=item C<begin_frame(@kept_rects)>, C<end_frame>
 
 Called once before and once after the commands of a frame are painted.
+C<begin_frame> resets every cell outside the kept C<[x0, y0, x1, y1]>
+rects; the cells inside them must keep what the previous frame painted,
+and writes into them are dropped until they are released.
+
+=item C<release_rect($rect)>
+
+Stops protecting one of the kept rects (the same array reference); its
+canvas paints its changes into it next.
 
 =item C<< set_cell($x, $y, $glyph, $fg, $bg) >>
 

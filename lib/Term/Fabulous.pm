@@ -21,6 +21,7 @@ class Term::Fabulous
 {
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_BORDER
+		CLAY_RENDER_COMMAND_TYPE_CUSTOM
 		CLAY_RENDER_COMMAND_TYPE_RECTANGLE
 		CLAY_RENDER_COMMAND_TYPE_TEXT
 	);
@@ -82,6 +83,7 @@ class Term::Fabulous
 		my $rc = tb_init();
 		die "Term::Fabulous: tb_init failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
 		$_terminal_is_open = 1;
+		$self->invalidate_canvases;    # the fresh back buffer holds no canvas cells
 
 		try {
 			$self->_prepare_terminal;
@@ -121,8 +123,8 @@ class Term::Fabulous
 		return $handle;
 	}
 
-	# Rectangles and text paint their whole box, a border only its edges;
-	# nothing is painted outside the clip rect.
+	# Rectangles, text and canvases paint their whole box, a border only its
+	# edges; nothing is painted outside the clip rect.
 	sub _command_paints_cell ( $command, $clip, $x, $y ) {
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @$clip;
 		return 0 unless $x >= $clip_x0 && $x < $clip_x1 && $y >= $clip_y0 && $y < $clip_y1;
@@ -131,7 +133,7 @@ class Term::Fabulous
 		return 0 unless $x >= $x0 && $x < $x1 && $y >= $y0 && $y < $y1;
 
 		my $type = $command->{commandType};
-		return 1 if $type == CLAY_RENDER_COMMAND_TYPE_RECTANGLE || $type == CLAY_RENDER_COMMAND_TYPE_TEXT;
+		return 1 if $type == CLAY_RENDER_COMMAND_TYPE_RECTANGLE || $type == CLAY_RENDER_COMMAND_TYPE_TEXT || $type == CLAY_RENDER_COMMAND_TYPE_CUSTOM;
 		return 0 unless $type == CLAY_RENDER_COMMAND_TYPE_BORDER;
 
 		my $widths = $command->{renderData}{width} // {};
@@ -332,7 +334,9 @@ Term::Fabulous - Terminal UIs from Clay layouts, drawn with termbox2
 A L<Clay::UI> subclass that composes L<Term::Fabulous::Render>: it lays
 out a widget tree with Clay and draws it into the terminal through
 termbox2, redrawing continuously at 30 frames per second while
-L</run> is active.
+L</run> is active. termbox2 writes only the cells that changed to the
+terminal, and a L<Term::Fabulous::Widget::Canvas> sends only its changed
+cells to termbox2 while nothing moves or covers it.
 
 To render the same widget tree once, as text for a pipe or a report,
 use L<Term::Fabulous::Static> instead; it paints with the same render
@@ -429,8 +433,8 @@ or on the root when nothing has focus.
 =item L<Term::Fabulous::Event::Mouse>
 
 Fired on the topmost event emitter painted at the pointer's cell in the
-last frame (a widget's background or text, or the edge cells of its
-border), or on the root when there is none. Content scrolled out of a
+last frame (a widget's background, text or canvas, or the edge cells of
+its border), or on the root when there is none. Content scrolled out of a
 scroll container is not painted, so it never receives the event.
 
 =item L<Term::Fabulous::Event::Resize>
@@ -460,7 +464,7 @@ notch is fired as usual.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Clay::UI>, L<Termbox>.
 
 =head1 AUTHOR
 

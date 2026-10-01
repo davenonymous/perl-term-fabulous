@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect);
+our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside);
 
 use List::Util qw(min max);
 use POSIX qw(floor);
@@ -30,6 +30,24 @@ sub visible_cell_rect ( $bbox, $clip ) {
 	my ( $x0, $y0, $x1, $y1 ) = @{ intersect_cell_rects( [ cell_rect($bbox) ], $clip ) };
 	return if $x0 >= $x1 || $y0 >= $y1;
 	return ( $x0, $y0, $x1, $y1 );
+}
+
+sub rects_overlap ( $first, $second ) {
+	my ( $x0, $y0, $x1, $y1 ) = @{ intersect_cell_rects( $first, $second ) };
+	return $x0 < $x1 && $y0 < $y1;
+}
+
+sub row_spans_outside ( $y, $x0, $x1, @rects ) {
+	my @holes = sort { $a->[0] <=> $b->[0] } map { [ max( $x0, $_->[0] ), min( $x1, $_->[2] ) ] } grep { $y >= $_->[1] && $y < $_->[3] && $_->[0] < $x1 && $_->[2] > $x0 } @rects;
+
+	my ( @spans, $from );
+	$from = $x0;
+	foreach my $hole (@holes) {
+		push @spans, [ $from, $hole->[0] ] if $hole->[0] > $from;
+		$from = max( $from, $hole->[1] );
+	}
+	push @spans, [ $from, $x1 ] if $x1 > $from;
+	return @spans;
 }
 
 1;
@@ -78,5 +96,19 @@ C<y1 == y0>.
 L</cell_rect> intersected with the C<[x0, y0, x1, y1]> rect C<$clip>
 (usually L<Term::Fabulous::Render::Clip/clip_rect>). Returns the empty
 list when nothing is visible.
+
+=head2 rects_overlap
+
+	my $overlap = rects_overlap([$x0, $y0, $x1, $y1], [$x0, $y0, $x1, $y1]);
+
+True when two C<[x0, y0, x1, y1]> rects share at least one cell.
+
+=head2 row_spans_outside
+
+	my @spans = row_spans_outside($y, $x0, $x1, @rects);
+
+The cells C<$x0 .. $x1 - 1> of row C<$y> that none of the
+C<[x0, y0, x1, y1]> rects covers, as C<[from, to]> pairs (C<to>
+exclusive) from left to right. Without rects it is the whole span.
 
 =cut
