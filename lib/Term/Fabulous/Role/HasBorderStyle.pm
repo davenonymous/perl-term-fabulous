@@ -22,16 +22,17 @@ role Term::Fabulous::Role::HasBorderStyle {
 	field $border_style_bottom :param :accessor :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
 	field $border_style_left   :param :accessor :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
 
+	# border_style fills the sides that have no style of their own.
 	ADJUST :params ( :$border_style = undef ) {
 		if ( defined $border_style ) {
 			die "Term::Fabulous::Role::HasBorderStyle: border_style must be a Term::Fabulous::Enum::BorderStyle, got "
 				. ( ref $border_style || "'$border_style'" )
 				unless blessed $border_style && $border_style->isa('Term::Fabulous::Enum::BorderStyle');
 
-			$self->border_style_top($border_style);
-			$self->border_style_right($border_style);
-			$self->border_style_bottom($border_style);
-			$self->border_style_left($border_style);
+			foreach my $side (@SIDES) {
+				my $accessor = "border_style_$side";
+				$self->$accessor($border_style) unless defined $self->$accessor;
+			}
 		}
 	}
 
@@ -191,8 +192,9 @@ composes the role. Unknown values die.
 
 A L<Term::Fabulous::Enum::BorderStyle> item, for example
 C<< Term::Fabulous::Enum::BorderStyle->Round >>; it sets the style of
-all four sides. Default: none. Anything else, including the name of a
-style as a string, dies. To use a name, convert it:
+every side that has no side parameter of its own. Default: none.
+Anything else, including the name of a style as a string, dies. To use
+a name, convert it:
 C<< Term::Fabulous::Enum::BorderStyle->from_name('Round') >>.
 
 =item C<border_style_top>
@@ -204,8 +206,13 @@ C<< Term::Fabulous::Enum::BorderStyle->from_name('Round') >>.
 =item C<border_style_left>
 
 C<undef> or a L<Term::Fabulous::Enum::BorderStyle> item for one side.
-Default: C<undef>. These are ignored when C<border_style> is passed as
-well (see L</CAVEATS>).
+Default: C<undef>. A side parameter wins over C<border_style>:
+
+	border_style      => Term::Fabulous::Enum::BorderStyle->Solid,
+	border_style_left => Term::Fabulous::Enum::BorderStyle->Thick,
+
+gives a thick left side and solid other sides, like
+C<border style=Solid style-left=Thick> in a KDL layout.
 
 =back
 
@@ -248,22 +255,6 @@ Accessor for the style of the left side, as L</border_style_top>.
 Called by Clay::UI while it builds the configuration of a frame; it
 adds the border widths to the padding as described in
 L</Border space>. You do not call it yourself.
-
-=head1 CAVEATS
-
-When both C<border_style> and a side parameter such as
-C<border_style_left> are passed to C<new>, C<border_style> wins and the
-side parameter is ignored. Set the side with its accessor after
-construction instead:
-
-	my $box = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
-		border_style => Term::Fabulous::Enum::BorderStyle->Solid,
-	);
-	$box->border_style_left( Term::Fabulous::Enum::BorderStyle->Thick );
-
-In a KDL layout this works directly: C<border style=Solid style-left=Thick>
-(see L<Term::Fabulous::Widget::Box/KDL PROPERTIES>).
 
 =head1 SEE ALSO
 

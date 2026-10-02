@@ -4,7 +4,7 @@ use utf8;
 
 use Test2::V0;
 
-use Encode qw(decode encode);
+use Encode qw(decode);
 use Object::Pad 0.825;
 use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
 use Clay::UI::Role::Layout::HasFloating;
@@ -27,7 +27,7 @@ sub page {
 		border_color => [ 200, 0, 0, 255 ],
 		( $args{background} ? ( background_color => $args{background} ) : () ),
 	);
-	$root->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $_ ), text_color => [ 255, 255, 255, 255 ] ) ) foreach @{ $args{lines} // ['Hello'] };
+	$root->add_child( Term::Fabulous::Widget::Text->new( text => $_, text_color => [ 255, 255, 255, 255 ] ) ) foreach @{ $args{lines} // ['Hello'] };
 	return Term::Fabulous::Static->new( root => $root, width => $args{width} // 12, %{ $args{static} // {} } );
 }
 

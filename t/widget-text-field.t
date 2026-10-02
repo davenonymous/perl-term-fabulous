@@ -107,7 +107,7 @@ subtest 'mouse' => sub {
 	click( $field, 3, 0, modifiers => TB_MOD_MOTION );
 	is $field->editor->selected_text, 'ne', 'dragging selects';
 	click( $field, 6, 0, modifiers => TB_MOD_SHIFT );
-	is $field->editor->selected_text, 'ne tw', 'Shift-click extends the selection';
+	is $field->editor->selected_text, '', 'a click with Shift (which termbox2 never reports) just places the cursor';
 	click( $field, 5, 0 );
 	click( $field, 5, 0 );
 	is $field->editor->selected_text, 'two', 'a double click selects a word';
@@ -122,6 +122,14 @@ subtest 'disabled' => sub {
 	press( $field, 'y' );
 	is $field->value, 'x', 'keys are ignored';
 	is $field->cell( 0, 0 )->[1], $field->color_attr( $field->disabled_color ), 'painted in the disabled color';
+	$field->disabled(0);
+	ok $field->can_focus, 'enabling lets it take the focus again';
+
+	my ($unfocusable) = text_field( can_focus => 0 );
+	ok !$unfocusable->can_focus, 'can_focus => 0 is kept';
+	$unfocusable->disabled(1);
+	$unfocusable->disabled(0);
+	ok !$unfocusable->can_focus, 'and survives a disable/enable cycle';
 };
 
 done_testing;

@@ -236,15 +236,13 @@ L<Term::Fabulous::Widget::Text> widgets.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(encode);
 	use Term::Fabulous::Static;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Text;
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
 
-	# Text widgets take UTF-8 encoded bytes: encode every character string.
 	sub text ($string) {
-		return Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $string ), text_color => [ 230, 230, 230, 255 ] );
+		return Term::Fabulous::Widget::Text->new( text => $string, text_color => [ 230, 230, 230, 255 ] );
 	}
 
 	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
@@ -264,20 +262,21 @@ and an C<e> with an acute accent followed by the rest of the line.
 
 =item *
 
-Text widgets take UTF-8 encoded bytes, not character strings. A
-character string with characters above U+00FF makes drawing die with
-"Wide character"; one with Latin-1 characters such as C<\x{fc}> shows
-U+FFFD replacement characters. Encode with C<Encode::encode('UTF-8', ...)>,
-as the C<text> helper does. This applies only to Text widgets: canvases,
-input widgets and KDL layouts take character strings. See
-L<Term::Fabulous::Manual/Text widgets take UTF-8 bytes>.
+Text widgets take Perl character strings, like everything else in
+Term::Fabulous (canvases, input widgets, KDL layouts). See
+L<Term::Fabulous::Manual/Text is character strings>.
 
 =item *
 
 The C<\x{...}> escapes keep this recipe's source ASCII. With
 C<use utf8;> at the top of a UTF-8 encoded source file you can write
-the characters directly; they are still character strings and still
-need C<encode>.
+the characters directly; both give the same character strings.
+
+=item *
+
+Text from outside the program (a file, a command, a socket) is bytes.
+Decode it with C<Encode::decode('UTF-8', ...)> before passing it to a
+widget, or each byte shows as one Latin-1 character.
 
 =item *
 
@@ -468,7 +467,6 @@ show what the terminal reports for every key.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Text;
@@ -497,9 +495,7 @@ show what the terminal reports for every key.
 		KeyPress => sub ($event) {
 			my $name = $event->key_name;
 			my $text = $event->text;
-			# The typed character may be any Unicode character, and Text widgets
-			# take UTF-8 bytes, so encode it.
-			$last->text( encode( 'UTF-8', sprintf 'key_name: %s, text: %s', $name // 'undef', defined $text ? "'$text'" : 'undef' ) );
+			$last->text( sprintf 'key_name: %s, text: %s', $name // 'undef', defined $text ? "'$text'" : 'undef' );
 
 			my $action = $action_by_key{ $name // '' } or return;
 			$action->();
@@ -541,13 +537,6 @@ sends it as Escape followed by x, and the program receives two key
 presses, C<Escape> and C<x>. Alt with a special key (arrows, Home, End,
 Page Up, Page Down, Insert, Delete, F1 to F12) arrives as one key, such
 as C<Alt+Down>. See L<Term::Fabulous::Manual/Key names>.
-
-=item *
-
-The typed character is put into a Text widget, so it is encoded as UTF-8
-first; without that, typing a character such as the euro sign would make
-drawing die (see
-L</Show non-ASCII text (umlauts, CJK, combining accents)>).
 
 =item *
 
@@ -1219,7 +1208,7 @@ it runs, and its exit status when it ends.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(decode encode);
+	use Encode qw(decode);
 	use IO::Async::Loop;
 	use IO::Async::Process;
 	use IO::Async::Timer::Periodic;
@@ -1242,7 +1231,8 @@ it runs, and its exit status when it ends.
 			padding          => { left => 1, right => 1 },
 		},
 	);
-	my $title = Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+	# The arguments are bytes, like the command's output.
+	my $title = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
 	my $output = Term::Fabulous::Widget::ScrollBox->new(
 		id               => 'output',
 		background_color => [ 30, 35, 50, 255 ],
@@ -1258,12 +1248,11 @@ it runs, and its exit status when it ends.
 		return;
 	}
 
-	# Turns the bytes of one output line into what a Text widget takes:
-	# decoding replaces bytes that are not valid UTF-8 with U+FFFD, and
-	# encoding turns the characters back into UTF-8 bytes.
+	# Turns the bytes of one output line into a character string; bytes
+	# that are not valid UTF-8 become U+FFFD.
 	sub clean ($bytes) {
 		$bytes =~ s/\r\z//;
-		return encode( 'UTF-8', decode( 'UTF-8', $bytes ) );
+		return decode( 'UTF-8', $bytes );
 	}
 
 	# Hands every complete line of a stream to add_line.
@@ -1291,7 +1280,7 @@ it runs, and its exit status when it ends.
 		on_exception => sub ( $process, $exception, $errno, $exit_code ) {
 			# A failed exec leaves $exception empty and the reason in $errno.
 			my $reason = length( $exception // '' ) ? $exception : "$errno";
-			add_line( encode( 'UTF-8', "Could not run the command: $reason" ), [ 255, 110, 110, 255 ] );
+			add_line( "Could not run the command: $reason", [ 255, 110, 110, 255 ] );
 			return;
 		},
 	);
@@ -1337,11 +1326,10 @@ could read the user's key presses.
 
 =item *
 
-Command output is bytes. Text widgets take UTF-8 bytes, so valid UTF-8
-output could go in as it is; decoding and encoding it again turns
-invalid bytes into U+FFFD instead of letting them reach the renderer.
-To put output into a L<Term::Fabulous::Widget::TextArea> or a canvas,
-which take character strings, only decode it.
+Command output is bytes, and Text widgets take character strings, so
+C<clean> decodes every line. Decoding also turns bytes that are not
+valid UTF-8 into U+FFFD. The same decoded lines can go into a
+L<Term::Fabulous::Widget::TextArea> or a canvas.
 
 =item *
 
@@ -1367,7 +1355,6 @@ check box, which validates the input when the user presses Enter.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Widget::Box;
@@ -1399,10 +1386,10 @@ check box, which validates the input when the user presses Enter.
 	$root->add_child($dialog);
 
 	sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
-		return Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $string ), text_color => $color );
+		return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 	}
 
-	my $user     = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
+	my $user    = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
 	my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password',  layout => { sizing => { width => sizing_grow() } }, mask => '*' );
 	my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
 	my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );
@@ -1412,11 +1399,11 @@ check box, which validates the input when the user presses Enter.
 
 	sub log_in () {
 		if ( $user->value eq '' || $password->value eq '' ) {
-			$message->text( encode( 'UTF-8', 'Please fill in both fields.' ) );
+			$message->text('Please fill in both fields.');
 			$ui->interaction->set_focused_widget( $user->value eq '' ? $user : $password );
 			return;
 		}
-		$message->text( encode( 'UTF-8', sprintf 'Welcome, %s!%s', $user->value, $remember->checked ? ' (remembered)' : '' ) );
+		$message->text( sprintf 'Welcome, %s!%s', $user->value, $remember->checked ? ' (remembered)' : '' );
 		return;
 	}
 
@@ -1453,11 +1440,6 @@ focus from code: here to the first field at the start, and to the
 empty field when the input is incomplete. See
 L<Term::Fabulous::Manual/Moving the focus>.
 
-=item *
-
-The message is set with C<encode('UTF-8', ...)> because it contains
-what the user typed, which may be any character.
-
 =back
 
 =head2 Choose from options in Perl (Dropdown, RadioGroup, Slider)
@@ -1470,7 +1452,6 @@ and from radio buttons, and a number from a range, all built in Perl.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Dropdown;
@@ -1517,7 +1498,7 @@ and from radio buttons, and a number from a range, all built in Perl.
 
 	$root->on(
 		Change => sub ($event) {
-			$status->text( encode( 'UTF-8', sprintf '%s: %s', $event->target->id, $event->value // 'none' ) );
+			$status->text( sprintf '%s: %s', $event->target->id, $event->value // 'none' );
 			return;
 		}
 	);
@@ -1682,7 +1663,6 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 	use FindBin;
 	use lib "$FindBin::Bin/../lib/";
 
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Layout;
 
@@ -1789,7 +1769,7 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 	find_widget( $root, 'form' )->on(
 		Change => sub ($event) {
 			my $id = $event->target->id;
-			$status->text( encode( 'UTF-8', sprintf '%s is now %s', $id, shown_value( $id, $event->value ) ) );
+			$status->text( sprintf '%s is now %s', $id, shown_value( $id, $event->value ) );
 			return;
 		}
 	);
@@ -1797,7 +1777,7 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 	$root->on(
 		KeyPress => sub ($event) {
 			return unless ( $event->key_name // '' ) eq 'F2';
-			$status->text( encode( 'UTF-8', values_text() ) );
+			$status->text( values_text() );
 			return;
 		}
 	);
@@ -1828,7 +1808,7 @@ C<Text { text "Name"; text_color "#96a0b4"; }>.
 
 Colors in KDL are strings in any format L<Term::Fabulous::Color>
 understands, such as C<"#61afef"> or C<"rgb(97, 175, 239)">. Text in
-KDL is converted to UTF-8 bytes for you.
+KDL is a character string and is used as is.
 
 =item *
 
@@ -1846,9 +1826,8 @@ read as UTF-8.
 
 Every C<Change> event bubbles from the input to the form box, so one
 listener reports all changes; C<< $event->target >> is the input that
-changed. The status line uses C<encode> because the values may contain
-any character. The password is shown as stars in the status line and
-in the printed values.
+changed. The password is shown as stars in the status line and in the
+printed values.
 
 =item *
 
@@ -2654,7 +2633,6 @@ terminal and plain in a pipe or a file.
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-	use Encode qw(encode);
 	use Term::Fabulous::Static;
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Widget::Box;
@@ -2673,7 +2651,7 @@ terminal and plain in a pipe or a file.
 			padding          => { left => 1, right => 1 },
 		},
 	);
-	$report->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', 'Sales per region (in EUR)' ), text_color => [ 255, 200, 80, 255 ] ) );
+	$report->add_child( Term::Fabulous::Widget::Text->new( text => 'Sales per region (in EUR)', text_color => [ 255, 200, 80, 255 ] ) );
 	foreach my $region ( sort keys %sales ) {
 		my $line = sprintf '%-8s %6d', $region, $sales{$region};
 		$report->add_child( Term::Fabulous::Widget::Text->new( text => $line, text_color => [ 230, 230, 230, 255 ] ) );
@@ -2855,7 +2833,6 @@ F<examples/custom-widget.pl>.
 
 	use Object::Pad 0.825;
 
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Layout;
 	use Term::Fabulous::Widget::Input;
@@ -2972,8 +2949,7 @@ F<examples/custom-widget.pl>.
 
 	$root->on(
 		Change => sub ($event) {
-			# Labels are character strings; Text widgets take UTF-8 bytes.
-			$status->text( encode( 'UTF-8', sprintf '%s switched %s', $event->target->label, $event->value ? 'on' : 'off' ) );
+			$status->text( sprintf '%s switched %s', $event->target->label, $event->value ? 'on' : 'off' );
 			return;
 		}
 	);
@@ -3006,9 +2982,7 @@ C<focus_background_color> while it has the focus. C<accent_color
 =item *
 
 Call C<repaint> after every change of what the widget shows, and
-C<fire_change> only for changes the user makes. The status line encodes
-the label as UTF-8, because labels are character strings and Text
-widgets take bytes.
+C<fire_change> only for changes the user makes.
 
 =item *
 
@@ -3042,7 +3016,6 @@ The widget, saved as F<lib/My/Panel.pm>:
 
 	class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
 		use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
-		use Encode qw(decode encode);
 		use Term::Fabulous::Enum::BorderStyle;
 		use Term::Fabulous::Widget::Text;
 
@@ -3061,10 +3034,10 @@ The widget, saved as F<lib/My/Panel.pm>:
 			$self->add_child($title_widget);    # the first child; the layout adds the others after it
 		}
 
-		# Title text as a character string.
+		# Title text, a character string.
 		method title (@new) {
-			$title_widget->text( encode( 'UTF-8', $new[0] ) ) if @new;
-			return decode( 'UTF-8', $title_widget->text );
+			$title_widget->text( $new[0] ) if @new;
+			return $title_widget->text;
 		}
 
 		# A structured property: 'title "Settings" color="#ffcc00"' has an

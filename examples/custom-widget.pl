@@ -17,7 +17,6 @@ use lib "$FindBin::Bin/../lib/";
 
 use Object::Pad 0.825;
 
-use Encode qw(encode);
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 use Term::Fabulous::Widget::Input;
@@ -134,8 +133,7 @@ my $status = find_widget( $root, 'status' );
 
 $root->on(
 	Change => sub ($event) {
-		# Labels are character strings; Text widgets take UTF-8 bytes.
-		$status->text( encode( 'UTF-8', sprintf '%s switched %s', $event->target->label, $event->value ? 'on' : 'off' ) );
+		$status->text( sprintf '%s switched %s', $event->target->label, $event->value ? 'on' : 'off' );
 		return;
 	}
 );

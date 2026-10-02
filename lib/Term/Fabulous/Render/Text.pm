@@ -12,7 +12,6 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Clip;
 
 role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
-	use Encode qw(decode);
 	use List::Util qw(min);
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
@@ -21,17 +20,16 @@ role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 
 	use constant CLUSTER_CACHE_LIMIT => 4096;
 
-	# Text contents rarely change between frames: memoize the decoded,
-	# sanitized clusters and their widths per UTF-8 string.
+	# Text contents rarely change between frames: memoize the sanitized
+	# clusters and their widths per string.
 	my %clusters_by_text;
 
-	sub _clusters_with_columns ($utf8_text) {
-		my $clusters = $clusters_by_text{$utf8_text};
+	sub _clusters_with_columns ($text) {
+		my $clusters = $clusters_by_text{$text};
 		return $clusters if defined $clusters;
 
 		%clusters_by_text = () if keys(%clusters_by_text) >= CLUSTER_CACHE_LIMIT;
-		my $text = decode( 'UTF-8', $utf8_text, Encode::FB_DEFAULT );
-		return $clusters_by_text{$utf8_text} = [ map { [ $_, cluster_columns($_) ] } grapheme_clusters($text) ];
+		return $clusters_by_text{$text} = [ map { [ $_, cluster_columns($_) ] } grapheme_clusters($text) ];
 	}
 
 	method set_cell;
@@ -104,9 +102,9 @@ bounding box, in the command's text color:
 
 =item *
 
-The text (C<stringContents>, UTF-8 encoded bytes) is decoded, control
-characters are replaced (see L<Term::Fabulous::Unicode/sanitize_text>)
-and it is split into grapheme clusters. Invalid UTF-8 shows as U+FFFD.
+The text (C<stringContents>, a character string) has its control
+characters replaced (see L<Term::Fabulous::Unicode/sanitize_text>) and
+is split into grapheme clusters.
 
 =item *
 
@@ -128,10 +126,9 @@ was painted there before in this frame, or the terminal default.
 
 =back
 
-The line is skipped when its row lies outside the clip area. Decoded
-and segmented lines are cached by their bytes (the cache is emptied
-when it reaches 4096 entries), because texts rarely change between
-frames.
+The line is skipped when its row lies outside the clip area. Segmented
+lines are cached by their text (the cache is emptied when it reaches
+4096 entries), because texts rarely change between frames.
 
 =head1 REQUIRED METHODS
 

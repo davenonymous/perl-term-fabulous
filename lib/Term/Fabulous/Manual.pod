@@ -563,32 +563,35 @@ C<[0, 0, 0, 255]>, which is invisible on the dark background most
 terminals use. To use the terminal's default text color instead, pass
 C<[0, 0, 0, 0]> (see L</Alpha and the terminal default color>).
 
-=head2 Text widgets take UTF-8 bytes
+=head2 Text is character strings
 
-B<The C<text> of a Text widget must be a UTF-8 encoded byte string, not a
-Perl character string.> ASCII text is the same in both forms, so this only
-matters for other characters. Encode text before passing it:
+B<The C<text> of a Text widget is a Perl character string>, like all text
+in Term::Fabulous: the input widgets (C<value>, C<label>, C<placeholder>,
+options), the canvas drawing methods, L<Term::Fabulous::Editor>,
+L<Term::Fabulous::Unicode> and
+C<< Term::Fabulous::Layout->new( string => ... ) >>. With C<use utf8;>,
+non-ASCII literals in your source work directly:
 
 	use utf8;                 # this source file contains non-ASCII text
-	use Encode qw(encode);
 
 	my $greeting = Term::Fabulous::Widget::Text->new(
-		text       => encode( 'UTF-8', 'Grüße aus München' ),
+		text       => 'Grüße aus München',
 		text_color => [ 255, 255, 255, 255 ],
 	);
-	$greeting->text( encode( 'UTF-8', 'Schöne Grüße' ) );
+	$greeting->text('Schöne Grüße');
 
-What goes wrong otherwise: a character string with characters above
-U+00FF (for example Japanese text or emoji) makes drawing die with
-C<Wide character>, and one with only Latin-1 characters (like u with
-diaeresis, U+00FC) shows replacement characters (U+FFFD) in place of
-them.
+Text that comes from outside the program (files, command output,
+sockets, C<@ARGV>) is bytes. Decode it first with
+C<Encode::decode('UTF-8', ...)>; otherwise each byte shows as one Latin-1
+character, so "ü" shows as two wrong characters:
 
-B<Everything else in Term::Fabulous takes character strings>: the input
-widgets (C<value>, C<label>, C<placeholder>, options), the canvas drawing
-methods, L<Term::Fabulous::Editor>, L<Term::Fabulous::Unicode>, and
-C<< Term::Fabulous::Layout->new( string => ... ) >>. Text in a KDL layout
-is encoded for you.
+	use Encode qw(decode);
+
+	chomp( my $hostname = `hostname` );    # bytes
+	$label->text( decode( 'UTF-8', $hostname ) );
+
+Text in a KDL layout is already a character string and is passed to the
+Text widget as is.
 
 =head2 Wrapping
 
@@ -1192,10 +1195,11 @@ example to start with the cursor in the first field.
 
 To take a widget out of the focus order, call C<< $widget->can_focus(0) >>
 after creating it; Tab skips it, a click does not focus it, and
-C<set_focused_widget> dies for it. (Passing C<can_focus =E<gt> 0> to
-C<new> works for Buttons, but is currently ignored by the input widgets
-and by RadioGroup; call the method instead.) Disabled inputs cannot take
-the focus.
+C<set_focused_widget> dies for it. Passing C<can_focus =E<gt> 0> to
+C<new> does the same and works for every focusable widget. Disabled
+inputs cannot take the focus: C<< $input->disabled(1) >> forces
+C<can_focus> to 0 while the input is disabled, and C<disabled(0)>
+restores the value it had before.
 
 =head2 Reacting to focus changes
 
@@ -1361,17 +1365,9 @@ widgets: C<Mouse> goes to the widget that drew the cell, C<OnPress> to the
 innermost pressable widget whose box contains the pointer, even if it
 draws nothing there.
 
-Two limitations follow from passing the pointer to Clay once per frame
-and from termbox2:
+One limitation follows from termbox2:
 
 =over
-
-=item *
-
-A click whose press and release both arrive within one frame (1/30
-second), such as a quick touchpad tap, fires two C<Mouse> events but no
-C<OnPress> and C<OnRelease>. If no click may be missed, also listen to
-C<Mouse> for C<TB_KEY_MOUSE_RELEASE>.
 
 =item *
 
@@ -1416,6 +1412,11 @@ switches vertical scrolling off. The wheel scrolls only vertically:
 C<horizontal =E<gt> 1> lets content be wider than the box, but it can only
 be moved sideways from code, with C<child_offset>.
 
+A wheel notch scrolls the scroll box under the pointer only when no
+widget handled the C<Mouse> event. Widgets that scroll themselves
+(TextArea, Slider, the open Dropdown list) return C<HANDLED> for the
+wheel, and the enclosing scroll box then stays put.
+
 =item *
 
 The scroll box fires C<OnScroll> when its position changed.
@@ -1441,7 +1442,8 @@ L<Term::Fabulous::Widget::ScrollBox>.
 
 There is no keyboard scrolling and no scroll bar for ScrollBox. A
 L<Term::Fabulous::Widget::TextArea> scrolls its own text, with keys,
-wheel and a scroll bar.
+wheel and a scroll bar, and the box around it does not scroll while the
+pointer is over it.
 
 =head1 CANVASES
 
@@ -1489,8 +1491,8 @@ the canvas background, or the terminal's default text color.
 	$canvas->put_text( 0, 0, 'Score: 100', '#ffffff', '#202040' );
 	$canvas->fill( 0, 3, 10, 2, '#', [ 0, 200, 0 ] );       # 10x2 block
 
-Text drawn on a canvas is a character string (no UTF-8 encoding, unlike
-Text widgets).
+Text drawn on a canvas is a character string, like the text of a Text
+widget.
 
 =head2 Pixels
 
@@ -1719,8 +1721,8 @@ depends on another, give it after the other: a dropdown's C<value> after
 its C<options>, a slider's C<value> after its C<min> and C<max>, a text
 field's C<value> after its C<max_length>.
 
-Text in a KDL layout is plain text; Term::Fabulous encodes it for Text
-widgets.
+Text in a KDL layout is a character string and is passed to Text widgets
+as is.
 
 L<Term::Fabulous::Layout> documents the grammar and lists the properties
 of every widget. To use your own widget classes in a layout, see
@@ -1995,16 +1997,12 @@ widgets at a time, for example by building only the visible part of a
 long list, or by drawing many small items on a canvas instead. See
 L<Term::Fabulous/LIMITATIONS>.
 
-=head2 "Wide character" or garbled characters in a Text widget
+=head2 Garbled characters in a Text widget, input, canvas or KDL layout
 
-Text widgets take UTF-8 encoded bytes. Pass
-C<encode('UTF-8', $text)>; see L</Text widgets take UTF-8 bytes>.
-
-=head2 Garbled characters in an input, canvas or KDL layout
-
-These take character strings. If your source code contains non-ASCII
-characters, add C<use utf8;>. If the text comes from a file or
-C<@ARGV>, decode it first (C<decode('UTF-8', $bytes)>).
+All of these take character strings. If your source code contains
+non-ASCII characters, add C<use utf8;>. If the text comes from a file,
+a command or C<@ARGV>, decode it first (C<decode('UTF-8', $bytes)>); see
+L</Text is character strings>.
 
 =head2 Wide characters (CJK, emoji) shift the rest of the line
 
@@ -2281,7 +2279,7 @@ L</SCROLLING>, L<Term::Fabulous/MOUSE WHEEL SCROLLING>.
 
 =item UTF-8 bytes versus character strings
 
-L</Text widgets take UTF-8 bytes>.
+L</Text is character strings>.
 
 =item Errors, crashes, restoring the terminal
 

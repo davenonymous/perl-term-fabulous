@@ -239,9 +239,9 @@ terminal's default foreground color.
 
 =item C<border_style>
 
-A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of all
-four sides. Default: C<undef> (no border style; a side with a width is
-then drawn with spaces).
+A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of
+every side that has no side parameter of its own. Default: C<undef> (no
+border style; a side with a width is then drawn with spaces).
 
 =item C<border_style_top>
 
@@ -252,7 +252,7 @@ then drawn with spaces).
 =item C<border_style_left>
 
 A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of one
-side. Default: C<undef>. Ignored when C<border_style> is passed too.
+side. Default: C<undef>. It wins over C<border_style> for that side.
 
 =item C<width_group>
 

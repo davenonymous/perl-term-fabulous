@@ -34,6 +34,9 @@ subtest 'values snap to the step' => sub {
 	is $slider->value, 0.3, 'rounded to the step, without floating-point noise';
 	is $slider->format_value( $slider->value ), '0.3', 'shown with the step decimals';
 	is( ( slider( min => 0, max => 10, step => 3, value => 10 ) )[0]->value, 9, 'the highest value on the grid' );
+	my ($offset) = slider( min => 0.5, max => 10.5, step => 1 );
+	is [ $offset->value, $offset->value(2.5), $offset->format_value(2.5) ], [ 0.5, 2.5, '2.5' ], 'the decimals of min count too';
+	is( ( slider( min => 0, max => 1e-9, step => 1e-12, value => 3e-12 ) )[0]->value, 3e-12, 'a tiny step keeps its decimals' );
 
 	$slider->max(0.2);
 	is $slider->value, 0.2, 'a new range moves the value into it';

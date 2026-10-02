@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::TextInput
 	:abstract
 {
 	use Feature::Compat::Try;
-	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns);
 
@@ -200,8 +200,9 @@ class Term::Fabulous::Widget::TextInput
 	}
 
 	# ---------------------------------------------------------------------
-	# Mouse: a press places the cursor (Shift extends the selection), a
-	# double click selects a word, dragging selects.
+	# Mouse: a press places the cursor, a double click selects a word,
+	# dragging selects. termbox2 reports no Shift with the mouse, so
+	# there is no Shift+click.
 	# ---------------------------------------------------------------------
 
 	method handle_mouse ($event) {
@@ -227,7 +228,7 @@ class Term::Fabulous::Widget::TextInput
 			@last_press = ();
 		}
 		else {
-			$editor->move_to( @position, $event->modifiers & TB_MOD_SHIFT ? 1 : 0 );
+			$editor->move_to( @position, 0 );
 			@last_press = ( $now, @position );
 		}
 		$dragging = 1;

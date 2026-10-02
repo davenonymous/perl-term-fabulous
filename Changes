@@ -74,3 +74,15 @@ Revision history for Term::Fabulous
           constructors reject measure_text, key_name has no name for C1
           control characters, editor errors name the text input, and
           the editor clipboard can be read through an editor
+        - Text widgets take character strings like everything else;
+          UTF-8 bytes no longer have to be encoded for them. can_focus
+          given to new is honored by the input widgets and RadioGroup,
+          and disabled(0) restores it. A press and a release within one
+          frame both reach Clay, so fast clicks press buttons. A wheel
+          notch a widget handled (TextArea, Slider, the dropdown list)
+          no longer also scrolls the ScrollBox around it; fire_event
+          reports the outcome for that. A border_style_<side> parameter
+          wins over border_style, as in KDL. Slider values keep the
+          decimals of min and of tiny steps. TextInput drops its
+          Shift+click branch, which termbox2 can never trigger, and
+          examples/kdl-layout.pl starts again

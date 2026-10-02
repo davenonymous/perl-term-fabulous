@@ -12,7 +12,6 @@ widgets, keyboard and mouse
      no warnings 'experimental::signatures';
 
      use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-     use Encode qw(encode);
      use Term::Fabulous;
      use Term::Fabulous::Widget::Box;
      use Term::Fabulous::Widget::Text;
@@ -37,8 +36,7 @@ widgets, keyboard and mouse
 
      $name->on(
              Submit => sub ($event) {
-                     # Text widgets take UTF-8 bytes; the field's value is a character string.
-                     $greeting->text( encode( 'UTF-8', 'Hello, ' . $event->value . '!' ) );
+                     $greeting->text( 'Hello, ' . $event->value . '!' );
                      return;
              }
      );
@@ -319,7 +317,9 @@ mouse event. The pointer is reported only on button presses, releases,
 drags and wheel turns (see ["What the terminal reports" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#What-the-terminal-reports)),
 so this is not the live mouse position. Term::Fabulous
 passes it to Clay with every frame, which derives the hover and press
-state of the widgets from it.
+state of the widgets from it. When the button went down and up again
+between two frames, each state gets a frame of its own, so a click is
+never too fast to press a widget.
 
 ## termbox\_draw\_interval
 
@@ -428,10 +428,13 @@ Each notch of the mouse wheel scrolls the scroll box under the
 pointer (for example a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox)) by three
 rows. Notches that arrive between two frames are added up and applied
 when the next frame is drawn. A `Mouse` event is fired for every notch
-termbox2 reports (see ["LIMITATIONS"](#limitations) for reports it loses). Widgets that
-scroll themselves, like [Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea), use those
-`Mouse` events. Only vertical scrolling is driven by the wheel; there is
-no horizontal wheel input.
+termbox2 reports (see ["LIMITATIONS"](#limitations) for reports it loses), before the
+notch is counted: when a listener returns `HANDLED` for it, the notch
+scrolls no scroll box. Widgets that scroll themselves, like
+[Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea), handle the wheel this way, so the
+scroll box around them stays put while the pointer is over them. Only
+vertical scrolling is driven by the wheel; there is no horizontal wheel
+input.
 
 # MODULES
 
@@ -660,19 +663,11 @@ but very large widget trees cost CPU time.
 - termbox2 asks the terminal to report mouse buttons, drags and the wheel,
 but not movement without a pressed button, so hover effects follow
 clicks, drags and the wheel only.
-- The press and release state of the mouse is passed to Clay once per
-frame. A click whose press and release both arrive within one frame
-(1/30 second), such as a quick touchpad tap, fires its two `Mouse`
-events but no `OnPress` and `OnRelease`. Buttons, checkboxes and radio
-buttons do not react to it; text inputs, sliders and dropdowns do,
-because they act on the `Mouse` event itself.
 - When the terminal sends several mouse reports at once (for example
 during fast wheel scrolling), termbox2 delivers only the first, so some
 wheel notches and fast releases are lost.
 - `Alt` plus a printable key cannot be told apart from `Escape` followed
 by that key.
-- Text widgets take UTF-8 encoded byte strings, while everything else
-takes character strings; see ["TEXT" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#TEXT).
 - There are no floating windows or dialogs for application use yet; only
 the dropdown list floats over other widgets.
 - Clay lays out at most 8192 elements per frame; every widget is one

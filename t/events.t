@@ -3,6 +3,7 @@ use warnings;
 
 use Test2::V0;
 
+use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
 use Term::Fabulous::Termbox qw(
@@ -40,7 +41,7 @@ my $ui = Term::Fabulous->new( width => 20, height => 5, root => $root );
 # Handlers on the root see every event through bubbling; record the widget
 # each event was fired on.
 my %targets;
-foreach my $name (qw(KeyPress Mouse OnPress)) {
+foreach my $name (qw(KeyPress Mouse OnPress OnRelease)) {
 	$root->on( $name => sub { push @{ $targets{$name} }, $_[0]->target; return } );
 }
 
@@ -74,6 +75,18 @@ subtest 'Mouse targets the widget under the pointer' => sub {
 	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 10, y => 3 );
 	ref_is $targets{Mouse}[1], $root, 'outside the button: the root';
 	is $ui->pointer_state->{down}, 0, 'release clears the pointer';
+};
+
+subtest 'a press and a release within one frame both reach Clay' => sub {
+	$ui->_draw_pending;
+	%targets = ();
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT,    x => 1, y => 1 );
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 2, y => 1 );
+	is $ui->pointer_state, { x => 2, y => 1, down => 0 }, 'pointer_state is the newest report';
+
+	$ui->_draw_pending;
+	is [ map { refaddr $_ } $targets{OnPress}[0], $targets{OnRelease}[0] ], [ ( refaddr $button ) x 2 ], 'the frame shows the press and then the release';
+	is $ui->pointer_state, { x => 2, y => 1, down => 0 }, 'and leaves the newest report as the pointer';
 };
 
 subtest 'Mouse targets a canvas without a background' => sub {
@@ -157,12 +170,12 @@ subtest 'scroll boxes' => sub {
 		id     => 'log',
 		layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },
 	);
-	my @rows = map { Term::Fabulous::Widget::Box->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } ) } 10 .. 15;
+	my @rows = map { Term::Fabulous::Widget::Box->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } ) } 10 .. 19;
 	$log->add_child($_)         foreach @rows;
 	$scroll_root->add_child($_) foreach $header, $log;
 	my $scroll_ui = Term::Fabulous->new( width => 20, height => 5, root => $scroll_root );
 	my @mouse_targets;
-	$scroll_root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
+	$scroll_root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return Clay::UI::Enum::Result->CONTINUE } );
 
 	my $row_top = sub {
 		my ($row) = @_;
@@ -177,6 +190,14 @@ subtest 'scroll boxes' => sub {
 	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 3 );
 	$scroll_ui->draw( scroll_cells => [ 0, -3 ] );
 	is $row_top->( $rows[3] ), 2, 'scroll_cells scrolls the box under the pointer by whole rows';
+
+	$scroll_ui->_draw_pending;
+	is $row_top->( $rows[3] ), -1, 'a frame applies the wheel notches reported since the last one';
+
+	$log->on( Mouse => sub { Clay::UI::Enum::Result->HANDLED } );
+	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 3 );
+	$scroll_ui->_draw_pending;
+	is $row_top->( $rows[3] ), -1, 'a notch a widget handled scrolls no scroll box';
 
 	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
 	ref_is $mouse_targets[-1], $header, 'content scrolled out of the box does not take the pointer';

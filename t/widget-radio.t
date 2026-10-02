@@ -28,6 +28,11 @@ subtest 'the group selects one button' => sub {
 	is [ map { $_->label } $group->buttons ], [qw(Small Medium Large)], 'buttons in nested boxes belong to the group';
 	is [ map { row_text( $_, 0 ) } @$buttons ], [ '( ) Small', "(\x{2022}) Medium", '( ) Large' ], 'the selected button shows its mark';
 	ok !$buttons->[0]->can_focus, 'buttons do not take the focus';
+	my ($unfocusable) = radio_group( can_focus => 0 );
+	ok !$unfocusable->can_focus, 'can_focus => 0 is kept';
+	$unfocusable->disabled(1);
+	$unfocusable->disabled(0);
+	ok !$unfocusable->can_focus, 'and survives a disable/enable cycle';
 
 	$group->value('l');
 	is [ map { $_->is_selected } @$buttons ], [ 0, 0, 1 ], 'setting the value selects another button';

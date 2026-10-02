@@ -36,7 +36,6 @@ role Term::Fabulous::Render
 		CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM
 	);
-	use Encode qw(decode);
 	use Scalar::Util qw(looks_like_number);
 	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR);
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -103,7 +102,7 @@ role Term::Fabulous::Render
 
 	# Clay measures single words and single lines, so the height is one cell.
 	sub _measure_text ( $text, $config, $userdata ) {
-		return { width => string_columns( decode( 'UTF-8', $text, Encode::FB_DEFAULT ) ), height => 1 };
+		return { width => string_columns($text), height => 1 };
 	}
 
 	method get_last_commands () {

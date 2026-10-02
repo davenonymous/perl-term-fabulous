@@ -15,7 +15,6 @@ no warnings 'experimental::signatures';
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
-use Encode qw(encode);
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 
@@ -122,7 +121,7 @@ sub values_text () {
 find_widget( $root, 'form' )->on(
 	Change => sub ($event) {
 		my $id = $event->target->id;
-		$status->text( encode( 'UTF-8', sprintf '%s is now %s', $id, shown_value( $id, $event->value ) ) );
+		$status->text( sprintf '%s is now %s', $id, shown_value( $id, $event->value ) );
 		return;
 	}
 );
@@ -130,7 +129,7 @@ find_widget( $root, 'form' )->on(
 $root->on(
 	KeyPress => sub ($event) {
 		return unless ( $event->key_name // '' ) eq 'F2';
-		$status->text( encode( 'UTF-8', values_text() ) );
+		$status->text( values_text() );
 		return;
 	}
 );

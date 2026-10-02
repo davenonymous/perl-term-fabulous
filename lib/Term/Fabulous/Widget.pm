@@ -266,9 +266,9 @@ C<background_color>. Default: the terminal's default foreground color.
 =item C<border_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item, such as
-C<< Term::Fabulous::Enum::BorderStyle->Round >>, used for all four
-sides. Default: none; a side that has a width but no style is drawn
-with the C<Blank> style (spaces). See
+C<< Term::Fabulous::Enum::BorderStyle->Round >>, used for every side
+that has no side parameter of its own. Default: none; a side that has a
+width but no style is drawn with the C<Blank> style (spaces). See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<border_style_top>
@@ -279,9 +279,9 @@ L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<border_style_left>
 
-The style of one side, a L<Term::Fabulous::Enum::BorderStyle> item.
-Ignored when C<border_style> is given as well; see
-L<Term::Fabulous::Role::HasBorderStyle/CAVEATS>.
+The style of one side, a L<Term::Fabulous::Enum::BorderStyle> item. It
+wins over C<border_style> for that side; see
+L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<width_group>
 

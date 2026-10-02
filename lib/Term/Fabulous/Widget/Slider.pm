@@ -104,12 +104,20 @@ class Term::Fabulous::Widget::Slider
 	# Value
 	# ---------------------------------------------------------------------
 
-	# Digits after the decimal point of the step, so values print without
+	# Digits after the decimal point in the shortest form of a number:
+	# 0.25 has 2, 1e-12 has 12, 1500 has 0.
+	sub _decimal_places ($number) {
+		my ( $mantissa, $exponent ) = sprintf( '%.15g', $number ) =~ /\A-?(\d+(?:\.\d+)?)(?:e([-+]\d+))?\z/
+			or die "Term::Fabulous::Widget::Slider: cannot read the decimal places of $number";
+		my $places = $mantissa =~ /\.(\d+)\z/ ? length $1 : 0;
+		return List::Util::max( 0, $places - ( $exponent // 0 ) );
+	}
+
+	# Digits after the decimal point that values need: enough for the
+	# step and for min, so values stay on the grid and print without
 	# floating-point noise.
 	method _decimals () {
-		my $text = sprintf '%.10f', $step;
-		$text =~ s/0+\z//;
-		return $text =~ /\.(\d+)\z/ ? length $1 : 0;
+		return List::Util::max( _decimal_places($step), _decimal_places($min) );
 	}
 
 	# The nearest value on the grid min, min + step, ... inside the range.
@@ -334,10 +342,11 @@ here). The part of the track left of the thumb is painted in the
 C<accent_color>, the rest in C<track_color>.
 
 The value is always on the grid C<min>, C<min + step>,
-C<min + 2 * step>, ... and never outside C<min>..C<max> (but see the
-known bug in L</CAVEATS>). Values are
-rounded to as many decimal places as the C<step> has, so with a step of
-C<0.1> you get C<0.3>, not C<0.30000000000000004>. If the range is not a
+C<min + 2 * step>, ... and never outside C<min>..C<max>. Values are
+rounded to as many decimal places as the C<step> or C<min> has
+(whichever has more), so with a step of C<0.1> you get C<0.3>, not
+C<0.30000000000000004>, and C<< min => 0.5, step => 1 >> gives C<0.5>,
+C<1.5>, C<2.5>, ... If the range is not a
 whole number of steps (C<min> 0, C<max> 10, C<step> 3), the highest
 reachable value is the last grid value below C<max> (9).
 
@@ -657,27 +666,6 @@ before C<min> (C<min 200> while C<max> is still 100 dies).
 		$high->value( $event->value ) if $high->value < $event->value;
 		return;
 	} );
-
-=head1 CAVEATS
-
-=over
-
-=item *
-
-B<Known bug:> values are rounded to as many decimal places as the
-C<step> has, ignoring C<min>. When C<min> has more decimal places than
-the C<step> (C<< min => 0.5, step => 1 >>), values can leave the grid
-or fall below C<min>: the initial value becomes 0, and C<value(2.5)>
-returns 2. A C<step> below C<1e-10> rounds every value to a whole
-number. Give C<min> no more decimal places than the C<step>, and use
-steps of at least C<1e-10>.
-
-=item *
-
-Inside a L<Term::Fabulous::Widget::ScrollBox>, one notch of the mouse
-wheel over the slider both changes the value and scrolls the scroll box.
-
-=back
 
 =head1 SEE ALSO
 

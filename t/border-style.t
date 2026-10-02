@@ -29,6 +29,8 @@ subtest 'widget border styles are validated' => sub {
 
 	my $box = Term::Fabulous::Widget::Box->new( border_style => $Style->Round );
 	ref_is $box->border_style_left, $Style->Round, 'border_style sets every side';
+	my $mixed = Term::Fabulous::Widget::Box->new( border_style => $Style->Round, border_style_left => $Style->Thick );
+	is [ map { $mixed->$_ } qw(border_style_left border_style_top) ], [ $Style->Thick, $Style->Round ], 'a side parameter wins over border_style';
 	like dies { $box->border_style_left('Round') }, qr/border_style_left/, 'accessor write is checked';
 	ok lives { $box->border_style_left(undef) }, 'undef clears a side';
 };

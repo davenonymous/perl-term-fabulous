@@ -10,7 +10,6 @@ no warnings 'experimental::signatures';
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
-use Encode qw(encode);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
@@ -39,7 +38,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 
 sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
-	return Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $string ), text_color => $color );
+	return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 }
 
 $root->add_child( text('Tab and Shift-Tab move between inputs; the mouse works too. Ctrl+C quits.') );
@@ -103,11 +102,11 @@ $form->on(
 	Change => sub ($event) {
 		my $value = $event->value // 'nothing';
 		$value =~ s/\n/\x{21B5}/g;
-		$status->text( encode( 'UTF-8', sprintf '%s changed to: %s', $event->target->id, $value ) );
+		$status->text( sprintf '%s changed to: %s', $event->target->id, $value );
 		return;
 	}
 );
-$name->on( Submit => sub ($event) { $status->text( encode( 'UTF-8', 'Hello, ' . $event->value . '!' ) ); return } );
+$name->on( Submit => sub ($event) { $status->text( 'Hello, ' . $event->value . '!' ); return } );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 $ui->interaction->set_focused_widget($name);

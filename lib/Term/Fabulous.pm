@@ -19,6 +19,7 @@ class Term::Fabulous
 	:does(Term::Fabulous::Render::Target::Termbox)
 	:strict(params)
 {
+	use Clay::UI::Enum::Result;
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_BORDER
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM
@@ -60,8 +61,9 @@ class Term::Fabulous
 	field @_notifiers;
 	field $_resize_timer;
 	field $_pending_resize;
-	field $_pointer;
-	field $_wheel_rows = 0;    # wheel scrolling since the last frame
+	field $_pointer;             # the pointer state as last reported
+	field @_pointer_queue;       # pointer states no frame has shown to Clay yet
+	field $_wheel_rows = 0;      # wheel scrolling since the last frame
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -209,14 +211,29 @@ class Term::Fabulous
 		$_resize_timer   = undef;
 		$_pending_resize = undef;
 		$_wheel_rows     = 0;
+		@_pointer_queue  = ();
 		return;
 	}
 
 	method _draw_frame () {
 		return if $_resize_timer->is_running;
+		$self->_draw_pending;
+		return;
+	}
+
+	# Clay takes one button state per frame, so every queued pointer state
+	# gets a frame of its own; the wheel rows go with the first.
+	method _draw_pending () {
+		my @pointers = splice @_pointer_queue;
+		push @pointers, $_pointer unless @pointers;
 		my $rows = $_wheel_rows;
 		$_wheel_rows = 0;
-		$self->draw( scroll_cells => [ 0, $rows ] );
+
+		foreach my $pointer (@pointers) {
+			$_pointer = $pointer;
+			$self->draw( scroll_cells => [ 0, $rows ] );
+			$rows = 0;
+		}
 		return;
 	}
 
@@ -258,18 +275,35 @@ class Term::Fabulous
 
 	method _on_mouse ($event) {
 		my ( $x, $y, $key ) = ( $event->x, $event->y, $event->key );
+		my $newest = @_pointer_queue ? $_pointer_queue[-1] : $_pointer;
 		my $down
 			= $key == TB_KEY_MOUSE_LEFT    ? 1
 			: $key == TB_KEY_MOUSE_RELEASE ? 0
-			:                                ( defined $_pointer ? $_pointer->{down} : 0 );
+			:                                ( defined $newest ? $newest->{down} : 0 );
 		$_pointer = { x => $x, y => $y, down => $down };
-		$_wheel_rows += WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_UP;
-		$_wheel_rows -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		$self->_queue_pointer($_pointer);
 
 		my $target = $self->_emitter_at( $x, $y ) // $self->root;
 		$self->interaction->set_focused_widget( _focusable_at_or_above($target) )
 			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
-		$target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
+		my $result = $target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
+
+		# A widget that scrolls itself has used the wheel notch.
+		return if $result == Clay::UI::Enum::Result->HANDLED;
+		$_wheel_rows += WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_UP;
+		$_wheel_rows -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		return;
+	}
+
+	# Motion replaces the newest queued state; a press or a release adds
+	# one, so a press and a release within the same frame are both shown
+	# to Clay.
+	method _queue_pointer ($pointer) {
+		if ( @_pointer_queue && $_pointer_queue[-1]{down} == $pointer->{down} ) {
+			$_pointer_queue[-1] = $pointer;
+			return;
+		}
+		push @_pointer_queue, $pointer;
 		return;
 	}
 
@@ -333,7 +367,6 @@ widgets, keyboard and mouse
 	no warnings 'experimental::signatures';
 
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Text;
@@ -358,8 +391,7 @@ widgets, keyboard and mouse
 
 	$name->on(
 		Submit => sub ($event) {
-			# Text widgets take UTF-8 bytes; the field's value is a character string.
-			$greeting->text( encode( 'UTF-8', 'Hello, ' . $event->value . '!' ) );
+			$greeting->text( 'Hello, ' . $event->value . '!' );
 			return;
 		}
 	);
@@ -678,7 +710,9 @@ mouse event. The pointer is reported only on button presses, releases,
 drags and wheel turns (see L<Term::Fabulous::Manual/What the terminal reports>),
 so this is not the live mouse position. Term::Fabulous
 passes it to Clay with every frame, which derives the hover and press
-state of the widgets from it.
+state of the widgets from it. When the button went down and up again
+between two frames, each state gets a frame of its own, so a click is
+never too fast to press a widget.
 
 =head2 termbox_draw_interval
 
@@ -789,10 +823,13 @@ Each notch of the mouse wheel scrolls the scroll box under the
 pointer (for example a L<Term::Fabulous::Widget::ScrollBox>) by three
 rows. Notches that arrive between two frames are added up and applied
 when the next frame is drawn. A C<Mouse> event is fired for every notch
-termbox2 reports (see L</LIMITATIONS> for reports it loses). Widgets that
-scroll themselves, like L<Term::Fabulous::Widget::TextArea>, use those
-C<Mouse> events. Only vertical scrolling is driven by the wheel; there is
-no horizontal wheel input.
+termbox2 reports (see L</LIMITATIONS> for reports it loses), before the
+notch is counted: when a listener returns C<HANDLED> for it, the notch
+scrolls no scroll box. Widgets that scroll themselves, like
+L<Term::Fabulous::Widget::TextArea>, handle the wheel this way, so the
+scroll box around them stays put while the pointer is over them. Only
+vertical scrolling is driven by the wheel; there is no horizontal wheel
+input.
 
 =head1 MODULES
 
@@ -1055,15 +1092,6 @@ clicks, drags and the wheel only.
 
 =item *
 
-The press and release state of the mouse is passed to Clay once per
-frame. A click whose press and release both arrive within one frame
-(1/30 second), such as a quick touchpad tap, fires its two C<Mouse>
-events but no C<OnPress> and C<OnRelease>. Buttons, checkboxes and radio
-buttons do not react to it; text inputs, sliders and dropdowns do,
-because they act on the C<Mouse> event itself.
-
-=item *
-
 When the terminal sends several mouse reports at once (for example
 during fast wheel scrolling), termbox2 delivers only the first, so some
 wheel notches and fast releases are lost.
@@ -1072,11 +1100,6 @@ wheel notches and fast releases are lost.
 
 C<Alt> plus a printable key cannot be told apart from C<Escape> followed
 by that key.
-
-=item *
-
-Text widgets take UTF-8 encoded byte strings, while everything else
-takes character strings; see L<Term::Fabulous::Manual/TEXT>.
 
 =item *
 

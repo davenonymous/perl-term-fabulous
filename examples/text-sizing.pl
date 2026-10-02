@@ -74,7 +74,6 @@ my @texts = (
 	$german,
 );
 
-use Encode qw(encode);
 
 foreach my $text (@texts) {
 	my $cell = Term::Fabulous::Widget::Box->new(
@@ -90,7 +89,7 @@ foreach my $text (@texts) {
 	);
 
 	my $label = Term::Fabulous::Widget::Text->new(
-		text       => encode('UTF-8', $text),
+		text       => $text,
 		text_color => [255, 255, 255, 255],
 	);
 

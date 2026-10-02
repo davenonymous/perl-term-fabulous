@@ -4,7 +4,6 @@ use utf8;
 
 use Test2::V0;
 
-use Encode qw(encode);
 use Term::Fabulous::Layout;
 
 sub layout {
@@ -156,8 +155,7 @@ Box "root" {
 KDL
 	my ($text) = $root->children->@*;
 	is $text->id, 'greeting', 'Text keeps its id';
-	is $text->text, encode( 'UTF-8', "Grüße 🎉" ), 'text is stored as UTF-8 bytes';
-	ok !utf8::is_utf8( $text->text ), 'text is a byte string';
+	is $text->text, "Grüße 🎉", 'text is stored as a character string';
 	is $text->text_color, [ 1, 2, 3, 255 ], 'text_color';
 
 	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext\n}") },   qr/'text' needs exactly one argument/, 'text without argument';

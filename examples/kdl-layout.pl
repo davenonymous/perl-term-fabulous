@@ -41,13 +41,9 @@ END
 my $root = $layout->build;
 
 my $ui = Term::Fabulous->new(
-	width       => 100,
-	height      => 32,
-	root        => $root,
-	use_termbox => 1,
+	width  => 100,
+	height => 32,
+	root   => $root,
 );
-
-use Data::Printer;
-#p $root;
 
 $ui->run();

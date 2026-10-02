@@ -15,7 +15,6 @@ no warnings 'experimental::signatures';
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
-use Encode qw(encode);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
@@ -48,8 +47,8 @@ foreach my $style ( sort keys %panels ) {
 		border_style => Term::Fabulous::Enum::BorderStyle->from_name($style),
 		border_color => [ 120, 180, 240, 255 ],
 	);
-	$panel->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', "$style border" ), text_color => [ 255, 200, 80, 255 ] ) );
-	$panel->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $_ ), text_color => [ 230, 230, 230, 255 ] ) ) foreach split /\n/, $panels{$style};
+	$panel->add_child( Term::Fabulous::Widget::Text->new( text => "$style border", text_color => [ 255, 200, 80, 255 ] ) );
+	$panel->add_child( Term::Fabulous::Widget::Text->new( text => $_, text_color => [ 230, 230, 230, 255 ] ) ) foreach split /\n/, $panels{$style};
 	$root->add_child($panel);
 }
 

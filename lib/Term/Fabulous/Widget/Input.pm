@@ -34,6 +34,9 @@ class Term::Fabulous::Widget::Input
 
 	field $disabled :param = 0;
 
+	# The can_focus the input goes back to when it is enabled again.
+	field $can_focus_when_enabled;
+
 	field $text_color             :param = [ 220, 223, 228, 255 ];
 	field $disabled_color         :param = [ 108, 112, 120, 255 ];
 	field $accent_color           :param = [ 97,  175, 239, 255 ];
@@ -46,7 +49,8 @@ class Term::Fabulous::Widget::Input
 	method paint;
 
 	ADJUST {
-		$disabled = $disabled ? 1 : 0;
+		$disabled               = $disabled ? 1 : 0;
+		$can_focus_when_enabled = $self->can_focus ? 1 : 0;
 		$self->_checked_color( $_ => $self->$_ ) foreach @COLOR_NAMES;
 		$self->_sync_focusability;
 
@@ -73,7 +77,10 @@ class Term::Fabulous::Widget::Input
 
 	method disabled (@new) {
 		return $disabled unless @new;
-		$disabled = $new[0] ? 1 : 0;
+		my $disable = $new[0] ? 1 : 0;
+		return $disabled if $disable == $disabled;
+		$can_focus_when_enabled = $self->can_focus ? 1 : 0 if $disable;
+		$disabled               = $disable;
 		$self->_sync_focusability;
 		$self->repaint;
 		return $disabled;
@@ -87,9 +94,10 @@ class Term::Fabulous::Widget::Input
 		return 1;
 	}
 
-	# A disabled widget cannot take the focus and gives it up.
+	# A disabled widget cannot take the focus and gives it up; an enabled
+	# one gets back the can_focus it had before it was disabled.
 	method _sync_focusability () {
-		$self->can_focus( $self->accepts_focus && !$disabled ? 1 : 0 );
+		$self->can_focus( !$disabled && $self->accepts_focus && $can_focus_when_enabled ? 1 : 0 );
 		my $ui = $self->ui;
 		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
 		return;
@@ -473,15 +481,12 @@ L</disabled>.
 
 =item C<can_focus>
 
-A boolean. Default: 1. Whether the input can take the keyboard focus
-(see L<Clay::UI::Role::Interaction::Focusable>).
-
-B<Known bug:> during construction the input recomputes C<can_focus> from
-C<disabled>, so C<< can_focus => 0 >> given to C<new> (or
-C<can_focus #false> in a KDL layout) is ignored and the input stays
-focusable. To make an enabled input unfocusable, call
-C<< $input->can_focus(0) >> after constructing it, and again after every
-C<< $input->disabled(0) >>, which sets C<can_focus> back to 1.
+A boolean, stored as 1 or 0. Default: 1. Whether the input can take the
+keyboard focus (see L<Clay::UI::Role::Interaction::Focusable>). A
+disabled input has C<can_focus> 0 whatever was passed; the value given
+here is what it gets back when it is enabled (see L</disabled>). A
+L<Term::Fabulous::Widget::RadioButton> never takes the focus, so for it
+the parameter has no effect.
 
 =item C<text_color>
 
@@ -536,9 +541,11 @@ a disabled input bubble on to its ancestors, and Clay::UI still fires
 C<OnHoverStart>, C<OnHoverStopped>, C<OnPress> and C<OnRelease> on it,
 so listeners you add yourself still run.
 
-Writing a false value enables the input again and sets C<can_focus> to
-what L</accepts_focus> returns: 1 for every built-in input except
-L<Term::Fabulous::Widget::RadioButton>, which never takes the focus.
+Writing a false value enables the input again and gives C<can_focus>
+back the value it had when the input was disabled (or the C<can_focus>
+passed to C<new>, when it was constructed disabled); a
+L<Term::Fabulous::Widget::RadioButton>, which never takes the focus,
+keeps 0. Writing the value the input already has changes nothing.
 Returns the new value (1 or 0).
 
 A radio button also counts as disabled while its radio group is

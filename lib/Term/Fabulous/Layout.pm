@@ -503,7 +503,7 @@ L<Term::Fabulous::Widget::Text>:
 	letter_spacing N     do not use; see Term::Fabulous::Widget::Text
 
 Text in a layout is a character string like everything else in the
-layout; the Text widget receives it UTF-8 encoded, as it requires.
+layout; it is passed to the Text widget as is.
 
 =head2 Button properties
 

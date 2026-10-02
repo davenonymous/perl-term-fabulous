@@ -14,7 +14,6 @@ class Term::Fabulous::Widget::Text
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:strict(params)
 {
-	use Encode qw(encode);
 	use Feature::Compat::Try;
 	use Term::Fabulous::Color;
 
@@ -59,7 +58,7 @@ class Term::Fabulous::Widget::Text
 			if ( $name eq 'text' ) {
 				my $text = $self->kdl_argument($kid);
 				die "Term::Fabulous::Widget::Text: 'text' needs a string argument" unless $text->is_string;
-				$self->text( encode( 'UTF-8', $text->value ) );
+				$self->text( $text->value );
 			}
 			elsif ( $name eq 'text_color' ) {
 				$self->text_color( $self->kdl_argument($kid)->as_perl );
@@ -76,13 +75,15 @@ class Term::Fabulous::Widget::Text
 
 __END__
 
+=encoding UTF-8
+
 =head1 NAME
 
 Term::Fabulous::Widget::Text - A piece of text inside a box
 
 =head1 SYNOPSIS
 
-	use Encode qw(encode);
+	use utf8;    # this source file contains non-ASCII text
 	use Term::Fabulous::Widget::Text;
 
 	my $title = Term::Fabulous::Widget::Text->new(
@@ -90,15 +91,15 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 		text_color => [ 255, 255, 255, 255 ],
 	);
 
-	# Non-ASCII text must be encoded to UTF-8 bytes first:
+	# Text is a character string, like everywhere in Term::Fabulous:
 	my $greeting = Term::Fabulous::Widget::Text->new(
 		id         => 'greeting',
-		text       => encode( 'UTF-8', "Gr\x{fc}\x{df}e" ),
+		text       => 'Grüße',
 		text_color => [ 230, 230, 230, 255 ],
 	);
 
 	# Later, change what it shows:
-	$greeting->text( encode( 'UTF-8', 'Hello again' ) );
+	$greeting->text('Hello again');
 
 =head1 DESCRIPTION
 
@@ -128,16 +129,12 @@ except C<id> also has an accessor of the same name.
 
 =item C<text>
 
-A UTF-8 encoded byte string. Default: C<''>.
+A character string, like all text in Term::Fabulous. Default: C<''>.
 
-B<Text widgets take bytes, not characters.> Plain ASCII strings work as
-they are. A character string with other characters must be encoded
-with C<Encode::encode('UTF-8', $string)> first: unencoded, characters
-above U+00FF make drawing die with C<Wide character>, and characters
-from U+0080 to U+00FF are shown as U+FFFD (the replacement character).
-Text read from a KDL layout is encoded for you. Other parts of
-Term::Fabulous (canvases, input widgets) take character strings; see
-L<Term::Fabulous::Manual/Text widgets take UTF-8 bytes>.
+Bytes read from a file, a command or a socket must be decoded first
+with C<Encode::decode('UTF-8', $bytes)>; otherwise each byte is shown
+as one Latin-1 character. Text read from a KDL layout is used as is.
+See L<Term::Fabulous::Manual/Text is character strings>.
 
 Control characters are never sent to the terminal: a TAB is shown as
 one space and every other control character as U+FFFD. Wide characters
@@ -216,13 +213,13 @@ are fired on Text widgets.
 
 =head2 text
 
-	my $bytes = $label->text;
-	$label->text( encode( 'UTF-8', $new_text ) );
+	my $text = $label->text;
+	$label->text($new_text);
 
 Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
 like the constructor parameter. The change shows in the next frame. The
-text is in UTF-8 bytes; the layout adapts to the new length.
+text is a character string; the layout adapts to the new length.
 
 =head2 text_color
 
@@ -312,8 +309,8 @@ The node's argument (C<"greeting">) is the C<id>. Inside the block:
 
 =item C<text "...">
 
-Exactly one string. It is encoded to UTF-8 for you, so write any
-characters directly (KDL files are UTF-8).
+Exactly one string. It is used as is, so write any characters directly
+(KDL files are UTF-8).
 
 =item C<text_color "...">
 

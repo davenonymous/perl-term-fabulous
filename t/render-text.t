@@ -4,7 +4,6 @@ use utf8;
 
 use Test2::V0;
 
-use Encode qw(encode);
 use Object::Pad 0.825;
 use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
 use Term::Fabulous::Render::Text;
@@ -39,7 +38,7 @@ sub draw_text {
 	$canvas->render_text(
 		{
 			boundingBox => { x => 0, y => 0, width => 20, height => 1, %bbox },
-			renderData  => { stringContents => encode( 'UTF-8', $text ), textColor => $color },
+			renderData  => { stringContents => $text, textColor => $color },
 		},
 		undef, $buffer,
 	);

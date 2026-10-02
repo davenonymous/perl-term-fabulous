@@ -27,7 +27,6 @@ use lib "$FindBin::Bin/../lib/";
 
 use Object::Pad 0.825;
 
-use Encode qw(encode);
 use IO::Async::Loop;
 use IO::Async::Timer::Periodic;
 use List::Util qw(max);
@@ -66,7 +65,7 @@ my $page = Term::Fabulous::Widget::ScrollBox->new(
 		padding => { left => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
-$page->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $text ), text_color => [ 190, 200, 215, 255 ] ) );
+$page->add_child( Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 190, 200, 215, 255 ] ) );
 
 # No background: over the terminal's default color nothing can be blended.
 my $footer = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_fit() }, padding => { left => 2, right => 2 } } );

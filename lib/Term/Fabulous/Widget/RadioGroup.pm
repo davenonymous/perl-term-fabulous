@@ -31,11 +31,16 @@ class Term::Fabulous::Widget::RadioGroup
 	field $value    :param = undef;
 	field $disabled :param = 0;
 
+	# The can_focus the group goes back to when it is enabled again.
+	field $can_focus_when_enabled;
+
 	ADJUST {
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } )
 			unless exists $layout->{layout_direction} || exists $layout->{layoutDirection};
-		$self->disabled($disabled);
+		$disabled               = $disabled ? 1 : 0;
+		$can_focus_when_enabled = $self->can_focus ? 1 : 0;
+		$self->_sync_focusability;
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
@@ -59,12 +64,22 @@ class Term::Fabulous::Widget::RadioGroup
 
 	method disabled (@new) {
 		return $disabled unless @new;
-		$disabled = $new[0] ? 1 : 0;
-		$self->can_focus( $disabled ? 0 : 1 );
-		my $ui = $self->ui;
-		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
+		my $disable = $new[0] ? 1 : 0;
+		return $disabled if $disable == $disabled;
+		$can_focus_when_enabled = $self->can_focus ? 1 : 0 if $disable;
+		$disabled               = $disable;
+		$self->_sync_focusability;
 		$self->repaint_buttons;
 		return $disabled;
+	}
+
+	# A disabled group cannot take the focus and gives it up; an enabled
+	# one gets back the can_focus it had before it was disabled.
+	method _sync_focusability () {
+		$self->can_focus( $disabled ? 0 : $can_focus_when_enabled );
+		my $ui = $self->ui;
+		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
+		return;
 	}
 
 	method is_enabled () {
@@ -227,11 +242,10 @@ C<disabled_color>.
 
 =item C<can_focus>
 
-A boolean. Default: 1. B<Known bug:> during construction the group sets
-C<can_focus> from C<disabled>, so C<< can_focus => 0 >> (or
-C<can_focus #false> in a KDL layout) is ignored. Call
-C<< $group->can_focus(0) >> after construction instead; note that
-C<< $group->disabled(0) >> sets it back to 1.
+A boolean, stored as 1 or 0. Default: 1. Whether the group can take the
+keyboard focus. A disabled group has C<can_focus> 0 whatever was passed;
+the value given here is what it gets back when it is enabled (see
+L</disabled>).
 
 =back
 
@@ -259,8 +273,10 @@ fires no C<Change> event. Returns the new value.
 Accessor. Returns 1 or 0; writing returns the new value. Writing a true
 value disables the group: its buttons are painted disabled, keys and
 clicks are ignored, C<can_focus> becomes 0 and the group gives up the
-focus if it had it. Writing a false value enables it again and sets
-C<can_focus> to 1.
+focus if it had it. Writing a false value enables it again and gives
+C<can_focus> back the value it had when the group was disabled (or the
+C<can_focus> passed to C<new>, when it was constructed disabled).
+Writing the value the group already has changes nothing.
 
 =head2 is_enabled
 
@@ -376,8 +392,8 @@ Fired by Clay::UI when the group gains or loses the focus.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<value>, C<disabled> and C<can_focus> (C<#true> / C<#false>; see the
-known bug under the C<can_focus> parameter). The radio buttons are
+C<value>, C<disabled> and C<can_focus> (C<#true> / C<#false>). The radio
+buttons are
 written as child nodes:
 
 	use Term::Fabulous::Widget::RadioGroup as RadioGroup
