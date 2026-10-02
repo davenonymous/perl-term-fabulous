@@ -12,8 +12,10 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 
 role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Target::Mask) {
-	use Term::Fabulous::Termbox qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_get_cell tb_print tb_width tb_height TB_DEFAULT TB_OK);
+	use Term::Fabulous::Termbox qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_get_cell tb_print tb_width tb_height tb_send tf_flush TB_DEFAULT TB_OK);
 	use Term::Fabulous::Render::Geometry qw(row_spans_outside);
+
+	field $termbox_inline_top :reader :writer = undef;    # the terminal row of row 0 in inline mode
 
 	# termbox2 keeps its back buffer between frames, so the cells of kept
 	# rects still hold what the previous frame painted there.
@@ -23,40 +25,51 @@ role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Targe
 			return;
 		}
 		my $width = tb_width();
-		foreach my $y ( 0 .. tb_height() - 1 ) {
+		my $rows  = defined $termbox_inline_top ? $self->height : tb_height();
+		foreach my $y ( 0 .. $rows - 1 ) {
 			foreach my $span ( row_spans_outside( $y, 0, $width, @kept_rects ) ) {
 				my ( $from, $to ) = @$span;
-				tb_print( $from, $y, TB_DEFAULT, TB_DEFAULT, ' ' x ( $to - $from ) );
+				tb_print( $from, $self->_terminal_row($y), TB_DEFAULT, TB_DEFAULT, ' ' x ( $to - $from ) );
 			}
 		}
 		return;
 	}
 
+	# In inline mode the hidden cursor waits at the start of the region's
+	# first row: a terminal that rewraps its lines on a resize moves it
+	# along, so asking for it finds the region again.
 	method present_cells () {
 		tb_present();
+		return unless defined $termbox_inline_top;
+		tb_send( "\e[" . ( $termbox_inline_top + 1 ) . ";1H" );
+		tf_flush();
 		return;
 	}
 
 	method put_cell ( $x, $y, $glyph, $fg, $bg ) {
-		tb_set_cell( $x, $y, $glyph, $fg, $bg );
+		tb_set_cell( $x, $self->_terminal_row($y), $glyph, $fg, $bg );
 		return;
 	}
 
 	method put_extension ( $x, $y, $character ) {
-		tb_extend_cell( $x, $y, $character );
+		tb_extend_cell( $x, $self->_terminal_row($y), $character );
 		return;
 	}
 
 	method put_row ( $x, $y, $columns, $bg ) {
-		tb_print( $x, $y, TB_DEFAULT, $bg, ' ' x $columns );
+		tb_print( $x, $self->_terminal_row($y), TB_DEFAULT, $bg, ' ' x $columns );
 		return;
 	}
 
 	# A cleared cell holds a space, so the back buffer always has a glyph.
 	method painted_cell ( $x, $y ) {
-		my ( $status, $glyph, $fg, $bg ) = tb_get_cell( $x, $y, 1 );
+		my ( $status, $glyph, $fg, $bg ) = tb_get_cell( $x, $self->_terminal_row($y), 1 );
 		return () unless $status == TB_OK;
 		return ( $glyph, $fg, $bg );
+	}
+
+	method _terminal_row ($y) {
+		return $y + ( $termbox_inline_top // 0 );
 	}
 }
 
@@ -105,25 +118,35 @@ The terminal must have been opened with termbox2's C<tb_init> (which
 L<Term::Fabulous/run> does) before anything is painted; otherwise
 termbox2 ignores the calls.
 
+In inline mode (opened with C<tf_init_inline> instead, see
+L<Term::Fabulous::Termbox/tf_init_inline>) the layout covers only some
+rows of the terminal; L</termbox_inline_top> says which row its first
+row is painted on.
+
 =head1 METHODS
 
 These are the primitives required by
-L<Term::Fabulous::Render::Target::Mask>.
+L<Term::Fabulous::Render::Target::Mask>, and L</termbox_inline_top>.
+The rows of the primitives count from the first row of the layout.
 
 =head2 clear_cells
 
 	$ui->clear_cells(@kept_rects);
 
 Without rectangles, clears the whole back buffer (C<tb_clear>). With
-rectangles, overwrites every cell outside them with a space in the
-terminal default colors and leaves the cells inside them as the previous
-frame painted them; termbox2 keeps its back buffer between frames.
+rectangles, overwrites every cell of the layout's rows outside them with
+a space in the terminal default colors and leaves the cells inside them
+as the previous frame painted them; termbox2 keeps its back buffer
+between frames.
 
 =head2 present_cells
 
 	$ui->present_cells;
 
-Shows the frame (C<tb_present>).
+Shows the frame (C<tb_present>). In inline mode it then moves the
+hidden cursor to the start of the layout's first row; a terminal that
+rewraps its lines when it is resized moves the cursor along with them,
+so asking the terminal for the cursor finds the layout again.
 
 =head2 put_cell
 
@@ -155,6 +178,19 @@ L<Term::Fabulous::Render/painted_cell>.
 Writes C<$columns> spaces from C<($x, $y)> to the right with
 termbox2's C<tb_print>, in the background attribute C<$bg> and the
 terminal default foreground.
+
+=head2 termbox_inline_top
+
+	my $row = $ui->termbox_inline_top;
+	$ui->set_termbox_inline_top(12);
+	$ui->set_termbox_inline_top(undef);
+
+The terminal row, counted from 0, that row 0 of the layout is painted
+on, or C<undef>, the default, for the full screen. With a row, every
+cell is painted that many rows further down, only the layout's
+C<height> rows are touched, and after every frame the hidden cursor
+is moved to the start of that row. L<Term::Fabulous/run> sets it in
+inline mode. C<set_termbox_inline_top> sets it and returns the object.
 
 =head1 SEE ALSO
 

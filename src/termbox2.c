@@ -8,7 +8,8 @@
  * Besides the library this file holds the two readers termbox2 lacks.
  * They run as termbox2's TB_FUNC_EXTRACT_PRE hook, before its own
  * parsers, and read the raw input buffer, which is static to this
- * translation unit.
+ * translation unit. It also holds inline mode (tf_init_inline and its
+ * helpers), which reaches into termbox2's internals the same way.
  */
 #define TB_IMPL
 #include "tf_termbox.h"
@@ -145,4 +146,172 @@ static int tf_extract_input(struct tb_event *event, size_t *consumed) {
 
 int tf_install_input_parser(void) {
 	return tb_set_func(TB_FUNC_EXTRACT_PRE, tf_extract_input);
+}
+
+/*
+ * Inline mode. termbox2 has no switch for it, so tf_init_inline_rwfd()
+ * runs the steps of tb_init_rwfd() itself and empties the capabilities
+ * that take over the screen before anything is sent: the alternate
+ * screen, entered at the start and left at tb_shutdown(), and the clear
+ * that tb_init_rwfd(), every resize and tb_shutdown() send.
+ */
+static void tf_drop_screen_takeover(void) {
+	global.caps[TB_CAP_ENTER_CA]     = "";
+	global.caps[TB_CAP_EXIT_CA]      = "";
+	global.caps[TB_CAP_CLEAR_SCREEN] = "";
+}
+
+int tf_init_inline(void) {
+	int ttyfd;
+
+	if (global.initialized) return TB_ERR_INIT_ALREADY;
+	ttyfd = open("/dev/tty", O_RDWR);
+	if (ttyfd < 0) {
+		global.last_errno = errno;
+		return TB_ERR_INIT_OPEN;
+	}
+	global.ttyfd_open = 1;
+	return tf_init_inline_rwfd(ttyfd, ttyfd);
+}
+
+int tf_init_inline_rwfd(int rfd, int wfd) {
+	int rv;
+
+	if (global.initialized) return TB_ERR_INIT_ALREADY;
+	tb_reset();
+	global.ttyfd = isatty(rfd) ? rfd : (wfd != rfd && isatty(wfd) ? wfd : -1);
+	global.rfd   = rfd;
+	global.wfd   = wfd;
+
+	do {
+		if_err_break(rv, init_term_attrs());
+		if_err_break(rv, init_term_caps());
+		tf_drop_screen_takeover();
+		if_err_break(rv, init_cap_trie());
+		if_err_break(rv, init_resize_handler());
+		if_err_break(rv, send_init_escape_codes());
+		if_err_break(rv, bytebuf_flush(&global.out, global.wfd));
+		if_err_break(rv, update_term_size());
+		if_err_break(rv, init_cellbuf());
+		global.initialized = 1;
+	} while (0);
+
+	if (rv != TB_OK) tb_deinit();
+	return rv;
+}
+
+/* Any larger row or column is not a cursor position report. */
+#define TF_CURSOR_NUMBER_LIMIT 65535
+
+/*
+ * Finds a cursor position report, ESC [ row ; column R, in the input
+ * buffer from offset `from` on: TB_OK with its offset, length and
+ * numbers, or TB_ERR while there is no complete one.
+ */
+static int tf_find_cursor_report(size_t from, size_t *at, size_t *length, int *row, int *column) {
+	const char *buf = global.in.buf;
+	size_t len      = global.in.len;
+	size_t start, i;
+
+	for (start = from; start + 1 < len; start++) {
+		int numbers[2] = {0, 0};
+		int count      = 0;
+		int digits     = 0;
+
+		if (buf[start] != '\x1b' || buf[start + 1] != '[') continue;
+		for (i = start + 2; i < len; i++) {
+			char c = buf[i];
+			if (c >= '0' && c <= '9') {
+				numbers[count] = numbers[count] * 10 + (c - '0');
+				if (numbers[count] > TF_CURSOR_NUMBER_LIMIT) break;
+				digits++;
+			} else if (c == ';' && count == 0 && digits > 0) {
+				count  = 1;
+				digits = 0;
+			} else if (c == 'R' && count == 1 && digits > 0) {
+				*at     = start;
+				*length = i + 1 - start;
+				*row    = numbers[0];
+				*column = numbers[1];
+				return TB_OK;
+			} else {
+				break;
+			}
+		}
+	}
+	return TB_ERR;
+}
+
+/*
+ * Appends what the terminal sent to the input buffer, waiting for it no
+ * later than the deadline: TB_ERR_NO_EVENT once the deadline has
+ * passed. A wait a signal interrupted reads nothing and returns TB_OK.
+ */
+static int tf_read_input_before(const struct timeval *deadline) {
+	char buf[TB_OPT_READ_BUF];
+	struct timeval now, left;
+	fd_set fds;
+	ssize_t count;
+	int ready;
+
+	gettimeofday(&now, NULL);
+	if (!timercmp(&now, deadline, <)) return TB_ERR_NO_EVENT;
+	timersub(deadline, &now, &left);
+
+	FD_ZERO(&fds);
+	FD_SET(global.rfd, &fds);
+	ready = select(global.rfd + 1, &fds, NULL, NULL, &left);
+	if (ready < 0 && errno == EINTR) return TB_OK;
+	if (ready < 0) {
+		global.last_errno = errno;
+		return TB_ERR_POLL;
+	}
+	if (ready == 0) return TB_ERR_NO_EVENT;
+
+	count = read(global.rfd, buf, sizeof(buf));
+	if (count <= 0) {
+		global.last_errno = count < 0 ? errno : 0;
+		return TB_ERR_READ;
+	}
+	return bytebuf_nputs(&global.in, buf, (size_t)count);
+}
+
+int tf_cursor_position(int timeout_ms, int *x, int *y) {
+	struct timeval deadline, timeout;
+	size_t from, at, length;
+	int rv, row, column;
+
+	if_not_init_return();
+	from = global.in.len; /* input from before the question cannot hold the answer */
+	if_err_return(rv, bytebuf_puts(&global.out, "\x1b[6n"));
+	if_err_return(rv, bytebuf_flush(&global.out, global.wfd));
+
+	gettimeofday(&deadline, NULL);
+	timeout.tv_sec  = timeout_ms / 1000;
+	timeout.tv_usec = (timeout_ms % 1000) * 1000;
+	timeradd(&deadline, &timeout, &deadline);
+
+	while (tf_find_cursor_report(from, &at, &length, &row, &column) != TB_OK) {
+		if_err_return(rv, tf_read_input_before(&deadline));
+	}
+
+	memmove(global.in.buf + at, global.in.buf + at + length, global.in.len - at - length);
+	global.in.len -= length;
+	global.in.buf[global.in.len] = '\0';
+
+	*x = column > 0 ? column - 1 : 0;
+	*y = row > 0 ? row - 1 : 0;
+	return TB_OK;
+}
+
+int tf_reset_attrs(void) {
+	if_not_init_return();
+	global.last_fg = ~global.fg;
+	global.last_bg = ~global.bg;
+	return bytebuf_puts(&global.out, global.caps[TB_CAP_SGR0]);
+}
+
+int tf_flush(void) {
+	if_not_init_return();
+	return bytebuf_flush(&global.out, global.wfd);
 }

@@ -1,6 +1,15 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Inline mode: Term::Fabulous->new( inline => $rows ) draws the
+          user interface into that many rows below the shell's output
+          instead of taking over the screen, draws the final state and
+          keeps it there when run returns, and finds the region again
+          after a resize. It has no mouse support; the cookbook recipe
+          "Ask for input below the shell's output" shows it.
+          Term::Fabulous::Termbox gains tf_init_inline,
+          tf_init_inline_rwfd, tf_cursor_position, tf_reset_attrs and
+          tf_flush
         - Dialogs keep the keyboard to themselves: keys the widgets of
           an open dialog do not use stop at its backdrop instead of
           reaching the key bindings behind it; when the focused widget

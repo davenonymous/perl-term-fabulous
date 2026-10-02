@@ -18,11 +18,11 @@ XSLoader::load( __PACKAGE__, $VERSION );
 
 $EXPORT_TAGS{api} = [
 	qw(
-		tb_init tb_init_file tb_init_fd tb_init_rwfd tb_shutdown
+		tb_init tb_init_file tb_init_fd tb_init_rwfd tf_init_inline tf_init_inline_rwfd tb_shutdown
 		tb_width tb_height tb_set_input_mode tb_set_output_mode
 		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
-		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send
-		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_readable_bytes
+		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send tf_reset_attrs tf_flush
+		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_cursor_position tf_readable_bytes
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -99,12 +99,12 @@ at run time, and the compile-time options are fixed:
 
 C<TB_OPT_ATTR_W> is 64: an attribute carries a 24-bit color and every
 style bit, C<TB_STRIKEOUT>, C<TB_UNDERLINE_2>, C<TB_OVERLINE> and
-C<TB_INVISIBLE> included. L</tb_attr_width> reports 64.
+C<TB_INVISIBLE> included. L<tb_attr_width|/"tb_has_truecolor, tb_has_egc, tb_attr_width, tb_version"> reports 64.
 
 =item *
 
 C<TB_OPT_EGC> is set: a cell holds a whole grapheme cluster
-(L</tb_extend_cell>, L</tb_set_cell_ex>). L</tb_has_egc> reports 1.
+(L</tb_extend_cell>, L</tb_set_cell_ex>). L<tb_has_egc|/"tb_has_truecolor, tb_has_egc, tb_attr_width, tb_version"> reports 1.
 
 =item *
 
@@ -172,7 +172,7 @@ C<TB_OUTPUT_GRAYSCALE>, C<TB_OUTPUT_TRUECOLOR>.
 
 =item C<:return>
 
-C<TB_OK> and every C<TB_ERR_*> code, L</tb_strerror> names them.
+C<TB_OK> and every C<TB_ERR_*> code, L<tb_strerror|/"tb_last_errno, tb_strerror"> names them.
 
 =item C<:all>
 
@@ -193,13 +193,29 @@ Everything.
 
 Open the terminal. C<tb_init> uses F</dev/tty>.
 
+=head3 tf_init_inline, tf_init_inline_rwfd
+
+	my $rc = tf_init_inline();
+	my $rc = tf_init_inline_rwfd( $rfd, $wfd );
+
+A Term::Fabulous addition: open the terminal like C<tb_init> and
+C<tb_init_rwfd>, but without taking over the screen. termbox2 then
+neither switches to the alternate screen nor clears the screen, not
+when it starts, not on a resize and not in C<tb_shutdown>, so what the
+terminal showed before stays. The cell buffers still cover the whole
+terminal and C<tb_present> still places cells at absolute positions:
+the caller paints only the rows it owns (see L</tf_cursor_position>)
+and leaves the others as C<tb_clear> left them, so that C<tb_present>
+sends nothing for them. The C<inline> parameter of L<Term::Fabulous/new>
+is built on this.
+
 =head3 tb_shutdown
 
 Restores the terminal.
 
 =head3 tb_width, tb_height
 
-The terminal size in cells, or C<TB_ERR_NOT_INIT> before L</tb_init>.
+The terminal size in cells, or C<TB_ERR_NOT_INIT> before L<tb_init|/"tb_init, tb_init_file, tb_init_fd, tb_init_rwfd">.
 
 =head3 tb_set_input_mode, tb_set_output_mode
 
@@ -261,6 +277,23 @@ with a wider character is sent UTF-8 encoded. Like everything termbox2
 writes, the bytes stay in its output buffer until the next
 C<tb_present> or C<tb_shutdown>.
 
+=head3 tf_reset_attrs
+
+	my $rc = tf_reset_attrs();
+
+A Term::Fabulous addition. Queues the reset of all colors and styles
+(C<SGR 0>), for escape sequences sent with L</tb_send> that depend on
+them, such as erasing (it uses the current background color). The next
+cell C<tb_present> draws sets its colors again, which termbox2 would
+otherwise skip when it believes the terminal still has them.
+
+=head3 tf_flush
+
+	my $rc = tf_flush();
+
+A Term::Fabulous addition. Writes what L</tb_send> and the drawing
+functions queued, without waiting for the next C<tb_present>.
+
 =head2 Events
 
 =head3 tb_peek_event
@@ -301,6 +334,20 @@ call this after every C<tb_init>. Returns C<TB_OK>.
 The parser only decodes; to receive motion reports at all, ask the
 terminal with C<< tb_send("\e[?1003h") >> (and send C<"\e[?1003l">
 before C<tb_shutdown>), as L<Term::Fabulous> does.
+
+=head3 tf_cursor_position
+
+	my $rc = tf_cursor_position( $timeout_ms, \my $x, \my $y );
+
+A Term::Fabulous addition. Asks the terminal where its cursor is
+(C<ESC [ 6 n>), waits up to C<$timeout_ms> milliseconds for the answer
+and stores the column and the row, counted from 0, through the
+references. Input that arrives meanwhile, such as keys typed ahead,
+stays queued for L</tb_peek_event>; it is read already, so the
+terminal descriptor no longer reports it as readable. Returns
+C<TB_OK>, C<TB_ERR_NO_EVENT> when no answer arrived in time, or
+another error; the references are untouched unless the result is
+C<TB_OK>. Dies unless both references are scalar references.
 
 =head3 tf_readable_bytes
 

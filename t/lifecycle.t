@@ -171,6 +171,54 @@ subtest 'a resize' => sub {
 	ok $invalidated >= 2, 'every reported size makes termbox rebuild its cells, so no canvas is kept';
 };
 
+subtest 'inline mode' => sub {
+	my $box = sub { Term::Fabulous::Widget::Box->new };
+	like dies { Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 0 ) }, qr/inline must be a whole number of rows of at least 1, got '0'/, 'inline needs rows';
+	like dies { Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3, mouse => 1 ) }, qr/inline mode has no mouse support/, 'and has no mouse';
+	my $inline = Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3 );
+	is $inline->mouse, 0, 'the mouse is off by default';
+
+	# The stubbed terminal has 5 rows; the cursor is reported as [column, row].
+	my ( $sent, $cursor, @seen ) = ( '', [ 4, 4 ] );
+	no warnings 'redefine';
+	local *Term::Fabulous::tf_init_inline     = sub { $calls{tf_init_inline}++; TB_OK };
+	local *Term::Fabulous::tf_cursor_position = sub {
+		return TB_ERR_NO_EVENT unless defined $cursor;
+		( ${ $_[1] }, ${ $_[2] } ) = @$cursor;
+		return TB_OK;
+	};
+	local *Term::Fabulous::tf_reset_attrs     = sub {TB_OK};
+	local *Term::Fabulous::tb_clear           = sub {TB_OK};
+	local *Term::Fabulous::tb_send            = sub { $sent .= $_[0]; TB_OK };
+
+	$inline->root->on( Start => sub { push @seen, [ $_[0]->height, $inline->termbox_inline_top ]; $inline->loop->stop; return } );
+	my $presents = $calls{tb_present} // 0;
+	ok lives { $inline->run }, 'run returns';
+	is $calls{tf_init_inline}, 1, 'the terminal is opened inline';
+	is $calls{tb_present}, $presents + 1, 'the state the loop stopped in is drawn before run returns';
+	is \@seen, [ [ 3, 2 ] ], 'Start reports the rows of the region, moved up to fit the screen';
+	is $sent, "\e[5;1H\n\n\n" . "\e[3;1H\e[J" . "\e[5;1H\n", 'the terminal scrolls, the region is erased, and the shell goes on below its last row';
+	is $inline->termbox_inline_top, undef, 'the region is forgotten after run';
+
+	my $resizing = Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3 );
+	( $sent, $cursor, @seen ) = ( '', [ 0, 0 ] );
+	@queued_events = ( { type => TB_EVENT_RESIZE, w => 30, h => 8 } );
+	$resizing->root->on( Start => sub { $cursor = [ 0, 1 ]; syswrite $tty_write, 'x'; return } );
+	$resizing->root->on(
+		Resize => sub {
+			return unless $_[0]->is_post_event;
+			push @seen, [ $_[0]->width, $_[0]->height, $resizing->termbox_inline_top ];
+			$resizing->loop->stop;
+			return;
+		}
+	);
+	ok lives { $resizing->run }, 'run returns after a resize';
+	is \@seen, [ [ 30, 3, 1 ] ], 'the region is found again where the terminal moved the cursor';
+
+	$cursor = undef;
+	like dies { $inline->run }, qr/^Term::Fabulous: the terminal did not report its cursor position/, 'a terminal that does not answer ends run';
+};
+
 subtest 'terminal input errors' => sub {
 	my $reading = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
 	$reading->root->on( Start => sub { syswrite $tty_write, 'x'; return } );

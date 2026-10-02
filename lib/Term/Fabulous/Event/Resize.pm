@@ -53,7 +53,10 @@ L<Term::Fabulous> fires a C<Resize> event when the terminal window
 changes size. Most programs do not need it: the layout follows the new
 size automatically, because widgets sized with C<grow> or C<percent(...)>
 are laid out again in the next frame. Listen for it when something that
-is not part of the layout depends on the terminal size.
+is not part of the layout depends on the terminal size. In inline mode
+(L<Term::Fabulous/INLINE MODE>) the height it reports is the rows of the
+region, which changes only while the terminal has fewer rows than
+C<inline> asks for.
 
 Resizes are debounced: while the user drags the window border, nothing
 is fired; one tenth of a second after the last size change, the event is

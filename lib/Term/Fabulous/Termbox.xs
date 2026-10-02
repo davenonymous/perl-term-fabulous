@@ -71,9 +71,9 @@ static SV *cell_text(pTHX_ const struct tb_cell *cell) {
 	return text;
 }
 
-static void scalar_ref_or_croak(pTHX_ SV *ref, const char *what) {
+static void scalar_ref_or_croak(pTHX_ SV *ref, const char *function, const char *what) {
 	if (SvROK(ref) && SvTYPE(SvRV(ref)) < SVt_PVAV) return;
-	croak("Term::Fabulous::Termbox: tb_get_fds needs a scalar reference for the %s descriptor", what);
+	croak("Term::Fabulous::Termbox: %s needs a scalar reference for the %s", function, what);
 }
 
 /* Installs a constant sub and records its name under an export tag. */
@@ -132,6 +132,12 @@ tb_width()
 
 int
 tb_height()
+
+int
+tf_init_inline()
+
+int
+tf_init_inline_rwfd(int rfd, int wfd)
 
 int
 tb_set_input_mode(int mode)
@@ -208,6 +214,12 @@ tb_print(int x, int y, uintattr_t fg, uintattr_t bg, SV *text)
 		RETVAL
 
 int
+tf_reset_attrs()
+
+int
+tf_flush()
+
+int
 tb_send(SV *bytes)
 	PREINIT:
 		STRLEN length;
@@ -249,6 +261,22 @@ int
 tf_install_input_parser()
 
 int
+tf_cursor_position(int timeout_ms, SV *x_ref, SV *y_ref)
+	PREINIT:
+		int x = 0;
+		int y = 0;
+	CODE:
+		scalar_ref_or_croak(aTHX_ x_ref, "tf_cursor_position", "column");
+		scalar_ref_or_croak(aTHX_ y_ref, "tf_cursor_position", "row");
+		RETVAL = tf_cursor_position(timeout_ms, &x, &y);
+		if (RETVAL == TB_OK) {
+			sv_setiv(SvRV(x_ref), x);
+			sv_setiv(SvRV(y_ref), y);
+		}
+	OUTPUT:
+		RETVAL
+
+int
 tf_readable_bytes(int fd)
 	PREINIT:
 		int count = 0;
@@ -263,8 +291,8 @@ tb_get_fds(SV *tty_ref, SV *resize_ref)
 		int ttyfd    = -1;
 		int resizefd = -1;
 	CODE:
-		scalar_ref_or_croak(aTHX_ tty_ref, "tty");
-		scalar_ref_or_croak(aTHX_ resize_ref, "resize");
+		scalar_ref_or_croak(aTHX_ tty_ref, "tb_get_fds", "tty descriptor");
+		scalar_ref_or_croak(aTHX_ resize_ref, "tb_get_fds", "resize descriptor");
 		RETVAL = tb_get_fds(&ttyfd, &resizefd);
 		sv_setiv(SvRV(tty_ref), ttyfd);
 		sv_setiv(SvRV(resize_ref), resizefd);

@@ -45,4 +45,38 @@ int tf_cluster_width(const uint32_t *codepoints, size_t count);
  */
 int tf_install_input_parser(void);
 
+/*
+ * Inline mode: tb_init_rwfd without taking over the screen. termbox2
+ * neither switches to the alternate screen nor clears it, not at the
+ * start, not on a resize and not at tb_shutdown(); its cell buffers
+ * still cover the whole terminal, and the caller paints only the rows
+ * it owns. tf_init_inline() opens /dev/tty like tb_init(). Both return
+ * a termbox2 status code.
+ *
+ * They call termbox2's internal init steps and replace entries of its
+ * capability table (global.caps); see README.termbox2 before updating
+ * termbox2.h.
+ */
+int tf_init_inline(void);
+int tf_init_inline_rwfd(int rfd, int wfd);
+
+/*
+ * Asks the terminal where the cursor is (ESC [ 6 n) and waits up to
+ * timeout_ms milliseconds for its report. x and y count from 0. Input
+ * that arrives meanwhile stays queued for tb_peek_event. Returns
+ * TB_ERR_NO_EVENT when no report arrived in time, else a termbox2
+ * status code.
+ */
+int tf_cursor_position(int timeout_ms, int *x, int *y);
+
+/*
+ * Queues the reset of all colors and styles (SGR 0), and makes the next
+ * cell tb_present() draws set its colors again: termbox2 otherwise
+ * skips colors it believes the terminal still has.
+ */
+int tf_reset_attrs(void);
+
+/* Writes what tb_send() and the other output calls queued. */
+int tf_flush(void);
+
 #endif /* TF_TERMBOX_H */

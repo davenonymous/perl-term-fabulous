@@ -508,6 +508,12 @@ the picture shows the open dialog.
 
 =end html
 
+=item F<inline-prompt.pl>
+
+L<Term::Fabulous::Cookbook/Ask for input below the shell's output (inline mode)>;
+it draws into three rows below the shell's output instead of the whole
+screen.
+
 =item F<choose-options.pl>
 
 L<Term::Fabulous::Cookbook/Choose from options in Perl (Dropdown, RadioGroup, Slider)>;

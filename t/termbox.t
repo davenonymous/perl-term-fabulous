@@ -141,4 +141,40 @@ subtest 'cells and raw output after tb_init' => sub {
 	like $written, qr/\xff\x80\xe9\xe2\x98\xba/, 'bytes go out as they are, also from an upgraded string; a wide string UTF-8 encoded';
 };
 
+subtest 'inline mode' => sub {
+	try { require IO::Pty }
+	catch ($error) { skip_all 'IO::Pty is not installed' }
+	my $pty     = IO::Pty->new;
+	my $display = $pty->slave;
+	$display->set_winsize( 6, 10 );
+	pipe my $read, my $write or die "pipe: $!";
+	my $rc = tf_init_inline_rwfd( fileno $read, fileno $display );
+	skip_all "termbox2 cannot start on a pty here: " . tb_strerror($rc) unless $rc == TB_OK;
+	is [ tb_width(), tb_height() ], [ 10, 6 ], 'the buffers cover the whole terminal';
+
+	syswrite $write, "a\x1b[5;7Rb";
+	is tf_cursor_position( 1000, \my $x, \my $y ), TB_OK, 'the terminal reports the cursor';
+	is [ $x, $y ], [ 6, 4 ], 'counted from 0';
+	my @keys;
+	while ( tb_peek_event( my $event = Term::Fabulous::Termbox::Event->new, 100 ) == TB_OK ) {
+		push @keys, $event->ch;
+	}
+	is \@keys, [ ord 'a', ord 'b' ], 'the keys around the report stay queued';
+	is tf_cursor_position( 50, \$x, \$y ), TB_ERR_NO_EVENT, 'no report in time';
+	like dies { tf_cursor_position( 50, 1, \$y ) }, qr/tf_cursor_position needs a scalar reference/, 'tf_cursor_position wants references';
+
+	tb_set_cell( 0, 4, 'x', TB_DEFAULT, TB_DEFAULT );
+	tb_present();
+	tb_shutdown();
+	my $written = '';
+	vec( my $readable = '', fileno $pty, 1 ) = 1;
+	while ( select( my $ready = $readable, undef, undef, 0.2 ) > 0 ) {
+		sysread( $pty, my $chunk, 65536 ) or last;
+		$written .= $chunk;
+	}
+	like $written, qr/\x1b\[6n/, 'the question was sent';
+	like $written, qr/\x1b\[5;1Hx/, 'cells go to their absolute position';
+	unlike $written, qr/\x1b\[\?1049|\x1b\[2J/, 'neither the alternate screen nor a clear, not even at tb_shutdown';
+};
+
 done_testing;

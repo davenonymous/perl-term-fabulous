@@ -156,15 +156,26 @@ first. Unknown parameters die
 - `height`
 
     Required. A positive number: the height of the layout in rows until
-    ["run"](#run) starts, then the terminal's height.
+    ["run"](#run) starts, then the terminal's height (in inline mode, the rows of
+    the inline region).
+
+- `inline`
+
+    Optional. A whole number of rows, at least 1, or `undef`, the default.
+    With a number, ["run"](#run) does not take over the screen: the user
+    interface is drawn into that many rows below the shell's output and
+    stays there when `run` returns, like a prompt. See ["INLINE MODE"](#inline-mode).
+    Anything else dies
+    (`Term::Fabulous: inline must be a whole number of rows of at least 1, got '0'`).
 
 - `mouse`
 
-    A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags,
-    movement and the wheel to the program (see
+    A boolean. Default: 1, or 0 in inline mode. With 1, the terminal
+    reports mouse clicks, drags, movement and the wheel to the program (see
     ["MOUSE" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#MOUSE)). With 0, the terminal keeps the mouse
     for itself, so the user can select and copy text as usual, and no
-    `Mouse` or `MouseMove` events are fired.
+    `Mouse` or `MouseMove` events are fired. Inline mode has no mouse
+    support: `mouse` with a true value and `inline` together die.
 
 - `output_mode`
 
@@ -210,8 +221,9 @@ first. Unknown parameters die
      $ui->run;
 ```
 
-Opens the terminal in full-screen mode, runs the event loop until it is
-stopped, and restores the terminal. It returns nothing.
+Opens the terminal in full-screen mode (or inline, see
+["INLINE MODE"](#inline-mode)), runs the event loop until it is stopped, and
+restores the terminal. It returns nothing.
 
 While it runs:
 
@@ -259,8 +271,11 @@ After `run` has returned or died, the object can be used again and
 
 `run` dies with a message starting with `Term::Fabulous:` when the
 terminal cannot be opened, for example when the process has no
-controlling terminal (`tb_init failed: No such device or address`), or
-when the terminal reports a size of 0 columns or rows.
+controlling terminal (`tb_init failed: No such device or address`,
+or `tf_init_inline failed: ...` in inline mode), or when the terminal
+reports a size of 0 columns or rows. In inline mode it also dies when
+the terminal does not report its cursor position within a second
+(`the terminal did not report its cursor position; ...`).
 
 When the locale's character set is not UTF-8, `run` warns (at every
 call): `Term::Fabulous: the locale's character set is not UTF-8; wide
@@ -324,8 +339,16 @@ terminal resize, so a written value lasts only until then. Inherited from
 ```
 
 Accessor. Returns the current layout height in rows: the terminal height
-while ["run"](#run) is active. Writing works like for ["width"](#width). Inherited from
-[Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
+while ["run"](#run) is active, or the rows of the inline region in inline mode.
+Writing works like for ["width"](#width). Inherited from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
+
+## inline
+
+```perl
+     my $rows = $ui->inline;    # undef for the full screen
+```
+
+Returns the `inline` constructor parameter. Read only.
 
 ## mouse
 
@@ -333,7 +356,8 @@ while ["run"](#run) is active. Writing works like for ["width"](#width). Inherit
      my $enabled = $ui->mouse;
 ```
 
-Returns the `mouse` constructor parameter. Read only.
+Returns whether the mouse is reported: the `mouse` constructor
+parameter, or its default (1, or 0 in inline mode). Read only.
 
 ## output\_mode
 
@@ -503,6 +527,41 @@ leaves a text field and closes an open dropdown. This happens before the
 See ["KEYBOARD" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#KEYBOARD) and
 ["FOCUS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FOCUS).
 
+# INLINE MODE
+
+```perl
+     my $ui = Term::Fabulous->new( root => $root, width => 80, height => 3, inline => 3 );
+     $ui->run;
+     say 'Done.';    # printed below the region
+```
+
+With `inline` set to a number of rows, ["run"](#run) leaves the screen as it
+is and draws the user interface into that many rows, starting at the
+line of the cursor (the line below it when text precedes the cursor
+on its line). The layout is as wide as the terminal and as high as
+the region; ["height"](#height) and the `Start` and `Resize` events report the
+region's rows. A region taller than the terminal gets the terminal's
+height.
+
+- When the region does not fit below the cursor, the terminal scrolls up
+first, as if lines had been printed. The rows of the region are erased
+before the first frame.
+- When `run` returns, it first draws a frame if one is due, so a change
+made by the listener that stopped the loop is shown. That frame stays
+on the screen (when `run` dies, the last frame drawn before), and the
+cursor goes to the line below it, where the shell or the program's own
+output continues.
+- When the terminal is resized, Term::Fabulous asks the terminal where
+the region is now (between frames the hidden cursor waits at the start
+of its first row), erases from there down and draws the region again.
+- The mouse is not available (see ["new"](#new)).
+- The terminal must answer the cursor position query `ESC [ 6 n`, as
+xterm-compatible terminals do; Term::Fabulous asks when `run` starts
+and after every resize.
+
+Like in full-screen mode, printing to STDOUT while `run` is active
+writes over the user interface.
+
 # MOUSE WHEEL SCROLLING
 
 Each notch of the mouse wheel scrolls the scroll box under the
@@ -511,10 +570,11 @@ rows, and each notch of a horizontal wheel (or a sideways tilt of the
 wheel) by three columns. Notches that arrive between two frames are
 added up and applied when the next frame is drawn. A `Mouse` event is
 fired for every notch, before the notch is counted: when a listener
-returns `HANDLED` for it, the notch scrolls no scroll box. Widgets
-that scroll themselves, like [Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea),
-handle the wheel this way, so the scroll box around them stays put
-while the pointer is over them.
+calls `use_wheel` on it (["use\_wheel" in Term::Fabulous::Event::Mouse](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouse#use_wheel)),
+the notch scrolls no scroll box; what the listener returns does not
+matter for this. Widgets that scroll themselves, like
+[Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea), use the notches they scroll by, so
+the scroll box around them stays put while they can still scroll.
 
 # MODULES
 
@@ -773,6 +833,14 @@ by a key that arrives in the same read looks like `Alt` plus that key.
 of other keys.
 - Mouse reports with the buttons 8 to 11 (extra buttons of some mice)
 are decoded by termbox2 as the left, middle or right button.
+- In inline mode, a terminal that rewraps its lines when it gets narrower
+rewraps the region too. Term::Fabulous erases the rewrapped rows it
+still finds on the screen, but when they are more than the screen
+holds, the terminal pushes the first of them into the scrollback (tmux
+does), and the scrollback cannot be erased without erasing the user's
+history too: copies of the old region stay there. Output that other
+programs write to the terminal while `run` is active also moves the
+region away from where Term::Fabulous draws it.
 - Clay lays out at most `max_element_count` elements per frame (8192 by
 default); every widget is one element and Term::Fabulous uses two
 more. A larger tree makes drawing die with a message that names the

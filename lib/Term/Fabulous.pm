@@ -37,9 +37,10 @@ class Term::Fabulous
 	use Scalar::Util qw(refaddr);
 	use Time::HiRes ();
 	use Term::Fabulous::Termbox qw(
-		tb_init tb_shutdown tb_width tb_height tb_hide_cursor
+		tb_init tf_init_inline tb_shutdown tb_width tb_height tb_hide_cursor tb_clear
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
 		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
+		tf_cursor_position tf_reset_attrs
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
@@ -65,7 +66,11 @@ class Term::Fabulous
 	use constant REPORT_MOUSE_MOTION      => "\x1b[?1003h";
 	use constant STOP_MOUSE_MOTION_REPORT => "\x1b[?1003l";
 
-	field $mouse :param :reader = 1;
+	use constant CURSOR_REPORT_TIMEOUT_MS => 1000;
+	use constant ERASE_BELOW              => "\x1b[J";
+
+	field $inline :param :reader = undef;    # the rows of the inline region, or undef for the full screen
+	field $mouse :param :reader  = undef;
 	field $loop :reader;
 	field $termbox_draw_interval :reader            = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
@@ -96,6 +101,14 @@ class Term::Fabulous
 			unless $self->root->DOES('Clay::UI::Role::Events::Emitter');
 	}
 
+	ADJUST {
+		die "Term::Fabulous: inline must be a whole number of rows of at least 1, got '$inline'"
+			if defined $inline && $inline !~ /\A[1-9][0-9]*\z/;
+		die "Term::Fabulous: inline mode has no mouse support; leave out mouse or pass mouse => 0"
+			if defined $inline && $mouse;
+		$mouse //= defined $inline ? 0 : 1;
+	}
+
 	method pointer_state () {
 		return undef unless defined $_pointer;
 		return {%$_pointer};
@@ -116,8 +129,8 @@ class Term::Fabulous
 		warn "Term::Fabulous: the locale's character set is not UTF-8; wide characters will be misaligned\n"
 			unless terminal_is_utf8();
 
-		my $rc = tb_init();
-		die "Term::Fabulous: tb_init failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
+		my ( $init, $rc ) = defined $inline ? ( 'tf_init_inline', tf_init_inline() ) : ( 'tb_init', tb_init() );
+		die "Term::Fabulous: $init failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
 		$_terminal_is_open = 1;
 		$self->invalidate_canvases;    # the fresh back buffer holds no canvas cells
 
@@ -127,6 +140,10 @@ class Term::Fabulous
 			$self->_attach_notifiers;
 			$loop->later( sub { $self->_start } );
 			$loop->run;
+
+			# The frame that stays on the screen shows the final state; frames
+			# start after Start, with the frame timer.
+			$self->_draw_frame if defined $inline && $_draw_timer->is_running;
 		}
 		catch ($error) {
 			# Perl reports an uncaught exception before unwinding into
@@ -145,8 +162,46 @@ class Term::Fabulous
 		$_terminal_is_open = 0;
 		$self->_detach_notifiers;
 		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
+		$self->_leave_inline_region if defined $self->termbox_inline_top;
 		tb_shutdown();
 		return;
+	}
+
+	# The region starts on the cursor's row, or on the next one when text
+	# precedes the cursor there. When it would reach below the screen,
+	# the terminal scrolls up first. Its rows are erased, since termbox
+	# takes the rows it has not drawn yet for blank.
+	method _anchor_inline_region ($screen_height) {
+		my $rc = tf_cursor_position( CURSOR_REPORT_TIMEOUT_MS, \my $column, \my $row );
+		die "Term::Fabulous: the terminal did not report its cursor position; inline mode needs a terminal that answers ESC [ 6 n\n"
+			if $rc == TB_ERR_NO_EVENT;
+		_check_termbox( 'tf_cursor_position', $rc );
+
+		my $rows     = $inline < $screen_height ? $inline : $screen_height;
+		my $top      = $column == 0 ? $row : $row + 1;
+		my $overflow = $top + $rows - $screen_height;
+		_check_termbox( 'tf_reset_attrs', tf_reset_attrs() );    # scrolled-in and erased rows take the current background
+		if ( $overflow > 0 ) {
+			_check_termbox( 'tb_send', tb_send( _cursor_to_row( $screen_height - 1 ) . "\n" x $overflow ) );
+			$top -= $overflow;
+		}
+		_check_termbox( 'tb_send', tb_send( _cursor_to_row($top) . ERASE_BELOW ) );
+		_check_termbox( 'tb_clear', tb_clear() );    # cells of an earlier region must not come back at their old rows
+		$self->set_termbox_inline_top($top);
+		return $rows;
+	}
+
+	# The last frame stays where it is; the shell goes on below it.
+	method _leave_inline_region () {
+		my $last_row = $self->termbox_inline_top + $self->height - 1;
+		tf_reset_attrs();
+		tb_send( _cursor_to_row($last_row) . "\n" );
+		$self->set_termbox_inline_top(undef);
+		return;
+	}
+
+	sub _cursor_to_row ($row) {
+		return "\x1b[" . ( $row + 1 ) . ";1H";
 	}
 
 	sub _check_termbox ( $function, $rc ) {
@@ -192,7 +247,7 @@ class Term::Fabulous
 		die "Term::Fabulous: the terminal reports an unusable size of ${width}x${height}\n"
 			if $width < 1 || $height < 1;
 		$self->width($width);
-		$self->height($height);
+		$self->height( defined $inline ? $self->_anchor_inline_region($height) : $height );
 		return;
 	}
 
@@ -231,6 +286,7 @@ class Term::Fabulous
 		$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
 		$_draw_timer->start;
 		$self->_watch_terminal_input;
+		$self->_drain_termbox_events if defined $inline;    # keys the cursor position query read ahead
 		return;
 	}
 
@@ -463,12 +519,14 @@ class Term::Fabulous
 		return unless defined $_pending_resize;
 		my ( $width, $height ) = @$_pending_resize;
 		$_pending_resize = undef;
+		$height = $self->_anchor_inline_region($height) if defined $inline;
 
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 0 ) );
 		$self->width($width);
 		$self->height($height);
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 1 ) );
 		$_frame_requested = 1;
+		$self->_drain_termbox_events if defined $inline;    # keys the cursor position query read ahead
 		return;
 	}
 
@@ -681,15 +739,26 @@ it up to date when the terminal is resized.
 =item C<height>
 
 Required. A positive number: the height of the layout in rows until
-L</run> starts, then the terminal's height.
+L</run> starts, then the terminal's height (in inline mode, the rows of
+the inline region).
+
+=item C<inline>
+
+Optional. A whole number of rows, at least 1, or C<undef>, the default.
+With a number, L</run> does not take over the screen: the user
+interface is drawn into that many rows below the shell's output and
+stays there when C<run> returns, like a prompt. See L</INLINE MODE>.
+Anything else dies
+(C<Term::Fabulous: inline must be a whole number of rows of at least 1, got '0'>).
 
 =item C<mouse>
 
-A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags,
-movement and the wheel to the program (see
+A boolean. Default: 1, or 0 in inline mode. With 1, the terminal
+reports mouse clicks, drags, movement and the wheel to the program (see
 L<Term::Fabulous::Manual/MOUSE>). With 0, the terminal keeps the mouse
 for itself, so the user can select and copy text as usual, and no
-C<Mouse> or C<MouseMove> events are fired.
+C<Mouse> or C<MouseMove> events are fired. Inline mode has no mouse
+support: C<mouse> with a true value and C<inline> together die.
 
 =item C<output_mode>
 
@@ -735,8 +804,9 @@ dies.
 
 	$ui->run;
 
-Opens the terminal in full-screen mode, runs the event loop until it is
-stopped, and restores the terminal. It returns nothing.
+Opens the terminal in full-screen mode (or inline, see
+L</INLINE MODE>), runs the event loop until it is stopped, and
+restores the terminal. It returns nothing.
 
 While it runs:
 
@@ -814,8 +884,11 @@ C<run> can be called again.
 
 C<run> dies with a message starting with C<Term::Fabulous:> when the
 terminal cannot be opened, for example when the process has no
-controlling terminal (C<tb_init failed: No such device or address>), or
-when the terminal reports a size of 0 columns or rows.
+controlling terminal (C<tb_init failed: No such device or address>,
+or C<tf_init_inline failed: ...> in inline mode), or when the terminal
+reports a size of 0 columns or rows. In inline mode it also dies when
+the terminal does not report its cursor position within a second
+(C<the terminal did not report its cursor position; ...>).
 
 When the locale's character set is not UTF-8, C<run> warns (at every
 call): C<Term::Fabulous: the locale's character set is not UTF-8; wide
@@ -869,14 +942,21 @@ L<Clay::UI>.
 	$ui->height(40);
 
 Accessor. Returns the current layout height in rows: the terminal height
-while L</run> is active. Writing works like for L</width>. Inherited from
-L<Clay::UI>.
+while L</run> is active, or the rows of the inline region in inline mode.
+Writing works like for L</width>. Inherited from L<Clay::UI>.
+
+=head2 inline
+
+	my $rows = $ui->inline;    # undef for the full screen
+
+Returns the C<inline> constructor parameter. Read only.
 
 =head2 mouse
 
 	my $enabled = $ui->mouse;
 
-Returns the C<mouse> constructor parameter. Read only.
+Returns whether the mouse is reported: the C<mouse> constructor
+parameter, or its default (1, or 0 in inline mode). Read only.
 
 =head2 output_mode
 
@@ -1040,6 +1120,57 @@ C<Mouse> event is fired.
 See L<Term::Fabulous::Manual/KEYBOARD> and
 L<Term::Fabulous::Manual/FOCUS>.
 
+=head1 INLINE MODE
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 3, inline => 3 );
+	$ui->run;
+	say 'Done.';    # printed below the region
+
+With C<inline> set to a number of rows, L</run> leaves the screen as it
+is and draws the user interface into that many rows, starting at the
+line of the cursor (the line below it when text precedes the cursor
+on its line). The layout is as wide as the terminal and as high as
+the region; L</height> and the C<Start> and C<Resize> events report the
+region's rows. A region taller than the terminal gets the terminal's
+height.
+
+=over
+
+=item *
+
+When the region does not fit below the cursor, the terminal scrolls up
+first, as if lines had been printed. The rows of the region are erased
+before the first frame.
+
+=item *
+
+When C<run> returns, it first draws a frame if one is due, so a change
+made by the listener that stopped the loop is shown. That frame stays
+on the screen (when C<run> dies, the last frame drawn before), and the
+cursor goes to the line below it, where the shell or the program's own
+output continues.
+
+=item *
+
+When the terminal is resized, Term::Fabulous asks the terminal where
+the region is now (between frames the hidden cursor waits at the start
+of its first row), erases from there down and draws the region again.
+
+=item *
+
+The mouse is not available (see L</new>).
+
+=item *
+
+The terminal must answer the cursor position query C<ESC [ 6 n>, as
+xterm-compatible terminals do; Term::Fabulous asks when C<run> starts
+and after every resize.
+
+=back
+
+Like in full-screen mode, printing to STDOUT while C<run> is active
+writes over the user interface.
+
 =head1 MOUSE WHEEL SCROLLING
 
 Each notch of the mouse wheel scrolls the scroll box under the
@@ -1048,10 +1179,11 @@ rows, and each notch of a horizontal wheel (or a sideways tilt of the
 wheel) by three columns. Notches that arrive between two frames are
 added up and applied when the next frame is drawn. A C<Mouse> event is
 fired for every notch, before the notch is counted: when a listener
-returns C<HANDLED> for it, the notch scrolls no scroll box. Widgets
-that scroll themselves, like L<Term::Fabulous::Widget::TextArea>,
-handle the wheel this way, so the scroll box around them stays put
-while the pointer is over them.
+calls C<use_wheel> on it (L<Term::Fabulous::Event::Mouse/use_wheel>),
+the notch scrolls no scroll box; what the listener returns does not
+matter for this. Widgets that scroll themselves, like
+L<Term::Fabulous::Widget::TextArea>, use the notches they scroll by, so
+the scroll box around them stays put while they can still scroll.
 
 =head1 MODULES
 
@@ -1344,6 +1476,17 @@ of other keys.
 
 Mouse reports with the buttons 8 to 11 (extra buttons of some mice)
 are decoded by termbox2 as the left, middle or right button.
+
+=item *
+
+In inline mode, a terminal that rewraps its lines when it gets narrower
+rewraps the region too. Term::Fabulous erases the rewrapped rows it
+still finds on the screen, but when they are more than the screen
+holds, the terminal pushes the first of them into the scrollback (tmux
+does), and the scrollback cannot be erased without erasing the user's
+history too: copies of the old region stay there. Output that other
+programs write to the terminal while C<run> is active also moves the
+region away from where Term::Fabulous draws it.
 
 =item *
 

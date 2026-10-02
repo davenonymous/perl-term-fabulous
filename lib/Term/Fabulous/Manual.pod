@@ -892,8 +892,9 @@ widget, so calls can be chained. There is no method to remove a listener;
 if a listener must become inactive, let it check a flag.
 
 Several examples in this manual print with C<say> to keep them short.
-While C<run> is active, the terminal shows the full-screen user
-interface, and printing to STDOUT writes over it. Real programs show
+While C<run> is active, the terminal shows the user interface (full
+screen, or in some rows below the shell's output in inline mode), and
+printing to STDOUT writes over it. Real programs show
 messages in a widget (for example a status line made of a Text widget)
 or write them to a log file.
 
@@ -2273,6 +2274,10 @@ Where to find what, by task.
 =item Start a full-screen application
 
 L</YOUR FIRST PROGRAM>, L<Term::Fabulous>.
+
+=item Show a prompt below the shell's output instead of taking the whole screen
+
+L<Term::Fabulous/INLINE MODE>.
 
 =item Arrange widgets in rows and columns, sizes, padding, gaps
 

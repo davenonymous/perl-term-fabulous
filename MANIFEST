@@ -120,6 +120,7 @@ examples-cookbook/custom-events.pl
 examples-cookbook/disable-inputs.pl      
 examples-cookbook/focus-help-line.pl     
 examples-cookbook/follow-log.pl          
+examples-cookbook/inline-prompt.pl       
 examples-cookbook/kdl-panel.pl           
 examples-cookbook/key-bindings.pl        
 examples-cookbook/lib/My/Panel.pm        
