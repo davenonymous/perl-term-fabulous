@@ -2,6 +2,8 @@ package Term::Fabulous::Widget;
 
 use v5.22;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 our $VERSION = '0.01';
 
@@ -24,12 +26,26 @@ class Term::Fabulous::Widget
 	:does(Term::Fabulous::Role::HasBorderStyle)
 	:abstract
 {
-	field $classes :param = [];
+	field $classes             :param = [];
+	field $glyphs_show_through :param = 0;
+
+	ADJUST {
+		$glyphs_show_through = _boolean( glyphs_show_through => $glyphs_show_through );
+	}
+
+	sub _boolean ( $name, $value ) {
+		die "Term::Fabulous::Widget: $name must be a boolean, got a " . ref($value) . " reference" if ref $value;
+		return $value ? 1 : 0;
+	}
 
 	method get_classes () {
 		return (@$classes, map { 'state_' . lc($_) } $self->states);
 	}
 
+	method glyphs_show_through (@new) {
+		return $glyphs_show_through unless @new;
+		return $glyphs_show_through = _boolean( glyphs_show_through => $new[0] );
+	}
 }
 
 1;
@@ -193,13 +209,26 @@ C<{ r => ..., g => ..., b => ..., a => ... }>. Default: none, so the
 widget's area shows what is behind it. Strings such as C<'#ff0000'> are
 not accepted here (they are in KDL layouts); convert them with
 C<< [ Term::Fabulous::Color->new( color => '#ff0000' )->to_rgba ] >>.
-An alpha of 0 means no color; any other alpha is drawn fully opaque.
-See L<Term::Fabulous::Manual/COLORS>.
+An alpha of 0 means no color, 255 is opaque, and 1 to 254 is
+translucent: the color is blended with whatever is below the widget
+(see C<glyphs_show_through>). See L<Term::Fabulous::Manual/COLORS>.
 
 A widget with neither a background color nor a border paints nothing,
 so it is also invisible to the mouse: clicks on it go to the widget
 behind it. A widget with only a border receives clicks on its border
 cells.
+
+=item C<glyphs_show_through>
+
+Only matters with a translucent C<background_color> (alpha 1 to 254).
+False (the default): the widget's area is covered with spaces in the
+blended color, so text and borders below it disappear. True: they stay
+visible through the background, with their colors tinted by it, until
+the widget paints its own content over them. Where the color below is
+the terminal default, which cannot be blended, the background is drawn
+opaque and a glyph's default foreground stays as it is. Any true or
+false value; references die. See
+L<Term::Fabulous::Manual/Alpha and the terminal default color>.
 
 =item C<border_width>
 
@@ -406,6 +435,15 @@ when none is set); with an argument it sets the value and returns the
 new value. C<undef> removes the background color. An invalid value dies
 like the constructor parameter of the same name. The change shows in the
 next frame.
+
+=head2 glyphs_show_through
+
+	$box->glyphs_show_through(1);
+
+Accessor for the constructor parameter of the same name (0 or 1).
+Without an argument it returns the current value; with an argument it
+sets the value and returns the new one. The change shows in the next
+frame.
 
 =head2 border_color
 

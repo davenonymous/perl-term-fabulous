@@ -11,6 +11,7 @@ examples/pixel-paint.pl
 examples/scroll-box.pl
 examples/static-report.pl
 examples/text-sizing.pl
+examples/translucency.pl
 lib/Term/Fabulous.pm
 lib/Term/Fabulous/Color.pm
 lib/Term/Fabulous/Cookbook.pod

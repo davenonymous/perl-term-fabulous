@@ -707,7 +707,7 @@ L<Term::Fabulous::Color> understands:
 
 =head2 Alpha and the terminal default color
 
-The terminal cannot blend colors, so alpha has only two meanings:
+Alpha has three meanings:
 
 =over
 
@@ -716,13 +716,34 @@ The terminal cannot blend colors, so alpha has only two meanings:
 "No color": the terminal's default color is used (the color the terminal
 shows when a program sets none). A box with
 C<background_color =E<gt> [0, 0, 0, 0]>, or without a background color,
-shows the background of whatever is behind it.
+shows whatever is behind it, text and borders included.
 
-=item Alpha 1 to 255
+=item Alpha 255
 
-The color is drawn fully opaque. There is no transparency in between.
+The color is drawn opaque.
+
+=item Alpha 1 to 254
+
+Translucent. A C<background_color> with such an alpha is blended, cell
+by cell, with whatever was drawn below the widget, like a sheet of
+tinted glass: C<[0, 0, 0, 128]> dims the area below to half its
+brightness. What happens to the text and borders below is up to the
+widget's C<glyphs_show_through> (see L<Term::Fabulous::Widget/new>).
+Off, the default, covers them with spaces in the blended color. On,
+they stay visible through the background, with their colors tinted the
+same way, until the widget draws its own content over them.
+
+Text and border colors are not blended; with such an alpha they are
+drawn opaque.
 
 =back
+
+The terminal default color cannot be blended, because the terminal
+alone knows which color it shows for it. Where the color below a
+translucent background is the default, the background is drawn opaque,
+and a glyph showing through with the default text color keeps it.
+F<examples/translucency.pl> shows all of this, with translucent boxes
+orbiting over a screen of text.
 
 Black is a real color: C<[0, 0, 0, 255]> is drawn as black, not as the
 terminal's default.

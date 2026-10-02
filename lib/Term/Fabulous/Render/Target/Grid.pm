@@ -56,6 +56,11 @@ role Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::
 		return $rows[$y][$x];
 	}
 
+	method painted_cell ( $x, $y ) {
+		my $cell = $rows[$y][$x] // return ();
+		return @$cell;
+	}
+
 	method grid_height () {
 		return scalar @rows;
 	}
@@ -180,6 +185,13 @@ Primitive for L<Term::Fabulous::Render::Target::Mask>: stores one cell.
 
 Primitive for L<Term::Fabulous::Render::Target::Mask>: appends a
 combining character to a stored cell. Dies if nothing was stored there.
+
+=head2 painted_cell
+
+	my ( $glyph, $fg, $bg ) = $ui->painted_cell( $x, $y );
+
+The contents of L</cell> as a list, or an empty list when the cell is
+C<undef>. See L<Term::Fabulous::Render/painted_cell>.
 
 =head2 put_row
 

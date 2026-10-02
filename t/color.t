@@ -33,6 +33,10 @@ subtest 'alpha grammar' => sub {
 	like dies { rgba_of('rgba(1, 2, 3, 256)') },  qr/alpha must be a number in 0\.\.255/,            'channel above 255 dies';
 };
 
+subtest 'is_translucent' => sub {
+	is [ map { $Color->rgba( 0, 0, 0, $_ )->is_translucent ? 1 : 0 } 0, 1, 254, 255 ], [ 0, 1, 1, 0 ], 'true for alpha 1 to 254 only';
+};
+
 subtest 'hash, array and clone inputs' => sub {
 	is rgba_of( { r => 1, g => 2, b => 3 } ),                           [ 1, 2, 3, 255 ], 'r/g/b hash';
 	is rgba_of( { red => 1, green => 2, blue => 3, alpha => 4 } ),      [ 1, 2, 3, 4 ],   'red/green/blue/alpha hash';

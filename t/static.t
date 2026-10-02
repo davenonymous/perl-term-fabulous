@@ -5,7 +5,9 @@ use utf8;
 use Test2::V0;
 
 use Encode qw(decode encode);
-use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM);
+use Object::Pad 0.825;
+use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
+use Clay::UI::Role::Layout::HasFloating;
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
@@ -63,6 +65,30 @@ subtest 'colors' => sub {
 
 	$root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } }, border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Panel, border_color => [ 9, 9, 9, 255 ] );
 	like [ Term::Fabulous::Static->new( root => $root, width => 2 )->render_lines ]->[0], qr/\e\[7;38;2;9;9;9m/, 'reverse video locations use SGR 7';
+};
+
+class FloatingBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Layout::HasFloating) { }
+
+subtest 'translucent background' => sub {
+	# A half-black box floating over the middle of red text on white.
+	my $row_with_overlay = sub {
+		my ($glyphs_show_through) = @_;
+		my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(5), height => sizing_fixed(1) } }, background_color => [ 255, 255, 255, 255 ] );
+		$root->add_child( Term::Fabulous::Widget::Text->new( text => 'abcde', text_color => [ 255, 0, 0, 255 ] ) );
+		$root->add_child(
+			FloatingBox->new(
+				layout              => { sizing => { width => sizing_fixed(3), height => sizing_fixed(1) } },
+				background_color    => [ 0, 0, 0, 128 ],
+				glyphs_show_through => $glyphs_show_through,
+				floating            => { attach_to => CLAY_ATTACH_TO_PARENT, offset => { x => 1, y => 0 }, attach_points => { element => CLAY_ATTACH_POINT_LEFT_TOP, parent => CLAY_ATTACH_POINT_LEFT_TOP } },
+			)
+		);
+		return ( Term::Fabulous::Static->new( root => $root, width => 5 )->render_lines )[0];
+	};
+	is $row_with_overlay->(0), "\e[38;2;255;0;0;48;2;255;255;255ma\e[0m\e[48;2;127;127;127m   \e[0m\e[38;2;255;0;0;48;2;255;255;255me\e[0m",
+		'the glyphs below are covered with spaces in the blended color';
+	is $row_with_overlay->(1), "\e[38;2;255;0;0;48;2;255;255;255ma\e[0m\e[38;2;127;0;0;48;2;127;127;127mbcd\e[0m\e[38;2;255;0;0;48;2;255;255;255me\e[0m",
+		'with glyphs_show_through the text shows through, tinted';
 };
 
 subtest 'scroll box' => sub {

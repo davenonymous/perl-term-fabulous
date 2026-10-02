@@ -60,7 +60,7 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method layout_properties () {
-		return qw(background_color border_color border_width width_group height_group);
+		return qw(background_color glyphs_show_through border_color border_width width_group height_group);
 	}
 
 	method parse_node ($node) {

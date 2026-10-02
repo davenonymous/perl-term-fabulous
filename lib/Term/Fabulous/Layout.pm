@@ -465,6 +465,9 @@ L<RadioGroup|Term::Fabulous::Widget::RadioGroup> and all input widgets.
 	border_width N                             all four sides, an integer 0..65535
 	border_width left=N right=N top=N bottom=N per side; missing sides are 0
 	background_color "..."                     a color string
+	glyphs_show_through #true                  #true or #false (the default): whether text
+	                                           and borders below a translucent background
+	                                           stay visible (see Term::Fabulous::Widget)
 	border_color "..."                         a color string (same as border color=)
 	width_group N                              an integer 0..1048575; 0 means no group
 	height_group N                             an integer 0..1048575; 0 means no group

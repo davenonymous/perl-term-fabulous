@@ -201,6 +201,10 @@ class Term::Fabulous::Color :strict(params) {
 		return Term::Fabulous::Color->new( color => [ $red, $green, $blue, $new_alpha ], );
 	}
 
+	method is_translucent () {
+		return $alpha > 0 && $alpha < 255;
+	}
+
 	method lighten ($amount) {
 		die "Term::Fabulous::Color: lighten amount must be a number, got " . _describe($amount)
 			unless _is_finite_number($amount);
@@ -361,8 +365,10 @@ notation.
 
 An alpha of 0 means "no color": a background with alpha 0 is not
 painted, so whatever is below it shows through, and a text or foreground
-color with alpha 0 uses the terminal default color. Terminals cannot
-blend colors, so any alpha from 1 to 255 is drawn fully opaque. See
+color with alpha 0 uses the terminal default color. An alpha from 1 to 254
+(see L</is_translucent>) makes a widget background translucent: it is
+blended with the colors below it when it is painted. Text and border
+colors with such an alpha are drawn opaque. See
 L<Term::Fabulous::Manual/Alpha and the terminal default color>.
 
 =head2 Channel rules
@@ -435,7 +441,7 @@ written:
 	number with %          50%       percentage 0..100     128
 
 Watch the difference between C<1> and C<1.0>: C<'rgba(0, 0, 0, 1)'> has
-alpha 1 (almost transparent, which a terminal still draws as opaque),
+alpha 1 (almost fully transparent),
 while C<'rgba(0, 0, 0, 1.0)'> has alpha 255.
 
 =back
@@ -509,6 +515,14 @@ The blue channel, an integer from 0 to 255.
 	my $a = $color->alpha;
 
 The alpha channel, an integer from 0 (transparent) to 255 (opaque).
+
+=head2 is_translucent
+
+	if ( $color->is_translucent ) { ... }
+
+True when the alpha is from 1 to 254: the color is neither "no color"
+(alpha 0) nor opaque (alpha 255). A translucent background is blended
+with what is below it; see L</Alpha>.
 
 =head2 to_rgba
 

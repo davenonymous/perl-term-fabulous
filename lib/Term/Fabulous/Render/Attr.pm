@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(color_attr clay_color cell_color_attr);
+our @EXPORT_OK = qw(color_attr clay_color cell_color_attr blended_bg_attr blended_fg_attr);
 
 use Scalar::Util qw(blessed);
 use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
@@ -18,8 +18,12 @@ use Term::Fabulous::Color;
 use constant CACHE_LIMIT => 4096;
 use constant MAX_RGB     => 0xFFFFFF;
 
+# The bits of an attribute that hold its color; the rest are style flags.
+use constant COLOR_BITS => MAX_RGB | TB_HI_BLACK;
+
 my %attr_by_rgba;
 my %color_by_clay_rgba;
+my %blended_attr_by_pair;
 
 sub color_attr ($color) {
 	my $rgba = $color->rgba_int;
@@ -64,6 +68,49 @@ sub _termbox_attr ($color) {
 	return $rgb == 0 ? TB_HI_BLACK : $rgb;
 }
 
+# A translucent background painted over the background attribute below it.
+# The terminal default color has no RGB to blend with, so the color is
+# drawn opaque there. Style flags of the attribute below are kept.
+sub blended_bg_attr ( $color, $under ) {
+	my $flags = $under & ~COLOR_BITS;
+	my $rgb   = _attr_rgb($under);
+	return $flags | color_attr($color) unless defined $rgb;
+	return $flags | _blend_over_rgb( $color, $rgb );
+}
+
+# A translucent background painted over a glyph: its foreground attribute
+# is tinted the same way, except that a terminal-default foreground, which
+# cannot be blended, stays as it is.
+sub blended_fg_attr ( $color, $under ) {
+	my $rgb = _attr_rgb($under);
+	return $under unless defined $rgb;
+	return ( $under & ~COLOR_BITS ) | _blend_over_rgb( $color, $rgb );
+}
+
+# The 0xRRGGBB value of an attribute; undef for the terminal default.
+sub _attr_rgb ($attr) {
+	return 0 if $attr & TB_HI_BLACK;
+	my $rgb = $attr & MAX_RGB;
+	return $rgb == 0 ? undef : $rgb;
+}
+
+# The color attribute of $color composited over the opaque color $rgb.
+sub _blend_over_rgb ( $color, $rgb ) {
+	my $key  = $color->rgba_int . ",$rgb";
+	my $attr = $blended_attr_by_pair{$key};
+	return $attr if defined $attr;
+
+	%blended_attr_by_pair = () if keys(%blended_attr_by_pair) >= CACHE_LIMIT;
+	my @over  = $color->to_rgba;
+	my $alpha = pop @over;
+	my @under = ( ( $rgb >> 16 ) & 0xFF, ( $rgb >> 8 ) & 0xFF, $rgb & 0xFF );
+	my $mixed = 0;
+	foreach my $channel ( 0 .. 2 ) {
+		$mixed = ( $mixed << 8 ) | int( ( $over[$channel] * $alpha + $under[$channel] * ( 255 - $alpha ) ) / 255 + 0.5 );
+	}
+	return $blended_attr_by_pair{$key} = $mixed == 0 ? TB_HI_BLACK : $mixed;
+}
+
 1;
 
 __END__
@@ -74,12 +121,13 @@ Term::Fabulous::Render::Attr - Turn colors into termbox2 truecolor attributes
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr);
+	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr blended_bg_attr);
 	use Term::Fabulous::Color;
 
 	my $fg = color_attr( Term::Fabulous::Color->rgb( 0, 0, 0 ) );               # TB_HI_BLACK
 	my $bg = color_attr( clay_color( { r => 20, g => 25, b => 35, a => 255 } ) );  # 0x141923
 	my $cell_fg = cell_color_attr( fg => '#ffcc00' );                             # 0xFFCC00
+	my $dimmed  = blended_bg_attr( Term::Fabulous::Color->rgba( 0, 0, 0, 128 ), 0xFFFFFF );  # 0x7F7F7F
 
 =head1 DESCRIPTION
 
@@ -107,8 +155,11 @@ color, so black needs this flag of its own.
 
 =back
 
-Alpha values from 1 to 254 are treated as fully opaque; terminals cannot
-blend colors.
+A color with an alpha from 1 to 254 is I<translucent>. Terminals cannot
+blend colors themselves, so L</blended_bg_attr> and L</blended_fg_attr>
+compute the mix of such a color with the attribute below it. The
+terminal default color has no RGB value to mix with; see those functions
+for what happens then.
 
 Loading this module dies if the installed termbox2 library was built
 without truecolor support (C<TB_OPT_TRUECOLOR>), because Term::Fabulous
@@ -170,6 +221,29 @@ returns C<undef>.
 The first argument names the color in error messages, for example
 C<Term::Fabulous::Render::Attr: fg must be a packed 0xRRGGBB value, got 16777216>.
 Invalid colors die in L<Term::Fabulous::Color>.
+
+=head2 blended_bg_attr
+
+	my $attr = blended_bg_attr( $color, $under );
+
+The background attribute of a translucent L<Term::Fabulous::Color>
+painted over the background attribute C<$under>: each channel of the
+color is mixed with the channel below it by the color's alpha
+(C<over * alpha + under * (255 - alpha)>, divided by 255 and rounded),
+and black becomes C<TB_HI_BLACK>. When C<$under> is the terminal
+default color, which cannot be blended, the result is the color drawn
+opaque (L</color_attr>). Style flags in C<$under> are kept. An opaque
+color returns itself, a color with alpha 0 returns C<$under>. Results
+are cached like L</color_attr>.
+
+=head2 blended_fg_attr
+
+	my $attr = blended_fg_attr( $color, $under );
+
+The same mix for the foreground attribute C<$under> of a glyph that a
+translucent background is painted over, so that the glyph shows through
+tinted. A terminal-default foreground cannot be blended and is returned
+unchanged; style flags such as C<TB_REVERSE> are kept.
 
 =head1 SEE ALSO
 

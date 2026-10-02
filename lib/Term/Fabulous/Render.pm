@@ -91,6 +91,7 @@ role Term::Fabulous::Render
 	method set_cell;
 	method extend_cell;
 	method fill_row;
+	method painted_cell;
 	method release_rect;
 
 	ADJUST {
@@ -351,15 +352,18 @@ whole cells (see L<Term::Fabulous::Render::Geometry/cell_rect>) and
 clipped to the viewport (C<width> x C<height>) and to the innermost
 open scissor (see L<Term::Fabulous::Render::Clip>). Nothing outside
 these limits is painted. Colors are turned into termbox2 attributes as
-described in L<Term::Fabulous::Render::Attr>; alpha is ignored except
-that 0 means "no color".
+described in L<Term::Fabulous::Render::Attr>; alpha 0 means "no color",
+and only a background with an alpha from 1 to 254 is blended.
 
 =over
 
 =item Rectangles
 
 A widget's background. Its cells are filled with spaces in the
-background color. See L<Term::Fabulous::Render::Rectangle>.
+background color. A translucent background is blended with what lies
+below it, covering the glyphs there or letting them show through as the
+widget's C<glyphs_show_through> says. See
+L<Term::Fabulous::Render::Rectangle>.
 
 =item Text
 
@@ -460,6 +464,17 @@ cell set last at that position, to complete a grapheme cluster.
 
 Paints C<$columns> cells of spaces with the background attribute C<$bg>,
 starting at C<($x, $y)> and going right.
+
+=head2 painted_cell
+
+	my ( $glyph, $fg, $bg ) = $ui->painted_cell( $x, $y );
+
+Reads back what the frame holds at a cell so far: the glyph (a
+character string, the base character plus any combining characters),
+its foreground and its background attribute. Returns an empty list when
+nothing was painted there. The cell to the right of a wide glyph is
+not written for it, so reading it gives what was painted there before
+the glyph. Kept rectangles do not affect reading.
 
 =head1 SEE ALSO
 

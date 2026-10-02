@@ -54,3 +54,8 @@ Revision history for Term::Fabulous
           Term::Fabulous::Cookbook (recipes), reference documentation
           for every module, and the examples buttons-and-keys.pl,
           kdl-form.pl and custom-widget.pl
+        - Translucent backgrounds: a background_color with an alpha from
+          1 to 254 is blended with what lies below the widget. The new
+          widget parameter glyphs_show_through decides whether the text
+          and borders below stay visible, tinted, or are covered. The
+          cell targets gained painted_cell to read a cell back

@@ -12,7 +12,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 
 role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Target::Mask) {
-	use Term::Fabulous::Termbox qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_print tb_width tb_height TB_DEFAULT);
+	use Term::Fabulous::Termbox qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_get_cell tb_print tb_width tb_height TB_DEFAULT TB_OK);
 	use Term::Fabulous::Render::Geometry qw(row_spans_outside);
 
 	# termbox2 keeps its back buffer between frames, so the cells of kept
@@ -50,6 +50,13 @@ role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Targe
 	method put_row ( $x, $y, $columns, $bg ) {
 		tb_print( $x, $y, TB_DEFAULT, $bg, ' ' x $columns );
 		return;
+	}
+
+	# A cleared cell holds a space, so the back buffer always has a glyph.
+	method painted_cell ( $x, $y ) {
+		my ( $status, $glyph, $fg, $bg ) = tb_get_cell( $x, $y, 1 );
+		return () unless $status == TB_OK;
+		return ( $glyph, $fg, $bg );
 	}
 }
 
@@ -132,6 +139,14 @@ background attribute C<$bg>.
 
 Appends a combining character to the cell at C<($x, $y)> with
 termbox2's C<tb_extend_cell>, completing a grapheme cluster.
+
+=head2 painted_cell
+
+	my ( $glyph, $fg, $bg ) = $ui->painted_cell( $x, $y );
+
+Reads the cell from the back buffer with termbox2's C<tb_get_cell>. A
+cell nothing has painted holds the space C<tb_clear> left there. See
+L<Term::Fabulous::Render/painted_cell>.
 
 =head2 put_row
 
