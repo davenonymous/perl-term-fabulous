@@ -59,3 +59,5 @@ Revision history for Term::Fabulous
           widget parameter glyphs_show_through decides whether the text
           and borders below stay visible, tinted, or are covered. The
           cell targets gained painted_cell to read a cell back
+        - Term::Fabulous::Enum::WebColor holds the 148 CSS named colors
+          as Term::Fabulous::Color objects (it was an empty placeholder)

@@ -12,6 +12,7 @@ examples/scroll-box.pl
 examples/static-report.pl
 examples/text-sizing.pl
 examples/translucency.pl
+examples/web-colors.pl
 lib/Term/Fabulous.pm
 lib/Term/Fabulous/Color.pm
 lib/Term/Fabulous/Cookbook.pod
@@ -84,6 +85,7 @@ t/render-text.t
 t/static.t
 t/termbox.t
 t/unicode.t
+t/web-color.t
 t/widget-canvas.t
 t/widget-checkbox.t
 t/widget-dropdown.t

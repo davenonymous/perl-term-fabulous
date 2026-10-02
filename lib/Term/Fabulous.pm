@@ -957,7 +957,8 @@ safe for the terminal.
 
 =item L<Term::Fabulous::Enum::WebColor>
 
-A placeholder for named colors; it defines no colors yet.
+The 148 CSS named colors (C<Tomato>, C<SteelBlue>, ...) as
+Term::Fabulous::Color objects.
 
 =back
 

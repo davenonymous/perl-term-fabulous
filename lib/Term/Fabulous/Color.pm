@@ -412,7 +412,8 @@ C<red>, C<green>, C<blue> (and optionally C<alpha>). Alpha defaults to
 In one of the notations below. The string must not have leading or
 trailing whitespace; whitespace after C<(> and around the commas is
 allowed. The function names are lowercase. Named colors such as
-C<'red'> and three-digit hex such as C<'#f00'> are not supported.
+C<'red'> and three-digit hex such as C<'#f00'> are not supported;
+L<Term::Fabulous::Enum::WebColor> has the CSS named colors as objects.
 
 	String              Example                     Meaning
 	------------------  --------------------------  -------------------------------

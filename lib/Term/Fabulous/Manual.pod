@@ -683,6 +683,10 @@ such as C<'#ff0000'> die here.
 To use another format, convert it with L<Term::Fabulous::Color>:
 
 	background_color => [ Term::Fabulous::Color->hex('#14192b')->to_rgba ],
+	border_color     => [ Term::Fabulous::Enum::WebColor->SteelBlue->to_rgba ],
+
+L<Term::Fabulous::Enum::WebColor> has the 148 CSS named colors as
+L<Term::Fabulous::Color> objects.
 
 =item Input widget colors and canvas cells
 

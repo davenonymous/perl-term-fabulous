@@ -583,7 +583,8 @@ Every module has its own page. They are grouped here by purpose.
 
 - [Term::Fabulous::Enum::WebColor](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEnum%3A%3AWebColor)
 
-    A placeholder for named colors; it defines no colors yet.
+    The 148 CSS named colors (`Tomato`, `SteelBlue`, ...) as
+    Term::Fabulous::Color objects.
 
 ## Extending Term::Fabulous
 
