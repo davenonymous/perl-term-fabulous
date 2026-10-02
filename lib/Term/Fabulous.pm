@@ -320,73 +320,215 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous - Terminal UIs from Clay layouts, drawn with termbox2
+Term::Fabulous - Full-screen terminal user interfaces with layouts,
+widgets, keyboard and mouse
 
 =head1 SYNOPSIS
 
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+	use Encode qw(encode);
 	use Term::Fabulous;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Text;
-	use Clay::XS qw(sizing_grow);
+	use Term::Fabulous::Widget::TextField;
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [20, 25, 35, 255],
-		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
 	);
-	$root->add_child( Term::Fabulous::Widget::Text->new(text => 'Hello', text_color => [255, 255, 255, 255]) );
-	$root->on( KeyPress => sub ($event) { ... } );
+
+	my $greeting = Term::Fabulous::Widget::Text->new(
+		text       => 'What is your name? (Enter to greet, Ctrl+C to quit)',
+		text_color => [ 230, 230, 230, 255 ],
+	);
+	my $name = Term::Fabulous::Widget::TextField->new( placeholder => 'Your name' );
+	$root->add_child( $greeting, $name );
+
+	$name->on(
+		Submit => sub ($event) {
+			# Text widgets take UTF-8 bytes; the field's value is a character string.
+			$greeting->text( encode( 'UTF-8', 'Hello, ' . $event->value . '!' ) );
+			return;
+		}
+	);
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
-	$ui->run;   # returns after Ctrl+C, SIGINT or SIGTERM
+	$ui->interaction->set_focused_widget($name);
+	$ui->run;    # returns after Ctrl+C, SIGINT or SIGTERM
 
 =head1 DESCRIPTION
 
-A L<Clay::UI> subclass that composes L<Term::Fabulous::Render>: it lays
-out a widget tree with Clay and draws it into the terminal through
-termbox2, redrawing continuously at 30 frames per second while
-L</run> is active. termbox2 writes only the cells that changed to the
-terminal, and a L<Term::Fabulous::Widget::Canvas> sends only its changed
-cells to termbox2 while nothing moves or covers it.
+Term::Fabulous builds full-screen terminal applications in Perl. You
+describe the screen as a tree of widgets (boxes, text, buttons, input
+fields, scrollable areas and canvases), in Perl code or in a layout file
+written in KDL, a small configuration language (L<https://kdl.dev>).
+Term::Fabulous sizes and positions the widgets with the Clay layout
+engine, draws them with 24-bit colors through the termbox2 library, and
+turns key presses, mouse clicks and terminal resizes into events your
+code reacts to.
 
-To render the same widget tree once, as text for a pipe or a report,
-use L<Term::Fabulous::Static> instead; it paints with the same render
-roles but never opens the terminal.
+Highlights:
+
+=over
+
+=item *
+
+Flexible layout: rows and columns, growing, fitting, fixed and
+percentage sizes, padding, gaps, alignment, borders in 21 styles.
+
+=item *
+
+Input widgets for forms: single- and multi-line text with selection,
+undo and a clipboard shared by all text fields of the program; check
+boxes; radio buttons; dropdowns; sliders.
+
+=item *
+
+Keyboard focus with Tab and mouse clicks, readable key names for key
+bindings (C<Ctrl+S>, C<Shift+Left>), mouse wheel scrolling.
+
+=item *
+
+Canvases for free drawing, including a half-block pixel canvas with
+lines, rectangles and circles.
+
+=item *
+
+Correct handling of Unicode: wide CJK characters, emoji, combining
+characters.
+
+=item *
+
+The same widget tree can be printed once as text (with or without
+colors) for reports and tests, through L<Term::Fabulous::Static>.
+
+=item *
+
+Runs on L<IO::Async>, so timers, sockets and child processes work
+alongside the user interface.
+
+=back
+
+This class is the application object: it owns the widget tree, opens the
+terminal, runs the event loop, draws the screen 30 times per second and
+dispatches input events. It is a subclass of L<Clay::UI>.
+
+=head1 DOCUMENTATION
+
+=over
+
+=item L<Term::Fabulous::Manual>
+
+The user guide. Start here: it explains layout, text, colors, events,
+the keyboard and the mouse, focus, forms, KDL layout files, the event
+loop and writing your own widgets, with examples throughout. Its
+L<FEATURE INDEX|Term::Fabulous::Manual/FEATURE INDEX> maps tasks to the
+documentation.
+
+=item L<Term::Fabulous::Cookbook>
+
+Complete programs for common tasks.
+
+=item This page
+
+The reference for C<new>, C<run> and the other methods of the
+application object.
+
+=item The module pages
+
+One page per class, listed under L</MODULES>.
+
+=item The F<examples> directory of the distribution
+
+Runnable demo programs.
+
+=back
+
+=head1 REQUIREMENTS
+
+Perl 5.24 or later, the L<Termbox> module (version 2) with a termbox2
+library that was built with truecolor support, a terminal with 24-bit
+colors and a UTF-8 locale. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 
 =head1 CONSTRUCTOR
 
 =head2 new
 
-	my $ui = Term::Fabulous->new(%params);
+	my $ui = Term::Fabulous->new(
+		root   => $root_widget,
+		width  => 80,
+		height => 24,
+		mouse  => 1,
+	);
 
-Unknown parameters die.
+Creates the application object. The terminal is not touched until
+L</run>, so you can create the object, set the focus and add timers
+first. Unknown parameters die
+(C<Unrecognised parameters for Term::Fabulous constructor: 'colour'>).
 
 =over
 
-=item C<root> (required)
+=item C<root>
 
-The root widget. It must consume L<Clay::UI::Role::Events::Emitter>
-(for example L<Term::Fabulous::Widget::Box>), otherwise the constructor
-dies, because unhandled input events are delivered to it.
+Required. The root widget, the top of the widget tree, usually a
+L<Term::Fabulous::Widget::Box>. It receives every event that no other
+widget receives: key presses while nothing has the focus, mouse events
+where no widget is drawn, and every C<Resize>. It must therefore be able
+to fire events (compose L<Clay::UI::Role::Events::Emitter>, as all
+Term::Fabulous widgets except Text do); otherwise C<new> dies. A widget
+that was ever attached to another widget cannot be the root.
 
-=item C<width>, C<height> (required)
+=item C<width>
 
-Initial layout size in cells. L</run> replaces them with the terminal
-size, and resizes keep them in sync.
+Required. A positive number: the width of the layout in columns until
+L</run> starts. C<run> replaces it with the terminal's width, and keeps
+it up to date when the terminal is resized.
 
-=item C<output_mode>
+=item C<height>
 
-Must be C<TB_OUTPUT_TRUECOLOR> (the default); see
-L<Term::Fabulous::Render>.
+Required. A positive number: the height of the layout in rows until
+L</run> starts, then the terminal's height.
 
 =item C<mouse>
 
-Boolean, default 1. Enables termbox2 mouse input (clicks, releases,
-wheel and drag motion).
+A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags
+and the wheel to the program (see L<Term::Fabulous::Manual/MOUSE>). With
+0, the terminal keeps the mouse for itself, so the user can select and
+copy text as usual, and no C<Mouse> events are fired.
 
-=item C<memory_size>, C<error_handler>
+=item C<output_mode>
 
-Passed to L<Clay::UI>. The measure-text callback is always the
-terminal-cell measurement installed by L<Term::Fabulous::Render>.
+Optional, and only one value is allowed: C<TB_OUTPUT_TRUECOLOR> from
+L<Termbox>, the default. Any other value dies. Term::Fabulous always draws
+with 24-bit colors.
+
+=item C<memory_size>
+
+Optional, rarely needed. The number of bytes Clay reserves for laying out
+a frame: an integer of at least C<Clay::XS::Clay_MinMemorySize()> (about
+6 MB), which is also the default. It does not raise the limit on the
+number of widgets; see L</LIMITATIONS>.
+
+=item C<error_handler>
+
+Optional. A code reference Clay calls when it reports an error during
+layout (for example two widgets with the same id). The default dies with
+C<Clay error: ...>. See L<Clay::UI/new>.
+
+=item C<measure_text>
+
+Accepted because L<Clay::UI> accepts it, but ignored: Term::Fabulous
+always installs its own measurement, which counts terminal columns.
 
 =back
 
@@ -394,135 +536,558 @@ terminal-cell measurement installed by L<Term::Fabulous::Render>.
 
 =head2 run
 
-Opens the terminal, runs the event loop until it is stopped, and closes
-the terminal again. The terminal is initialized here, not in the
-constructor: C<tb_init> and every terminal setup call are checked and
-die with termbox2's error message. Once the terminal is open, it is
-always restored (C<tb_shutdown>) and every watcher this object added to
-the L<IO::Async::Loop> singleton is removed, whether the loop stops
-normally, an exception escapes from a timer or an event handler, or an
-event handler calls C<exit>. An exception is rethrown after the terminal
-has been restored, so its message appears on the normal screen. C<run>
-can therefore be called again later, and other code can keep using the
-loop.
+	$ui->run;
 
-When the locale's character set is not UTF-8, C<run> warns once before
-opening the terminal: termbox2 then cannot place wide characters.
+Opens the terminal in full-screen mode, runs the event loop until it is
+stopped, and restores the terminal. It returns nothing.
 
-Input is read when the terminal (or termbox2's resize pipe) becomes
-readable; there is no polling timer.
-
-=head2 pointer_state
-
-C<undef> until the first mouse event, then C<< { x => ..., y => ..., down => 0|1 } >>.
-A left-button press sets C<down>, a release clears it, wheel and other
-buttons keep it. C<draw> passes it to Clay, which drives hover and
-press state of L<Clay::UI::Role::Interaction::Hoverable> and
-L<Clay::UI::Role::Interaction::Pressable> widgets.
-
-=head2 loop
-
-The L<IO::Async::Loop> used by the last L</run>.
-
-=head2 mouse, termbox_draw_interval, termbox_resize_debounce_interval
-
-Readers. The intervals are 1/30 s (redraw) and 1/10 s (resize debounce).
-
-=head1 EVENTS
-
-Every dispatch fires a freshly built event, which then bubbles up the
-parent chain as described in L<Clay::UI::Role::Events::Emitter>.
+While it runs:
 
 =over
 
-=item L<Term::Fabulous::Event::KeyPress>
+=item *
 
-Fired on the focused widget (C<< $ui->interaction->get_focused_widget >>),
-or on the root when nothing has focus.
+the screen is laid out and drawn every 1/30 second (see
+L</termbox_draw_interval>), using the real terminal size;
 
-=item L<Term::Fabulous::Event::Mouse>
+=item *
 
-Fired on the topmost event emitter painted at the pointer's cell in the
-last frame (a widget's background, text or canvas, or the edge cells of
-its border), or on the root when there is none. Content scrolled out of a
-scroll container is not painted, so it never receives the event. A left
-button press moves the keyboard focus first (see
-L</KEYBOARD FOCUS AND SCROLLING>).
+terminal input is read as soon as it arrives and dispatched as
+C<KeyPress> and C<Mouse> events (see L</EVENTS>);
 
-=item L<Term::Fabulous::Event::Resize>
+=item *
 
-Always fired on the root, twice per debounced terminal resize: once
-before the new size is applied (C<is_pre_event>) and once after it.
-Resizes to a zero width or height are ignored.
+terminal resizes fire C<Resize> on the root widget;
+
+=item *
+
+everything else you added to the L<IO::Async::Loop> (IO::Async calls
+these objects I<notifiers>: timers, sockets, child processes, ...) runs
+as usual.
 
 =back
 
-Ctrl+C fires a KeyPress (key 3) and then stops the loop, so L</run>
-returns.
+The loop stops, and C<run> returns, when:
 
-=head1 KEYBOARD FOCUS AND SCROLLING
+=over
 
-Tab and Shift-Tab fire their KeyPress like any key and then move the
-focus to the next or previous focusable widget
-(C<< $ui->interaction->focus_next >> / C<focus_previous>, which wrap
-around), for example a L<Term::Fabulous::Widget::Button>. Listeners see
-the key but cannot keep the focus from moving.
+=item *
 
-A left mouse button press focuses the widget it is fired on, or its
-nearest ancestor that can take focus, before the Mouse event is fired.
-When neither can, the focused widget loses the focus, so clicking an
-empty area blurs a text field and closes an open dropdown. Dragging
-with the button held does not move the focus.
+your code calls C<< $ui->loop->stop >>;
 
-Every mouse-wheel notch scrolls the scroll container under the pointer,
-for example a L<Term::Fabulous::Widget::ScrollBox>, by three rows. The
-notches since the last frame are applied together when the next frame
-is drawn (L<Term::Fabulous::Render/draw>), and the Mouse event for each
-notch is fired as usual.
+=item *
 
-=head1 INPUT WIDGETS
+the user presses C<Ctrl+C> (after its C<KeyPress> was fired);
 
-Forms are built from these widgets; every one of them can take the
-keyboard focus (a radio group as a whole), works with the mouse, and
-fires a L<Term::Fabulous::Event::Change> when the user changes its
-value:
+=item *
+
+the process receives C<SIGINT> or C<SIGTERM>.
+
+=back
+
+If code running inside the loop dies (a listener, a timer), C<run>
+restores the terminal first and then dies with the same error, so the
+message is readable on the normal screen. The terminal is also restored
+when code inside the loop calls C<exit>. After C<run> has returned or
+died, the object can be used again and C<run> can be called again.
+
+C<run> dies with a message starting with C<Term::Fabulous:> when the
+terminal cannot be opened, for example when the process has no
+controlling terminal (C<tb_init failed: No such device or address>), or
+when the terminal reports a size of 0 columns or rows.
+
+When the locale's character set is not UTF-8, C<run> warns (at every
+call): C<Term::Fabulous: the locale's character set is not UTF-8; wide
+characters will be misaligned>.
+
+=head2 loop
+
+	my $loop = $ui->loop;
+	$ui->loop->stop;
+
+Returns the L<IO::Async::Loop> of the most recent L</run>, or C<undef>
+before the first C<run>. Call C<< $ui->loop->stop >> from a listener or
+timer to end C<run>. The loop is IO::Async's process-wide loop: the same
+object that C<< IO::Async::Loop->new >> returns, which is why notifiers
+added to C<< IO::Async::Loop->new >> before C<run> run inside it.
+
+=head2 interaction
+
+	my $tracker = $ui->interaction;
+	$ui->interaction->set_focused_widget($widget);
+	my $focused = $ui->interaction->get_focused_widget;
+
+Returns the L<Clay::UI::Interaction> object of this UI. It holds the
+keyboard focus and the hover and press state of the widgets. Use it to
+move the focus from code (C<set_focused_widget>, C<focus_next>,
+C<focus_previous>) and to ask which widget has it
+(C<get_focused_widget>). See L<Term::Fabulous::Manual/FOCUS>. Inherited
+from L<Clay::UI>.
+
+=head2 root
+
+	my $root = $ui->root;
+
+Returns the root widget given to L</new>. Read only.
+
+=head2 width
+
+	my $columns = $ui->width;
+	$ui->width(100);
+
+Accessor. Returns the current layout width in columns: the terminal width
+while L</run> is active. Writing sets the layout width from the next frame
+on and returns the new value; a value that is not a positive number dies.
+C<run> sets the width to the terminal width when it starts and after every
+terminal resize, so a written value lasts only until then. Inherited from
+L<Clay::UI>.
+
+=head2 height
+
+	my $rows = $ui->height;
+	$ui->height(40);
+
+Accessor. Returns the current layout height in rows: the terminal height
+while L</run> is active. Writing works like for L</width>. Inherited from
+L<Clay::UI>.
+
+=head2 mouse
+
+	my $enabled = $ui->mouse;
+
+Returns the C<mouse> constructor parameter. Read only.
+
+=head2 output_mode
+
+	my $mode = $ui->output_mode;    # TB_OUTPUT_TRUECOLOR
+
+Returns the C<output_mode> constructor parameter, always
+C<TB_OUTPUT_TRUECOLOR>. Read only.
+
+=head2 pointer_state
+
+	my $pointer = $ui->pointer_state;    # { x => 12, y => 3, down => 0 } or undef
+
+Returns where the mouse pointer was last reported: a new hash reference
+with the cell coordinates C<x> and C<y> and C<down>, which is 1 while the
+left button is held and 0 otherwise. Returns C<undef> until the first
+mouse event. The pointer is reported only on button presses, releases,
+drags and wheel turns (see L<Term::Fabulous::Manual/What the terminal reports>),
+so this is not the live mouse position. Term::Fabulous
+passes it to Clay with every frame, which derives the hover and press
+state of the widgets from it.
+
+=head2 termbox_draw_interval
+
+	my $seconds = $ui->termbox_draw_interval;    # 1/30
+
+Returns the time between two frames in seconds: 1/30. Read only.
+
+=head2 termbox_resize_debounce_interval
+
+	my $seconds = $ui->termbox_resize_debounce_interval;    # 1/10
+
+Returns how long, in seconds, the terminal size must stay unchanged
+before a resize is applied and the C<Resize> events are fired: 1/10.
+While a resize is pending, no frames are drawn. Read only.
+
+=head2 draw
+
+	$ui->draw;
+
+Lays out and draws one frame immediately. C<run> calls it 30 times per
+second, so programs do not need it. It only has a visible effect while
+the terminal is open. See L<Term::Fabulous::Render/draw>.
+
+=head2 Other inherited methods
+
+The class inherits further methods from L<Clay::UI> (C<render>,
+C<widget_for>, C<measure_text>) and from L<Term::Fabulous::Render>
+(C<get_last_commands>, C<get_last_clip_rects>). Applications rarely need
+them; they are documented on those pages.
+
+=head1 EVENTS
+
+C<run> fires these events. Each one bubbles from the widget it is fired
+on to the root, as described in
+L<Term::Fabulous::Manual/Return values and bubbling>.
+
+=over
+
+=item C<KeyPress> (L<Term::Fabulous::Event::KeyPress>)
+
+For every key press, on the focused widget, or on the root widget when
+nothing has the focus.
+
+=item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
+
+For every mouse report (button press, release, drag, wheel), on the
+topmost widget that drew something in the cell under the pointer in the
+last frame: its background, its border or its canvas. Text widgets are
+skipped, and so are widgets that draw nothing there. When no widget
+qualifies, the event is fired on the root widget. Content that is
+scrolled out of view in a L<Term::Fabulous::Widget::ScrollBox> is not
+drawn and never receives the event.
+
+=item C<Resize> (L<Term::Fabulous::Event::Resize>)
+
+On the root widget, twice per resize: first with C<is_pre_event> true,
+before the new size is applied, then with C<is_post_event> true, after
+it. Resizes are debounced (see L</termbox_resize_debounce_interval>),
+and a size with zero columns or rows is ignored. No C<Resize> is fired
+when C<run> starts and adopts the terminal's size; see
+L<Term::Fabulous::Event::Resize>.
+
+=back
+
+Widgets fire further events themselves: C<Change> from the input
+widgets, C<Submit> from L<Term::Fabulous::Widget::TextField>,
+C<CanvasResize> from canvases, and Clay::UI's C<OnPress>, C<OnRelease>,
+C<OnHoverStart>, C<OnHoverStopped>, C<OnFocus>, C<OnBlur> and
+C<OnScroll>. The complete list is in
+L<Term::Fabulous::Manual/Event reference>.
+
+=head1 KEYBOARD AND FOCUS
+
+Three keys have a fixed meaning. Their C<KeyPress> is fired first, like
+for any other key, and then:
+
+=over
+
+=item C<Ctrl+C>
+
+stops the loop, so L</run> returns.
+
+=item C<Tab>
+
+moves the focus to the next widget that can take it, in tree order,
+wrapping around at the end.
+
+=item C<Shift+Tab> (key name C<BackTab>)
+
+moves the focus to the previous one.
+
+=back
+
+Listeners cannot prevent these actions.
+
+When the left mouse button is pressed (not dragged), the widget under
+the pointer gets the focus, or its nearest ancestor that can take it.
+When there is none, the focus is cleared; so clicking an empty area
+leaves a text field and closes an open dropdown. This happens before the
+C<Mouse> event is fired.
+
+See L<Term::Fabulous::Manual/KEYBOARD> and
+L<Term::Fabulous::Manual/FOCUS>.
+
+=head1 MOUSE WHEEL SCROLLING
+
+Each notch of the mouse wheel scrolls the scroll box under the
+pointer (for example a L<Term::Fabulous::Widget::ScrollBox>) by three
+rows. Notches that arrive between two frames are added up and applied
+when the next frame is drawn. A C<Mouse> event is fired for every notch
+termbox2 reports (see L</LIMITATIONS> for reports it loses). Widgets that
+scroll themselves, like L<Term::Fabulous::Widget::TextArea>, use those
+C<Mouse> events. Only vertical scrolling is driven by the wheel; there is
+no horizontal wheel input.
+
+=head1 MODULES
+
+Every module has its own page. They are grouped here by purpose.
+
+=head2 Application
+
+=over
+
+=item L<Term::Fabulous>
+
+The interactive application object, described on this page.
+
+=item L<Term::Fabulous::Static>
+
+Renders a widget tree once, as text, without opening the terminal; for
+reports, command-line output and tests.
+
+=item L<Term::Fabulous::Layout>
+
+Builds a widget tree from a KDL layout file and documents the layout
+file format.
+
+=back
+
+=head2 Widgets
+
+=over
+
+=item L<Term::Fabulous::Widget::Box>
+
+The general container, with layout options, a background and a border.
+
+=item L<Term::Fabulous::Widget::Text>
+
+Shows text in one color; wraps and aligns it.
+
+=item L<Term::Fabulous::Widget::Button>
+
+A box that can take the keyboard focus and reports mouse clicks.
+
+=item L<Term::Fabulous::Widget::ScrollBox>
+
+A box whose content can be larger than the box and scrolls with the
+mouse wheel.
+
+=item L<Term::Fabulous::Widget::Canvas>
+
+A box with a grid of character cells that you draw into.
+
+=item L<Term::Fabulous::Widget::PixelCanvas>
+
+A canvas that draws pixels, two per cell, with lines, rectangles and
+circles.
+
+=item L<Term::Fabulous::Widget>
+
+The abstract base class of all widgets except Text. Its page describes
+the constructor parameters and methods they all share.
+
+=back
+
+=head2 Input widgets
 
 =over
 
 =item L<Term::Fabulous::Widget::TextField>
 
-One line of text, with an optional mask for passwords.
+A single line of text input, optionally masked for passwords.
 
 =item L<Term::Fabulous::Widget::TextArea>
 
-Several lines of text, wrapped or scrolled sideways.
+Text input of several lines, wrapped or scrolled sideways.
 
 =item L<Term::Fabulous::Widget::Checkbox>
 
-A box to check, with an optional indeterminate state.
+A box the user checks and unchecks.
 
-=item L<Term::Fabulous::Widget::RadioGroup> and L<Term::Fabulous::Widget::RadioButton>
+=item L<Term::Fabulous::Widget::RadioGroup>
 
-One choice of several, all visible.
+A group of radio buttons of which one is selected; it takes the focus
+for its buttons.
+
+=item L<Term::Fabulous::Widget::RadioButton>
+
+One choice inside a radio group.
 
 =item L<Term::Fabulous::Widget::Dropdown>
 
-One choice of several, from a list that opens over the other widgets.
+One choice from a list that opens over the other widgets.
 
 =item L<Term::Fabulous::Widget::Slider>
 
-A number from a range.
+A number from a range, chosen by moving a thumb.
+
+=item L<Term::Fabulous::Widget::Input>
+
+The base class of the input widgets; derive from it to write your own.
+
+=item L<Term::Fabulous::Widget::TextInput>
+
+The base class of TextField and TextArea, with the editing keys and mouse
+selection.
+
+=item L<Term::Fabulous::Editor>
+
+The text, cursor, selection, undo history and clipboard behind the text
+inputs, without any drawing.
+
+=item L<Term::Fabulous::Widget::Dropdown::List>
+
+The list an open dropdown shows. Used internally by the dropdown.
 
 =back
 
-They share L<Term::Fabulous::Widget::Input>, which describes their
-colors, sizing and disabled state; the text inputs share
-L<Term::Fabulous::Widget::TextInput> and its editing keys. Bind keys of
-your own with L<Term::Fabulous::Event::KeyPress/key_name>.
+=head2 Events
+
+=over
+
+=item L<Term::Fabulous::Event::KeyPress>
+
+A key was pressed. Provides readable key names for key bindings.
+
+=item L<Term::Fabulous::Event::Mouse>
+
+A mouse button was pressed or released, the mouse was dragged, or the
+wheel was turned.
+
+=item L<Term::Fabulous::Event::Resize>
+
+The terminal changed size.
+
+=item L<Term::Fabulous::Event::CanvasResize>
+
+A canvas got a new size from the layout.
+
+=item L<Term::Fabulous::Event::Change>
+
+The user changed the value of an input widget.
+
+=item L<Term::Fabulous::Event::Submit>
+
+The user pressed Enter in a text field.
+
+=back
+
+=head2 Colors, borders and text
+
+=over
+
+=item L<Term::Fabulous::Color>
+
+Color values: parsing color strings, converting between RGB and HSL,
+making colors lighter, darker or mixed.
+
+=item L<Term::Fabulous::Enum::BorderStyle>
+
+The 21 border styles and their characters.
+
+=item L<Term::Fabulous::Role::HasBorderStyle>
+
+The per-side border styles of a widget and how borders take space.
+
+=item L<Term::Fabulous::Unicode>
+
+How many terminal columns a piece of text takes, and how text is made
+safe for the terminal.
+
+=item L<Term::Fabulous::Enum::WebColor>
+
+A placeholder for named colors; it defines no colors yet.
+
+=back
+
+=head2 Extending Term::Fabulous
+
+These modules matter only if you write widget classes that can be built
+from layout files, or your own application or output class.
+
+=over
+
+=item L<Term::Fabulous::Role::CanParseLayout>
+
+Makes a widget class usable in KDL layout files.
+
+=item L<Term::Fabulous::Render>
+
+The role that draws a laid-out widget tree; composed by Term::Fabulous
+and Term::Fabulous::Static.
+
+=item L<Term::Fabulous::Render::Target::Termbox>
+
+Sends the drawn cells to the terminal.
+
+=item L<Term::Fabulous::Render::Target::Grid>
+
+Collects the drawn cells in memory.
+
+=item L<Term::Fabulous::Render::Target::Mask>
+
+Lets a frame keep cells of the previous frame, so unchanged canvases are
+not drawn again.
+
+=item L<Term::Fabulous::Render::Rectangle>
+
+Draws backgrounds.
+
+=item L<Term::Fabulous::Render::Border>
+
+Draws borders.
+
+=item L<Term::Fabulous::Render::Text>
+
+Draws text.
+
+=item L<Term::Fabulous::Render::Canvas>
+
+Draws canvases, only their changed cells when possible.
+
+=item L<Term::Fabulous::Render::Clip>
+
+Restricts drawing to the visible part of scroll containers.
+
+=item L<Term::Fabulous::Render::Attr>
+
+Converts colors into termbox2 color values.
+
+=item L<Term::Fabulous::Render::Geometry>
+
+Converts Clay's layout boxes into terminal cells.
+
+=back
+
+=head1 LIMITATIONS
+
+=over
+
+=item *
+
+The whole screen is laid out and drawn 30 times per second, also when
+nothing changed. Only the cells that changed are sent to the terminal,
+but very large widget trees cost CPU time.
+
+=item *
+
+termbox2 asks the terminal to report mouse buttons, drags and the wheel,
+but not movement without a pressed button, so hover effects follow
+clicks, drags and the wheel only.
+
+=item *
+
+The press and release state of the mouse is passed to Clay once per
+frame. A click whose press and release both arrive within one frame
+(1/30 second), such as a quick touchpad tap, fires its two C<Mouse>
+events but no C<OnPress> and C<OnRelease>. Buttons, checkboxes and radio
+buttons do not react to it; text inputs, sliders and dropdowns do,
+because they act on the C<Mouse> event itself.
+
+=item *
+
+When the terminal sends several mouse reports at once (for example
+during fast wheel scrolling), termbox2 delivers only the first, so some
+wheel notches and fast releases are lost.
+
+=item *
+
+C<Alt> plus a printable key cannot be told apart from C<Escape> followed
+by that key.
+
+=item *
+
+Text widgets take UTF-8 encoded byte strings, while everything else
+takes character strings; see L<Term::Fabulous::Manual/TEXT>.
+
+=item *
+
+There are no floating windows or dialogs for application use yet; only
+the dropdown list floats over other widgets.
+
+=item *
+
+Clay lays out at most 8192 elements per frame; every widget is one
+element and Term::Fabulous uses two more, so at most 8190 widgets can
+be shown. A larger tree makes drawing die with a misleading Clay error
+(C<There were still open layout elements when EndLayout was called>).
+C<memory_size> does not change this limit.
+
+=back
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>, L<Term::Fabulous::Widget::Input>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Manual>, L<Term::Fabulous::Cookbook>, L<Clay::UI>,
+L<Clay::XS>, L<Termbox>, L<IO::Async>, L<Object::Pad>.
+
+=head1 BUGS
+
+Please report bugs at
+L<https://github.com/davenonymous/perl-term-fabulous/issues>.
 
 =head1 AUTHOR
 

@@ -41,3 +41,7 @@ Revision history for Term::Fabulous
         - Event::KeyPress::key_name and text name keys for bindings
           ('Ctrl+Shift+Left', 'Enter', 'a'); Widget::Box::parse_property
           lets subclasses parse KDL properties of their own
+        - Documentation: Term::Fabulous::Manual (user guide) and
+          Term::Fabulous::Cookbook (recipes), reference documentation
+          for every module, and the examples buttons-and-keys.pl,
+          kdl-form.pl and custom-widget.pl

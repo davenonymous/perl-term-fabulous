@@ -156,117 +156,186 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::PixelCanvas - Canvas of half-block pixels
+Term::Fabulous::Widget::PixelCanvas - A canvas of square-ish pixels, two
+per cell
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Widget::PixelCanvas;
 	use Clay::XS qw(sizing_grow);
 	use Termbox 2 qw(TB_KEY_MOUSE_LEFT);
+	use Term::Fabulous::Widget::PixelCanvas;
 
 	my $image = Term::Fabulous::Widget::PixelCanvas->new(
-		background_color => [0, 0, 0, 255],
+		background_color => [ 0, 0, 0, 255 ],
 		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 	);
 
+	# Draw when the size is known, and again after every resize.
 	$image->on( CanvasResize => sub ($event) {
 		my ( $width, $height ) = ( $image->pixel_width, $image->pixel_height );
 		$image->clear;
 		$image->draw_line( 0, $height - 1, $width - 1, 0, 0x00FF00 );
 		$image->draw_circle( $width / 2, $height / 2, $height / 3, '#ff8800' );
 		$image->fill_rect( 2, 2, 6, 4, [ 40, 80, 200 ] );
+		return;
 	} );
 
+	# Paint with the left mouse button.
 	$image->on( Mouse => sub ($event) {
 		return unless $event->key == TB_KEY_MOUSE_LEFT;
 		my ( $x, $y ) = $image->pixel_at($event) or return;
 		$image->set_pixel( $x, $y, 0xFFFFFF )->set_pixel( $x, $y + 1, 0xFFFFFF );
+		return;
 	} );
 
 =head1 DESCRIPTION
 
-A L<Term::Fabulous::Widget::Canvas> drawn in pixels: every cell shows
-two of them on top of each other, as an upper half block (U+2580) in
-the color of the top pixel over the color of the bottom one, or a lower
-half block (U+2584) when only the bottom pixel is set. The image is
-C<columns> pixels wide and twice C<rows> pixels high, and a terminal
-cell is about twice as high as wide, so pixels come out roughly square.
-Unknown constructor parameters die.
+A PixelCanvas is a L<Term::Fabulous::Widget::Canvas> that you draw on
+in pixels instead of characters. Every terminal cell shows two pixels
+stacked on top of each other, using the half block characters U+2580
+(UPPER HALF BLOCK) and U+2584 (LOWER HALF BLOCK): the top pixel is the
+character's color, the bottom pixel its background. A terminal cell is
+about twice as high as it is wide, so the pixels come out roughly
+square. An image is C<columns> pixels wide and C<2 * rows> pixels high.
 
-Everything else works as in the canvas: the buffer follows the layout
-(and fires C<CanvasResize>), only changed cells are painted, and unset
-pixels show the background of the canvas or its nearest ancestor.
+Everything else works as for a Canvas: the layout decides the size,
+C<CanvasResize> tells you when it changes (draw then), only changed
+cells are sent to the terminal, and unset pixels show the canvas's
+background (or that of its nearest ancestor with one).
 
-The pixels are the cells: a pixel is read back from the half block in
-its cell. The inherited cell methods (C<put>, C<put_text>, C<fill>,
-C<erase>, C<clear>) therefore work for text over the image, and a cell
-written that way shows no pixels until a pixel is set in it again; this
-also unsets the other pixel of that cell.
+=head2 Pixels and cells
+
+The pixels are stored in the cells themselves. The inherited cell
+methods (C<put>, C<put_text>, C<fill>, C<erase>, C<clear>) therefore
+still work, for example to write text over an image. A cell written
+that way shows no pixels any more: both of its pixels count as unset
+until a pixel is set in it again, and setting one leaves the other
+unset.
 
 =head2 Coordinates and colors
 
-C<$x> counts pixels from the left, C<$y> from the top, both from 0.
-Coordinates, sizes and the radius must be finite numbers and are
-rounded down; anything else dies. Pixels outside the image are dropped,
-so shapes may extend past its edges. Colors are given as for the
-canvas (L<Term::Fabulous::Widget::Canvas/Colors>); C<undef>, or a color
-with alpha 0, unsets the pixels instead.
+C<$x> counts pixels from the left, C<$y> pixels from the top, both
+from 0. Coordinates, sizes and the radius may be any finite numbers and
+are rounded down to whole pixels; C<undef>, non-numbers, C<NaN> and
+infinities die. Pixels outside the image are silently dropped, so
+shapes may extend past its edges.
 
-The drawing methods return the pixel canvas, so calls chain.
+Colors are given as for the canvas (see
+L<Term::Fabulous::Widget::Canvas/Colors>): a packed C<0xRRGGBB>
+integer, a L<Term::Fabulous::Color>, or anything
+C<< Term::Fabulous::Color->new >> accepts. C<undef>, or a color with
+alpha 0, unsets the pixels instead of coloring them.
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $image = Term::Fabulous::Widget::PixelCanvas->new(%parameters);
+
+Takes exactly the parameters of L<Term::Fabulous::Widget::Canvas> (the
+Box parameters, see L<Term::Fabulous::Widget/new>). Unknown parameters
+die. Give it a C<sizing>, otherwise the image has no pixels.
 
 =head1 METHODS
 
-=head2 set_pixel, unset_pixel
+The drawing methods return the pixel canvas, so calls chain. A
+PixelCanvas also has every method of L<Term::Fabulous::Widget::Canvas>.
+
+=head2 set_pixel
 
 	$image->set_pixel( $x, $y, $color );
+
+Colors one pixel. C<undef> as the color unsets it.
+
+=head2 unset_pixel
+
 	$image->unset_pixel( $x, $y );
+
+Unsets one pixel, so it shows the background.
 
 =head2 pixel
 
 	my $attr = $image->pixel( $x, $y );
 
-The termbox2 attribute of a pixel (see
-L<Term::Fabulous::Render::Attr>), C<undef> when it is unset or outside
-the image.
+Reads one pixel back: the termbox2 attribute number of its color (see
+L<Term::Fabulous::Render::Attr>; compare it with
+C<Term::Fabulous::Render::Attr::cell_color_attr( color => $color )>),
+or C<undef> when the pixel is unset or outside the image.
 
-=head2 fill_rect, draw_rect
+=head2 fill_rect
 
 	$image->fill_rect( $x, $y, $width, $height, $color );
+
+Colors every pixel of the rectangle that starts at C<($x, $y)> and is
+C<$width> pixels wide and C<$height> pixels high. A width or height
+below 1 draws nothing.
+
+=head2 draw_rect
+
 	$image->draw_rect( $x, $y, $width, $height, $color );
 
-All pixels of the rect, or only its one-pixel outline. Nothing for a
-width or height below 1.
+Colors the one-pixel outline of the same rectangle as C<fill_rect>.
 
 =head2 draw_line
 
 	$image->draw_line( $from_x, $from_y, $to_x, $to_y, $color );
 
-Every pixel from one end point to the other (Bresenham), both included.
-The number of pixels visited grows with the length of the line, also
-outside the image.
+Colors every pixel on the straight line between the two points, both
+end points included (Bresenham's algorithm). The time this takes grows
+with the length of the line, including the part outside the image.
 
 =head2 draw_circle
 
 	$image->draw_circle( $center_x, $center_y, $radius, $color );
 
-The one-pixel outline of a circle (midpoint algorithm); radius 0 is a
-single pixel. A negative radius dies.
+Colors the one-pixel outline of a circle (midpoint algorithm). Radius 0
+is a single pixel; a negative radius dies.
 
 =head2 pixel_at
 
 	my ( $x, $y ) = $image->pixel_at($mouse_event);
 
-The upper pixel of the cell under a L<Term::Fabulous::Event::Mouse>
-(see L<Term::Fabulous::Widget::Canvas/cell_at>); the terminal reports
-the pointer per cell, so the pixel below it, C<$y + 1>, is under the
-pointer as well. The empty list when the pointer is outside the image.
+The pixel under a L<Term::Fabulous::Event::Mouse> (see
+L<Term::Fabulous::Widget::Canvas/cell_at>). The terminal reports the
+mouse per cell, not per pixel, so this is always the B<upper> pixel of
+the cell; the pixel below it, C<$y + 1>, is under the pointer as well.
+Returns the empty list when the pointer is outside the image (on the
+border or padding, for example) or before the first frame.
 
-=head2 pixel_width, pixel_height
+=head2 pixel_width
 
-The size of the image in pixels: C<columns> and C<2 * rows>.
+	my $width = $image->pixel_width;
+
+The width of the image in pixels: the same as C<columns>. 0 before the
+first frame.
+
+=head2 pixel_height
+
+	my $height = $image->pixel_height;
+
+The height of the image in pixels: C<2 * rows>. 0 before the first
+frame.
+
+=head1 EVENTS
+
+The events of L<Term::Fabulous::Widget::Canvas/EVENTS>: C<CanvasResize>
+when the size changes (its C<columns> and C<rows> are in cells; use
+L</pixel_width> and L</pixel_height> for pixels) and C<Mouse>.
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::Box/KDL PROPERTIES>.
+The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>:
+
+	use Term::Fabulous::Widget::PixelCanvas as PixelCanvas
+
+	PixelCanvas "image" {
+		sizing width=grow height=grow
+		background_color "#000000"
+	}
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Manual/CANVASES>,
+the example program F<examples/pixel-paint.pl>.
 
 =cut

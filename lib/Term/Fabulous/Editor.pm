@@ -507,220 +507,492 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Editor - Text, cursor, selection and undo of a text input
+Term::Fabulous::Editor - Text, cursor, selection, undo and clipboard of
+a text input
 
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Editor;
 
 	my $editor = Term::Fabulous::Editor->new( text => "Hello\nworld" );
+
 	$editor->move_document_start;
 	$editor->move_word_right(1);         # select "Hello"
 	$editor->type('Goodbye');            # replaces the selection
+	say $editor->text;                   # "Goodbye\nworld"
+
 	$editor->undo;
 	say $editor->text;                   # "Hello\nworld"
 
+	# Inside a text input widget:
+	my $field_editor = $text_field->editor;
+	$field_editor->select_all;
+	$text_field->cursor_moved;           # scroll and repaint
+
 =head1 DESCRIPTION
 
-The editing model behind L<Term::Fabulous::Widget::TextField> and
+C<Term::Fabulous::Editor> is the editing model behind
+L<Term::Fabulous::Widget::TextField> and
 L<Term::Fabulous::Widget::TextArea>, without any drawing: a list of
-lines, a cursor, a selection, an undo history and a clipboard. Widgets
-translate key presses into these methods and draw the result.
+lines, a cursor, an optional selection, an undo history and a
+clipboard. The widgets translate key presses and clicks into calls of
+these methods and draw the result. You use the editor directly when you
+want to move the cursor, select or change text of an input from your
+program (through C<< $input->editor >>), or when you build a text widget
+of your own.
 
-Text is a Perl character string, not UTF-8 bytes. The cursor moves by
-grapheme clusters (what a reader sees as one character, such as C<e>
-followed by a combining accent, or a flag), segmented exactly as the
-renderer segments text, and words are runs of C<\w> characters.
-Unknown constructor parameters die.
+The text is a Perl character string (decoded text), not UTF-8 encoded
+bytes. Internally it is kept as a list of lines without their line
+breaks; C<text> joins them with C<"\n">.
+
+The cursor moves by grapheme clusters: what a reader sees as one
+character, such as C<e> followed by a combining accent, an emoji with a
+skin tone modifier, or a flag made of two regional indicators. The
+segmentation is the same as the renderer's (L<Term::Fabulous::Unicode>),
+so the cursor never lands inside a character. Words, for word movement
+and word deletion, are runs of C<\w> characters (letters, digits and
+C<_>).
+
+Changes made through the editor of an input widget are not shown until
+the widget repaints, and they fire no C<Change> event. Call
+C<< $input->cursor_moved >> (see
+L<Term::Fabulous::Widget::TextInput/cursor_moved>) afterwards.
 
 =head1 CONSTRUCTOR
 
 =head2 new
 
-	my $editor = Term::Fabulous::Editor->new( text => '', multi_line => 1, max_length => undef );
+	my $editor = Term::Fabulous::Editor->new(
+		text       => '',
+		multi_line => 1,
+		max_length => undef,
+	);
+
+All parameters are optional. Unknown parameters die.
 
 =over
 
 =item C<text>
 
-The initial text, see C<set_text>.
+A character string. Default: C<''>. The initial text, as for
+L</set_text>. Dies if it is longer than C<max_length>.
 
 =item C<multi_line>
 
-Boolean, default 1. A single-line editor turns every line break it is
-given into a space.
+A boolean. Default: 1. A single-line editor (0) turns every line break
+it is given into a space, so its text is always one line.
 
 =item C<max_length>
 
-The most grapheme clusters the text may hold (every line break counts
-as one), or C<undef> (the default) for no limit. Inserted text is cut
-to fit; C<set_text> dies on a longer text.
+A non-negative integer, or C<undef>. Default: C<undef> (no limit). The
+most grapheme clusters the text may hold; every line break counts as
+one. Inserted and typed text is cut to fit.
 
 =back
 
 =head1 POSITIONS
 
-A position is a line index (C<$row>, from 0) and a character offset
-into that line (C<$offset>) that lies on a grapheme cluster boundary.
-Methods that take a position clamp it to the text and move an offset
-inside a cluster to the start of that cluster; non-integer values die.
+Several methods take or return a position: a line index C<$row> (from
+0) and a character offset C<$offset> into that line (from 0, in Perl
+characters, not columns). A valid position lies on a grapheme cluster
+boundary. Methods that take a position clamp it to the text (a row past
+the last line means the last line, an offset past the end of a line
+means its end) and move an offset inside a cluster back to the start of
+that cluster. A row or offset that is not an integer dies.
 
-=head1 METHODS
+=head1 METHODS: TEXT
 
-=head2 Text
+=head2 text
 
-=over
+	my $text = $editor->text;
 
-=item C<text>, C<set_text($text)>
+The whole text, a character string with lines joined by C<"\n">.
 
-The whole text, lines joined with C<"\n">. C<set_text> replaces it,
-turns C<"\r\n"> and C<"\r"> into C<"\n">, puts the cursor at the end,
-clears the selection and the undo history, and returns the editor.
-It dies when the text is not a string or is longer than C<max_length>.
+=head2 set_text
 
-=item C<lines>, C<line($row)>, C<line_count>
+	$editor->set_text("new\ntext");
 
-The lines of the text, without line breaks; there is always at least
-one.
+Replaces the whole text. C<"\r\n"> and C<"\r"> become C<"\n"> (and every
+line break becomes a space in a single-line editor). Puts the cursor at
+the end, clears the selection and the undo and redo history. Returns the
+editor. Dies if the text is not a string or is longer than
+C<max_length>.
 
-=item C<boundaries($row)>
+=head2 lines
+
+	my @lines = $editor->lines;
+
+The lines of the text, without line breaks. There is always at least
+one line (an empty text has one empty line).
+
+=head2 line
+
+	my $line = $editor->line($row);
+
+One line of the text, without its line break. Valid rows are 0 to
+C<< line_count - 1 >>; a row past the end returns C<undef>, and negative
+rows are not supported (they currently count from the end, like Perl
+array indices).
+
+=head2 line_count
+
+	my $count = $editor->line_count;
+
+The number of lines, at least 1.
+
+=head2 boundaries
+
+	my @offsets = $editor->boundaries($row);
 
 The grapheme cluster boundaries of a line as character offsets, from 0
-to the length of the line.
+up to and including the length of the line. For C<"ae\x{301}"> they are
+C<(0, 1, 3)>.
 
-=item C<character_count>
+=head2 character_count
 
-The number of grapheme clusters, line breaks included.
+	my $count = $editor->character_count;
 
-=item C<is_empty>
+The number of grapheme clusters in the text, line breaks included (each
+counts as one). This is what C<max_length> limits.
 
-Whether the text is the empty string.
+=head2 is_empty
 
-=item C<max_length>, C<set_max_length($limit)>
+	if ( $editor->is_empty ) { ... }
 
-The length limit, see L</new>. C<set_max_length> takes a non-negative
-integer or C<undef> for no limit, dies when the text is already longer,
-and returns the editor.
+True when the text is the empty string.
 
-=item C<revision>
+=head2 max_length
 
-A number that changes whenever the text changes, for caching what is
-derived from the text.
+	my $limit = $editor->max_length;
 
-=back
+The length limit, or C<undef> for none.
 
-=head2 Cursor and selection
+=head2 set_max_length
 
-=over
+	$editor->set_max_length(80);
+	$editor->set_max_length(undef);
 
-=item C<cursor>
+Sets the length limit. Returns the editor. Dies if the limit is not a
+non-negative integer or C<undef>, or if the text is already longer.
 
-C<($row, $offset)> of the cursor.
+=head2 revision
 
-=item C<move_to($row, $offset, $extend = 0)>
+	my $revision = $editor->revision;
 
-Moves the cursor. With C<$extend> true the selection reaches from where
-it started (the cursor position before the first extending move) to
-the new position, otherwise the selection is cleared.
+A number that grows whenever the text changes (edits, C<set_text>, undo,
+redo). Compare it with an earlier value to know whether something you
+derived from the text is still up to date.
 
-=item C<move_left($extend)>, C<move_right($extend)>
+=head2 multi_line
 
-One grapheme cluster, crossing line breaks. Without C<$extend>, a
-selection collapses to its start (left) or end (right) instead.
+	my $keeps_line_breaks = $editor->multi_line;
 
-=item C<move_word_left($extend)>, C<move_word_right($extend)>
+True for a multi-line editor (see the C<multi_line> parameter).
 
-To the start of the word before the cursor, or to the end of the word
-after it. From the start (end) of a line, they cross to the previous
-(next) line.
+=head1 METHODS: CURSOR AND SELECTION
 
-=item C<move_line_start($extend)>, C<move_line_end($extend)>, C<move_document_start($extend)>, C<move_document_end($extend)>
+The cursor is where typing inserts text. A selection reaches from an
+anchor (where the selection started) to the cursor. The movement methods
+below take an optional C<$extend> argument: when true, the selection is
+extended to the new cursor position (starting at the old cursor
+position if there was no selection); when false or omitted, the
+selection is cleared. Movement and selection methods return the editor,
+so calls can be chained.
 
-=item C<set_selection($anchor_row, $anchor_offset, $cursor_row, $cursor_offset)>, C<select_all>, C<clear_selection>
+=head2 cursor
 
-=item C<select_word_at($row, $offset)>
+	my ( $row, $offset ) = $editor->cursor;
 
-Selects the word of the cluster at the position (the last cluster at
-the end of the line), or that single cluster when it is not part of a
-word. A cluster is part of a word when its first character matches
-C<\w>.
+The position of the cursor.
 
-=item C<has_selection>, C<selection>, C<selected_text>
+=head2 move_to
 
-C<selection> returns the ordered positions C<($row_0, $offset_0,
-$row_1, $offset_1)>, or the empty list. A selection is never empty.
+	$editor->move_to( $row, $offset );
+	$editor->move_to( $row, $offset, 1 );    # extend the selection
 
-=back
+Moves the cursor to a position (see L</POSITIONS>).
 
-The movement and selection methods return the editor.
+=head2 move_left
 
-=head2 Editing
+	$editor->move_left;
+	$editor->move_left(1);
 
-Every edit returns 1 when it changed the text and 0 otherwise. Edits
-that change the text replace the selection, if there is one, leave no
-selection behind and can be undone.
+Moves one grapheme cluster to the left, to the end of the previous line
+from the start of a line. Without C<$extend> and with a selection, the
+cursor goes to the start of the selection instead and the selection is
+cleared.
 
-=over
+=head2 move_right
 
-=item C<insert($text)>
+	$editor->move_right;
+	$editor->move_right(1);
 
-Inserts text at the cursor (replacing the selection), cut to
-C<max_length>. Line breaks are normalized as in C<set_text>.
+Moves one grapheme cluster to the right, to the start of the next line
+from the end of a line. Without C<$extend> and with a selection, the
+cursor goes to the end of the selection instead and the selection is
+cleared.
 
-=item C<type($text)>
+=head2 move_word_left
 
-Like C<insert>, for text the user types: consecutive typing forms one
-undo step per word and per run of spaces.
+	$editor->move_word_left($extend);
 
-=item C<delete_backward>, C<delete_forward>
+Moves to the start of the word before the cursor (skipping non-word
+characters in between). From the start of a line, moves to the end of
+the previous line.
 
-The selection, or else the cluster (or line break) before or after the
-cursor.
+=head2 move_word_right
 
-=item C<delete_word_backward>, C<delete_word_forward>
+	$editor->move_word_right($extend);
 
-The selection, or else up to the start of the word before the cursor
-or the end of the word after it.
+Moves to the end of the word after the cursor. From the end of a line,
+moves to the start of the next line.
 
-=item C<delete_to_line_start>, C<delete_to_line_end>
+=head2 move_line_start
 
-The selection, or else up to the start or end of the line; at the
-start (end) of a line, the line break before (after) it.
+	$editor->move_line_start($extend);
 
-=back
+Moves to the start of the cursor's line.
 
-=head2 Clipboard
+=head2 move_line_end
 
-=over
+	$editor->move_line_end($extend);
 
-=item C<copy>, C<cut>, C<paste>
+Moves to the end of the cursor's line.
 
-C<copy> and C<cut> put the selected text on the clipboard and return 1,
-or return 0 without a selection. C<paste> inserts the clipboard.
+=head2 move_document_start
 
-=item C<clipboard>
+	$editor->move_document_start($extend);
+
+Moves to the start of the text.
+
+=head2 move_document_end
+
+	$editor->move_document_end($extend);
+
+Moves to the end of the text.
+
+=head2 set_selection
+
+	$editor->set_selection( $anchor_row, $anchor_offset, $cursor_row, $cursor_offset );
+
+Selects from the anchor position to the cursor position (either may
+come first) and puts the cursor at the second position. Selecting an
+empty range leaves no selection.
+
+=head2 select_all
+
+	$editor->select_all;
+
+Selects the whole text, with the cursor at its end.
+
+=head2 clear_selection
+
+	$editor->clear_selection;
+
+Removes the selection; the cursor stays where it is.
+
+=head2 select_word_at
+
+	$editor->select_word_at( $row, $offset );
+
+Selects the word containing the grapheme cluster at the position (at the
+end of a line: the last cluster). When that cluster is not part of a
+word (its first character does not match C<\w>), selects just that one
+cluster. On an empty line, only moves the cursor there. This is what a
+double click does.
+
+=head2 has_selection
+
+	if ( $editor->has_selection ) { ... }
+
+True when there is a non-empty selection.
+
+=head2 selection
+
+	my ( $row_0, $offset_0, $row_1, $offset_1 ) = $editor->selection;
+
+The start and end positions of the selection, in text order (the start
+comes first, whatever direction it was made in), or the empty list when
+nothing is selected.
+
+=head2 selected_text
+
+	my $text = $editor->selected_text;
+
+The selected text (lines joined with C<"\n">), or C<''> when nothing is
+selected.
+
+=head1 METHODS: EDITING
+
+Every edit method returns 1 when it changed the text and 0 when it did
+not. An edit that changes the text replaces the selection (if there is
+one), leaves no selection behind, puts the cursor after the inserted
+text, and can be undone. None of them fires events; they are plain
+methods on the text model.
+
+=head2 insert
+
+	$editor->insert('text');
+
+Inserts a character string at the cursor, replacing the selection. Line
+breaks are converted as in L</set_text>. With C<max_length>, only as
+much of the text as fits is inserted. Inserting an empty string with a
+selection deletes the selection.
+
+=head2 type
+
+	$editor->type('a');
+
+Like L</insert>, for text the user types: consecutive calls are merged
+into one undo step per word and per run of spaces, so undo takes back a
+word at a time. Any cursor movement, and any other edit, ends the
+current step. Unlike C<insert>, C<type('')> does nothing, even with a
+selection.
+
+=head2 delete_backward
+
+	$editor->delete_backward;
+
+Deletes the selection, or else the grapheme cluster (or line break)
+before the cursor. This is C<Backspace>.
+
+=head2 delete_forward
+
+	$editor->delete_forward;
+
+Deletes the selection, or else the grapheme cluster (or line break)
+after the cursor. This is C<Delete>.
+
+=head2 delete_word_backward
+
+	$editor->delete_word_backward;
+
+Deletes the selection, or else everything from the start of the word
+before the cursor to the cursor.
+
+=head2 delete_word_forward
+
+	$editor->delete_word_forward;
+
+Deletes the selection, or else everything from the cursor to the end of
+the word after it.
+
+=head2 delete_to_line_start
+
+	$editor->delete_to_line_start;
+
+Deletes the selection, or else everything from the start of the line to
+the cursor. At the start of a line, deletes the line break before it
+(joining the line with the previous one).
+
+=head2 delete_to_line_end
+
+	$editor->delete_to_line_end;
+
+Deletes the selection, or else everything from the cursor to the end of
+the line. At the end of a line, deletes the line break after it.
+
+=head1 METHODS: CLIPBOARD
+
+=head2 copy
+
+	$editor->copy;
+
+Puts the selected text on the clipboard. Returns 1, or 0 (and leaves the
+clipboard alone) when nothing is selected. Does not change the text.
+
+=head2 cut
+
+	$editor->cut;
+
+Puts the selected text on the clipboard and deletes it. Returns 1, or 0
+when nothing is selected.
+
+=head2 paste
+
+	$editor->paste;
+
+Inserts the clipboard at the cursor, like L</insert>. Returns whether
+the text changed.
+
+=head2 clipboard
 
 	my $text = Term::Fabulous::Editor->clipboard;
-	Term::Fabulous::Editor->clipboard($text);
+	Term::Fabulous::Editor->clipboard('text to paste');
 
-The clipboard, shared by all editors of the process. Set it to connect
-it to another clipboard.
+Class method: call it on the class, C<Term::Fabulous::Editor>; calling
+it on an editor object dies. Reads or sets the clipboard: one character
+string shared by all editors, and therefore by all text inputs, of the
+program. It is not connected to the clipboard of your desktop; set it
+yourself to bring text in from there. Setting anything but a string
+dies.
 
-=back
+=head1 METHODS: UNDO
 
-=head2 Undo
+=head2 undo
 
-=over
+	$editor->undo;
 
-=item C<undo>, C<redo>
+Takes back the last edit, restoring the text, the cursor and the
+selection as they were before it. Returns 1, or 0 when there is nothing
+to undo. Up to 100 steps are kept; older ones are forgotten.
 
-Take back the last edit, or redo the last undone one, restoring the
-cursor and selection as well. Return 1, or 0 when there is nothing to
-undo or redo. Up to 100 steps are kept; a new edit clears the redo
-steps.
+=head2 redo
 
-=item C<can_undo>, C<can_redo>
+	$editor->redo;
 
-=back
+Redoes the last undone edit. Returns 1, or 0 when there is nothing to
+redo. Any new edit clears the redo steps.
+
+=head2 can_undo
+
+	if ( $editor->can_undo ) { ... }
+
+True when L</undo> would do something.
+
+=head2 can_redo
+
+	if ( $editor->can_redo ) { ... }
+
+True when L</redo> would do something.
+
+=head1 EXAMPLES
+
+=head2 Insert a timestamp at the cursor of a text area
+
+	use POSIX qw(strftime);
+
+	my $editor = $notes->editor;
+	if ( $editor->insert( strftime( '%Y-%m-%d %H:%M ', localtime ) ) ) {
+		$notes->cursor_moved;    # scroll to the cursor and repaint
+	}
+
+=head2 Select the second line of a text area
+
+	my $editor = $area->editor;
+	$editor->set_selection( 1, 0, 1, length $editor->line(1) );
+	$area->cursor_moved;
+
+=head2 Load the system clipboard on a key press
+
+The clipboard is not the desktop clipboard. This listener on the root
+widget copies the desktop clipboard (through the C<xclip> program) into
+it when the user presses C<F2>; C<F2> bubbles up from text inputs, and
+C<Ctrl+V> then pastes the text.
+
+	use Clay::UI::Enum::Result;
+	use Encode qw(decode);
+
+	$root->on( KeyPress => sub ($event) {
+		return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'F2';
+		my $bytes = qx{xclip -o -selection clipboard};    # UTF-8 bytes
+		Term::Fabulous::Editor->clipboard( decode( 'UTF-8', $bytes ) ) if defined $bytes;
+		return;
+	} );
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextField>,
+L<Term::Fabulous::Widget::TextArea>, L<Term::Fabulous::Unicode>.
 
 =cut

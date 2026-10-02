@@ -290,60 +290,313 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Enum::BorderStyle - Terminal border glyph styles
+Term::Fabulous::Enum::BorderStyle - The border styles a widget can be drawn with
 
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
 
-	my $round = Term::Fabulous::Enum::BorderStyle->Round;
-	my $style = Term::Fabulous::Enum::BorderStyle->from_name('Heavy');
+	# A box with a rounded border on all four sides.
+	my $box = Term::Fabulous::Widget::Box->new(
+		border_width => 1,
+		border_color => [ 180, 200, 220, 255 ],
+		border_style => Term::Fabulous::Enum::BorderStyle->Round,
+	);
 
-	my ($top_left, $top, $top_right) = $round->get_top_glyphs;
-	my $joint = $style->get_mixed_joint( Term::Fabulous::Enum::BorderStyle->Solid );
+	# A heavier line on top only.
+	$box->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
+
+	# Look a style up by its name, for example from a configuration file.
+	my $style = Term::Fabulous::Enum::BorderStyle->from_name('Double')
+		// die "unknown border style\n";
+
+	# All styles, in the order listed below.
+	my @names = map { $_->name } Term::Fabulous::Enum::BorderStyle->values;
 
 =head1 DESCRIPTION
 
-An L<Object::PadX::Enum> of border styles ported from Textual's
-C<_border.py>: C<Ascii>, C<Blank>, C<Block>, C<DarkShade>, C<Dashed>,
-C<Double>, C<Heavy>, C<Hidden>, C<Hkey>, C<Inner>, C<LightShade>,
-C<MediumShade>, C<Outer>, C<Panel>, C<Round>, C<Solid>, C<Tab>, C<Tall>,
-C<Thick>, C<Vkey> and C<Wide>. Each item carries its glyphs and the
-location codes that decide how a glyph is colored (see
-L<Term::Fabulous::Render::Border>).
+This enumeration holds the 21 border styles Term::Fabulous can draw.
+Each style is a single, shared object that you get with a class method
+named after the style, for example
+C<< Term::Fabulous::Enum::BorderStyle->Round >>. Give it to a widget's
+C<border_style> parameter (all four sides) or to one of
+C<border_style_top>, C<border_style_right>, C<border_style_bottom> and
+C<border_style_left> (one side each); see
+L<Term::Fabulous::Role::HasBorderStyle>. A border is only drawn on the
+sides where the widget's C<border_width> is positive; see
+L<Term::Fabulous::Manual/BORDERS>.
+
+The styles and their glyphs come from the Python TUI library Textual.
+To see all of them, run F<examples/border-showcase.pl> from the
+distribution.
+
+=head1 STYLES
+
+Every style is a class method that returns the style object. Names are
+case sensitive.
+
+=head2 Ascii
+
+C<+> corners, C<-> and C<|> lines. Works on every terminal and font.
+
+=head2 Blank
+
+Spaces on the widget's own background: the border takes space but
+shows nothing, so the border color has no effect. This is also the
+style used for a side that has a positive width but no style.
+
+=head2 Block
+
+A frame of solid block characters drawn half into the parent's
+background: lower half blocks on top, full blocks on the sides, upper
+half blocks at the bottom.
+
+=head2 DarkShade
+
+Every border cell is a dark shade character (U+2593).
+
+=head2 Dashed
+
+Heavy box-drawing corners with dashed heavy lines.
+
+=head2 Double
+
+Double-line box drawing.
+
+=head2 Heavy
+
+Heavy (bold) box-drawing lines.
+
+=head2 Hidden
+
+Like L</Blank>: the border takes space but shows only spaces.
+
+=head2 Hkey
+
+A thin line (upper one eighth block) along the top edge and a thin line
+(lower one eighth block) along the bottom edge; the sides are blank.
+
+=head2 Inner
+
+A thin frame of quadrant and half blocks along the inner side of the
+border cells; the outer half of the border cells shows the parent's
+background.
+
+=head2 LightShade
+
+Every border cell is a light shade character (U+2591).
+
+=head2 MediumShade
+
+Every border cell is a medium shade character (U+2592).
+
+=head2 Outer
+
+A thin frame of quadrant and half blocks along the outer side of the
+border cells; the inner half shows the widget's own background.
+
+=head2 Panel
+
+A solid top bar in the border color, with thin bars at the sides and
+the bottom; good as a panel with a title row.
+
+=head2 Round
+
+Light box-drawing lines with rounded corners.
+
+=head2 Solid
+
+Light box-drawing lines with square corners.
+
+=head2 Tab
+
+A tab-like frame: a line below the top edge, a line above the bottom
+edge, and bars at the sides. Currently looks exactly like L</Wide>.
+
+=head2 Tall
+
+Like L</Panel>, but with a thin top line instead of a solid top bar.
+
+=head2 Thick
+
+Full and half blocks: a thick, solid frame.
+
+=head2 Vkey
+
+Thin vertical bars at the left and right edges; no lines at the top and
+bottom.
+
+=head2 Wide
+
+Like L</Tab>.
 
 =head1 METHODS
 
-=head2 get_top_glyphs, get_bottom_glyphs, get_left_glyphs, get_right_glyphs
+=head2 values
 
-Glyphs of one side; top and bottom return three (corner, edge, corner).
+	my @styles = Term::Fabulous::Enum::BorderStyle->values;
 
-=head2 get_top_locations, get_bottom_locations, get_left_locations, get_right_locations
+Class method. All styles, in the order of L</STYLES>.
 
-Location codes in the same order as the glyphs.
+=head2 from_name
+
+	my $style = Term::Fabulous::Enum::BorderStyle->from_name('Round');
+
+Class method. The style with that name, or C<undef> if there is none.
+The name is case sensitive: C<'round'> returns C<undef>. KDL layouts use
+this lookup for C<border style=Round>.
+
+=head2 from_ordinal
+
+	my $style = Term::Fabulous::Enum::BorderStyle->from_ordinal(0);    # Ascii
+
+Class method. The style at a position of L</values>, counted from 0, or
+C<undef> when there is no style at that position.
+
+=head2 name
+
+	say $style->name;    # 'Round'
+
+The name of the style.
+
+=head2 ordinal
+
+	my $position = $style->ordinal;    # 14 for Round
+
+The position of the style in L</values>, counted from 0.
+
+=head2 glyphs
+
+	my ( $top_left, $top, $top_right, $left, $right, $bottom_left, $bottom, $bottom_right ) = @{ $style->glyphs };
+
+An array reference of the eight characters the style draws, in this
+order: top-left corner, top edge, top-right corner, left edge, right
+edge, bottom-left corner, bottom edge, bottom-right corner.
+
+=head2 locations
+
+	my @codes = @{ $style->locations };
+
+An array reference of eight location codes, one per glyph in the order
+of L</glyphs>. The code decides which colors the glyph is drawn in:
+
+	Code  Foreground                Background
+	----  ------------------------  ------------------------------------
+	0     border color              the widget's own background
+	1     border color              the parent's background
+	2     the parent's background   border color (reverse video of 1)
+	3     the widget's background   border color (reverse video of 0)
+
+"The parent's background" is the color of the cell just outside the
+widget's box on the same side. Codes 2 and 3 use the terminal's reverse
+video attribute, which also works when one of the colors is the
+terminal default color.
+
+=head2 get_top_glyphs
+
+	my ( $left_corner, $edge, $right_corner ) = $style->get_top_glyphs;
+
+The three glyphs of the top side: top-left corner, top edge, top-right
+corner.
+
+=head2 get_bottom_glyphs
+
+	my ( $left_corner, $edge, $right_corner ) = $style->get_bottom_glyphs;
+
+The three glyphs of the bottom side: bottom-left corner, bottom edge,
+bottom-right corner.
+
+=head2 get_left_glyphs
+
+	my $edge = $style->get_left_glyphs;
+
+The glyph of the left edge.
+
+=head2 get_right_glyphs
+
+	my $edge = $style->get_right_glyphs;
+
+The glyph of the right edge.
+
+=head2 get_top_locations
+
+	my @codes = $style->get_top_locations;
+
+The location codes of L</get_top_glyphs>, in the same order.
+
+=head2 get_bottom_locations
+
+	my @codes = $style->get_bottom_locations;
+
+The location codes of L</get_bottom_glyphs>, in the same order.
+
+=head2 get_left_locations
+
+	my $code = $style->get_left_locations;
+
+The location code of L</get_left_glyphs>.
+
+=head2 get_right_locations
+
+	my $code = $style->get_right_locations;
+
+The location code of L</get_right_glyphs>.
+
+=head1 GRID JOINTS
+
+Some styles also carry the glyphs needed where lines of a grid meet.
+No Term::Fabulous widget draws grid lines yet; these methods are for
+your own widgets.
 
 =head2 joints
 
-Seven grid-joint glyphs (h_line, v_line, cross, t_down, t_up, t_right,
-t_left) or undef. C<Dashed> shares the heavy joints of C<Heavy>.
+	my ( $h_line, $v_line, $cross, $t_down, $t_up, $t_right, $t_left ) = @{ $style->joints };
+
+An array reference of seven glyphs, or C<undef> for styles without
+grid joints: horizontal line, vertical line, cross, T pointing down
+(a horizontal line with a line going down), T pointing up, T pointing
+right and T pointing left. L</Ascii>, L</Dashed>, L</Double>,
+L</Heavy>, L</Round> and L</Solid> have joints; L</Dashed> uses the
+joints of L</Heavy>, and L</Round> those of L</Solid>.
 
 =head2 get_grid_styles
 
-Class method: the styles that have C<joints>.
+	my @styles = Term::Fabulous::Enum::BorderStyle->get_grid_styles;
+
+Class method. The styles that have L</joints>, in the order of
+L</values>.
 
 =head2 get_mixed_joint
 
 	my $table = $horizontal_style->get_mixed_joint($vertical_style);
+	my ( $cross, $t_down, $t_up, $t_right, $t_left ) = @$table if $table;
 
-The five joint glyphs (cross, t_down, t_up, t_right, t_left) where grid
-lines of this style meet lines of C<$vertical_style>, or undef when this
-style has no table for it. Dies unless C<$vertical_style> is a
-Term::Fabulous::Enum::BorderStyle item.
+The five joint glyphs to use where horizontal lines of this style meet
+vertical lines of C<$vertical_style>, as an array reference, or
+C<undef> when there is no such table. Tables exist for
+L</Double> with L</Solid>, L</Heavy> with L</Solid>, and L</Solid> with
+L</Heavy> or L</Double>. Dies if C<$vertical_style> is not a
+Term::Fabulous::Enum::BorderStyle object (a style name string is not
+enough).
 
 =head2 get_mixed_joints
 
-	my $table = Term::Fabulous::Enum::BorderStyle->get_mixed_joints($horizontal_style, $vertical_style);
+	my $table = Term::Fabulous::Enum::BorderStyle->get_mixed_joints( $horizontal_style, $vertical_style );
 
-Class-method form of L</get_mixed_joint>.
+Class method form of L</get_mixed_joint>. Dies if either argument is not
+a Term::Fabulous::Enum::BorderStyle object.
+
+=head2 mixed_joints
+
+	my $builder = $style->mixed_joints;    # a code reference, or undef
+
+Internal: a code reference that builds the tables of
+L</get_mixed_joint>. Use L</get_mixed_joint> instead.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Manual/BORDERS>, L<Term::Fabulous::Role::HasBorderStyle>,
+L<Term::Fabulous::Render::Border>, L<Object::PadX::Enum>.
 
 =cut

@@ -415,147 +415,474 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::Dropdown - Choose one of several options from a list that opens
+Term::Fabulous::Widget::Dropdown - Choose one of several options from a
+list that opens
 
 =head1 SYNOPSIS
 
+	use Clay::UI::Enum::Result;
 	use Term::Fabulous::Widget::Dropdown;
 
 	my $color = Term::Fabulous::Widget::Dropdown->new(
+		id          => 'color',
 		options     => [ 'Red', [ 'Dark green' => 'green' ], { label => 'Blue', value => 'blue' } ],
 		placeholder => 'Pick a color',
 	);
-	$color->on( Change => sub ($event) { paint_with( $event->value ); return } );
+	$color->on( Change => sub ($event) {
+		say 'color: ', $event->value;    # 'Red', 'green' or 'blue'
+		return Clay::UI::Enum::Result->CONTINUE;
+	} );
+
+	$color->value('green');              # programmatic: fires no Change
+	say $color->selected_label;          # 'Dark green'
 
 =head1 DESCRIPTION
 
-An L<Term::Fabulous::Widget::Input> showing the label of the selected
-option and an arrow. Opened by Enter, Space, Alt+Down, F4 or a click,
-it shows its options in a list floating over the other widgets, below
-the dropdown, or above it when there is more room there. The list
-shows up to C<max_visible_options> options at a time and scrolls
-through the rest. Unknown constructor parameters die.
+A dropdown shows the label of the selected option (or a placeholder)
+and a small arrow. When the user opens it, the options appear in a list
+that floats over the other widgets. It opens below the dropdown, unless
+it does not fit there and there is more room above the dropdown; then it
+opens above. The list shows up to C<max_visible_options> options at a
+time; when the terminal has less room on the chosen side, it shrinks to
+that room, but always shows at least one option. It scrolls through the
+rest and has a scrollbar when it scrolls. Choosing an option closes the list.
+
+Every option has a label (the text shown) and a value (what C<value>
+and the C<Change> event return). The value defaults to the label.
+
+The list is a child widget of the dropdown, created when the list opens
+and removed when it closes (see L<Term::Fabulous::Widget::Dropdown::List>).
+The dropdown keeps the focus and handles the keys while the list is
+open. The list closes when the dropdown loses the focus, for example
+through C<Tab> or a click elsewhere.
+
+Disabling, colors, focus and sizing are described in
+L<Term::Fabulous::Widget::Input>. Unless the C<layout> sizes it, the
+dropdown is one row high and as wide as its longest label (or the
+placeholder, if that is longer) plus two columns for the arrow.
 
 =head1 CONSTRUCTOR
 
-Besides the parameters of L<Term::Fabulous::Widget::Input>:
+=head2 new
+
+	my $dropdown = Term::Fabulous::Widget::Dropdown->new(%parameters);
+
+Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
+(C<id>, C<layout>, the border parameters, C<disabled>, C<can_focus>,
+C<text_color>, C<disabled_color>, C<accent_color>,
+C<focus_background_color>) and the ones below. Unknown parameters die.
 
 =over
 
 =item C<options>
 
-An arrayref of options. Each option is a label (a string that is also
-its value), C<[ $label, $value ]> or C<< { label => $label, value =>
-$value } >>; a missing value is the label. Default none.
+An array reference of options. Default: no options. Each option is one
+of:
 
-=item C<value>, C<selected_index>
+=over
 
-The initial selection, by value or by index; giving both dies. Default
-none selected.
+=item *
 
-=item C<placeholder>
+a string, which is both the label and the value: C<'Red'>;
 
-Shown in C<placeholder_color> while nothing is selected; default none.
+=item *
 
-=item C<max_visible_options>
+an array reference C<[ $label, $value ]>: C<[ 'Dark green' => 'green' ]>;
 
-The most options the list shows at once, a positive integer; default 8.
-The list also shrinks to the room left in the terminal.
+=item *
 
-=item C<placeholder_color>, C<list_background_color>, C<highlight_text_color>
-
-The color of the placeholder, of the list's background and of the text
-of the highlighted option, which is shown on the C<accent_color>. The
-list's border has the C<accent_color>, and the selected option's label
-too.
-
-=item C<background_color>
-
-Defaults to a dark gray, like the text inputs.
+a hash reference with the keys C<label> and optionally C<value>:
+C<< { label => 'Blue', value => 'blue' } >>.
 
 =back
 
+A missing or C<undef> value is the label. Labels are character strings;
+values are strings or numbers. Any other shape dies.
+
+=item C<value>
+
+The value of the option to select at the start. Default: none selected.
+Dies if no option has this value. Give either C<value> or
+C<selected_index>, not both (giving both dies).
+
+=item C<selected_index>
+
+The index (from 0) of the option to select at the start. Default: none
+selected. Dies if out of range.
+
+=item C<placeholder>
+
+A character string. Default: C<''> (none). Shown in
+C<placeholder_color> while no option is selected.
+
+=item C<max_visible_options>
+
+A positive integer. Default: 8. The most options the open list shows at
+once. The list is also made smaller when the terminal has less room
+above and below the dropdown.
+
+=item C<placeholder_color>
+
+A color, in any format L<Term::Fabulous::Widget::Input> accepts.
+Default: C<[120, 126, 138, 255]>, a gray.
+
+=item C<list_background_color>
+
+A color, as above. The background of the open list. Default:
+C<[30, 33, 40, 255]>, a very dark gray.
+
+=item C<highlight_text_color>
+
+A color, as above. The text color of the highlighted option in the open
+list, which is painted on the C<accent_color>. Default:
+C<[16, 18, 22, 255]>, almost black.
+
+=item C<background_color>
+
+An C<[r, g, b, a]> array reference or C<{ r, g, b, a }> hash reference.
+Default: C<[36, 40, 48, 255]>, a dark gray, like the text inputs.
+
+=back
+
+The open list's border has the C<accent_color>, and so does the label of
+the selected option in the list.
+
 =head1 METHODS
+
+The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<is_enabled>,
+the color accessors, C<repaint>), plus:
 
 =head2 value
 
+	my $value = $dropdown->value;
 	$dropdown->value('green');
+	$dropdown->value(undef);    # select nothing
 
-Reader and writer of the selected option's value, C<undef> when none
-is selected. Writing selects the first option with that value (C<undef>
-clears the selection); a value no option has dies. Writing fires no
-event.
+Accessor. Returns the value of the selected option, or C<undef> when
+none is selected. Writing selects the first option with that value
+(compared as strings), or clears the selection for C<undef>, repaints,
+and returns the new value. Dies if no option has the value. Writing
+fires no C<Change> event.
 
-=head2 selected_index, selected_label
+=head2 selected_index
 
-The index of the selected option (reader and writer; C<undef> for none,
-an index out of range dies), and its label.
+	my $index = $dropdown->selected_index;
+	$dropdown->selected_index(0);
+	$dropdown->selected_index(undef);
+
+Accessor for the index of the selected option (from 0), C<undef> for
+none. Writing returns the new index and fires no C<Change> event. Dies
+if the index is not an integer in range; the selection then stays.
+
+=head2 selected_label
+
+	my $label = $dropdown->selected_label;
+
+The label of the selected option, or C<undef> when none is selected.
 
 =head2 options
 
-	my @options = $dropdown->options;              # ( { label => ..., value => ... }, ... )
-	$dropdown->options( [ 'One', 'Two' ] );
+	my @options = $dropdown->options;    # ( { label => ..., value => ... }, ... )
+	$dropdown->options( [ 'One', 'Two', [ Three => 3 ] ] );
 
-Reader and writer. Writing closes the list and keeps the selection when
-an option with the selected value is still there.
+Accessor. Returns the options as a list of hash references with the keys
+C<label> and C<value> (copies; changing them does not change the
+dropdown). Writing replaces all options (in the formats of the
+C<options> parameter), closes the list, and keeps the selection when an
+option with the selected value still exists; otherwise nothing is
+selected afterwards. Writing fires no C<Change> event. Returns the new
+options.
 
-=head2 placeholder, max_visible_options, placeholder_color, list_background_color, highlight_text_color
+=head2 placeholder
 
-Readers and writers of the constructor parameters.
+	my $text = $dropdown->placeholder;
+	$dropdown->placeholder('Choose one');
 
-=head2 open, close, is_open
+Accessor for the placeholder. Writing repaints and returns the new
+placeholder. A value that is not a string dies and leaves the
+placeholder unchanged.
 
-Open and close the list as the user does; C<open> does nothing without
-options or while disabled. Both return the dropdown.
+=head2 max_visible_options
+
+	my $count = $dropdown->max_visible_options;
+	$dropdown->max_visible_options(12);
+
+Accessor for the C<max_visible_options> parameter. Writing returns the
+new value, which takes effect the next time the list opens. A value that
+is not a positive integer dies and leaves the old value.
+
+=head2 placeholder_color
+
+	$dropdown->placeholder_color('#888888');
+
+Accessor for the C<placeholder_color> parameter. Writing repaints the
+dropdown and returns the new color (as given). An invalid color dies
+and leaves the old one.
+
+=head2 list_background_color
+
+	$dropdown->list_background_color([ 20, 20, 30, 255 ]);
+
+Accessor for the C<list_background_color> parameter. Writing returns the
+new color (as given); it takes effect the next time the list opens. An
+invalid color dies and leaves the old one.
+
+=head2 highlight_text_color
+
+	$dropdown->highlight_text_color('#000000');
+
+Accessor for the C<highlight_text_color> parameter. Writing returns the
+new color (as given). An open list shows the change the next time it
+repaints (when the highlight moves); a closed list shows it the next
+time it opens. An invalid color dies and leaves the old one.
+
+=head2 disabled
+
+	$dropdown->disabled(1);
+
+As described in L<Term::Fabulous::Widget::Input/disabled>; disabling
+also closes the list.
+
+=head2 open
+
+	$dropdown->open;
+
+Opens the list as the user does, with the selected option (or the first
+one) highlighted. Does nothing when the list is already open, when there
+are no options, or while the dropdown is disabled. Returns the dropdown.
+
+=head2 close
+
+	$dropdown->close;
+
+Closes the list without changing the selection. Does nothing when it is
+closed. Returns the dropdown.
+
+=head2 is_open
+
+	if ( $dropdown->is_open ) { ... }
+
+1 while the list is open, 0 otherwise.
 
 =head2 choose
 
 	$dropdown->choose(2);
 
-Selects the option at an index as the user does: closes the list and
-fires C<Change> when the selection changes. An index out of range dies.
-Returns the dropdown.
+Selects the option at an index (from 0) as the user does: closes the
+list and, when the selection changes, fires a C<Change> event. Dies if
+the index is not an integer in range. Returns the dropdown.
+
+=head2 highlight
+
+	$dropdown->highlight(3);
+
+Moves the highlight of the open list to an index (clamped to the
+options) and scrolls it into view. Does nothing while the list is
+closed. Returns the dropdown.
 
 =head2 highlighted_index
 
-The option highlighted in the open list, C<undef> while closed.
+	my $index = $dropdown->highlighted_index;
+
+The index of the highlighted option in the open list, C<undef> while the
+list is closed.
 
 =head1 KEYS
 
-While closed: Enter, Space, Alt+Down and F4 open the list. Up and Down
-select the previous and next option, Home and End the first and last
-one.
+The dropdown uses the keys below while it has the focus and is enabled.
 
-While open: Up, Down, Page Up, Page Down, Home and End move the
-highlight; Enter and Space select the highlighted option and close the
-list, Escape closes it without a change. The list also closes when the
-dropdown loses the focus, for example through Tab or a click elsewhere.
+When the list is closed:
 
-Typing letters selects (or, while open, highlights) the next option
-whose label starts with them, ignoring case; letters typed within a
-second continue the search.
+=over
+
+=item C<Enter>, C<Space>, C<Alt+Down>, C<F4>
+
+Open the list.
+
+=item C<Up>, C<Down>
+
+Select the previous or next option directly, without opening the list
+(this fires C<Change>). They stop at the first and last option. With
+nothing selected, C<Up> selects the last option and C<Down> the first.
+
+=item C<Home>, C<End>
+
+Select the first or last option.
+
+=back
+
+When the list is open:
+
+=over
+
+=item C<Up>, C<Down>
+
+Move the highlight one option up or down.
+
+=item C<PageUp>, C<PageDown>
+
+Move the highlight by as many options as the list shows.
+
+=item C<Home>, C<End>
+
+Move the highlight to the first or last option.
+
+=item C<Enter>, C<Space>
+
+Select the highlighted option and close the list.
+
+=item C<Escape>
+
+Close the list without changing the selection.
+
+=back
+
+In both states, typing a printable character (without C<Ctrl> or
+C<Alt>) jumps to the next option whose label starts with it, ignoring
+case: it selects that option while the list is closed (firing C<Change>)
+and highlights it while the list is open. The search starts after the
+current option and wraps around from the last option to the first.
+Characters typed at most one second apart form one search string, so
+typing C<d>, C<a> quickly finds "Dark green" rather than the next option
+starting with C<a>.
+
+The keys above are used and do not bubble, and so is every printable
+character, even one that matches no label. Only a dropdown without any
+options lets printable characters bubble. All other keys bubble to the
+ancestors, among them C<Tab> (which then moves the focus and closes the
+list) and, while the list is closed, C<Escape>.
 
 =head1 MOUSE
 
-A click on the dropdown opens or closes the list. Pressing on an option
-highlights it; releasing the button over it selects it and closes the
-list. The mouse wheel scrolls the list.
+=over
+
+=item *
+
+Pressing the left button on the dropdown opens the list, or closes it
+when it is open; the list reacts to the press, not to the release.
+
+=item *
+
+Pressing the left button on an option of the open list highlights it;
+releasing the button over an option selects it and closes the list. So
+both a click on an option and a single gesture work: press on the
+dropdown, drag to an option and release there.
+
+=item *
+
+The mouse wheel over the open list scrolls it by one option per notch.
+
+=back
 
 =head1 EVENTS
 
+=over
+
+=item C<Change>
+
 L<Term::Fabulous::Event::Change> when the user selects another option,
-with its value.
+with the option's value as C<< $event->value >>. Selecting the option
+that is already selected fires nothing. Programmatic writes to
+C<value>, C<selected_index> and C<options> fire nothing.
+
+=back
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::Input/KDL PROPERTIES> plus C<value>,
-C<selected_index>, C<placeholder>, C<max_visible_options> and the colors
-above. Options are given as labels, or one at a time with a value:
+The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
+C<value>, C<selected_index>, C<placeholder>, C<max_visible_options>,
+C<placeholder_color>, C<list_background_color> and
+C<highlight_text_color>. Options are added with two kinds of nodes,
+which may be repeated and mixed; each adds to the options given before:
+
+=over
+
+=item C<options "Label 1" "Label 2" ...>
+
+One or more options whose value is their label.
+
+=item C<option "Label" value="v">
+
+One option; C<value=> is optional and defaults to the label.
+
+=back
+
+	use Term::Fabulous::Widget::Dropdown as Dropdown
 
 	Dropdown "color" {
+		placeholder "Pick a color"
 		options "Red" "Green"
 		option "Dark blue" value="navy"
 		value "navy"
 	}
+
+Give C<value> (or C<selected_index>) after the options it refers to;
+before them, building the layout dies with "no option has the value".
+
+=head1 EXAMPLES
+
+=head2 Options with numeric values
+
+	my $priority = Term::Fabulous::Widget::Dropdown->new(
+		options => [ [ Low => 1 ], [ Normal => 2 ], [ High => 3 ] ],
+		value   => 2,
+	);
+	my $level = $priority->value;    # 2
+
+=head2 Options that depend on another dropdown
+
+	my $country = Term::Fabulous::Widget::Dropdown->new( options => [ 'Germany', 'France' ] );
+	my $city    = Term::Fabulous::Widget::Dropdown->new( placeholder => 'City' );
+	my %cities  = ( Germany => [qw(Berlin Hamburg)], France => [qw(Paris Lyon)] );
+
+	$country->on( Change => sub ($event) {
+		$city->options( $cities{ $event->value } );    # clears the city selection
+		return;
+	} );
+
+=head1 SUBCLASS INTERFACE
+
+The open list (L<Term::Fabulous::Widget::Dropdown::List>) paints the
+options through these methods; override them in a subclass to change how
+options look.
+
+=head2 option_attrs
+
+	my ( $fg, $bg ) = $self->option_attrs($index);
+
+The termbox2 attributes of an option's row in the list: the
+C<highlight_text_color> on the C<accent_color> for the highlighted
+option, the C<accent_color> for the selected one, the C<text_color> for
+the others (C<undef> background: the list background shows).
+
+=head2 option_label
+
+	my $label = $self->option_label($index);
+
+The label of the option at an index.
+
+=head2 option_count
+
+	my $count = $self->option_count;
+
+The number of options.
+
+=head2 parse_property
+
+	method parse_property :override ($kid) { ... }
+
+KDL hook (see L<Term::Fabulous::Widget::Box/parse_property>); handles
+C<options> and C<option> nodes and passes all others on.
+
+=head1 CAVEATS
+
+Inside a L<Term::Fabulous::Widget::ScrollBox>, the mouse wheel over the
+open list also scrolls the scroll box.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Widget::Dropdown::List>,
+L<Term::Fabulous::Event::Change>,
+L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
 
 =cut

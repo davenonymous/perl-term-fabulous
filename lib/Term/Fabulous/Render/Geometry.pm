@@ -65,67 +65,91 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Geometry - Map Clay bounding boxes to terminal cells
+Term::Fabulous::Render::Geometry - Snap Clay's layout boxes to terminal cells
 
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Render::Geometry qw(cell_rect intersect_cell_rects visible_cell_rect);
 
-	my ($x0, $y0, $x1, $y1) = cell_rect($command->{boundingBox});
-	my $clip    = intersect_cell_rects([0, 0, $width, $height], [cell_rect($scissor_box)]);
-	my @visible = visible_cell_rect($command->{boundingBox}, $clip);
+	my ( $x0, $y0, $x1, $y1 ) = cell_rect( { x => 1.7, y => 2, width => 3.6, height => 2 } );    # (1, 2, 5, 4)
+	my $both    = intersect_cell_rects( [ 0, 0, 10, 5 ], [ 8, 3, 12, 9 ] );                      # [8, 3, 10, 5]
+	my @visible = visible_cell_rect( $command->{boundingBox}, $ui->clip_rect );
 
 =head1 DESCRIPTION
 
-Clay bounding boxes are floating point and may be negative or extend
-past the viewport. These functions snap them to integer cell bounds the
-same way everywhere: C<x0 = floor(x)>, C<x1 = floor(x + width)>, with
-C<x1> / C<y1> exclusive.
+Most programs never use this module directly. It is used by the render
+roles and the canvas widgets.
+
+Clay places boxes at fractional positions, which may be negative or
+reach past the viewport. Terminal output needs whole cells. These
+functions convert boxes to cells the same way everywhere: the left edge
+is C<floor(x)>, the right edge C<floor(x + width)>, and likewise for the
+top and bottom.
+
+Cell rectangles are written C<[x0, y0, x1, y1]>: C<x0>, C<y0> is the
+top-left cell, and C<x1>, C<y1> are I<exclusive>, so the rectangle
+covers the columns C<x0 .. x1 - 1> and the rows C<y0 .. y1 - 1>. A
+rectangle with C<x1 == x0> or C<y1 == y0> is empty.
 
 =head1 FUNCTIONS
 
+Nothing is exported by default. Import the functions you need by name.
+
 =head2 cell_rect
 
-	my ($x0, $y0, $x1, $y1) = cell_rect($bbox);
+	my ( $x0, $y0, $x1, $y1 ) = cell_rect($bbox);
 
-Unclipped cell bounds of a C<{ x, y, width, height }> box.
+The cell rectangle of a Clay bounding box, a hash reference with C<x>,
+C<y>, C<width> and C<height>, as a list. It is not clipped, so it may
+lie partly or fully outside the viewport.
 
 =head2 intersect_cell_rects
 
-	my $both = intersect_cell_rects([$x0, $y0, $x1, $y1], [$x0, $y0, $x1, $y1]);
+	my $common = intersect_cell_rects( $first, $second );
 
-The cells two C<[x0, y0, x1, y1]> rects have in common, as a new rect.
-When they do not overlap, the result is empty: C<x1 == x0> or
-C<y1 == y0>.
+The cells two rectangles have in common, as a new array reference
+C<[x0, y0, x1, y1]>. When they do not overlap, the result is an empty
+rectangle (C<x1 == x0> or C<y1 == y0>).
 
 =head2 visible_cell_rect
 
-	my ($x0, $y0, $x1, $y1) = visible_cell_rect($bbox, $clip);
+	my ( $x0, $y0, $x1, $y1 ) = visible_cell_rect( $bbox, $clip );
 
-L</cell_rect> intersected with the C<[x0, y0, x1, y1]> rect C<$clip>
-(usually L<Term::Fabulous::Render::Clip/clip_rect>). Returns the empty
-list when nothing is visible.
+L</cell_rect> of C<$bbox>, intersected with the rectangle C<$clip>
+(usually L<Term::Fabulous::Render::Clip/clip_rect>), as a list. Returns
+the empty list when nothing of the box is visible.
+
+=head2 rects_overlap
+
+	if ( rects_overlap( $first, $second ) ) { ... }
+
+True if the two rectangles share at least one cell. Rectangles that
+only touch (one ends where the other starts) do not overlap.
+
+=head2 row_spans_outside
+
+	my @spans = row_spans_outside( $y, $x0, $x1, @rects );
+
+The parts of row C<$y> between the columns C<$x0> (inclusive) and
+C<$x1> (exclusive) that none of the rectangles C<@rects> covers, as a
+list of C<[from, to]> pairs (C<to> exclusive), from left to right.
+Without rectangles it returns the whole span C<[$x0, $x1]>.
+
+	row_spans_outside( 1, 0, 10, [ 2, 0, 4, 3 ], [ 6, 1, 8, 2 ] );    # ([0, 2], [4, 6], [8, 10])
 
 =head2 cell_coordinate
 
 	my $column = cell_coordinate( x => $x );
 
-A coordinate or size given to the canvas drawing methods, rounded down
-to a whole cell. Dies when it is not a finite number (C<NaN> and
-infinities included); C<$what> names the argument in the error.
+A coordinate or size given to a canvas drawing method, rounded down to
+a whole cell: C<3.9> becomes 3, C<-0.5> becomes -1. Dies unless the
+value is a finite number (NaN and infinities die); the first argument
+names the value in the message:
 
-=head2 rects_overlap
+	Term::Fabulous::Render::Geometry: x must be a finite number, got 'inf'
 
-	my $overlap = rects_overlap([$x0, $y0, $x1, $y1], [$x0, $y0, $x1, $y1]);
+=head1 SEE ALSO
 
-True when two C<[x0, y0, x1, y1]> rects share at least one cell.
-
-=head2 row_spans_outside
-
-	my @spans = row_spans_outside($y, $x0, $x1, @rects);
-
-The cells C<$x0 .. $x1 - 1> of row C<$y> that none of the
-C<[x0, y0, x1, y1]> rects covers, as C<[from, to]> pairs (C<to>
-exclusive) from left to right. Without rects it is the whole span.
+L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Clip>.
 
 =cut

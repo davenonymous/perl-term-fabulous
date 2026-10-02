@@ -1,8 +1,11 @@
 Changes
 cpanfile
 examples/border-showcase.pl
+examples/buttons-and-keys.pl
 examples/canvas.pl
+examples/custom-widget.pl
 examples/form.pl
+examples/kdl-form.pl
 examples/kdl-layout.pl
 examples/pixel-paint.pl
 examples/scroll-box.pl
@@ -10,6 +13,7 @@ examples/static-report.pl
 examples/text-sizing.pl
 lib/Term/Fabulous.pm
 lib/Term/Fabulous/Color.pm
+lib/Term/Fabulous/Cookbook.pod
 lib/Term/Fabulous/Editor.pm
 lib/Term/Fabulous/Enum/BorderStyle.pm
 lib/Term/Fabulous/Enum/WebColor.pm
@@ -20,6 +24,7 @@ lib/Term/Fabulous/Event/Mouse.pm
 lib/Term/Fabulous/Event/Resize.pm
 lib/Term/Fabulous/Event/Submit.pm
 lib/Term/Fabulous/Layout.pm
+lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Render.pm
 lib/Term/Fabulous/Render/Attr.pm
 lib/Term/Fabulous/Render/Border.pm

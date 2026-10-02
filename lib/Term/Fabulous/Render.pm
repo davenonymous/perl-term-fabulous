@@ -177,155 +177,293 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render - Draw Clay render commands with termbox2
+Term::Fabulous::Render - Role that paints Clay render commands into
+terminal cells
 
 =head1 SYNOPSIS
 
-	class My::UI :isa(Clay::UI) :does(Term::Fabulous::Render) :does(Term::Fabulous::Render::Target::Termbox) {
+	use Object::Pad 0.825;
+	use Clay::UI;
+	use Term::Fabulous::Render;
+	use Term::Fabulous::Render::Target::Grid;
+
+	# A UI class that paints into memory and never sees a pointer.
+	class My::Snapshot
+		:isa(Clay::UI)
+		:does(Term::Fabulous::Render)
+		:does(Term::Fabulous::Render::Target::Grid)
+	{
 		method pointer_state () { return undef }
 	}
 
-	$ui->draw;   # after tb_init(); Term::Fabulous->run does this for you
+	my $ui = My::Snapshot->new( root => $root, width => 10, height => 2 );
+	$ui->draw;
+	my ( $glyph, $fg, $bg ) = @{ $ui->cell( 0, 0 ) };
 
 =head1 DESCRIPTION
 
-Role for a L<Clay::UI> subclass (usually L<Term::Fabulous>). On
-construction it validates C<output_mode> and installs a measure-text
-callback that reports terminal columns (L<Term::Fabulous::Unicode>).
-The role decides which cells to paint; where they go is up to a cell
-target role the consumer composes as well (see L</CELL TARGET>).
+Most programs never use this module directly. L<Term::Fabulous> (for
+the terminal) and L<Term::Fabulous::Static> (for text output) already
+compose it. Read on if you want to write your own UI class, for example
+one that paints into a different kind of output.
 
-=head2 output_mode
+Term::Fabulous::Render is an L<Object::Pad> role for a subclass of
+L<Clay::UI>. It turns a laid-out widget tree into terminal cells:
+L</draw> asks Clay::UI for the frame's render commands (rectangles,
+borders, text, clipping and canvases) and paints each of them, cell by
+cell. Where the cells go is decided by a second role, the I<cell
+target>, which the class composes as well (see L</CELL TARGET>).
 
-Constructor parameter; must be C<TB_OUTPUT_TRUECOLOR> (the default),
-because colors are always emitted as 24-bit values. Anything else dies.
+The role is composed of smaller roles, one per kind of render command:
+L<Term::Fabulous::Render::Rectangle>, L<Term::Fabulous::Render::Border>,
+L<Term::Fabulous::Render::Text>, L<Term::Fabulous::Render::Canvas> and
+L<Term::Fabulous::Render::Clip>.
+
+When it is constructed, the role checks C<output_mode> and installs its
+own measure-text callback in Clay::UI (C<measure_text>), which reports
+text widths in terminal columns (see L<Term::Fabulous::Unicode>). Any
+C<measure_text> given to the constructor is replaced.
+
+Loading this module dies if the termbox2 library was built without
+truecolor support; see L<Term::Fabulous::Render::Attr>.
+
+=head1 REQUIREMENTS OF THE CONSUMING CLASS
+
+The class that composes this role must provide:
+
+=over
+
+=item * the methods of L<Clay::UI>: C<render>, C<widget_for>, C<measure_text>, C<width> and C<height> (subclass Clay::UI);
+
+=item * C<pointer_state> (see L</pointer_state>);
+
+=item * the cell target methods (compose one of the target roles; see L</CELL TARGET>).
+
+=back
+
+=head1 CONSTRUCTOR PARAMETERS
+
+=over
+
+=item C<output_mode>
+
+The termbox2 output mode. It must be C<TB_OUTPUT_TRUECOLOR> (from
+L<Termbox>), which is also the default, because Term::Fabulous always
+paints 24-bit colors. Any other value dies with
+C<Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR>.
+There is no reason to pass it.
+
+=back
+
+=head1 METHODS
 
 =head2 draw
 
 	$ui->draw;
 	$ui->draw( scroll_cells => [ $columns, $rows ] );
 
-Renders the layout (passing the consumer's C<pointer_state>, when
-defined, to C<render>; see L</pointer_state>), plans the canvases
-(L<Term::Fabulous::Render::Canvas/plan_canvases>), calls the target's
-C<begin_frame> with the rects of the canvases whose cells stay, paints
-every render command through the target and calls C<end_frame>.
-Rectangle, border, text, scissor and custom (canvas) commands are
-supported; any other command type dies.
+Lays out and paints one frame:
+
+=over
+
+=item 1.
+
+Calls Clay::UI's C<render>, passing the pointer from L</pointer_state>
+(when it is defined) and the scroll amount. Clay::UI fires its pointer
+events (hover, press, scroll) during this call.
+
+=item 2.
+
+Sizes every canvas to its new content box and decides which canvases
+can keep the cells of the previous frame
+(L<Term::Fabulous::Render::Canvas/plan_canvases>). Canvases fire
+C<CanvasResize> here.
+
+=item 3.
+
+Calls the target's C<begin_frame>, paints every render command in order
+and calls C<end_frame>.
+
+=item 4.
+
+Calls L<Term::Fabulous::Render::Canvas/finish_canvases>, which
+remembers this completely painted frame for the comparison in step 2 of
+the next frame. If painting died, this step is skipped and the next
+frame paints every canvas in full.
+
+=back
 
 C<scroll_cells> scrolls the scroll container under the pointer (see
-L<Clay::UI::Role::Layout::HasScroll>) by that many cells before the
-layout pass. Positive values scroll toward the top and left, as a mouse
-wheel turned up does; Clay clamps the result to the content. Any other
-argument dies.
-With the termbox2 target the terminal must be initialized
-(L<Term::Fabulous/run> does that); otherwise termbox2 ignores the
-drawing calls.
+L<Term::Fabulous::Widget::ScrollBox>) by C<[$columns, $rows]> cells
+before the layout is computed. Positive values reveal content
+above and to the left (the content moves down and right on screen), as
+turning a mouse wheel up does; negative values reveal content below and
+to the right. Clay keeps
+the result within the content. L<Term::Fabulous> passes the wheel
+notches since the last frame here.
+
+Any other argument dies. Render command types other than rectangle,
+border, text, scissor (clipping) and custom (canvas) die; Term::Fabulous
+widgets produce only these. With the termbox2 target, the terminal must
+have been opened (L<Term::Fabulous/run> does that); otherwise termbox2
+ignores the drawing.
 
 =head2 get_last_commands
 
-The render commands of the most recent C<draw>, in the order they were
-painted.
+	my @commands = $ui->get_last_commands;
+
+The render commands of the last L</draw>, in the order they were
+painted, as hash references in the format of L<Clay::XS/RENDER COMMANDS>.
+L<Term::Fabulous> uses them to find the widget under the mouse pointer.
+Use C<< $ui->widget_for( $command->{userData} ) >> to get the widget a
+command belongs to.
 
 =head2 get_last_clip_rects
 
-The clip rect (L<Term::Fabulous::Render::Clip/clip_rect>) each of
-L</get_last_commands> was painted under, in the same order. A command
-outside its clip rect, such as content scrolled out of a scroll
-container, was not drawn. When painting the frame died, the list ends
-at the command that failed.
+	my @clip_rects = $ui->get_last_clip_rects;
 
-=head1 RENDERING
+For each command of L</get_last_commands>, in the same order, the
+C<[x0, y0, x1, y1]> rectangle of cells it was allowed to paint into
+(see L<Term::Fabulous::Render::Clip/clip_rect>). A command that lies
+outside its rectangle, such as content scrolled out of a scroll
+container, was not drawn. If painting the frame died, the list ends at
+the command that failed.
 
-Bounding boxes are snapped to cells with C<floor> and clipped to the
-viewport (C<width> x C<height>) and to the innermost open scissor
-(L<Term::Fabulous::Render::Clip>); nothing outside them is drawn. Clay
-opens a scissor around the content of a scroll container. Colors map
-to termbox2 attributes as described in L<Term::Fabulous::Render::Attr>.
+=head2 pointer_state
+
+	method pointer_state () { return { x => 12, y => 3, down => 0 } }
+
+Required from the consuming class: C<undef> when there is no pointer,
+or a hash reference with the pointer's cell C<x> and C<y> (from 0) and
+whether the left button is held (C<down>, 0 or 1).
+
+L</draw> gives Clay the center of that cell (C<x + 0.5>, C<y + 0.5>),
+not its corner: Clay counts the right and bottom edge of a box as part
+of the box, so the corner of a cell would also be "over" the widgets to
+the left of and above it. As a consequence, the C<x> and C<y> of
+Clay::UI's C<OnPress> and C<OnRelease> events are cell centers, such
+as C<12.5>.
+
+=head1 HOW COMMANDS ARE PAINTED
+
+Clay positions boxes in fractional layout units. They are snapped to
+whole cells (see L<Term::Fabulous::Render::Geometry/cell_rect>) and
+clipped to the viewport (C<width> x C<height>) and to the innermost
+open scissor (see L<Term::Fabulous::Render::Clip>). Nothing outside
+these limits is painted. Colors are turned into termbox2 attributes as
+described in L<Term::Fabulous::Render::Attr>; alpha is ignored except
+that 0 means "no color".
 
 =over
 
 =item Rectangles
 
-Fill their cells with spaces in the background color.
+A widget's background. Its cells are filled with spaces in the
+background color. See L<Term::Fabulous::Render::Rectangle>.
 
 =item Text
 
-Starts at the top-left cell of its box. Control characters are replaced
-(L<Term::Fabulous::Unicode/sanitize_text>) and every grapheme cluster
-advances by the columns termbox2 will use, so measuring and drawing
-agree. A cluster that would cross the right edge of the box or the
-viewport ends the line. The background is the one already painted below
-the text.
+One line of a Text widget. It starts at the top-left cell of its box;
+every grapheme cluster takes as many columns as termbox2 will use for
+it. A cluster that would cross the right edge of the box or of the clip
+area ends the line. The background of each cell is whatever was painted
+there before. See L<Term::Fabulous::Render::Text>.
 
 =item Canvases
 
-L<Term::Fabulous::Widget::Canvas> widgets get a custom render command.
-Their background rectangle, which Clay emits after it, is painted first.
-The canvas then paints its buffer into its content box: every visible
-cell, or only the changed ones when the cells of the previous frame
-stay (see L<Term::Fabulous::Render::Canvas>).
+The cells of a L<Term::Fabulous::Widget::Canvas>, painted into its
+content box. Clay emits a canvas's background rectangle after the
+canvas's own command; the renderer swaps the two, so the background is
+painted first. See L<Term::Fabulous::Render::Canvas>.
 
 =item Borders
 
-Drawn for widgets composing L<Term::Fabulous::Role::HasBorderStyle>. A
-side is drawn when its Clay border width is positive, as one line of
-glyphs on the outermost cells; corners appear where two drawn sides
-meet. Each glyph is colored by its style's location code: 0 draws the
-border color over the widget's background, 1 over the parent's
-background (the cell just outside the box), and 2 and 3 are 1 and 0 in
-reverse video, which also inverts terminal-default colors correctly.
+The border of a widget composing L<Term::Fabulous::Role::HasBorderStyle>,
+in its border styles. See L<Term::Fabulous::Render::Border>.
+
+=item Scissors
+
+Start and end of a clipping area, for example around the content of a
+scroll container. See L<Term::Fabulous::Render::Clip>.
 
 =back
-
-=head2 pointer_state
-
-Required from the consumer: C<undef> or C<< { x => ..., y => ..., down => 0|1 } >>,
-with C<x> and C<y> in cells. C<draw> hands Clay the center of that cell
-(C<x + 0.5>, C<y + 0.5>): Clay counts the right and bottom edges of a
-box as inside it, so the cell's top-left corner would also be over the
-widgets left of and above it. The coordinates of Clay::UI's C<OnPress>
-and C<OnRelease> events are therefore cell centers.
 
 =head1 CELL TARGET
 
-The render roles compute glyphs and termbox2 attributes
-(L<Term::Fabulous::Render::Attr>) and hand them to these methods, which
-the consumer must provide by composing a target role:
-L<Term::Fabulous::Render::Target::Termbox> draws into the terminal,
-L<Term::Fabulous::Render::Target::Grid> collects the cells in memory
-(used by L<Term::Fabulous::Static> and by tests). Both get the cell
-methods and the kept rects from L<Term::Fabulous::Render::Target::Mask>.
+The paint roles do not write to the terminal themselves. They compute a
+glyph and two termbox2 attributes per cell and hand them to the
+following methods, which the consuming class gets by composing a target
+role:
 
 =over
 
-=item C<begin_frame(@kept_rects)>, C<end_frame>
+=item L<Term::Fabulous::Render::Target::Termbox>
 
-Called once before and once after the commands of a frame are painted.
-C<begin_frame> resets every cell outside the kept C<[x0, y0, x1, y1]>
-rects; the cells inside them must keep what the previous frame painted,
-and writes into them are dropped until they are released.
+Draws into the terminal through termbox2. Used by L<Term::Fabulous>.
 
-=item C<release_rect($rect)>
+=item L<Term::Fabulous::Render::Target::Grid>
 
-Stops protecting one of the kept rects (the same array reference); its
-canvas paints its changes into it next.
-
-=item C<< set_cell($x, $y, $glyph, $fg, $bg) >>
-
-One cell: a base character and its foreground and background attributes.
-
-=item C<< extend_cell($x, $y, $codepoint) >>
-
-Appends a combining codepoint to the cell set last at that position.
-
-=item C<< fill_row($x, $y, $columns, $bg) >>
-
-C<$columns> cells of spaces in the background C<$bg>, starting at C<$x>.
+Keeps the cells in memory. Used by L<Term::Fabulous::Static> and by
+tests.
 
 =back
 
-Coordinates are always inside the viewport and the open scissors;
-clipping happens before a target method is called.
+Both build on L<Term::Fabulous::Render::Target::Mask>, which implements
+the methods below on top of a few primitives; write your own target the
+same way. All coordinates are cells, counted from 0 at the top-left, and
+always lie inside the viewport and the open clip area: clipping happens
+before a target method is called.
+
+=head2 begin_frame
+
+	$ui->begin_frame(@kept_rects);
+
+Called once before the commands of a frame are painted. Resets every
+cell outside the given C<[x0, y0, x1, y1]> rectangles (all cells when
+none are given). The cells inside them must keep what the previous
+frame painted there, and writes into them are ignored until the
+rectangle is released with L</release_rect>.
+
+=head2 end_frame
+
+	$ui->end_frame;
+
+Called once after all commands of a frame are painted. Releases all
+kept rectangles and shows the frame.
+
+=head2 release_rect
+
+	$ui->release_rect($rect);
+
+Stops protecting one of the rectangles given to L</begin_frame>
+(identified by being the same array reference). The canvas that owns it
+then paints its changed cells into it.
+
+=head2 set_cell
+
+	$ui->set_cell( $x, $y, $glyph, $fg, $bg );
+
+Paints one cell: C<$glyph> is a character string with one character
+(the base character of a grapheme cluster), C<$fg> and C<$bg> are
+termbox2 attributes.
+
+=head2 extend_cell
+
+	$ui->extend_cell( $x, $y, $character );
+
+Appends a combining character (a character string of length one) to the
+cell set last at that position, to complete a grapheme cluster.
+
+=head2 fill_row
+
+	$ui->fill_row( $x, $y, $columns, $bg );
+
+Paints C<$columns> cells of spaces with the background attribute C<$bg>,
+starting at C<($x, $y)> and going right.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous>, L<Term::Fabulous::Static>, L<Clay::UI>,
+L<Term::Fabulous::Render::Target::Mask>, L<Term::Fabulous::Render::Attr>.
 
 =cut

@@ -70,3 +70,78 @@ role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Term::Fabulous::Render::Text - Paint lines of text
+
+=head1 SYNOPSIS
+
+	# Composed by Term::Fabulous::Render; called from draw for every
+	# text render command:
+	$ui->render_text( $command, $widget, $buffer );
+
+=head1 DESCRIPTION
+
+Most programs never use this module directly. It is one of the roles
+L<Term::Fabulous::Render> is made of, and it paints the text render
+commands Clay emits for L<Term::Fabulous::Widget::Text> widgets. Clay
+breaks a widget's text into lines and words; each text command is one
+line.
+
+=head1 METHODS
+
+=head2 render_text
+
+	$ui->render_text( $command, $widget, $buffer );
+
+Paints one line of text, starting at the top-left cell of the command's
+bounding box, in the command's text color:
+
+=over
+
+=item *
+
+The text (C<stringContents>, UTF-8 encoded bytes) is decoded, control
+characters are replaced (see L<Term::Fabulous::Unicode/sanitize_text>)
+and it is split into grapheme clusters. Invalid UTF-8 shows as U+FFFD.
+
+=item *
+
+Every cluster advances by the number of columns termbox2 uses for it
+(see L<Term::Fabulous::Unicode/cluster_columns>), so measuring and
+drawing agree.
+
+=item *
+
+The line ends before the first cluster that would cross the right edge
+of the bounding box or of the clip area. Clusters left of the clip area
+are not painted but still advance.
+
+=item *
+
+The background of each cell is the one recorded in C<$buffer> (an array
+reference of rows of attributes, C<< $buffer->[$y][$x] >>) by whatever
+was painted there before in this frame, or the terminal default.
+
+=back
+
+The line is skipped when its row lies outside the clip area. Decoded
+and segmented lines are cached by their bytes (the cache is emptied
+when it reaches 4096 entries), because texts rarely change between
+frames.
+
+=head1 REQUIRED METHODS
+
+The consuming class provides C<set_cell> and C<extend_cell> (from a
+cell target, see L<Term::Fabulous::Render/CELL TARGET>) and C<width>
+and C<height> (for L<Term::Fabulous::Render::Clip>).
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Render>, L<Term::Fabulous::Widget::Text>,
+L<Term::Fabulous::Unicode>.
+
+=cut

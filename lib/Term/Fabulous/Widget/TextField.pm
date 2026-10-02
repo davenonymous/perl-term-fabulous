@@ -138,57 +138,192 @@ Term::Fabulous::Widget::TextField - Single-line text input
 		placeholder => 'Your name',
 		max_length  => 40,
 	);
-	$name->on( Submit => sub ($event) { greet( $event->value ); return } );
+	$name->on( Submit => sub ($event) {
+		say 'Hello, ', $event->value;
+		return;
+	} );
 
-	my $password = Term::Fabulous::Widget::TextField->new( mask => '*' );
+	my $password = Term::Fabulous::Widget::TextField->new(
+		id   => 'password',
+		mask => '*',
+	);
+
+	say $name->value;    # the text, a character string
 
 =head1 DESCRIPTION
 
-A L<Term::Fabulous::Widget::TextInput> for one line of text. Text wider
-than the field scrolls sideways to keep the cursor visible. Line breaks
-in pasted or assigned text become spaces. Unknown constructor
-parameters die.
+A text field holds one line of text that the user can type, edit, select
+and copy. When the text is wider than the field, the field scrolls
+sideways to keep the cursor visible. Line breaks never get into the
+text: in pasted or assigned text they become spaces. Pressing C<Enter>
+fires a L<Term::Fabulous::Event::Submit>.
 
-See L<Term::Fabulous::Widget::TextInput> for the C<value>, the editing
-keys, mouse selection and the C<Change> event.
+The text is a Perl character string (decoded text), not UTF-8 encoded
+bytes.
+
+The editing keys, mouse selection, the placeholder, C<max_length>,
+C<read_only> and the C<Change> event are the same as in the text area
+and are described in L<Term::Fabulous::Widget::TextInput>. Disabling,
+colors and sizing are described in L<Term::Fabulous::Widget::Input>.
 
 =head1 CONSTRUCTOR
 
-Besides the parameters of L<Term::Fabulous::Widget::TextInput>:
+=head2 new
+
+	my $field = Term::Fabulous::Widget::TextField->new(%parameters);
+
+Accepts the parameters of L<Term::Fabulous::Widget::TextInput/CONSTRUCTOR>
+(C<value>, C<placeholder>, C<max_length>, C<read_only>,
+C<placeholder_color>, C<selection_color>, C<background_color>) and of
+L<Term::Fabulous::Widget::Input/CONSTRUCTOR> (C<id>, C<layout>,
+C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
+C<accent_color>, C<focus_background_color>, the border parameters), plus
+the two below. Unknown parameters die.
 
 =over
 
 =item C<preferred_columns>
 
-The width of the text area in columns when the C<layout> gives the
-field no width; a positive integer, default 20. The field is one row
-high unless the layout says otherwise.
+A positive integer. Default: 20. The width of the text in columns when
+the C<layout> gives the field no width. The field is one row high unless
+the C<layout> gives it a height. Padding and border are added to these
+sizes. Dies if not a positive integer.
 
 =item C<mask>
 
-A character, one column wide, shown instead of every character of the
-text, for passwords; default C<undef> (the text is shown). Masking
-hides the text only on the screen: C<value> and copying through the
-clipboard still return it.
+A single character that is one column wide, or C<undef>. Default:
+C<undef> (the text is shown). When set, every character of the text is
+shown as this character, for passwords. The mask only hides the text on
+the screen: C<value>, the C<Change> and C<Submit> events and copying to
+the clipboard still give the real text. Dies if the mask is not exactly
+one grapheme cluster one column wide.
 
 =back
 
-Both have readers and writers of the same name.
+=head1 METHODS
+
+The methods of L<Term::Fabulous::Widget::TextInput/METHODS> (C<value>,
+C<max_length>, C<placeholder>, C<read_only>, C<placeholder_color>,
+C<selection_color>, C<editor>, C<cursor_moved>) and of
+L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>, C<is_enabled>,
+the color accessors, C<repaint>), plus:
+
+=head2 preferred_columns
+
+	my $columns = $field->preferred_columns;
+	$field->preferred_columns(30);
+
+Accessor for the C<preferred_columns> parameter. A new value takes
+effect at the next frame. Writing returns the new value. Dies if not a
+positive integer; the old value then stays.
+
+=head2 mask
+
+	$field->mask('*');      # hide the text
+	$field->mask(undef);    # show it again
+
+Accessor for the C<mask> parameter. Writing repaints the field and
+returns the new mask. A mask that is not a single one-column character
+dies; the old mask then stays.
 
 =head1 KEYS
 
-The keys of L<Term::Fabulous::Widget::TextInput/KEYS>, plus Enter,
-which fires L<Term::Fabulous::Event::Submit> with the text. Up, Down,
-Page Up and Page Down are not used and bubble.
+All keys of L<Term::Fabulous::Widget::TextInput/KEYS>, plus:
+
+=over
+
+=item C<Enter>
+
+Fires L<Term::Fabulous::Event::Submit> with the text. The key is used
+(it does not bubble). This also happens when the field is C<read_only>.
+
+=back
+
+C<Up>, C<Down>, C<PageUp> and C<PageDown> are not used by a text field
+and bubble to its ancestors, as do C<Escape>, C<Tab>, the function keys
+and every other key not listed in L<Term::Fabulous::Widget::TextInput/KEYS>.
+
+=head1 MOUSE
+
+As described in L<Term::Fabulous::Widget::TextInput/MOUSE>: click to
+place the cursor, drag (while the pointer stays over the input) to
+select, double-click to select a word. The mouse wheel is not used.
+
+=head1 EVENTS
+
+=over
+
+=item C<Change>
+
+L<Term::Fabulous::Event::Change> after every change the user makes to
+the text; C<< $event->value >> is the new text.
+
+=item C<Submit>
+
+L<Term::Fabulous::Event::Submit> when the user presses C<Enter>;
+C<< $event->value >> is the text.
+
+=back
+
+Neither is fired for changes made by the program. Both bubble to the
+ancestors (see L<Term::Fabulous::Manual/Return values and bubbling>).
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::TextInput/KDL PROPERTIES> plus
-C<preferred_columns> and C<mask>:
+The properties of L<Term::Fabulous::Widget::TextInput/KDL PROPERTIES>,
+plus C<preferred_columns> and C<mask>:
+
+	use Term::Fabulous::Widget::TextField as TextField
 
 	TextField "email" {
 		placeholder "name@example.com"
 		preferred_columns 30
+		max_length 80
 	}
+
+=head1 EXAMPLES
+
+=head2 A search field that reacts to Enter and to typing
+
+	use Clay::UI::Enum::Result;
+	use Clay::XS qw(sizing_grow);
+	use Term::Fabulous::Widget::TextField;
+
+	my $search = Term::Fabulous::Widget::TextField->new(
+		id          => 'search',
+		placeholder => 'Search (Enter to run)',
+		layout      => { sizing => { width => sizing_grow() } },
+	);
+	$search->on( Change => sub ($event) {
+		show_suggestions( $event->value );
+		return Clay::UI::Enum::Result->CONTINUE;
+	} );
+	$search->on( Submit => sub ($event) {
+		run_search( $event->value );
+		return;
+	} );
+
+=head2 A password field that is enabled by a checkbox
+
+	use Term::Fabulous::Widget::Checkbox;
+
+	my $password = Term::Fabulous::Widget::TextField->new( mask => '*', disabled => 1 );
+	my $enable   = Term::Fabulous::Widget::Checkbox->new( label => 'Set a password' );
+	$enable->on( Change => sub ($event) {
+		$password->disabled( !$event->value );
+		return;
+	} );
+
+=head2 Give the field the focus when the program starts
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+	$ui->interaction->set_focused_widget($name);
+	$ui->run;
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextArea>,
+L<Term::Fabulous::Event::Submit>,
+L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
 
 =cut

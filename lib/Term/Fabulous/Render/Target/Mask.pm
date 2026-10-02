@@ -79,34 +79,130 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Target::Mask - Keep cells of a frame untouched
+Term::Fabulous::Render::Target::Mask - Base role of the cell targets:
+protect kept cells during a frame
 
 =head1 SYNOPSIS
 
-	role My::Target :does(Term::Fabulous::Render::Target::Mask) {
-		method clear_cells (@kept_rects) { ... }
-		method present_cells ()          { ... }
-		method put_cell ( $x, $y, $glyph, $fg, $bg ) { ... }
-		method put_extension ( $x, $y, $codepoint )  { ... }
-		method put_row ( $x, $y, $columns, $bg )     { ... }
+	use v5.24;
+	use Object::Pad 0.825;
+	use Term::Fabulous::Render::Target::Mask;
+
+	# A cell target that records which cells were written.
+	role My::Target::Log :does(Term::Fabulous::Render::Target::Mask) {
+		field @written;
+
+		method clear_cells (@kept_rects)            { @written = (); return }
+		method present_cells ()                     { say scalar(@written), ' cells'; return }
+		method put_cell ( $x, $y, $glyph, $fg, $bg ) { push @written, [ $x, $y, $glyph ]; return }
+		method put_extension ( $x, $y, $character ) { $written[-1][2] .= $character; return }
+		method put_row ( $x, $y, $columns, $bg )    { push @written, map { [ $_, $y, ' ' ] } $x .. $x + $columns - 1; return }
 	}
 
 =head1 DESCRIPTION
 
-Implements the cell target methods of L<Term::Fabulous::Render/CELL TARGET>
-on top of five primitives a target role provides. It lets the renderer
-keep rects of the previous frame: a canvas that has not moved and that
-nothing covers stays on screen without being painted again (see
-L<Term::Fabulous::Render::Canvas>).
+Most programs never use this module directly. Read on if you want to
+paint Term::Fabulous frames somewhere other than the terminal
+(L<Term::Fabulous::Render::Target::Termbox>) or memory
+(L<Term::Fabulous::Render::Target::Grid>).
 
-C<begin_frame(@kept_rects)> asks the target to reset every cell outside
-the C<[x0, y0, x1, y1]> rects (C<clear_cells>). Until a rect is
-released with C<release_rect($rect)> (the same array reference), every
-C<set_cell>, C<extend_cell> and C<fill_row> inside it is dropped, so the
-commands painted below a kept canvas do not overwrite it. C<end_frame>
-releases every rect and calls C<present_cells>.
+A I<cell target> is the role that receives the cells
+L<Term::Fabulous::Render> paints (see
+L<Term::Fabulous::Render/CELL TARGET>). This role implements the
+target methods the renderer calls (C<begin_frame>, C<end_frame>,
+C<release_rect>, C<set_cell>, C<extend_cell>, C<fill_row>) on top of
+five simple primitives that a concrete target provides. On the way, it
+implements I<kept rectangles>: parts of the previous frame that must
+stay as they are, because an unchanged canvas is there (see
+L<Term::Fabulous::Render::Canvas/Painting only the changes>). Writes
+into a kept rectangle are dropped until the rectangle is released.
 
-Both cell targets, L<Term::Fabulous::Render::Target::Termbox> and
-L<Term::Fabulous::Render::Target::Grid>, compose this role.
+=head1 METHODS
+
+=head2 begin_frame
+
+	$target->begin_frame(@kept_rects);
+
+Remembers the kept C<[x0, y0, x1, y1]> rectangles and calls
+L</clear_cells> with them.
+
+=head2 end_frame
+
+	$target->end_frame;
+
+Forgets all kept rectangles and calls L</present_cells>.
+
+=head2 release_rect
+
+	$target->release_rect($rect);
+
+Stops protecting one kept rectangle. C<$rect> must be the same array
+reference that was given to L</begin_frame>.
+
+=head2 set_cell
+
+	$target->set_cell( $x, $y, $glyph, $fg, $bg );
+
+Calls L</put_cell>, unless the cell lies in a kept rectangle.
+
+=head2 extend_cell
+
+	$target->extend_cell( $x, $y, $character );
+
+Calls L</put_extension>, unless the cell lies in a kept rectangle.
+
+=head2 fill_row
+
+	$target->fill_row( $x, $y, $columns, $bg );
+
+Calls L</put_row> for the parts of the row that lie outside every kept
+rectangle.
+
+=head1 REQUIRED METHODS
+
+A role or class composing this role provides these primitives. They are
+called with coordinates inside the viewport only.
+
+=head2 clear_cells
+
+	method clear_cells (@kept_rects) { ... }
+
+Resets every cell outside the given rectangles to empty (a space in the
+terminal default colors), and leaves the cells inside them as the
+previous frame left them. Without rectangles, resets everything.
+
+=head2 present_cells
+
+	method present_cells () { ... }
+
+Shows the finished frame, if the target needs a step for that.
+
+=head2 put_cell
+
+	method put_cell ( $x, $y, $glyph, $fg, $bg ) { ... }
+
+Writes one cell: C<$glyph> is a character string of one character,
+C<$fg> and C<$bg> are termbox2 attributes (see
+L<Term::Fabulous::Render::Attr>).
+
+=head2 put_extension
+
+	method put_extension ( $x, $y, $character ) { ... }
+
+Appends a combining character (a character string of length one) to the
+cell written last at that position.
+
+=head2 put_row
+
+	method put_row ( $x, $y, $columns, $bg ) { ... }
+
+Writes C<$columns> cells of spaces with the background attribute C<$bg>
+and the terminal default foreground, from C<($x, $y)> to the right.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Render/CELL TARGET>,
+L<Term::Fabulous::Render::Target::Termbox>,
+L<Term::Fabulous::Render::Target::Grid>.
 
 =cut

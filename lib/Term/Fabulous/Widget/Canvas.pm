@@ -249,154 +249,300 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::Canvas - Free-drawing cell buffer widget
+Term::Fabulous::Widget::Canvas - A widget you draw on cell by cell
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Widget::Canvas;
 	use Clay::XS qw(sizing_grow);
+	use Term::Fabulous::Color;
+	use Term::Fabulous::Widget::Canvas;
 
 	my $canvas = Term::Fabulous::Widget::Canvas->new(
-		background_color => [10, 10, 20, 255],
+		background_color => [ 10, 10, 20, 255 ],
 		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 	);
 
+	# The canvas gets its size from the layout; draw when it is known.
 	$canvas->on( CanvasResize => sub ($event) {
 		$canvas->clear;
+		$canvas->put_text( 0, 0, "Gr\x{fc}\x{df}e", '#ffcc00' );           # a character string
+		$canvas->put( 3, 1, "\x{2580}", 0xFF0000, 0x0000FF );               # red over blue
+		$canvas->fill( 0, 2, 10, 1, '#', Term::Fabulous::Color->rgb( 0, 200, 0 ) );
 		$canvas->put( $_, $event->rows - 1, "\x{2500}", 0x808080 ) foreach 0 .. $event->columns - 1;
+		return;
 	} );
-
-	$canvas->put( 3, 1, "\x{2580}", 0xFF0000, 0x0000FF );         # upper half block, red over blue
-	$canvas->put_text( 0, 0, "Gr\x{fc}\x{df}e", '#ffcc00' );
-	$canvas->fill( 0, 2, 10, 1, '#', Term::Fabulous::Color->rgb( 0, 200, 0 ) );
 
 =head1 DESCRIPTION
 
-A L<Term::Fabulous::Widget::Box> that holds a buffer of cells and draws
-it inside its content box (the box without its border and padding). Any
-grapheme cluster with any foreground and background color can be put at
-any cell; it is a base for plotters, half-block pixel images (see
-L<Term::Fabulous::Widget::PixelCanvas>) and other text art. Unknown constructor parameters die.
+A Canvas is a L<Term::Fabulous::Widget::Box> that holds a grid of
+cells you fill yourself: any character (more exactly, any grapheme
+cluster) in any foreground and background color at any cell. Use it for
+charts, plots, games, images made of half blocks (see
+L<Term::Fabulous::Widget::PixelCanvas>) and anything else that is not
+made of boxes and text.
+
+The cells are drawn inside the canvas's content box, that is the
+canvas without its border and padding. A Canvas has every parameter of
+a Box, so it can have a background, a border and padding around the
+drawing.
 
 =head2 Buffer size
 
-The buffer follows the layout: before the first frame it has 0 x 0
-cells, and whenever the laid-out content box gets a new size, the
-buffer is resized to it and the canvas fires a
-L<Term::Fabulous::Event::CanvasResize> before that frame is painted.
-Cells inside the new size are kept, a wide glyph cut by the new right
-edge is unset. Draw in the C<CanvasResize> listener (or later); writes
-outside the buffer are dropped. Use C<fixed(N)> sizing for a canvas of
-a fixed size.
-
-=head2 Only changes are painted
-
-The canvas records which cells changed since it was last painted.
-Under L<Term::Fabulous>, a canvas that is at the same place as in the
-previous frame, has the same visible part and the same background, and
-that nothing was drawn over in this frame or the previous one, is not
-painted again: only its changed cells are sent to termbox2, and termbox2
-writes only the cells that differ to the terminal. Otherwise (the first
-frame, after a resize, while scrolling or when other widgets, including
-the canvas's own children, overlap it) every visible cell is painted. See
-L<Term::Fabulous::Render::Canvas>.
+The layout decides how big the canvas is, and the cell buffer follows:
+before the first frame it has 0 x 0 cells, and every time the content
+box gets a new size (the first frame, terminal resizes, layout
+changes), the buffer is resized to it and the canvas fires a
+C<CanvasResize> event (L<Term::Fabulous::Event::CanvasResize>) just
+before that frame is drawn. Cells that are still inside the new size
+keep their contents; a wide character cut by the new right edge is
+removed. Draw in a C<CanvasResize> listener (and whenever your data
+changes); drawing outside the buffer, including everything drawn
+before the first frame, is silently dropped. For a canvas of a known,
+constant size, use C<sizing_fixed> for both axes.
 
 =head2 Cells
 
-A cell is unset, or holds one grapheme cluster with a foreground and a
-background color. Unset cells, and set cells without a background color,
-show the background of the canvas (its C<background_color>), or else of
-the nearest ancestor that has one, or else the terminal's default.
-Cells without a foreground color use the terminal's default.
+A cell is either unset, or holds one grapheme cluster (what a reader
+sees as one character, for example C<e> followed by a combining accent)
+with an optional foreground and an optional background color.
 
-A glyph that is two (or more) columns wide, such as most CJK characters
-and emoji, covers the cells to its right. Writing over any of its cells
-replaces its other cells with spaces in its colors. A glyph that would
-cross the right edge of the buffer is dropped.
+=over
+
+=item * An unset cell, and a set cell without a background color, show
+the canvas's C<background_color>. When the canvas has none, they show
+the background of the nearest ancestor that has one, or else the
+terminal's default background.
+
+=item * A cell without a foreground color uses the terminal's default
+foreground color.
+
+=item * A character that is two columns wide, such as most CJK
+characters and many emoji, covers the cell to its right as well.
+Writing into either of its cells replaces the other one with a space in
+the same colors. A wide character that would cross the right edge of
+the buffer is not drawn.
+
+=item * Control characters are shown as U+FFFD (the replacement
+character); a TAB is shown as a space.
+
+=back
 
 =head2 Colors
 
-The C<$fg> and C<$bg> arguments accept a packed C<0xRRGGBB> integer
-(the fast path), C<undef> for no color of the cell's own, a
-L<Term::Fabulous::Color>, or anything C<< Term::Fabulous::Color->new >>
-accepts (C<[r, g, b, a]>, C<'#rrggbb'>, C<'hsl(...)'>, ...). A color with
-alpha 0 counts as no color. Integers above C<0xFFFFFF> and invalid
-colors die.
+Every C<$fg> and C<$bg> argument accepts:
+
+=over
+
+=item * a packed integer C<0xRRGGBB> (fastest; C<0x000000> is black),
+
+=item * C<undef> for "no color of its own" (see L</Cells>),
+
+=item * a L<Term::Fabulous::Color> object,
+
+=item * anything C<< Term::Fabulous::Color->new( color => ... ) >>
+accepts: C<'#rrggbb'>, C<'rgb(r, g, b)'>, C<'hsl(h, s%, l%)'>,
+C<[r, g, b]>, C<[r, g, b, a]>, C<{ r => ..., g => ..., b => ... }>, ...
+
+=back
+
+A color with alpha 0 counts as no color; any other alpha is drawn
+fully opaque. Integers above C<0xFFFFFF> and invalid colors die.
 
 =head2 Coordinates
 
-C<$x> counts columns from the left, C<$y> rows from the top of the
-buffer, both from 0. Coordinates must be finite numbers and are rounded
-down, so a plotter can pass computed positions directly. Anything else
-dies.
+C<$x> is the column and C<$y> the row in the buffer, both counted from
+0 at the top-left corner of the content box. Coordinates and sizes may
+be any finite numbers; they are rounded down to whole cells, so a
+plotter can pass computed positions directly. C<undef>, strings that
+are not numbers, C<NaN> and infinities die.
+
+=head2 Efficient updates
+
+The canvas remembers which cells changed since it was last drawn.
+Under L<Term::Fabulous>, a canvas that is in the same place as in the
+previous frame and that nothing else is drawn over sends only its
+changed cells to the terminal. You can therefore redraw a few cells
+many times per second (an animation, a live chart) cheaply. A canvas
+is drawn in full in the first frame, after it moved or changed size,
+while it is scrolled, and while other widgets (including its own
+children) overlap it. See L<Term::Fabulous::Render::Canvas>.
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $canvas = Term::Fabulous::Widget::Canvas->new(%parameters);
+
+All parameters are optional; unknown parameters die. A Canvas takes
+exactly the parameters of L<Term::Fabulous::Widget::Box>: C<id>,
+C<layout>, C<background_color>, C<border_width>, C<border_color>,
+C<border_style>, ... (see L<Term::Fabulous::Widget/new>). Without a
+C<sizing>, the canvas has no content and therefore a 0 x 0 buffer, so
+always give it a size.
 
 =head1 METHODS
 
-The drawing methods return the canvas, so calls chain.
+The drawing methods (C<put>, C<put_text>, C<fill>, C<erase>, C<clear>)
+return the canvas, so calls chain:
+C<< $canvas->clear->put_text( 0, 0, 'Score: 0' ) >>. A drawn change
+appears in the next frame. A Canvas also has all methods of
+L<Term::Fabulous::Widget>.
 
 =head2 put
 
-	$canvas->put( $x, $y, $glyph, $fg = undef, $bg = undef );
+	$canvas->put( $x, $y, $glyph );
+	$canvas->put( $x, $y, $glyph, $fg );
+	$canvas->put( $x, $y, $glyph, $fg, $bg );
 
 Sets one cell. C<$glyph> is a character string (not UTF-8 bytes) of
-exactly one grapheme cluster; anything else dies. Control characters
-are shown as U+FFFD (TAB as a space), as in
-L<Term::Fabulous::Widget::Text>.
+exactly one grapheme cluster, such as C<'#'>, C<"\x{2588}"> or
+C<"e\x{301}">; an empty string, several clusters or a reference die.
+C<$fg> and C<$bg> are optional colors (see L</Colors>).
 
 =head2 put_text
 
-	$canvas->put_text( $x, $y, $text, $fg = undef, $bg = undef );
+	$canvas->put_text( $x, $y, $text );
+	$canvas->put_text( $x, $y, $text, $fg, $bg );
 
-Puts the grapheme clusters of a character string from C<$x> to the
-right, each advancing by its width in columns. Clusters outside the
-buffer are dropped.
+Writes a character string from C<($x, $y)> to the right, one cluster
+per cell (two for wide characters), all in the same colors. The text
+does not wrap: clusters beyond the right edge of the buffer are
+dropped. C<$text> may be empty; C<undef> or a reference dies.
 
 =head2 fill
 
-	$canvas->fill( $x, $y, $width, $height, $glyph, $fg = undef, $bg = undef );
+	$canvas->fill( $x, $y, $width, $height, $glyph );
+	$canvas->fill( $x, $y, $width, $height, $glyph, $fg, $bg );
 
-Puts C<$glyph> into every cell of the rect, repeated from C<$x> on
-in steps of its width.
+Puts C<$glyph> into every cell of the rectangle that starts at
+C<($x, $y)> and is C<$width> columns wide and C<$height> rows high. A
+wide glyph is repeated every two columns. Parts outside the buffer are
+skipped; a width or height of 0 or less fills nothing. Use
+C<< fill( $x, $y, $w, $h, ' ', undef, $color ) >> for a solid colored
+rectangle.
 
 =head2 erase
 
 	$canvas->erase( $x, $y );
 
-Unsets one cell.
+Unsets one cell, so it shows the background again.
 
 =head2 clear
 
-Unsets every cell.
+	$canvas->clear;
+
+Unsets every cell. The buffer keeps its size.
 
 =head2 cell
 
-	my $cell = $canvas->cell( $x, $y );
+	if ( my $cell = $canvas->cell( $x, $y ) ) {
+		my ( $glyph, $fg_attr, $bg_attr ) = @$cell;
+		...
+	}
 
-C<[ $glyph, $fg, $bg ]> for a set cell: the (sanitized) cluster and the
-termbox2 attributes (see L<Term::Fabulous::Render::Attr>), C<undef> for
-a missing color. C<undef> for an unset cell, a cell covered by a wide
-glyph to its left, or a cell outside the buffer.
+Reads one cell back. Returns C<[ $glyph, $fg, $bg ]> for a set cell, or
+C<undef> for an unset cell, for the right half of a wide character and
+for a position outside the buffer. C<$glyph> is the cluster as it is
+shown (control characters already replaced). C<$fg> and C<$bg> are not
+the colors you passed but termbox2 attribute numbers (see
+L<Term::Fabulous::Render::Attr>), or C<undef> where the cell has no
+color of its own; compare them with
+C<Term::Fabulous::Render::Attr::cell_color_attr( fg => $color )>.
 
 =head2 cell_at
 
-	my ( $x, $y ) = $canvas->cell_at($mouse_event);
+	$canvas->on( Mouse => sub ($event) {
+		my ( $x, $y ) = $canvas->cell_at($event) or return Clay::UI::Enum::Result->CONTINUE;
+		$canvas->put( $x, $y, '*', 0xFFFF00 );
+		return;
+	} );
 
-The buffer cell under a L<Term::Fabulous::Event::Mouse> (anything with
-C<x> and C<y> in viewport cells), as of the last frame that laid the
-canvas out. The empty list when the pointer is outside the buffer (on
-the border or padding, for example) or before the first frame.
+Translates a mouse position into buffer coordinates. Takes a
+L<Term::Fabulous::Event::Mouse> (or any object with C<x> and C<y>
+methods giving a terminal cell) and returns the buffer cell
+C<($x, $y)> under it, based on where the canvas was drawn in the last
+frame. Returns the empty list when the position is outside the buffer
+(for example on the border or the padding) or before the first frame.
 
 =head2 content_origin
 
-	my ( $x, $y ) = $canvas->content_origin;
+	my ( $left, $top ) = $canvas->content_origin;
 
-The viewport cell that showed buffer cell (0, 0) in the last frame that
-laid the canvas out; the empty list before the first frame. It may lie
-outside the viewport when the canvas is scrolled or clipped.
+The terminal cell where buffer cell C<(0, 0)> was drawn in the last
+frame, or the empty list before the first frame. It can lie outside the
+terminal when the canvas is scrolled or partly clipped.
 
-=head2 columns, rows
+=head2 columns
 
-The size of the buffer in cells.
+	my $width = $canvas->columns;
+
+The width of the buffer in cells; 0 before the first frame.
+
+=head2 rows
+
+	my $height = $canvas->rows;
+
+The height of the buffer in cells; 0 before the first frame.
+
+=head1 EVENTS
+
+=over
+
+=item C<CanvasResize> (L<Term::Fabulous::Event::CanvasResize>)
+
+Fired on the canvas when the layout gives its buffer a new size, before
+the frame that shows it is drawn. C<< $event->columns >> and
+C<< $event->rows >> are the new size; they are also available as
+C<< $canvas->columns >> and C<< $canvas->rows >>. Draw (again) in a
+listener; anything drawn in it appears in the same frame.
+
+=item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
+
+Fired for mouse input over the canvas, including over its unset cells.
+Use L</cell_at> to find the cell.
+
+=back
+
+=head1 MOUSE
+
+A Canvas does nothing with the mouse by itself; listen for C<Mouse>
+events and use L</cell_at>.
+
+=head1 KDL PROPERTIES
+
+The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>. The
+drawing itself is done from Perl:
+
+	use Term::Fabulous::Widget::Canvas as Canvas
+
+	Canvas "chart" {
+		sizing width=grow height="fixed(10)"
+		background_color "#0a0a14"
+	}
+
+=head1 EXAMPLES
+
+A bar chart that is redrawn whenever the canvas changes size:
+
+	use Clay::XS qw(sizing_grow sizing_fixed);
+	use List::Util qw(max);
+	use Term::Fabulous::Widget::Canvas;
+
+	my @values = ( 3, 7, 2, 9, 5 );
+	my $chart  = Term::Fabulous::Widget::Canvas->new(
+		layout => { sizing => { width => sizing_grow(), height => sizing_fixed(8) } },
+	);
+
+	sub draw_chart () {
+		my $scale = $chart->rows / max(@values);
+		$chart->clear;
+		foreach my $index ( 0 .. $#values ) {
+			my $height = int( $values[$index] * $scale + 0.5 );
+			$chart->fill( 3 * $index, $chart->rows - $height, 2, $height, "\x{2588}", 0x50A0FF );
+		}
+		return;
+	}
+	$chart->on( CanvasResize => sub ($event) { draw_chart(); return } );
 
 =head1 SUBCLASS INTERFACE
 
@@ -404,48 +550,61 @@ The size of the buffer in cells.
 
 	$canvas->put_attrs( $x, $y, $glyph, $fg_attr, $bg_attr );
 
-Like L</put>, without parsing: C<$x> and C<$y> must be integers and the
-colors termbox2 attributes or C<undef> (as L</cell> returns them). An
-C<undef> glyph unsets the cell. For subclasses that draw in their own
-units, such as L<Term::Fabulous::Widget::PixelCanvas>.
+Like L</put> but without any conversion, for subclasses that draw a
+lot of cells (L<Term::Fabulous::Widget::PixelCanvas>, the input
+widgets). C<$x> and C<$y> must be integers; C<$fg_attr> and C<$bg_attr>
+must be termbox2 attributes or C<undef>, as L</cell> returns them
+(convert colors once with
+C<Term::Fabulous::Render::Attr::cell_color_attr>). An C<undef> glyph
+unsets the cell. Returns the canvas.
 
 =head1 RENDERER INTERFACE
 
-Used by L<Term::Fabulous::Render::Canvas>; applications do not call
-these.
+These methods are called by L<Term::Fabulous::Render::Canvas> while a
+frame is drawn. Applications do not call them.
 
-=over
+=head2 content_insets
 
-=item C<content_insets>
+	my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 
-C<($left, $top, $right, $bottom)>: the cells between the widget's box
-and its content box (padding plus border width).
+The number of cells between the widget's outer box and its content box
+on each side: padding plus border width.
 
-=item C<< set_content_origin($x, $y) >>
+=head2 set_content_origin
 
-Records where the content box starts in the viewport, for L</cell_at>.
+	$canvas->set_content_origin( $x, $y );
 
-=item C<< fit_to($columns, $rows) >>
+Records the terminal cell where the content box starts, for
+L</cell_at> and L</content_origin>.
+
+=head2 fit_to
+
+	$canvas->fit_to( $columns, $rows );
 
 Resizes the buffer and fires C<CanvasResize>, unless it already has
-that size.
+that size. Dies unless both are non-negative integers.
 
-=item C<take_changed_spans>
+=head2 take_changed_spans
 
-An arrayref indexed by row of C<[from, to]> column spans (C<to>
-exclusive) changed since the last call, C<undef> for unchanged rows;
-every row in full after a resize or C<clear>. Forgets the changes.
+	my $spans = $canvas->take_changed_spans;
 
-=item C<< cell_row($y) >>
+An array reference indexed by row: C<[ $from, $to ]> (C<$to>
+exclusive) covering the columns changed since the last call, or
+C<undef> for an unchanged row. After a resize or C<clear>, every row
+is reported in full. The changes are forgotten.
 
-The glyph, foreground and background arrayrefs of one row. A glyph is
-C<undef> (unset), C<''> (covered by a wide glyph to the left) or
-C<[ $cluster, $columns, $base_character, @extending_characters ]>.
+=head2 cell_row
 
-=back
+	my ( $glyphs, $fgs, $bgs ) = $canvas->cell_row($y);
 
-=head1 KDL PROPERTIES
+The three array references holding row C<$y>. A glyph entry is
+C<undef> (unset), C<''> (the right half of a wide character) or
+C<[ $cluster, $columns, $base_character, @combining_characters ]>.
 
-The L<Term::Fabulous::Widget::Box/KDL PROPERTIES>.
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::PixelCanvas>, L<Term::Fabulous::Manual/CANVASES>,
+L<Term::Fabulous::Event::CanvasResize>, L<Term::Fabulous::Render::Canvas>,
+the example program F<examples/canvas.pl>.
 
 =cut

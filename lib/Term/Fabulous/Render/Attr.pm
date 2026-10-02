@@ -77,71 +77,110 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Attr - Map colors to termbox2 truecolor attributes
+Term::Fabulous::Render::Attr - Turn colors into termbox2 truecolor attributes
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
+	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr);
+	use Term::Fabulous::Color;
 
-	my $fg = color_attr( Term::Fabulous::Color->rgb(0, 0, 0) );   # TB_TRUECOLOR_BLACK
-	my $bg = color_attr( clay_color( $command->{renderData}{backgroundColor} ) );
+	my $fg = color_attr( Term::Fabulous::Color->rgb( 0, 0, 0 ) );               # TB_TRUECOLOR_BLACK
+	my $bg = color_attr( clay_color( { r => 20, g => 25, b => 35, a => 255 } ) );  # 0x141923
+	my $cell_fg = cell_color_attr( fg => '#ffcc00' );                             # 0xFFCC00
 
 =head1 DESCRIPTION
 
-Converts L<Term::Fabulous::Color> values into the C<uintattr_t> values
-termbox2 expects in C<TB_OUTPUT_TRUECOLOR> mode. Loading the module dies
-if the termbox2 library was built without truecolor support.
+Most programs never use this module directly. It is used by the render
+roles and the canvas widgets, and it explains what the color values
+returned by L<Term::Fabulous::Widget::Canvas/cell> and
+L<Term::Fabulous::Widget::PixelCanvas/pixel> mean.
 
-Nothing is exported by default.
+termbox2 describes the colors of a cell with an integer I<attribute>. In
+truecolor mode, the one Term::Fabulous uses, an attribute holds a
+24-bit color C<0xRRGGBB> in its low bits and flags such as reverse video
+in its high bits. Two values are special:
+
+=over
+
+=item C<TB_DEFAULT> (0)
+
+The terminal's default color. This is what a color with alpha 0 ("no
+color") becomes.
+
+=item C<TB_TRUECOLOR_BLACK>
+
+Opaque black. termbox2 would read the color C<0x000000> as the default
+color, so black needs this flag of its own.
+
+=back
+
+Alpha values from 1 to 254 are treated as fully opaque; terminals cannot
+blend colors.
+
+Loading this module dies if the installed termbox2 library was built
+without truecolor support (C<TB_OPT_TRUECOLOR>), because Term::Fabulous
+needs 24-bit colors:
+
+	Term::Fabulous::Render::Attr: the termbox2 library was built without truecolor support (TB_OPT_TRUECOLOR); Term::Fabulous needs 24-bit colors
 
 =head1 FUNCTIONS
+
+Nothing is exported by default. Import the functions you need by name.
 
 =head2 color_attr
 
 	my $attr = color_attr($color);
 
-Takes a L<Term::Fabulous::Color> and returns:
-
-=over
-
-=item * C<TB_DEFAULT> (the terminal's default color) when alpha is 0;
-
-=item * C<TB_TRUECOLOR_BLACK> for opaque black (termbox2 would otherwise
-read C<0x000000> as the default color);
-
-=item * the packed C<0xRRGGBB> value otherwise.
-
-=back
-
-Alpha values between 1 and 254 are treated as opaque; there is no
-blending. Results are memoized by C<rgba_int> (bounded cache).
+Takes a L<Term::Fabulous::Color> object and returns its attribute:
+C<TB_DEFAULT> when its alpha is 0, C<TB_TRUECOLOR_BLACK> for black, and
+the packed C<0xRRGGBB> value otherwise. Results are cached (the cache is
+emptied when it reaches 4096 entries).
 
 =head2 clay_color
 
-	my $color = clay_color( { r => 20, g => 25, b => 35, a => 255 } );
+	my $color = clay_color( $command->{renderData}{backgroundColor} );
 
-Returns the L<Term::Fabulous::Color> for a Clay render-data color hash.
-Colors are memoized by their channel values (bounded cache), so
-rendering a frame does not re-parse and re-validate colors it has seen
-before. Dies unless given a hash reference; invalid channels die in
-L<Term::Fabulous::Color>.
+Takes a color as it appears in Clay render commands, a hash reference
+with the keys C<r>, C<g>, C<b> and C<a>, and returns the matching
+L<Term::Fabulous::Color> object. Results are cached, so a frame does not
+parse colors it has seen before (the cache is emptied when it reaches
+4096 entries). Dies unless the argument is a hash reference; invalid
+channels die in L<Term::Fabulous::Color>.
 
 =head2 cell_color_attr
 
 	my $attr = cell_color_attr( fg => $color );
 
-The color argument of the canvas drawing methods
-(L<Term::Fabulous::Widget::Canvas/Colors>) as an attribute: a packed
-C<0xRRGGBB> integer is taken as it is (0 becomes C<TB_TRUECOLOR_BLACK>),
-anything else goes through L</color_attr> after
-C<< Term::Fabulous::Color->new >> unless it already is a
-L<Term::Fabulous::Color>. Returns C<undef> for C<undef> and for colors
-with alpha 0. C<$what> names the argument in the error raised for
-integers above C<0xFFFFFF>; invalid colors die in
-L<Term::Fabulous::Color>.
+Converts the color argument of the canvas drawing methods (see
+L<Term::Fabulous::Widget::Canvas/Colors>) into an attribute:
+
+=over
+
+=item *
+
+C<undef> returns C<undef> ("no color of its own").
+
+=item *
+
+A non-negative integer is taken as a packed C<0xRRGGBB> color as it is;
+C<0> becomes C<TB_TRUECOLOR_BLACK>. Integers above C<0xFFFFFF> die.
+
+=item *
+
+A L<Term::Fabulous::Color> object, or anything
+C<< Term::Fabulous::Color->new >> accepts (C<[r, g, b, a]>, C<'#rrggbb'>,
+C<'hsl(...)'>, ...), goes through L</color_attr>. A color with alpha 0
+returns C<undef>.
+
+=back
+
+The first argument names the color in error messages, for example
+C<Term::Fabulous::Render::Attr: fg must be a packed 0xRRGGBB value, got 16777216>.
+Invalid colors die in L<Term::Fabulous::Color>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Render>, L<Term::Fabulous::Color>.
+L<Term::Fabulous::Color>, L<Term::Fabulous::Render>,
+L<Term::Fabulous::Manual/COLORS>.
 
 =cut

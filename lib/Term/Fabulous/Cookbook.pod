@@ -1,0 +1,3269 @@
+=pod
+
+=head1 NAME
+
+Term::Fabulous::Cookbook - Recipes for common Term::Fabulous tasks
+
+=head1 HOW TO USE THIS COOKBOOK
+
+Every recipe solves one task. It starts with a sentence on the goal,
+shows a complete program or a snippet, and then explains the lines that
+matter, with links to the reference documentation. The recipe titles
+name the task in plain words, so you can search this page (or run
+C<perldoc Term::Fabulous::Cookbook> and search with C</>) for what you
+want to do.
+
+Complete programs start with this header and run as they are:
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+Save a program to a file and run it with C<perl file.pl> in a terminal
+that uses a UTF-8 locale and supports 24-bit colors (see
+L<Term::Fabulous::Manual/REQUIREMENTS>). Interactive programs take over
+the whole terminal; press Ctrl+C to end any of them. Programs that print
+a report (they use L<Term::Fabulous::Static>) print and end on their own.
+
+Snippets build on a program from an earlier recipe and say which one.
+A snippet that refers to C<$root> or C<$ui> means the root widget and the
+L<Term::Fabulous> object of that program.
+
+Some recipes are also shipped as runnable files in the F<examples>
+directory of the distribution; those recipes say so. The shipped files
+start differently: with a C<#!/usr/bin/env perl> line, C<use experimental
+'signatures'> instead of C<use feature 'signatures'>, and a
+C<use lib "$FindBin::Bin/../lib/"> line so that they run from a copy of
+the distribution without installing it.
+
+=head2 All recipes
+
+=over
+
+=item Getting started
+
+L</A minimal program to start from>,
+L</Quit with q or Escape>,
+L</Show non-ASCII text (umlauts, CJK, combining accents)>,
+L</Wrap, align and space text>,
+L</Let the terminal handle the mouse (select and copy text)>
+
+=item Keyboard and mouse
+
+L</Bind a key to an action>,
+L</Clickable buttons with focus and press styling>,
+L</Paint with the mouse (Canvas, clicks and drags)>
+
+=item Timers and live data
+
+L</Update the screen from a timer (a clock)>,
+L</A scrolling log that grows from a timer (ScrollBox)>,
+L</Scroll a ScrollBox from code (keep a log at the newest line)>,
+L</Show the output of a running command>
+
+=item Forms
+
+L</A login form (centered dialog, masked password)>,
+L</Choose from options in Perl (Dropdown, RadioGroup, Slider)>,
+L</Read all values of a form>, L</Find widgets by id>,
+L</Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>,
+L</Disable inputs until a checkbox is checked>,
+L</Show a status line that follows the focus (OnFocus)>,
+L</Change the Tab order (HasFocusOrder)>,
+L</Copy and paste through the clipboard>
+
+=item Layout and looks
+
+L</Equal-width labels with width_group>,
+L</Per-side border styles>,
+L</Change colors at run time (a theme with lighten and darken)>,
+L</Mark widgets with states and classes>,
+L</Resize-aware layout (Resize event)>
+
+=item Canvases
+
+L</Plot data with PixelCanvas>
+
+=item Output without a terminal
+
+L</Render a report to a file or pipe (Static)>,
+L</Test a widget without a terminal>
+
+=item Your own widgets and events
+
+L</Write a custom input widget (a toggle switch)>,
+L</Make a widget usable from KDL>,
+L</Fire your own events>
+
+=back
+
+=head1 GETTING STARTED
+
+=head2 A minimal program to start from
+
+Goal: a full-screen program that shows a line of text and ends when the
+user presses q, Escape or Ctrl+C. Most other recipes start from it.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	$root->add_child(
+		Term::Fabulous::Widget::Text->new(
+			text       => 'Hello from Term::Fabulous! Press q, Escape or Ctrl+C to quit.',
+			text_color => [ 230, 230, 230, 255 ],
+		)
+	);
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	$root->on(
+		KeyPress => sub ($event) {
+			my $key = $event->key_name // return;
+			$ui->loop->stop if $key eq 'q' || $key eq 'Escape';
+			return;
+		}
+	);
+
+	$ui->run;
+
+=over
+
+=item *
+
+The root widget is a L<Term::Fabulous::Widget::Box> that grows to fill
+the whole terminal (C<sizing_grow()> on both axes), lays its children
+out from top to bottom and keeps one cell of padding at the top and
+bottom and two at the sides. See L<Term::Fabulous::Manual/LAYOUT>.
+
+=item *
+
+C<background_color> takes C<[ $red, $green, $blue, $alpha ]>, each
+0..255. Without a background, the terminal's default color shows. See
+L<Term::Fabulous::Manual/COLORS>.
+
+=item *
+
+Always give a L<Term::Fabulous::Widget::Text> a C<text_color>: the
+default is opaque black, which is invisible on a dark terminal.
+
+=item *
+
+C<width> and C<height> in L<Term::Fabulous/new> are only the starting
+size; C<run> replaces them with the real terminal size.
+
+=item *
+
+C<run> opens the terminal, draws 30 frames per second and handles input
+until the event loop stops; then it restores the terminal and returns.
+
+=back
+
+=head2 Quit with q or Escape
+
+Goal: end the program on a key of your choice, not only on Ctrl+C.
+
+This is the listener of the program above:
+
+	$root->on(
+		KeyPress => sub ($event) {
+			my $key = $event->key_name // return;
+			$ui->loop->stop if $key eq 'q' || $key eq 'Escape';
+			return;
+		}
+	);
+
+=over
+
+=item *
+
+C<< $ui->loop >> is the L<IO::Async::Loop> that C<run> is running.
+Stopping it makes C<run> return after the terminal has been restored,
+so code after C<< $ui->run >> runs on a normal screen. Ctrl+C, SIGINT
+and SIGTERM stop it in the same way. See
+L<Term::Fabulous::Manual/Quitting>.
+
+=item *
+
+C<key_name> returns names like C<q>, C<Escape>, C<Ctrl+S> or C<F1>, or
+C<undef> for a key without a name, hence the C<// return>.
+
+=item *
+
+Key presses go to the focused widget first and bubble up to the root.
+While a text field has the focus, it uses the q (it types it), so the
+root never sees it. Escape reaches the root unless an open dropdown
+list uses it to close itself. See
+L<Term::Fabulous::Manual/Which widget receives key presses>.
+
+=item *
+
+Terminals send Alt plus a letter as Escape followed by the letter, so
+with Escape bound to quit, every Alt+letter combination quits as well.
+If your users may press Alt combinations, quit on q or Ctrl+Q instead;
+L<Term::Fabulous::Manual/Key names> explains which Alt combinations
+arrive as such.
+
+=item *
+
+The listener is registered after C<$ui> exists, because it uses C<$ui>.
+
+=back
+
+=head2 Show non-ASCII text (umlauts, CJK, combining accents)
+
+Goal: show text with umlauts, CJK characters or combining accents in
+L<Term::Fabulous::Widget::Text> widgets.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(encode);
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
+
+	# Text widgets take UTF-8 encoded bytes: encode every character string.
+	sub text ($string) {
+		return Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $string ), text_color => [ 230, 230, 230, 255 ] );
+	}
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+	$root->add_child(
+		text("Gr\x{fc}\x{df}e aus M\x{fc}nchen"),                          # German umlauts and sharp s
+		text("\x{3044}\x{308d}\x{306f}\x{306b}\x{307b}\x{3078}\x{3068}|"),    # Japanese, two columns each
+		text("e\x{301} is one character|"),                                  # e and a combining acute accent
+	);
+
+	Term::Fabulous::Static->new( root => $root, width => 30 )->print( colors => 0 );
+
+The program prints three lines: the German greeting, seven Japanese
+characters that take two columns each (14 columns) followed by C<|>,
+and an C<e> with an acute accent followed by the rest of the line.
+
+=over
+
+=item *
+
+Text widgets take UTF-8 encoded bytes, not character strings. A
+character string with characters above U+00FF makes drawing die with
+"Wide character"; one with Latin-1 characters such as C<\x{fc}> shows
+U+FFFD replacement characters. Encode with C<Encode::encode('UTF-8', ...)>,
+as the C<text> helper does. This applies only to Text widgets: canvases,
+input widgets and KDL layouts take character strings. See
+L<Term::Fabulous::Manual/Text widgets take UTF-8 bytes>.
+
+=item *
+
+The C<\x{...}> escapes keep this recipe's source ASCII. With
+C<use utf8;> at the top of a UTF-8 encoded source file you can write
+the characters directly; they are still character strings and still
+need C<encode>.
+
+=item *
+
+Wide characters take two columns, and a base character with combining
+marks takes one cell. Term::Fabulous measures text with the same
+C<wcwidth> rules as termbox2; see
+L<Term::Fabulous::Manual/Wide characters and emoji>.
+
+=back
+
+=head2 Wrap, align and space text
+
+Goal: control how a L<Term::Fabulous::Widget::Text> breaks its lines,
+how it aligns them and how much room each line gets.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(
+		sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER
+		CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT CLAY_TEXT_WRAP_NEWLINES
+	);
+
+	my $words = "Text wraps at spaces to the width of its box.\nA line break starts a new line.";
+
+	# A framed box, 24 columns wide, with a caption and a Text that gets the
+	# given options. 'box_layout' replaces the layout of the box.
+	sub sample ( $caption, $text, %options ) {
+		my $box_layout = delete $options{box_layout} // { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(24) } };
+		my $box        = Term::Fabulous::Widget::Box->new(
+			border_width => 1,
+			border_style => Term::Fabulous::Enum::BorderStyle->Ascii,
+			border_color => [ 120, 160, 220, 255 ],
+			layout       => $box_layout,
+		);
+		$box->add_child(
+			Term::Fabulous::Widget::Text->new( text => $caption, text_color => [ 255, 200, 80, 255 ] ),
+			Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 230, 230, 230, 255 ], %options ),
+		);
+		return $box;
+	}
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+	$root->add_child(
+		sample( 'Default: wrap at words', $words ),
+		sample( 'Centered lines',         $words, text_alignment => CLAY_TEXT_ALIGN_CENTER ),
+		sample( 'Right-aligned lines',    $words, text_alignment => CLAY_TEXT_ALIGN_RIGHT ),
+		sample( 'Line breaks only', "No wrapping at spaces,\nonly at line breaks.", wrap_mode   => CLAY_TEXT_WRAP_NEWLINES ),
+		sample( 'Two rows per line', "First line\nSecond line",                    line_height => 2 ),
+		sample(
+			'A centered label', 'OK',
+			box_layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(24) }, child_alignment => { x => CLAY_ALIGN_X_CENTER } },
+		),
+	);
+
+	Term::Fabulous::Static->new( root => $root, width => 30 )->print( colors => 0 );
+
+The program prints:
+
+	+----------------------+
+	|Default: wrap at words|
+	|Text wraps at spaces  |
+	|to the width of its   |
+	|box.                  |
+	|A line break starts a |
+	|new line.             |
+	+----------------------+
+	+----------------------+
+	|Centered lines        |
+	| Text wraps at spaces |
+	| to the width of its  |
+	|         box.         |
+	|A line break starts a |
+	|      new line.       |
+	+----------------------+
+	+----------------------+
+	|Right-aligned lines   |
+	|  Text wraps at spaces|
+	|   to the width of its|
+	|                  box.|
+	| A line break starts a|
+	|             new line.|
+	+----------------------+
+	+----------------------+
+	|Line breaks only      |
+	|No wrapping at spaces,|
+	|only at line breaks.  |
+	+----------------------+
+	+----------------------+
+	|Two rows per line     |
+	|First line            |
+	|                      |
+	|Second line           |
+	|                      |
+	+----------------------+
+	+----------------------+
+	|   A centered label   |
+	|          OK          |
+	+----------------------+
+
+=over
+
+=item *
+
+C<wrap_mode> decides where lines break. The default,
+C<CLAY_TEXT_WRAP_WORDS>, breaks at spaces to fit the width of the box
+and at line breaks (C<"\n">). C<CLAY_TEXT_WRAP_NEWLINES> breaks only at
+line breaks, C<CLAY_TEXT_WRAP_NONE> never. A line that does not fit its
+box then runs past the box's right edge, over its border; keep such
+lines short or give the box room. See L<Term::Fabulous::Manual/Wrapping>.
+
+=item *
+
+C<text_alignment> (C<CLAY_TEXT_ALIGN_LEFT>, C<CLAY_TEXT_ALIGN_CENTER>,
+C<CLAY_TEXT_ALIGN_RIGHT>) aligns each line within the width of the
+text. It shows only on text that wraps to the width of its box: a short
+single-line text is exactly as wide as its words, so there is nothing
+to align. To center or right-align a short label, set
+C<child_alignment> on the box that holds it, as the last sample does.
+See L<Term::Fabulous::Manual/Alignment> and
+L<Term::Fabulous::Manual/Aligning and centering children>.
+
+=item *
+
+C<line_height> is the number of rows per line (0, the default, means
+1). See L<Term::Fabulous::Manual/Line height>.
+
+=item *
+
+C<font_id> and C<font_size> have no visible effect in a terminal.
+C<letter_spacing> changes where Clay breaks the lines but is not drawn,
+so do not use it.
+
+=item *
+
+All these options are accessors too, for example
+C<< $text->text_alignment(CLAY_TEXT_ALIGN_RIGHT) >>; the next frame
+shows the change.
+
+=back
+
+=head2 Let the terminal handle the mouse (select and copy text)
+
+Goal: leave the mouse to the terminal, so that the user can select and
+copy text on the screen with the terminal's own selection.
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24, mouse => 0 );
+
+=over
+
+=item *
+
+With C<mouse =E<gt> 0>, Term::Fabulous does not ask the terminal for mouse
+reports. The terminal then handles clicks and drags itself, usually by
+selecting text. The program receives no
+L<Term::Fabulous::Event::Mouse> events, clicks neither focus nor
+activate widgets, buttons and input widgets can be used only with the
+keyboard, and the mouse wheel does not scroll scroll boxes.
+
+=item *
+
+Some terminals turn the mouse wheel into Up and Down key presses while
+a full-screen program runs without mouse reports.
+
+=item *
+
+Many terminals also let you select text while the program does use the
+mouse, if you hold Shift (or another key, depending on the terminal)
+while dragging.
+
+=back
+
+=head1 KEYBOARD AND MOUSE
+
+=head2 Bind a key to an action
+
+Goal: run code when the user presses a key or a key combination, and
+show what the terminal reports for every key.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(encode);
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+	my $help = Term::Fabulous::Widget::Text->new( text => 'Try F1, Ctrl+R, Alt+Down, Ctrl+Shift+Left or any letter.', text_color => [ 230, 230, 230, 255 ] );
+	my $last = Term::Fabulous::Widget::Text->new( text => 'No key yet.', text_color => [ 150, 200, 255, 255 ] );
+	$root->add_child( $help, $last );
+
+	my %action_by_key = (
+		'F1'              => sub { $help->text('F1: this is the help.') },
+		'Ctrl+R'          => sub { $help->text('Ctrl+R: reloaded.') },
+		'Alt+Down'        => sub { $help->text('Alt+Down: moved down.') },
+		'Ctrl+Shift+Left' => sub { $help->text('Ctrl+Shift+Left: selected a word to the left.') },
+	);
+
+	$root->on(
+		KeyPress => sub ($event) {
+			my $name = $event->key_name;
+			my $text = $event->text;
+			# The typed character may be any Unicode character, and Text widgets
+			# take UTF-8 bytes, so encode it.
+			$last->text( encode( 'UTF-8', sprintf 'key_name: %s, text: %s', $name // 'undef', defined $text ? "'$text'" : 'undef' ) );
+
+			my $action = $action_by_key{ $name // '' } or return;
+			$action->();
+			return;
+		}
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+C<key_name> describes a key with its modifiers in a fixed order:
+C<Ctrl+Alt+Shift+> followed by the key, for example C<Ctrl+R>,
+C<Alt+Down>, C<Ctrl+Shift+Left>, C<F1>, C<Enter>, C<Space> or a typed
+character such as C<a> or C<A>. A table keyed by these names is the
+simplest way to bind keys. See L<Term::Fabulous::Manual/Key names> and
+L<Term::Fabulous::Event::KeyPress>.
+
+=item *
+
+C<text> is the character a key types (for C<Space> a single space), or
+C<undef> for keys that type nothing and for keys pressed with Ctrl or
+Alt. Use it to read typed text; use C<key_name> for bindings.
+
+=item *
+
+Terminals send some Ctrl combinations as other keys: Ctrl+H arrives as
+C<Backspace>, Ctrl+I as C<Tab>, Ctrl+M as C<Enter>. Ctrl+C always ends
+the program, and Tab and Shift+Tab always move the focus after their
+KeyPress has been delivered; see
+L<Term::Fabulous::Manual/Keys Term::Fabulous handles itself>.
+
+=item *
+
+Alt with a printable key, such as Alt+x, cannot be bound: the terminal
+sends it as Escape followed by x, and the program receives two key
+presses, C<Escape> and C<x>. Alt with a special key (arrows, Home, End,
+Page Up, Page Down, Insert, Delete, F1 to F12) arrives as one key, such
+as C<Alt+Down>. See L<Term::Fabulous::Manual/Key names>.
+
+=item *
+
+The typed character is put into a Text widget, so it is encoded as UTF-8
+first; without that, typing a character such as the euro sign would make
+drawing die (see
+L</Show non-ASCII text (umlauts, CJK, combining accents)>).
+
+=item *
+
+Listening on the root makes these application shortcuts: the root
+receives every key that nothing below it uses. See
+L<Term::Fabulous::Manual/Application shortcuts>.
+
+=back
+
+=head2 Clickable buttons with focus and press styling
+
+Goal: buttons that can be clicked with the mouse and pressed with the
+keyboard, that show which one has the focus and which one is being
+pressed, together with application shortcuts and a clock. This program
+is also shipped as F<examples/buttons-and-keys.pl>.
+
+	#!/usr/bin/env perl
+
+	# Buttons that react to the mouse and the keyboard, application key
+	# bindings and a clock that a timer updates once per second.
+	#
+	#     perl examples/buttons-and-keys.pl
+
+	use v5.24;
+	use warnings;
+	use strict;
+	use experimental 'signatures';
+	no warnings 'experimental::signatures';
+
+	use FindBin;
+	use lib "$FindBin::Bin/../lib/";
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use POSIX qw(strftime);
+	use Term::Fabulous;
+	use Term::Fabulous::Color;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Button;
+	use Term::Fabulous::Widget::Text;
+
+	use Clay::UI::Enum::Result;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $CONTINUE = Clay::UI::Enum::Result->CONTINUE;
+
+	my $button_color = Term::Fabulous::Color->new( color => '#2b3a55' );
+	my $press_color  = $button_color->lighten(0.15);
+	my $border_color = Term::Fabulous::Color->new( color => '#5a6b8c' );
+	my $focus_color  = Term::Fabulous::Color->new( color => '#61afef' );
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	sub label ( $text, $color = [ 220, 220, 220, 255 ] ) {
+		return Term::Fabulous::Widget::Text->new( text => $text, text_color => $color );
+	}
+
+	my $clock   = label( 'Time: --:--:--', [ 150, 160, 180, 255 ] );
+	my $counter = label('Counter: 0');
+	my $status  = label('Tab focuses a button, Enter or Space presses it. + - r change the counter, q or Ctrl+Q quits.');
+	$root->add_child( $clock, $counter );
+
+	my $count = 0;
+
+	sub set_count ($new) {
+		$count = $new;
+		$counter->text("Counter: $count");
+		return;
+	}
+
+	# A Button is a Box that can take the focus and tracks hover and press
+	# state. It has no look of its own, so the listeners below give it one:
+	# a bright border while it has the focus, a lighter background while the
+	# mouse button is held on it. Terminals report the mouse only when a
+	# button is pressed, released or dragged, or the wheel turns, so there is
+	# no live hover highlight; OnHoverStopped fires when a press is dragged
+	# off the button or released elsewhere.
+	sub button ( $id, $caption, $action ) {
+		my $button = Term::Fabulous::Widget::Button->new(
+			id               => $id,
+			background_color => [ $button_color->to_rgba ],
+			border_color     => [ $border_color->to_rgba ],
+			border_width     => 1,
+			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+			layout           => { padding => { left => 1, right => 1 } },
+		);
+		$button->add_child( label($caption) );
+
+		my $look_normal = sub { $button->background_color( [ $button_color->to_rgba ] ); return };
+		$button->on( OnFocus        => sub ($event) { $button->border_color( [ $focus_color->to_rgba ] );  return $CONTINUE } );
+		$button->on( OnBlur         => sub ($event) { $button->border_color( [ $border_color->to_rgba ] ); return $CONTINUE } );
+		$button->on( OnPress        => sub ($event) { $button->background_color( [ $press_color->to_rgba ] ); return } );
+		$button->on( OnHoverStopped => sub ($event) { $look_normal->(); return } );
+
+		# A click: the left button pressed and released over the button.
+		$button->on( OnRelease => sub ($event) { $look_normal->(); $action->(); return } );
+
+		# Enter and Space press the focused button; every other key bubbles
+		# on to the root, where the application shortcuts live.
+		$button->on(
+			KeyPress => sub ($event) {
+				my $key = $event->key_name // '';
+				return $CONTINUE unless $key eq 'Enter' || $key eq 'Space';
+				$action->();
+				return;
+			}
+		);
+		return $button;
+	}
+
+	my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+	$buttons->add_child(
+		button( increase => 'Increase', sub { set_count( $count + 1 ) } ),
+		button( decrease => 'Decrease', sub { set_count( $count - 1 ) } ),
+		button( reset    => 'Reset',    sub { set_count(0) } ),
+	);
+	$root->add_child( $buttons, $status );
+
+	my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
+
+	# Application shortcuts. KeyPress reaches the root when nothing has the
+	# focus, or when the focused widget's listeners let it bubble. Escape is
+	# not used to quit: terminals send Alt plus a key as Escape followed by
+	# the key, so any Alt combination would end the program.
+	my %action_by_key = (
+		'+'      => sub { set_count( $count + 1 ) },
+		'-'      => sub { set_count( $count - 1 ) },
+		'r'      => sub { set_count(0) },
+		'q'      => sub { $ui->loop->stop },
+		'Ctrl+Q' => sub { $ui->loop->stop },
+	);
+	$root->on(
+		KeyPress => sub ($event) {
+			my $action = $action_by_key{ $event->key_name // '' } or return;
+			$action->();
+			return;
+		}
+	);
+
+	# The screen is redrawn 30 times per second, so changing the text is all
+	# the timer has to do.
+	my $timer = IO::Async::Timer::Periodic->new(
+		interval       => 1,
+		first_interval => 0,
+		on_tick        => sub { $clock->text( strftime( 'Time: %H:%M:%S', localtime ) ); return },
+	);
+	$timer->start;
+	IO::Async::Loop->new->add($timer);
+
+	$ui->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Widget::Button> is a Box that can take the focus and
+that tracks hover and press state. It has no look and no key handling
+of its own: you style it in listeners and decide which keys press it.
+
+=item *
+
+C<OnFocus> and C<OnBlur> fire when the button gets or loses the
+keyboard focus (by Tab, Shift+Tab, a click or
+C<< $ui->interaction->set_focused_widget >>). They return
+C<CONTINUE> so that ancestors can react to focus changes too.
+
+=item *
+
+C<OnPress> fires when the left mouse button goes down on the button,
+C<OnRelease> when it comes up over the same button: that is a complete
+click. A press that is dragged off the button and released elsewhere
+fires no C<OnRelease>, but C<OnHoverStopped>, which restores the normal
+look here.
+
+=item *
+
+Hover styling (C<OnHoverStart>) is possible, but terminals report the
+mouse only when a button is pressed, released or dragged, or the wheel
+turns. Plain mouse movement is not reported, so a hover highlight would
+change only on those occasions. This program therefore styles focus and
+press, not hover. See L<Term::Fabulous::Manual/What the terminal reports>
+and L<Term::Fabulous::Manual/Clicks, hover and press>.
+
+=item *
+
+The button's C<KeyPress> listener handles Enter and Space and returns
+C<CONTINUE> for every other key, so the shortcuts on the root keep
+working while a button has the focus. See
+L<Term::Fabulous::Manual/Return values and bubbling>.
+
+=item *
+
+Clicking the text inside a button clicks the button: Text widgets do
+not receive mouse events, the box behind them does.
+
+=item *
+
+C<< $ui->loop >> is used to stop the program from a shortcut; see
+L</Quit with q or Escape>. The program quits on q and Ctrl+Q, not on
+Escape, because any Alt+letter arrives as Escape first. The clock is
+explained in L</Update the screen from a timer (a clock)>.
+
+=back
+
+=head2 Paint with the mouse (Canvas, clicks and drags)
+
+Goal: let the user draw on a canvas by clicking and dragging.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Canvas;
+	use Term::Fabulous::Widget::Text;
+	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTION);
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $help = Term::Fabulous::Widget::Text->new( text => 'Left button draws, right button erases. Drag to draw lines.', text_color => [ 230, 230, 230, 255 ] );
+	my $canvas = Term::Fabulous::Widget::Canvas->new(
+		background_color => [ 10, 12, 20, 255 ],
+		border_width     => 1,
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		border_color     => [ 120, 160, 220, 255 ],
+		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+	);
+	$root->add_child( $help, $canvas );
+
+	$canvas->on(
+		Mouse => sub ($event) {
+			my $key = $event->key;
+			return unless $key == TB_KEY_MOUSE_LEFT || $key == TB_KEY_MOUSE_RIGHT;
+
+			# cell_at turns the pointer position into a cell of the canvas, or
+			# the empty list when the pointer is on the border.
+			my ( $x, $y ) = $canvas->cell_at($event) or return;
+			my $dragging = $event->modifiers & TB_MOD_MOTION;
+
+			if ( $key == TB_KEY_MOUSE_RIGHT ) {
+				$canvas->erase( $x, $y );
+			}
+			else {
+				$canvas->put( $x, $y, $dragging ? '*' : 'o', $dragging ? 0xFFC832 : 0x50DC64 );
+			}
+			return;
+		}
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+The L<Term::Fabulous::Event::Mouse> event is fired on the topmost
+widget under the pointer that painted something there, here the
+canvas. C<key> says what happened: C<TB_KEY_MOUSE_LEFT>,
+C<TB_KEY_MOUSE_RIGHT>, C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RELEASE>,
+C<TB_KEY_MOUSE_WHEEL_UP> or C<TB_KEY_MOUSE_WHEEL_DOWN> (constants of
+L<Termbox>).
+
+=item *
+
+While a button is held and the mouse moves, the terminal repeats the
+button's key with C<TB_MOD_MOTION> set in C<modifiers>; that is how a
+drag is recognized.
+
+=item *
+
+C<< $canvas->cell_at($event) >> converts the event's terminal position
+into a cell of the canvas. It returns the empty list when the pointer
+is outside the drawing area, for example on the border, hence
+C<or return>. See L<Term::Fabulous::Widget::Canvas/cell_at>.
+
+=item *
+
+For pixels instead of cells, use a L<Term::Fabulous::Widget::PixelCanvas>
+and its C<pixel_at>; F<examples/pixel-paint.pl> is a complete paint
+program with a color palette.
+
+=back
+
+=head1 TIMERS AND LIVE DATA
+
+=head2 Update the screen from a timer (a clock)
+
+Goal: change what the screen shows at regular intervals, here a clock
+in the middle of the terminal.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use POSIX qw(strftime);
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
+
+	my $clock = Term::Fabulous::Widget::Text->new( text => '--:--:--', text_color => [ 255, 200, 80, 255 ] );
+	my $root  = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing          => { width => sizing_grow(), height => sizing_grow() },
+			child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+		},
+	);
+	$root->add_child($clock);
+
+	my $timer = IO::Async::Timer::Periodic->new(
+		interval       => 1,
+		first_interval => 0,
+		on_tick        => sub { $clock->text( strftime( '%H:%M:%S', localtime ) ) },
+	);
+	$timer->start;
+	IO::Async::Loop->new->add($timer);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+C<run> uses the process-wide L<IO::Async::Loop>, which
+C<< IO::Async::Loop->new >> returns. Timers, sockets and other
+L<IO::Async> notifiers added to it run while the user interface runs.
+Add them before C<run>, or later from any listener. See
+L<Term::Fabulous::Manual/Timers and other asynchronous work>.
+
+=item *
+
+You never redraw by hand: Term::Fabulous draws a new frame 30 times per
+second, so changing a widget (here the text) is all a timer has to do.
+
+=item *
+
+C<first_interval =E<gt> 0> makes the first tick happen at once instead of
+after one second.
+
+=item *
+
+C<child_alignment> centers the clock in the root box. See
+L<Term::Fabulous::Manual/Aligning and centering children>.
+
+=back
+
+=head2 A scrolling log that grows from a timer (ScrollBox)
+
+Goal: a box that receives a new line every half second, can be
+scrolled with the mouse wheel, and never holds more than 500 lines.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use POSIX qw(strftime);
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::ScrollBox;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	use constant MAX_LINES => 500;
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 1, right => 1 },
+		},
+	);
+
+	# A ScrollBox needs an id: Clay keeps the scroll position by id.
+	my $log = Term::Fabulous::Widget::ScrollBox->new(
+		id               => 'log',
+		background_color => [ 30, 35, 50, 255 ],
+		border_width     => 1,
+		border_color     => [ 120, 160, 220, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 1, right => 1 },
+		},
+	);
+	$root->add_child($log);
+
+	my $count = 0;
+	my $timer = IO::Async::Timer::Periodic->new(
+		interval => 0.5,
+		on_tick  => sub {
+			$count++;
+			$log->add_child(
+				Term::Fabulous::Widget::Text->new(
+					text       => strftime( '%H:%M:%S', localtime ) . " event number $count",
+					text_color => [ 200, 210, 230, 255 ],
+				)
+			);
+
+			# Keep the log from growing forever: drop the oldest line.
+			my $oldest = $log->children->[0];
+			$log->remove_children_with( sub ($child) { $child == $oldest } ) if @{ $log->children } > MAX_LINES;
+			return;
+		},
+	);
+	$timer->start;
+	IO::Async::Loop->new->add($timer);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Widget::ScrollBox> clips its content to its box and
+scrolls it vertically. It needs an C<id>, because the scroll position
+is stored by id. The mouse wheel scrolls the scroll box under the
+pointer by three rows per notch. See L<Term::Fabulous::Manual/SCROLLING>.
+
+=item *
+
+Widgets added with C<add_child> appear in the next frame, at the end
+of the box. The scroll position does not follow new lines
+automatically: the view stays where the user scrolled to.
+
+=item *
+
+To keep the newest line in view, see
+L</Scroll a ScrollBox from code (keep a log at the newest line)>.
+
+=item *
+
+C<remove_children_with> removes every child for which the code returns
+true. A removed widget cannot be added again anywhere; build a new one
+instead. See L<Term::Fabulous::Manual/Changing the tree>.
+
+=back
+
+=head2 Scroll a ScrollBox from code (keep a log at the newest line)
+
+Goal: a log that always shows its newest line, until the user scrolls
+up to read older lines; keys that scroll the log up, down and sideways.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use List::Util qw(max min);
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::ScrollBox;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 1, right => 1 },
+		},
+	);
+	$root->add_child(
+		Term::Fabulous::Widget::Text->new(
+			text       => 'Wheel or Up/Down scroll, Left/Right scroll sideways, Home goes to the top, End follows the newest line.',
+			text_color => [ 230, 230, 230, 255 ],
+		)
+	);
+
+	my $log = Term::Fabulous::Widget::ScrollBox->new(
+		id               => 'log',
+		horizontal       => 1,    # vertical scrolling is on by default
+		background_color => [ 30, 35, 50, 255 ],
+		border_width     => 1,
+		border_color     => [ 120, 160, 220, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+		},
+	);
+	$root->add_child($log);
+
+	# Clay keeps the scroll position of every scroll container by id. The
+	# data describes the last frame: the visible size of the box, the size
+	# of its content and the position, which is 0 at the top and left and
+	# negative when scrolled down or right.
+	my $log_id = Clay::XS::Clay_GetElementId('log');
+	sub scroll_data () { return Clay::XS::Clay_GetScrollContainerData($log_id) }
+
+	sub lowest_y ($data) { return min( 0, $data->{scrollContainerDimensions}{height} - $data->{contentDimensions}{height} ) }
+	sub lowest_x ($data) { return min( 0, $data->{scrollContainerDimensions}{width} - $data->{contentDimensions}{width} ) }
+
+	# Moves the view; the values are kept within the content.
+	sub scroll_to ( $x, $y ) {
+		my $data = scroll_data();
+		return unless $data->{found};    # not laid out yet
+		Clay::XS::set_scroll_position( $log_id, { x => max( lowest_x($data), min( 0, $x ) ), y => max( lowest_y($data), min( 0, $y ) ) } );
+		return;
+	}
+
+	sub scroll_by ( $columns, $rows ) {
+		my $data = scroll_data();
+		return unless $data->{found};
+		scroll_to( $data->{scrollPosition}{x} - $columns, $data->{scrollPosition}{y} - $rows );
+		return;
+	}
+
+	# Follow the newest line until the user scrolls up; End follows again.
+	my $follow = 1;
+	$log->on(
+		OnScroll => sub ($event) {
+			$follow = 0 if $event->delta_y > 0;    # positive: the view moved up
+			return;
+		}
+	);
+
+	my %action_by_key = (
+		Up    => sub { $follow = 0; scroll_by( 0, -1 ) },
+		Down  => sub { scroll_by( 0, 1 ) },
+		Left  => sub { scroll_by( -4, 0 ) },
+		Right => sub { scroll_by( 4, 0 ) },
+		Home  => sub { $follow = 0; scroll_to( 0, 0 ) },
+		End   => sub { $follow = 1 },
+	);
+	$root->on(
+		KeyPress => sub ($event) {
+			my $action = $action_by_key{ $event->key_name // '' } or return;
+			$action->();
+			return;
+		}
+	);
+
+	my $count = 0;
+	my $loop  = IO::Async::Loop->new;
+	$loop->add(
+		IO::Async::Timer::Periodic->new(
+			interval => 0.25,
+			on_tick  => sub {
+				$count++;
+				my $text = sprintf 'Line %4d', $count;
+				$text .= ' ' . ( '-' x 150 ) . ' a wide line' if $count % 5 == 0;    # wider than the box
+				$log->add_child( Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 200, 210, 230, 255 ] ) );
+				return;
+			},
+		)->start
+	);
+
+	# The content height is known only after the frame that lays out a new
+	# line, so keep moving to the bottom as long as the view follows.
+	$loop->add(
+		IO::Async::Timer::Periodic->new(
+			interval => 1 / 30,
+			on_tick  => sub {
+				my $data = scroll_data();
+				return unless $follow && $data->{found};
+				scroll_to( $data->{scrollPosition}{x}, lowest_y($data) ) if $data->{scrollPosition}{y} != lowest_y($data);
+				return;
+			},
+		)->start
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+Clay, the layout engine, keeps the scroll position of every scroll
+container by its element id. C<Clay::XS::Clay_GetElementId('log')>
+turns the widget id into that element id.
+
+=item *
+
+C<Clay::XS::Clay_GetScrollContainerData($element_id)> returns a hash
+about the last frame: C<found> (false until the box has been laid out
+once), C<scrollContainerDimensions> (the visible size of the box, in
+cells), C<contentDimensions> (the size of everything inside it, padding
+included) and C<scrollPosition>. The position is 0 at the top and the
+left and negative when the content is scrolled down or right; the
+lowest possible C<y> is the box height minus the content height.
+
+=item *
+
+C<Clay::XS::set_scroll_position( $element_id, { x =E<gt> ..., y =E<gt> ... } )>
+moves the view; the next frame shows it. The recipe keeps the values
+within the content itself. A value outside is pulled back into the
+content by the next frame, which counts as scrolling and fires
+C<OnScroll>.
+
+=item *
+
+These Clay::XS functions work on the Clay context of the
+L<Clay::UI> object that was used last; with one L<Term::Fabulous>
+object in the program that is always the right one.
+
+=item *
+
+The content size of a new line is known only after the frame that lays
+it out, so a timer running at the frame rate moves the view to the
+bottom while the log follows. The newest line therefore appears one
+frame (1/30 s) after it was added.
+
+=item *
+
+C<OnScroll> is fired on the scroll box whenever its position changed
+during a frame because of the mouse wheel. C<delta_y> is positive when
+the view moved up, negative when it moved down. The recipe stops
+following on the first move up.
+
+=item *
+
+C<< horizontal =E<gt> 1 >> lets the content be wider than the box. The
+mouse wheel only scrolls vertically, so horizontal scrolling needs code
+such as the Left and Right keys here.
+
+=item *
+
+To position the content entirely yourself, set the scroll box's
+C<child_offset> to C<< { x =E<gt> ..., y =E<gt> ... } >> (the same signs
+as the scroll position). While it is set, it alone decides what is
+shown; the wheel and C<set_scroll_position> still move Clay's own
+position, which shows again once C<child_offset> is set back to
+C<undef>. See L<Term::Fabulous::Widget::ScrollBox> and
+L<Term::Fabulous::Manual/SCROLLING>.
+
+=back
+
+=head2 Show the output of a running command
+
+Goal: run a command, show its output and its errors line by line while
+it runs, and its exit status when it ends.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(decode encode);
+	use IO::Async::Loop;
+	use IO::Async::Process;
+	use IO::Async::Timer::Periodic;
+	use List::Util qw(min);
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::ScrollBox;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	# The command to run: the program's arguments, or a default.
+	my @command = @ARGV ? @ARGV : ( 'ls', '-l', '/' );
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 1, right => 1 },
+		},
+	);
+	my $title = Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+	my $output = Term::Fabulous::Widget::ScrollBox->new(
+		id               => 'output',
+		background_color => [ 30, 35, 50, 255 ],
+		border_width     => 1,
+		border_color     => [ 120, 160, 220, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },
+	);
+	$root->add_child( $title, $output );
+
+	sub add_line ( $line, $color = [ 200, 210, 230, 255 ] ) {
+		$output->add_child( Term::Fabulous::Widget::Text->new( text => $line, text_color => $color ) );
+		return;
+	}
+
+	# Turns the bytes of one output line into what a Text widget takes:
+	# decoding replaces bytes that are not valid UTF-8 with U+FFFD, and
+	# encoding turns the characters back into UTF-8 bytes.
+	sub clean ($bytes) {
+		$bytes =~ s/\r\z//;
+		return encode( 'UTF-8', decode( 'UTF-8', $bytes ) );
+	}
+
+	# Hands every complete line of a stream to add_line.
+	sub line_reader ($color) {
+		return sub ( $stream, $buffer_ref, $eof ) {
+			add_line( clean($1), $color ) while $$buffer_ref =~ s/\A([^\n]*)\n//;
+			if ( $eof && length $$buffer_ref ) {    # a last line without a line break
+				add_line( clean($$buffer_ref), $color );
+				$$buffer_ref = '';
+			}
+			return 0;
+		};
+	}
+
+	my $loop    = IO::Async::Loop->new;
+	my $process = IO::Async::Process->new(
+		command => \@command,
+		stdin   => { from => '' },    # the command must not read the terminal
+		stdout  => { on_read => line_reader( [ 200, 210, 230, 255 ] ) },
+		stderr  => { on_read => line_reader( [ 255, 110, 110, 255 ] ) },
+		on_finish => sub ( $process, $exit_code ) {
+			add_line( sprintf( 'Finished with exit status %d. Press Ctrl+C to quit.', $exit_code >> 8 ), [ 255, 200, 80, 255 ] );
+			return;
+		},
+		on_exception => sub ( $process, $exception, $errno, $exit_code ) {
+			# A failed exec leaves $exception empty and the reason in $errno.
+			my $reason = length( $exception // '' ) ? $exception : "$errno";
+			add_line( encode( 'UTF-8', "Could not run the command: $reason" ), [ 255, 110, 110, 255 ] );
+			return;
+		},
+	);
+	$loop->add($process);
+
+	# Keep the newest line in view (see "Scroll a ScrollBox from code").
+	my $output_id = Clay::XS::Clay_GetElementId('output');
+	$loop->add(
+		IO::Async::Timer::Periodic->new(
+			interval => 1 / 30,
+			on_tick  => sub {
+				my $data = Clay::XS::Clay_GetScrollContainerData($output_id);
+				return unless $data->{found};
+				my $lowest = min( 0, $data->{scrollContainerDimensions}{height} - $data->{contentDimensions}{height} );
+				Clay::XS::set_scroll_position( $output_id, { x => 0, y => $lowest } ) if $data->{scrollPosition}{y} != $lowest;
+				return;
+			},
+		)->start
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+Run it with a command and its arguments, for example
+C<perl show-output.pl ping -c 5 localhost>; without arguments it runs
+C<ls -l />.
+
+=over
+
+=item *
+
+L<IO::Async::Process> runs the command in the event loop that
+L<Term::Fabulous> uses, so the screen stays responsive while the
+command runs. Its C<on_read> callbacks get the output as it arrives,
+which may be several lines or part of a line at a time; the reader
+takes complete lines out of the buffer and keeps the rest for the next
+call.
+
+=item *
+
+C<< stdin =E<gt> { from =E<gt> '' } >> gives the command an empty input.
+Without it the command would share the terminal with the program and
+could read the user's key presses.
+
+=item *
+
+Command output is bytes. Text widgets take UTF-8 bytes, so valid UTF-8
+output could go in as it is; decoding and encoding it again turns
+invalid bytes into U+FFFD instead of letting them reach the renderer.
+To put output into a L<Term::Fabulous::Widget::TextArea> or a canvas,
+which take character strings, only decode it.
+
+=item *
+
+Errors (C<stderr>) are shown in red. C<on_finish> reports the exit
+status, C<on_exception> a command that could not be started.
+
+=item *
+
+The timer at the end keeps the newest line in view, as explained in
+L</Scroll a ScrollBox from code (keep a log at the newest line)>.
+
+=back
+
+=head1 FORMS
+
+=head2 A login form (centered dialog, masked password)
+
+Goal: a centered dialog with a user name, a masked password and a
+check box, which validates the input when the user presses Enter.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(encode);
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Checkbox;
+	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::Widget::TextField;
+	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing          => { width => sizing_grow(), height => sizing_grow() },
+			child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+		},
+	);
+
+	my $dialog = Term::Fabulous::Widget::Box->new(
+		background_color => [ 28, 33, 45, 255 ],
+		border_width     => 1,
+		border_color     => [ 97, 175, 239, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_fixed(44) },
+			padding          => { left => 1, right => 1, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	$root->add_child($dialog);
+
+	sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
+		return Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', $string ), text_color => $color );
+	}
+
+	my $user     = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
+	my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password',  layout => { sizing => { width => sizing_grow() } }, mask => '*' );
+	my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
+	my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );
+	$dialog->add_child( text('Log in'), $user, $password, $remember, $message );
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	sub log_in () {
+		if ( $user->value eq '' || $password->value eq '' ) {
+			$message->text( encode( 'UTF-8', 'Please fill in both fields.' ) );
+			$ui->interaction->set_focused_widget( $user->value eq '' ? $user : $password );
+			return;
+		}
+		$message->text( encode( 'UTF-8', sprintf 'Welcome, %s!%s', $user->value, $remember->checked ? ' (remembered)' : '' ) );
+		return;
+	}
+
+	# Enter in either field fires Submit on that field; both bubble to the dialog.
+	$dialog->on( Submit => sub ($event) { log_in(); return } );
+
+	$ui->interaction->set_focused_widget($user);
+	$ui->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Widget::TextField> with C<mask =E<gt> '*'> shows a star
+for every character. C<value> still returns the real text.
+
+=item *
+
+Pressing Enter in a text field fires L<Term::Fabulous::Event::Submit> on
+it. Events bubble up the tree, so one listener on the dialog box
+handles Enter in both fields. The check box fires no C<Submit>: Enter
+and Space toggle it.
+
+=item *
+
+The inputs size themselves: a text field is one row high and
+C<preferred_columns> (default 20) wide unless the C<layout> says
+otherwise. Here C<sizing_grow()> makes the fields as wide as the dialog.
+
+=item *
+
+C<< $ui->interaction->set_focused_widget($widget) >> moves the keyboard
+focus from code: here to the first field at the start, and to the
+empty field when the input is incomplete. See
+L<Term::Fabulous::Manual/Moving the focus>.
+
+=item *
+
+The message is set with C<encode('UTF-8', ...)> because it contains
+what the user typed, which may be any character.
+
+=back
+
+=head2 Choose from options in Perl (Dropdown, RadioGroup, Slider)
+
+Goal: let the user pick one of several options, from a list that opens
+and from radio buttons, and a number from a range, all built in Perl.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(encode);
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Dropdown;
+	use Term::Fabulous::Widget::RadioButton;
+	use Term::Fabulous::Widget::RadioGroup;
+	use Term::Fabulous::Widget::Slider;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	# Options are labels, [ label, value ] pairs or { label, value } hashes.
+	my $country = Term::Fabulous::Widget::Dropdown->new(
+		id          => 'country',
+		placeholder => 'Choose a country',
+		options     => [ [ 'Germany' => 'DE' ], [ 'France' => 'FR' ], [ 'Italy' => 'IT' ], { label => 'United Kingdom', value => 'GB' } ],
+	);
+
+	# The group holds the value; each button says which value it stands for.
+	my $shipping = Term::Fabulous::Widget::RadioGroup->new( id => 'shipping', value => 'standard', layout => { layout_direction => CLAY_LEFT_TO_RIGHT, child_gap => 2 } );
+	$shipping->add_child( Term::Fabulous::Widget::RadioButton->new( label => $_->[0], value => $_->[1] ) )
+		foreach [ 'Standard' => 'standard' ], [ 'Express' => 'express' ], [ 'Pick up' => 'pickup' ];
+
+	# value_format may be a code reference.
+	my $tip = Term::Fabulous::Widget::Slider->new(
+		id           => 'tip',
+		min          => 0,
+		max          => 20,
+		step         => 2.5,
+		value        => 10,
+		value_format => sub ($percent) { sprintf '%4.1f %%', $percent },
+	);
+
+	my $status = Term::Fabulous::Widget::Text->new( text => 'Nothing chosen yet.', text_color => [ 150, 200, 255, 255 ] );
+	$root->add_child( $country, $shipping, $tip, $status );
+
+	$root->on(
+		Change => sub ($event) {
+			$status->text( encode( 'UTF-8', sprintf '%s: %s', $event->target->id, $event->value // 'none' ) );
+			return;
+		}
+	);
+
+	# Choosing from code fires no Change; the user's choices do.
+	$country->value('FR');
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+	$ui->interaction->set_focused_widget($country);
+	$ui->run;
+
+=over
+
+=item *
+
+A L<Term::Fabulous::Widget::Dropdown> shows the selected option's label;
+its C<value> is the option's value. Enter, Space, Alt+Down, F4 or a
+click open the list; Up and Down change the selection even while it is
+closed. Typing letters jumps to the next option that starts with them.
+
+=item *
+
+A L<Term::Fabulous::Widget::RadioGroup> holds the value and takes the
+focus for all its buttons, so Tab moves past the whole group in one
+step; the arrow keys choose a button. The buttons can be anywhere
+inside the group, also in nested boxes.
+
+=item *
+
+A L<Term::Fabulous::Widget::Slider> keeps its value on the grid C<min>,
+C<min + step>, ...; C<value_format> may be a C<sprintf> format or a
+code reference that formats the value.
+
+=item *
+
+All three fire C<Change> on themselves when the user changes the value,
+and the event bubbles to the root, where one listener shows it. Setting
+the value from code (C<< $country->value('FR') >>) fires nothing.
+
+=back
+
+=head2 Read all values of a form
+
+Goal: collect the values of all input widgets of a form into a hash,
+for example to save them.
+
+	# { id => value } of every input widget at or below $node that has an id.
+	# A radio group counts as one input; its buttons are skipped.
+	sub form_values ( $node, $values = {} ) {
+		my $is_input = $node->isa('Term::Fabulous::Widget::Input') || $node->isa('Term::Fabulous::Widget::RadioGroup');
+		$values->{ $node->id } = $node->value
+			if $is_input && defined $node->id && !$node->isa('Term::Fabulous::Widget::RadioButton');
+		if ( $node->can('children') ) {
+			form_values( $_, $values ) foreach @{ $node->children };
+		}
+		return $values;
+	}
+
+Called on the form of
+L</Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>
+right after it starts, C<form_values($root)> returns:
+
+	{
+		name       => '',
+		password   => '',
+		size       => 'm',
+		color      => undef,
+		volume     => 30,
+		newsletter => 0,
+	}
+
+=over
+
+=item *
+
+Every input widget (subclasses of L<Term::Fabulous::Widget::Input>) and
+L<Term::Fabulous::Widget::RadioGroup> have a C<value> reader. Text
+inputs return their text, a check box 1 or 0, a slider a number, a
+dropdown the value of the selected option (C<undef> while none is
+selected) and a radio group the value of its selected button.
+
+=item *
+
+Radio buttons are inputs too, but their C<value> is the value they give
+their group when selected, not a state; the group holds the state.
+
+=item *
+
+Only widgets with an C<id> are collected; give the inputs ids, as in
+C<< Term::Fabulous::Widget::TextField->new( id => 'name' ) >> or
+C<TextField "name"> in KDL.
+
+=back
+
+=head2 Find widgets by id
+
+Goal: get hold of a widget by the id you gave it, typically after
+building the tree from a KDL layout, which returns only the root.
+
+	# The first widget at or below $node whose id is $id, or undef.
+	sub find_widget ( $node, $id ) {
+		return $node if defined $node->id && $node->id eq $id;
+		return undef unless $node->can('children');
+		foreach my $child ( @{ $node->children } ) {
+			my $found = find_widget( $child, $id );
+			return $found if defined $found;
+		}
+		return undef;
+	}
+
+	my $volume = find_widget( $root, 'volume' );
+	say $volume->value;
+
+=over
+
+=item *
+
+Every widget has an C<id> reader; it returns C<undef> for widgets
+without an id.
+
+=item *
+
+Text widgets have no children, hence the C<can('children')> check.
+C<children> returns a new array reference each time; changing that
+array does not change the widget.
+
+=item *
+
+For the direct children only, every widget has
+C<< $box->get_children_with( sub ($child) { ... } ) >>. It returns the
+list of children for which the code returns true; the code gets each
+child both as its argument and in C<$_>, so
+C<< $box->get_children_with( sub { $_->id eq 'name' } ) >> works too.
+
+=item *
+
+Search once and keep the result instead of searching in every event;
+the tree is walked each time.
+
+=back
+
+=head2 Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)
+
+Goal: describe the form in a KDL layout instead of Perl code, then find
+the inputs by id, react to changes and print all values when the program
+ends. This program is also shipped as F<examples/kdl-form.pl>.
+
+	#!/usr/bin/env perl
+
+	# A form of input widgets described in KDL. The program finds the inputs
+	# by their ids, shows every change in a status line and prints the values
+	# when it ends.
+	#
+	#     perl examples/kdl-form.pl
+
+	use v5.24;
+	use warnings;
+	use strict;
+	use experimental 'signatures';
+	no warnings 'experimental::signatures';
+
+	use FindBin;
+	use lib "$FindBin::Bin/../lib/";
+
+	use Encode qw(encode);
+	use Term::Fabulous;
+	use Term::Fabulous::Layout;
+
+	my $layout = Term::Fabulous::Layout->new( string => <<'KDL' );
+	use Term::Fabulous::Widget::Box as Box
+	use Term::Fabulous::Widget::Text as Text
+	use Term::Fabulous::Widget::TextField as TextField
+	use Term::Fabulous::Widget::Checkbox as Checkbox
+	use Term::Fabulous::Widget::RadioGroup as RadioGroup
+	use Term::Fabulous::Widget::RadioButton as RadioButton
+	use Term::Fabulous::Widget::Dropdown as Dropdown
+	use Term::Fabulous::Widget::Slider as Slider
+
+	Box "root" {
+		layout direction=down gap=1
+		sizing width=grow height=grow
+		padding left=2 right=2 top=1 bottom=1
+		background_color "#141923"
+
+		Text { text "Fill in the form. Tab moves on, F2 shows the values, Ctrl+C ends."; text_color "#dcdcdc"; }
+
+		Box "form" {
+			layout direction=down gap=1
+			sizing width=grow
+			padding left=1 right=1
+			border style=Round color="#61afef"
+			border_width 1
+			background_color "#1c212d"
+
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Name"; text_color "#96a0b4"; } }
+				TextField "name" { placeholder "Your name"; preferred_columns 30; }
+			}
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Password"; text_color "#96a0b4"; } }
+				TextField "password" { mask "*"; preferred_columns 30; }
+			}
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Size"; text_color "#96a0b4"; } }
+				RadioGroup "size" {
+					layout direction=right gap=2
+					value "m"
+					RadioButton { label "Small"; value "s"; }
+					RadioButton { label "Medium"; value "m"; }
+					RadioButton { label "Large"; value "l"; }
+				}
+			}
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Color"; text_color "#96a0b4"; } }
+				Dropdown "color" {
+					placeholder "Pick a color"
+					options "Red" "Green" "Blue"
+					option "Dark blue" value="navy"
+				}
+			}
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Volume"; text_color "#96a0b4"; } }
+				Slider "volume" { step 5; value 30; value_format "%d%%"; }
+			}
+			Box {
+				layout gap=1
+				Box { width_group 1; Text { text "Newsletter"; text_color "#96a0b4"; } }
+				Checkbox "newsletter" { label "Send me the newsletter"; }
+			}
+		}
+
+		Text "status" { text "Nothing changed yet."; text_color "#dcdcdc"; }
+	}
+	KDL
+
+	my $root = $layout->build;
+
+	# Term::Fabulous::Layout returns the root widget only; this walks the tree
+	# to find a widget by the id given in the layout.
+	sub find_widget ( $node, $id ) {
+		return $node if defined $node->id && $node->id eq $id;
+		return undef unless $node->can('children');
+		foreach my $child ( @{ $node->children } ) {
+			my $found = find_widget( $child, $id );
+			return $found if defined $found;
+		}
+		return undef;
+	}
+
+	my %input  = map { $_ => find_widget( $root, $_ ) } qw(name password size color volume newsletter);
+	my $status = find_widget( $root, 'status' );
+
+	# The password is shown as stars, here and in the status line.
+	sub shown_value ( $id, $value ) {
+		return '*' x length $value if $id eq 'password';
+		return $value // '(none)';
+	}
+
+	sub values_text () {
+		return join ', ', map { sprintf '%s=%s', $_, shown_value( $_, $input{$_}->value ) } sort keys %input;
+	}
+
+	# Change events bubble from every input up to the form box.
+	find_widget( $root, 'form' )->on(
+		Change => sub ($event) {
+			my $id = $event->target->id;
+			$status->text( encode( 'UTF-8', sprintf '%s is now %s', $id, shown_value( $id, $event->value ) ) );
+			return;
+		}
+	);
+
+	$root->on(
+		KeyPress => sub ($event) {
+			return unless ( $event->key_name // '' ) eq 'F2';
+			$status->text( encode( 'UTF-8', values_text() ) );
+			return;
+		}
+	);
+
+	my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
+	$ui->interaction->set_focused_widget( $input{name} );
+	$ui->run;
+
+	say values_text();
+
+=over
+
+=item *
+
+A layout starts with C<use Module::Name as Alias> lines for the widget
+classes it uses, followed by exactly one root widget. Nodes that start
+with an uppercase letter are widgets; their optional string argument
+is the widget id. Nodes that start with a lowercase letter are
+properties of the widget around them. See
+L<Term::Fabulous::Manual/KDL LAYOUT FILES> and L<Term::Fabulous::Layout>.
+
+=item *
+
+Several properties can share a line when separated by semicolons:
+C<Text { text "Name"; text_color "#96a0b4"; }>.
+
+=item *
+
+Colors in KDL are strings in any format L<Term::Fabulous::Color>
+understands, such as C<"#61afef"> or C<"rgb(97, 175, 239)">. Text in
+KDL is converted to UTF-8 bytes for you.
+
+=item *
+
+Properties are applied in the order they appear. Give what a value
+depends on first: the dropdown's options before a C<value>, the
+slider's range before its C<value>.
+
+=item *
+
+To load the layout from a file, use
+C<< Term::Fabulous::Layout->new( file => 'form.kdl' ) >>; the file is
+read as UTF-8.
+
+=item *
+
+Every C<Change> event bubbles from the input to the form box, so one
+listener reports all changes; C<< $event->target >> is the input that
+changed. The status line uses C<encode> because the values may contain
+any character. The password is shown as stars in the status line and
+in the printed values.
+
+=item *
+
+The labels sit in boxes with C<width_group 1>, so they all get the
+width of the widest label; see L</Equal-width labels with width_group>.
+
+=item *
+
+C<run> returns when the user presses Ctrl+C; the values are printed
+after the terminal has been restored.
+
+=back
+
+=head2 Disable inputs until a checkbox is checked
+
+Goal: a text field that can only be used while a check box is checked.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Checkbox;
+	use Term::Fabulous::Widget::TextField;
+	use Clay::UI::Enum::Result;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	my $company = Term::Fabulous::Widget::Checkbox->new( id => 'company', label => 'I order for a company' );
+	my $vat_id  = Term::Fabulous::Widget::TextField->new( id => 'vat_id', placeholder => 'VAT number', disabled => 1 );
+	$root->add_child( $company, $vat_id );
+
+	$company->on(
+		Change => sub ($event) {
+			$vat_id->disabled( !$event->value );
+			return Clay::UI::Enum::Result->CONTINUE;    # let ancestors see the change too
+		}
+	);
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+	$ui->interaction->set_focused_widget($company);
+	$ui->run;
+
+=over
+
+=item *
+
+C<< $input->disabled(1) >> grays the input out (it is drawn in its
+C<disabled_color>), makes it ignore keys and the mouse, removes the
+focus from it and makes Tab skip it. C<< disabled(0) >> undoes all of
+that. See L<Term::Fabulous::Widget::Input/disabled>.
+
+=item *
+
+C<Change> carries the check box's new state in C<value> (1 or 0). It is
+fired when the user toggles the box and when the program calls
+C<toggle>, which acts as the user does; setting C<checked> from the
+program fires nothing.
+
+=item *
+
+The listener returns C<CONTINUE> so that a form-wide C<Change> listener
+on an ancestor still sees the change.
+
+=back
+
+=head2 Show a status line that follows the focus (OnFocus)
+
+Goal: show a help text for the input that currently has the focus.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Slider;
+	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::Widget::TextArea;
+	use Term::Fabulous::Widget::TextField;
+	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
+
+	my %help_by_id = (
+		title  => 'A short title, at most 40 characters.',
+		notes  => 'Enter starts a new line; Ctrl+Z undoes.',
+		rating => 'Left and Right change the rating.',
+	);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $status = Term::Fabulous::Widget::Text->new( text => 'Press Tab to start.', text_color => [ 150, 200, 255, 255 ] );
+	$root->add_child(
+		Term::Fabulous::Widget::TextField->new( id => 'title', placeholder => 'Title', max_length => 40 ),
+		Term::Fabulous::Widget::TextArea->new( id => 'notes', placeholder => 'Notes', layout => { sizing => { width => sizing_grow(), height => sizing_fixed(5) } } ),
+		Term::Fabulous::Widget::Slider->new( id => 'rating', min => 1, max => 5, value => 3 ),
+		$status,
+	);
+
+	# OnFocus is fired on the widget that gets the focus and bubbles up to
+	# the root, because the inputs' own OnFocus listeners return CONTINUE.
+	$root->on(
+		OnFocus => sub ($event) {
+			$status->text( $help_by_id{ $event->target->id } // '' );
+			return;
+		}
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+C<OnFocus> is fired on the widget that gets the focus. It bubbles to
+the ancestors because the input widgets' own C<OnFocus> listeners
+return C<CONTINUE>, so a single listener on the root hears about every
+focus change. C<< $event->target >> is the widget that got the focus.
+C<OnBlur> works the same way for the widget that lost it.
+
+=item *
+
+The same pattern works for C<Change> (show the value that changed) and
+C<Submit>.
+
+=back
+
+=head2 Change the Tab order (HasFocusOrder)
+
+Goal: make Tab visit the inputs in an order that differs from their
+order on the screen.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Object::Pad 0.825;
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::TextField;
+	use Clay::UI::Role::Interaction::HasFocusOrder;
+	use Clay::XS qw(sizing_grow);
+
+	# A box that decides the Tab order of everything inside it. It must be
+	# the root: with nothing focused, only the root is asked.
+	class My::OrderedBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Interaction::HasFocusOrder) :strict(params) {
+		field @order;
+
+		method focus_order (@widgets) {
+			@order = @widgets;
+			return $self;
+		}
+
+		method _neighbour ($direction) {
+			my $focused = $self->ui->interaction->get_focused_widget;
+			my ($index) = grep { defined $focused && $order[$_] == $focused } 0 .. $#order;
+			return $order[ $direction > 0 ? 0 : -1 ] unless defined $index;
+			return $order[ ( $index + $direction ) % @order ];
+		}
+
+		method get_next_focus ()     { return $self->_neighbour(1) }
+		method get_previous_focus () { return $self->_neighbour(-1) }
+	}
+
+	my %field = map { $_ => Term::Fabulous::Widget::TextField->new( id => $_, placeholder => ucfirst, preferred_columns => 12 ) } qw(street city zip);
+	my $root = My::OrderedBox->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
+	);
+
+	# Shown left to right as street, city, zip; Tab goes street, zip, city.
+	$root->add_child( @field{qw(street city zip)} );
+	$root->focus_order( @field{qw(street zip city)} );
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+By default Tab visits the focusable widgets in tree order (depth
+first, in the order they were added) and wraps around at the end.
+
+=item *
+
+A widget that composes L<Clay::UI::Role::Interaction::HasFocusOrder>
+decides the order for the widgets inside it: its C<get_next_focus> and
+C<get_previous_focus> return the widget to focus, or C<undef> to keep
+the focus where it is. While nothing has the focus, only the root is
+asked, so make the ordering box the root (or let the program focus a
+widget inside it first).
+
+=item *
+
+A widget returned while it cannot take the focus (for example a
+disabled input) leaves the focus where it is. See
+L<Term::Fabulous::Manual/Custom focus order>.
+
+=back
+
+=head2 Copy and paste through the clipboard
+
+Goal: exchange text between the program and the text inputs' clipboard.
+
+	use Term::Fabulous::Editor;
+
+	# Put text on the clipboard; Ctrl+V or Shift+Insert in any text input pastes it.
+	Term::Fabulous::Editor->clipboard('order-4711');
+
+	# Read what the user copied with Ctrl+Insert or cut with Ctrl+X.
+	my $copied = Term::Fabulous::Editor->clipboard;
+
+	# Copy the whole text of a field from code, and show the selection.
+	$field->editor->select_all;
+	$field->editor->copy;
+	$field->repaint;
+
+=over
+
+=item *
+
+All text inputs of the process share one clipboard, a character
+string held by L<Term::Fabulous::Editor>. It is not connected to the
+desktop clipboard; to connect it, read and write it in your own key
+binding, for example with an external tool.
+
+=item *
+
+Ctrl+C is not copy: it ends the program. Copy is Ctrl+Insert, cut is
+Ctrl+X or Shift+Delete, paste is Ctrl+V or Shift+Insert. See
+L<Term::Fabulous::Widget::TextInput/KEYS>.
+
+=item *
+
+C<< $field->editor >> gives access to the cursor, the selection and
+undo of a text input. After changing them from code, call
+C<< $field->repaint >> so the field shows the change.
+
+=back
+
+=head1 LAYOUT AND LOOKS
+
+=head2 Equal-width labels with width_group
+
+Goal: line up the values of a list of label/value rows, whatever the
+length of each label.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+
+	foreach my $pair ( [ 'Name', 'Ada Lovelace' ], [ 'Occupation', 'Mathematician' ], [ 'Born', '1815' ] ) {
+		my ( $name, $value ) = @$pair;
+		my $row   = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+		my $label = Term::Fabulous::Widget::Box->new( width_group => 1 );    # all labels: one group
+		$label->add_child( Term::Fabulous::Widget::Text->new( text => "$name:", text_color => [ 150, 160, 180, 255 ] ) );
+		$row->add_child( $label, Term::Fabulous::Widget::Text->new( text => $value, text_color => [ 255, 255, 255, 255 ] ) );
+		$root->add_child($row);
+	}
+
+	Term::Fabulous::Static->new( root => $root, width => 40 )->print( colors => 0 );
+
+The program prints:
+
+	Name:        Ada Lovelace
+	Occupation:  Mathematician
+	Born:        1815
+
+=over
+
+=item *
+
+Widgets with the same non-zero C<width_group> get the same width: the
+width of the widest of them. The groups work across the whole tree, so
+the labels need not share a parent. C<height_group> does the same for
+heights. See L<Term::Fabulous::Manual/Equal sizes across the tree>.
+
+=item *
+
+Group ids are integers from 1 to 1048575; 0 means "no group". Text
+widgets cannot join a group, so each label is wrapped in a Box.
+
+=item *
+
+Only widgets sized by their content (the default C<fit>, or C<grow>)
+take part; C<fixed> and C<percent> sizes are kept.
+
+=back
+
+=head2 Per-side border styles
+
+Goal: different border styles on different sides of a box, or a border
+on some sides only.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $Style = 'Term::Fabulous::Enum::BorderStyle';
+
+	sub panel ( $title, %border ) {
+		my $box = Term::Fabulous::Widget::Box->new(
+			border_color => [ 120, 180, 240, 255 ],
+			layout       => { sizing => { width => sizing_grow() }, padding => { left => 1, right => 1 } },
+			%border,
+		);
+		$box->add_child( Term::Fabulous::Widget::Text->new( text => $title, text_color => [ 230, 230, 230, 255 ] ) );
+		return $box;
+	}
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() }, child_gap => 1 } );
+
+	# Lines above and below only: no left and right border.
+	my $rules = panel(
+		'Rules above and below',
+		border_width        => { top => 1, bottom => 1, left => 0, right => 0 },
+		border_style_top    => $Style->Double,
+		border_style_bottom => $Style->Solid,
+	);
+
+	# A box with a heavy top edge. border_style sets all four sides; set the
+	# side that differs afterwards.
+	my $header = panel( 'Heavy top edge', border_width => 1, border_style => $Style->Solid );
+	$header->border_style_top( $Style->Heavy );
+
+	# A tab-like look: thick left edge only.
+	my $marker = panel( 'Thick left edge', border_width => { left => 1 }, border_style_left => $Style->Thick );
+
+	$root->add_child( $rules, $header, $marker );
+	Term::Fabulous::Static->new( root => $root, width => 32 )->print( colors => 0 );
+
+The program prints three boxes: the first with a double line above and
+a single line below the text and nothing at the sides, the second a
+single-line frame with a heavy top edge, the third only a solid block
+at the left of its text.
+
+=over
+
+=item *
+
+C<border_width> decides which sides have a border: a number for all
+sides, or a hash with C<top>, C<right>, C<bottom> and C<left> (missing
+sides have none). Borders take one cell per side inside the box. See
+L<Term::Fabulous::Manual/BORDERS>.
+
+=item *
+
+C<border_style_top>, C<border_style_right>, C<border_style_bottom> and
+C<border_style_left> choose the style of each side, C<border_style> of
+all four. When both are given to the same C<new> call, C<border_style>
+wins, so set the different side with its accessor afterwards, as the
+second box does. In a KDL layout (C<border style=Solid
+style-top=Heavy>) the side wins.
+
+=item *
+
+The styles are the items of L<Term::Fabulous::Enum::BorderStyle>, for
+example C<Solid>, C<Round>, C<Heavy>, C<Double>, C<Thick> and C<Ascii>;
+F<examples/border-showcase.pl> shows all of them.
+
+=back
+
+=head2 Change colors at run time (a theme with lighten and darken)
+
+Goal: derive a set of colors from one base color, and switch between a
+dark and a light theme with a key.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Color;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::Widget::TextField;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	# Two themes derived from one base color each.
+	sub theme ($base_spec) {
+		my $base = Term::Fabulous::Color->new( color => $base_spec );
+		my $is_dark = ( $base->to_hsl )[2] < 50;
+		return {
+			background => $base,
+			panel      => $is_dark ? $base->lighten(0.06) : $base->darken(0.06),
+			border     => $is_dark ? $base->lighten(0.35) : $base->darken(0.35),
+			text       => $is_dark ? Term::Fabulous::Color->rgb( 230, 230, 230 ) : Term::Fabulous::Color->rgb( 30, 30, 30 ),
+			accent     => Term::Fabulous::Color->hsl( 210, 80, $is_dark ? 65 : 40 ),
+		};
+	}
+	my @themes = ( theme('#141923'), theme('hsl(40, 30%, 92%)') );
+	my $current = 0;
+
+	my $root  = Term::Fabulous::Widget::Box->new(
+		layout => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+	my $panel = Term::Fabulous::Widget::Box->new(
+		border_width => 1,
+		border_style => Term::Fabulous::Enum::BorderStyle->Round,
+		layout       => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow() },
+			padding          => { left => 1, right => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $label = Term::Fabulous::Widget::Text->new( text => 'Press F2 to switch between the dark and the light theme.' );
+	my $field = Term::Fabulous::Widget::TextField->new( placeholder => 'Type here' );
+	$panel->add_child( $label, $field );
+	$root->add_child($panel);
+
+	# Clay-side colors (background_color, border_color, text_color of Box and
+	# Text) take [r, g, b, a]; the input widgets take Color objects directly.
+	sub apply_theme ($theme) {
+		$root->background_color( [ $theme->{background}->to_rgba ] );
+		$panel->background_color( [ $theme->{panel}->to_rgba ] );
+		$panel->border_color( [ $theme->{border}->to_rgba ] );
+		$label->text_color( [ $theme->{text}->to_rgba ] );
+		$field->background_color( [ $theme->{background}->to_rgba ] );
+		$field->text_color( $theme->{text} );
+		$field->accent_color( $theme->{accent} );
+		$field->focus_background_color( $theme->{background}->blend( $theme->{accent}, 0.2 ) );
+		return;
+	}
+	apply_theme( $themes[$current] );
+
+	$root->on(
+		KeyPress => sub ($event) {
+			return unless ( $event->key_name // '' ) eq 'F2';
+			$current = 1 - $current;
+			apply_theme( $themes[$current] );
+			return;
+		}
+	);
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+	$ui->interaction->set_focused_widget($field);
+	$ui->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Color> parses color strings (C<'#141923'>,
+C<'hsl(40, 30%, 92%)'>, ...) and computes new colors: C<lighten> and
+C<darken> change the HSL lightness by a fraction (0.06 is 6 percentage
+points), C<blend> mixes two colors, C<to_hsl> returns hue, saturation
+and lightness. Colors never change; every method returns a new one.
+See L<Term::Fabulous::Manual/Working with colors>.
+
+=item *
+
+Colors of Box and Text widgets (C<background_color>, C<border_color>,
+C<text_color>) take only C<[ r, g, b, a ]> arrays or C<{ r, g, b, a }>
+hashes, hence C<< [ $color->to_rgba ] >>. The colors of input widgets
+(C<text_color>, C<accent_color>, C<focus_background_color>, ...) take a
+Color object, a color string or an array directly. An input's
+C<background_color> and C<border_color>, however, are Box colors and
+take only arrays and hashes, like the Box colors above: the recipe sets
+the field's background with C<< [ $color->to_rgba ] >>. See
+L<Term::Fabulous::Manual/Color formats>.
+
+=item *
+
+Every color accessor can be called at any time; the next frame shows
+the change.
+
+=back
+
+=head2 Mark widgets with states and classes
+
+Goal: mark widgets with names, such as "selected" or "danger", and
+style them from those marks in one place.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Button;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	# One look per state, applied by a single function.
+	sub restyle ($item) {
+		$item->background_color( $item->has_state('selected') ? [ 60, 90, 140, 255 ] : [ 30, 35, 50, 255 ] );
+		return;
+	}
+
+	my $menu = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
+	my @items;
+	foreach my $name (qw(Open Save Quit)) {
+		my $item = Term::Fabulous::Widget::Button->new(
+			id      => lc $name,
+			classes => [ 'menu-item', $name eq 'Quit' ? 'danger' : () ],
+			layout  => { sizing => { width => sizing_grow() }, padding => { left => 1 } },
+		);
+		$item->add_child( Term::Fabulous::Widget::Text->new( text => $name, text_color => [ 230, 230, 230, 255 ] ) );
+		restyle($item);
+		push @items, $item;
+	}
+	$menu->add_child(@items);
+	# The derived states (hovered, pressed, focused) need a UI that owns the
+	# tree; a Static one is enough here.
+	my $page = Term::Fabulous::Static->new( root => $menu, width => 20 );
+
+	# User states: any name you like.
+	$items[1]->add_state('selected');
+	$items[2]->toggle_state('selected')->toggle_state('selected');    # on and off again
+	restyle($_) foreach @items;
+
+	# Derived states follow the interaction tracker and cannot be set.
+	$page->interaction->set_focused_widget( $items[0] );
+
+	foreach my $item (@items) {
+		printf "%-5s states: %-18s classes: %s\n", $item->id, join( ',', sort $item->states ), join( ' ', sort $item->get_classes );
+	}
+	printf "Save selected: %d, Open focused: %d\n", $items[1]->has_state('selected'), $items[0]->has_state('focused');
+	eval { $items[0]->add_state('focused'); 1 } or print "add_state('focused') dies\n";
+
+The program prints:
+
+	open  states: focused            classes: menu-item state_focused
+	save  states: selected           classes: menu-item state_selected
+	quit  states:                    classes: danger menu-item
+	Save selected: 1, Open focused: 1
+	add_state('focused') dies
+
+=over
+
+=item *
+
+Every widget except Text has a set of states: names you choose.
+C<add_state>, C<remove_state> and C<toggle_state> change them and
+return the widget, so calls chain; C<has_state> tests one, C<states>
+returns all (in no particular order).
+
+=item *
+
+C<hovered>, C<pressed> and C<focused> are derived states: they follow
+the mouse and the focus of widgets that can be hovered, pressed or
+focused (buttons and input widgets), appear in C<states> and
+C<has_state>, and cannot be changed (C<add_state('focused')> dies).
+They need a UI that owns the widget tree.
+
+=item *
+
+C<classes> is a constructor parameter: a list of names that never
+changes. C<get_classes> returns the classes followed by C<state_NAME>
+for every current state, a single list to decide a widget's look from.
+
+=item *
+
+Term::Fabulous does not style widgets from states or classes by
+itself; your code does, as C<restyle> shows. Call it after changing a
+state, or from the listeners of the events that change the derived
+states (C<OnFocus>, C<OnBlur>, C<OnPress>, C<OnRelease>).
+
+=back
+
+=head2 Resize-aware layout (Resize event)
+
+Goal: arrange two panes side by side on a wide terminal and above each
+other on a narrow one.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
+
+	use constant NARROW_COLUMNS => 70;
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
+	);
+	foreach my $name (qw(Inbox Message)) {
+		my $pane = Term::Fabulous::Widget::Box->new(
+			border_width => 1,
+			border_style => Term::Fabulous::Enum::BorderStyle->Round,
+			border_color => [ 120, 160, 220, 255 ],
+			layout       => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1 } },
+		);
+		$pane->add_child( Term::Fabulous::Widget::Text->new( text => $name, text_color => [ 230, 230, 230, 255 ] ) );
+		$root->add_child($pane);
+	}
+
+	# Panes side by side on a wide terminal, stacked on a narrow one.
+	sub arrange ($columns) {
+		my $direction = $columns < NARROW_COLUMNS ? CLAY_TOP_TO_BOTTOM : CLAY_LEFT_TO_RIGHT;
+		$root->layout( { %{ $root->layout }, layout_direction => $direction } );
+		return;
+	}
+
+	# Resize is fired on the root twice per resize: before the new size is
+	# applied (is_pre_event) and after it (is_post_event).
+	$root->on(
+		Resize => sub ($event) {
+			arrange( $event->width ) if $event->is_post_event;
+			return;
+		}
+	);
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	# run() replaces the 80 x 24 given above with the real terminal size
+	# without firing Resize. later() runs the code once the loop is running,
+	# when $ui->width is the real width.
+	IO::Async::Loop->new->later( sub { arrange( $ui->width ) } );
+	$ui->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Event::Resize> is fired on the root widget when the
+terminal changes size (once the size has been stable for a tenth of a
+second), twice: before the new size is applied (C<is_pre_event>) and
+after it (C<is_post_event>). C<width> and C<height> are the new size in
+cells.
+
+=item *
+
+C<run> starts with the real terminal size, not the 80 x 24 given to
+C<new>, but it does not fire C<Resize> for it. The C<later> callback
+runs as soon as the event loop runs, when C<< $ui->width >> already is
+the real width.
+
+=item *
+
+C<layout> is an accessor: give it a new hash to change the layout. The
+next frame uses it. See
+L<Term::Fabulous::Manual/Changing the layout at run time>.
+
+=item *
+
+Usually you need none of this: C<grow> and C<percent> sizes follow the
+terminal size by themselves.
+
+=back
+
+=head1 CANVASES
+
+=head2 Plot data with PixelCanvas
+
+Goal: draw a line chart of a series of numbers, filling whatever room
+the terminal gives.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::PixelCanvas;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	# Some data: one value per pixel column is plotted, so any number of
+	# points works.
+	my @temperatures = map { 12 + 8 * sin( $_ / 9 ) + 3 * sin( $_ / 2.3 ) } 0 .. 199;
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	$root->add_child( Term::Fabulous::Widget::Text->new( text => 'Temperature over 200 hours', text_color => [ 230, 230, 230, 255 ] ) );
+
+	my $plot = Term::Fabulous::Widget::PixelCanvas->new(
+		background_color => [ 10, 12, 20, 255 ],
+		border_width     => 1,
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		border_color     => [ 120, 160, 220, 255 ],
+		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+	);
+	$root->add_child($plot);
+
+	# The pixel size is known only once the layout has sized the canvas, and
+	# it changes with the terminal: draw whenever it is (re)sized.
+	$plot->on(
+		CanvasResize => sub ($event) {
+			my ( $width, $height ) = ( $plot->pixel_width, $plot->pixel_height );
+			return if $width < 2 || $height < 2;
+			my ( $low, $high ) = ( -5, 30 );
+			my $y_of = sub ($value) { ( $height - 1 ) * ( $high - $value ) / ( $high - $low ) };
+
+			$plot->clear;
+			$plot->draw_line( 0, $y_of->(0), $width - 1, $y_of->(0), 0x404860 );    # the zero line
+
+			my $previous;
+			foreach my $x ( 0 .. $width - 1 ) {
+				my $value = $temperatures[ int( $x * @temperatures / $width ) ];
+				my @point = ( $x, $y_of->($value) );
+				$plot->draw_line( @$previous, @point, $value > 20 ? '#ff6e6e' : '#6ec8ff' ) if $previous;
+				$previous = \@point;
+			}
+			$plot->put_text( 1, 0, "$high C", 0x9098B0 );
+			$plot->put_text( 1, $plot->rows - 1, "$low C", 0x9098B0 );
+			return;
+		}
+	);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=over
+
+=item *
+
+A L<Term::Fabulous::Widget::PixelCanvas> has two pixels per cell, one
+above the other, so a 70 x 20 cell canvas is 70 x 40 pixels. Its size
+comes from the layout and is known only after the first layout; the
+C<CanvasResize> event is fired whenever it changes, before the frame is
+drawn. Draw in its listener. See L<Term::Fabulous::Manual/The canvas size>.
+
+=item *
+
+C<draw_line>, C<draw_rect>, C<fill_rect>, C<draw_circle> and
+C<set_pixel> take pixel coordinates from the top-left corner. Fractions
+are rounded down, so computed coordinates can be passed directly.
+Pixels outside the canvas are dropped.
+
+=item *
+
+Colors on a canvas may be packed integers (C<0x404860>), color strings
+(C<'#ff6e6e'>), arrays or L<Term::Fabulous::Color> objects.
+
+=item *
+
+C<put_text> writes text over the image in cells (character strings,
+not bytes). A cell with text shows no pixels.
+
+=item *
+
+To draw characters instead of pixels, use
+L<Term::Fabulous::Widget::Canvas> and its C<put>, C<put_text> and
+C<fill>; F<examples/canvas.pl> animates a plot with a timer and redraws
+only the cells that changed.
+
+=back
+
+=head1 OUTPUT WITHOUT A TERMINAL
+
+=head2 Render a report to a file or pipe (Static)
+
+Goal: lay out a widget tree once and print it as text, with colors on a
+terminal and plain in a pipe or a file.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Encode qw(encode);
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow sizing_fit CLAY_TOP_TO_BOTTOM);
+
+	my %sales = ( 'North' => 1250, 'South' => 980, 'East' => 1530 );
+
+	my $report = Term::Fabulous::Widget::Box->new(
+		border_width => 1,
+		border_style => Term::Fabulous::Enum::BorderStyle->Round,
+		border_color => [ 120, 180, 240, 255 ],
+		layout       => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_fit() },
+			padding          => { left => 1, right => 1 },
+		},
+	);
+	$report->add_child( Term::Fabulous::Widget::Text->new( text => encode( 'UTF-8', 'Sales per region (in EUR)' ), text_color => [ 255, 200, 80, 255 ] ) );
+	foreach my $region ( sort keys %sales ) {
+		my $line = sprintf '%-8s %6d', $region, $sales{$region};
+		$report->add_child( Term::Fabulous::Widget::Text->new( text => $line, text_color => [ 230, 230, 230, 255 ] ) );
+	}
+
+	my $page = Term::Fabulous::Static->new( root => $report, width => 40 );
+
+	# To the terminal or a pipe: colors only when STDOUT is a terminal.
+	$page->print;
+
+	# To a file, always without colors. print() encodes the text as UTF-8
+	# itself, so open the file without an encoding layer.
+	open my $file, '>', 'report.txt' or die "Cannot write report.txt: $!";
+	$page->print( fh => $file, colors => 0 );
+	close $file;
+
+	# As a string, for example for an e-mail body (a character string).
+	my $text = $page->render_string( colors => 0 );
+
+The program prints a 40 column box with rounded corners holding a title
+and three lines, and writes the same box without color codes to
+F<report.txt>.
+
+=over
+
+=item *
+
+L<Term::Fabulous::Static> lays out and draws exactly like
+L<Term::Fabulous>, but into memory. It never opens the terminal, so it
+works in pipes, cron jobs and tests. Only C<width> is required; the
+output is as high as the content.
+
+=item *
+
+C<print> writes UTF-8 bytes. With no C<colors> argument it uses colors
+only when the handle is a terminal. Open files without an encoding
+layer, or the text is encoded twice.
+
+=item *
+
+C<render_string> and C<render_lines> return character strings (one
+string, or one per row). See
+L<Term::Fabulous::Manual/RENDERING WITHOUT A TERMINAL>.
+
+=item *
+
+The root uses C<sizing_fit()> for its height; with C<sizing_grow()> it
+would fill the default height of 4096 rows.
+
+=item *
+
+Spaces at the end of a row are dropped unless they have a background
+color. Pass C<trim_trailing_whitespace =E<gt> 0> to C<new> to get every
+row padded to C<width> columns, for example for fixed-width files.
+
+=back
+
+=head2 Test a widget without a terminal
+
+Goal: test the behavior of widgets in an automated test, by firing key
+events at them and checking their values and what they show.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Test2::V0;
+	use Termbox 2 qw(TB_KEY_ARROW_LEFT);
+	use Term::Fabulous::Event::KeyPress;
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::TextField;
+
+	# A key press as termbox2 would report it: a typed character, or a
+	# special key code.
+	sub type_text ( $widget, $text ) {
+		$widget->fire_event( Term::Fabulous::Event::KeyPress->new( key => 0, char => ord $_, modifiers => 0 ) ) foreach split //, $text;
+		return;
+	}
+
+	sub press_key ( $widget, $key ) {
+		$widget->fire_event( Term::Fabulous::Event::KeyPress->new( key => $key, char => 0, modifiers => 0 ) );
+		return;
+	}
+
+	my $field = Term::Fabulous::Widget::TextField->new( preferred_columns => 10, max_length => 8 );
+	my @changes;
+	$field->on( Change => sub ($event) { push @changes, $event->value; return } );
+
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child($field);
+	my $page = Term::Fabulous::Static->new( root => $root, width => 20 );
+	$page->render_lines;    # lays the widgets out once, so the field has a size
+
+	type_text( $field, 'hello' );
+	press_key( $field, TB_KEY_ARROW_LEFT );
+	type_text( $field, 'X' );
+
+	is $field->value, 'hellXo', 'typing and cursor movement';
+	is $changes[-1], 'hellXo', 'Change carries the new text';
+
+	type_text( $field, 'abcdef' );
+	is $field->value, 'hellXabo', 'max_length stops the input at 8 characters';
+
+	# The field is 10 columns wide and has a background color, so its
+	# empty cells are kept as spaces.
+	is [ $page->render_lines( colors => 0 ) ], ['hellXabo  '], 'what the screen shows';
+
+	done_testing;
+
+=over
+
+=item *
+
+The test lays the tree out once with L<Term::Fabulous::Static>, so that
+the widgets have their size, then fires events directly at the widget
+with C<fire_event>. Events fired this way bubble exactly as they do
+under L<Term::Fabulous>. What L<Term::Fabulous> itself does around the
+events does not happen: Tab does not move the focus, a click does not
+focus anything, the wheel does not scroll and Ctrl+C does not stop
+anything. Do that from the test where it matters, for example with
+C<< $page->interaction->set_focused_widget($field) >>.
+
+=item *
+
+To test a click on a Button or an input widget, fire the C<OnRelease>
+event they react to:
+C<< $checkbox->fire_event( Clay::UI::Events::OnRelease->new( x => 0.5, y => 0.5 ) ) >>
+(after C<use Clay::UI::Events::OnRelease;>). See
+L<Term::Fabulous::Manual/TESTING>.
+
+=item *
+
+A L<Term::Fabulous::Event::KeyPress> takes termbox2's three numbers: a
+typed character goes into C<char> (with C<key> 0), a special key into
+C<key> (with C<char> 0, using a C<TB_KEY_*> constant of L<Termbox> or
+the control code, such as 13 for Enter), and C<modifiers> holds
+C<TB_MOD_*> bits.
+
+=item *
+
+C<render_lines( colors =E<gt> 0 )> returns what the screen would show.
+The field has a background color, so its empty cells are kept as
+spaces at the end of the line.
+
+=item *
+
+Event objects can be fired once only; build a new one for every
+key press. See L<Term::Fabulous::Manual/TESTING>.
+
+=back
+
+=head1 YOUR OWN WIDGETS AND EVENTS
+
+=head2 Write a custom input widget (a toggle switch)
+
+Goal: an input widget of your own that behaves like the built-in ones:
+it takes the focus, reacts to keys and clicks, fires C<Change> and can
+be used from a KDL layout. This program is also shipped as
+F<examples/custom-widget.pl>.
+
+	#!/usr/bin/env perl
+
+	# A widget of your own: an on/off switch built on
+	# Term::Fabulous::Widget::Input. It takes the focus, reacts to keys and
+	# clicks, fires Change events, and can be used from a KDL layout.
+	#
+	#     perl examples/custom-widget.pl
+
+	use v5.24;
+	use warnings;
+	use strict;
+	use experimental 'signatures';
+	no warnings 'experimental::signatures';
+
+	use FindBin;
+	use lib "$FindBin::Bin/../lib/";
+
+	use Object::Pad 0.825;
+
+	use Encode qw(encode);
+	use Term::Fabulous;
+	use Term::Fabulous::Layout;
+	use Term::Fabulous::Widget::Input;
+
+	class My::ToggleSwitch :isa(Term::Fabulous::Widget::Input) :strict(params) {
+		use Term::Fabulous::Unicode qw(string_columns);
+
+		use constant ON_MARK  => '[ ON]';
+		use constant OFF_MARK => '[OFF]';
+
+		field $on    :param = 0;
+		field $label :param = '';
+
+		# Accessor of the state. Like the built-in inputs, a write from the
+		# program repaints but fires no Change event.
+		method value (@new) {
+			return $on unless @new;
+			$on = $new[0] ? 1 : 0;
+			$self->repaint;
+			return $on;
+		}
+
+		method label (@new) {
+			return $label unless @new;
+			$label = $new[0];
+			$self->repaint;
+			return $label;
+		}
+
+		# The names a KDL layout may set, on top of those of every input.
+		method layout_properties :override () {
+			return ( $self->SUPER::layout_properties, qw(value label) );
+		}
+
+		# Columns and rows of content the widget needs when the layout does
+		# not size it.
+		method natural_size () {
+			my $label_columns = length $label ? 1 + string_columns($label) : 0;
+			return ( string_columns(ON_MARK) + $label_columns, 1 );
+		}
+
+		# Draws into the cleared buffer; called whenever the state, the focus,
+		# the colors or the size change.
+		method paint () {
+			my $bg   = $self->paint_focus_background;
+			my $mark = $on ? ON_MARK : OFF_MARK;
+			my $x    = $self->paint_text( 0, 0, $mark, $on ? $self->accent_attr : $self->foreground_attr, $bg );
+			$self->paint_text( $x + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
+			return;
+		}
+
+		# The user changes the state: repaint and tell the listeners.
+		method _switch ($new) {
+			return if $new == $on;
+			$self->value($new);
+			$self->fire_change($on);
+			return;
+		}
+
+		# Return true for keys the widget uses; they stop bubbling. Others
+		# (Tab, Escape, ...) bubble on to the ancestors.
+		method handle_key ($event) {
+			my $name = $event->key_name // return 0;
+			my %new_state_by_key = ( Space => !$on, Enter => !$on, Left => 0, Right => 1 );
+			return 0 unless exists $new_state_by_key{$name};
+			$self->_switch( $new_state_by_key{$name} ? 1 : 0 );
+			return 1;
+		}
+
+		# A click: the left mouse button pressed and released over the widget.
+		method activate () {
+			$self->_switch( $on ? 0 : 1 );
+			return;
+		}
+	}
+
+	# Term::Fabulous::Layout loads the classes a layout names with require.
+	# This class lives in this script, so mark it as loaded.
+	$INC{'My/ToggleSwitch.pm'} = __FILE__;
+
+	my $layout = Term::Fabulous::Layout->new( string => <<'KDL' );
+	use Term::Fabulous::Widget::Box as Box
+	use Term::Fabulous::Widget::Text as Text
+	use My::ToggleSwitch as Toggle
+
+	Box "root" {
+		layout direction=down gap=1
+		sizing width=grow height=grow
+		padding left=2 right=2 top=1 bottom=1
+		background_color "#141923"
+
+		Text { text "Tab moves, Space, Enter, Left, Right or a click switch. Ctrl+C ends."; text_color "#dcdcdc"; }
+		Toggle "wifi" { label "Wi-Fi"; value #true; }
+		Toggle "bluetooth" { label "Bluetooth"; }
+		Toggle "airplane" { label "Airplane mode"; accent_color "#e5c07b"; }
+		Text "status" { text " "; text_color "#96a0b4"; }
+	}
+	KDL
+
+	my $root = $layout->build;
+
+	# The first widget at or below $node whose id is $id, or undef.
+	sub find_widget ( $node, $id ) {
+		return $node if defined $node->id && $node->id eq $id;
+		return undef unless $node->can('children');
+		foreach my $child ( @{ $node->children } ) {
+			my $found = find_widget( $child, $id );
+			return $found if defined $found;
+		}
+		return undef;
+	}
+
+	my $status = find_widget( $root, 'status' );
+
+	$root->on(
+		Change => sub ($event) {
+			# Labels are character strings; Text widgets take UTF-8 bytes.
+			$status->text( encode( 'UTF-8', sprintf '%s switched %s', $event->target->label, $event->value ? 'on' : 'off' ) );
+			return;
+		}
+	);
+
+	my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
+	$ui->interaction->focus_next;
+	$ui->run;
+
+=over
+
+=item *
+
+L<Term::Fabulous::Widget::Input> is the base of all input widgets. A
+subclass implements C<natural_size> (the columns and rows it needs) and
+C<paint> (draw into the cleared buffer). Everything else is optional:
+C<handle_key> and C<handle_mouse> return true for events they used,
+C<activate> runs on a click. See
+L<Term::Fabulous::Widget::Input/SUBCLASS INTERFACE> and
+L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>.
+
+=item *
+
+C<paint_text> paints a character string with the attributes it is
+given. C<foreground_attr> and C<accent_attr> return the text and accent
+colors, and switch to C<disabled_color> while the widget is disabled;
+C<paint_focus_background> fills the widget with
+C<focus_background_color> while it has the focus. C<accent_color
+"#e5c07b"> in the layout changes the accent of the third switch.
+
+=item *
+
+Call C<repaint> after every change of what the widget shows, and
+C<fire_change> only for changes the user makes. The status line encodes
+the label as UTF-8, because labels are character strings and Text
+widgets take bytes.
+
+=item *
+
+Focus handling, Tab, the disabled state and the colors come from the
+base class; the widget does nothing for them.
+
+=item *
+
+C<layout_properties> lists the accessors a KDL layout may set. A layout
+that is to use a class defined inside the program needs the
+C<$INC{...}> line, because L<Term::Fabulous::Layout> loads every class
+it names with C<require>. A class in its own F<.pm> file somewhere in
+C<@INC> needs nothing of the kind; see the next recipe.
+
+=back
+
+=head2 Make a widget usable from KDL
+
+Goal: a reusable container widget in its own module that KDL layouts
+can use, with a property that takes more than a single value.
+
+The widget, saved as F<lib/My/Panel.pm>:
+
+	package My::Panel;
+
+	use v5.24;
+	use warnings;
+	use Object::Pad 0.825;
+
+	use Term::Fabulous::Widget::Box;
+
+	class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
+		use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
+		use Encode qw(decode encode);
+		use Term::Fabulous::Color;
+		use Term::Fabulous::Enum::BorderStyle;
+		use Term::Fabulous::Widget::Text;
+
+		field $title_widget = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 255, 200, 80, 255 ] );
+
+		# Runs after the layout properties were applied: fill in what the
+		# layout left out.
+		ADJUST {
+			my $layout = $self->layout;
+			$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } ) unless exists $layout->{layout_direction};
+			$self->border_width(1) unless defined $self->border_width;
+			foreach my $side (qw(top right bottom left)) {
+				my $accessor = "border_style_$side";
+				$self->$accessor( Term::Fabulous::Enum::BorderStyle->Round ) unless defined $self->$accessor;
+			}
+			$self->add_child($title_widget);    # the first child; the layout adds the others after it
+		}
+
+		# Title text as a character string.
+		method title (@new) {
+			$title_widget->text( encode( 'UTF-8', $new[0] ) ) if @new;
+			return decode( 'UTF-8', $title_widget->text );
+		}
+
+		# A structured property: 'title "Settings" color="#ffcc00"' has an
+		# argument and a key=value property, which parse_generic does not
+		# accept, so it is parsed here.
+		method parse_property :override ($kid) {
+			return $self->SUPER::parse_property($kid) unless $kid->name eq 'title';
+
+			my @args  = $kid->args->@*;
+			my %props = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
+			die "My::Panel: 'title' takes one string and an optional color=..."
+				unless @args == 1 && $args[0]->is_string && !grep { $_ ne 'color' } keys %props;
+
+			$self->title( $args[0]->value );
+			$title_widget->text_color( [ Term::Fabulous::Color->new( color => $props{color} )->to_rgba ] ) if exists $props{color};
+			return;
+		}
+	}
+
+	1;
+
+A program that uses it from a layout, saved next to the F<lib>
+directory:
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use FindBin;
+	use lib "$FindBin::Bin/lib";    # where My/Panel.pm lives
+
+	use Term::Fabulous::Layout;
+	use Term::Fabulous::Static;
+
+	my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
+	use Term::Fabulous::Widget::Box as Box
+	use Term::Fabulous::Widget::Text as Text
+	use My::Panel as Panel
+
+	Box {
+		layout direction=down gap=1
+		sizing width=grow
+
+		Panel "network" {
+			title "Network" color="#61afef"
+			sizing width=grow
+			padding left=1 right=1
+			Text { text "Connected to the office network."; text_color "#dcdcdc"; }
+		}
+		Panel "disk" {
+			title "Disk"
+			border style=Double color="#e5c07b"
+			sizing width=grow
+			padding left=1 right=1
+			Text { text "42 % used"; text_color "#dcdcdc"; }
+		}
+	}
+	KDL
+
+	Term::Fabulous::Static->new( root => $root, width => 40 )->print;
+
+The program prints two framed panels: "Network" (in blue) above
+"Connected to the office network." in a rounded frame, and "Disk" above
+"42 % used" in a double-lined frame.
+
+=over
+
+=item *
+
+L<Term::Fabulous::Layout> creates every widget with
+C<< $class->new( id => $id, kdl_node => $node ) >>. Every class based
+on L<Term::Fabulous::Widget::Box> accepts these parameters through
+L<Term::Fabulous::Role::CanParseLayout> and parses its property nodes
+during construction, before the class's own C<ADJUST> blocks run. That
+is why the C<ADJUST> block above sees the layout's properties and only
+fills in what the layout left out.
+
+=item *
+
+C<parse_property> is called for every child node of the widget's node.
+Override it for properties that need special parsing and pass all
+others on to C<SUPER::parse_property>, which handles the Box properties
+and the names listed by C<layout_properties>. See
+L<Term::Fabulous::Widget::Box/SUBCLASS INTERFACE>.
+
+=item *
+
+Die with a clear message for malformed properties; the layout adds the
+widget's name to it. Unknown property names already die with the list
+of known names.
+
+=item *
+
+The child widgets of the node are added by the layout after the widget
+has been constructed, so the title added in C<ADJUST> stays the first
+child.
+
+=back
+
+=head2 Fire your own events
+
+Goal: let one part of the program announce that something happened,
+and let any ancestor widget react, with the same C<on> listeners as for
+the built-in events.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Object::Pad 0.825;
+
+	use Clay::UI::Enum::Bubble;
+	use Clay::UI::Enum::Result;
+	use Clay::UI::Events::Event;
+	use Term::Fabulous::Widget::Box;
+
+	# An event class with data of its own. event_name is the name listeners
+	# register for.
+	class My::Event::Saved :isa(Clay::UI::Events::Event) :strict(params) {
+		field $path :param :reader;
+
+		method event_name :common { 'Saved' }
+	}
+
+	my $app    = Term::Fabulous::Widget::Box->new( id => 'app' );
+	my $editor = Term::Fabulous::Widget::Box->new( id => 'editor' );
+	$app->add_child($editor);
+
+	$editor->on(
+		Saved => sub ($event) {
+			say 'editor: saved ', $event->path;
+			return Clay::UI::Enum::Result->CONTINUE;    # let the ancestors see it too
+		}
+	);
+	$app->on(
+		Saved => sub ($event) {
+			say 'app: ', $event->target->id, ' saved ', $event->path;
+			return;
+		}
+	);
+	$app->on( Refresh => sub ($event) { say 'app: refresh requested by ', $event->target->id; return } );
+
+	# Fire an event of the class; every event object can be fired once.
+	$editor->fire_event( My::Event::Saved->new( path => '/tmp/notes.txt' ) );
+
+	# A plain event needs only a name. ALWAYS bubbles to every ancestor,
+	# whatever the listeners return.
+	$editor->fire_event( Clay::UI::Events::Event->new( name => 'Refresh', bubble_mode => Clay::UI::Enum::Bubble->ALWAYS ) );
+
+The program prints:
+
+	editor: saved /tmp/notes.txt
+	app: editor saved /tmp/notes.txt
+	app: refresh requested by editor
+
+=over
+
+=item *
+
+C<< Clay::UI::Events::Event->new( name => 'Refresh' ) >> creates an
+event with a name; listeners register for that name with
+C<< $widget->on( Refresh => ... ) >>.
+
+=item *
+
+For an event with data of its own, subclass L<Clay::UI::Events::Event>
+with Object::Pad, add fields and return the name from C<event_name>.
+
+=item *
+
+C<fire_event> is available on Box-based widgets (all widgets except
+Text). The event is delivered to the widget's own listeners first and
+then bubbles to its ancestors while the listeners return
+C<< Clay::UI::Enum::Result->CONTINUE >>; a widget without listeners
+for the name passes it on. C<< bubble_mode =E<gt>
+Clay::UI::Enum::Bubble->ALWAYS >> delivers it to all ancestors
+regardless, C<NEVER> only to the widget itself. See
+L<Term::Fabulous::Manual/Firing your own events>.
+
+=item *
+
+C<< $event->target >> is the widget the event was fired on. An event
+object can be fired only once; create a new one each time.
+
+=back
+
+=head1 SEE ALSO
+
+L<Term::Fabulous> (the main module), L<Term::Fabulous::Manual> (concepts
+and reference overview), the widget classes under
+C<Term::Fabulous::Widget::>, L<Term::Fabulous::Layout> (KDL layouts),
+L<Term::Fabulous::Static> (rendering to text), and the programs in the
+F<examples> directory of the distribution.
+
+=cut

@@ -297,110 +297,385 @@ Term::Fabulous::Widget::Slider - Choose a number from a range by moving a thumb
 
 =head1 SYNOPSIS
 
+	use Clay::UI::Enum::Result;
 	use Term::Fabulous::Widget::Slider;
 
-	my $volume = Term::Fabulous::Widget::Slider->new( min => 0, max => 100, step => 5, value => 50 );
-	$volume->on( Change => sub ($event) { set_volume( $event->value ); return } );
+	my $volume = Term::Fabulous::Widget::Slider->new(
+		id           => 'volume',
+		min          => 0,
+		max          => 100,
+		step         => 5,
+		value        => 50,
+		value_format => '%d%%',
+	);
+	$volume->on( Change => sub ($event) {
+		set_volume( $event->value );
+		return Clay::UI::Enum::Result->CONTINUE;
+	} );
+
+	say $volume->value;    # 50
+	$volume->value(75);    # programmatic: fires no Change
 
 =head1 DESCRIPTION
 
-An L<Term::Fabulous::Widget::Input> showing a horizontal track with a
-thumb at the current value and, by default, the value itself on the
-right of it. The part of the track left of the thumb is painted in the
-accent color. Unknown constructor parameters die.
+A slider lets the user choose a number from a range. It shows a
+horizontal track with a thumb at the current value and, by default, the
+value itself right of the track:
 
-The value is always one of C<min>, C<min + step>, C<min + 2 * step>,
-... and lies within C<min> and C<max>. Values are rounded to as many
-decimals as the step has, so a step of C<0.1> gives C<0.3>, not
-C<0.30000000000000004>.
+	==========o---------  50
+
+(with line-drawing characters and a dot instead of the ASCII shown
+here). The part of the track left of the thumb is painted in the
+C<accent_color>, the rest in C<track_color>.
+
+The value is always on the grid C<min>, C<min + step>,
+C<min + 2 * step>, ... and never outside C<min>..C<max> (but see the
+known bug in L</CAVEATS>). Values are
+rounded to as many decimal places as the C<step> has, so with a step of
+C<0.1> you get C<0.3>, not C<0.30000000000000004>. If the range is not a
+whole number of steps (C<min> 0, C<max> 10, C<step> 3), the highest
+reachable value is the last grid value below C<max> (9).
+
+The user moves the value with the arrow keys, Page Up and Page Down,
+Home and End, by clicking or dragging on the track, or with the mouse
+wheel.
+
+Disabling, colors, focus and sizing are described in
+L<Term::Fabulous::Widget::Input>. Unless the C<layout> sizes it, the
+slider is one row high and C<preferred_columns> plus the width of the
+value label plus one column wide.
 
 =head1 CONSTRUCTOR
 
-Besides the parameters of L<Term::Fabulous::Widget::Input>:
+=head2 new
+
+	my $slider = Term::Fabulous::Widget::Slider->new(%parameters);
+
+Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
+(C<id>, C<layout>, C<background_color>, the border parameters,
+C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
+C<accent_color>, C<focus_background_color>) and the ones below. Unknown
+parameters die.
 
 =over
 
-=item C<min>, C<max>, C<step>
+=item C<min>
 
-The range and the step between values; finite numbers with C<min>
-below C<max> and a positive C<step>. Defaults 0, 100 and 1.
+A finite number. Default: 0. The lowest value. Must be less than C<max>,
+or the constructor dies.
+
+=item C<max>
+
+A finite number. Default: 100. The highest value.
+
+=item C<step>
+
+A positive finite number. Default: 1. The distance between two values
+of the grid, and how far one arrow key press or wheel notch moves the
+value.
 
 =item C<value>
 
-The initial value, default C<min>. It is rounded to the nearest step;
-a value outside the range dies.
+A finite number in C<min>..C<max>. Default: C<min>. The initial value;
+it is rounded to the nearest grid value. Dies if outside the range.
 
 =item C<page_step>
 
-How far Page Up and Page Down move. Defaults to a tenth of the range,
-rounded to whole steps (at least one step).
+A positive finite number, or C<undef>. Default: C<undef>, which means a
+tenth of the range rounded to whole steps, but at least one step (10 for
+the default range 0..100). How far C<PageUp> and C<PageDown> move the
+value.
 
 =item C<show_value>
 
-Boolean, default 1: show the value right of the track.
+A boolean. Default: 1. Whether the value is shown right of the track.
 
 =item C<value_format>
 
-How the value is shown: a C<sprintf> format such as C<'%d%%'>, or a
-code reference that gets the value and returns the text. By default,
-with as many decimals as the step.
+How the value is shown: a C<sprintf> format string such as C<'%d%%'> or
+C<'%.1f C'>, or a code reference that gets the value and returns the
+text. Default: C<undef>, which shows the value with as many decimal
+places as the C<step> has. The label is as wide as the widest of the
+lowest value, the highest reachable value and the current value, so the
+track keeps its length while the value changes.
+
+	value_format => sub ($value) { $value == 0 ? 'off' : "$value dB" },
 
 =item C<preferred_columns>
 
-The length of the track when the C<layout> gives no width, a positive
-integer; default 20. The value label adds to it.
+A positive integer. Default: 20. The length of the track in columns when
+the C<layout> gives the slider no width. The value label and one space
+are added to it.
 
-=item C<fill_glyph>, C<track_glyph>, C<thumb_glyph>
+=item C<fill_glyph>
 
-The characters of the track left of the thumb, right of it, and of the
-thumb; each a single character one column wide. Defaults: a heavy and a
-light horizontal line and a black circle.
+A single character one column wide. Default: C<"\x{2501}"> (heavy
+horizontal line). The track left of the thumb.
+
+=item C<track_glyph>
+
+A single character one column wide. Default: C<"\x{2500}"> (light
+horizontal line). The track right of the thumb.
+
+=item C<thumb_glyph>
+
+A single character one column wide. Default: C<"\x{25CF}"> (black
+circle). The thumb. It is painted in C<accent_color>, or in
+C<text_color> while the slider has the focus.
 
 =item C<track_color>
 
-The color of the track right of the thumb.
+A color, in any format L<Term::Fabulous::Widget::Input> accepts. The
+track right of the thumb. Default: C<[90, 96, 110, 255]>, a gray.
 
 =back
 
-All have readers and writers of the same name. Changing C<min>, C<max>
-or C<step> moves the value into the new range. Writing C<value> fires no
-event.
+The glyph parameters die unless they are exactly one grapheme cluster
+one column wide; the numeric parameters die unless they are finite
+numbers in their range.
 
 =head1 METHODS
+
+The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>,
+C<is_enabled>, the color accessors, C<repaint>), plus:
+
+=head2 value
+
+	my $number = $slider->value;
+	$slider->value(42);
+
+Accessor. Returns the current value, a number. Writing rounds the new
+value to the nearest grid value, repaints, and returns the stored value.
+Dies if the new value is not a finite number or lies outside
+C<min>..C<max>. Writing fires no C<Change> event.
+
+=head2 min
+
+	my $min = $slider->min;
+	$slider->min(10);
+
+Accessor for the lower end of the range. Writing moves the value into
+the new range if needed (without a C<Change> event), repaints and
+returns the new C<min>. Dies if the new C<min> is not a finite number
+less than C<max>; the range then stays as it was. To move a range
+upwards, set C<max> first.
+
+=head2 max
+
+	my $max = $slider->max;
+	$slider->max(200);
+
+Accessor for the upper end of the range; works like L</min>. Dies if the
+new C<max> is not a finite number greater than C<min>.
+
+=head2 step
+
+	my $step = $slider->step;
+	$slider->step(0.5);
+
+Accessor for the step. Writing moves the value onto the new grid,
+repaints and returns the new step. Dies unless the step is a positive
+finite number; the step then stays as it was.
+
+=head2 page_step
+
+	my $page = $slider->page_step;
+	$slider->page_step(25);
+	$slider->page_step(undef);    # back to a tenth of the range
+
+Accessor. Reading returns the effective page step (the computed default
+when none was set); writing returns the new effective page step. A value
+that is not C<undef> or a positive finite number dies and leaves the old
+one.
+
+=head2 show_value
+
+	my $shown = $slider->show_value;
+	$slider->show_value(0);
+
+Accessor for the C<show_value> parameter. Returns a true or false value:
+the writer stores and returns 1 or 0, but a value passed to C<new> is
+returned exactly as it was given. Writing repaints. Any value is
+accepted.
+
+=head2 value_format
+
+	$slider->value_format('%.2f');
+
+Accessor for the C<value_format> parameter. Writing repaints and returns
+the new format. Anything other than a string, a code reference or
+C<undef> dies and leaves the old format.
 
 =head2 format_value
 
 	my $text = $slider->format_value(42);
 
-A value as the slider shows it.
+A number formatted as the slider shows it (see C<value_format>).
+
+=head2 preferred_columns
+
+	my $columns = $slider->preferred_columns;
+	$slider->preferred_columns(40);
+
+Accessor for the C<preferred_columns> parameter. Writing returns the new
+value, which takes effect at the next frame. A value that is not a
+positive integer dies and leaves the old value.
+
+=head2 fill_glyph
+
+	$slider->fill_glyph('=');
+
+Accessor for the C<fill_glyph> parameter. Writing repaints and returns
+the new glyph. A value that is not a single one-column character dies
+and leaves the old glyph.
+
+=head2 track_glyph
+
+	$slider->track_glyph('-');
+
+Accessor for the C<track_glyph> parameter; works like L</fill_glyph>.
+
+=head2 thumb_glyph
+
+	$slider->thumb_glyph('o');
+
+Accessor for the C<thumb_glyph> parameter; works like L</fill_glyph>.
+
+=head2 track_color
+
+	$slider->track_color('#444444');
+
+Accessor for the C<track_color> parameter. Writing repaints and returns
+the new color (as given). An invalid color dies and leaves the old one.
 
 =head1 KEYS
 
-Left and Down decrease the value by one step, Right and Up increase it.
-Page Down and Page Up move by C<page_step>, Home and End to the lowest
-and highest value.
+While the slider has the focus and is enabled:
+
+=over
+
+=item C<Left>, C<Down>
+
+Decrease the value by one C<step>.
+
+=item C<Right>, C<Up>
+
+Increase the value by one C<step>.
+
+=item C<PageDown>, C<PageUp>
+
+Decrease or increase the value by C<page_step>.
+
+=item C<Home>, C<End>
+
+Go to the lowest or the highest reachable value.
+
+=back
+
+The value never leaves the range; at either end these keys do nothing
+(but are still used). All other keys bubble to the ancestors.
 
 =head1 MOUSE
 
-Pressing on the track moves the thumb there, and dragging moves it
-along; the value follows the pointer while it stays over the slider.
-The mouse wheel moves the value by one step per notch.
+=over
+
+=item Click and drag
+
+Pressing the left button on the track moves the thumb there, and
+dragging with the button held moves it along while the pointer stays
+over the slider. The track's first column is C<min>, its last column
+C<max>, and the value is rounded to the grid. Clicks on the value label
+do nothing.
+
+=item Wheel
+
+Each notch moves the value by one C<step>: up increases, down
+decreases.
+
+=back
 
 =head1 EVENTS
 
-L<Term::Fabulous::Event::Change> when the user moves the value, with
-the new value.
+=over
+
+=item C<Change>
+
+L<Term::Fabulous::Event::Change> whenever the user moves the value to a
+different grid value; C<< $event->value >> is the new number. While
+dragging, it is fired for every new value. Programmatic writes to
+C<value>, C<min>, C<max> and C<step> fire nothing.
+
+=back
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::Input/KDL PROPERTIES> plus the
-constructor parameters above, except that C<value_format> takes only a
-format string:
+The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
+C<min>, C<max>, C<step>, C<page_step>, C<value>, C<show_value>
+(C<#true> / C<#false>), C<value_format> (a format string only; code
+references cannot be written in KDL), C<preferred_columns>,
+C<fill_glyph>, C<track_glyph>, C<thumb_glyph> and C<track_color>:
 
-	Slider "volume" {
-		max 11
-		value 5
-		value_format "%d dB"
+	use Term::Fabulous::Widget::Slider as Slider
+
+	Slider "temperature" {
+		min -10
+		max 40
+		step 0.5
+		value 21.5
+		value_format "%.1f C"
 	}
+
+Properties are applied in order and each one is checked against the
+values set before it. Give C<min>, C<max> and C<step> before C<value>.
+To move the range upwards past the default C<max> of 100, give C<max>
+before C<min> (C<min 200> while C<max> is still 100 dies).
+
+=head1 EXAMPLES
+
+=head2 A percentage with a custom label
+
+	my $opacity = Term::Fabulous::Widget::Slider->new(
+		min          => 0,
+		max          => 1,
+		step         => 0.05,
+		value        => 1,
+		value_format => sub ($value) { sprintf '%3d%%', $value * 100 },
+	);
+
+=head2 Keep two sliders in order
+
+	my $low  = Term::Fabulous::Widget::Slider->new( value => 20 );
+	my $high = Term::Fabulous::Widget::Slider->new( value => 80 );
+
+	$low->on( Change => sub ($event) {
+		$high->value( $event->value ) if $high->value < $event->value;
+		return;
+	} );
+
+=head1 CAVEATS
+
+=over
+
+=item *
+
+B<Known bug:> values are rounded to as many decimal places as the
+C<step> has, ignoring C<min>. When C<min> has more decimal places than
+the C<step> (C<< min => 0.5, step => 1 >>), values can leave the grid
+or fall below C<min>: the initial value becomes 0, and C<value(2.5)>
+returns 2. A C<step> below C<1e-10> rounds every value to a whole
+number. Give C<min> no more decimal places than the C<step>, and use
+steps of at least C<1e-10>.
+
+=item *
+
+Inside a L<Term::Fabulous::Widget::ScrollBox>, one notch of the mouse
+wheel over the slider both changes the value and scrolls the scroll box.
+
+=back
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Event::Change>,
+L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
 
 =cut

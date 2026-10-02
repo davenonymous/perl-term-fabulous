@@ -118,57 +118,168 @@ Term::Fabulous::Widget::RadioButton - One choice of a radio group
 
 =head1 SYNOPSIS
 
-	my $button = Term::Fabulous::Widget::RadioButton->new( label => 'Medium', value => 'm' );
-	$group->add_child($button);
+	use Term::Fabulous::Widget::RadioGroup;
+	use Term::Fabulous::Widget::RadioButton;
+
+	my $size = Term::Fabulous::Widget::RadioGroup->new( value => 'm' );
+	$size->add_child(
+		Term::Fabulous::Widget::RadioButton->new( label => 'Small',  value => 's' ),
+		Term::Fabulous::Widget::RadioButton->new( label => 'Medium', value => 'm' ),
+		Term::Fabulous::Widget::RadioButton->new( label => 'Large',  value => 'l' ),
+	);
 
 =head1 DESCRIPTION
 
-An L<Term::Fabulous::Widget::Input> showing a mark and a label,
-C<(E<0x2022>) Medium>, inside a L<Term::Fabulous::Widget::RadioGroup>,
-which keeps track of the selected button, takes the keyboard focus and
-fires the C<Change> event. A click selects the button. Clicking a radio
-button outside a group dies. Unknown constructor parameters die.
+A radio button is one choice of a L<Term::Fabulous::Widget::RadioGroup>.
+It shows a mark and a label:
 
-A radio button is disabled when it or its group is.
+	(*) Medium
+	( ) Large
+
+(the selected mark is U+2022 BULLET by default, shown here as C<*>).
+
+A radio button only works inside a radio group, as a child of the group
+or deeper inside it (for example in a box that lays out several buttons
+in a row). The group keeps track of which button is selected, takes the
+keyboard focus for all its buttons and fires the C<Change> event; the
+button itself never takes the focus and fires no C<Change>. A button is
+selected when its C<value> equals the group's C<value>.
+
+A click on a button selects it and focuses its group. Clicking a radio
+button that is not inside a radio group dies.
+
+A radio button is disabled when it or its group is disabled. Disabled
+buttons are painted in C<disabled_color> and skipped by the arrow keys.
 
 =head1 CONSTRUCTOR
 
-Besides the parameters of L<Term::Fabulous::Widget::Input>:
+=head2 new
+
+	my $button = Term::Fabulous::Widget::RadioButton->new(%parameters);
+
+Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
+(C<id>, C<layout>, C<background_color>, the border parameters,
+C<disabled>, C<text_color>, C<disabled_color>, C<accent_color>,
+C<focus_background_color>) and the ones below. C<can_focus> is accepted
+but has no effect: a radio button never takes the focus. Unknown
+parameters die.
 
 =over
 
 =item C<label>
 
-The text after the mark, a character string; default none.
+A character string. Default: C<''> (no label). The text after the mark.
+Dies if not a string.
 
 =item C<value>
 
-The value the group takes when the button is selected, a string or a
-number; defaults to the label. The values of a group's buttons should
-differ: the group selects every button whose value equals its own.
+A string or a number. Default: C<undef>, which means "the same as the
+label". The value the group takes when this button is selected. The
+buttons of one group should have different values: the group selects
+every button whose value equals its own. Dies if given a reference.
 
-=item C<selected_mark>, C<unselected_mark>
+=item C<selected_mark>
 
-The marks, by default C<(E<0x2022>)> and C<( )>. The selected mark is
-painted in the accent color.
+A character string. Default: C<"(\x{2022})">, a bullet in parentheses.
+The mark of the selected button, painted in C<accent_color>.
+
+=item C<unselected_mark>
+
+A character string. Default: C<'( )'>. The mark of the other buttons,
+painted in C<text_color>.
 
 =back
 
-All have readers and writers of the same name.
-
 =head1 METHODS
+
+The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>,
+C<is_enabled>, the color accessors, C<repaint>), plus:
+
+=head2 value
+
+	my $value = $button->value;
+	$button->value('xl');
+
+Accessor. Returns the button's value, or its label when no value was
+given or the value was set to C<undef>. Writing repaints and returns the
+value as the reader would (C<< $button->value(undef) >> returns the
+label). A reference dies and leaves the value unchanged. Changing the
+value of the selected button does not change the group's value, so the
+button is no longer selected afterwards.
+
+=head2 label
+
+	my $label = $button->label;
+	$button->label('Extra large');
+
+Accessor for the label. Writing repaints and returns the new label. A
+value that is not a string dies and leaves the label unchanged.
+
+=head2 selected_mark
+
+	$button->selected_mark('[*]');
+
+Accessor for the C<selected_mark> parameter. Writing repaints and returns
+the new mark. A value that is not a string dies and leaves the mark
+unchanged.
+
+=head2 unselected_mark
+
+	$button->unselected_mark('[ ]');
+
+Accessor for the C<unselected_mark> parameter; works like
+L</selected_mark>.
 
 =head2 group
 
-The nearest L<Term::Fabulous::Widget::RadioGroup> ancestor, or C<undef>.
+	my $group = $button->group;
+
+The nearest L<Term::Fabulous::Widget::RadioGroup> among the button's
+ancestors, or C<undef> when there is none.
 
 =head2 is_selected
 
-Whether the group's value equals the button's value.
+	if ( $button->is_selected ) { ... }
+
+1 when the button's group has a value equal to the button's value
+(compared as strings), 0 otherwise or when the button has no group.
+
+=head2 is_enabled
+
+	if ( $button->is_enabled ) { ... }
+
+True when neither the button nor its group is disabled.
+
+=head1 KEYS
+
+A radio button uses no keys itself: it never has the focus. Its radio
+group handles the keys; see
+L<Term::Fabulous::Widget::RadioGroup/KEYS>.
+
+=head1 MOUSE
+
+A click (left button pressed and released over the button) selects the
+button, as L<Term::Fabulous::Widget::RadioGroup/choose> does, and the
+press focuses the group. Nothing happens while the button or its group
+is disabled.
+
+A click whose press and release both arrive within one frame (1/30
+second), such as a quick touchpad tap, is not seen as a click; see
+L<Term::Fabulous::Manual/Clicks, hover and press>.
+
+=head1 EVENTS
+
+A radio button fires no C<Change> event of its own; the group fires it.
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::Input/KDL PROPERTIES> plus C<label>,
-C<value>, C<selected_mark> and C<unselected_mark>.
+The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
+C<label>, C<value>, C<selected_mark> and C<unselected_mark>. Radio
+buttons are written as children of a radio group; see
+L<Term::Fabulous::Widget::RadioGroup/KDL PROPERTIES>.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::Input>.
 
 =cut

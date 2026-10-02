@@ -189,23 +189,60 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Canvas - Paint canvas widgets, only their changes when possible
+Term::Fabulous::Render::Canvas - Paint canvas widgets, only their
+changed cells when possible
 
 =head1 SYNOPSIS
 
+	# What Term::Fabulous::Render::draw does with canvases:
 	my @kept_rects = $ui->plan_canvases( \@commands );   # before begin_frame
 	$ui->begin_frame(@kept_rects);
-	$ui->render_custom( $command, $canvas, $buffer );     # for each CUSTOM command
+	$ui->render_custom( $command, $canvas, $buffer );     # for each canvas command
 	$ui->end_frame;
 	$ui->finish_canvases;                                 # after a complete frame
 
 =head1 DESCRIPTION
 
-Composed by L<Term::Fabulous::Render>, which calls these methods from
-C<draw>. A L<Term::Fabulous::Widget::Canvas> asks Clay for a custom
-render command; this role paints its buffer into the canvas's content
-box (its box without the border and padding), clipped like every other
-command.
+Most programs never use this module directly. It is one of the roles
+L<Term::Fabulous::Render> is made of, and it paints
+L<Term::Fabulous::Widget::Canvas> widgets (and everything built on them:
+L<Term::Fabulous::Widget::PixelCanvas> and the input widgets).
+
+A canvas asks Clay for a I<custom> render command. This role paints the
+canvas's cell buffer into the canvas's content box (its box without
+border and padding), clipped like every other command.
+
+=head2 Painting only the changes
+
+Repainting a large canvas every frame is wasteful when only a few of
+its cells changed. Since termbox2 keeps the cells of the previous frame
+in its back buffer, a canvas can often leave them there and paint only
+the cells that changed. This is safe when all of the following hold:
+
+=over
+
+=item *
+
+the canvas has the same position, the same visible part and the same
+background as in the last frame that was painted completely;
+
+=item *
+
+no command painted after the canvas (a border, a child widget, a
+floating widget such as an open dropdown list) touches its visible part,
+neither in this frame nor in that previous frame;
+
+=item *
+
+the viewport has the same size.
+
+=back
+
+Such a canvas is called I<intact>. Its visible rectangle is handed to
+the target's C<begin_frame> as a I<kept> rectangle, which protects it
+from the background painted below it; then the canvas releases the
+rectangle and paints only its changed cells. Every other canvas paints
+all of its visible cells.
 
 =head1 METHODS
 
@@ -213,38 +250,70 @@ command.
 
 	my @kept_rects = $ui->plan_canvases( \@commands );
 
-Before a frame is painted: records where every canvas's content box
-starts and resizes its buffer to the box (which may fire
-L<Term::Fabulous::Event::CanvasResize>), and decides
-for every visible canvas whether the cells of the previous frame can
-stay. That is the case when the canvas has the same origin, visible
-rect and background as in the last completely painted frame and no
-later command paints into its visible rect, neither in this frame nor
-in that one. The visible rects of those canvases are returned as the
-kept rects for the target's C<begin_frame>
-(L<Term::Fabulous::Render::Target::Mask>). A change of the viewport
-size forgets the previous frame. Dies when a custom render command does
-not belong to a canvas.
+Called before a frame is painted, with all of the frame's render
+commands. For every canvas command it:
+
+=over
+
+=item *
+
+records where the canvas's content box starts
+(L<Term::Fabulous::Widget::Canvas/content_origin>) and resizes the
+canvas buffer to the content box, which fires
+L<Term::Fabulous::Event::CanvasResize> when the size changed;
+
+=item *
+
+decides whether the canvas is intact (see L</Painting only the changes>).
+
+=back
+
+Returns the visible rectangles (C<[x0, y0, x1, y1]>) of the intact
+canvases, for the target's C<begin_frame>. Canvases that are not visible
+at all are skipped and keep their pending changes. Dies with
+C<Term::Fabulous::Render::Canvas: a custom render command needs a Term::Fabulous::Widget::Canvas>
+when a custom command belongs to another kind of widget.
 
 =head2 render_custom
 
-The render command handler. A canvas whose cells are kept releases its
-rect and paints only the cells that changed since it was last painted;
-any other canvas paints every visible cell. Unset cells are painted as
-spaces in the canvas background. Every painted cell records its
-background in the shadow buffer, so text drawn over the canvas keeps
-it. Canvases that are not visible are skipped and keep their changes.
+	$ui->render_custom( $command, $canvas, $buffer );
+
+The render command handler for canvases. An intact canvas releases its
+kept rectangle and paints the cells that changed since it was last
+painted; any other canvas paints all of its visible cells. Unset cells,
+and cells without a background color, are painted as the canvas
+background: the C<background_color> of the canvas, or of its nearest
+ancestor that has one, or else the terminal default. A wide glyph that
+would cross the visible right edge is painted as spaces. Every painted
+cell records its background in C<$buffer>, so text drawn over the canvas
+later in the frame keeps it.
 
 =head2 finish_canvases
 
-After a frame has been painted completely: remembers it for the next
-C<plan_canvases>. A frame that died before is never remembered, so the
-next one paints every canvas in full.
+	$ui->finish_canvases;
+
+Called after a frame was painted completely: remembers it as the frame
+the next L</plan_canvases> compares with. A frame that died before this
+call is never remembered, so the next frame paints every canvas in full.
 
 =head2 invalidate_canvases
 
-Forgets the previous frame, so the next one paints every canvas in
-full. Needed when the target lost its cells, as termbox2 does in
-C<tb_init>.
+	$ui->invalidate_canvases;
+
+Forgets the previous frame, so that the next frame paints every canvas
+in full. Call it whenever the target lost its cells. L<Term::Fabulous>
+calls it when it opens the terminal, because C<tb_init> starts with an
+empty back buffer.
+
+=head1 REQUIRED METHODS
+
+The consuming class provides C<widget_for> (from L<Clay::UI>),
+C<set_cell>, C<extend_cell> and C<release_rect> (from a cell target,
+see L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height>.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Render>,
+L<Term::Fabulous::Render::Target::Mask>.
 
 =cut

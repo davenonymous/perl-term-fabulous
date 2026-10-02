@@ -313,40 +313,65 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Color - Immutable RGBA color value with parser-driven construction
+Term::Fabulous::Color - An immutable RGBA color, parsed from many notations
 
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Color;
+	use Term::Fabulous::Widget::Box;
 
-	# Generic constructor (string / hashref / arrayref / another Color).
-	my $a     = Term::Fabulous::Color->new( color => '#ff00ff' );
-	my $b     = Term::Fabulous::Color->new( color => 'rgba(255, 0, 128, 0.5)' );
-	my $c     = Term::Fabulous::Color->new( color => { r => 1, g => 2, b => 3 } );
-	my $copy  = Term::Fabulous::Color->new( color => $a );
+	# One constructor that understands every notation ...
+	my $purple = Term::Fabulous::Color->new( color => '#7c3aed' );
+	my $faded  = Term::Fabulous::Color->new( color => 'rgba(255, 0, 128, 0.5)' );
+	my $teal   = Term::Fabulous::Color->new( color => 'hsl(174, 72%, 56%)' );
+	my $blue   = Term::Fabulous::Color->new( color => [ 40, 80, 200 ] );
+	my $gray   = Term::Fabulous::Color->new( color => { r => 128, g => 128, b => 128, a => 255 } );
 
-	# Positional factories.
-	my $red   = Term::Fabulous::Color->rgb(255, 0, 0);
-	my $half  = Term::Fabulous::Color->rgba(255, 0, 0, 128);
-	my $hex   = Term::Fabulous::Color->hex('#7c3aed');
-	my $teal  = Term::Fabulous::Color->hsl(174, 72, 56);
-	my $faded = Term::Fabulous::Color->hsla(174, 72, 56, 0.5);
+	# ... and shortcuts for the common cases.
+	my $red    = Term::Fabulous::Color->rgb( 255, 0, 0 );
+	my $glass  = Term::Fabulous::Color->rgba( 255, 0, 0, 128 );
+	my $violet = Term::Fabulous::Color->hex('#7c3aed');
+	my $mint   = Term::Fabulous::Color->hsl( 150, 60, 70 );
 
-	my @rgba  = $red->to_rgba;   # (255, 0, 0, 255)
-	my @hsl   = $red->to_hsl;    # (0, 100, 50)
+	# Derive new colors; the original never changes.
+	my $hover  = $purple->lighten(0.1);
+	my $shadow = $purple->darken(0.2);
+	my $mix    = $red->blend( $blue, 0.25 );
+
+	# Use it where Clay::UI wants [r, g, b, a].
+	my $box = Term::Fabulous::Widget::Box->new( background_color => [ $shadow->to_rgba ] );
 
 =head1 DESCRIPTION
 
-A color value carrying red, green, blue and alpha channels, each an
-integer in C<0..255>. Colors are immutable: every transformation
-(L</lighten>, L</blend>, L</with_alpha>, ...) returns a new object.
+A color with red, green, blue and alpha (opacity) channels, each an
+integer from 0 to 255. Color objects are immutable: methods such as
+L</lighten> and L</blend> return a new object.
+
+Term::Fabulous uses this class to parse every color given as a string:
+colors in L<KDL layout files|Term::Fabulous::Layout>, the colors of the
+input widgets and the cell colors of a
+L<canvas|Term::Fabulous::Widget::Canvas>. Clay::UI widget parameters
+(C<background_color>, C<border_color>, the C<text_color> of a Text
+widget) accept only C<[r, g, b, a]> or C<{ r, g, b, a }>; pass
+C<< [ $color->to_rgba ] >> there. See
+L<Term::Fabulous::Manual/COLORS> for which place accepts which
+notation.
+
+=head2 Alpha
+
+An alpha of 0 means "no color": a background with alpha 0 is not
+painted, so whatever is below it shows through, and a text or foreground
+color with alpha 0 uses the terminal default color. Terminals cannot
+blend colors, so any alpha from 1 to 255 is drawn fully opaque. See
+L<Term::Fabulous::Manual/Alpha and the terminal default color>.
 
 =head2 Channel rules
 
-Every channel is rounded to the nearest integer once, at construction,
-and the rounded value must lie in C<0..255> inclusive. Anything else
-(undef, non-numeric strings, NaN, infinities, out-of-range numbers)
-dies with a message naming the channel and the offending value, e.g.
+Every channel is rounded to the nearest integer once, when the color is
+built (an exact half rounds up), and the rounded value must be from 0 to
+255. So C<255.4> becomes 255, C<0.5> becomes 1 and C<-0.4> becomes 0,
+while C<255.5> and C<-1> die. Undefined values, non-numbers, NaN and
+infinities die too. The error names the channel and the value:
 
 	Term::Fabulous::Color: red must be a number in 0..255, got '300'
 
@@ -356,165 +381,268 @@ dies with a message naming the channel and the offending value, e.g.
 
 	my $color = Term::Fabulous::Color->new( color => $spec );
 
-C<color> is the only (and required) parameter; unknown parameters die.
-C<$spec> may be:
+Builds a color from C<$spec>. C<color> is the only parameter and it is
+required; unknown parameters die. C<$spec> can be any of the following.
 
 =over
 
-=item * Another C<Term::Fabulous::Color> (or subclass) instance, whose
-four channels are copied.
+=item A Term::Fabulous::Color object
 
-=item * A hashref with exactly the keys C<r, g, b> or C<r, g, b, a>, or
-exactly C<red, green, blue> or C<red, green, blue, alpha>. Alpha
-defaults to 255. Any other key set dies.
+Its four channels are copied. Objects of subclasses work as well.
 
-=item * An arrayref C<[ R, G, B ]> or C<[ R, G, B, A ]>. Other lengths
-die. Alpha defaults to 255.
+=item An array reference
 
-=item * A string in one of these forms (no surrounding whitespace):
+C<[ $r, $g, $b ]> or C<[ $r, $g, $b, $a ]>. Alpha defaults to 255. Any
+other number of elements dies.
 
-	#rrggbb  #rrggbbaa        hex digits, leading '#' optional
-	rgb(r, g, b)              channels 0..255, decimals are rounded
-	rgba(r, g, b, a)          alpha per the alpha grammar below
-	hsl(h, s%, l%)            hue in degrees, s and l in 0..100
-	hsla(h, s%, l%, a)        alpha per the alpha grammar below
+=item A hash reference
 
-The alpha token of C<rgba()> and C<hsla()> is read as follows:
+With exactly the keys C<r>, C<g>, C<b> (and optionally C<a>), or exactly
+C<red>, C<green>, C<blue> (and optionally C<alpha>). Alpha defaults to
+255. Any other set of keys dies.
 
-=over
+=item A string
 
-=item * a bare integer (C<128>) is the C<0..255> channel value;
+In one of the notations below. The string must not have leading or
+trailing whitespace; whitespace after C<(> and around the commas is
+allowed. The function names are lowercase. Named colors such as
+C<'red'> and three-digit hex such as C<'#f00'> are not supported.
 
-=item * a number containing a decimal point (C<0.5>, C<1.0>, C<.25>) is a
-fraction in C<0..1>, multiplied by 255;
+	String              Example                     Meaning
+	------------------  --------------------------  -------------------------------
+	#rrggbb             '#7c3aed', '7c3aed'         hex, alpha 255; '#' is optional
+	#rrggbbaa           '#7c3aed80'                 hex with alpha
+	rgb(r, g, b)        'rgb(124, 58, 237)'         channels 0..255, alpha 255
+	rgba(r, g, b, a)    'rgba(124, 58, 237, 0.5)'   alpha as described below
+	hsl(h, s%, l%)      'hsl(262, 83%, 58%)'        hue in degrees, alpha 255
+	hsla(h, s%, l%, a)  'hsla(262, 83%, 58%, 50%)'  alpha as described below
 
-=item * a number followed by C<%> (C<50%>) is a percentage in C<0..100>.
+Hex digits may be upper or lower case. Channel values in C<rgb()> and
+C<rgba()> may have decimals; they are rounded (see L</Channel rules>).
+
+In C<hsl()> and C<hsla()>, the hue is in degrees and taken modulo 360,
+so C<360> is the same as C<0> and C<-90> the same as C<270>. Saturation
+and lightness are percentages from 0 to 100 and must be written with a
+C<%> sign.
+
+The alpha of C<rgba()> and C<hsla()> is read according to how it is
+written:
+
+	Written as             Example   Meaning               Alpha
+	---------------------  --------  --------------------  -----
+	integer, no point      128       channel value 0..255  128
+	number with a point    0.5       fraction 0..1         128
+	number with %          50%       percentage 0..100     128
+
+Watch the difference between C<1> and C<1.0>: C<'rgba(0, 0, 0, 1)'> has
+alpha 1 (almost transparent, which a terminal still draws as opaque),
+while C<'rgba(0, 0, 0, 1.0)'> has alpha 255.
 
 =back
 
-So C<rgba(0, 0, 0, 1)> has alpha 1 (nearly transparent) while
-C<rgba(0, 0, 0, 1.0)> has alpha 255. The hue is taken modulo 360, so
-C<720> equals C<0> and C<-90> equals C<270>.
-
-=back
-
-Any other value (undef, other references, other blessed objects,
-unrecognized strings) dies with the offending value in the message.
-
-=head1 METHODS
-
-=head2 red, green, blue, alpha
-
-Channel readers; integers in C<0..255>.
+Anything else (C<undef>, other references or objects, unknown strings)
+dies with the offending value in the message.
 
 =head2 rgb
 
-	my $color = Term::Fabulous::Color->rgb($r, $g, $b);
+	my $color = Term::Fabulous::Color->rgb( $r, $g, $b );
 
-Opaque color from three channels (see L</Channel rules>).
+Class method. An opaque color (alpha 255) from three channels from 0 to
+255 (see L</Channel rules>).
 
 =head2 rgba
 
-	my $color = Term::Fabulous::Color->rgba($r, $g, $b, $a);
+	my $color = Term::Fabulous::Color->rgba( $r, $g, $b, $a );
 
-As L</rgb> with an explicit alpha channel in C<0..255>.
+Class method. Like L</rgb> with an explicit alpha channel from 0 to 255.
 
 =head2 hex
 
 	my $color = Term::Fabulous::Color->hex('#7c3aed');
-	my $color = Term::Fabulous::Color->hex('7c3aedff');
+	my $color = Term::Fabulous::Color->hex('7c3aed80');
 
-Accepts six- or eight-digit hex strings with an optional leading C<#>;
-anything else dies.
+Class method. A color from a six- or eight-digit hex string with an
+optional leading C<#>. Any other string dies, even one that L</new>
+would accept.
 
 =head2 hsl
 
-	my $color = Term::Fabulous::Color->hsl($h, $s, $l);
+	my $color = Term::Fabulous::Color->hsl( $hue, $saturation, $lightness );
 
-Hue in degrees (taken modulo 360), saturation and lightness as
-percentages in C<0..100>. The conversion runs in floating point and
-rounds each channel once.
+Class method. An opaque color from a hue in degrees (taken modulo 360)
+and saturation and lightness as plain numbers from 0 to 100 (no C<%>
+sign). The conversion is computed in floating point, and each channel
+is rounded once at the end.
 
 =head2 hsla
 
-	my $color = Term::Fabulous::Color->hsla($h, $s, $l, $a);
+	my $color = Term::Fabulous::Color->hsla( $hue, $saturation, $lightness, $alpha );
 
-As L</hsl> plus an alpha fraction in C<0..1> (CSS convention).
+Class method. Like L</hsl>, plus an alpha given as a fraction from 0 to
+1, as in CSS. Note that this differs from the C<hsla()> string notation,
+where a bare integer is the 0..255 channel value:
+C<< ->hsla(0, 0, 0, 1) >> is opaque, the string
+C<'hsla(0, 0%, 0%, 1)'> is not.
 
-=head2 hsl_to_rgb, rgb_to_hsl
+=head1 METHODS
 
-	my ($r, $g, $b) = Term::Fabulous::Color->hsl_to_rgb($h, $s, $l);
-	my ($h, $s, $l) = Term::Fabulous::Color->rgb_to_hsl($r, $g, $b);
+=head2 red
 
-Class-method conversions. Both compute in floating point and round each
-result once to the nearest integer; the returned hue is in C<0..359>.
+	my $r = $color->red;
+
+The red channel, an integer from 0 to 255.
+
+=head2 green
+
+	my $g = $color->green;
+
+The green channel, an integer from 0 to 255.
+
+=head2 blue
+
+	my $b = $color->blue;
+
+The blue channel, an integer from 0 to 255.
+
+=head2 alpha
+
+	my $a = $color->alpha;
+
+The alpha channel, an integer from 0 (transparent) to 255 (opaque).
 
 =head2 to_rgba
 
-	my ($r, $g, $b, $a) = $color->to_rgba;
+	my ( $r, $g, $b, $a ) = $color->to_rgba;
+	$box->background_color( [ $color->to_rgba ] );
 
-Returns the four channels.
+Returns the four channels as a list. Wrap the result in C<[ ]> to get
+the array reference Clay::UI widgets take.
 
 =head2 to_hsl
 
-	my ($h, $s, $l) = $color->to_hsl;
+	my ( $hue, $saturation, $lightness ) = $color->to_hsl;
 
-Returns the rounded C<(hue, saturation, lightness)> tuple of the stored
-RGB channels.
+Returns hue (0 to 359), saturation and lightness (0 to 100) of the
+color, each rounded to an integer. Alpha is ignored.
 
 =head2 lighten
 
 	my $brighter = $color->lighten(0.15);
 
-HSL-space lightness adjustment matching Textual's C<Color.lighten>.
-C<$amount> is a fraction added to the HSL lightness (so C<0.15> adds 15
-percentage points); the result is clamped at C<0%>..C<100%>. The
-adjustment works on unrounded HSL values, so C<lighten(0)> returns an
-identical color. Hue, saturation and alpha are preserved. Negative
-amounts darken. A non-numeric amount dies.
+Returns a color with more lightness in HSL terms. C<$amount> is a
+fraction added to the lightness: C<0.15> adds 15 percentage points. The
+result is clamped to 0% to 100% lightness, so C<lighten(1)> is white.
+Hue, saturation and alpha stay the same, and C<lighten(0)> returns an
+identical color. A negative amount darkens. Dies if C<$amount> is not a
+number.
 
 =head2 darken
 
 	my $shadow = $color->darken(0.15);
 
-Identical to C<< $color->lighten(-$amount) >>.
+The same as C<< $color->lighten(-$amount) >>.
 
 =head2 blend
 
-	my $mix = $color->blend($other, $ratio);
+	my $mix = $color->blend( $other, $ratio );
 
-Linear per-channel mix: C<$ratio> 0 returns this color, 1 returns
-C<$other>. Channels are truncated to integers.
+Returns a mix of this color and C<$other>, channel by channel, alpha
+included: C<$ratio> 0 gives this color, 1 gives C<$other>, 0.5 the
+middle. Channels of the result are truncated to integers, not rounded:
+black blended with white at 0.5 is C<(127, 127, 127)>. C<$other> must be
+a Term::Fabulous::Color object, and C<$ratio> should be between 0 and 1;
+values outside that range can produce channels outside 0..255, which
+die.
 
 =head2 with_alpha
 
 	my $translucent = $color->with_alpha(128);
 
-Copy with a different alpha channel (C<0..255>).
+Returns a copy with a different alpha channel (0 to 255, rounded as
+described in L</Channel rules>).
 
-=head2 rgb_int, rgba_int
+=head2 rgb_int
 
-Packed integers C<0xRRGGBB> and C<0xRRGGBBAA>. Both are memoized.
+	my $packed = $color->rgb_int;    # 0xRRGGBB
 
-=head2 rgb_float, rgba_float
+The red, green and blue channels packed into one integer, C<0xRRGGBB>.
+This is also the fast way to give a color to the canvas drawing methods
+(see L<Term::Fabulous::Widget::Canvas/Colors>), but note that a packed
+integer has no alpha channel.
 
-Channels scaled to C<0..1>.
+=head2 rgba_int
+
+	my $packed = $color->rgba_int;   # 0xRRGGBBAA
+
+All four channels packed into one integer, C<0xRRGGBBAA>.
+
+=head2 rgb_float
+
+	my ( $r, $g, $b ) = $color->rgb_float;
+
+The red, green and blue channels scaled to the range 0 to 1.
+
+=head2 rgba_float
+
+	my ( $r, $g, $b, $a ) = $color->rgba_float;
+
+All four channels scaled to the range 0 to 1.
 
 =head2 hexString
 
-C<#rrggbbaa> string.
+	my $hex = $color->hexString;     # '#7c3aedff'
 
-=head2 ansi, ansi_bg
+The color as a lowercase C<#rrggbbaa> string. Alpha is always included.
 
-24-bit SGR foreground / background escape sequences.
+=head2 ansi
 
-=head2 fg_sgr, bg_sgr
+	print $color->ansi, 'colored text', "\e[0m";
 
-Like C<ansi> / C<ansi_bg>, but a color with alpha 0 yields the
-terminal default reset (C<\e[39m> / C<\e[49m>). Memoized.
+The 24-bit ANSI escape sequence that sets this color as the foreground
+color (C<ESC [ 38 ; 2 ; r ; g ; b m>). Alpha is ignored.
+
+=head2 ansi_bg
+
+	print $color->ansi_bg, ' ', "\e[0m";
+
+The 24-bit ANSI escape sequence that sets this color as the background
+color (C<ESC [ 48 ; 2 ; r ; g ; b m>). Alpha is ignored.
+
+=head2 fg_sgr
+
+	print $color->fg_sgr;
+
+Like L</ansi>, except that a color with alpha 0 returns C<ESC [ 39 m>,
+which switches back to the terminal's default foreground color.
+
+=head2 bg_sgr
+
+	print $color->bg_sgr;
+
+Like L</ansi_bg>, except that a color with alpha 0 returns
+C<ESC [ 49 m>, which switches back to the terminal's default background
+color.
+
+=head2 hsl_to_rgb
+
+	my ( $r, $g, $b ) = Term::Fabulous::Color->hsl_to_rgb( $hue, $saturation, $lightness );
+
+Class method. Converts hue (degrees, taken modulo 360), saturation and
+lightness (0 to 100) to red, green and blue (0 to 255), computed in
+floating point and rounded once. Dies if saturation or lightness are
+outside 0..100.
+
+=head2 rgb_to_hsl
+
+	my ( $hue, $saturation, $lightness ) = Term::Fabulous::Color->rgb_to_hsl( $r, $g, $b );
+
+Class method. Converts red, green and blue (numbers from 0 to 255) to
+hue (0 to 359) and saturation and lightness (0 to 100), each rounded to
+an integer. Dies if a channel is outside 0..255.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous>, L<Term::Fabulous::Render::Attr>.
+L<Term::Fabulous::Manual/COLORS>, L<Term::Fabulous::Render::Attr>,
+L<Term::Fabulous::Widget::Canvas/Colors>.
 
 =cut

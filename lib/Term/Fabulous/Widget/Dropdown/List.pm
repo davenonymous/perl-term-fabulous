@@ -151,37 +151,102 @@ Term::Fabulous::Widget::Dropdown::List - The option list of an open dropdown
 
 =head1 DESCRIPTION
 
-Internal to L<Term::Fabulous::Widget::Dropdown>, which creates one each
-time it opens and adds it as a floating child: a
-L<Term::Fabulous::Widget::Canvas> that draws the dropdown's options,
-scrolls through them and turns clicks into choices. It never takes the
-focus; the dropdown keeps it and handles the keys. Applications do not
-create lists themselves.
+This class is internal to L<Term::Fabulous::Widget::Dropdown>.
+Applications never create a list themselves: the dropdown creates one
+each time it opens, adds it as a floating child of itself (so it is
+drawn over the other widgets, attached below or above the dropdown), and
+removes it when it closes.
 
-=head1 METHODS
+The list is a L<Term::Fabulous::Widget::Canvas> that paints the
+dropdown's options with a one-column margin on both sides, highlights
+one of them, scrolls through them when there are more options than
+rows, and then shows a scrollbar in its rightmost column. It turns mouse
+presses into highlights and mouse releases into choices, and scrolls on
+the mouse wheel. It never takes the keyboard focus; the dropdown keeps
+the focus and handles the keys.
+
+The methods below are documented for authors of dropdown subclasses and
+for tests.
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $list = Term::Fabulous::Widget::Dropdown::List->new(
+		dropdown     => $dropdown,
+		visible_rows => 8,
+		...
+	);
+
+Called by the dropdown with these parameters, plus C<background_color>,
+C<border_color>, C<border_width>, C<border_style>, C<layout> and
+C<floating> (see L<Clay::UI::Role::Layout::HasFloating>). Unknown
+parameters die.
 
 =over
 
+=item C<dropdown>
+
+Required. The L<Term::Fabulous::Widget::Dropdown> the list belongs to.
+Held as a weak reference.
+
 =item C<visible_rows>
+
+Required. A positive integer: how many options the list shows at once.
+
+=back
+
+=head1 METHODS
+
+=head2 visible_rows
+
+	my $rows = $list->visible_rows;
 
 How many options the list shows at once.
 
-=item C<top_option>
+=head2 top_option
 
-The index of the first option shown.
+	my $index = $list->top_option;
 
-=item C<show_highlight>
+The index of the first option shown (from 0).
+
+=head2 show_highlight
+
+	$list->show_highlight;
 
 Scrolls the dropdown's highlighted option into view and repaints.
+Returns the list.
 
-=item C<scroll($rows)>
+=head2 scroll
 
-Scrolls by options, within the list.
+	$list->scroll(-1);
 
-=item C<option_at_row($row)>
+Scrolls by a number of options (negative: towards the first), staying
+within the options. Returns the list.
 
-The option shown at a row of the list, or C<undef>.
+=head2 option_at_row
 
-=back
+	my $index = $list->option_at_row($row);
+
+The index of the option shown at a row of the list's content (from 0),
+or C<undef> for a row without an option.
+
+=head2 repaint
+
+	$list->repaint;
+
+Paints the visible options and, when the list scrolls, the scrollbar.
+Returns the list.
+
+=head1 MOUSE
+
+A left press on an option highlights it; releasing the left button over
+an option chooses it (see L<Term::Fabulous::Widget::Dropdown/choose>).
+Presses on the scrollbar column are ignored. Each notch of the mouse
+wheel scrolls by one option.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Dropdown>.
 
 =cut

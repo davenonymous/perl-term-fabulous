@@ -36,3 +36,51 @@ role Term::Fabulous::Render::Rectangle :does(Term::Fabulous::Render::Clip) {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Term::Fabulous::Render::Rectangle - Paint widget backgrounds
+
+=head1 SYNOPSIS
+
+	# Composed by Term::Fabulous::Render; called from draw for every
+	# rectangle render command:
+	$ui->render_rectangle( $command, $widget, $buffer );
+
+=head1 DESCRIPTION
+
+Most programs never use this module directly. It is one of the roles
+L<Term::Fabulous::Render> is made of, and it paints the rectangle render
+commands Clay emits for widget backgrounds (C<background_color>).
+
+=head1 METHODS
+
+=head2 render_rectangle
+
+	$ui->render_rectangle( $command, $widget, $buffer );
+
+Fills the cells of the command's bounding box that lie inside the
+current clip area (see L<Term::Fabulous::Render::Clip/clip_rect>) with
+spaces in the command's background color, using the target's
+C<fill_row>. It also records that background color for every filled
+cell in C<$buffer>, an array reference of rows of attributes indexed
+C<< $buffer->[$y][$x] >>, so that text and borders drawn on top later in
+the frame know the background below them.
+
+C<$command> is a Clay render command hash (see
+L<Clay::XS/RENDER COMMANDS>); C<$widget> is the widget it belongs to
+and is not used.
+
+=head1 REQUIRED METHODS
+
+The consuming class provides C<fill_row> (from a cell target, see
+L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height> (for
+L<Term::Fabulous::Render::Clip>).
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Clip>.
+
+=cut

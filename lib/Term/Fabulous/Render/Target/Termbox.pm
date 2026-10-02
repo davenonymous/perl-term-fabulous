@@ -59,19 +59,91 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Target::Termbox - Paint render cells into termbox2
+Term::Fabulous::Render::Target::Termbox - Cell target that paints into
+the terminal through termbox2
 
 =head1 SYNOPSIS
 
-	class My::UI :isa(Clay::UI) :does(Term::Fabulous::Render) :does(Term::Fabulous::Render::Target::Termbox) { ... }
+	use Object::Pad 0.825;
+	use Clay::UI;
+	use Term::Fabulous::Render;
+	use Term::Fabulous::Render::Target::Termbox;
+
+	# A UI class that paints into the terminal, without a mouse pointer.
+	# (Term::Fabulous is such a class, with an event loop added.)
+	class My::Screen
+		:isa(Clay::UI)
+		:does(Term::Fabulous::Render)
+		:does(Term::Fabulous::Render::Target::Termbox)
+	{
+		method pointer_state () { return undef }
+	}
+
+	# After termbox2's tb_init():
+	My::Screen->new( root => $root, width => 80, height => 24 )->draw;
 
 =head1 DESCRIPTION
 
-The cell target of L<Term::Fabulous>: every method forwards to the termbox2
-call of the same meaning. C<begin_frame> clears the back buffer, except
-for the kept rects (see L<Term::Fabulous::Render::Target::Mask>), which
-keep what the previous frame painted there; C<end_frame> presents it, and
-termbox2 then writes only the cells that changed to the terminal. See
-L<Term::Fabulous::Render/CELL TARGET> for the contract.
+Most programs never use this module directly; L<Term::Fabulous>
+composes it.
+
+This is the cell target (see L<Term::Fabulous::Render/CELL TARGET>)
+that sends the painted cells to termbox2, built on
+L<Term::Fabulous::Render::Target::Mask>. termbox2 collects the cells of
+a frame in a back buffer; when the frame is presented, it compares the
+back buffer with what is on the screen and writes only the cells that
+differ to the terminal.
+
+The terminal must have been opened with termbox2's C<tb_init> (which
+L<Term::Fabulous/run> does) before anything is painted; otherwise
+termbox2 ignores the calls.
+
+=head1 METHODS
+
+These are the primitives required by
+L<Term::Fabulous::Render::Target::Mask>.
+
+=head2 clear_cells
+
+	$ui->clear_cells(@kept_rects);
+
+Without rectangles, clears the whole back buffer (C<tb_clear>). With
+rectangles, overwrites every cell outside them with a space in the
+terminal default colors and leaves the cells inside them as the previous
+frame painted them; termbox2 keeps its back buffer between frames.
+
+=head2 present_cells
+
+	$ui->present_cells;
+
+Shows the frame (C<tb_present>).
+
+=head2 put_cell
+
+	$ui->put_cell( $x, $y, $glyph, $fg, $bg );
+
+Writes one cell into the back buffer with termbox2's C<tb_set_cell>:
+the character C<$glyph> with the foreground attribute C<$fg> and the
+background attribute C<$bg>.
+
+=head2 put_extension
+
+	$ui->put_extension( $x, $y, $character );
+
+Appends a combining character to the cell at C<($x, $y)> with
+termbox2's C<tb_extend_cell>, completing a grapheme cluster.
+
+=head2 put_row
+
+	$ui->put_row( $x, $y, $columns, $bg );
+
+Writes C<$columns> spaces from C<($x, $y)> to the right with
+termbox2's C<tb_print>, in the background attribute C<$bg> and the
+terminal default foreground.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous>, L<Term::Fabulous::Render/CELL TARGET>,
+L<Term::Fabulous::Render::Target::Mask>, L<Termbox>.
 
 =cut

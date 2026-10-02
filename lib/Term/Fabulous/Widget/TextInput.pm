@@ -320,54 +320,110 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::TextInput - Abstract base class of the text input widgets
+Term::Fabulous::Widget::TextInput - Common base class of the text input widgets
+
+=head1 SYNOPSIS
+
+	use Clay::UI::Enum::Result;
+	use Term::Fabulous::Widget::TextField;
+
+	# The parameters and methods below work the same for both text inputs:
+	my $field = Term::Fabulous::Widget::TextField->new(
+		value             => 'initial text',
+		placeholder       => 'Type here',
+		max_length        => 40,
+		read_only         => 0,
+		placeholder_color => '#787e8a',
+		selection_color   => [ 38, 79, 120 ],
+	);
+
+	my $text = $field->value;          # a character string
+	$field->value('replaced');         # fires no Change event
+
+	$field->on( Change => sub ($event) {
+		say 'now: ', $event->value;
+		return Clay::UI::Enum::Result->CONTINUE;
+	} );
 
 =head1 DESCRIPTION
 
-The common part of L<Term::Fabulous::Widget::TextField> and
-L<Term::Fabulous::Widget::TextArea>: a L<Term::Fabulous::Editor> holding
-the text, the cursor, the selection and the undo history, the editing
-keys, mouse selection and the painting of text with its selection and
-cursor. The text is a Perl character string, not UTF-8 bytes.
+C<Term::Fabulous::Widget::TextInput> is the abstract base class of
+L<Term::Fabulous::Widget::TextField> (one line) and
+L<Term::Fabulous::Widget::TextArea> (several lines). It holds what both
+have in common: the text with its cursor, selection, undo history and
+clipboard (kept in a L<Term::Fabulous::Editor>), the editing keys, mouse
+selection, the placeholder and the C<read_only> mode. You do not create
+a C<TextInput> directly; its C<new> dies.
 
-The focused widget shows a block cursor (the character under it in
-reverse video) and paints its content in C<focus_background_color>.
-Selected text is shown on C<selection_color>.
+The text is a Perl character string (decoded text), not UTF-8 encoded
+bytes. The cursor moves by grapheme clusters, that is by what a reader
+sees as one character (a letter with a combining accent, an emoji with
+modifiers, a flag), and wide characters such as CJK take two columns.
+
+While the input has the focus, its content is painted on
+C<focus_background_color> and the cursor is shown as a block: the
+character under it in reverse video. Selected text is painted on
+C<selection_color>. While the text is empty, the C<placeholder> is
+shown instead, in C<placeholder_color>.
+
+Everything described for L<Term::Fabulous::Widget::Input> applies as
+well: C<disabled>, the colors, focus, sizing and the C<Change> event.
 
 =head1 CONSTRUCTOR
 
-Unknown parameters die. Besides the parameters of
-L<Term::Fabulous::Widget::Input>, text inputs accept:
+=head2 new
+
+	my $field = Term::Fabulous::Widget::TextField->new(%parameters);
+	my $area  = Term::Fabulous::Widget::TextArea->new(%parameters);
+
+The text inputs accept the parameters of
+L<Term::Fabulous::Widget::Input/CONSTRUCTOR> and these. Unknown
+parameters die.
 
 =over
 
 =item C<value>
 
-The initial text, default empty. The cursor starts at its end.
+A character string. Default: C<''>. The initial text. The cursor starts
+at its end. A text field turns line breaks into spaces; a text area
+converts C<"\r\n"> and C<"\r"> to C<"\n">. Dies if the text is longer
+than C<max_length>.
 
 =item C<placeholder>
 
-A hint shown in C<placeholder_color> while the text is empty; default
-none.
+A character string. Default: C<''> (none). A hint shown in
+C<placeholder_color> while the text is empty. It is never part of the
+C<value>.
 
 =item C<max_length>
 
-The most characters (grapheme clusters, line breaks included) the text
-may hold, or C<undef> (the default) for no limit. Typing and pasting
-stop at the limit; setting a longer C<value> dies.
+A non-negative integer, or C<undef>. Default: C<undef> (no limit). The
+most characters the text may hold, counted in grapheme clusters; in a
+text area every line break counts as one. Typing and pasting stop at the
+limit: pasted text is cut to fit. Dies if the initial C<value> is longer.
 
 =item C<read_only>
 
-Boolean, default 0. A read-only input can be focused, and its text can
-be selected and copied, but not changed by the user.
+A boolean. Default: 0. A read-only input can still take the focus, and
+its text can be selected and copied, but the user cannot change it:
+typing and the editing keys are not used and bubble on to the
+ancestors. Programmatic writes to C<value> still work.
 
-=item C<placeholder_color>, C<selection_color>
+=item C<placeholder_color>
 
-Colors as for L<Term::Fabulous::Widget::Input>.
+A color, in any format L<Term::Fabulous::Widget::Input> accepts.
+Default: C<[120, 126, 138, 255]>, a gray.
+
+=item C<selection_color>
+
+A color, in any format L<Term::Fabulous::Widget::Input> accepts. The
+background of selected text. Default: C<[38, 79, 120, 255]>, a dark blue.
 
 =item C<background_color>
 
-Defaults to a dark gray, so the input stands out from its surroundings.
+An C<[r, g, b, a]> array reference or C<{ r, g, b, a }> hash reference.
+Default: C<[36, 40, 48, 255]>, a dark gray, so the input stands out from
+its surroundings. Pass C<[0, 0, 0, 0]> for no background of its own.
 
 =back
 
@@ -378,87 +434,333 @@ Defaults to a dark gray, so the input stands out from its surroundings.
 	my $text = $input->value;
 	$input->value("new text");
 
-Reader and writer of the text. Writing puts the cursor at the end,
-clears the selection and the undo history, and fires no event.
+Accessor for the text, a character string. Writing replaces the whole
+text, puts the cursor at its end, clears the selection and the undo
+history, repaints, and returns the new text (after line-break
+conversion). It fires no C<Change> event. Dies if the new text is not a
+string or is longer than C<max_length>.
+
+=head2 max_length
+
+	my $limit = $input->max_length;
+	$input->max_length(10);
+	$input->max_length(undef);         # no limit
+
+Accessor for the length limit (see the C<max_length> parameter). Returns
+the new limit. Dies if the limit is not a non-negative integer or
+C<undef>, or if the current text is already longer; the limit then stays as it
+was.
+
+=head2 placeholder
+
+	$input->placeholder('Search');
+
+Accessor for the placeholder text. Writing repaints the input and
+returns the new placeholder; a value that is not a string dies and
+leaves the placeholder unchanged.
+
+=head2 read_only
+
+	my $is_read_only = $input->read_only;
+	$input->read_only(1);
+
+Accessor for the C<read_only> flag. Returns a true or false value: the
+writer stores and returns 1 or 0, but a value passed to C<new> is
+returned exactly as it was given. Any value is accepted.
+
+=head2 placeholder_color
+
+	$input->placeholder_color('#888888');
+
+Accessor for the placeholder color. Writing repaints and returns the
+new color (as given); an invalid color dies and leaves the color
+unchanged.
+
+=head2 selection_color
+
+	$input->selection_color([ 60, 60, 120 ]);
+
+Accessor for the selection background. Writing repaints and returns
+the new color (as given); an invalid color dies and leaves the color
+unchanged.
 
 =head2 editor
 
-The L<Term::Fabulous::Editor> holding the text, for programmatic cursor
-and selection changes. Call C<repaint> after changing it.
+	my $editor = $input->editor;
 
-=head2 max_length, placeholder, read_only, placeholder_color, selection_color
+The L<Term::Fabulous::Editor> that holds the text, the cursor, the
+selection and the undo history. Use it to move the cursor, select or
+edit text from your program. Afterwards call C<< $input->cursor_moved >>,
+which scrolls the cursor into view and repaints. Edits made through the
+editor fire no C<Change> event.
 
-Readers and writers of the constructor parameters.
+	$field->editor->select_all;
+	$field->cursor_moved;
+
+	$area->editor->move_document_start;
+	$area->editor->insert("Dear Sir or Madam,\n");
+	$area->cursor_moved;
+
+=head2 cursor_moved
+
+	$input->cursor_moved;
+
+Scrolls the view so the cursor is visible and repaints. Call it after
+changing the cursor, the selection or the text through L</editor>.
+Returns 1.
 
 =head1 KEYS
+
+The keys below are named as L<Term::Fabulous::Event::KeyPress/key_name>
+returns them. A text input uses them while it has the focus and is
+enabled; they then do not bubble. All other keys bubble on to the
+ancestors: for example C<Escape>, C<Tab>, C<BackTab> (C<Shift+Tab>),
+C<F1> to C<F12> and C<Alt+> combinations. L<Term::Fabulous> moves the
+focus on C<Tab> and C<BackTab> and stops on C<Ctrl+C>, after the key
+has been delivered.
 
 =over
 
 =item Typing
 
-Inserts the character at the cursor, replacing the selection.
+A printable character (pressed without C<Ctrl> or C<Alt>) is inserted at
+the cursor, replacing the selection.
 
-=item Left, Right, Home, End
+=item C<Left>, C<Right>
 
-Move the cursor by a character or to the start or end of the line. With
-Ctrl, Left and Right move by words, Home and End to the start or end of
-the text. With Shift, every movement extends the selection.
+Move the cursor one character left or right, across line breaks. With a
+selection, they move to its start (C<Left>) or end (C<Right>) and clear
+it.
 
-=item Ctrl+A
+=item C<Ctrl+Left>, C<Ctrl+Right>
 
-Selects everything.
+Move to the start of the word before the cursor, or to the end of the
+word after it. Words are runs of letters, digits and C<_>.
 
-=item Backspace, Delete
+=item C<Home>, C<End>
 
-Delete the selection, or the character before or after the cursor.
-Ctrl+W deletes the word before the cursor, Ctrl+Delete the word after
-it, Ctrl+U everything before the cursor in its line and Ctrl+K
-everything after it.
+Move to the start or end of the line (in a text area: of the text
+line, not of the wrapped row).
 
-=item Ctrl+X, Ctrl+V, Ctrl+Insert, Shift+Delete, Shift+Insert
+=item C<Ctrl+Home>, C<Ctrl+End>
 
-Cut, paste and copy through the clipboard of L<Term::Fabulous::Editor>,
-which all text inputs of the process share. Ctrl+C is not copy: it
-stops L<Term::Fabulous>.
+Move to the start or end of the whole text.
 
-=item Ctrl+Z, Ctrl+Y
+=item C<Shift+Left>, C<Shift+Right>, C<Ctrl+Shift+Left>, C<Ctrl+Shift+Right>, C<Shift+Home>, C<Shift+End>, C<Ctrl+Shift+Home>, C<Ctrl+Shift+End>
 
-Undo and redo. Typing is undone a word at a time.
+The movements above, extending the selection.
+
+=item C<Ctrl+A>
+
+Selects the whole text.
+
+=item C<Backspace>, C<Delete>
+
+Delete the selection, or else the character before (C<Backspace>) or
+after (C<Delete>) the cursor.
+
+=item C<Ctrl+W>, C<Ctrl+Delete>
+
+Delete the selection, or else the word before (C<Ctrl+W>) or after
+(C<Ctrl+Delete>) the cursor.
+
+=item C<Ctrl+U>, C<Ctrl+K>
+
+Delete the selection, or else everything from the start of the line to
+the cursor (C<Ctrl+U>) or from the cursor to the end of the line
+(C<Ctrl+K>). At the very start (end) of a line, they delete the line
+break before (after) it.
+
+=item C<Ctrl+X>, C<Shift+Delete>
+
+Cut: copy the selection to the clipboard and delete it.
+
+=item C<Ctrl+Insert>
+
+Copy the selection to the clipboard. C<Ctrl+C> is not copy: it stops
+L<Term::Fabulous>.
+
+=item C<Ctrl+V>, C<Shift+Insert>
+
+Paste the clipboard at the cursor, replacing the selection.
+
+=item C<Ctrl+Z>, C<Ctrl+Y>
+
+Undo and redo. Consecutive typing is undone one word (or one run of
+spaces) at a time; up to 100 steps are kept.
 
 =back
 
-Keys the input does not use, such as Tab, Escape and function keys,
-bubble to its ancestors. While C<read_only> is set, typing and the
-editing keys bubble too.
+The clipboard is the one of L<Term::Fabulous::Editor/clipboard>: one
+string shared by all text inputs of the program. It is not the system
+clipboard.
+
+While C<read_only> is set, typing and the keys that change the text
+(C<Backspace>, C<Delete>, C<Ctrl+W>, C<Ctrl+Delete>, C<Ctrl+U>,
+C<Ctrl+K>, C<Ctrl+X>, C<Shift+Delete>, C<Ctrl+V>, C<Shift+Insert>,
+C<Ctrl+Z>, C<Ctrl+Y>) are not used and bubble; movement, selection and
+copying still work.
+
+L<Term::Fabulous::Widget::TextField> and
+L<Term::Fabulous::Widget::TextArea> add keys of their own (C<Enter>,
+C<Up>, C<Down>, ...); see their KEYS sections.
 
 =head1 MOUSE
 
-A left click places the cursor; with Shift it extends the selection.
-Dragging selects, a double click selects a word.
+=over
+
+=item Click
+
+A left click places the cursor at the clicked character and focuses the
+input. The terminal does not report C<Shift>, C<Ctrl> or C<Alt> with
+mouse events, so there is no Shift+click selection; drag instead.
+
+=item Double click
+
+A second left click at the same position within 0.4 seconds selects the
+word there (or the single character, when it is not part of a word).
+
+=item Drag
+
+Moving the pointer with the left button held selects from where the
+button went down to the pointer, as long as the pointer stays over the
+input.
+
+=back
 
 =head1 EVENTS
 
+=over
+
+=item C<Change>
+
 L<Term::Fabulous::Event::Change> after every change the user makes to
-the text, with the new text as its C<value>.
+the text (typing, deleting, cutting, pasting, undo, redo), with the new
+text as its C<value>. Keys that do not change the text (cursor
+movement, copying, typing at C<max_length>) fire nothing. Programmatic
+changes through C<value> or C<editor> fire nothing.
 
-=head1 SUBCLASS INTERFACE
+=back
 
-Subclasses implement C<scroll_to_cursor> (keep the cursor visible),
-C<position_at($column, $row)> (the editor position at a buffer cell),
-C<is_multi_line> (a class method, whether the editor keeps line
-breaks), and the C<natural_size> and C<paint> methods of
-L<Term::Fabulous::Widget::Input>. They paint with
-C<paint_line_part($y, $row, $from, $to, $scroll, $cursor_at_end)>,
-C<paint_placeholder($y)> and C<paint_focus_background>, and measure with
-C<clusters_between>, C<columns_to> and C<offset_at_column>.
-C<display_cluster> decides how a cluster is shown. C<handle_key> may be
-extended; call C<cursor_moved> after moving the cursor and
-C<apply_edit($changed)> after an edit.
+L<Term::Fabulous::Widget::TextField> also fires
+L<Term::Fabulous::Event::Submit> on C<Enter>.
 
 =head1 KDL PROPERTIES
 
-The L<Term::Fabulous::Widget::Input/KDL PROPERTIES> plus C<value>,
-C<placeholder>, C<max_length>, C<read_only>, C<placeholder_color> and
-C<selection_color>.
+The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
+C<value>, C<placeholder>, C<max_length>, C<read_only> (C<#true> /
+C<#false>), C<placeholder_color> and C<selection_color>. Give
+C<max_length> before C<value>; in the opposite order a too long value is
+accepted first and the C<max_length> property then dies.
+
+	TextField "nick" {
+		max_length 12
+		value "guest"
+		placeholder "Nickname"
+	}
+
+=head1 SUBCLASS INTERFACE
+
+L<Term::Fabulous::Widget::TextField> and
+L<Term::Fabulous::Widget::TextArea> implement these; a new kind of text
+input would too.
+
+=head2 is_multi_line
+
+	method is_multi_line :common () { return 1 }
+
+Class method. Whether the editor keeps line breaks (1) or turns them
+into spaces (0, the default).
+
+=head2 scroll_to_cursor
+
+	method scroll_to_cursor () { ... }
+
+Required. Adjusts the input's scroll position so the cursor is visible.
+
+=head2 position_at
+
+	method position_at ( $column, $row ) { return ( $line, $offset ) }
+
+Required. The editor position (line index and character offset, see
+L<Term::Fabulous::Editor/POSITIONS>) shown at a cell of the buffer.
+Used for mouse clicks.
+
+=head2 natural_size
+
+	method natural_size () { return ( $preferred_columns, 1 ) }
+
+Required; see L<Term::Fabulous::Widget::Input/natural_size>.
+
+=head2 paint
+
+	method paint () { ... }
+
+Required; see L<Term::Fabulous::Widget::Input/paint>.
+
+=head2 display_cluster
+
+	method display_cluster ($cluster) { return $shown }
+
+How one grapheme cluster of the text is shown. The default replaces
+control characters (see L<Term::Fabulous::Unicode/sanitize_text>); the
+text field returns its C<mask> instead when one is set.
+
+=head2 clusters_between
+
+	my @clusters = $self->clusters_between( $line, $from, $to );
+
+The grapheme clusters of a line between two character offsets, as
+C<[ $offset, $display_cluster, $columns ]> array references.
+
+=head2 columns_to
+
+	my $columns = $self->columns_to( $line, $from, $offset );
+
+The columns the text of a line takes from offset C<$from> to C<$offset>.
+
+=head2 offset_at_column
+
+	my $offset = $self->offset_at_column( $line, $from, $to, $column );
+
+The offset of the cluster shown at C<$column> when the part
+C<[$from, $to)> of a line is painted from column 0; C<$to> for a column
+past its end.
+
+=head2 paint_line_part
+
+	my $next_x = $self->paint_line_part( $y, $line, $from, $to, $scroll, $cursor_at_end );
+
+Paints the part C<[$from, $to)> of a line on buffer row C<$y>, shifted
+left by C<$scroll> columns, with the selection and the cursor. The
+cursor is drawn after the last character only when C<$cursor_at_end> is
+true. Returns the column after the text.
+
+=head2 paint_placeholder
+
+	$self->paint_placeholder($y);
+
+Paints the placeholder on buffer row C<$y>, with the cursor on its first
+character while the input has the focus.
+
+=head2 shows_placeholder
+
+	return $self->paint_placeholder(0) if $self->shows_placeholder;
+
+True while the text is empty and there is a placeholder.
+
+=head2 apply_edit
+
+	return $self->apply_edit( $self->editor->insert($text) );
+
+Call after an editor edit made on behalf of the user: scrolls to the
+cursor, repaints, and fires C<Change> when the argument is true (the
+editor's edit methods return whether the text changed). Returns 1, so it
+can be returned from C<handle_key> directly.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
+L<Term::Fabulous::Editor>, L<Term::Fabulous::Widget::Input>.
 
 =cut

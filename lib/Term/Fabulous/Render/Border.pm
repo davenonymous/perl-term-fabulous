@@ -103,3 +103,89 @@ role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Term::Fabulous::Render::Border - Paint widget borders in their border styles
+
+=head1 SYNOPSIS
+
+	# Composed by Term::Fabulous::Render; called from draw for every
+	# border render command:
+	$ui->render_border( $command, $widget, $buffer );
+
+=head1 DESCRIPTION
+
+Most programs never use this module directly. It is one of the roles
+L<Term::Fabulous::Render> is made of, and it paints the border render
+commands Clay emits for widgets with a C<border_width>, using the
+widget's border styles (see L<Term::Fabulous::Role::HasBorderStyle> and
+L<Term::Fabulous::Enum::BorderStyle>).
+
+=head1 METHODS
+
+=head2 render_border
+
+	$ui->render_border( $command, $widget, $buffer );
+
+Paints the border of C<$widget>:
+
+=over
+
+=item *
+
+Nothing is painted unless C<$widget> composes
+L<Term::Fabulous::Role::HasBorderStyle>.
+
+=item *
+
+A side is painted when its border width in the command is positive.
+Whatever the width, a side is one cell thick: it is drawn on the
+outermost row or column of the widget's box. Corners are drawn where a
+painted top or bottom side meets a painted left or right side;
+otherwise the top or bottom edge glyph continues to the end of the row.
+In a box only one cell high, the top and bottom sides would share the
+same row: when both are to be drawn, only the top side is. Likewise in
+a box one cell wide only the left side is drawn when both the left and
+the right side are to be drawn.
+
+=item *
+
+Each side uses the style of that side (C<border_style_top>, ...). A
+side without a style is drawn with the C<Blank> style: spaces.
+
+=item *
+
+Each glyph is colored according to its style's location code (see
+L<Term::Fabulous::Enum::BorderStyle/locations>): the border color in
+front of either the widget's own background (the background already
+painted in that cell, read from C<$buffer>) or the parent's background
+(the background of the cell just outside the box, also read from
+C<$buffer>), possibly in reverse video.
+
+=item *
+
+Only cells inside the current clip area are painted.
+
+=back
+
+C<$command> is a Clay render command hash (see
+L<Clay::XS/RENDER COMMANDS>); C<$buffer> is the array reference of rows
+of background attributes, C<< $buffer->[$y][$x] >>, that
+L<Term::Fabulous::Render::Rectangle> and the other paint roles fill
+during the frame.
+
+=head1 REQUIRED METHODS
+
+The consuming class provides C<set_cell> (from a cell target, see
+L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height> (for
+L<Term::Fabulous::Render::Clip>).
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Render>, L<Term::Fabulous::Enum::BorderStyle>,
+L<Term::Fabulous::Role::HasBorderStyle>, L<Term::Fabulous::Manual/BORDERS>.
+
+=cut
