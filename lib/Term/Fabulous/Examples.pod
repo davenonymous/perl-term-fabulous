@@ -187,6 +187,19 @@ whenever the terminal is resized. See L<Term::Fabulous::Manual/Flow layout>.
 
 =end html
 
+=head2 examples/stack.pl
+
+Cards with a badge over their top right corner, and a message centered
+over a log, each built from a box with the stack layout: its children
+share one box and later ones are drawn on top. See
+L<Term::Fabulous::Manual/Stack layout>.
+
+=begin html
+
+<p><img src="/screenshots/example-stack.svg" alt="Three bordered cards with colored badges in their top right corners above a log with a bordered message centered over it"></p>
+
+=end html
+
 =head2 examples/canvas.pl
 
 Waves plotted with half blocks on a L<Term::Fabulous::Widget::Canvas>

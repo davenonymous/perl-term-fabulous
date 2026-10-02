@@ -4,7 +4,7 @@ use warnings;
 use Test2::V0;
 
 use Clay::UI::Enum::Result;
-use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
+use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_BACK_TO_FRONT CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
 use Time::HiRes ();
 use Term::Fabulous::Termbox qw(
@@ -185,6 +185,29 @@ subtest 'a left press focuses the widget under the pointer' => sub {
 	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 1 );
 	$focus_ui->draw;
 	is [ map { refaddr $_ } @pressed ], [ refaddr $buttons[1] ], 'Clay hit-tests the cell, not the edge it shares with the widget above';
+};
+
+subtest 'a click where stacked buttons overlap goes to the one on top' => sub {
+	my $stack   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_BACK_TO_FRONT } );
+	my @buttons = map { Term::Fabulous::Widget::Button->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed( 6 - 2 * $_ ), height => sizing_fixed(1) } } ) } 1 .. 2;
+	$stack->add_child(@buttons);
+	my $stack_ui = Term::Fabulous->new( width => 20, height => 5, root => $stack );
+	my ( @pressed, @mouse_targets );
+	$_->on( OnPress => sub { push @pressed, $_[0]->target; return } ) foreach @buttons;
+	$stack->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
+	$stack_ui->draw;
+
+	dispatch( $stack_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 0, y => 0 );
+	$stack_ui->draw;
+	ref_is $mouse_targets[0], $buttons[1], 'Mouse goes to the later child, drawn on top';
+	ref_is $stack_ui->interaction->get_focused_widget, $buttons[1], 'the press focuses it';
+	is [ map { refaddr $_ } @pressed ], [ refaddr $buttons[1] ], 'and only it is pressed';
+
+	dispatch( $stack_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 0, y => 0 );
+	$stack_ui->draw;
+	dispatch( $stack_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 0 );
+	$stack_ui->draw;
+	is [ map { refaddr $_ } @pressed[ 1 .. $#pressed ] ], [ refaddr $buttons[0] ], 'the uncovered part of the lower button is still pressable';
 };
 
 subtest 'a click where a removed widget was goes to what is left' => sub {

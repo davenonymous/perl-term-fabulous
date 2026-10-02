@@ -246,10 +246,11 @@ The number of empty cells between two neighboring children.
 
 =item C<layout_direction>
 
-C<CLAY_LEFT_TO_RIGHT> (the default), C<CLAY_TOP_TO_BOTTOM> or
+C<CLAY_LEFT_TO_RIGHT> (the default), C<CLAY_TOP_TO_BOTTOM>,
 C<CLAY_LEFT_TO_RIGHT_WRAP> (left to right, wrapping onto new lines; see
-L<Term::Fabulous::Manual/Flow layout>), constants exported by
-L<Clay::XS>.
+L<Term::Fabulous::Manual/Flow layout>) or C<CLAY_BACK_TO_FRONT> (on top
+of each other; see L<Term::Fabulous::Manual/Stack layout>), constants
+exported by L<Clay::XS>.
 
 =item C<line_gap>
 

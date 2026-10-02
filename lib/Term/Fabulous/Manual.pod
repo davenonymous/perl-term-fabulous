@@ -452,6 +452,11 @@ Children are stacked from top to bottom.
 Children are placed from left to right and wrap onto a new line when the
 row is full. See L</Flow layout>.
 
+=item C<CLAY_BACK_TO_FRONT>
+
+Children are placed on top of each other, later ones over earlier ones.
+See L</Stack layout>.
+
 =back
 
 A column of form rows, each row a left-to-right box of a label and an
@@ -604,6 +609,62 @@ Wrapping is horizontal only; there is no top-to-bottom variant. In a KDL
 layout, write C<layout direction=wrap gap=1 line_gap=0 line_sizing=fit>.
 See C<examples/flow.pl> for a tag list that rewraps when the terminal is
 resized.
+
+=head2 Stack layout
+
+With C<layout_direction =E<gt> CLAY_BACK_TO_FRONT> a widget places all
+its children on top of each other inside its padding. Later children
+are drawn over earlier ones, so a background, the content and a badge in
+the corner are three children in that order:
+
+	use Clay::XS qw(sizing_grow CLAY_BACK_TO_FRONT CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP);
+
+	my $card = Term::Fabulous::Widget::Box->new(
+		layout => {
+			layout_direction => CLAY_BACK_TO_FRONT,
+			child_alignment  => { x => CLAY_ALIGN_X_RIGHT, y => CLAY_ALIGN_Y_TOP },
+		},
+	);
+	$card->add_child(
+		Term::Fabulous::Widget::Box->new(
+			background_color => [ 30, 35, 50, 255 ],
+			layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, top => 1 } },
+		)->add_child( Term::Fabulous::Widget::Text->new( text => 'Inbox' ) ),
+		Term::Fabulous::Widget::Box->new(
+			background_color => [ 224, 108, 117, 255 ],
+			layout           => { padding => { left => 1, right => 1 } },
+		)->add_child( Term::Fabulous::Widget::Text->new( text => '3' ) ),
+	);
+
+=over
+
+=item *
+
+With C<sizing_fit()> the stack is as wide as its widest child and as
+tall as its tallest one. C<grow> children fill it.
+
+=item *
+
+C<child_alignment> places every child on its own, on both axes. A stack
+has only one C<child_alignment>; to put children in different corners,
+wrap each one in a C<grow> stack with its own alignment.
+
+=item *
+
+C<child_gap> has no effect.
+
+=item *
+
+Where children overlap, the one drawn on top gets the C<Mouse> event,
+the focus and the C<OnPress>. Uncovered parts of the children below
+still receive the mouse as usual.
+
+=back
+
+Unlike C<floating> widgets, the children of a stack take part in the
+layout: the stack, and so its parent, grows with its largest child. In
+a KDL layout, write C<layout direction=stack>. See C<examples/stack.pl>
+for cards with badges and a centered overlay.
 
 =head2 Borders take space
 

@@ -6,7 +6,7 @@ use Test2::V0;
 
 use Encode qw(decode);
 use Object::Pad 0.825;
-use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
+use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
 use Clay::UI::Role::Layout::HasFloating;
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
@@ -112,6 +112,22 @@ subtest 'flow layout' => sub {
 
 	is [ Term::Fabulous::Static->new( root => $root, width => 13 )->render_lines( colors => 0 ) ], [ 'one two three', '', 'four' ], 'a child that does not fit starts a new line, line_gap rows below';
 	is [ Term::Fabulous::Static->new( root => $root, width => 9 )->render_lines( colors => 0 ) ], [ 'one two', '', 'three', '', 'four' ], 'a narrower root breaks the lines earlier';
+};
+
+subtest 'stack layout' => sub {
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_BACK_TO_FRONT, child_alignment => { x => CLAY_ALIGN_X_RIGHT, y => CLAY_ALIGN_Y_BOTTOM } } );
+	$root->add_child(
+		Term::Fabulous::Widget::Box->new(
+			border_width => 1,
+			border_style => Term::Fabulous::Enum::BorderStyle->Round,
+			layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+		),
+		Term::Fabulous::Widget::Text->new( text => "first\nsecond\nthird" ),
+		Term::Fabulous::Widget::Text->new( text => '*' ),
+	);
+
+	is [ Term::Fabulous::Static->new( root => $root, width => 20 )->render_lines( colors => 0 ) ], [ "first╮", "second", "third*" ],
+		'the stack fits its largest child, a growing child fills it and later children are drawn on top';
 };
 
 subtest 'print' => sub {

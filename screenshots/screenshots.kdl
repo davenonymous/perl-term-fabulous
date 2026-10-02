@@ -113,6 +113,11 @@ screenshot "example-scroll-box" {
 	}
 }
 
+screenshot "example-stack" {
+	script "examples/stack.pl"
+	size 64 18
+}
+
 screenshot "example-static-report" {
 	script "examples/static-report.pl"
 	size 62 24

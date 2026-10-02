@@ -16,7 +16,7 @@ class Term::Fabulous::Widget::Box
 {
 	use Clay::XS qw(
 		Clay_GetElementId sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
-		CLAY_LEFT_TO_RIGHT_WRAP CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
+		CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
 		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_TO_ROOT CLAY_ATTACH_TO_ELEMENT_WITH_ID
 		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_CENTER CLAY_ATTACH_POINT_LEFT_BOTTOM
@@ -37,6 +37,9 @@ class Term::Fabulous::Widget::Box
 		wrap               => CLAY_LEFT_TO_RIGHT_WRAP,
 		ltr_wrap           => CLAY_LEFT_TO_RIGHT_WRAP,
 		left_to_right_wrap => CLAY_LEFT_TO_RIGHT_WRAP,
+		stack              => CLAY_BACK_TO_FRONT,
+		back_to_front      => CLAY_BACK_TO_FRONT,
+		btf                => CLAY_BACK_TO_FRONT,
 	);
 
 	my %LINE_SIZING_BY_NAME = ( grow => CLAY_LINE_SIZING_GROW, fit => CLAY_LINE_SIZING_FIT );
@@ -441,8 +444,10 @@ unknown keys and invalid values die, naming the property.
 =item C<layout direction=... gap=N line_gap=N line_sizing=...>
 
 C<direction> is C<down> (aliases C<ttb>, C<top_to_bottom>), C<right>
-(aliases C<ltr>, C<left_to_right>) or C<wrap> (aliases C<ltr_wrap>,
-C<left_to_right_wrap>; see L<Term::Fabulous::Manual/Flow layout>).
+(aliases C<ltr>, C<left_to_right>), C<wrap> (aliases C<ltr_wrap>,
+C<left_to_right_wrap>; see L<Term::Fabulous::Manual/Flow layout>) or
+C<stack> (aliases C<back_to_front>, C<btf>; see
+L<Term::Fabulous::Manual/Stack layout>).
 C<gap> (alias C<child_gap>; giving both dies) is the number of cells
 between children, a non-negative integer. C<line_gap> is the number of
 rows between the lines of a C<wrap> box, a non-negative integer.

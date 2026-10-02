@@ -10,6 +10,7 @@ examples/kdl-form.pl
 examples/kdl-layout.pl
 examples/pixel-paint.pl
 examples/scroll-box.pl
+examples/stack.pl
 examples/static-report.pl
 examples/text-sizing.pl
 examples/translucency.pl
@@ -180,6 +181,7 @@ screenshots/example-form.svg
 screenshots/example-kdl-form.svg         
 screenshots/example-pixel-paint.svg      
 screenshots/example-scroll-box.svg       
+screenshots/example-stack.svg            
 screenshots/example-static-report.svg    
 screenshots/example-text-sizing.svg      
 screenshots/example-translucency.svg     
