@@ -1,0 +1,676 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+Term::Fabulous::Examples - The example programs of the distribution,
+with pictures
+
+=head1 DESCRIPTION
+
+The distribution comes with three directories of runnable programs:
+
+=over
+
+=item F<examples>
+
+Demo programs, each showing off one area of Term::Fabulous; see
+L</THE DEMO PROGRAMS>.
+
+=item F<examples/widgets>
+
+One small program per widget, showing it in its typical states; see
+L</THE WIDGET GALLERY>.
+
+=item F<examples-cookbook>
+
+The complete programs of L<Term::Fabulous::Cookbook>, one file per
+recipe; see L</THE COOKBOOK PROGRAMS>.
+
+=back
+
+Every picture on this page shows a program running in a terminal,
+taken from the shipped file after the input that is described next to
+it. The pictures are taken again whenever a program changes, so they
+always show what the code does.
+
+=head1 RUNNING THE EXAMPLES
+
+The programs need a terminal that uses a UTF-8 locale and supports
+24-bit colors (see L<Term::Fabulous::Manual/REQUIREMENTS>). Interactive
+programs take over the whole terminal; Ctrl+C ends any of them.
+
+To get the files, unpack the distribution, for example with
+C<cpanm --look Term::Fabulous>. Once Term::Fabulous is installed, run a
+program from the unpacked directory:
+
+	perl examples/form.pl
+
+Without installing it, build the distribution first and run the
+programs with the built copy:
+
+	perl Makefile.PL && make
+	perl -Mblib examples/form.pl
+
+=head1 THE DEMO PROGRAMS
+
+=head2 examples/showcase.pl
+
+A tour on one screen: a form with every input widget and two buttons,
+a live chart on a pixel canvas, a log that grows from a timer in a
+scroll box, a translucent notification that Save shows for a few
+seconds, and text in several scripts. Tab and Shift+Tab move between
+the inputs.
+
+The picture shows it after typing a name and an e-mail address and
+pressing Save.
+
+=begin html
+
+<p><img src="/screenshots/overview.svg" alt="The showcase: a sign-up form, a chart of requests per second with a notification over it, an event log and text in several scripts"></p>
+
+=end html
+
+=head2 examples/form.pl
+
+Every input widget in one form, built in Perl: text fields (one masked),
+a text area, a dropdown, radio buttons, a slider and check boxes, with
+labels of equal width. A status line shows every change; checking
+"I accept the terms" enables the password field. See
+L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+
+The picture shows it after typing a name and a note and choosing a
+color from the dropdown.
+
+=begin html
+
+<p><img src="/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+
+=end html
+
+=head2 examples/kdl-form.pl
+
+A form described in a KDL layout instead of Perl code. The program finds
+the inputs by their ids, shows every change, shows all values on F2 and
+prints them when it ends. It is the program of
+L<Term::Fabulous::Cookbook/Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>.
+
+The picture shows the form filled in, after F2.
+
+=begin html
+
+<p><img src="/screenshots/example-kdl-form.svg" alt="The KDL form filled in, with all values shown in the status line after F2"></p>
+
+=end html
+
+=head2 examples/buttons-and-keys.pl
+
+Buttons that react to the mouse and to the keyboard, with focus, hover
+and press styling, application key bindings and a clock updated by a
+timer. It is the program of
+L<Term::Fabulous::Cookbook/Clickable buttons with focus and press styling>.
+
+The picture shows it after Tab and three presses of C<+>, with the mouse
+pointer over the Reset button.
+
+=begin html
+
+<p><img src="/screenshots/example-buttons-and-keys.svg" alt="Three buttons, the first focused and the last under the mouse pointer, a counter at 3 and a clock"></p>
+
+=end html
+
+=head2 examples/custom-widget.pl
+
+A widget of your own: an on/off switch built on
+L<Term::Fabulous::Widget::Input>, used from a KDL layout. It takes the
+focus, reacts to keys and clicks and fires C<Change> events. It is the
+program of
+L<Term::Fabulous::Cookbook/Write a custom input widget (a toggle switch)>.
+
+The picture shows it after Tab and Space switched Bluetooth on.
+
+=begin html
+
+<p><img src="/screenshots/example-custom-widget.svg" alt="Three toggle switches, Bluetooth focused and switched on, and the status line"></p>
+
+=end html
+
+=head2 examples/border-showcase.pl
+
+Every border style of L<Term::Fabulous::Enum::BorderStyle>, one box
+each.
+
+=begin html
+
+<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
+
+=end html
+
+=head2 examples/translucency.pl
+
+Three boxes with translucent backgrounds orbit over a screen of text.
+Their backgrounds are blended with the text below them, which shows
+through, tinted, or is covered, depending on C<glyphs_show_through>.
+Space pauses the orbit and g switches C<glyphs_show_through> on every
+box. See L<Term::Fabulous::Manual/Alpha and the terminal default color>.
+
+The picture shows the orbit after a few seconds.
+
+=begin html
+
+<p><img src="/screenshots/example-translucency.svg" alt="A green, a red and a blue translucent box over a screen of text; the text shows through the green and the blue one"></p>
+
+=end html
+
+=head2 examples/text-sizing.pl
+
+Text in Japanese, Korean, Thai and German with emoji, wrapped to the
+width of its box. Wide characters take two columns, and clusters with
+combining marks one. See L<Term::Fabulous::Manual/Wide characters and emoji>.
+
+=begin html
+
+<p><img src="/screenshots/example-text-sizing.svg" alt="Four boxes with Japanese, Korean, Thai and German text and emoji"></p>
+
+=end html
+
+=head2 examples/canvas.pl
+
+Waves plotted with half blocks on a L<Term::Fabulous::Widget::Canvas>
+and animated by a timer. Only the cells whose pixels moved are redrawn
+in each frame.
+
+=begin html
+
+<p><img src="/screenshots/example-canvas.svg" alt="Three waves in red, blue and green on a canvas, drawn with half blocks"></p>
+
+=end html
+
+=head2 examples/pixel-paint.pl
+
+A paint program on a L<Term::Fabulous::Widget::PixelCanvas>: the left
+mouse button paints, the right one erases, keys 1 to 6 pick a color and
+c clears. It starts with a few shapes drawn by the program.
+
+The picture shows a red wave painted with the mouse over the shapes.
+
+=begin html
+
+<p><img src="/screenshots/example-pixel-paint.svg" alt="A pixel canvas with a frame, a line, a circle, a filled rectangle and a red wave painted with the mouse"></p>
+
+=end html
+
+=head2 examples/scroll-box.pl
+
+Two L<Term::Fabulous::Widget::ScrollBox> widgets with more lines than
+fit, scrolled with the mouse wheel.
+
+The picture shows the boxes after five notches of the wheel on the left
+box and two on the right one.
+
+=begin html
+
+<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares"></p>
+
+=end html
+
+=head2 examples/web-colors.pl
+
+All colors of L<Term::Fabulous::Enum::WebColor> in a grid that adapts
+its columns to the terminal width and scrolls. A dropdown sorts them by
+hue, brightness, saturation or name.
+
+=begin html
+
+<p><img src="/screenshots/example-web-colors.svg" alt="A grid of color swatches with their hex values and names, and a dropdown to sort them"></p>
+
+=end html
+
+=head2 examples/static-report.pl
+
+Renders bordered panels with non-ASCII text once, with
+L<Term::Fabulous::Static>, and prints them: colored when the output is a
+terminal, plain text in a pipe.
+
+=begin html
+
+<p><img src="/screenshots/example-static-report.svg" alt="Three panels with double, heavy and round borders, printed to the terminal"></p>
+
+=end html
+
+=head2 examples/kdl-layout.pl
+
+The smallest KDL layout: a box with two lines of text, and borders that
+differ per side (rounded at the sides, thick at the top and bottom). See
+L<Term::Fabulous::Layout>.
+
+=head1 THE WIDGET GALLERY
+
+The programs in F<examples/widgets> show one widget each, in its
+typical states. Their pictures are also on the widget's page. Tab moves
+the focus between the widgets, Ctrl+C quits.
+
+=head2 examples/widgets/box.pl
+
+L<Term::Fabulous::Widget::Box>: a card with a border, a background,
+padding and a gap between its children, and boxes sized to their
+content, to the room left over and to a fixed width.
+
+=begin html
+
+<p><img src="/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
+
+=end html
+
+=head2 examples/widgets/text.pl
+
+L<Term::Fabulous::Widget::Text>: text in colors, wrapped and aligned
+in boxes, and in several scripts.
+
+=begin html
+
+<p><img src="/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
+
+=end html
+
+=head2 examples/widgets/button.pl
+
+L<Term::Fabulous::Widget::Button>: three buttons; the focused one has a
+brighter border. The picture shows it after Enter pressed Save.
+
+=begin html
+
+<p><img src="/screenshots/widget-button.svg" alt="Save, Cancel and Delete buttons, Save focused, and the line Save was pressed"></p>
+
+=end html
+
+=head2 examples/widgets/checkbox.pl
+
+L<Term::Fabulous::Widget::Checkbox>: focused, unchecked, checked,
+indeterminate and disabled.
+
+=begin html
+
+<p><img src="/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
+
+=end html
+
+=head2 examples/widgets/radio.pl
+
+L<Term::Fabulous::Widget::RadioGroup> and
+L<Term::Fabulous::Widget::RadioButton>: a group in a row (focused), a
+group in a column and a disabled group.
+
+=begin html
+
+<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+
+=end html
+
+=head2 examples/widgets/dropdown.pl
+
+L<Term::Fabulous::Widget::Dropdown>: one showing its placeholder, one
+with a selected option, and one whose list is open. The picture shows
+it after Enter opened the list and Down moved the highlight.
+
+=begin html
+
+<p><img src="/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
+
+=end html
+
+=head2 examples/widgets/slider.pl
+
+L<Term::Fabulous::Widget::Slider>: a focused slider with a percentage,
+one that formats its value with code, and a disabled one.
+
+=begin html
+
+<p><img src="/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
+
+=end html
+
+=head2 examples/widgets/text-field.pl
+
+L<Term::Fabulous::Widget::TextField>: a field being typed in, an empty
+one showing its placeholder, a masked password and a disabled field.
+
+=begin html
+
+<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: Ada Lovelace being typed, a placeholder, a masked password and a disabled field"></p>
+
+=end html
+
+=head2 examples/widgets/text-area.pl
+
+L<Term::Fabulous::Widget::TextArea>: a shopping list whose long line
+wraps at a space; the text is taller than the area, so a scrollbar shows
+the position.
+
+=begin html
+
+<p><img src="/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
+
+=end html
+
+=head2 examples/widgets/dialog.pl
+
+L<Term::Fabulous::Widget::Dialog>: a dialog over a list of files,
+behind a backdrop that dims them. Escape or a button closes it, d opens
+it again.
+
+=begin html
+
+<p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files"></p>
+
+=end html
+
+=head1 THE COOKBOOK PROGRAMS
+
+The programs in F<examples-cookbook> are the complete programs of
+L<Term::Fabulous::Cookbook>, where each is explained line by line.
+Three recipes use a program of F<examples> instead; they are listed
+above. Programs without a picture print text or run as a test.
+
+=head2 Getting started
+
+=over
+
+=item F<minimal-program.pl>
+
+L<Term::Fabulous::Cookbook/A minimal program to start from>: a line of
+text, and q, Escape or Ctrl+C to quit.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-minimal-program.svg" alt="The minimal program: one line of text on a dark background"></p>
+
+=end html
+
+=item F<non-ascii-text.pl>
+
+L<Term::Fabulous::Cookbook/Show non-ASCII text (umlauts, CJK, combining accents)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-non-ascii-text.svg" alt="German, Japanese and a combining accent, each line aligned in its columns"></p>
+
+=end html
+
+=item F<wrap-and-align-text.pl>
+
+L<Term::Fabulous::Cookbook/Wrap, align and space text>; prints the
+boxes as plain text.
+
+=back
+
+=head2 Keyboard and mouse
+
+=over
+
+=item F<key-bindings.pl>
+
+L<Term::Fabulous::Cookbook/Bind a key to an action>; the picture shows
+it after Ctrl+R.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-key-bindings.svg" alt="The key bindings program after Ctrl+R: the help line says reloaded and the second line shows the key name"></p>
+
+=end html
+
+=item F<paint-with-the-mouse.pl>
+
+L<Term::Fabulous::Cookbook/Paint with the mouse (Canvas, clicks and drags)>;
+the picture shows a drag and three clicks.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-paint-with-the-mouse.svg" alt="A wave drawn by dragging the mouse over a canvas, and three clicked dots"></p>
+
+=end html
+
+=back
+
+=head2 Timers and live data
+
+=over
+
+=item F<clock.pl>
+
+L<Term::Fabulous::Cookbook/Update the screen from a timer (a clock)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-clock.svg" alt="A clock in the middle of the terminal"></p>
+
+=end html
+
+=item F<scrolling-log.pl>
+
+L<Term::Fabulous::Cookbook/A scrolling log that grows from a timer (ScrollBox)>;
+the picture shows it after a few seconds.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-scrolling-log.svg" alt="A framed log with ten timestamped lines"></p>
+
+=end html
+
+=item F<follow-log.pl>
+
+L<Term::Fabulous::Cookbook/Scroll a ScrollBox from code (keep a log at the newest line)>;
+the picture shows it after a few seconds.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-follow-log.svg" alt="A log that shows its newest lines; every fifth line is wider than the box and cut at its edge"></p>
+
+=end html
+
+=item F<show-output.pl>
+
+L<Term::Fabulous::Cookbook/Show the output of a running command>; the
+picture shows it running C<seq -f 'Line %g' 1 40>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-show-output.svg" alt="The last lines of the output of seq and the exit status in a framed box"></p>
+
+=end html
+
+=back
+
+=head2 Forms
+
+=over
+
+=item F<login-form.pl>
+
+L<Term::Fabulous::Cookbook/A login form (centered dialog, masked password)>;
+the picture shows it after logging in.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-login-form.svg" alt="A centered login dialog with a user name, a masked password, a checked box and the welcome message"></p>
+
+=end html
+
+=item F<confirm-dialog.pl>
+
+L<Term::Fabulous::Cookbook/Ask a question in a dialog (Dialog widget)>;
+the picture shows the open dialog.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-confirm-dialog.svg" alt="The Really quit? dialog with Quit and Cancel buttons over the dimmed notes"></p>
+
+=end html
+
+=item F<choose-options.pl>
+
+L<Term::Fabulous::Cookbook/Choose from options in Perl (Dropdown, RadioGroup, Slider)>;
+the picture shows it after choosing Express shipping and raising the tip.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-choose-options.svg" alt="A dropdown showing France, radio buttons with Express chosen, a slider at 15 percent and the status line"></p>
+
+=end html
+
+=item F<disable-inputs.pl>
+
+L<Term::Fabulous::Cookbook/Disable inputs until a checkbox is checked>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-disable-inputs.svg" alt="An unchecked check box and the grayed out VAT number field below it"></p>
+
+=end html
+
+=item F<focus-help-line.pl>
+
+L<Term::Fabulous::Cookbook/Show a status line that follows the focus (OnFocus)>;
+the picture shows it while the notes have the focus.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-focus-help-line.svg" alt="A title, notes being typed, a slider and the help line for the notes"></p>
+
+=end html
+
+=item F<tab-order.pl>
+
+L<Term::Fabulous::Cookbook/Change the Tab order (HasFocusOrder)>.
+
+=back
+
+=head2 Layout and looks
+
+=over
+
+=item F<width-group.pl>
+
+L<Term::Fabulous::Cookbook/Equal-width labels with width_group>; prints
+plain text.
+
+=item F<border-sides.pl>
+
+L<Term::Fabulous::Cookbook/Per-side border styles>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-border-sides.svg" alt="Three boxes: double and single rules above and below, a heavy top edge, and a thick left edge"></p>
+
+=end html
+
+=item F<theme-switch.pl>
+
+L<Term::Fabulous::Cookbook/Change colors at run time (a theme with lighten and darken)>;
+the picture shows the light theme, after F2.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2"></p>
+
+=end html
+
+=item F<states-and-classes.pl>
+
+L<Term::Fabulous::Cookbook/Mark widgets with states and classes>; prints
+plain text.
+
+=item F<resize-aware-layout.pl>
+
+L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-resize-aware-layout.svg" alt="The Inbox and Message panes side by side on a wide terminal"></p>
+
+=end html
+
+=back
+
+=head2 Canvases
+
+=over
+
+=item F<pixel-canvas-plot.pl>
+
+L<Term::Fabulous::Cookbook/Plot data with PixelCanvas>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-pixel-canvas-plot.svg" alt="A line chart of temperatures on a pixel canvas, red above 20 degrees"></p>
+
+=end html
+
+=back
+
+=head2 Output without a terminal
+
+=over
+
+=item F<report-to-file.pl>
+
+L<Term::Fabulous::Cookbook/Render a report to a file or pipe (Static)>;
+also writes F<report.txt> into the current directory.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-report-to-file.svg" alt="The sales report: a rounded box with a title and three regions"></p>
+
+=end html
+
+=item F<test-a-widget.pl>
+
+L<Term::Fabulous::Cookbook/Test a widget without a terminal>; a test
+script, run it with C<prove>.
+
+=back
+
+=head2 Your own widgets and events
+
+=over
+
+=item F<kdl-panel.pl> and F<lib/My/Panel.pm>
+
+L<Term::Fabulous::Cookbook/Make a widget usable from KDL>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-kdl-panel.svg" alt="The Network panel in a rounded frame and the Disk panel in a double frame"></p>
+
+=end html
+
+=item F<custom-events.pl>
+
+L<Term::Fabulous::Cookbook/Fire your own events>; prints what the
+listeners hear.
+
+=back
+
+=head1 PICTURES OF YOUR OWN PROGRAMS
+
+The pictures on this page are taken with F<tools/screenshot> from the
+distribution, which takes one of any Term::Fabulous program, as SVG or
+PNG. It runs the program in a pseudo terminal of a given size, sends it
+the keys, text and mouse actions you give, and records what the
+terminal shows. Time is simulated, so animations and clocks come out
+the same on every run. From a built copy of the distribution:
+
+	perl -Mblib tools/screenshot --size 100x30 --output form.svg examples/form.pl
+	perl -Mblib tools/screenshot --steps 'type "Ada"; key "Tab"' --output form.png my-program.pl
+
+C<perl -Mblib tools/screenshot --help> lists the options. PNG output
+needs L<Imager> with PNG and FreeType support; F<tools/README.md>
+describes the tools.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous>, L<Term::Fabulous::Manual>,
+L<Term::Fabulous::Cookbook>.
+
+=cut

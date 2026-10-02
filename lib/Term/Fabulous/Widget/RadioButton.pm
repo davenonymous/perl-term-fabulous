@@ -133,6 +133,12 @@ Term::Fabulous::Widget::RadioButton - One choice of a radio group
 		Term::Fabulous::Widget::RadioButton->new( label => 'Large',  value => 'l' ),
 	);
 
+=begin html
+
+<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A radio button is one choice of a L<Term::Fabulous::Widget::RadioGroup>.

@@ -452,6 +452,12 @@ widgets, keyboard and mouse
 	$ui->interaction->set_focused_widget($name);
 	$ui->run;    # returns after Ctrl+C, SIGINT or SIGTERM
 
+=begin html
+
+<p><img src="/screenshots/overview.svg" alt="A Term::Fabulous program: a sign-up form with text fields, radio buttons, a dropdown, a slider, a check box and buttons, a chart of requests per second with a translucent notification, an event log and text in several scripts"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
@@ -535,9 +541,11 @@ application object.
 
 One page per class, listed under L</MODULES>.
 
-=item The F<examples> directory of the distribution
+=item L<Term::Fabulous::Examples>
 
-Runnable demo programs.
+The example programs of the distribution, with a picture of each: demo
+programs, a gallery of the widgets and the complete programs of the
+cookbook. The picture above is F<examples/showcase.pl>.
 
 =back
 
@@ -1242,8 +1250,9 @@ limit; raise C<max_element_count> in L</new>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual>, L<Term::Fabulous::Cookbook>, L<Clay::UI>,
-L<Clay::XS>, L<Term::Fabulous::Termbox>, L<IO::Async>, L<Object::Pad>.
+L<Term::Fabulous::Manual>, L<Term::Fabulous::Cookbook>,
+L<Term::Fabulous::Examples>, L<Clay::UI>, L<Clay::XS>,
+L<Term::Fabulous::Termbox>, L<IO::Async>, L<Object::Pad>.
 
 =head1 BUGS
 

@@ -268,6 +268,12 @@ Term::Fabulous::Widget::Box - The general-purpose container widget
 		Term::Fabulous::Widget::Text->new( text => 'Body text', text_color => [ 200, 205, 215, 255 ] ),
 	);
 
+=begin html
+
+<p><img src="/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A Box is a rectangle that holds other widgets and arranges them in a

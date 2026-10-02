@@ -21,3 +21,11 @@ requires 'XSLoader';
 on test => sub {
 	requires 'Test2::V0';
 };
+
+# The documentation tools in tools/ (make docs, make docs-check).
+on develop => sub {
+	requires 'IO::Pty';
+	requires 'JSON::PP';
+	requires 'Pod::Markdown';
+	recommends 'Imager';    # PNG output of tools/screenshot
+};

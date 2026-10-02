@@ -189,6 +189,12 @@ one is selected
 
 	$size->value('l');    # programmatic: selects "Large", fires no Change
 
+=begin html
+
+<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A radio group lets the user choose exactly one of several options, all

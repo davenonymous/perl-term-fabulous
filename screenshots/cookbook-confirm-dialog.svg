@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="708" height="345" viewBox="0 0 708 345" role="img" aria-label="perl examples-cookbook/confirm-dialog.pl">
+<title>perl examples-cookbook/confirm-dialog.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="676" height="310" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="676" height="310" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="676" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="354" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples-cookbook/confirm-dialog.pl</text>
+<rect x="16.5" y="16.5" width="675" height="309" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="30" y="60" width="648" height="54" fill="#0a0c11"/>
+<rect x="30" y="114" width="18" height="180" fill="#0a0c11"/>
+<rect x="48" y="114" width="108" height="126" fill="#121418"/>
+<rect x="156" y="114" width="396" height="72" fill="#1c212d"/>
+<rect x="552" y="114" width="108" height="126" fill="#121418"/>
+<rect x="660" y="114" width="18" height="180" fill="#0a0c11"/>
+<rect x="156" y="186" width="18" height="18" fill="#1c212d"/>
+<rect x="174" y="186" width="54" height="18" fill="#2b3a55"/>
+<rect x="228" y="186" width="18" height="18" fill="#1c212d"/>
+<rect x="246" y="186" width="72" height="18" fill="#2b3a55"/>
+<rect x="318" y="186" width="234" height="18" fill="#1c212d"/>
+<rect x="156" y="204" width="396" height="36" fill="#1c212d"/>
+<rect x="48" y="240" width="612" height="54" fill="#121418"/>
+<rect x="30" y="294" width="648" height="18" fill="#0a0c11"/>
+<rect x="165" y="122" width="378" height="1" fill="#61afef"/>
+<rect x="160" y="132" width="1" height="90" fill="#61afef"/>
+<rect x="547" y="132" width="1" height="90" fill="#61afef"/>
+<rect x="165" y="230" width="378" height="1" fill="#61afef"/>
+</g>
+<polyline points="160.5 132 160.5 127 160.538 126.413 160.653 125.835 160.843 125.278 161.103 124.75 161.43 124.261 161.818 123.818 162.261 123.43 162.75 123.103 163.278 122.843 163.835 122.653 164.413 122.538 165 122.5 165 122.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="547.5 132 547.5 127 547.462 126.413 547.347 125.835 547.157 125.278 546.897 124.75 546.57 124.261 546.182 123.818 545.739 123.43 545.25 123.103 544.722 122.843 544.165 122.653 543.587 122.538 543 122.5 543 122.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="160.5 222 160.5 226 160.538 226.587 160.653 227.165 160.843 227.722 161.103 228.25 161.43 228.739 161.818 229.182 162.261 229.57 162.75 229.897 163.278 230.157 163.835 230.347 164.413 230.462 165 230.5 165 230.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="547.5 222 547.5 226 547.462 226.587 547.347 227.165 547.157 227.722 546.897 228.25 546.57 228.739 546.182 229.182 545.739 229.57 545.25 229.897 544.722 230.157 544.165 230.347 543.587 230.462 543 230.5 543 230.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<g class="terminal">
+<text x="48" y="92" textLength="360" fill="#6e6e6e">Type some notes. q asks before quitting.</text>
+<text x="48" y="128" textLength="108" fill="#6e6f72">Buy milk and</text>
+<text x="174" y="164" textLength="324" fill="#dcdcdc">Really quit? Unsaved notes are lost.</text>
+<text x="183" y="200" textLength="126" fill="#dcdcdc">Quit    Cancel</text>
+</g>
+<g shape-rendering="crispEdges">
+</g>
+</svg>

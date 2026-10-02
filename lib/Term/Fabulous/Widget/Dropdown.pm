@@ -440,6 +440,12 @@ list that opens
 	$color->value('green');              # programmatic: fires no Change
 	say $color->selected_label;          # 'Dark green'
 
+=begin html
+
+<p><img src="/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A dropdown shows the label of the selected option (or a placeholder)

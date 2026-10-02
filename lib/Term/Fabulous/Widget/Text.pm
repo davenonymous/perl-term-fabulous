@@ -118,6 +118,12 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 	# Later, change what it shows:
 	$greeting->text('Hello again');
 
+=begin html
+
+<p><img src="/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A Text widget shows text inside its parent widget, usually a

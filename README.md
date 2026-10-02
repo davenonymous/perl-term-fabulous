@@ -46,6 +46,10 @@ widgets, keyboard and mouse
      $ui->run;    # returns after Ctrl+C, SIGINT or SIGTERM
 ```
 
+<div>
+    <p><img src="/screenshots/overview.svg" alt="A Term::Fabulous program: a sign-up form with text fields, radio buttons, a dropdown, a slider, a check box and buttons, a chart of requests per second with a translucent notification, an event log and text in several scripts"></p>
+</div>
+
 # DESCRIPTION
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
@@ -103,9 +107,11 @@ subclass of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
 
     One page per class, listed under ["MODULES"](#modules).
 
-- The `examples` directory of the distribution
+- [Term::Fabulous::Examples](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AExamples)
 
-    Runnable demo programs.
+    The example programs of the distribution, with a picture of each: demo
+    programs, a gallery of the widgets and the complete programs of the
+    cookbook. The picture above is `examples/showcase.pl`.
 
 # REQUIREMENTS
 
@@ -757,8 +763,9 @@ limit; raise `max_element_count` in ["new"](#new).
 
 # SEE ALSO
 
-[Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual), [Term::Fabulous::Cookbook](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI),
-[Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS), [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox), [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync), [Object::Pad](https://metacpan.org/pod/Object%3A%3APad).
+[Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual), [Term::Fabulous::Cookbook](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook),
+[Term::Fabulous::Examples](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AExamples), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS),
+[Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox), [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync), [Object::Pad](https://metacpan.org/pod/Object%3A%3APad).
 
 # BUGS
 

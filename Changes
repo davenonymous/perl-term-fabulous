@@ -1,6 +1,23 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Documentation with pictures: Term::Fabulous::Examples lists
+          every example program with a screenshot; the overview below
+          the SYNOPSIS of Term::Fabulous (and in README.md) shows the
+          new examples/showcase.pl; every widget page shows a preview
+          below its SYNOPSIS, taken from the new widget gallery in
+          examples/widgets; the Cookbook, the Manual and the pages of
+          WebColor, BorderStyle and Static show the matching programs
+        - The complete programs of Term::Fabulous::Cookbook are shipped
+          in examples-cookbook, one file per recipe; the Cookbook's code
+          blocks are copies of the shipped files
+        - Maintainer tools in tools/ (shipped, not installed): make docs
+          copies the example programs into the POD and takes the
+          screenshots again, reproducibly (each program runs in a pseudo
+          terminal on a virtual clock in a fixed environment); make
+          docs-check fails when either is out of date and runs before
+          make release; tools/screenshot takes an SVG or PNG screenshot
+          of any Term::Fabulous program
         - Frames are drawn only when something changed: a widget setter
           (Clay::UI::Revision), input, a resize or $ui->invalidate.
           Widget classes of your own call mark_changed (or repaint)

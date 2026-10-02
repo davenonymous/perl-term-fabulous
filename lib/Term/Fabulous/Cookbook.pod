@@ -20,22 +20,30 @@ Complete programs start with this header and run as they are:
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-Save a program to a file and run it with C<perl file.pl> in a terminal
-that uses a UTF-8 locale and supports 24-bit colors (see
+Run a program with C<perl file.pl> in a terminal that uses a UTF-8
+locale and supports 24-bit colors (see
 L<Term::Fabulous::Manual/REQUIREMENTS>). Interactive programs take over
 the whole terminal; press Ctrl+C to end any of them. Programs that print
 a report (they use L<Term::Fabulous::Static>) print and end on their own.
 
+You need not copy the programs from this page: every complete program
+is shipped as a file in the distribution, and each recipe names its
+file. Most are in the F<examples-cookbook> directory, as shown here; a
+few are in the F<examples> directory, which holds the demo programs of
+L<Term::Fabulous::Examples>. Those start differently: with
+C<use experimental 'signatures'> instead of C<use feature 'signatures'>,
+and with a C<use lib "$FindBin::Bin/../lib/"> line. From an unpacked
+copy of the distribution, run a file after installing Term::Fabulous,
+or from the built copy (C<perl Makefile.PL && make>) with
+C<perl -Mblib examples-cookbook/minimal-program.pl>.
+
+The picture below a program shows it running in a terminal, after the
+input its recipe describes. The pictures are taken from the shipped
+files, so they always show what the code on this page does.
+
 Snippets build on a program from an earlier recipe and say which one.
 A snippet that refers to C<$root> or C<$ui> means the root widget and the
 L<Term::Fabulous> object of that program.
-
-Some recipes are also shipped as runnable files in the F<examples>
-directory of the distribution; those recipes say so. The shipped files
-start differently: with a C<#!/usr/bin/env perl> line, C<use experimental
-'signatures'> instead of C<use feature 'signatures'>, and a
-C<use lib "$FindBin::Bin/../lib/"> line so that they run from a copy of
-the distribution without installing it.
 
 =head2 All recipes
 
@@ -106,6 +114,10 @@ L</Fire your own events>
 Goal: a full-screen program that shows a line of text and ends when the
 user presses q, Escape or Ctrl+C. Most other recipes start from it.
 
+This program is shipped as F<examples-cookbook/minimal-program.pl>.
+
+=for code-from examples-cookbook/minimal-program.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -143,6 +155,12 @@ user presses q, Escape or Ctrl+C. Most other recipes start from it.
 	);
 
 	$ui->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-minimal-program.svg" alt="The minimal program: one line of text on a dark background"></p>
+
+=end html
 
 =over
 
@@ -231,6 +249,10 @@ The listener is registered after C<$ui> exists, because it uses C<$ui>.
 Goal: show text with umlauts, CJK characters or combining accents in
 L<Term::Fabulous::Widget::Text> widgets.
 
+This program is shipped as F<examples-cookbook/non-ascii-text.pl>.
+
+=for code-from examples-cookbook/non-ascii-text.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -253,6 +275,12 @@ L<Term::Fabulous::Widget::Text> widgets.
 	);
 
 	Term::Fabulous::Static->new( root => $root, width => 30 )->print( colors => 0 );
+
+=begin html
+
+<p><img src="/screenshots/cookbook-non-ascii-text.svg" alt="German, Japanese and a combining accent, each line aligned in its columns"></p>
+
+=end html
 
 The program prints three lines: the German greeting, seven Japanese
 characters that take two columns each (14 columns) followed by C<|>,
@@ -291,6 +319,10 @@ L<Term::Fabulous::Manual/Wide characters and emoji>.
 
 Goal: control how a L<Term::Fabulous::Widget::Text> breaks its lines,
 how it aligns them and how much room each line gets.
+
+This program is shipped as F<examples-cookbook/wrap-and-align-text.pl>.
+
+=for code-from examples-cookbook/wrap-and-align-text.pl
 
 	use v5.24;
 	use warnings;
@@ -462,6 +494,10 @@ while dragging.
 Goal: run code when the user presses a key or a key combination, and
 show what the terminal reports for every key.
 
+This program is shipped as F<examples-cookbook/key-bindings.pl>.
+
+=for code-from examples-cookbook/key-bindings.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -504,6 +540,12 @@ show what the terminal reports for every key.
 	);
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-key-bindings.svg" alt="The key bindings program after Ctrl+R: the help line says reloaded and the second line shows the key name"></p>
+
+=end html
 
 =over
 
@@ -553,6 +595,8 @@ keyboard, that show which one has the focus, which one the pointer is
 over and which one is being pressed, together with application
 shortcuts and a clock. This program is also shipped as
 F<examples/buttons-and-keys.pl>.
+
+=for code-from examples/buttons-and-keys.pl
 
 	# Buttons that react to the mouse and the keyboard, application key
 	# bindings and a clock that a timer updates once per second.
@@ -676,6 +720,12 @@ F<examples/buttons-and-keys.pl>.
 
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/example-buttons-and-keys.svg" alt="Three buttons, the first focused and the last under the mouse pointer, a counter at 3 and a clock"></p>
+
+=end html
+
 =over
 
 =item *
@@ -724,6 +774,10 @@ L</Update the screen from a timer (a clock)>.
 =head2 Paint with the mouse (Canvas, clicks and drags)
 
 Goal: let the user draw on a canvas by clicking and dragging.
+
+This program is shipped as F<examples-cookbook/paint-with-the-mouse.pl>.
+
+=for code-from examples-cookbook/paint-with-the-mouse.pl
 
 	use v5.24;
 	use warnings;
@@ -779,6 +833,12 @@ Goal: let the user draw on a canvas by clicking and dragging.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-paint-with-the-mouse.svg" alt="A wave drawn by dragging the mouse over a canvas, and three clicked dots"></p>
+
+=end html
+
 =over
 
 =item *
@@ -818,6 +878,10 @@ program with a color palette.
 Goal: change what the screen shows at regular intervals, here a clock
 in the middle of the terminal.
 
+This program is shipped as F<examples-cookbook/clock.pl>.
+
+=for code-from examples-cookbook/clock.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -851,6 +915,12 @@ in the middle of the terminal.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-clock.svg" alt="A clock in the middle of the terminal"></p>
+
+=end html
+
 =over
 
 =item *
@@ -882,6 +952,10 @@ L<Term::Fabulous::Manual/Aligning and centering children>.
 
 Goal: a box that receives a new line every half second, can be
 scrolled with the mouse wheel, and never holds more than 500 lines.
+
+This program is shipped as F<examples-cookbook/scrolling-log.pl>.
+
+=for code-from examples-cookbook/scrolling-log.pl
 
 	use v5.24;
 	use warnings;
@@ -947,6 +1021,12 @@ scrolled with the mouse wheel, and never holds more than 500 lines.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-scrolling-log.svg" alt="A framed log with ten timestamped lines"></p>
+
+=end html
+
 =over
 
 =item *
@@ -979,6 +1059,10 @@ instead. See L<Term::Fabulous::Manual/Changing the tree>.
 
 Goal: a log that always shows its newest line, until the user scrolls
 up to read older lines; keys that scroll the log up, down and sideways.
+
+This program is shipped as F<examples-cookbook/follow-log.pl>.
+
+=for code-from examples-cookbook/follow-log.pl
 
 	use v5.24;
 	use warnings;
@@ -1105,6 +1189,12 @@ up to read older lines; keys that scroll the log up, down and sideways.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-follow-log.svg" alt="A log that shows its newest lines; every fifth line is wider than the box and cut at its edge"></p>
+
+=end html
+
 =over
 
 =item *
@@ -1173,6 +1263,10 @@ L<Term::Fabulous::Manual/SCROLLING>.
 
 Goal: run a command, show its output and its errors line by line while
 it runs, and its exit status when it ends.
+
+This program is shipped as F<examples-cookbook/show-output.pl>.
+
+=for code-from examples-cookbook/show-output.pl
 
 	use v5.24;
 	use warnings;
@@ -1274,9 +1368,16 @@ it runs, and its exit status when it ends.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-show-output.svg" alt="The last lines of the output of seq and the exit status in a framed box"></p>
+
+=end html
+
 Run it with a command and its arguments, for example
-C<perl show-output.pl ping -c 5 localhost>; without arguments it runs
-C<ls -l />.
+C<perl examples-cookbook/show-output.pl ping -c 5 localhost>; without
+arguments it runs C<ls -l />. The picture shows it running
+C<seq -f 'Line %g' 1 40>.
 
 =over
 
@@ -1320,6 +1421,10 @@ L</Scroll a ScrollBox from code (keep a log at the newest line)>.
 
 Goal: a centered dialog with a user name, a masked password and a
 check box, which validates the input when the user presses Enter.
+
+This program is shipped as F<examples-cookbook/login-form.pl>.
+
+=for code-from examples-cookbook/login-form.pl
 
 	use v5.24;
 	use warnings;
@@ -1384,6 +1489,12 @@ check box, which validates the input when the user presses Enter.
 	$ui->interaction->set_focused_widget($user);
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-login-form.svg" alt="A centered login dialog with a user name, a masked password, a checked box and the welcome message"></p>
+
+=end html
+
 =over
 
 =item *
@@ -1424,6 +1535,10 @@ L</Ask a question in a dialog (Dialog widget)>.
 Goal: a "Really quit?" dialog that opens over the screen when the user
 presses q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
+
+This program is shipped as F<examples-cookbook/confirm-dialog.pl>.
+
+=for code-from examples-cookbook/confirm-dialog.pl
 
 	use v5.24;
 	use warnings;
@@ -1488,6 +1603,12 @@ or a button.
 	$ui->interaction->set_focused_widget($notes);
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-confirm-dialog.svg" alt="The Really quit? dialog with Quit and Cancel buttons over the dimmed notes"></p>
+
+=end html
+
 =over
 
 =item *
@@ -1522,6 +1643,10 @@ changes. The dialog itself keeps its children between openings.
 
 Goal: let the user pick one of several options, from a list that opens
 and from radio buttons, and a number from a range, all built in Perl.
+
+This program is shipped as F<examples-cookbook/choose-options.pl>.
+
+=for code-from examples-cookbook/choose-options.pl
 
 	use v5.24;
 	use warnings;
@@ -1585,6 +1710,12 @@ and from radio buttons, and a number from a range, all built in Perl.
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 	$ui->interaction->set_focused_widget($country);
 	$ui->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-choose-options.svg" alt="A dropdown showing France, radio buttons with Express chosen, a slider at 15 percent and the status line"></p>
+
+=end html
 
 =over
 
@@ -1708,7 +1839,7 @@ Goal: describe the form in a KDL layout instead of Perl code, then find
 the inputs by id, react to changes and print all values when the program
 ends. This program is also shipped as F<examples/kdl-form.pl>.
 
-	#!/usr/bin/env perl
+=for code-from examples/kdl-form.pl
 
 	# A form of input widgets described in KDL. The program finds the inputs
 	# by their ids, shows every change in a status line and prints the values
@@ -1838,6 +1969,12 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 
 	say values_text();
 
+=begin html
+
+<p><img src="/screenshots/example-kdl-form.svg" alt="The KDL form filled in, with all values shown in the status line after F2"></p>
+
+=end html
+
 =over
 
 =item *
@@ -1895,6 +2032,10 @@ after the terminal has been restored.
 
 Goal: a text field that can only be used while a check box is checked.
 
+This program is shipped as F<examples-cookbook/disable-inputs.pl>.
+
+=for code-from examples-cookbook/disable-inputs.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -1932,6 +2073,12 @@ Goal: a text field that can only be used while a check box is checked.
 	$ui->interaction->set_focused_widget($company);
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-disable-inputs.svg" alt="An unchecked check box and the grayed out VAT number field below it"></p>
+
+=end html
+
 =over
 
 =item *
@@ -1958,6 +2105,10 @@ on an ancestor still sees the change.
 =head2 Show a status line that follows the focus (OnFocus)
 
 Goal: show a help text for the input that currently has the focus.
+
+This program is shipped as F<examples-cookbook/focus-help-line.pl>.
+
+=for code-from examples-cookbook/focus-help-line.pl
 
 	use v5.24;
 	use warnings;
@@ -2006,6 +2157,12 @@ Goal: show a help text for the input that currently has the focus.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-focus-help-line.svg" alt="A title, notes being typed, a slider and the help line for the notes"></p>
+
+=end html
+
 =over
 
 =item *
@@ -2027,6 +2184,10 @@ C<Submit>.
 
 Goal: make Tab visit the inputs in an order that differs from their
 order on the screen.
+
+This program is shipped as F<examples-cookbook/tab-order.pl>.
+
+=for code-from examples-cookbook/tab-order.pl
 
 	use v5.24;
 	use warnings;
@@ -2145,6 +2306,10 @@ C<< $field->repaint >> so the field shows the change.
 Goal: line up the values of a list of label/value rows, whatever the
 length of each label.
 
+This program is shipped as F<examples-cookbook/width-group.pl>.
+
+=for code-from examples-cookbook/width-group.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -2200,6 +2365,10 @@ take part; C<fixed> and C<percent> sizes are kept.
 Goal: different border styles on different sides of a box, or a border
 on some sides only.
 
+This program is shipped as F<examples-cookbook/border-sides.pl>.
+
+=for code-from examples-cookbook/border-sides.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -2244,6 +2413,12 @@ on some sides only.
 	$root->add_child( $rules, $header, $marker );
 	Term::Fabulous::Static->new( root => $root, width => 32 )->print( colors => 0 );
 
+=begin html
+
+<p><img src="/screenshots/cookbook-border-sides.svg" alt="Three boxes: double and single rules above and below, a heavy top edge, and a thick left edge"></p>
+
+=end html
+
 The program prints three boxes: the first with a double line above and
 a single line below the text and nothing at the sides, the second a
 single-line frame with a heavy top edge, the third only a solid block
@@ -2279,6 +2454,10 @@ F<examples/border-showcase.pl> shows all of them.
 
 Goal: derive a set of colors from one base color, and switch between a
 dark and a light theme with a key.
+
+This program is shipped as F<examples-cookbook/theme-switch.pl>.
+
+=for code-from examples-cookbook/theme-switch.pl
 
 	use v5.24;
 	use warnings;
@@ -2358,6 +2537,12 @@ dark and a light theme with a key.
 	$ui->interaction->set_focused_widget($field);
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2"></p>
+
+=end html
+
 =over
 
 =item *
@@ -2388,6 +2573,10 @@ the change.
 
 Goal: mark widgets with names, such as "selected" or "danger", and
 style them from those marks in one place.
+
+This program is shipped as F<examples-cookbook/states-and-classes.pl>.
+
+=for code-from examples-cookbook/states-and-classes.pl
 
 	use v5.24;
 	use warnings;
@@ -2482,6 +2671,10 @@ states (C<OnFocus>, C<OnBlur>, C<OnPress>, C<OnRelease>).
 Goal: arrange two panes side by side on a wide terminal and above each
 other on a narrow one.
 
+This program is shipped as F<examples-cookbook/resize-aware-layout.pl>.
+
+=for code-from examples-cookbook/resize-aware-layout.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -2532,6 +2725,12 @@ other on a narrow one.
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-resize-aware-layout.svg" alt="The Inbox and Message panes side by side on a wide terminal"></p>
+
+=end html
+
 =over
 
 =item *
@@ -2568,6 +2767,10 @@ terminal size by themselves.
 
 Goal: draw a line chart of a series of numbers, filling whatever room
 the terminal gives.
+
+This program is shipped as F<examples-cookbook/pixel-canvas-plot.pl>.
+
+=for code-from examples-cookbook/pixel-canvas-plot.pl
 
 	use v5.24;
 	use warnings;
@@ -2632,6 +2835,12 @@ the terminal gives.
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
+=begin html
+
+<p><img src="/screenshots/cookbook-pixel-canvas-plot.svg" alt="A line chart of temperatures on a pixel canvas, red above 20 degrees"></p>
+
+=end html
+
 =over
 
 =item *
@@ -2674,6 +2883,10 @@ only the cells that changed.
 
 Goal: lay out a widget tree once and print it as text, with colors on a
 terminal and plain in a pipe or a file.
+
+This program is shipped as F<examples-cookbook/report-to-file.pl>.
+
+=for code-from examples-cookbook/report-to-file.pl
 
 	use v5.24;
 	use warnings;
@@ -2718,6 +2931,12 @@ terminal and plain in a pipe or a file.
 	# As a string, for example for an e-mail body (a character string).
 	my $text = $page->render_string( colors => 0 );
 
+=begin html
+
+<p><img src="/screenshots/cookbook-report-to-file.svg" alt="The sales report: a rounded box with a title and three regions"></p>
+
+=end html
+
 The program prints a 40 column box with rounded corners holding a title
 and three lines, and writes the same box without color codes to
 F<report.txt>.
@@ -2760,6 +2979,10 @@ row padded to C<width> columns, for example for fixed-width files.
 
 Goal: test the behavior of widgets in an automated test, by firing key
 events at them and checking their values and what they show.
+
+This program is shipped as F<examples-cookbook/test-a-widget.pl>.
+
+=for code-from examples-cookbook/test-a-widget.pl
 
 	use v5.24;
 	use warnings;
@@ -2861,7 +3084,7 @@ it takes the focus, reacts to keys and clicks, fires C<Change> and can
 be used from a KDL layout. This program is also shipped as
 F<examples/custom-widget.pl>.
 
-	#!/usr/bin/env perl
+=for code-from examples/custom-widget.pl
 
 	# A widget of your own: an on/off switch built on
 	# Term::Fabulous::Widget::Input. It takes the focus, reacts to keys and
@@ -2994,6 +3217,12 @@ F<examples/custom-widget.pl>.
 	$ui->interaction->focus_next;
 	$ui->run;
 
+=begin html
+
+<p><img src="/screenshots/example-custom-widget.svg" alt="Three toggle switches, Bluetooth focused and switched on, and the status line"></p>
+
+=end html
+
 =over
 
 =item *
@@ -3043,7 +3272,13 @@ C<@INC> needs nothing of the kind; see the next recipe.
 Goal: a reusable container widget in its own module that KDL layouts
 can use, with a property that takes more than a single value.
 
+Both files are shipped in the F<examples-cookbook> directory:
+F<examples-cookbook/lib/My/Panel.pm> and
+F<examples-cookbook/kdl-panel.pl>.
+
 The widget, saved as F<lib/My/Panel.pm>:
+
+=for code-from examples-cookbook/lib/My/Panel.pm
 
 	package My::Panel;
 
@@ -3101,6 +3336,8 @@ The widget, saved as F<lib/My/Panel.pm>:
 A program that uses it from a layout, saved next to the F<lib>
 directory:
 
+=for code-from examples-cookbook/kdl-panel.pl
+
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
@@ -3138,6 +3375,12 @@ directory:
 	KDL
 
 	Term::Fabulous::Static->new( root => $root, width => 40 )->print;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-kdl-panel.svg" alt="The Network panel in a rounded frame and the Disk panel in a double frame"></p>
+
+=end html
 
 The program prints two framed panels: "Network" (in blue) above
 "Connected to the office network." in a rounded frame, and "Disk" above
@@ -3182,6 +3425,10 @@ child.
 Goal: let one part of the program announce that something happened,
 and let any ancestor widget react, with the same C<on> listeners as for
 the built-in events.
+
+This program is shipped as F<examples-cookbook/custom-events.pl>.
+
+=for code-from examples-cookbook/custom-events.pl
 
 	use v5.24;
 	use warnings;
@@ -3270,7 +3517,8 @@ object can be fired only once; create a new one each time.
 L<Term::Fabulous> (the main module), L<Term::Fabulous::Manual> (concepts
 and reference overview), the widget classes under
 C<Term::Fabulous::Widget::>, L<Term::Fabulous::Layout> (KDL layouts),
-L<Term::Fabulous::Static> (rendering to text), and the programs in the
-F<examples> directory of the distribution.
+L<Term::Fabulous::Static> (rendering to text), and
+L<Term::Fabulous::Examples> (all example programs of the distribution,
+with pictures).
 
 =cut

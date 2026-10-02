@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="525" viewBox="0 0 780 525" role="img" aria-label="perl examples/translucency.pl">
+<title>perl examples/translucency.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="748" height="490" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="748" height="490" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="748" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/translucency.pl</text>
+<rect x="16.5" y="16.5" width="747" height="489" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="372" y="78" width="270" height="54" fill="#2d4c38"/>
+<rect x="381" y="132" width="261" height="18" fill="#2d4c38"/>
+<rect x="372" y="150" width="270" height="36" fill="#2d4c38"/>
+<rect x="39" y="222" width="270" height="108" fill="#8a3a3f"/>
+<rect x="354" y="366" width="270" height="72" fill="#285391"/>
+<rect x="363" y="438" width="261" height="18" fill="#285391"/>
+<rect x="354" y="456" width="270" height="18" fill="#3c8cff"/>
+<rect x="381" y="86" width="252" height="1" fill="#78e678"/>
+<rect x="376" y="96" width="1" height="36" fill="#78e678"/>
+<rect x="637" y="96" width="1" height="72" fill="#78e678"/>
+<rect x="376" y="150" width="1" height="18" fill="#78e678"/>
+<rect x="381" y="176" width="252" height="1" fill="#78e678"/>
+<rect x="48" y="230" width="252" height="1" fill="#ff5a5a"/>
+<rect x="43" y="240" width="1" height="72" fill="#ff5a5a"/>
+<rect x="304" y="240" width="1" height="72" fill="#ff5a5a"/>
+<rect x="48" y="320" width="252" height="1" fill="#ff5a5a"/>
+<rect x="363" y="374" width="252" height="1" fill="#3c8cff"/>
+<rect x="358" y="384" width="1" height="54" fill="#3c8cff"/>
+<rect x="619" y="384" width="1" height="72" fill="#3c8cff"/>
+<rect x="363" y="464" width="252" height="1" fill="#3c8cff"/>
+</g>
+<polyline points="376.5 96 376.5 91 376.538 90.413 376.653 89.835 376.843 89.278 377.103 88.75 377.43 88.261 377.818 87.818 378.261 87.43 378.75 87.103 379.278 86.843 379.835 86.653 380.413 86.538 381 86.5 381 86.5" fill="none" stroke="#78e678" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="637.5 96 637.5 91 637.462 90.413 637.347 89.835 637.157 89.278 636.897 88.75 636.57 88.261 636.182 87.818 635.739 87.43 635.25 87.103 634.722 86.843 634.165 86.653 633.587 86.538 633 86.5 633 86.5" fill="none" stroke="#78e678" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="376.5 168 376.5 172 376.538 172.587 376.653 173.165 376.843 173.722 377.103 174.25 377.43 174.739 377.818 175.182 378.261 175.57 378.75 175.897 379.278 176.157 379.835 176.347 380.413 176.462 381 176.5 381 176.5" fill="none" stroke="#78e678" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="637.5 168 637.5 172 637.462 172.587 637.347 173.165 637.157 173.722 636.897 174.25 636.57 174.739 636.182 175.182 635.739 175.57 635.25 175.897 634.722 176.157 634.165 176.347 633.587 176.462 633 176.5 633 176.5" fill="none" stroke="#78e678" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="43.5 240 43.5 235 43.538 234.413 43.653 233.835 43.843 233.278 44.103 232.75 44.43 232.261 44.818 231.818 45.261 231.43 45.75 231.103 46.278 230.843 46.835 230.653 47.413 230.538 48 230.5 48 230.5" fill="none" stroke="#ff5a5a" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="304.5 240 304.5 235 304.462 234.413 304.347 233.835 304.157 233.278 303.897 232.75 303.57 232.261 303.182 231.818 302.739 231.43 302.25 231.103 301.722 230.843 301.165 230.653 300.587 230.538 300 230.5 300 230.5" fill="none" stroke="#ff5a5a" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="43.5 312 43.5 316 43.538 316.587 43.653 317.165 43.843 317.722 44.103 318.25 44.43 318.739 44.818 319.182 45.261 319.57 45.75 319.897 46.278 320.157 46.835 320.347 47.413 320.462 48 320.5 48 320.5" fill="none" stroke="#ff5a5a" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="304.5 312 304.5 316 304.462 316.587 304.347 317.165 304.157 317.722 303.897 318.25 303.57 318.739 303.182 319.182 302.739 319.57 302.25 319.897 301.722 320.157 301.165 320.347 300.587 320.462 300 320.5 300 320.5" fill="none" stroke="#ff5a5a" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="358.5 384 358.5 379 358.538 378.413 358.653 377.835 358.843 377.278 359.103 376.75 359.43 376.261 359.818 375.818 360.261 375.43 360.75 375.103 361.278 374.843 361.835 374.653 362.413 374.538 363 374.5 363 374.5" fill="none" stroke="#3c8cff" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="619.5 384 619.5 379 619.462 378.413 619.347 377.835 619.157 377.278 618.897 376.75 618.57 376.261 618.182 375.818 617.739 375.43 617.25 375.103 616.722 374.843 616.165 374.653 615.587 374.538 615 374.5 615 374.5" fill="none" stroke="#3c8cff" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="358.5 456 358.5 460 358.538 460.587 358.653 461.165 358.843 461.722 359.103 462.25 359.43 462.739 359.818 463.182 360.261 463.57 360.75 463.897 361.278 464.157 361.835 464.347 362.413 464.462 363 464.5 363 464.5" fill="none" stroke="#3c8cff" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="619.5 456 619.5 460 619.462 460.587 619.347 461.165 619.157 461.722 618.897 462.25 618.57 462.739 618.182 463.182 617.739 463.57 617.25 463.897 616.722 464.157 616.165 464.347 615.587 464.462 615 464.5 615 464.5" fill="none" stroke="#3c8cff" stroke-width="1" stroke-linejoin="round"/>
+<g class="terminal">
+<text x="48" y="92" textLength="324" fill="#bec8d7">frame focus frame border render colo</text>
+<text x="642" y="92" textLength="45" fill="#bec8d7">timer</text>
+<text x="705" y="92" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="48" y="110" textLength="54" fill="#bec8d7">target</text>
+<text x="120" y="110" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="138" y="110" textLength="234" fill="#bec8d7">color shadow terminal cell</text>
+<text x="381" y="110" textLength="171" fill="#acd0bf">alpha render canvas</text>
+<text x="570" y="110" text-anchor="middle" fill="#acd0bf">漢</text>
+<text x="588" y="110" text-anchor="middle" fill="#acd0bf">字</text>
+<text x="606" y="110" textLength="27" fill="#acd0bf">tim</text>
+<text x="642" y="110" textLength="81" fill="#bec8d7">r pointer</text>
+<text x="48" y="128" textLength="324" fill="#bec8d7">glyph canvas terminal layout glyph e</text>
+<text x="381" y="128" textLength="9" fill="#acd0bf">e</text>
+<text x="390" y="128" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 1</text>
+<text x="606" y="128" textLength="27" fill="#acd0bf">col</text>
+<text x="642" y="128" textLength="63" fill="#bec8d7">r color</text>
+<text x="48" y="146" textLength="306" fill="#bec8d7">target pointer alpha timer scissor</text>
+<text x="372" y="146" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="390" y="146" text-anchor="middle" fill="#acd0bf">字</text>
+<text x="399" y="146" textLength="207" fill="#ffffff">lpha 64: a lighter tint</text>
+<text x="606" y="146" textLength="27" fill="#acd0bf">ent</text>
+<text x="642" y="146" textLength="45" fill="#bec8d7">color</text>
+<text x="48" y="164" textLength="324" fill="#bec8d7">timer cell terminal scissor layout s</text>
+<text x="381" y="164" textLength="225" fill="#acd0bf">issor widget color canvas</text>
+<text x="624" y="164" text-anchor="middle" fill="#acd0bf">漢</text>
+<text x="660" y="164" textLength="45" fill="#bec8d7">focus</text>
+<text x="48" y="182" textLength="315" fill="#bec8d7">frame glyph terminal terminal event</text>
+<text x="642" y="182" textLength="27" fill="#bec8d7">nal</text>
+<text x="48" y="200" textLength="243" fill="#bec8d7">widget layout color pointer</text>
+<text x="309" y="200" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="327" y="200" textLength="261" fill="#bec8d7">pointer shadow shadow pointer</text>
+<text x="606" y="200" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="624" y="200" textLength="45" fill="#bec8d7">frame</text>
+<text x="48" y="218" textLength="513" fill="#bec8d7">layout frame cell naïve timer layout pointer color border</text>
+<text x="579" y="218" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="597" y="218" textLength="117" fill="#bec8d7">cell terminal</text>
+<text x="318" y="236" textLength="378" fill="#bec8d7">alpha cell event scissor cell border glyph</text>
+<text x="714" y="236" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="318" y="254" textLength="396" fill="#bec8d7">canvas event canvas frame blend color layout</text>
+<text x="57" y="272" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 0</text>
+<text x="309" y="272" textLength="180" fill="#bec8d7">ll blend blend focus</text>
+<text x="507" y="272" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="525" y="272" textLength="162" fill="#bec8d7">Grüße focus widget</text>
+<text x="57" y="290" textLength="189" fill="#ffffff">text below is covered</text>
+<text x="318" y="290" textLength="153" fill="#bec8d7">cell color shadow</text>
+<text x="489" y="290" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="507" y="290" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="525" y="290" textLength="180" fill="#bec8d7">terminal frame color</text>
+<text x="309" y="308" textLength="81" fill="#bec8d7">et render</text>
+<text x="408" y="308" text-anchor="middle" fill="#bec8d7">東</text>
+<text x="426" y="308" text-anchor="middle" fill="#bec8d7">京</text>
+<text x="444" y="308" textLength="108" fill="#bec8d7">canvas event</text>
+<text x="570" y="308" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="588" y="308" textLength="117" fill="#bec8d7">layout layout</text>
+<text x="309" y="326" textLength="405" fill="#bec8d7">ssor timer render blend layout render pointer</text>
+<text x="48" y="344" textLength="117" fill="#bec8d7">canvas shadow</text>
+<text x="183" y="344" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="201" y="344" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="219" y="344" textLength="459" fill="#bec8d7">canvas layout canvas naïve focus event canvas timer</text>
+<text x="48" y="362" textLength="666" fill="#bec8d7">blend event alpha terminal event Grüße scissor scissor render Grüße border</text>
+<text x="48" y="380" textLength="306" fill="#bec8d7">focus target scissor widget shadow</text>
+<text x="624" y="380" textLength="81" fill="#bec8d7">fer timer</text>
+<text x="48" y="398" textLength="297" fill="#bec8d7">shadow naïve border canvas buffer</text>
+<text x="363" y="398" textLength="252" fill="#7daaeb">idget border Grüße widget fr</text>
+<text x="624" y="398" textLength="72" fill="#bec8d7">me color</text>
+<text x="48" y="416" textLength="54" fill="#bec8d7">border</text>
+<text x="120" y="416" text-anchor="middle" fill="#bec8d7">東</text>
+<text x="138" y="416" text-anchor="middle" fill="#bec8d7">京</text>
+<text x="156" y="416" textLength="198" fill="#bec8d7">terminal alpha timer b</text>
+<text x="363" y="416" textLength="9" fill="#7daaeb">f</text>
+<text x="372" y="416" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 1</text>
+<text x="588" y="416" textLength="27" fill="#7daaeb">len</text>
+<text x="633" y="416" textLength="63" fill="#bec8d7">scissor</text>
+<text x="48" y="434" textLength="306" fill="#bec8d7">border target color timer timer bo</text>
+<text x="363" y="434" textLength="9" fill="#7daaeb">d</text>
+<text x="372" y="434" textLength="225" fill="#ffffff">text below shows through,</text>
+<text x="597" y="434" textLength="18" fill="#7daaeb">et</text>
+<text x="624" y="434" textLength="72" fill="#bec8d7">terminal</text>
+<text x="48" y="452" textLength="288" fill="#bec8d7">blend Grüße pointer Grüße border</text>
+<text x="354" y="452" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="372" y="452" text-anchor="middle" fill="#7daaeb">字</text>
+<text x="381" y="452" textLength="45" fill="#ffffff">inted</text>
+<text x="435" y="452" textLength="171" fill="#7daaeb">buffer buffer timer</text>
+<text x="624" y="452" textLength="90" fill="#bec8d7">ell buffer</text>
+<text x="48" y="470" textLength="306" fill="#969696">Space pauses, g toggles glyphs_sho</text>
+<text x="624" y="470" textLength="45" fill="#969696">as no</text>
+<text x="48" y="488" textLength="396" fill="#969696">background, so over it the boxes are opaque.</text>
+</g>
+<g shape-rendering="crispEdges">
+</g>
+</svg>

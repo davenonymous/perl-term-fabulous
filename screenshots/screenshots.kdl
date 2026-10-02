@@ -1,0 +1,341 @@
+// The screenshots of the documentation.
+//
+// Every "screenshot" node runs one program in a terminal of the given
+// size, gives it the input of its steps, and writes what the terminal
+// then shows to screenshots/NAME.svg. The POD shows the images with
+// <img src="/screenshots/NAME.svg">.
+//
+//     make docs          # take the screenshots again, after changing a program
+//     make docs-check    # fails when a screenshot or a code block is out of date
+//
+// Time is virtual: the steps start 0.5 seconds after the program started
+// its event loop, every input is followed by 0.1 seconds, and the screen
+// is captured 0.5 seconds after the last step. "wait N" lets N seconds of
+// timers and animation pass. The clock starts at the time below, in UTC.
+// The syntax of all settings and steps is described in
+// tools/lib/Term/Fabulous/Screenshot/Scenario.pm.
+
+defaults {
+	size 80 24
+	clock "2026-06-01T09:41:00Z"
+}
+
+// --- The overview at the top of Term::Fabulous and README.md -------------
+
+screenshot "overview" {
+	script "examples/showcase.pl"
+	size 110 32
+	steps {
+		type "Ada Lovelace"
+		key "Tab"
+		type "ada@example.com"
+		wait 7
+		key "Tab" "Tab" "Tab" "Tab" "Tab" "Enter"
+		wait 1
+	}
+}
+
+// --- examples/ -------------------------------------------------------------
+
+screenshot "example-border-showcase" {
+	script "examples/border-showcase.pl"
+	size 100 32
+}
+
+screenshot "example-buttons-and-keys" {
+	script "examples/buttons-and-keys.pl"
+	size 80 12
+	steps {
+		key "Tab" "+" "+" "+"
+		move 30 6
+		wait 2
+	}
+}
+
+screenshot "example-canvas" {
+	script "examples/canvas.pl"
+	size 88 20
+	steps {
+		wait 2
+	}
+}
+
+screenshot "example-custom-widget" {
+	script "examples/custom-widget.pl"
+	size 80 11
+	steps {
+		key "Tab" "Space"
+	}
+}
+
+screenshot "example-form" {
+	script "examples/form.pl"
+	size 80 19
+	steps {
+		type "Ada Lovelace"
+		key "Tab" "Tab"
+		type "Please call after 6 pm."
+		key "Tab" "Enter" "Down" "Down" "Enter"
+	}
+}
+
+screenshot "example-kdl-form" {
+	script "examples/kdl-form.pl"
+	size 80 20
+	steps {
+		type "Grace Hopper"
+		key "Tab"
+		type "cobol"
+		key "Tab" "Right" "Tab" "Tab" "Right" "Right" "Tab" "Space" "F2"
+	}
+}
+
+screenshot "example-pixel-paint" {
+	script "examples/pixel-paint.pl"
+	size 96 22
+	steps {
+		key "2"
+		drag 8 12 9 13 10 14 11 15 12 15 13 16 14 16 15 16 16 16 17 16 18 16 19 16 20 15 21 14 22 14 23 13 24 12 25 12 26 11 27 10 28 10 29 9 30 9 31 9 32 9 33 9 34 9 35 10 36 10 37 11 38 12 39 12 40 13 41 13 42 14 43 15 44 16 45 16 46 16 47 16 48 16 49 16 50 16 51 15 52 15 53 14 54 13 55 12 56 12 57 11 58 11 59 10 60 9 61 9 62 9 63 9 64 9 65 9 66 9 67 10 68 11 69 11 70 12
+	}
+}
+
+screenshot "example-scroll-box" {
+	script "examples/scroll-box.pl"
+	size 80 16
+	steps {
+		wheel 20 6 direction="down" notches=5
+		wheel 60 6 direction="down" notches=2
+	}
+}
+
+screenshot "example-static-report" {
+	script "examples/static-report.pl"
+	size 62 24
+}
+
+screenshot "example-text-sizing" {
+	script "examples/text-sizing.pl"
+	size 100 13
+}
+
+screenshot "example-translucency" {
+	script "examples/translucency.pl"
+	size 80 24
+	steps {
+		wait 2.5
+	}
+}
+
+screenshot "example-web-colors" {
+	script "examples/web-colors.pl"
+	size 100 30
+}
+
+// --- examples-cookbook/: the programs of Term::Fabulous::Cookbook --------
+
+screenshot "cookbook-minimal-program" {
+	script "examples-cookbook/minimal-program.pl"
+	size 72 5
+}
+
+screenshot "cookbook-non-ascii-text" {
+	script "examples-cookbook/non-ascii-text.pl"
+	size 52 4
+}
+
+screenshot "cookbook-key-bindings" {
+	script "examples-cookbook/key-bindings.pl"
+	size 72 4
+	steps {
+		key "Ctrl+R"
+	}
+}
+
+screenshot "cookbook-paint-with-the-mouse" {
+	script "examples-cookbook/paint-with-the-mouse.pl"
+	size 72 14
+	steps {
+		drag 4 7 5 8 6 8 7 9 8 9 9 10 10 10 11 10 12 10 13 10 14 10 15 9 16 9 17 9 18 8 19 7 20 7 21 6 22 6 23 5 24 5 25 4 26 4 27 4 28 4 29 4 30 4 31 5 32 5 33 6 34 6 35 7 36 7 37 8 38 8 39 9 40 9 41 10 42 10 43 10 44 10 45 10 46 10 47 9 48 9 49 8 50 8 51 7 52 6 53 6 54 5 55 5 56 5 57 4 58 4 59 4 60 4 61 4 62 5 63 5 64 5 65 6
+		click 4 11
+		click 6 11
+		click 8 11
+	}
+}
+
+screenshot "cookbook-clock" {
+	script "examples-cookbook/clock.pl"
+	size 48 7
+	steps {
+		wait 5
+	}
+}
+
+screenshot "cookbook-scrolling-log" {
+	script "examples-cookbook/scrolling-log.pl"
+	size 72 12
+	steps {
+		wait 6
+	}
+}
+
+screenshot "cookbook-follow-log" {
+	script "examples-cookbook/follow-log.pl"
+	size 80 14
+	steps {
+		wait 8
+	}
+}
+
+screenshot "cookbook-show-output" {
+	script "examples-cookbook/show-output.pl"
+	args "seq" "-f" "Line %g" "1" "40"
+	size 72 14
+	steps {
+		wait 1
+		// Moving the pointer asks for a frame, which shows the newest
+		// line; see "Scroll a ScrollBox from code".
+		move 70 13
+	}
+}
+
+screenshot "cookbook-login-form" {
+	script "examples-cookbook/login-form.pl"
+	size 64 15
+	steps {
+		type "ada"
+		key "Tab"
+		type "difference engine"
+		key "Tab" "Space" "BackTab" "Enter"
+	}
+}
+
+screenshot "cookbook-confirm-dialog" {
+	script "examples-cookbook/confirm-dialog.pl"
+	size 72 14
+	steps {
+		type "Buy milk and a new punch card reader."
+		// While the notes have the focus they take the q as text; a click
+		// on the root (outside any input) takes the focus away first.
+		click 4 1
+		key "q"
+	}
+}
+
+screenshot "cookbook-choose-options" {
+	script "examples-cookbook/choose-options.pl"
+	size 72 9
+	steps {
+		key "Tab" "Right" "Tab" "Right" "Right"
+	}
+}
+
+screenshot "cookbook-disable-inputs" {
+	script "examples-cookbook/disable-inputs.pl"
+	size 60 5
+}
+
+screenshot "cookbook-focus-help-line" {
+	script "examples-cookbook/focus-help-line.pl"
+	size 72 14
+	steps {
+		key "Tab"
+		type "Weekly report"
+		key "Tab"
+		type "Sales are up in the north."
+	}
+}
+
+screenshot "cookbook-border-sides" {
+	script "examples-cookbook/border-sides.pl"
+	size 52 10
+}
+
+screenshot "cookbook-theme-switch" {
+	script "examples-cookbook/theme-switch.pl"
+	size 72 8
+	steps {
+		type "Light and readable"
+		key "F2"
+	}
+}
+
+screenshot "cookbook-resize-aware-layout" {
+	script "examples-cookbook/resize-aware-layout.pl"
+	size 80 8
+}
+
+screenshot "cookbook-pixel-canvas-plot" {
+	script "examples-cookbook/pixel-canvas-plot.pl"
+	size 80 16
+}
+
+screenshot "cookbook-report-to-file" {
+	script "examples-cookbook/report-to-file.pl"
+	size 52 8
+}
+
+screenshot "cookbook-kdl-panel" {
+	script "examples-cookbook/kdl-panel.pl"
+	size 52 8
+}
+
+// --- examples/widgets/: the previews of the widget pages ------------------
+
+screenshot "widget-box" {
+	script "examples/widgets/box.pl"
+	size 72 11
+}
+
+screenshot "widget-text" {
+	script "examples/widgets/text.pl"
+	size 80 11
+}
+
+screenshot "widget-button" {
+	script "examples/widgets/button.pl"
+	size 60 7
+	steps {
+		key "Enter"
+	}
+}
+
+screenshot "widget-checkbox" {
+	script "examples/widgets/checkbox.pl"
+	size 60 7
+}
+
+screenshot "widget-radio" {
+	script "examples/widgets/radio.pl"
+	size 64 9
+}
+
+screenshot "widget-dropdown" {
+	script "examples/widgets/dropdown.pl"
+	size 64 14
+	steps {
+		key "Enter" "Down"
+	}
+}
+
+screenshot "widget-slider" {
+	script "examples/widgets/slider.pl"
+	size 64 7
+}
+
+screenshot "widget-text-field" {
+	script "examples/widgets/text-field.pl"
+	size 64 9
+	steps {
+		type "Ada Lovelace"
+	}
+}
+
+screenshot "widget-text-area" {
+	script "examples/widgets/text-area.pl"
+	size 72 10
+}
+
+screenshot "widget-dialog" {
+	script "examples/widgets/dialog.pl"
+	size 72 12
+}

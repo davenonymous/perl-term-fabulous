@@ -197,6 +197,12 @@ not accepted by L<Term::Fabulous::Color/new> or in KDL layouts; use
 C<< Term::Fabulous::Enum::WebColor->Red->hexString >> or the hex value
 there. F<examples/web-colors.pl> shows all of the colors in a grid.
 
+=begin html
+
+<p><img src="/screenshots/example-web-colors.svg" alt="A grid of color swatches with their hex values and names, and a dropdown to sort them"></p>
+
+=end html
+
 =head1 METHODS
 
 =head2 values

@@ -339,6 +339,12 @@ Check what a widget shows, in a test:
 The script F<examples/static-report.pl> in the distribution renders
 several bordered panels with non-ASCII text.
 
+=begin html
+
+<p><img src="/screenshots/example-static-report.svg" alt="Three panels with double, heavy and round borders, printed to the terminal"></p>
+
+=end html
+
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual/RENDERING WITHOUT A TERMINAL>,

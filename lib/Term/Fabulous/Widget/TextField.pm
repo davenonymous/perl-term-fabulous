@@ -152,6 +152,12 @@ Term::Fabulous::Widget::TextField - Single-line text input
 
 	say $name->value;    # the text, a character string
 
+=begin html
+
+<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: Ada Lovelace being typed, a placeholder, a masked password and a disabled field"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A text field holds one line of text that the user can type, edit, select

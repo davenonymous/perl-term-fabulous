@@ -67,6 +67,12 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 		return;
 	} );
 
+=begin html
+
+<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A ScrollBox is a L<Term::Fabulous::Widget::Box> for content that is

@@ -141,6 +141,12 @@ Term::Fabulous::Widget::Checkbox - A box the user can check and uncheck
 	say $terms->checked ? 'accepted' : 'not accepted';
 	$terms->checked(1);    # programmatic: fires no Change
 
+=begin html
+
+<p><img src="/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A checkbox shows a mark followed by a label:

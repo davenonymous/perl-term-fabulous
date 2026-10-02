@@ -188,6 +188,12 @@ per cell
 		return;
 	} );
 
+=begin html
+
+<p><img src="/screenshots/example-pixel-paint.svg" alt="A pixel canvas with a frame, a line, a circle, a filled rectangle and a red wave painted with the mouse"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A PixelCanvas is a L<Term::Fabulous::Widget::Canvas> that you draw on

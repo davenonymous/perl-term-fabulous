@@ -276,6 +276,12 @@ Term::Fabulous::Widget::Canvas - A widget you draw on cell by cell
 		return;
 	} );
 
+=begin html
+
+<p><img src="/screenshots/example-canvas.svg" alt="Three waves in red, blue and green on a canvas, drawn with half blocks"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A Canvas is a L<Term::Fabulous::Widget::Box> that holds a grid of

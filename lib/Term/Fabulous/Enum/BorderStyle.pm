@@ -330,6 +330,12 @@ The styles and their glyphs come from the Python TUI library Textual.
 To see all of them, run F<examples/border-showcase.pl> from the
 distribution.
 
+=begin html
+
+<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
+
+=end html
+
 =head1 STYLES
 
 Every style is a class method that returns the style object. Names are

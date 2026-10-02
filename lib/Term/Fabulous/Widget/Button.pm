@@ -150,6 +150,12 @@ activated
 	# A click, or Enter or Space while the button has the focus.
 	$save->on( Activate => sub ($event) { save_document(); return } );
 
+=begin html
+
+<p><img src="/screenshots/widget-button.svg" alt="Save, Cancel and Delete buttons, Save focused, and the line Save was pressed"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A Button is a L<Term::Fabulous::Widget::Box> that can take the keyboard

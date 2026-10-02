@@ -102,6 +102,19 @@ WriteMakefile(
 		},
 		dynamic_config => 0,
 		provides       => collectProvides(),
+
+		# The documentation tools in tools/ (make docs, make docs-check).
+		prereqs => {
+			develop => {
+				requires   => { 'IO::Pty' => '0', 'JSON::PP' => '0', 'Pod::Markdown' => '0' },
+				recommends => { 'Imager'  => '0' },
+			},
+		},
+
+		# The example programs and the documentation tools contain
+		# packages (My::Panel, Term::Fabulous::Screenshot::*) that are
+		# not part of the installed distribution.
+		no_index => { directory => [qw(examples examples-cookbook tools screenshots)] },
 	},
 	test  => { TESTS => 't/*.t' },
 	clean => { FILES => 'Term-Fabulous-* lib/Term/Fabulous/Termbox.c lib/Term/Fabulous/Termbox.o lib/Term/Fabulous/Termbox.bs src/*.o' },
@@ -135,6 +148,33 @@ readme :
 	}
 	pod2markdown lib/Term/Fabulous.pm > README.md
 
+# --- Documentation: code blocks and screenshots ----------------------
+# Usage: make docs         (after changing an example program)
+#        make docs-check   (fails when the documentation is out of date)
+#
+# tools/update-docs copies the example programs into the POD code blocks
+# marked '=for code-from FILE' and takes the screenshots defined in
+# screenshots/screenshots.kdl again; then README.md is regenerated. The
+# programs run against blib/, so this distribution is built first. See
+# tools/README.md.
+
+.PHONY: docs docs-check
+
+docs : pure_all
+	$(FULLPERLRUN) -Mblib tools/update-docs
+	$(MAKE) readme
+
+docs-check : pure_all
+	$(FULLPERLRUN) -Mblib tools/update-docs --check
+	@command -v pod2markdown >/dev/null 2>&1 || { \
+	    echo "ERROR: pod2markdown not found in PATH; cpanm Pod::Markdown"; \
+	    exit 1; \
+	}
+	@pod2markdown lib/Term/Fabulous.pm | cmp -s - README.md || { \
+	    echo "ERROR: README.md is out of date; run 'make readme' (or 'make docs')."; \
+	    exit 1; \
+	}
+
 # --- Release target -------------------------------------------------
 # Usage: make release
 #
@@ -142,8 +182,10 @@ readme :
 # `make dist` (disttest alone only creates the unpacked directory),
 # then uploads it to CPAN with cpan-upload (from CPAN::Uploader).
 # Refuses to run if the git working tree is dirty, if any module's
-# $VERSION differs from the one in lib/Term/Fabulous.pm, or if a tag
-# for the current $(VERSION) already exists. See RELEASING.md.
+# $VERSION differs from the one in lib/Term/Fabulous.pm, if a tag
+# for the current $(VERSION) already exists, or if the documentation's
+# code blocks, screenshots or README.md are out of date (docs-check).
+# See RELEASING.md.
 #
 # disttest and dist run as separate sub-makes on purpose: as
 # prerequisites of one target they would share a single distdir
@@ -155,7 +197,7 @@ readme :
 version-check :
 	@perl -ne 'if (/^\s*our \$$VERSION\s*=\s*\x27([^\x27]*)\x27/ && $$1 ne "$(VERSION)") { print "ERROR: $$ARGV has \$$VERSION $$1, expected $(VERSION)\n"; $$failed = 1 } END { exit($$failed ? 1 : 0) }' $$(find lib -name '*.pm')
 
-release-check : version-check
+release-check : version-check docs-check
 	@git diff-index --quiet HEAD -- || { \
 	    echo "ERROR: git working tree is dirty; commit or stash first."; \
 	    exit 1; \

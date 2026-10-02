@@ -374,6 +374,12 @@ Term::Fabulous::Widget::TextArea - Multi-line text input
 
 	my @lines = split /\n/, $notes->value, -1;
 
+=begin html
+
+<p><img src="/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A text area holds text of several lines that the user can type, edit,

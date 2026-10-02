@@ -25,6 +25,10 @@ form.
 Complete programs for common tasks: forms, buttons, key bindings, timers,
 canvases, reports, tests.
 
+=item L<Term::Fabulous::Examples>
+
+The example programs of the distribution, with a picture of each.
+
 =item The module pages
 
 One page per widget and helper class, for example
@@ -772,6 +776,12 @@ and a glyph showing through with the default text color keeps it.
 F<examples/translucency.pl> shows all of this, with translucent boxes
 orbiting over a screen of text.
 
+=begin html
+
+<p><img src="/screenshots/example-translucency.svg" alt="A green, a red and a blue translucent box over a screen of text; the text shows through the green and the blue one"></p>
+
+=end html
+
 Black is a real color: C<[0, 0, 0, 255]> is drawn as black, not as the
 terminal's default.
 
@@ -848,6 +858,12 @@ half-block characters that blend into the background of the parent
 widget; they look best when the widget and its parent have different
 background colors. The script F<examples/border-showcase.pl> shows all
 styles.
+
+=begin html
+
+<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
+
+=end html
 
 =head1 EVENTS
 
@@ -1583,6 +1599,14 @@ One choice of several, from a list that opens over the other widgets.
 A number from a range.
 
 =back
+
+F<examples/form.pl> uses all of them in one form.
+
+=begin html
+
+<p><img src="/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+
+=end html
 
 =head2 What all inputs have in common
 
@@ -2366,7 +2390,8 @@ L</Wide characters and emoji>, L<Term::Fabulous::Unicode>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous>, L<Term::Fabulous::Cookbook>, L<Clay::UI>, L<Clay::XS>,
+L<Term::Fabulous>, L<Term::Fabulous::Cookbook>,
+L<Term::Fabulous::Examples>, L<Clay::UI>, L<Clay::XS>,
 L<Term::Fabulous::Termbox>, L<IO::Async>, L<Object::Pad>.
 
 =cut

@@ -331,6 +331,12 @@ Term::Fabulous::Widget::Slider - Choose a number from a range by moving a thumb
 	say $volume->value;    # 50
 	$volume->value(75);    # programmatic: fires no Change
 
+=begin html
+
+<p><img src="/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A slider lets the user choose a number from a range. It shows a

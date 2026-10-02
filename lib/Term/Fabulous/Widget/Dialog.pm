@@ -180,6 +180,12 @@ and keeps the focus
 	# From a key binding or a button:
 	$dialog->open($ui);
 
+=begin html
+
+<p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files"></p>
+
+=end html
+
 =head1 DESCRIPTION
 
 A Dialog is a L<Term::Fabulous::Widget::Box> that is not part of the
