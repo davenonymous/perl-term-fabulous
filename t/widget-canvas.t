@@ -4,7 +4,7 @@ use utf8;
 
 use Test2::V0;
 
-use Termbox 2 qw(TB_TRUECOLOR_BLACK);
+use Term::Fabulous::Termbox qw(TB_HI_BLACK);
 use Term::Fabulous::Color;
 use Term::Fabulous::Widget::Canvas;
 
@@ -28,7 +28,7 @@ subtest 'put and cell' => sub {
 	is $canvas->cell( 0, 0 ), undef, 'an unset cell';
 
 	$canvas->put( 2.7, 1.2, 'b', 0, Term::Fabulous::Color->rgb( 1, 2, 3 ) );
-	is $canvas->cell( 2, 1 ), [ 'b', TB_TRUECOLOR_BLACK, 0x010203 ], 'coordinates round down, 0 is opaque black, Color objects work';
+	is $canvas->cell( 2, 1 ), [ 'b', TB_HI_BLACK, 0x010203 ], 'coordinates round down, 0 is opaque black, Color objects work';
 
 	$canvas->put( 3, 1, 'c', '#0a0b0c', [ 9, 9, 9, 0 ] );
 	is $canvas->cell( 3, 1 ), [ 'c', 0x0A0B0C, undef ], 'color strings work, alpha 0 is no color';

@@ -5,11 +5,12 @@ use Test2::V0;
 
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
-use Termbox 2 qw(
+use Term::Fabulous::Termbox qw(
 	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
 	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION
 );
 use Term::Fabulous;
+use Term::Fabulous::Termbox::Event;
 use Term::Fabulous::Event::KeyPress;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
@@ -45,7 +46,7 @@ foreach my $name (qw(KeyPress Mouse OnPress)) {
 
 sub dispatch {
 	my ( $target_ui, %fields ) = @_;
-	$target_ui->_dispatch_termbox_event( Termbox::Event->new(%fields) );
+	$target_ui->_dispatch_termbox_event( Term::Fabulous::Termbox::Event->new(%fields) );
 	return;
 }
 

@@ -4,7 +4,7 @@ use warnings;
 use Test2::V0;
 
 use Object::Pad 0.825;
-use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
 use Term::Fabulous::Render::Rectangle;
 
 # A cell target that records every fill_row call as [ $x, $y, $columns, $bg ].
@@ -52,7 +52,7 @@ subtest 'invisible boxes draw nothing' => sub {
 
 subtest 'background attributes' => sub {
 	fill( [], x => 0, y => 0, width => 1, height => 1, color => { r => 0, g => 0, b => 0, a => 255 } );
-	is $prints[0][3], TB_TRUECOLOR_BLACK, 'opaque black';
+	is $prints[0][3], TB_HI_BLACK, 'opaque black';
 	fill( [], x => 0, y => 0, width => 1, height => 1, color => { r => 9, g => 9, b => 9, a => 0 } );
 	is $prints[0][3], TB_DEFAULT, 'transparent maps to the terminal default';
 };

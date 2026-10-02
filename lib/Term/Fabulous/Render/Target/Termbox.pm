@@ -12,7 +12,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 
 role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Target::Mask) {
-	use Termbox 2 qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_print tb_width tb_height TB_DEFAULT);
+	use Term::Fabulous::Termbox qw(tb_clear tb_present tb_set_cell tb_extend_cell tb_print tb_width tb_height TB_DEFAULT);
 	use Term::Fabulous::Render::Geometry qw(row_spans_outside);
 
 	# termbox2 keeps its back buffer between frames, so the cells of kept
@@ -42,8 +42,8 @@ role Term::Fabulous::Render::Target::Termbox :does(Term::Fabulous::Render::Targe
 		return;
 	}
 
-	method put_extension ( $x, $y, $codepoint ) {
-		tb_extend_cell( $x, $y, $codepoint );
+	method put_extension ( $x, $y, $character ) {
+		tb_extend_cell( $x, $y, $character );
 		return;
 	}
 
@@ -144,6 +144,6 @@ terminal default foreground.
 =head1 SEE ALSO
 
 L<Term::Fabulous>, L<Term::Fabulous::Render/CELL TARGET>,
-L<Term::Fabulous::Render::Target::Mask>, L<Termbox>.
+L<Term::Fabulous::Render::Target::Mask>, L<Term::Fabulous::Termbox>.
 
 =cut

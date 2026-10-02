@@ -40,7 +40,7 @@ turn from the terminal
 
 =head1 SYNOPSIS
 
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_WHEEL_UP TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_WHEEL_UP TB_MOD_MOTION);
 
 	$panel->on( Mouse => sub ($event) {
 		my ( $x, $y ) = ( $event->x, $event->y );    # terminal cell, from 0
@@ -103,7 +103,7 @@ C<TB_MOD_MOTION>; Shift+click cannot be told apart from a click.
 
 =head2 new
 
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
 
 	my $press   = Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_LEFT, x => 10, y => 3 );
 	my $drag    = Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_LEFT, x => 12, y => 3, modifiers => TB_MOD_MOTION );
@@ -153,7 +153,7 @@ C<fire_event> call.
 
 	my $event = Term::Fabulous::Event::Mouse->of($termbox_event);
 
-Builds an event from a C<Termbox::Event>: C<key>, C<x>, C<y> and
+Builds an event from a C<Term::Fabulous::Termbox::Event>: C<key>, C<x>, C<y> and
 C<modifiers> from its C<key>, C<x>, C<y> and C<mod>. Called by
 L<Term::Fabulous>; class method.
 
@@ -164,9 +164,9 @@ L<Term::Fabulous>; class method.
 	my $key = $event->key;
 
 Which button or wheel direction the event is about. Import the
-constants from L<Termbox>:
+constants from L<Term::Fabulous::Termbox>:
 
-	use Termbox 2 qw(
+	use Term::Fabulous::Termbox qw(
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT
 		TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
 		TB_MOD_MOTION
@@ -210,6 +210,6 @@ a button held (a drag); otherwise the value is C<0>.
 
 L<Term::Fabulous::Manual/MOUSE>, L<Term::Fabulous>,
 L<Term::Fabulous::Event::KeyPress>, L<Clay::UI::Events::Event>,
-L<Termbox>.
+L<Term::Fabulous::Termbox>.
 
 =cut

@@ -40,9 +40,9 @@ role Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::
 		return;
 	}
 
-	method put_extension ( $x, $y, $codepoint ) {
+	method put_extension ( $x, $y, $character ) {
 		my $cell = $rows[$y][$x] // die "Term::Fabulous::Render::Target::Grid: extend_cell($x, $y) on a cell that was never set";
-		$cell->[0] .= $codepoint;
+		$cell->[0] .= $character;
 		return;
 	}
 
@@ -126,8 +126,8 @@ characters of its grapheme cluster.
 
 C<$fg> and C<$bg> are the termbox2 attributes the render roles computed
 (see L<Term::Fabulous::Render::Attr>): C<0xRRGGBB>, C<TB_DEFAULT> (0) for
-the terminal default color, C<TB_TRUECOLOR_BLACK> for black, possibly
-combined with flags such as C<TB_TRUECOLOR_REVERSE>. Background fills
+the terminal default color, C<TB_HI_BLACK> for black, possibly
+combined with flags such as C<TB_REVERSE>. Background fills
 store C<TB_DEFAULT> as the foreground.
 
 =item *

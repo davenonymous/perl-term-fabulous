@@ -119,7 +119,7 @@ Default: C<0>.
 
 	my $event = Term::Fabulous::Event::Resize->of( $termbox_event, $is_post_event );
 
-Builds an event from a C<Termbox::Event> of type C<TB_EVENT_RESIZE>:
+Builds an event from a C<Term::Fabulous::Termbox::Event> of type C<TB_EVENT_RESIZE>:
 C<width> and C<height> from its C<w> and C<h>. C<$is_post_event> is
 optional and defaults to C<0>. Class method.
 

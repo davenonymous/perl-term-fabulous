@@ -7,7 +7,7 @@ use IO::Async::Loop;
 use IO::Async::Signal;
 use Fcntl qw(F_GETFL O_NONBLOCK);
 use Scalar::Util qw(weaken);
-use Termbox 2 qw(TB_OK TB_ERR_INIT_OPEN TB_ERR_NO_EVENT TB_EVENT_KEY);
+use Term::Fabulous::Termbox qw(TB_OK TB_ERR_INIT_OPEN TB_ERR_NO_EVENT TB_EVENT_KEY);
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 
@@ -30,7 +30,7 @@ my $tty_was_nonblocking;
 		tb_strerror        => sub { "stub error $_[0]" },
 		tb_width           => sub {20},
 		tb_height          => sub {5},
-		tb_hide_cursor     => sub {return},
+		tb_hide_cursor     => sub {TB_OK},
 		tb_set_input_mode  => sub {TB_OK},
 		tb_set_output_mode => sub {TB_OK},
 		tb_get_fds         => sub { ${ $_[0] } = fileno $tty_read; ${ $_[1] } = fileno $resize_read; TB_OK },

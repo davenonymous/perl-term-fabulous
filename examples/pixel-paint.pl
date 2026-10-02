@@ -14,7 +14,7 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::PixelCanvas;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
-use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT);
 
 use Clay::XS qw(:all);
 

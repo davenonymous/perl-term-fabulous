@@ -251,7 +251,7 @@ second. A click whose press and release both arrive between two frames
 no C<OnRelease>. If no click may be missed, listen to C<Mouse> events
 instead and act on C<TB_KEY_MOUSE_RELEASE>:
 
-	use Termbox 2 qw(TB_KEY_MOUSE_RELEASE);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE);
 
 	$save->on( Mouse => sub ($event) {
 		return Clay::UI::Enum::Result->CONTINUE unless $event->key == TB_KEY_MOUSE_RELEASE;

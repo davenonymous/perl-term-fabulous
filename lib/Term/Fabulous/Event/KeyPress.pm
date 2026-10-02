@@ -12,11 +12,12 @@ use Object::Pad 0.825;
 use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(params) {
-	use Termbox 2 qw(
+	use Term::Fabulous::Termbox qw(
 		TB_KEY_ARROW_LEFT TB_KEY_ARROW_RIGHT TB_KEY_ARROW_UP TB_KEY_ARROW_DOWN
 		TB_KEY_HOME TB_KEY_END TB_KEY_PGUP TB_KEY_PGDN TB_KEY_INSERT TB_KEY_DELETE TB_KEY_BACK_TAB
 		TB_KEY_F1 TB_KEY_F2 TB_KEY_F3 TB_KEY_F4 TB_KEY_F5 TB_KEY_F6
 		TB_KEY_F7 TB_KEY_F8 TB_KEY_F9 TB_KEY_F10 TB_KEY_F11 TB_KEY_F12
+		TB_KEY_BACKSPACE TB_KEY_TAB TB_KEY_ENTER TB_KEY_ESC TB_KEY_SPACE TB_KEY_BACKSPACE2
 		TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT
 	);
 
@@ -25,14 +26,14 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	field $modifiers :param :reader;
 
 	# termbox2 reports the keys of the ASCII control range with their byte as
-	# the key code; Termbox.pm exports no constants for them.
+	# the key code.
 	my %NAME_BY_KEY = (
-		0x08                 => 'Backspace',    # Ctrl+H, sent by some terminals for Backspace
-		0x09                 => 'Tab',
-		0x0D                 => 'Enter',
-		0x1B                 => 'Escape',
-		0x20                 => 'Space',
-		0x7F                 => 'Backspace',
+		TB_KEY_BACKSPACE()   => 'Backspace',    # Ctrl+H, sent by some terminals for Backspace
+		TB_KEY_TAB()         => 'Tab',
+		TB_KEY_ENTER()       => 'Enter',
+		TB_KEY_ESC()         => 'Escape',
+		TB_KEY_SPACE()       => 'Space',
+		TB_KEY_BACKSPACE2()  => 'Backspace',
 		TB_KEY_ARROW_LEFT()  => 'Left',
 		TB_KEY_ARROW_RIGHT() => 'Right',
 		TB_KEY_ARROW_UP()    => 'Up',
@@ -157,7 +158,7 @@ available through L</key>, L</char> and L</modifiers>.
 
 =head2 new
 
-	use Termbox 2 qw(TB_KEY_ARROW_LEFT TB_MOD_CTRL TB_MOD_SHIFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_ARROW_LEFT TB_MOD_CTRL TB_MOD_SHIFT);
 
 	my $typed_a    = Term::Fabulous::Event::KeyPress->new( key => 0, char => ord 'a', modifiers => 0 );
 	my $left       = Term::Fabulous::Event::KeyPress->new( key => TB_KEY_ARROW_LEFT, char => 0, modifiers => 0 );
@@ -202,7 +203,7 @@ C<fire_event> call.
 
 	my $event = Term::Fabulous::Event::KeyPress->of($termbox_event);
 
-Builds an event from a C<Termbox::Event> as returned by termbox2's
+Builds an event from a C<Term::Fabulous::Termbox::Event> as returned by termbox2's
 C<tb_peek_event> or C<tb_poll_event>: C<key> from its C<key>, C<char>
 from its C<ch> and C<modifiers> from its C<mod>. Called by
 L<Term::Fabulous>; class method.
@@ -281,7 +282,7 @@ which also filters out control characters.
 
 =head2 modifiers
 
-	use Termbox 2 qw(TB_MOD_CTRL);
+	use Term::Fabulous::Termbox qw(TB_MOD_CTRL);
 	my $ctrl_held = $event->modifiers & TB_MOD_CTRL;
 
 The raw bit mask of C<TB_MOD_ALT>, C<TB_MOD_CTRL> and C<TB_MOD_SHIFT>.
@@ -421,6 +422,6 @@ L<Term::Fabulous::Manual/Keys Term::Fabulous handles itself>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual/KEYBOARD>, L<Term::Fabulous>,
-L<Term::Fabulous::Event::Mouse>, L<Clay::UI::Events::Event>, L<Termbox>.
+L<Term::Fabulous::Event::Mouse>, L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>.
 
 =cut

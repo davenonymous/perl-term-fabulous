@@ -11,14 +11,7 @@ use Exporter 'import';
 our @EXPORT_OK = qw(color_attr clay_color cell_color_attr);
 
 use Scalar::Util qw(blessed);
-use Termbox 2 qw(TB_DEFAULT);
-
-BEGIN {
-	die "Term::Fabulous::Render::Attr: the termbox2 library was built without truecolor support (TB_OPT_TRUECOLOR); Term::Fabulous needs 24-bit colors\n"
-		unless $Termbox::TRUECOLOR;
-}
-
-use Termbox 2 qw(TB_TRUECOLOR_BLACK);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
 
 use Term::Fabulous::Color;
 
@@ -54,7 +47,7 @@ sub cell_color_attr ( $what, $color ) {
 	return undef unless defined $color;
 	if ( !ref $color && $color =~ /\A[0-9]+\z/ ) {
 		die "Term::Fabulous::Render::Attr: $what must be a packed 0xRRGGBB value, got $color" if $color > MAX_RGB;
-		return $color == 0 ? TB_TRUECOLOR_BLACK : $color + 0;
+		return $color == 0 ? TB_HI_BLACK : $color + 0;
 	}
 	my $object = blessed $color && $color->isa('Term::Fabulous::Color') ? $color : Term::Fabulous::Color->new( color => $color );
 	my $attr   = color_attr($object);
@@ -68,7 +61,7 @@ sub _termbox_attr ($color) {
 	return TB_DEFAULT if $color->alpha == 0;
 
 	my $rgb = $color->rgb_int;
-	return $rgb == 0 ? TB_TRUECOLOR_BLACK : $rgb;
+	return $rgb == 0 ? TB_HI_BLACK : $rgb;
 }
 
 1;
@@ -84,7 +77,7 @@ Term::Fabulous::Render::Attr - Turn colors into termbox2 truecolor attributes
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr);
 	use Term::Fabulous::Color;
 
-	my $fg = color_attr( Term::Fabulous::Color->rgb( 0, 0, 0 ) );               # TB_TRUECOLOR_BLACK
+	my $fg = color_attr( Term::Fabulous::Color->rgb( 0, 0, 0 ) );               # TB_HI_BLACK
 	my $bg = color_attr( clay_color( { r => 20, g => 25, b => 35, a => 255 } ) );  # 0x141923
 	my $cell_fg = cell_color_attr( fg => '#ffcc00' );                             # 0xFFCC00
 
@@ -107,7 +100,7 @@ in its high bits. Two values are special:
 The terminal's default color. This is what a color with alpha 0 ("no
 color") becomes.
 
-=item C<TB_TRUECOLOR_BLACK>
+=item C<TB_HI_BLACK>
 
 Opaque black. termbox2 would read the color C<0x000000> as the default
 color, so black needs this flag of its own.
@@ -132,7 +125,7 @@ Nothing is exported by default. Import the functions you need by name.
 	my $attr = color_attr($color);
 
 Takes a L<Term::Fabulous::Color> object and returns its attribute:
-C<TB_DEFAULT> when its alpha is 0, C<TB_TRUECOLOR_BLACK> for black, and
+C<TB_DEFAULT> when its alpha is 0, C<TB_HI_BLACK> for black, and
 the packed C<0xRRGGBB> value otherwise. Results are cached (the cache is
 emptied when it reaches 4096 entries).
 
@@ -163,7 +156,7 @@ C<undef> returns C<undef> ("no color of its own").
 =item *
 
 A non-negative integer is taken as a packed C<0xRRGGBB> color as it is;
-C<0> becomes C<TB_TRUECOLOR_BLACK>. Integers above C<0xFFFFFF> die.
+C<0> becomes C<TB_HI_BLACK>. Integers above C<0xFFFFFF> die.
 
 =item *
 

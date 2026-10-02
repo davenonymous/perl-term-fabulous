@@ -14,7 +14,7 @@ use Term::Fabulous::Render::Clip;
 role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 	use Encode qw(decode);
 	use List::Util qw(min);
-	use Termbox 2 qw(TB_DEFAULT);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);

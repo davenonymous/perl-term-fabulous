@@ -20,7 +20,7 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 	);
 	use List::Util qw(any max min);
 	use Scalar::Util qw(refaddr);
-	use Termbox 2 qw(TB_DEFAULT);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Render::Attr qw(color_attr);
 	use Term::Fabulous::Render::Geometry qw(cell_rect intersect_cell_rects rects_overlap);

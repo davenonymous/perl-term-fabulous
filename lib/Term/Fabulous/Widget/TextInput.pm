@@ -16,7 +16,7 @@ class Term::Fabulous::Widget::TextInput
 	:isa(Term::Fabulous::Widget::Input)
 	:abstract
 {
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns);
 

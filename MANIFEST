@@ -39,6 +39,9 @@ lib/Term/Fabulous/Render/Text.pm
 lib/Term/Fabulous/Role/CanParseLayout.pm
 lib/Term/Fabulous/Role/HasBorderStyle.pm
 lib/Term/Fabulous/Static.pm
+lib/Term/Fabulous/Termbox.pm
+lib/Term/Fabulous/Termbox.xs
+lib/Term/Fabulous/Termbox/Event.pm
 lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/Box.pm
@@ -60,6 +63,10 @@ lib/Term/Fabulous/Widget/TextInput.pm
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
+src/README.termbox2
+src/termbox2.c
+src/termbox2.h
+src/tf_termbox.h
 t/border-style.t
 t/color.t
 t/editor.t
@@ -74,6 +81,7 @@ t/render-clip.t
 t/render-rectangle.t
 t/render-text.t
 t/static.t
+t/termbox.t
 t/unicode.t
 t/widget-canvas.t
 t/widget-checkbox.t
@@ -84,3 +92,4 @@ t/widget-radio.t
 t/widget-slider.t
 t/widget-text-area.t
 t/widget-text-field.t
+typemap

@@ -3,12 +3,12 @@ use warnings;
 
 use Test2::V0;
 
-use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
 use Term::Fabulous::Color;
 use Term::Fabulous::Render::Attr qw(color_attr clay_color);
 
 subtest 'color_attr' => sub {
-	is color_attr( Term::Fabulous::Color->rgba( 0, 0, 0, 255 ) ), TB_TRUECOLOR_BLACK, 'opaque black';
+	is color_attr( Term::Fabulous::Color->rgba( 0, 0, 0, 255 ) ), TB_HI_BLACK, 'opaque black';
 	is color_attr( Term::Fabulous::Color->rgba( 0, 0, 0, 0 ) ),   TB_DEFAULT,         'alpha 0 is the terminal default';
 	is color_attr( Term::Fabulous::Color->rgba( 9, 9, 9, 0 ) ),   TB_DEFAULT,         'alpha 0 ignores the channels';
 	is color_attr( Term::Fabulous::Color->rgb( 18, 52, 86 ) ),    0x123456,           'packed rgb';

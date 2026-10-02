@@ -32,7 +32,7 @@ class Term::Fabulous
 	use IO::Async::Timer::Countdown;
 	use IO::Async::Timer::Periodic;
 	use POSIX qw(EINTR);
-	use Termbox 2 qw(
+	use Term::Fabulous::Termbox qw(
 		tb_init tb_shutdown tb_width tb_height tb_hide_cursor
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event
 		tb_last_errno tb_strerror
@@ -40,17 +40,14 @@ class Term::Fabulous
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
-		TB_KEY_BACK_TAB TB_MOD_MOTION
+		TB_KEY_CTRL_C TB_KEY_TAB TB_KEY_BACK_TAB TB_MOD_MOTION
 	);
+	use Term::Fabulous::Termbox::Event;
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Event::Mouse;
 	use Term::Fabulous::Event::Resize;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
-
-	# Termbox.pm exports no TB_KEY_CTRL_* or TB_KEY_TAB constants.
-	use constant KEY_CTRL_C => 0x03;
-	use constant KEY_TAB    => 0x09;
 
 	use constant WHEEL_NOTCH_ROWS => 3;
 
@@ -146,7 +143,7 @@ class Term::Fabulous
 	method _prepare_terminal () {
 		_check_termbox( 'tb_set_output_mode', tb_set_output_mode( $self->output_mode ) );
 		_check_termbox( 'tb_set_input_mode',  tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
-		tb_hide_cursor();    # the Termbox binding returns no status for this call
+		_check_termbox( 'tb_hide_cursor',     tb_hide_cursor() );
 
 		my ( $width, $height ) = ( tb_width(), tb_height() );
 		die "Term::Fabulous: the terminal reports an unusable size of ${width}x${height}\n"
@@ -220,7 +217,7 @@ class Term::Fabulous
 
 	method _drain_termbox_events () {
 		while (1) {
-			my $event = Termbox::Event->new;
+			my $event = Term::Fabulous::Termbox::Event->new;
 			my $rc    = tb_peek_event( $event, 0 );
 			if ( $rc == TB_OK ) {
 				$self->_dispatch_termbox_event($event);
@@ -248,8 +245,8 @@ class Term::Fabulous
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 
 		my ( $key, $is_special_key ) = ( $event->key, $event->ch == 0 );
-		$loop->stop                        if $is_special_key && $key == KEY_CTRL_C;
-		$self->interaction->focus_next     if $is_special_key && $key == KEY_TAB;
+		$loop->stop                        if $is_special_key && $key == TB_KEY_CTRL_C;
+		$self->interaction->focus_next     if $is_special_key && $key == TB_KEY_TAB;
 		$self->interaction->focus_previous if $is_special_key && $key == TB_KEY_BACK_TAB;
 		return;
 	}
@@ -456,8 +453,8 @@ Runnable demo programs.
 
 =head1 REQUIREMENTS
 
-Perl 5.24 or later, the L<Termbox> module (version 2) with a termbox2
-library that was built with truecolor support, a terminal with 24-bit
+Perl 5.24 or later, a C compiler to build L<Term::Fabulous::Termbox>
+(termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 
 =head1 CONSTRUCTOR
@@ -509,7 +506,7 @@ copy text as usual, and no C<Mouse> events are fired.
 =item C<output_mode>
 
 Optional, and only one value is allowed: C<TB_OUTPUT_TRUECOLOR> from
-L<Termbox>, the default. Any other value dies. Term::Fabulous always draws
+L<Term::Fabulous::Termbox>, the default. Any other value dies. Term::Fabulous always draws
 with 24-bit colors.
 
 =item C<memory_size>
@@ -984,6 +981,16 @@ and Term::Fabulous::Static.
 
 Sends the drawn cells to the terminal.
 
+=item L<Term::Fabulous::Termbox>
+
+The termbox2 library itself, compiled into the distribution: the
+C<tb_*> functions and C<TB_*> constants, and the width functions
+L<Term::Fabulous::Unicode> measures with.
+
+=item L<Term::Fabulous::Termbox::Event>
+
+One termbox2 input event, as C<tb_peek_event> fills it.
+
 =item L<Term::Fabulous::Render::Target::Grid>
 
 Collects the drawn cells in memory.
@@ -1082,7 +1089,7 @@ C<memory_size> does not change this limit.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual>, L<Term::Fabulous::Cookbook>, L<Clay::UI>,
-L<Clay::XS>, L<Termbox>, L<IO::Async>, L<Object::Pad>.
+L<Clay::XS>, L<Term::Fabulous::Termbox>, L<IO::Async>, L<Object::Pad>.
 
 =head1 BUGS
 

@@ -70,9 +70,9 @@ in terminal cells, so for Clay one unit is one cell.
 
 =item termbox2
 
-A small C library (used through L<Termbox>) that switches the terminal
-into full-screen mode, reads keys and mouse input, and writes characters
-with 24-bit colors.
+A small C library (compiled into L<Term::Fabulous::Termbox>) that
+switches the terminal into full-screen mode, reads keys and mouse input,
+and writes characters with 24-bit colors.
 
 =item IO::Async
 
@@ -124,9 +124,10 @@ Perl 5.24 or later.
 
 =item *
 
-The L<Termbox> module, version 2, with a termbox2 library that was built
-with truecolor support. Term::Fabulous dies at load time with a clear
-message if truecolor support is missing.
+A C compiler. termbox2 ships with the distribution and is compiled into
+L<Term::Fabulous::Termbox> when Term::Fabulous is installed, with
+truecolor and grapheme cluster support always on; there is no separate
+library to install or find.
 
 =item *
 
@@ -641,12 +642,14 @@ terminal cannot draw it, so lines break earlier than necessary.
 
 A terminal cell holds one character. Some characters, most CJK
 characters and many emoji, take two cells. Term::Fabulous measures text
-the same way termbox2 draws it (with the C library's C<wcwidth>, see
+the same way termbox2 draws it (with termbox2's own width tables, see
 L<Term::Fabulous::Unicode>), so wide characters line up as long as the
-locale is UTF-8 and the terminal agrees with the C library about each
+locale is UTF-8 and the terminal agrees with termbox2 about each
 character's width. Characters made of several code points, such as a
 letter with a combining accent or a flag, are kept together and take the
-width of the whole cluster.
+width of the whole cluster; an emoji presentation selector (U+FE0F), a
+zero-width joiner or a pair of regional indicators makes a cluster two
+cells wide.
 
 =head2 Control characters
 
@@ -1265,9 +1268,9 @@ What happened, as a termbox2 constant: C<TB_KEY_MOUSE_LEFT>,
 C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RIGHT> (a button was pressed, or
 is held during a drag), C<TB_KEY_MOUSE_RELEASE> (a button was released;
 the terminal does not say which), C<TB_KEY_MOUSE_WHEEL_UP>,
-C<TB_KEY_MOUSE_WHEEL_DOWN>. Import the constants from L<Termbox>:
+C<TB_KEY_MOUSE_WHEEL_DOWN>. Import the constants from L<Term::Fabulous::Termbox>:
 
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
 
 =item C<x>, C<y>
 
@@ -1287,7 +1290,7 @@ A box without a background color and without a border draws nothing, so
 clicks go through it to the widget behind it. When no widget drew the
 cell, the event is fired on the root widget.
 
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
 
 	$box->on(
 		Mouse => sub ($event) {
@@ -1901,7 +1904,7 @@ widget that would receive them.
 =back
 
 	use Test2::V0;
-	use Termbox 2 qw(TB_KEY_ARROW_LEFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_ARROW_LEFT);
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Static;
 
@@ -2123,7 +2126,7 @@ The widget an event was fired on.
 
 =item termbox2
 
-The C library that controls the terminal; see L<Termbox>.
+The C library that controls the terminal; see L<Term::Fabulous::Termbox>.
 
 =item terminal default color
 
@@ -2283,6 +2286,6 @@ L</Wide characters and emoji>, L<Term::Fabulous::Unicode>.
 =head1 SEE ALSO
 
 L<Term::Fabulous>, L<Term::Fabulous::Cookbook>, L<Clay::UI>, L<Clay::XS>,
-L<Termbox>, L<IO::Async>, L<Object::Pad>.
+L<Term::Fabulous::Termbox>, L<IO::Async>, L<Object::Pad>.
 
 =cut

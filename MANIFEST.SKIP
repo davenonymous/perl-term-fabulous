@@ -90,6 +90,9 @@
 ^Makefile\.old$
 ^pm_to_blib$
 ^MYMETA\.
+^lib/Term/Fabulous/Termbox\.(c|o|bs)$
+^src/.*\.o$
+\.so$
 
 # Maintainer-only docs and working notes (not shipped)
 ^RELEASING\.md$

@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
-use Termbox 2 qw(TB_KEY_MOUSE_WHEEL_DOWN);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_DOWN);
 use Term::Fabulous::Widget::TextArea;
 
 sub text_area {

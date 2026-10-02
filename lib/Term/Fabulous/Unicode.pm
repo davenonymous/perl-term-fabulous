@@ -10,13 +10,11 @@ our $VERSION = '0.01';
 use Exporter 'import';
 our @EXPORT_OK = qw(sanitize_text grapheme_clusters cluster_columns string_columns terminal_is_utf8);
 
-use FFI::Platypus 2;
 use I18N::Langinfo qw(langinfo CODESET);
+use Term::Fabulous::Termbox qw(tb_cluster_width);
 use Unicode::GCString;
 
 use constant CLUSTER_CACHE_LIMIT => 4096;
-
-FFI::Platypus->new( api => 2, lib => [undef] )->attach( [ wcwidth => '_libc_wcwidth' ] => ['wchar_t'] => 'int' );
 
 my %columns_by_cluster;
 
@@ -47,19 +45,12 @@ sub terminal_is_utf8 () {
 	return langinfo(CODESET) =~ /\Autf-?8\z/i ? 1 : 0;
 }
 
-# Mirrors termbox2's tb_present(): a single codepoint advances by
-# wcwidth(), a cluster by wcswidth() (the sum, or -1 as soon as one
-# codepoint is -1), and any result below 1 advances by one column.
+# Mirrors termbox2's tb_present(): a cluster advances by tb_cluster_width()
+# (its widest codepoint, forced to 1 by a text presentation selector and
+# to 2 by an emoji presentation selector, a zero-width joiner or a pair of
+# regional indicators), and any result below 1 advances by one column.
 sub _terminal_columns ($cluster) {
-	my $width = 0;
-	foreach my $codepoint ( unpack 'W*', $cluster ) {
-		my $codepoint_width = _libc_wcwidth($codepoint);
-		if ( $codepoint_width < 0 ) {
-			$width = -1;
-			last;
-		}
-		$width += $codepoint_width;
-	}
+	my $width = tb_cluster_width($cluster);
 	return $width < 1 ? 1 : $width;
 }
 
@@ -92,13 +83,16 @@ Layout and drawing must agree on these widths, or everything after a
 wide character shifts.
 
 termbox2, which draws Term::Fabulous programs, moves its cursor by the
-widths the C library's C<wcwidth> and C<wcswidth> functions report. This
-module calls the same C<wcwidth> (through L<FFI::Platypus>) and applies
-termbox2's C<wcswidth> rule for clusters of several code points in Perl,
-so the widths it computes are exactly the widths termbox2 uses.
-Term::Fabulous uses it to measure text for the layout and to draw text
-and canvas cells; use it yourself when you need to know how wide a
-string will be on screen, for example to pad or truncate a label.
+widths its own Unicode tables report: one codepoint by its C<tb_wcwidth>,
+a cluster of several codepoints by its C<tb_cluster_width>, which takes
+the widest codepoint and then lets a variation selector, a zero-width
+joiner or a pair of regional indicators decide between text (1) and
+emoji (2) presentation. This module calls those same functions through
+L<Term::Fabulous::Termbox>, so the widths it computes are exactly the
+widths termbox2 uses, on every platform. Term::Fabulous uses it to
+measure text for the layout and to draw text and canvas cells; use it
+yourself when you need to know how wide a string will be on screen, for
+example to pad or truncate a label.
 
 All functions take and return Perl character strings (decoded text),
 not UTF-8 encoded bytes.
@@ -114,13 +108,12 @@ L<Unicode::GCString>.
 
 =head2 The locale matters
 
-C<wcwidth> follows the character type locale of the process
-(C<LC_CTYPE>, usually set through C<LANG> or C<LC_ALL>). Under a UTF-8
-locale such as C<en_US.UTF-8> or C<C.UTF-8>, wide characters are two
-columns. Under a non-UTF-8 locale such as C<C>, every character counts
-as one column, both here and in termbox2, and wide characters overlap on
-screen. L<Term::Fabulous/run> warns when the locale is not UTF-8 (each
-time it is called); see L</terminal_is_utf8>.
+The widths do not depend on the locale, but the terminal does: termbox2
+sends UTF-8, and a terminal running under a non-UTF-8 locale such as
+C<C> shows the bytes of a wide character as several narrow ones, so
+everything after it shifts. L<Term::Fabulous/run> warns when the
+locale's character set is not UTF-8 (each time it is called); see
+L</terminal_is_utf8>.
 
 =head1 FUNCTIONS
 
@@ -173,9 +166,10 @@ list for the empty string.
 	my $columns = cluster_columns($cluster);
 
 Returns the number of columns termbox2 advances for one grapheme
-cluster: C<wcwidth> of its code point when it has one code point; for several
-code points, the sum of their C<wcwidth> values, or -1 as soon as one
-of them is -1 (the rule of C<wcswidth>); and at least 1
+cluster: L<Term::Fabulous::Termbox/tb_cluster_width> of its code
+points (the widest one; 1 when a variation selector 15 asks for text
+presentation, 2 when a variation selector 16, a zero-width joiner or a
+pair of regional indicators asks for emoji presentation), and at least 1
 in any case. Zero-width and unprintable clusters therefore still occupy
 one cell. The argument should be a single cluster as returned by
 L</grapheme_clusters>. Dies if C<$cluster> is the empty string.
@@ -203,7 +197,7 @@ locale, termbox2 cannot place wide characters correctly.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual/Wide characters and emoji>,
-L<Term::Fabulous::Manual/Control characters>, L<Unicode::GCString>,
-L<wcwidth(3)>.
+L<Term::Fabulous::Manual/Control characters>, L<Term::Fabulous::Termbox>,
+L<Unicode::GCString>.
 
 =cut

@@ -20,7 +20,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	use Clay::UI::Enum::Result;
 	use List::Util qw(max min);
 	use Scalar::Util qw(weaken);
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	use constant SCROLLBAR_TRACK => "\x{2502}";

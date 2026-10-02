@@ -9,7 +9,7 @@ use lib "$FindBin::Bin/lib";
 
 use Clay::XS qw(sizing_fixed CLAY_TOP_TO_BOTTOM);
 use InputTest;
-use Termbox 2 qw(TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Dropdown;

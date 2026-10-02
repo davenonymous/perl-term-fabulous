@@ -16,7 +16,7 @@ class Term::Fabulous::Widget::TextArea
 	:strict(params)
 {
 	use List::Util qw(max min sum0);
-	use Termbox 2 qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 
 	use constant WHEEL_ROWS      => 3;
 	use constant SCROLLBAR_TRACK => "\x{2502}";

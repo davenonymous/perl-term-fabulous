@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Input
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed);
 	use Scalar::Util qw(refaddr weaken);
-	use Termbox 2 qw(TB_TRUECOLOR_REVERSE);
+	use Term::Fabulous::Termbox qw(TB_REVERSE);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::Change;
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
@@ -141,7 +141,7 @@ class Term::Fabulous::Widget::Input
 	}
 
 	method reverse_attr ($attr) {
-		return ( $attr // 0 ) | TB_TRUECOLOR_REVERSE;
+		return ( $attr // 0 ) | TB_REVERSE;
 	}
 
 	# A color as the [r, g, b, a] that Clay takes for backgrounds and

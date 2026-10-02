@@ -21,7 +21,7 @@ class Term::Fabulous::Static
 {
 	use Encode qw(encode);
 	use Scalar::Util qw(openhandle);
-	use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK TB_TRUECOLOR_REVERSE TB_TRUECOLOR_BOLD TB_TRUECOLOR_UNDERLINE);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE TB_BOLD TB_UNDERLINE);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant DEFAULT_MAX_HEIGHT => 4096;
@@ -94,14 +94,14 @@ class Term::Fabulous::Static
 	sub _is_blank ($cell) {
 		return 1 unless defined $cell;
 		my ( $glyph, $fg, $bg ) = @$cell;
-		return $glyph eq ' ' && $bg == TB_DEFAULT && !( $fg & TB_TRUECOLOR_REVERSE );
+		return $glyph eq ' ' && $bg == TB_DEFAULT && !( $fg & TB_REVERSE );
 	}
 
 	sub _sgr ( $fg, $bg ) {
 		my @codes;
-		push @codes, 1 if $fg & TB_TRUECOLOR_BOLD;
-		push @codes, 4 if $fg & TB_TRUECOLOR_UNDERLINE;
-		push @codes, 7 if ( $fg | $bg ) & TB_TRUECOLOR_REVERSE;
+		push @codes, 1 if $fg & TB_BOLD;
+		push @codes, 4 if $fg & TB_UNDERLINE;
+		push @codes, 7 if ( $fg | $bg ) & TB_REVERSE;
 		push @codes, _color_codes( 38, $fg );
 		push @codes, _color_codes( 48, $bg );
 		return @codes ? "\e[" . join( ';', @codes ) . 'm' : '';
@@ -111,8 +111,8 @@ class Term::Fabulous::Static
 	# because termbox2 reads 0x000000 as the default color.
 	sub _color_codes ( $base, $attr ) {
 		return () if $attr == TB_DEFAULT;
-		my $rgb = $attr & TB_TRUECOLOR_BLACK ? 0 : $attr & COLOR_MASK;
-		return () if !( $attr & TB_TRUECOLOR_BLACK ) && $rgb == 0;
+		my $rgb = $attr & TB_HI_BLACK ? 0 : $attr & COLOR_MASK;
+		return () if !( $attr & TB_HI_BLACK ) && $rgb == 0;
 		return ( $base, 2, ( $rgb >> 16 ) & 0xFF, ( $rgb >> 8 ) & 0xFF, $rgb & 0xFF );
 	}
 }

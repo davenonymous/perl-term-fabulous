@@ -10,6 +10,12 @@ Revision history for Term::Fabulous
           The render roles paint through a cell target role
           (Render::Target::Termbox for the terminal, Render::Target::Grid
           for memory) instead of calling termbox2 directly
+        - termbox2 is compiled into the distribution as
+          Term::Fabulous::Termbox (XS, 64-bit attributes, grapheme
+          clusters); the Termbox and FFI::Platypus dependencies are
+          gone. Text is measured with termbox2's own width functions,
+          so emoji presentation sequences (U+FE0F), ZWJ sequences and
+          flags take two columns
         - Scroll containers: the renderer honors Clay's scissor commands
           (Render::Clip), Widget::ScrollBox is a Box that scrolls, and
           the mouse wheel scrolls the box under the pointer by three

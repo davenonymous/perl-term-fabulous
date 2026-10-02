@@ -38,7 +38,7 @@ role Term::Fabulous::Render
 	);
 	use Encode qw(decode);
 	use Scalar::Util qw(looks_like_number);
-	use Termbox 2 qw(TB_OUTPUT_TRUECOLOR);
+	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	my %handler_by_command_type = (
@@ -248,7 +248,7 @@ The class that composes this role must provide:
 =item C<output_mode>
 
 The termbox2 output mode. It must be C<TB_OUTPUT_TRUECOLOR> (from
-L<Termbox>), which is also the default, because Term::Fabulous always
+L<Term::Fabulous::Termbox>), which is also the default, because Term::Fabulous always
 paints 24-bit colors. Any other value dies with
 C<Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR>.
 There is no reason to pass it.

@@ -12,6 +12,13 @@
 /MANIFEST.bak
 /MANIFEST.SKIP.bak
 
+# XS build products
+/lib/Term/Fabulous/Termbox.c
+/lib/Term/Fabulous/Termbox.o
+/lib/Term/Fabulous/Termbox.bs
+/src/*.o
+*.so
+
 # Release tarballs and staging directories
 /Term-Fabulous-*.tar.gz
 /Term-Fabulous-*/

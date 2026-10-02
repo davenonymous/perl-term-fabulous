@@ -18,7 +18,7 @@ class Term::Fabulous::Widget::Slider
 	use List::Util ();    # min and max are methods here
 	use POSIX qw(floor);
 	use Scalar::Util qw(looks_like_number);
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
 
 	# Key name => steps (or pages, or the end) the value moves.

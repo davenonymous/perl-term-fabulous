@@ -1,0 +1,8 @@
+termbox2.h is an unmodified copy of upstream termbox2 (MIT licensed):
+
+  https://github.com/termbox/termbox2
+  commit cdf62e9990d8b200768780080fb10a4e2f680051 (2026-09-03, version 2.7.0-dev)
+  https://raw.githubusercontent.com/termbox/termbox2/cdf62e9990d8b200768780080fb10a4e2f680051/termbox2.h
+
+The compile-time options Term::Fabulous builds it with live in tf_termbox.h;
+termbox2.c is the one translation unit that defines TB_IMPL.

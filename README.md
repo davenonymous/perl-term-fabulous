@@ -110,8 +110,8 @@ dispatches input events. It is a subclass of [Clay::UI](https://metacpan.org/pod
 
 # REQUIREMENTS
 
-Perl 5.24 or later, the [Termbox](https://metacpan.org/pod/Termbox) module (version 2) with a termbox2
-library that was built with truecolor support, a terminal with 24-bit
+Perl 5.24 or later, a C compiler to build [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox)
+(termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. See ["REQUIREMENTS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#REQUIREMENTS).
 
 # CONSTRUCTOR
@@ -163,7 +163,7 @@ first. Unknown parameters die
 - `output_mode`
 
     Optional, and only one value is allowed: `TB_OUTPUT_TRUECOLOR` from
-    [Termbox](https://metacpan.org/pod/Termbox), the default. Any other value dies. Term::Fabulous always draws
+    [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox), the default. Any other value dies. Term::Fabulous always draws
     with 24-bit colors.
 
 - `memory_size`
@@ -603,6 +603,16 @@ from layout files, or your own application or output class.
 
     Sends the drawn cells to the terminal.
 
+- [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox)
+
+    The termbox2 library itself, compiled into the distribution: the
+    `tb_*` functions and `TB_*` constants, and the width functions
+    [Term::Fabulous::Unicode](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AUnicode) measures with.
+
+- [Term::Fabulous::Termbox::Event](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox%3A%3AEvent)
+
+    One termbox2 input event, as `tb_peek_event` fills it.
+
 - [Term::Fabulous::Render::Target::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3AGrid)
 
     Collects the drawn cells in memory.
@@ -672,7 +682,7 @@ be shown. A larger tree makes drawing die with a misleading Clay error
 # SEE ALSO
 
 [Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual), [Term::Fabulous::Cookbook](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI),
-[Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS), [Termbox](https://metacpan.org/pod/Termbox), [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync), [Object::Pad](https://metacpan.org/pod/Object%3A%3APad).
+[Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS), [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox), [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync), [Object::Pad](https://metacpan.org/pod/Object%3A%3APad).
 
 # BUGS
 

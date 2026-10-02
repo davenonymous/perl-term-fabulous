@@ -1,6 +1,7 @@
 use strict;
 use warnings;
-use ExtUtils::MakeMaker;
+use Config;
+use ExtUtils::MakeMaker 7.12;    # XSMULTI
 use File::Find qw(find);
 
 # Build the META "provides" map by hand. Module::Metadata does not
@@ -47,8 +48,25 @@ WriteMakefile(
 	LICENSE            => 'perl_5',
 	MIN_PERL_VERSION   => '5.024',
 	CONFIGURE_REQUIRES => {
-		'ExtUtils::MakeMaker' => '6.64',
+		'ExtUtils::MakeMaker' => '7.12',
 	},
+
+	# termbox2 is compiled in: src/termbox2.c holds the library (TB_IMPL),
+	# lib/Term/Fabulous/Termbox.xs the Perl surface. XSMULTI builds the
+	# .xs where it lives and names the .so after it (auto/Term/Fabulous/
+	# Termbox/Termbox.so), so the dist's NAME can stay Term::Fabulous.
+	XSMULTI => 1,
+	XSBUILD => {
+		xs => {
+			'lib/Term/Fabulous/Termbox' => {
+				OBJECT => 'lib/Term/Fabulous/Termbox$(OBJ_EXT) src/termbox2$(OBJ_EXT)',
+				INC    => '-I. -Isrc',
+			},
+		},
+	},
+	C => ['src/termbox2.c'],
+	H => [ 'src/termbox2.h', 'src/tf_termbox.h' ],
+	( $Config{gccversion} ? ( CCFLAGS => "$Config{ccflags} -std=c99 -Wall -Wextra" ) : () ),
 	TEST_REQUIRES => {
 		'Test2::V0' => '0',
 	},
@@ -57,7 +75,6 @@ WriteMakefile(
 		'Data::Checks'                    => '0.04',
 		'Encode'                          => '0',
 		'Exporter'                        => '0',
-		'FFI::Platypus'                   => '2.00',
 		'Feature::Compat::Try'            => '0',
 		'I18N::Langinfo'                  => '0',
 		'IO::Async'                       => '0',
@@ -67,10 +84,10 @@ WriteMakefile(
 		'Object::PadX::Enum'              => '0',
 		'POSIX'                           => '0',
 		'Scalar::Util'                    => '0',
-		'Termbox'                         => '2',
 		'Text::KDL::XS'                   => '0',
 		'Time::HiRes'                     => '0',
 		'Unicode::GCString'               => '0',
+		'XSLoader'                        => '0',
 	},
 	META_MERGE => {
 		'meta-spec' => { version => 2 },
@@ -87,11 +104,20 @@ WriteMakefile(
 		provides       => collectProvides(),
 	},
 	test  => { TESTS => 't/*.t' },
-	clean => { FILES => 'Term-Fabulous-*' },
+	clean => { FILES => 'Term-Fabulous-* lib/Term/Fabulous/Termbox.c lib/Term/Fabulous/Termbox.o lib/Term/Fabulous/Termbox.bs src/*.o' },
 );
 
 sub MY::postamble {
 	return <<'MAKE_FRAG';
+
+# --- termbox2 object --------------------------------------------------
+# MakeMaker only knows how to compile C files next to the XS; the
+# library lives in src/, so give it the same recipe with -o.
+
+src/%$(OBJ_EXT) : src/%.c src/termbox2.h src/tf_termbox.h
+	$(CCCMD) $(CCCDLFLAGS) -I. -Isrc "-I$(PERL_INC)" $(PASTHRU_DEFINE) $(DEFINE) -o $@ $<
+
+lib/Term/Fabulous/Termbox$(OBJ_EXT) : src/termbox2.h src/tf_termbox.h
 
 # --- README regeneration ---------------------------------------------
 # Usage: make readme

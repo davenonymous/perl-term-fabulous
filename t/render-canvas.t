@@ -5,7 +5,7 @@ use utf8;
 use Test2::V0;
 
 use Clay::XS qw(sizing_fixed sizing_grow);
-use Termbox 2 qw(TB_DEFAULT);
+use Term::Fabulous::Termbox qw(TB_DEFAULT);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Canvas;

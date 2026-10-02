@@ -282,8 +282,8 @@ need C<encode>.
 =item *
 
 Wide characters take two columns, and a base character with combining
-marks takes one cell. Term::Fabulous measures text with the same
-C<wcwidth> rules as termbox2; see
+marks takes one cell. Term::Fabulous measures text with termbox2's own
+width functions; see
 L<Term::Fabulous::Manual/Wide characters and emoji>.
 
 =back
@@ -775,7 +775,7 @@ Goal: let the user draw on a canvas by clicking and dragging.
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Canvas;
 	use Term::Fabulous::Widget::Text;
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTION);
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 	my $root = Term::Fabulous::Widget::Box->new(
@@ -828,7 +828,7 @@ widget under the pointer that painted something there, here the
 canvas. C<key> says what happened: C<TB_KEY_MOUSE_LEFT>,
 C<TB_KEY_MOUSE_RIGHT>, C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RELEASE>,
 C<TB_KEY_MOUSE_WHEEL_UP> or C<TB_KEY_MOUSE_WHEEL_DOWN> (constants of
-L<Termbox>).
+L<Term::Fabulous::Termbox>).
 
 =item *
 
@@ -2746,7 +2746,7 @@ events at them and checking their values and what they show.
 	no warnings 'experimental::signatures';
 
 	use Test2::V0;
-	use Termbox 2 qw(TB_KEY_ARROW_LEFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_ARROW_LEFT);
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Static;
 	use Term::Fabulous::Widget::Box;
@@ -2814,7 +2814,7 @@ L<Term::Fabulous::Manual/TESTING>.
 
 A L<Term::Fabulous::Event::KeyPress> takes termbox2's three numbers: a
 typed character goes into C<char> (with C<key> 0), a special key into
-C<key> (with C<char> 0, using a C<TB_KEY_*> constant of L<Termbox> or
+C<key> (with C<char> 0, using a C<TB_KEY_*> constant of L<Term::Fabulous::Termbox> or
 the control code, such as 13 for Enter), and C<modifiers> holds
 C<TB_MOD_*> bits.
 

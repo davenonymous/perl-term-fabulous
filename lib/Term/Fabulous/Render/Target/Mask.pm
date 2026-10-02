@@ -54,9 +54,9 @@ role Term::Fabulous::Render::Target::Mask {
 		return;
 	}
 
-	method extend_cell ( $x, $y, $codepoint ) {
+	method extend_cell ( $x, $y, $character ) {
 		return if @_kept_rects && _is_kept( $x, $y, \@_kept_rects );
-		$self->put_extension( $x, $y, $codepoint );
+		$self->put_extension( $x, $y, $character );
 		return;
 	}
 

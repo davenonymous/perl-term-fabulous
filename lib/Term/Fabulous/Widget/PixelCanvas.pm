@@ -162,7 +162,7 @@ per cell
 =head1 SYNOPSIS
 
 	use Clay::XS qw(sizing_grow);
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT);
 	use Term::Fabulous::Widget::PixelCanvas;
 
 	my $image = Term::Fabulous::Widget::PixelCanvas->new(

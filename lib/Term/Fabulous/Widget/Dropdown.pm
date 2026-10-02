@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::Dropdown
 	use Clay::XS qw(sizing_fixed CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_BOTTOM);
 	use List::Util qw(first max min);
 	use Scalar::Util qw(refaddr);
-	use Termbox 2 qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Unicode qw(string_columns);

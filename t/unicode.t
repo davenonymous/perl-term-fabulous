@@ -4,10 +4,7 @@ use utf8;
 
 use Test2::V0;
 
-use FFI::Platypus 2;
 use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns);
-
-my $wcwidth = FFI::Platypus->new( api => 2, lib => [undef] )->function( wcwidth => ['wchar_t'] => 'int' );
 
 subtest 'sanitize_text' => sub {
 	is sanitize_text("a\tb"),              'a b',                                  'TAB becomes a space';
@@ -17,14 +14,17 @@ subtest 'sanitize_text' => sub {
 };
 
 subtest 'widths follow the termbox2 rule' => sub {
-	my $emoji_width = $wcwidth->call(0x2764) + $wcwidth->call(0xFE0F);
-	is cluster_columns("\x{2764}\x{FE0F}"), $emoji_width < 1 ? 1 : $emoji_width, 'VS16 cluster uses wcswidth';
-	is cluster_columns("e\x{301}"),         1, 'combining sequence';
-	is cluster_columns("\x{200B}"),         1, 'zero-width cluster still occupies a cell';
-	is cluster_columns("\x{FFFD}"),         1, 'replacement character';
+	is cluster_columns('a'),                     1, 'ASCII';
+	is cluster_columns("\x{4E00}"),              2, 'CJK ideograph';
+	is cluster_columns("\x{2764}\x{FE0F}"),      2, 'VS16 asks for emoji presentation';
+	is cluster_columns("\x{2764}\x{FE0E}"),      1, 'VS15 asks for text presentation';
+	is cluster_columns("\x{1F1E9}\x{1F1EA}"),    2, 'two regional indicators make one flag';
+	is cluster_columns("e\x{301}"),              1, 'combining sequence';
+	is cluster_columns("\x{200B}"),              1, 'zero-width cluster still occupies a cell';
+	is cluster_columns("\x{FFFD}"),              1, 'replacement character';
 	is [ grapheme_clusters("a\e") ], [ 'a', "\x{FFFD}" ], 'clusters are sanitized';
-	is string_columns("ab\tc"),             4, 'string_columns sanitizes before measuring';
-	is string_columns(''),                  0, 'empty string';
+	is string_columns("ab\tc"),                  4, 'string_columns sanitizes before measuring';
+	is string_columns(''),                       0, 'empty string';
 	like dies { cluster_columns('') }, qr/non-empty cluster/, 'empty cluster dies';
 };
 

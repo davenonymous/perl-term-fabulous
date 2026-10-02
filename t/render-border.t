@@ -4,7 +4,7 @@ use warnings;
 use Test2::V0;
 
 use Object::Pad 0.825;
-use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_REVERSE);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_REVERSE);
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Render::Border;
 use Term::Fabulous::Widget::Box;
@@ -75,14 +75,14 @@ subtest 'location colors' => sub {
 	$buffer->[0] = [ (0x010101) x 6 ];                 # parent background above it
 
 	draw_border( style => 'Wide', width => { right => 1, top => 1 }, buffer => $buffer );
-	is $cells{'4,2'}, [ "\x{258A}", 0xC80000 | TB_TRUECOLOR_REVERSE, 0x0A0B0C ], 'location 3: reverse video over the widget background';
+	is $cells{'4,2'}, [ "\x{258A}", 0xC80000 | TB_REVERSE, 0x0A0B0C ], 'location 3: reverse video over the widget background';
 	is $cells{'2,1'}, [ "\x{2581}", 0xC80000, 0x010101 ], 'location 1: border color over the parent background';
 
 	draw_border( style => 'Solid', width => { top => 1 }, buffer => $buffer );
 	is $cells{'2,1'}[2], 0x0A0B0C, 'location 0: border color over the widget background';
 
 	draw_border( style => 'Panel', width => { top => 1, left => 1 } );
-	is $cells{'1,1'}[1], 0xC80000 | TB_TRUECOLOR_REVERSE, 'location 2 is reverse video';
+	is $cells{'1,1'}[1], 0xC80000 | TB_REVERSE, 'location 2 is reverse video';
 	is $cells{'1,1'}[2], TB_DEFAULT, 'location 2 background is the unpainted parent cell (terminal default)';
 };
 

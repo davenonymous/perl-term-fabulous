@@ -4,7 +4,6 @@ requires 'Clay::XS';
 requires 'Data::Checks', '0.04';
 requires 'Encode';
 requires 'Exporter';
-requires 'FFI::Platypus', '2.00';
 requires 'Feature::Compat::Try';
 requires 'I18N::Langinfo';
 requires 'IO::Async';
@@ -14,10 +13,10 @@ requires 'Object::Pad::FieldAttr::Checked';
 requires 'Object::PadX::Enum';
 requires 'POSIX';
 requires 'Scalar::Util';
-requires 'Termbox', '2';
 requires 'Text::KDL::XS';
 requires 'Time::HiRes';
 requires 'Unicode::GCString';
+requires 'XSLoader';
 
 on test => sub {
 	requires 'Test2::V0';

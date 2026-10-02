@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
-use Termbox 2 qw(TB_KEY_MOUSE_WHEEL_UP TB_MOD_MOTION);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_MOD_MOTION);
 use Term::Fabulous::Widget::Slider;
 
 sub slider {

@@ -6,7 +6,7 @@ use Test2::V0;
 
 use Encode qw(encode);
 use Object::Pad 0.825;
-use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_BLACK);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
 use Term::Fabulous::Render::Text;
 use Term::Fabulous::Unicode qw(cluster_columns);
 
@@ -80,7 +80,7 @@ subtest 'combining marks extend the base cell' => sub {
 
 subtest 'colors' => sub {
 	draw_text( 'a', color => { r => 0, g => 0, b => 0, a => 255 } );
-	is $calls[0][4], TB_TRUECOLOR_BLACK, 'opaque black foreground is TB_TRUECOLOR_BLACK';
+	is $calls[0][4], TB_HI_BLACK, 'opaque black foreground is TB_HI_BLACK';
 
 	draw_text( 'a', buffer => [ [ 0x112233 ] ] );
 	is $calls[0][5], 0x112233, 'background comes from the shadow buffer';

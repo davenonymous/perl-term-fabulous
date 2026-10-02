@@ -1,0 +1,341 @@
+package Term::Fabulous::Termbox;
+
+use v5.22;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+our $VERSION = '0.01';
+
+use Exporter 'import';
+use XSLoader;
+
+our ( @EXPORT_OK, %EXPORT_TAGS );
+
+# The constants and their tags (:keys :colors :event :return) are installed
+# by the XS BOOT code; the functions are listed here.
+XSLoader::load( __PACKAGE__, $VERSION );
+
+$EXPORT_TAGS{api} = [
+	qw(
+		tb_init tb_init_file tb_init_fd tb_init_rwfd tb_shutdown
+		tb_width tb_height tb_set_input_mode tb_set_output_mode
+		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
+		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send
+		tb_peek_event tb_poll_event tb_get_fds
+		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
+	)
+];
+$EXPORT_TAGS{width} = [qw(tb_iswprint tb_wcwidth tb_cluster_width)];
+
+{
+	my %seen;
+	@EXPORT_OK = grep { !$seen{$_}++ } map { @$_ } values %EXPORT_TAGS;
+}
+$EXPORT_TAGS{all} = [@EXPORT_OK];
+
+sub tb_peek_event ( $event, $timeout_ms ) {
+	my ( $status, %fields ) = _peek_event($timeout_ms);
+	_fill_event( $event, %fields ) if $status == TB_OK();
+	return $status;
+}
+
+sub tb_poll_event ($event) {
+	my ( $status, %fields ) = _poll_event();
+	_fill_event( $event, %fields ) if $status == TB_OK();
+	return $status;
+}
+
+sub _fill_event ( $event, %fields ) {
+	$event->$_( $fields{$_} ) foreach keys %fields;
+	return;
+}
+
+1;
+
+__END__
+
+=encoding UTF-8
+
+=head1 NAME
+
+Term::Fabulous::Termbox - termbox2 compiled into Term::Fabulous
+
+=head1 SYNOPSIS
+
+	use Term::Fabulous::Termbox qw(:api :keys :colors :event :return);
+	use Term::Fabulous::Termbox::Event;
+
+	my $rc = tb_init();
+	die tb_strerror($rc) unless $rc == TB_OK;
+	tb_set_output_mode(TB_OUTPUT_TRUECOLOR);
+
+	tb_set_cell( 0, 0, 'A', 0xFF8800 | TB_BOLD, TB_DEFAULT );
+	tb_set_cell( 1, 0, "e\x{301}", TB_DEFAULT, TB_DEFAULT );    # first codepoint ...
+	tb_extend_cell( 1, 0, "\x{301}" );                           # ... then the combining mark
+	tb_set_cell_ex( 2, 0, "\x{1F1E9}\x{1F1EA}", TB_DEFAULT, TB_DEFAULT );    # or the whole cluster at once
+	tb_present();
+
+	my $event = Term::Fabulous::Termbox::Event->new;
+	while ( tb_poll_event($event) == TB_OK ) {
+		last if $event->type == TB_EVENT_KEY && $event->key == TB_KEY_CTRL_C;
+	}
+	tb_shutdown();
+
+	use Term::Fabulous::Termbox qw(:width);
+	tb_wcwidth(0x4E00);                       # 2
+	tb_cluster_width("\x{2764}\x{FE0F}");    # 2: VS16 asks for emoji presentation
+
+=head1 DESCRIPTION
+
+An XS binding of L<termbox2|https://github.com/termbox/termbox2>, compiled
+from the header shipped in the distribution (F<src/termbox2.h>, see
+F<src/README.termbox2> for the exact upstream commit). Nothing is looked up
+at run time, and the compile-time options are fixed:
+
+=over
+
+=item *
+
+C<TB_OPT_ATTR_W> is 64: an attribute carries a 24-bit color and every
+style bit, C<TB_STRIKEOUT>, C<TB_UNDERLINE_2>, C<TB_OVERLINE> and
+C<TB_INVISIBLE> included. L</tb_attr_width> reports 64.
+
+=item *
+
+C<TB_OPT_EGC> is set: a cell holds a whole grapheme cluster
+(L</tb_extend_cell>, L</tb_set_cell_ex>). L</tb_has_egc> reports 1.
+
+=item *
+
+termbox2 measures with its own Unicode tables (C<TB_OPT_LIBC_WCHAR> is
+not set), so widths are the same on every platform. L</tb_wcwidth> and
+L</tb_cluster_width> expose exactly the functions C<tb_present> uses.
+
+=back
+
+Every function keeps its termbox2 name and returns its status code, C<TB_OK>
+or one of the C<TB_ERR_*> constants; nothing dies on a terminal error.
+The exceptions are arguments the binding cannot translate at all, such as
+an empty string where a character is needed, which die before termbox2 is
+called.
+
+=head1 EXPORTS
+
+Nothing is exported by default. The tags are
+
+=over
+
+=item C<:api>
+
+The functions below, except the width functions.
+
+=item C<:width>
+
+L</tb_iswprint>, L</tb_wcwidth>, L</tb_cluster_width>.
+
+=item C<:keys>
+
+Every C<TB_KEY_*> constant: the ASCII control range (C<TB_KEY_CTRL_A> to
+C<TB_KEY_CTRL_Z>, C<TB_KEY_TAB>, C<TB_KEY_ENTER>, C<TB_KEY_ESC>,
+C<TB_KEY_SPACE>, C<TB_KEY_BACKSPACE>, C<TB_KEY_BACKSPACE2>, ...), the
+function and navigation keys (C<TB_KEY_F1> to C<TB_KEY_F12>,
+C<TB_KEY_ARROW_*>, C<TB_KEY_HOME>, C<TB_KEY_END>, C<TB_KEY_PGUP>,
+C<TB_KEY_PGDN>, C<TB_KEY_INSERT>, C<TB_KEY_DELETE>, C<TB_KEY_BACK_TAB>) and
+the mouse "keys" (C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_RIGHT>,
+C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RELEASE>, C<TB_KEY_MOUSE_WHEEL_UP>,
+C<TB_KEY_MOUSE_WHEEL_DOWN>).
+
+=item C<:colors>
+
+C<TB_DEFAULT>, the eight basic colors C<TB_BLACK> to C<TB_WHITE>, and the
+style bits C<TB_BOLD>, C<TB_UNDERLINE>, C<TB_REVERSE>, C<TB_ITALIC>,
+C<TB_BLINK>, C<TB_HI_BLACK>, C<TB_BRIGHT>, C<TB_DIM>, C<TB_STRIKEOUT>,
+C<TB_UNDERLINE_2>, C<TB_OVERLINE>, C<TB_INVISIBLE>. In truecolor mode the
+low 24 bits of an attribute are the RGB value; since C<0x000000> means
+"terminal default" there, opaque black is C<TB_HI_BLACK>. The deprecated
+aliases C<TB_TRUECOLOR_BOLD>, C<TB_TRUECOLOR_UNDERLINE>,
+C<TB_TRUECOLOR_REVERSE>, C<TB_TRUECOLOR_ITALIC>, C<TB_TRUECOLOR_BLINK>,
+C<TB_TRUECOLOR_BLACK> are exported too.
+
+=item C<:event>
+
+C<TB_EVENT_KEY>, C<TB_EVENT_RESIZE>, C<TB_EVENT_MOUSE>; the modifiers
+C<TB_MOD_ALT>, C<TB_MOD_CTRL>, C<TB_MOD_SHIFT>, C<TB_MOD_MOTION>; the input
+modes C<TB_INPUT_CURRENT>, C<TB_INPUT_ESC>, C<TB_INPUT_ALT>,
+C<TB_INPUT_MOUSE>; the output modes C<TB_OUTPUT_CURRENT>,
+C<TB_OUTPUT_NORMAL>, C<TB_OUTPUT_256>, C<TB_OUTPUT_216>,
+C<TB_OUTPUT_GRAYSCALE>, C<TB_OUTPUT_TRUECOLOR>.
+
+=item C<:return>
+
+C<TB_OK> and every C<TB_ERR_*> code, L</tb_strerror> names them.
+
+=item C<:all>
+
+Everything.
+
+=back
+
+=head1 FUNCTIONS
+
+=head2 Lifecycle
+
+=head3 tb_init, tb_init_file, tb_init_fd, tb_init_rwfd
+
+	my $rc = tb_init();
+	my $rc = tb_init_file('/dev/tty');
+	my $rc = tb_init_fd($ttyfd);
+	my $rc = tb_init_rwfd( $rfd, $wfd );
+
+Open the terminal. C<tb_init> uses F</dev/tty>.
+
+=head3 tb_shutdown
+
+Restores the terminal.
+
+=head3 tb_width, tb_height
+
+The terminal size in cells, or C<TB_ERR_NOT_INIT> before L</tb_init>.
+
+=head3 tb_set_input_mode, tb_set_output_mode
+
+	tb_set_input_mode( TB_INPUT_ESC | TB_INPUT_MOUSE );
+	tb_set_output_mode(TB_OUTPUT_TRUECOLOR);
+
+=head2 Drawing
+
+=head3 tb_clear, tb_set_clear_attrs, tb_present, tb_invalidate
+
+As in termbox2: C<tb_clear> fills the back buffer with the clear
+attributes, C<tb_present> sends the changed cells, C<tb_invalidate> forces
+a full redraw on the next C<tb_present>.
+
+=head3 tb_set_cursor, tb_hide_cursor
+
+=head3 tb_set_cell
+
+	tb_set_cell( $x, $y, $character, $fg, $bg );
+
+Writes one cell. C<$character> is a Perl string whose first codepoint is
+used; an integer that was never a string is taken as the codepoint itself.
+An empty string dies.
+
+=head3 tb_extend_cell
+
+	tb_extend_cell( $x, $y, $character );
+
+Appends the first codepoint of C<$character> to the cell's grapheme
+cluster.
+
+=head3 tb_set_cell_ex
+
+	tb_set_cell_ex( $x, $y, $cluster, $fg, $bg );
+
+Writes a whole grapheme cluster at once: every codepoint of C<$cluster>.
+
+=head3 tb_get_cell
+
+	my ( $rc, $text, $fg, $bg ) = tb_get_cell( $x, $y, $back );
+
+Reads a cell from the back (C<$back> true) or front buffer. C<$text> is the
+cell's cluster as a string. Only C<$rc> is returned unless it is C<TB_OK>.
+
+=head3 tb_print
+
+	tb_print( $x, $y, $fg, $bg, $text );
+
+Writes a string cell by cell, advancing by each cluster's width.
+
+=head3 tb_send
+
+	tb_send($bytes);
+
+Writes raw bytes to the terminal, UTF-8 encoded if the string is wide.
+
+=head2 Events
+
+=head3 tb_peek_event
+
+	my $rc = tb_peek_event( $event, $timeout_ms );
+
+Waits up to C<$timeout_ms> for an event and fills C<$event>, a
+L<Term::Fabulous::Termbox::Event>, in place. Returns C<TB_OK>,
+C<TB_ERR_NO_EVENT> after the timeout, or an error. C<$event> is untouched
+unless the result is C<TB_OK>.
+
+=head3 tb_poll_event
+
+	my $rc = tb_poll_event($event);
+
+Like L</tb_peek_event> without a timeout.
+
+=head3 tb_get_fds
+
+	my $rc = tb_get_fds( \my $tty_fd, \my $resize_fd );
+
+Stores termbox2's tty and resize-pipe descriptors through the references,
+for an event loop that waits on them itself. Dies unless both arguments
+are scalar references.
+
+=head2 Widths
+
+=head3 tb_iswprint
+
+	my $printable = tb_iswprint($codepoint);
+
+=head3 tb_wcwidth
+
+	my $columns = tb_wcwidth($codepoint);
+
+The columns one codepoint takes: 0, 1, 2, or -1 for a codepoint that is
+not printable.
+
+=head3 tb_cluster_width
+
+	my $columns = tb_cluster_width($cluster);
+
+The columns a grapheme cluster takes, measured the way C<tb_present> does:
+the widest codepoint's width, forced to 1 when the cluster holds a
+variation selector 15 (text presentation) and to 2 when it holds a
+variation selector 16 (emoji presentation), a zero-width joiner or two
+regional indicators. Clusters below width 1 still occupy one cell when
+drawn. Dies on an empty string.
+
+=head2 Diagnostics
+
+=head3 tb_last_errno, tb_strerror
+
+	my $message = tb_strerror($rc);
+
+=head3 tb_has_truecolor, tb_has_egc, tb_attr_width, tb_version
+
+Report the compile-time options: 1, 1, 64 and the termbox2 version string.
+
+=head1 NOT BOUND
+
+C<tb_printf>, C<tb_sendf> and C<tb_printf_ex> (variadic; format in Perl and
+use L</tb_print> or L</tb_send>), the deprecated C<tb_set_func> and
+C<tb_cell_buffer> (use L</tb_get_cell>), and the C<tb_utf8_*> helpers
+(Perl strings are already Unicode).
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Termbox::Event>, L<Term::Fabulous>,
+L<termbox2|https://github.com/termbox/termbox2>.
+
+=head1 AUTHOR
+
+davenonymous <perl@davenonymous.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2026 davenonymous
+
+This library is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+termbox2 is Copyright (c) 2015-2026 Adam Saponara and 2010-2020 nsf, and
+distributed under the MIT license; see the header of F<src/termbox2.h>.
+
+=cut

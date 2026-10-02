@@ -14,7 +14,7 @@ use Term::Fabulous::Render::Clip;
 role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 	use List::Util qw(min max);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);    # checks truecolor support first
-	use Termbox 2 qw(TB_DEFAULT TB_TRUECOLOR_REVERSE);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_REVERSE);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 
@@ -28,8 +28,8 @@ role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 	sub _location_attrs ( $location, $border, $inner, $outer ) {
 		return ( $border, $inner ) if $location == 0;
 		return ( $border, $outer ) if $location == 1;
-		return ( $border | TB_TRUECOLOR_REVERSE, $outer ) if $location == 2;
-		return ( $border | TB_TRUECOLOR_REVERSE, $inner ) if $location == 3;
+		return ( $border | TB_REVERSE, $outer ) if $location == 2;
+		return ( $border | TB_REVERSE, $inner ) if $location == 3;
 		die "Term::Fabulous::Render::Border: invalid border location code '$location'";
 	}
 

@@ -12,7 +12,7 @@ use Exporter 'import';
 our @EXPORT = qw(layout_ui press type_text click row_text);
 
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-use Termbox 2 qw(
+use Term::Fabulous::Termbox qw(
 	TB_KEY_ARROW_LEFT TB_KEY_ARROW_RIGHT TB_KEY_ARROW_UP TB_KEY_ARROW_DOWN TB_KEY_HOME TB_KEY_END
 	TB_KEY_PGUP TB_KEY_PGDN TB_KEY_INSERT TB_KEY_DELETE TB_KEY_MOUSE_LEFT
 	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT

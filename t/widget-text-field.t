@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
-use Termbox 2 qw(TB_MOD_MOTION TB_MOD_SHIFT TB_TRUECOLOR_REVERSE);
+use Term::Fabulous::Termbox qw(TB_MOD_MOTION TB_MOD_SHIFT TB_REVERSE);
 use Term::Fabulous::Widget::TextField;
 
 sub text_field {
@@ -53,7 +53,7 @@ subtest 'cursor, selection and focus painting' => sub {
 	is $field->cell( 3, 0 ), undef, 'no cursor without focus';
 
 	$ui->interaction->set_focused_widget($field);
-	ok $field->cell( 3, 0 )->[1] & TB_TRUECOLOR_REVERSE, 'the focused field shows the cursor after the text';
+	ok $field->cell( 3, 0 )->[1] & TB_REVERSE, 'the focused field shows the cursor after the text';
 	press( $field, 'Shift+Left' );
 	is $field->editor->selected_text, 'c', 'Shift extends the selection';
 	is $field->cell( 2, 0 )->[2], $field->color_attr( $field->selection_color ), 'the selection is painted';
