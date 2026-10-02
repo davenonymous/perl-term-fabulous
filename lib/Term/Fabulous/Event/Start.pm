@@ -1,6 +1,6 @@
 package Term::Fabulous::Event::Start;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -38,8 +38,11 @@ Term::Fabulous::Event::Start - The terminal is open and its size is known
 L<Term::Fabulous/run> fires one C<Start> event on the root widget after
 it has opened the terminal and replaced the C<width> and C<height>
 given to C<new> with the terminal's size, and before the first frame is
-drawn. C<< $ui->width >> and C<< $ui->height >> already hold the
-terminal size when the listeners run. Later size changes fire
+drawn. It fires from inside the running event loop, before any input
+is read: C<< $ui->width >> and C<< $ui->height >> already hold the
+terminal size, and C<< $ui->loop >> is the running loop, so a listener
+can add timers to it or stop it. Timers and other work the program
+queued on the loop before C<run> may run before it. Later size changes fire
 C<Resize> (L<Term::Fabulous::Event::Resize>) instead; a program that
 lays itself out by the terminal size usually listens to both.
 

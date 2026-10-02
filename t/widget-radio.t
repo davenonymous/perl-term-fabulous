@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -33,6 +33,11 @@ subtest 'the group selects one button' => sub {
 	$unfocusable->disabled(1);
 	$unfocusable->disabled(0);
 	ok !$unfocusable->can_focus, 'and survives a disable/enable cycle';
+	$unfocusable->disabled(1);
+	$unfocusable->can_focus(1);
+	ok !$unfocusable->can_focus, 'can_focus(1) while disabled waits';
+	$unfocusable->disabled(0);
+	ok $unfocusable->can_focus, 'until the group is enabled';
 
 	$group->value('l');
 	is [ map { $_->is_selected } @$buttons ], [ 0, 0, 1 ], 'setting the value selects another button';

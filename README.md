@@ -43,7 +43,7 @@ widgets, keyboard and mouse
 
      my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
      $ui->interaction->set_focused_widget($name);
-     $ui->run;    # returns after Ctrl+C, SIGINT or SIGTERM
+     $ui->run;    # returns after Ctrl+C, SIGINT, SIGTERM or SIGHUP
 ```
 
 <div>
@@ -216,12 +216,19 @@ stopped, and restores the terminal. It returns nothing.
 While it runs:
 
 - a `Start` event is fired on the root widget as soon as the terminal is
-open, with its size;
+open, with its size: from inside the running loop, before the first
+frame and before any input is read, so a `Start` listener can use
+["loop"](#loop). Timers and other work the program queued on the loop before
+`run` may run before it;
 - every 1/30 second (see ["termbox\_draw\_interval"](#termbox_draw_interval)) the screen is laid
 out and drawn again, using the real terminal size, if anything changed
 since the last frame: a widget was changed, input arrived, the terminal
 was resized or ["invalidate"](#invalidate) was called. Nothing is drawn while
-nothing happens;
+nothing happens. A pointer that only moved gets a frame of its own at
+most every other check when frames take long to draw (longer than the
+time since the last one ended), so moving the mouse cannot keep the
+loop busy with nothing but redrawing; clicks, keys and changed widgets
+are always drawn at the next check;
 - terminal input is read as soon as it arrives and dispatched as
 `KeyPress`, `Mouse` and `MouseMove` events (see ["EVENTS"](#events));
 - terminal resizes fire `Resize` on the root widget;
@@ -233,13 +240,22 @@ The loop stops, and `run` returns, when:
 
 - your code calls `$ui->loop->stop`;
 - the user presses `Ctrl+C` (after its `KeyPress` was fired);
-- the process receives `SIGINT` or `SIGTERM`.
+- the process receives `SIGINT`, `SIGTERM` or `SIGHUP`.
+
+While `run` is active it handles these three signals itself; when it
+returns or dies, `%SIG` holds again what the program had set for them
+before, except for a signal that an [IO::Async::Signal](https://metacpan.org/pod/IO%3A%3AAsync%3A%3ASignal) the program
+added to the loop still watches.
 
 If code running inside the loop dies (a listener, a timer), `run`
 restores the terminal first and then dies with the same error, so the
 message is readable on the normal screen. The terminal is also restored
-when code inside the loop calls `exit`. After `run` has returned or
-died, the object can be used again and `run` can be called again.
+when code inside the loop calls `exit`. When the terminal input ends
+without a `SIGHUP` reaching the process (a terminal that went away
+while the process is not in its session, or input from a pipe), `run`
+dies with `Term::Fabulous: the terminal was closed`.
+After `run` has returned or died, the object can be used again and
+`run` can be called again.
 
 `run` dies with a message starting with `Term::Fabulous:` when the
 terminal cannot be opened, for example when the process has no
@@ -258,8 +274,8 @@ characters will be misaligned`.
 ```
 
 Returns the [IO::Async::Loop](https://metacpan.org/pod/IO%3A%3AAsync%3A%3ALoop) of the most recent ["run"](#run), or `undef`
-before the first `run`. Call `$ui->loop->stop` from a listener or
-timer to end `run`. The loop is IO::Async's process-wide loop: the same
+before the first `run`; it is set before the `Start` event fires.
+Call `$ui->loop->stop` from a listener or timer to end `run`. The loop is IO::Async's process-wide loop: the same
 object that `IO::Async::Loop->new` returns, which is why notifiers
 added to `IO::Async::Loop->new` before `run` run inside it.
 
@@ -342,7 +358,8 @@ mouse position as of the last report. Term::Fabulous passes it to Clay
 with every frame, which derives the hover and press state of the
 widgets from it. When the button went down and up again between two
 frames, each state gets a frame of its own, so a click is never too
-fast to press a widget.
+fast to press a widget. `down` follows the left button only: the
+release of another button does not end a press.
 
 ## invalidate
 
@@ -405,8 +422,8 @@ open. See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3A
 
 The class inherits further methods from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) (`render`,
 `widget_for`, `measure_text`) and from [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
-(`get_last_commands`, `get_last_clip_rects`). Applications rarely need
-them; they are documented on those pages.
+(`get_last_commands`, `get_last_clip_rects`, `last_frame`).
+Applications rarely need them; they are documented on those pages.
 
 # EVENTS
 

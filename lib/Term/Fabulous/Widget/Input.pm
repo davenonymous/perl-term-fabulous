@@ -1,24 +1,18 @@
 package Term::Fabulous::Widget::Input;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Clay::UI::Role::Interaction::Focusable;
-use Clay::UI::Role::Interaction::Hoverable;
-use Clay::UI::Role::Interaction::Pressable;
-use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Input::Element;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Input
-	:isa(Term::Fabulous::Widget::Canvas)
-	:does(Clay::UI::Role::Interaction::Focusable)
-	:does(Clay::UI::Role::Interaction::Hoverable)
-	:does(Clay::UI::Role::Interaction::Pressable)
+	:isa(Term::Fabulous::Widget::Input::Element)
 	:abstract
 {
 	use Clay::UI::Enum::Result;
@@ -34,8 +28,10 @@ class Term::Fabulous::Widget::Input
 
 	field $disabled :param = 0;
 
-	# The can_focus the input goes back to when it is enabled again.
-	field $can_focus_when_enabled;
+	# The can_focus last asked for (new, KDL or the accessor), whether or
+	# not the input is disabled; undef until something asks, which leaves
+	# the constructor's can_focus in force.
+	field $wants_focus;
 
 	field $text_color             :param = [ 220, 223, 228, 255 ];
 	field $disabled_color         :param = [ 108, 112, 120, 255 ];
@@ -49,8 +45,7 @@ class Term::Fabulous::Widget::Input
 	method paint;
 
 	ADJUST {
-		$disabled               = $disabled ? 1 : 0;
-		$can_focus_when_enabled = $self->can_focus ? 1 : 0;
+		$disabled = $disabled ? 1 : 0;
 		$self->_checked_color( $_ => $self->$_ ) foreach @COLOR_NAMES;
 		$self->_sync_focusability;
 
@@ -79,11 +74,21 @@ class Term::Fabulous::Widget::Input
 		return $disabled unless @new;
 		my $disable = $new[0] ? 1 : 0;
 		return $disabled if $disable == $disabled;
-		$can_focus_when_enabled = $self->can_focus ? 1 : 0 if $disable;
-		$disabled               = $disable;
+		$disabled = $disable;
 		$self->_sync_focusability;
 		$self->repaint;
 		return $disabled;
+	}
+
+	# Reads whether the input can take the focus now; a write records the
+	# wish, which counts while the input is enabled.
+	method can_focus :override (@new) {
+		return $self->SUPER::can_focus unless @new;
+		die ref($self) . ": can_focus takes one value, got " . scalar(@new) . "\n" unless @new == 1;
+		die ref($self) . ": can_focus must be a plain boolean value, got a " . ref( $new[0] ) . " reference\n" if ref $new[0];
+		$wants_focus = $new[0] ? 1 : 0;
+		$self->_sync_focusability;
+		return $self->SUPER::can_focus;
 	}
 
 	method is_enabled () {
@@ -95,9 +100,10 @@ class Term::Fabulous::Widget::Input
 	}
 
 	# A disabled widget cannot take the focus and gives it up; an enabled
-	# one gets back the can_focus it had before it was disabled.
+	# one can when can_focus asked for it and the widget accepts focus.
 	method _sync_focusability () {
-		$self->can_focus( !$disabled && $self->accepts_focus && $can_focus_when_enabled ? 1 : 0 );
+		$wants_focus //= $self->SUPER::can_focus ? 1 : 0;
+		$self->SUPER::can_focus( $wants_focus && $self->accepts_focus && !$disabled ? 1 : 0 );
 		my $ui = $self->ui;
 		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
 		return;
@@ -458,9 +464,9 @@ the natural size of the input on that axis (see L</SIZE>).
 
 =item C<background_color>
 
-The widget's background, an C<[r, g, b, a]> array reference or an
-C<< { r, g, b, a } >> hash reference (strings are not accepted here; see
-L<Term::Fabulous::Manual/Color formats>). Text inputs and the dropdown
+The widget's background, in any format L<Term::Fabulous::Color> accepts
+(see L<Term::Fabulous::Manual/Color formats>); it is stored as an
+C<[r, g, b, a]> array reference. Text inputs and the dropdown
 default to a dark gray (C<[36, 40, 48, 255]>); the other inputs have no
 background of their own and show the background of their parent.
 
@@ -484,12 +490,11 @@ L</disabled>.
 
 =item C<can_focus>
 
-A boolean, stored as 1 or 0. Default: 1. Whether the input can take the
-keyboard focus (see L<Clay::UI::Role::Interaction::Focusable>). A
-disabled input has C<can_focus> 0 whatever was passed; the value given
-here is what it gets back when it is enabled (see L</disabled>). A
-L<Term::Fabulous::Widget::RadioButton> never takes the focus, so for it
-the parameter has no effect.
+A boolean. Default: 1. Whether the input may take the keyboard focus
+(see L<Clay::UI::Role::Interaction::Focusable>). It counts while the
+input is enabled: a disabled input cannot take the focus, whatever this
+says (see L</can_focus>). A L<Term::Fabulous::Widget::RadioButton> never
+takes the focus, so for it the parameter has no effect.
 
 =item C<text_color>
 
@@ -532,21 +537,23 @@ is used.
 	$input->disabled(1);
 	$input->disabled(0);
 
-Accessor. Returns a true or false value: the writer stores 1 or 0, but a
-value passed to C<new> is returned exactly as it was given.
+Accessor. Returns 1 or 0; any true or false value may be written, also
+through C<new>.
 
 Writing a true value disables the input: it is painted in
 C<disabled_color>, ignores keys, clicks and the mouse wheel, never fires
-C<Change> or C<Submit>, sets its C<can_focus> to 0 and, if it has the
-focus, gives the focus up (no widget is focused afterwards). The events
+C<Change> or C<Submit>, cannot take the focus (C<can_focus> reads 0) and, if it has the
+focus, gives the focus up (no widget is focused afterwards, unless the
+input is inside an open L<Term::Fabulous::Widget::Dialog>, whose
+backdrop takes it). The events
 themselves are still delivered: C<KeyPress> and C<Mouse> events fired on
 a disabled input bubble on to its ancestors, and Clay::UI still fires
 C<OnHoverStart>, C<OnHoverStopped>, C<OnPress> and C<OnRelease> on it,
 so listeners you add yourself still run.
 
-Writing a false value enables the input again and gives C<can_focus>
-back the value it had when the input was disabled (or the C<can_focus>
-passed to C<new>, when it was constructed disabled); a
+Writing a false value enables the input again: it can take the focus
+when C<can_focus> was last set to a true value, through C<new>, a
+layout file or the accessor, also while the input was disabled. A
 L<Term::Fabulous::Widget::RadioButton>, which never takes the focus,
 keeps 0. Writing the value the input already has changes nothing.
 Returns the new value (1 or 0).
@@ -608,10 +615,15 @@ changed. Returns the input.
 =head2 can_focus
 
 	$input->can_focus(0);
+	if ( $input->can_focus ) { ... }
 
-Accessor inherited from L<Clay::UI::Role::Interaction::Focusable>:
-whether the input can take the focus. See the C<can_focus> parameter
-for how it interacts with C<disabled>.
+Whether the input can take the focus now: 1 when it may (the last
+value written, through C<new>, a layout file or this accessor, was
+true), it is enabled and it accepts the focus at all (a radio button
+does not); 0 otherwise. Writing records whether the input may take the
+focus and returns what reading returns now: C<can_focus(1)> on a
+disabled input returns 0, and the input takes the focus once it is
+enabled. The order of C<can_focus> and C<disabled> does not matter.
 
 =head2 is_focused
 
@@ -634,6 +646,16 @@ padding and border width. A C<sizing> in the C<layout> always wins:
 
 	# As wide as the parent allows, still one row high:
 	Term::Fabulous::Widget::TextField->new( layout => { sizing => { width => sizing_grow() } } );
+
+The natural size is a C<fixed> sizing, and a C<width_group> or
+C<height_group> (L<Term::Fabulous::Widget/new>) lines up C<fit> and
+C<grow> sizings only. An input has no content Clay could fit, so a
+plain C<fit> sizing gives it no columns at all; to line up inputs, give
+each a C<fit> sizing with its natural size as the minimum:
+
+	# Both 30 columns wide, the width of the wider one:
+	Term::Fabulous::Widget::TextField->new( width_group => 1, layout => { sizing => { width => sizing_fit(20) } } );
+	Term::Fabulous::Widget::TextField->new( width_group => 1, layout => { sizing => { width => sizing_fit(30) } } );
 
 =head1 EVENTS
 
@@ -686,9 +708,8 @@ Takes C<#true> or C<#false>, like the C<disabled> parameter.
 
 =item C<can_focus>
 
-Takes C<#true> or C<#false>. A C<can_focus #false> is currently ignored
-because of the bug described under the C<can_focus> constructor
-parameter.
+Takes C<#true> or C<#false>, like the C<can_focus> parameter; with
+C<disabled #true> in the same block the order does not matter.
 
 =item C<text_color>, C<disabled_color>, C<accent_color>, C<focus_background_color>
 
@@ -918,15 +939,10 @@ Pass the result on as the background of everything you paint after it.
 
 =item *
 
-C<< can_focus => 0 >> in the constructor or in a layout file is
-ignored; see the C<can_focus> parameter.
-
-=item *
-
-A disabled input does not use the mouse wheel. Inside a
-L<Term::Fabulous::Widget::ScrollBox>, the wheel over an enabled input
-that uses it (a text area, a slider, an open dropdown list) also
-scrolls the scroll box.
+A disabled input does not use the mouse wheel; inside a
+L<Term::Fabulous::Widget::ScrollBox> the wheel over it scrolls the
+scroll box. So does the wheel over a text area, a slider or an open
+dropdown list that cannot move any further.
 
 =back
 

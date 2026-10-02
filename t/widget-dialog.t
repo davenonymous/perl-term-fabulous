@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -10,14 +10,16 @@ use lib "$FindBin::Bin/lib";
 
 use Clay::XS qw(sizing_fixed sizing_grow);
 use InputTest;
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(refaddr weaken);
 use Term::Fabulous;
 use Term::Fabulous::Layout;
-use Term::Fabulous::Termbox qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_TAB);
+use Term::Fabulous::Termbox qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_TAB TB_KEY_BACK_TAB);
 use Term::Fabulous::Termbox::Event;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
+use Term::Fabulous::Widget::Dropdown;
+use Term::Fabulous::Widget::TextField;
 
 {
 	no warnings 'redefine';
@@ -71,6 +73,21 @@ subtest 'the backdrop takes clicks outside the dialog' => sub {
 	ref_is $mouse_targets[0], $dialog->backdrop, 'the button behind the dialog does not get the click';
 	ref_is $ui->interaction->get_focused_widget, $dialog->backdrop, 'the backdrop takes the focus';
 	is $dialog->backdrop->layout->{sizing}, { width => sizing_grow(), height => sizing_grow() }, 'the backdrop fills the screen';
+
+	dispatch( type => TB_EVENT_KEY, key => TB_KEY_BACK_TAB );
+	ref_is $ui->interaction->get_focused_widget, $inside[-1], 'Shift+Tab from the backdrop goes to the last widget';
+	$ui->interaction->set_focused_widget( $dialog->backdrop );
+	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	ref_is $ui->interaction->get_focused_widget, $inside[0], 'Tab to the first';
+};
+
+subtest 'keys stay inside the open dialog' => sub {
+	my @root_keys;
+	$root->on( KeyPress => sub { push @root_keys, $_[0]->key_name; return } );
+	press( $inside[0], 'd' );
+	press( $dialog->backdrop, 'q' );
+	is \@root_keys, [], 'the key bindings behind the dialog do not see them';
+	ok $dialog->is_open, 'and the dialog stays open';
 };
 
 subtest 'Escape closes and the focus goes back' => sub {
@@ -94,6 +111,70 @@ subtest 'a dialog opens again' => sub {
 	ok $dialog->is_open, 'Escape is ignored when close_on_escape is off';
 	$dialog->close;
 	is scalar @closes, 2, 'close from code fires Close too';
+};
+
+subtest 'the focus stays inside when the focused widget loses it' => sub {
+	my $field  = Term::Fabulous::Widget::TextField->new;
+	my $other  = button();
+	my $editor = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width => sizing_fixed(12) } } );
+	$editor->add_child( $field, $other );
+	$editor->open($ui);
+	ref_is $ui->interaction->get_focused_widget, $field, 'the field has the focus';
+
+	$field->disabled(1);
+	ref_is $ui->interaction->get_focused_widget, $editor->backdrop, 'disabling it hands the focus to the backdrop';
+	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	ref_is $ui->interaction->get_focused_widget, $other, 'Tab stays inside the dialog';
+
+	$editor->remove_children_with( sub ($child) { refaddr($child) == refaddr($other) } );
+	ref_is $ui->interaction->get_focused_widget, $editor->backdrop, 'removing the focused widget does too';
+	$ui->interaction->set_focused_widget(undef);
+	ref_is $ui->interaction->get_focused_widget, $editor->backdrop, 'and focusing nothing';
+
+	press( $editor->backdrop, 'Escape' );
+	ok !$editor->is_open, 'Escape still closes it';
+	ref_is $ui->interaction->get_focused_widget, $behind, 'and the focus goes back behind it';
+};
+
+subtest 'a dropdown list opens over its dialog' => sub {
+	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [qw(Red Green Blue)] );
+	my $picker   = Term::Fabulous::Widget::Dialog->new( z_index => 5000, layout => { sizing => { width => sizing_fixed(16) } } );
+	$picker->add_child($dropdown);
+	$picker->open($ui);
+	$dropdown->open;
+	$ui->draw;
+	my ($list) = @{ $dropdown->children };
+	my ( $x, $y ) = $list->content_origin;
+	ref_is $ui->_emitter_at( $x, $y + 1 ), $list, 'the list takes the clicks on its rows, whatever the z_index of the dialog';
+	$dropdown->close;
+	$picker->close;
+};
+
+subtest 'close after the program removed the dialog' => sub {
+	my $box       = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $screen_ui = Term::Fabulous->new( width => 30, height => 9, root => $box );
+	my $removed   = Term::Fabulous::Widget::Dialog->new;
+	$removed->add_child( button() );
+	my $closed = 0;
+	$removed->on( Close => sub { $closed++; return } );
+	$removed->open($screen_ui);
+
+	$box->clear_children;
+	ok $removed->is_open, 'the dialog counts as open until it is closed';
+	ok lives { $removed->close }, 'close does not die';
+	is [ $removed->is_open, $closed, $removed->parent ], [ 0, 1, undef ], 'it is closed, Close fired, it can be opened again';
+	ok lives { $removed->open($screen_ui)->close }, 'and it does';
+};
+
+subtest 'an open dialog does not keep a dropped UI alive' => sub {
+	my $box       = Term::Fabulous::Widget::Box->new;
+	my $screen_ui = Term::Fabulous->new( width => 30, height => 9, root => $box );
+	my $open      = Term::Fabulous::Widget::Dialog->new;
+	$open->open($screen_ui);
+	weaken( my $weak_dialog = $open );
+	weaken( my $weak_ui     = $screen_ui );
+	undef $_ foreach $open, $screen_ui, $box;
+	is [ $weak_dialog, $weak_ui ], [ undef, undef ], 'both are freed';
 };
 
 subtest 'defaults and errors' => sub {

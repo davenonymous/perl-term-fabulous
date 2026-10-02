@@ -1,6 +1,6 @@
 package Term::Fabulous;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -19,7 +19,6 @@ class Term::Fabulous
 	:does(Term::Fabulous::Render::Target::Termbox)
 	:strict(params)
 {
-	use Clay::UI::Enum::Result;
 	use Clay::UI::Revision qw(current_revision);
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_BORDER
@@ -33,11 +32,14 @@ class Term::Fabulous
 	use IO::Async::Signal;
 	use IO::Async::Timer::Countdown;
 	use IO::Async::Timer::Periodic;
-	use POSIX qw(EINTR);
+	use List::Util qw(any);
+	use POSIX qw(EINTR EIO);
+	use Scalar::Util qw(refaddr);
+	use Time::HiRes ();
 	use Term::Fabulous::Termbox qw(
 		tb_init tb_shutdown tb_width tb_height tb_hide_cursor
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
-		tb_last_errno tb_strerror tf_install_input_parser
+		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
@@ -54,6 +56,7 @@ class Term::Fabulous
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
 
+	use constant WATCHED_SIGNALS     => qw(TERM INT HUP);
 	use constant WHEEL_NOTCH_ROWS    => 3;
 	use constant WHEEL_NOTCH_COLUMNS => 3;
 
@@ -70,6 +73,8 @@ class Term::Fabulous
 	field $_terminal_is_open = 0;
 	field @_notifiers;
 	field $_resize_timer;
+	field $_draw_timer;
+	field %_signals_before;    # the caller's %SIG entries for the signals run watches
 	field $_pending_resize;
 	field $_pointer;             # the pointer state as last reported
 	field @_pointer_queue;       # pointer states no frame has shown to Clay yet
@@ -77,6 +82,9 @@ class Term::Fabulous
 	field $_wheel_columns = 0;
 	field $_frame_requested = 1;    # invalidate() or input since the last frame
 	field $_drawn_revision  = -1;   # the Clay::UI revision the last frame showed
+	field $_shown_down      = 0;    # the button state the last frame showed Clay
+	field $_frame_seconds   = 0;    # how long the last frame took to draw
+	field $_frame_ended_at  = 0;    # when it was drawn (Time::HiRes::time)
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -115,9 +123,9 @@ class Term::Fabulous
 
 		try {
 			$self->_prepare_terminal;
-			$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
 			$loop = IO::Async::Loop->new;
 			$self->_attach_notifiers;
+			$loop->later( sub { $self->_start } );
 			$loop->run;
 		}
 		catch ($error) {
@@ -188,6 +196,7 @@ class Term::Fabulous
 		return;
 	}
 
+	# Signals and timers; the terminal input is watched from _start on.
 	method _attach_notifiers () {
 		my $stop = sub { $loop->stop };
 
@@ -195,28 +204,53 @@ class Term::Fabulous
 			delay     => $termbox_resize_debounce_interval,
 			on_expire => sub { $self->_fire_resize },
 		);
-		my $draw_timer = IO::Async::Timer::Periodic->new(
+		$_draw_timer = IO::Async::Timer::Periodic->new(
 			interval => $termbox_draw_interval,
 			on_tick  => sub { $self->_draw_frame },
 		);
-		$draw_timer->start;
 
-		_check_termbox( 'tb_get_fds', tb_get_fds( \my $tty_fd, \my $resize_fd ) );
-		my @input_watchers = map {
-			IO::Async::Handle->new(
-				read_handle   => _duplicate_for_reading($_),
-				on_read_ready => sub { $self->_drain_termbox_events },
-			)
-		} ( $tty_fd, $resize_fd );
-
-		@_notifiers = (
-			IO::Async::Signal->new( name => 'TERM', on_receipt => $stop ),
-			IO::Async::Signal->new( name => 'INT',  on_receipt => $stop ),
+		%_signals_before = map { $_ => $SIG{$_} } WATCHED_SIGNALS;
+		$self->_add_notifiers(
+			( map { IO::Async::Signal->new( name => $_, on_receipt => $stop ) } WATCHED_SIGNALS ),
 			$_resize_timer,
-			$draw_timer,
-			@input_watchers,
+			$_draw_timer,
 		);
-		$loop->add($_) foreach @_notifiers;
+		return;
+	}
+
+	method _add_notifiers (@notifiers) {
+		push @_notifiers, @notifiers;
+		$loop->add($_) foreach @notifiers;
+		return;
+	}
+
+	# Start fires from inside the running loop, so its listeners can use
+	# $ui->loop (add notifiers, stop it); frames are drawn and input is
+	# read only after it.
+	method _start () {
+		$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
+		$_draw_timer->start;
+		$self->_watch_terminal_input;
+		return;
+	}
+
+	method _watch_terminal_input () {
+		_check_termbox( 'tb_get_fds', tb_get_fds( \my $tty_fd, \my $resize_fd ) );
+		my $tty_handle = _duplicate_for_reading($tty_fd);
+		my @input_watchers = (
+			IO::Async::Handle->new(
+				read_handle   => $tty_handle,
+				on_read_ready => sub {
+					$self->_drain_termbox_events;
+					die "Term::Fabulous: the terminal was closed (end of input)\n" if _input_is_at_eof($tty_handle);
+				},
+			),
+			IO::Async::Handle->new(
+				read_handle   => _duplicate_for_reading($resize_fd),
+				on_read_ready => sub { $self->_drain_termbox_events },
+			),
+		);
+		$self->_add_notifiers(@input_watchers);
 
 		# IO::Async switches watched handles to non-blocking mode. A duplicate
 		# shares that flag with termbox's own descriptor, and termbox gives up
@@ -230,18 +264,43 @@ class Term::Fabulous
 		return;
 	}
 
+	# After termbox has read all it could, a descriptor that still reports
+	# readable with no byte to read is at end of file: the terminal is gone.
+	# termbox reports that only as "no event", again and again. A terminal
+	# that hung up cannot even say how many bytes wait (EIO).
+	sub _input_is_at_eof ($handle) {
+		vec( my $readable = '', fileno $handle, 1 ) = 1;
+		return 0 unless select( $readable, undef, undef, 0 ) > 0;
+		my $waiting = tf_readable_bytes( fileno $handle );
+		return 1 if $waiting == 0;
+		return $waiting < 0 && $! == EIO ? 1 : 0;
+	}
+
 	method _detach_notifiers () {
 		foreach my $notifier (@_notifiers) {
 			my $owner = $notifier->loop;
 			$owner->remove($notifier) if defined $owner;
 		}
-		@_notifiers      = ();
-		$_resize_timer   = undef;
+		$self->_restore_signal_handlers;
+		@_notifiers       = ();
+		$_resize_timer    = undef;
+		$_draw_timer      = undef;
 		$_pending_resize  = undef;
 		$_wheel_rows      = 0;
 		$_wheel_columns   = 0;
 		@_pointer_queue   = ();
 		$_frame_requested = 1;    # the next run starts with a frame
+		return;
+	}
+
+	# IO::Async resets a signal it stops watching to the default action;
+	# the caller's handler comes back, unless another watcher (one the
+	# program added to the loop) keeps IO::Async's handler in place.
+	method _restore_signal_handlers () {
+		foreach my $name ( keys %_signals_before ) {
+			$SIG{$name} = $_signals_before{$name} unless defined $SIG{$name};
+		}
+		%_signals_before = ();
 		return;
 	}
 
@@ -252,12 +311,18 @@ class Term::Fabulous
 		return;
 	}
 
-	# A frame is due when something asked for one (invalidate, input, a
-	# resize), when pointer or wheel input waits to be shown to Clay, or
-	# when a widget changed since the last frame (the Clay::UI revision).
-	method _frame_is_due () {
-		return 1 if $_frame_requested || @_pointer_queue || $_wheel_rows || $_wheel_columns;
-		return current_revision() != $_drawn_revision;
+	# A frame is due when something asked for one (invalidate, a key, a
+	# click, a resize), when wheel input or a button press or release waits
+	# to be shown to Clay, or when a widget changed since the last frame
+	# (the Clay::UI revision). Pointer motion alone gets at most every
+	# other slice of time: when frames are slow, moving the mouse must not
+	# keep the loop busy with nothing but redrawing.
+	method _frame_is_due ( $now = Time::HiRes::time() ) {
+		return 1 if $_frame_requested || $_wheel_rows || $_wheel_columns;
+		return 1 if current_revision() != $_drawn_revision;
+		return 0 unless @_pointer_queue;
+		return 1 if any { $_->{down} != $_shown_down } @_pointer_queue;
+		return $now - $_frame_ended_at >= $_frame_seconds ? 1 : 0;
 	}
 
 	# Clay takes one button state per frame, so every queued pointer state
@@ -272,11 +337,15 @@ class Term::Fabulous
 		$_drawn_revision  = current_revision();
 		$_frame_requested = 0;
 
+		my $started = Time::HiRes::time();
 		foreach my $pointer (@pointers) {
-			$_pointer = $pointer;
+			$_pointer    = $pointer;
+			$_shown_down = defined $pointer ? $pointer->{down} : 0;
 			$self->draw( scroll_cells => [ $columns, $rows ] );
 			( $columns, $rows ) = ( 0, 0 );
 		}
+		$_frame_ended_at = Time::HiRes::time();
+		$_frame_seconds  = $_frame_ended_at - $started;
 		return;
 	}
 
@@ -298,7 +367,6 @@ class Term::Fabulous
 	}
 
 	method _dispatch_termbox_event ($event) {
-		$_frame_requested = 1;    # listeners may change anything
 		my $type = $event->type;
 		return $self->_on_key($event)    if $type == TB_EVENT_KEY;
 		return $self->_on_mouse($event)  if $type == TB_EVENT_MOUSE;
@@ -307,6 +375,7 @@ class Term::Fabulous
 	}
 
 	method _on_key ($event) {
+		$_frame_requested = 1;    # listeners may change anything
 		my $target = $self->interaction->get_focused_widget // $self->root;
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 
@@ -317,13 +386,15 @@ class Term::Fabulous
 		return;
 	}
 
+	# The pointer motion a MouseMove reports makes no frame due by itself
+	# (see _frame_is_due); listeners that change a widget make one due.
 	method _on_mouse ($event) {
 		my ( $x, $y, $key ) = ( $event->x, $event->y, $event->key );
 		my $newest = @_pointer_queue ? $_pointer_queue[-1] : $_pointer;
 		my $down
-			= $key == TB_KEY_MOUSE_LEFT    ? 1
-			: $key == TB_KEY_MOUSE_RELEASE ? 0
-			:                                ( defined $newest ? $newest->{down} : 0 );
+			= $key == TB_KEY_MOUSE_LEFT ? 1
+			: _releases_left_button($event) ? 0
+			:                                 ( defined $newest ? $newest->{down} : 0 );
 		$_pointer = { x => $x, y => $y, down => $down };
 		$self->_queue_pointer($_pointer);
 
@@ -333,12 +404,14 @@ class Term::Fabulous
 			return;
 		}
 
+		$_frame_requested = 1;    # listeners may change anything
 		$self->interaction->set_focused_widget( _focusable_at_or_above($target) )
 			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
-		my $result = $target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
+		my $mouse_event = Term::Fabulous::Event::Mouse->of($event);
+		$target->fire_event($mouse_event);
 
-		# A widget that scrolls itself has used the wheel notch.
-		return if $result == Clay::UI::Enum::Result->HANDLED;
+		# A widget that scrolled itself has used the wheel notch.
+		return if $mouse_event->wheel_used;
 		$_wheel_rows    += WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_UP;
 		$_wheel_rows    -= WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_DOWN;
 		$_wheel_columns += WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_LEFT;
@@ -358,6 +431,13 @@ class Term::Fabulous
 		return;
 	}
 
+	# A release whose button the terminal did not name counts as the left.
+	sub _releases_left_button ($event) {
+		return 0 unless $event->key == TB_KEY_MOUSE_RELEASE;
+		my $button = $event->ch;
+		return $button == 0 || $button == TB_KEY_MOUSE_LEFT ? 1 : 0;
+	}
+
 	# The widget a click focuses: the nearest one that can take focus now.
 	sub _focusable_at_or_above ($widget) {
 		for ( my $node = $widget; defined $node; $node = $node->parent ) {
@@ -370,6 +450,10 @@ class Term::Fabulous
 		my ( $width, $height ) = ( $event->w, $event->h );
 		return if $width < 1 || $height < 1;
 
+		# termbox has already rebuilt its buffers for the new size, keeping
+		# only the cells inside both sizes: no canvas is intact any more,
+		# even when the size ends up where it was.
+		$self->invalidate_canvases;
 		$_pending_resize = [ $width, $height ];
 		$_resize_timer->is_running ? $_resize_timer->reset : $_resize_timer->start;
 		return;
@@ -388,17 +472,22 @@ class Term::Fabulous
 		return;
 	}
 
-	# Topmost event emitter painted at the cell in the last frame.
+	# Topmost event emitter painted at the cell in the last frame that is
+	# still part of this UI: a listener may have removed it since.
 	method _emitter_at ( $x, $y ) {
-		my @commands   = $self->get_last_commands;
-		my @clip_rects = $self->get_last_clip_rects;
-		foreach my $index ( reverse 0 .. $#clip_rects ) {
-			my $command = $commands[$index];
-			next unless _command_paints_cell( $command, $clip_rects[$index], $x, $y );
+		my ( $commands, $clip_rects ) = $self->last_frame;
+		foreach my $index ( reverse 0 .. $#$clip_rects ) {
+			my $command = $commands->[$index];
+			next unless _command_paints_cell( $command, $clip_rects->[$index], $x, $y );
 			my $widget = $self->widget_for( $command->{userData} );
-			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter');
+			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter') && $self->_owns($widget);
 		}
 		return undef;
+	}
+
+	method _owns ($widget) {
+		my $ui = $widget->can('ui') ? $widget->ui : undef;
+		return defined $ui && refaddr($ui) == refaddr($self) ? 1 : 0;
 	}
 }
 
@@ -450,7 +539,7 @@ widgets, keyboard and mouse
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 	$ui->interaction->set_focused_widget($name);
-	$ui->run;    # returns after Ctrl+C, SIGINT or SIGTERM
+	$ui->run;    # returns after Ctrl+C, SIGINT, SIGTERM or SIGHUP
 
 =begin html
 
@@ -656,7 +745,10 @@ While it runs:
 =item *
 
 a C<Start> event is fired on the root widget as soon as the terminal is
-open, with its size;
+open, with its size: from inside the running loop, before the first
+frame and before any input is read, so a C<Start> listener can use
+L</loop>. Timers and other work the program queued on the loop before
+C<run> may run before it;
 
 =item *
 
@@ -664,7 +756,11 @@ every 1/30 second (see L</termbox_draw_interval>) the screen is laid
 out and drawn again, using the real terminal size, if anything changed
 since the last frame: a widget was changed, input arrived, the terminal
 was resized or L</invalidate> was called. Nothing is drawn while
-nothing happens;
+nothing happens. A pointer that only moved gets a frame of its own at
+most every other check when frames take long to draw (longer than the
+time since the last one ended), so moving the mouse cannot keep the
+loop busy with nothing but redrawing; clicks, keys and changed widgets
+are always drawn at the next check;
 
 =item *
 
@@ -697,15 +793,24 @@ the user presses C<Ctrl+C> (after its C<KeyPress> was fired);
 
 =item *
 
-the process receives C<SIGINT> or C<SIGTERM>.
+the process receives C<SIGINT>, C<SIGTERM> or C<SIGHUP>.
 
 =back
+
+While C<run> is active it handles these three signals itself; when it
+returns or dies, C<%SIG> holds again what the program had set for them
+before, except for a signal that an L<IO::Async::Signal> the program
+added to the loop still watches.
 
 If code running inside the loop dies (a listener, a timer), C<run>
 restores the terminal first and then dies with the same error, so the
 message is readable on the normal screen. The terminal is also restored
-when code inside the loop calls C<exit>. After C<run> has returned or
-died, the object can be used again and C<run> can be called again.
+when code inside the loop calls C<exit>. When the terminal input ends
+without a C<SIGHUP> reaching the process (a terminal that went away
+while the process is not in its session, or input from a pipe), C<run>
+dies with C<Term::Fabulous: the terminal was closed>.
+After C<run> has returned or died, the object can be used again and
+C<run> can be called again.
 
 C<run> dies with a message starting with C<Term::Fabulous:> when the
 terminal cannot be opened, for example when the process has no
@@ -722,8 +827,8 @@ characters will be misaligned>.
 	$ui->loop->stop;
 
 Returns the L<IO::Async::Loop> of the most recent L</run>, or C<undef>
-before the first C<run>. Call C<< $ui->loop->stop >> from a listener or
-timer to end C<run>. The loop is IO::Async's process-wide loop: the same
+before the first C<run>; it is set before the C<Start> event fires.
+Call C<< $ui->loop->stop >> from a listener or timer to end C<run>. The loop is IO::Async's process-wide loop: the same
 object that C<< IO::Async::Loop->new >> returns, which is why notifiers
 added to C<< IO::Async::Loop->new >> before C<run> run inside it.
 
@@ -792,7 +897,8 @@ mouse position as of the last report. Term::Fabulous passes it to Clay
 with every frame, which derives the hover and press state of the
 widgets from it. When the button went down and up again between two
 frames, each state gets a frame of its own, so a click is never too
-fast to press a widget.
+fast to press a widget. C<down> follows the left button only: the
+release of another button does not end a press.
 
 =head2 invalidate
 
@@ -845,8 +951,8 @@ open. See L<Term::Fabulous::Render/draw>.
 
 The class inherits further methods from L<Clay::UI> (C<render>,
 C<widget_for>, C<measure_text>) and from L<Term::Fabulous::Render>
-(C<get_last_commands>, C<get_last_clip_rects>). Applications rarely need
-them; they are documented on those pages.
+(C<get_last_commands>, C<get_last_clip_rects>, C<last_frame>).
+Applications rarely need them; they are documented on those pages.
 
 =head1 EVENTS
 

@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
-use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_DOWN);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_MOUSE_WHEEL_UP);
 use Term::Fabulous::Widget::TextArea;
 
 sub text_area {
@@ -67,10 +67,44 @@ subtest 'scrolling follows the cursor' => sub {
 	press( $area, 'PageDown' );
 	is [ $area->editor->cursor ], [ 2, 0 ], 'Page Down moves by the height less one row';
 
-	click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN );
+	my $notch = click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN );
 	is [ $area->top_row, $area->editor->cursor ], [ 3, 2, 0 ], 'the wheel scrolls without moving the cursor';
+	ok $notch->wheel_used, 'and uses the notch';
 	click( $area, 0, 1 );
 	is [ $area->editor->cursor ], [ 4, 0 ], 'a click maps through the scrolled view';
+
+	click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN ) foreach 1 .. 3;
+	is $area->top_row, 7, 'down to the last rows';
+	ok !click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch past the end is left to a scroll box around it';
+	ok click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used, 'one back is not';
+};
+
+subtest 'wrapping wide characters and blanks' => sub {
+	my ( $area, $ui ) = text_area( preferred_columns => 10, preferred_rows => 4, scrollbar => 0, value => "aaaaaaaaaa bbbbbbbbb\x{5B57}cd" );
+	is rows($area), [ 'aaaaaaaaaa', 'bbbbbbbbb ', "\x{5B57}cd      ", '          ' ],
+		'a wide character that does not fit after the carried word gets a row of its own; the blank at a full row hangs';
+
+	$ui->interaction->set_focused_widget($area);
+	$area->editor->move_to( 0, 10 );
+	$area->cursor_moved;
+	is [ map { $area->cell( 0, 1 )->[$_] } 0, 1 ], [ 'b', $area->reverse_attr( $area->foreground_attr ) ], 'a cursor on the hanging blank shows at the start of the next row';
+	press( $area, 'Right' );
+	is [ $area->editor->cursor ], [ 0, 11 ], 'and Right moves on past it';
+	click( $area, 0, 1 );
+	is [ $area->editor->cursor ], [ 0, 11 ], 'a click on that row lands after the blank';
+};
+
+subtest 'editing re-wraps the changed lines' => sub {
+	my ( $area, $ui ) = text_area( value => "one two three\nfour" );
+	is rows($area), [ 'one two     ', 'three       ', 'four        ' ], 'wrapped';
+	$area->editor->move_to( 0, 3 );
+	press( $area, 'Delete' );
+	press( $area, 'Delete' );
+	press( $area, 'Delete' );
+	press( $area, 'Delete' );
+	is rows($area), [ 'one three   ', 'four        ', '            ' ], 'the edited line is wrapped again, the others are kept';
+	$area->value("four\none two three");
+	is rows($area), [ 'four        ', 'one two     ', 'three       ' ], 'lines that moved keep their wrapping';
 };
 
 subtest 'selection across lines' => sub {

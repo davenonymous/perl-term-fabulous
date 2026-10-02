@@ -1,6 +1,49 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Dialogs keep the keyboard to themselves: keys the widgets of
+          an open dialog do not use stop at its backdrop instead of
+          reaching the key bindings behind it; when the focused widget
+          inside is disabled or removed, the backdrop takes the focus;
+          Shift+Tab from the backdrop goes to the last widget; close
+          works (and fires Close) after the program took the dialog out
+          of the tree; an open dialog no longer keeps a dropped UI
+          alive. An open Dropdown list floats over every z_index, so
+          it works inside a dialog
+        - can_focus and disabled no longer depend on their order: an
+          input or radio group built with disabled #true takes the
+          focus once it is enabled, and can_focus written while
+          disabled counts once enabled (Widget::Input::Element and
+          Widget::RadioGroup::Element hold the Clay::UI roles)
+        - Wheel scrolling is explicit: a widget that scrolled itself
+          calls use_wheel on the Mouse event; what listeners return no
+          longer keeps a ScrollBox from scrolling. TextArea, Slider and
+          the Dropdown list leave a notch they cannot use to the
+          ScrollBox around them
+        - Mouse events say which button a release released
+          (released_button); only the left button's release ends a
+          press
+        - run fires Start from inside the running loop ($ui->loop works
+          in Start listeners), stops on SIGHUP too, gives back the
+          program's INT, TERM and HUP handlers, and dies with "the
+          terminal was closed" at the end of the terminal input instead
+          of spinning
+        - A click where a widget was removed since the last frame no
+          longer kills run; a resize that ends at the old size repaints
+          the canvases; borders beside an unchanged canvas keep their
+          colors; pointer motion alone draws at most every other frame
+          while frames are slow
+        - TextArea wraps only the lines an edit changed; a wide
+          character after a carried word is no longer hidden; the space
+          at which a full row wraps hangs instead of starting the next
+          row. Editor undo steps keep the replaced text only
+        - Text inputs: Shift+click extends the selection; a TextField
+          with a mask copies and cuts nothing and moves and deletes by
+          the whole text instead of by word
+        - PixelCanvas draw_line and draw_circle cost no more than the
+          canvas is wide or high, however far the shape reaches
+        - tb_send sends bytes as they are (tf_readable_bytes is new);
+          Button takes #null and "reverse" in KDL; classes is checked
         - Documentation with pictures: Term::Fabulous::Examples lists
           every example program with a screenshot; the overview below
           the SYNOPSIS of Term::Fabulous (and in README.md) shows the

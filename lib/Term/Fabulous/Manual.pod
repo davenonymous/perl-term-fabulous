@@ -97,7 +97,10 @@ second whether anything changed since the last frame: a widget was
 changed through one of its methods, input arrived, the terminal was
 resized, or the program asked for a frame with
 L<Term::Fabulous/invalidate>. When nothing changed, nothing is drawn.
-When something did, a frame is drawn:
+When something did, a frame is drawn. A pointer that only moved is the
+exception: when frames take long to draw, frames for it alone are drawn
+at most every other check, so moving the mouse does not keep the
+program busy redrawing:
 
 =over
 
@@ -1000,8 +1003,11 @@ under the pointer, like C<Mouse>. Fields: C<x>, C<y>, C<modifiers>.
 =item C<Start> (L<Term::Fabulous::Event::Start>)
 
 C<run> opened the terminal. Fired on the root widget once per C<run>,
-before the first frame, when C<< $ui->width >> and C<< $ui->height >>
-already hold the terminal size. Fields: C<width>, C<height>.
+from inside the running loop, before the first frame and before any
+input event, when C<< $ui->width >> and C<< $ui->height >> already hold
+the terminal size. A listener can use C<< $ui->loop >>, to add timers
+or to stop the loop right away. Timers the program queued on the loop
+before C<run> may run before it. Fields: C<width>, C<height>.
 
 =item C<Resize> (L<Term::Fabulous::Event::Resize>)
 
@@ -1260,13 +1266,13 @@ example to start with the cursor in the first field.
 
 =back
 
-To take a widget out of the focus order, call C<< $widget->can_focus(0) >>
-after creating it; Tab skips it, a click does not focus it, and
-C<set_focused_widget> dies for it. Passing C<can_focus =E<gt> 0> to
-C<new> does the same and works for every focusable widget. Disabled
-inputs cannot take the focus: C<< $input->disabled(1) >> forces
-C<can_focus> to 0 while the input is disabled, and C<disabled(0)>
-restores the value it had before.
+To take a widget out of the focus order, pass C<can_focus =E<gt> 0> to
+C<new> (or C<can_focus #false> in a layout file), or call
+C<< $widget->can_focus(0) >> later; Tab skips it, a click does not focus
+it, and C<set_focused_widget> dies for it. Disabled inputs cannot take
+the focus: while C<< $input->disabled(1) >> is in force, C<can_focus>
+reads 0. Once the input is enabled again it reads what it was last set
+to, also when that was set while the input was disabled.
 
 =head2 Reacting to focus changes
 
@@ -1287,8 +1293,10 @@ these listeners:
 	$button->on( OnBlur  => sub ($event) { $button->background_color( [ 40, 45, 60, 255 ] );  return Clay::UI::Enum::Result->CONTINUE } );
 
 A L<Term::Fabulous::Widget::Dialog> keeps the focus inside itself while
-it is open: Tab and Shift+Tab cycle through its widgets only, and when
-it closes the focus goes back to the widget that had it before.
+it is open: Tab and Shift+Tab cycle through its widgets only, keys do
+not reach the widgets and key bindings behind it, a focused widget that
+is disabled or removed hands the focus to the dialog's backdrop, and
+when it closes the focus goes back to the widget that had it before.
 
 =head2 Custom focus order
 
@@ -1360,7 +1368,7 @@ Every report with a button or the wheel becomes a C<Mouse> event
 What happened, as a termbox2 constant: C<TB_KEY_MOUSE_LEFT>,
 C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RIGHT> (a button was pressed, or
 is held during a drag), C<TB_KEY_MOUSE_RELEASE> (a button was released;
-the terminal does not say which), C<TB_KEY_MOUSE_WHEEL_UP>,
+C<released_button> says which), C<TB_KEY_MOUSE_WHEEL_UP>,
 C<TB_KEY_MOUSE_WHEEL_DOWN>, and for a horizontal wheel
 C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>. Import the
 constants from L<Term::Fabulous::Termbox>:
@@ -1429,7 +1437,11 @@ L<Term::Fabulous::Widget::Button>.
 
 A press on a pressable widget fires both C<Mouse> and C<OnPress>.
 C<Mouse> comes first, as soon as the terminal reports the press;
-C<OnPress> follows when the next frame is drawn. They can go to different
+C<OnPress> follows when the next frame is drawn. A press and a release
+reported before the same frame (a quick tap) each get a frame of their
+own, so no click is too fast to be seen. Only the left button presses:
+releasing another button while the left one is held does not end the
+press. They can go to different
 widgets: C<Mouse> goes to the widget that drew the cell, C<OnPress> to the
 innermost pressable widget whose box contains the pointer, even if it
 draws nothing there.
@@ -1466,14 +1478,17 @@ The C<id> is required, because the scroll position is stored by id.
 
 Each notch of the mouse wheel scrolls the scroll box under the pointer by
 three rows. Scroll boxes scroll vertically by default; C<vertical =E<gt> 0>
-switches vertical scrolling off. The wheel scrolls only vertically:
-C<horizontal =E<gt> 1> lets content be wider than the box, but it can only
-be moved sideways from code, with C<child_offset>.
+switches vertical scrolling off. C<horizontal =E<gt> 1> lets content be
+wider than the box; a horizontal wheel (or a sideways tilt of the
+wheel) scrolls it by three columns per notch.
 
-A wheel notch scrolls the scroll box under the pointer only when no
-widget handled the C<Mouse> event. Widgets that scroll themselves
-(TextArea, Slider, the open Dropdown list) return C<HANDLED> for the
-wheel, and the enclosing scroll box then stays put.
+A wheel notch scrolls the scroll box under the pointer unless a widget
+used it to scroll itself: a TextArea, a Slider or an open Dropdown list
+that moved calls C<use_wheel> on the C<Mouse> event
+(L<Term::Fabulous::Event::Mouse/use_wheel>), and the enclosing scroll
+box then stays put. One that is already at its end leaves the notch to
+the scroll box. Your own listeners do not change this: what they
+return only decides whether the C<Mouse> event bubbles on.
 
 =item *
 
@@ -1869,18 +1884,26 @@ when the user presses C<Ctrl+C>;
 
 =item *
 
-when the process receives C<SIGINT> or C<SIGTERM>.
+when the process receives C<SIGINT>, C<SIGTERM> or C<SIGHUP> (the
+terminal window was closed).
 
 =back
 
-After C<run> has returned, the terminal is back to normal, and you can
-print to it, ask questions on the command line, or call C<run> again.
+After C<run> has returned, the terminal is back to normal, the handlers
+your program had set in C<%SIG> for these signals are back in place
+(unless an L<IO::Async::Signal> of your program still watches one), and
+you can print to it, ask questions on the command line, or call C<run>
+again.
 
 =head2 Errors and terminal restore
 
 If a listener, a timer or other code inside the loop dies, C<run> restores
 the terminal and then dies with the same error, so the message appears on
-the normal screen. The terminal is also restored when code calls C<exit>.
+the normal screen. When the terminal's input ends without a C<SIGHUP>
+reaching the process (a terminal that went away while the process is
+not in its session, or input from a pipe), C<run> dies with
+"Term::Fabulous: the terminal was closed". The terminal is also
+restored when code calls C<exit>.
 Catch errors around C<run> if your program should continue:
 
 	use Feature::Compat::Try;

@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::TextArea;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -49,6 +49,11 @@ class Term::Fabulous::Widget::TextArea
 
 	# The visual rows of the text for one width, see _layout.
 	field $layout_cache;
+
+	# "width:wrap" => { line text => [ its parts ] }, for the widths the
+	# last layout used and the lines it showed: an edit wraps only the
+	# lines it changed.
+	field %parts_by_key;
 
 	ADJUST {
 		$preferred_columns = _checked_size( preferred_columns => $preferred_columns );
@@ -113,57 +118,100 @@ class Term::Fabulous::Widget::TextArea
 
 	# ---------------------------------------------------------------------
 	# Visual rows: every line is cut into the parts shown on one row each.
+	# A row is [ $line, $from, $to, $is_last_part, $shown_from ]: the part
+	# [from, to) of the line, shown from $shown_from on (see _wrap_line).
 	# ---------------------------------------------------------------------
 
-	# The parts [from, to) of a line for a text width. Wrapping breaks
-	# after the last space that fits, or else before the cluster that does
-	# not fit. A line whose last part fills the width gets an empty part
-	# after it, where the cursor can stand at its end.
+	# The parts [from, to, shown_from] of a line for a text width.
+	# Wrapping breaks after the last blank that fits, or else before the
+	# cluster that does not fit. A blank that does not fit any more hangs
+	# at the break: it starts the next part, unseen (shown_from is after
+	# it), so no row starts with the blank that ended the row above. A
+	# line whose last part fills the width gets an empty part after it,
+	# where the cursor can stand at its end.
 	method _wrap_line ( $row, $width ) {
-		my @clusters = $self->clusters_between( $row, 0, length $self->editor->line($row) );
-		my $end      = length $self->editor->line($row);
-		return [ 0, $end ] unless $wrap;
+		my $end = length $self->editor->line($row);
+		return [ 0, $end, 0 ] unless $wrap;
+
+		my @clusters = $self->clusters_between( $row, 0, $end );
+		my $offset_of = sub ($index) { $index < @clusters ? $clusters[$index][0] : $end };
+		my $part      = sub ( $start, $shown, $stop ) { [ map { $offset_of->($_) } $start, $stop, $shown ] };
 
 		my ( @parts, $break );
-		my ( $start, $used ) = ( 0, 0 );
+		my ( $start, $shown, $used ) = ( 0, 0, 0 );
 		foreach my $index ( 0 .. $#clusters ) {
 			my ( undef, $display, $columns ) = @{ $clusters[$index] };
-			if ( $used + $columns > $width && $index > $start ) {
-				my $cut = defined $break && $break > $start ? $break : $index;
-				push @parts, [ $clusters[$start][0], $clusters[$cut][0] ];
-				$used  = sum0 map { $_->[2] } @clusters[ $cut .. $index - 1 ];
-				$start = $cut;
+			my $is_blank = $display =~ /\A\s\z/;
+			if ( $used + $columns > $width && $index > $shown ) {
+				if ($is_blank) {
+					push @parts, $part->( $start, $shown, $index );
+					( $start, $shown, $used ) = ( $index, $index + 1, 0 );
+					undef $break;
+					next;
+				}
+				my $cut = defined $break && $break > $shown ? $break : $index;
+				push @parts, $part->( $start, $shown, $cut );
+				( $start, $shown ) = ( $cut, $cut );
+				$used = sum0 map { $_->[2] } @clusters[ $cut .. $index - 1 ];
 				undef $break;
+
+				# The word carried over to the new row may leave no room for
+				# this cluster either.
+				if ( $used + $columns > $width && $index > $shown ) {
+					push @parts, $part->( $start, $shown, $index );
+					( $start, $shown, $used ) = ( $index, $index, 0 );
+				}
 			}
 			$used += $columns;
-			$break = $index + 1 if $display =~ /\A\s\z/;
+			$break = $index + 1 if $is_blank;
 		}
-		push @parts, [ @clusters ? $clusters[$start][0] : 0, $end ];
-		push @parts, [ $end, $end ] if @clusters && $used >= $width;
+		push @parts, $part->( $start, $shown, scalar @clusters );
+		push @parts, [ $end, $end, $end ] if @clusters && $used >= $width;
 		return @parts;
 	}
 
-	# { width, scrollbar, rows => [ [ $row, $from, $to, $is_last_part ], ... ],
+	# { width, scrollbar, rows => [ [ $row, $from, $to, $is_last, $shown_from ], ... ],
 	# first => [ the first visual row of each line ] } for the current size.
+	# The row count at the full width decides whether a scrollbar is needed.
 	method _layout () {
 		my ( $columns, $height ) = ( $self->columns, $self->rows );
 		my $key = join ':', $self->editor->revision, $columns, $height, $wrap, $scrollbar;
 		return $layout_cache if defined $layout_cache && $layout_cache->{key} eq $key;
 
-		my $layout = $self->_layout_for( max( $columns, 1 ) );
-		$layout = $self->_layout_for( $columns - 1, 1 ) if $scrollbar && $columns > 1 && @{ $layout->{rows} } > $height;
-		$layout->{key} = $key;
-		return $layout_cache = $layout;
+		my @lines = $self->editor->lines;
+		my %parts_now;
+		my ( $width, $has_scrollbar ) = ( max( $columns, 1 ), 0 );
+		my $parts = $self->_parts_of_lines( \@lines, $width, \%parts_now );
+		if ( $scrollbar && $columns > 1 && sum0( map { scalar @$_ } @$parts ) > $height ) {
+			( $width, $has_scrollbar ) = ( $columns - 1, 1 );
+			$parts = $self->_parts_of_lines( \@lines, $width, \%parts_now );
+		}
+		%parts_by_key = %parts_now;
+
+		my ( @rows, @first );
+		foreach my $row ( 0 .. $#$parts ) {
+			push @first, scalar @rows;
+			push @rows, map { [ $row, @$_ ] } @{ $parts->[$row] };
+		}
+		return $layout_cache = { key => $key, width => $width, scrollbar => $has_scrollbar, rows => \@rows, first => \@first };
 	}
 
-	method _layout_for ( $width, $has_scrollbar = 0 ) {
-		my ( @rows, @first );
-		foreach my $row ( 0 .. $self->editor->line_count - 1 ) {
-			my @parts = $self->_wrap_line( $row, $width );
-			push @first, scalar @rows;
-			push @rows, map { [ $row, @{ $parts[$_] }, $_ == $#parts ] } 0 .. $#parts;
-		}
-		return { width => $width, scrollbar => $has_scrollbar, rows => \@rows, first => \@first };
+	# The parts of every line as [ $from, $to, $is_last, $shown_from ].
+	# Wrapping depends on the text of a line, the width and wrap only, so
+	# the parts of a line come from the last layout when it had the line.
+	method _parts_of_lines ( $lines, $width, $parts_now ) {
+		my $key    = "$width:$wrap";
+		my $before = $parts_by_key{$key} // {};
+		my $now    = $parts_now->{$key} //= {};
+		return [
+			map {
+				my $text = $lines->[$_];
+				$now->{$text} //= $before->{$text} // do {
+					my @parts = $self->_wrap_line( $_, $width );
+					[ map { [ @{ $parts[$_] }[ 0, 1 ], $_ == $#parts ? 1 : 0, $parts[$_][2] ] } 0 .. $#parts ];
+				};
+			} 0 .. $#$lines
+		];
 	}
 
 	# The visual row index showing an editor position.
@@ -213,13 +261,13 @@ class Term::Fabulous::Widget::TextArea
 		my $layout = $self->_layout;
 		my $rows   = $layout->{rows};
 		my $index  = min( $top + $row, $#$rows );
-		my ( $line, $from, $to, $is_last ) = @{ $rows->[$index] };
-		my $offset = $self->offset_at_column( $line, $from, $to, $column + ( $wrap ? 0 : $scroll ) );
+		my ( $line, undef, $to, $is_last, $shown ) = @{ $rows->[$index] };
+		my $offset = $self->offset_at_column( $line, $shown, $to, $column + ( $wrap ? 0 : $scroll ) );
 
 		# The end of a wrapped part is shown at the start of the next row;
 		# a click past it stays on its own row, before its last cluster.
-		if ( !$is_last && $offset == $to && $to > $from ) {
-			my @clusters = $self->clusters_between( $line, $from, $to );
+		if ( !$is_last && $offset == $to && $to > $shown ) {
+			my @clusters = $self->clusters_between( $line, $shown, $to );
 			$offset = $clusters[-1][0];
 		}
 		return ( $line, $offset );
@@ -251,7 +299,7 @@ class Term::Fabulous::Widget::TextArea
 		my ( $row, $offset ) = $editor->cursor;
 		my $visual = $self->_visual_row_of( $layout, $row, $offset );
 		my $part   = $layout->{rows}[$visual];
-		$goal_column //= $self->columns_to( $row, $part->[1], $offset );
+		$goal_column //= $self->columns_to( $row, $part->[4], $offset );
 
 		my $target = $visual + $rows;
 		if ( $target < 0 || $target > $#{ $layout->{rows} } ) {
@@ -260,10 +308,10 @@ class Term::Fabulous::Widget::TextArea
 			return;
 		}
 
-		my ( $line, $from, $to, $is_last ) = @{ $layout->{rows}[$target] };
-		my $target_offset = $self->offset_at_column( $line, $from, $to, $goal_column );
-		if ( !$is_last && $target_offset == $to && $to > $from ) {
-			my @clusters = $self->clusters_between( $line, $from, $to );
+		my ( $line, undef, $to, $is_last, $shown ) = @{ $layout->{rows}[$target] };
+		my $target_offset = $self->offset_at_column( $line, $shown, $to, $goal_column );
+		if ( !$is_last && $target_offset == $to && $to > $shown ) {
+			my @clusters = $self->clusters_between( $line, $shown, $to );
 			$target_offset = $clusters[-1][0];
 		}
 		my $goal = $goal_column;
@@ -275,7 +323,10 @@ class Term::Fabulous::Widget::TextArea
 	method handle_mouse :override ($event) {
 		my $key = $event->key;
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
+			my $before = $top;
 			$self->scroll_rows( $key == TB_KEY_MOUSE_WHEEL_UP ? -WHEEL_ROWS : WHEEL_ROWS );
+			return 0 if $top == $before;    # at its end: the notch is left to a scroll box
+			$event->use_wheel;
 			return 1;
 		}
 		undef $goal_column;
@@ -304,8 +355,8 @@ class Term::Fabulous::Widget::TextArea
 		else {
 			my $rows = $layout->{rows};
 			foreach my $y ( 0 .. min( $self->rows, @$rows - $top ) - 1 ) {
-				my ( $line, $from, $to, $is_last ) = @{ $rows->[ $top + $y ] };
-				my $end_x = $self->paint_line_part( $y, $line, $from, $to, $wrap ? 0 : $scroll, $is_last );
+				my ( $line, $from, $to, $is_last, $shown ) = @{ $rows->[ $top + $y ] };
+				my $end_x = $self->paint_line_part( $y, $line, $shown, $to, $wrap ? 0 : $scroll, $is_last, $from );
 				$self->_paint_selected_line_break( $y, $line, $end_x, $layout->{width} ) if $is_last;
 			}
 		}
@@ -426,17 +477,21 @@ C<layout> gives the area no height. Dies if not a positive integer.
 
 =item C<wrap>
 
-A boolean, stored as 1 or 0. Default: 1. When true, a line longer than the area continues
-on the next row, broken after the last space that fits, or inside a word
-that is wider than the area. When false, every line takes exactly one
-row and the view scrolls sideways with the cursor.
+A boolean, stored as 1 or 0. Default: 1. When true, a line longer than
+the area continues on the next row, broken after the last space that
+fits, or inside a word that is wider than the area. A space at which a
+full row breaks is not shown at the start of the next row; the cursor
+before it shows there, on the same cell as the cursor after it, so
+C<Right> over that space moves the cursor without visible change. A wide character that does not fit at the end of a
+row starts the next one. When false, every line takes exactly one row
+and the view scrolls sideways with the cursor.
 
 =item C<scrollbar>
 
-A boolean, stored as 1 or 0. Default: 1. When true, a scrollbar is shown in the rightmost
-column while the text has more rows than the area; it then takes one
-column from the text. The scrollbar only shows the position; it cannot
-be dragged.
+A boolean, stored as 1 or 0. Default: 1. When true, a scrollbar is
+shown in the rightmost column while the text has more rows than the
+area; it then takes one column from the text. The scrollbar only shows
+the position; it cannot be dragged.
 
 =back
 
@@ -479,19 +534,17 @@ integer; the old value then stays.
 
 	$area->wrap(0);
 
-Accessor for the C<wrap> parameter. Returns a true or false value: the
-writer stores and returns 1 or 0, but a value passed to C<new> is
-returned exactly as it was given. Writing re-wraps the text, scrolls to
-the cursor and repaints. Any value is accepted.
+Accessor for the C<wrap> parameter. Returns 1 or 0, also for a value
+passed to C<new>. Writing re-wraps the text, scrolls to the cursor and
+repaints. Any value is accepted.
 
 =head2 scrollbar
 
 	$area->scrollbar(0);
 
-Accessor for the C<scrollbar> parameter. Returns a true or false value:
-the writer stores and returns 1 or 0, but a value passed to C<new> is
-returned exactly as it was given. Writing scrolls to the cursor and
-repaints. Any value is accepted.
+Accessor for the C<scrollbar> parameter. Returns 1 or 0, also for a
+value passed to C<new>. Writing scrolls to the cursor and repaints. Any
+value is accepted.
 
 =head2 scroll_rows
 
@@ -592,9 +645,13 @@ the string (C<value "first\nsecond">).
 		layout    => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 	);
 
+	# Appends at the end through the editor: only the new line is wrapped
+	# and kept for undo, however long the log grows.
 	sub log_line ($line) {
-		my $text = $log->value;
-		$log->value( length $text ? "$text\n$line" : $line );    # cursor at the end
+		my $editor = $log->editor;
+		$editor->move_document_end;
+		$editor->insert( $editor->is_empty ? $line : "\n$line" );
+		$log->cursor_moved;    # scrolls to the new line and repaints
 		return;
 	}
 
@@ -610,8 +667,9 @@ the string (C<value "first\nsecond">).
 
 =head1 CAVEATS
 
-Inside a L<Term::Fabulous::Widget::ScrollBox>, one notch of the mouse
-wheel over the text area scrolls both the text area and the scroll box.
+Inside a L<Term::Fabulous::Widget::ScrollBox>, a notch of the mouse
+wheel over the text area scrolls the text area; once it shows its first
+(last) rows, a notch up (down) scrolls the scroll box instead.
 
 =head1 SEE ALSO
 

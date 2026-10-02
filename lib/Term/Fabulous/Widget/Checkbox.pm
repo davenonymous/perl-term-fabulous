@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Checkbox;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -304,10 +304,6 @@ All other keys bubble to the ancestors.
 
 A click (left button pressed and released over the checkbox, mark or
 label) toggles it and focuses it.
-
-A click whose press and release both arrive within one frame (1/30
-second), such as a quick touchpad tap, is not seen as a click; see
-L<Term::Fabulous::Manual/Clicks, hover and press>.
 
 =head1 EVENTS
 

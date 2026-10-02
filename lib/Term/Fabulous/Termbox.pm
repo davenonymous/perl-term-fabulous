@@ -1,6 +1,6 @@
 package Term::Fabulous::Termbox;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -22,7 +22,7 @@ $EXPORT_TAGS{api} = [
 		tb_width tb_height tb_set_input_mode tb_set_output_mode
 		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
 		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send
-		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser
+		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_readable_bytes
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -254,7 +254,12 @@ Writes a string cell by cell, advancing by each cluster's width.
 
 	tb_send($bytes);
 
-Writes raw bytes to the terminal, UTF-8 encoded if the string is wide.
+Queues bytes for the terminal, for escape sequences termbox2 has no
+function for. A string whose characters are all below 0x100 is sent
+byte for byte, whether or not Perl stores it UTF-8 encoded; a string
+with a wider character is sent UTF-8 encoded. Like everything termbox2
+writes, the bytes stay in its output buffer until the next
+C<tb_present> or C<tb_shutdown>.
 
 =head2 Events
 
@@ -284,7 +289,11 @@ followed by a key in the same read becomes that key with C<TB_MOD_ALT>
 their modifier bits (C<TB_MOD_SHIFT>, C<TB_MOD_ALT>, C<TB_MOD_CTRL>),
 report the pointer moving with no button as C<TF_KEY_MOUSE_MOVE> with
 C<TB_MOD_MOTION>, and report a horizontal wheel as
-C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>. Escape
+C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>, and say
+which button a C<TB_KEY_MOUSE_RELEASE> released: the event's C<ch> is
+C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE> or C<TB_KEY_MOUSE_RIGHT>
+(0 when the terminal did not name the button, as in reports termbox2
+decodes itself). Escape
 sequences that begin with C<ESC [> or C<ESC O> and are not SGR mouse
 reports are left to termbox2. C<tb_shutdown> forgets the parser, so
 call this after every C<tb_init>. Returns C<TB_OK>.
@@ -292,6 +301,16 @@ call this after every C<tb_init>. Returns C<TB_OK>.
 The parser only decodes; to receive motion reports at all, ask the
 terminal with C<< tb_send("\e[?1003h") >> (and send C<"\e[?1003l">
 before C<tb_shutdown>), as L<Term::Fabulous> does.
+
+=head3 tf_readable_bytes
+
+	my $count = tf_readable_bytes($fd);
+
+A Term::Fabulous addition. The number of bytes waiting to be read from
+the file descriptor (C<ioctl FIONREAD>), or -1 when the descriptor
+cannot tell (C<$!> says why). A terminal descriptor that is readable
+while this returns 0 is at end of file: the terminal is gone. A
+terminal that hung up returns -1 with C<$!> set to C<EIO>.
 
 =head3 tb_get_fds
 

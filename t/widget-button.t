@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -107,6 +107,17 @@ Button "ok" {
 }
 KDL
 	is [ $built->focus_border_color, $built->pressed_background_color, $built->can_focus ], [ [ 255, 255, 255, 255 ], [ 255, 0, 0, 255 ], 0 ], 'all three properties';
+
+	my $plain = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
+use Term::Fabulous::Widget::Button as Button
+Button "plain" {
+	focus_border_color #null
+	pressed_background_color "reverse"
+}
+KDL
+	is [ $plain->focus_border_color, $plain->pressed_background_color ], [ undef, 'reverse' ], '#null switches a look off, "reverse" is the reverse look';
+	like dies { Term::Fabulous::Layout->new( string => qq{use Term::Fabulous::Widget::Button as Button\nButton { focus_border_color "reverse"; }} )->build },
+		qr/focus_border_color is not a color/, 'only the pressed look can be reverse';
 };
 
 done_testing;

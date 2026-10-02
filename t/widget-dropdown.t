@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -92,8 +92,8 @@ subtest 'mouse' => sub {
 
 	click( $list, 2, 2 );
 	is $dropdown->highlighted_index, 2, 'pressing highlights';
-	click( $list, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN );
-	is $list->top_option, 0, 'the wheel scrolls only a list that does not show everything';
+	ok !click( $list, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a list that shows everything leaves the wheel to a scroll box';
+	is $list->top_option, 0, 'and does not scroll';
 	click( $list, 2, 3, key => TB_KEY_MOUSE_RELEASE );
 	is [ $dropdown->is_open, $changes ], [ 0, ['Cyan'] ], 'releasing over an option chooses it';
 };

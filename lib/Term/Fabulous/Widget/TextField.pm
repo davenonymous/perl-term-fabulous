@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::TextField;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -65,6 +65,10 @@ class Term::Fabulous::Widget::TextField
 
 	method natural_size () {
 		return ( $preferred_columns, 1 );
+	}
+
+	method hides_text :override () {
+		return defined $mask ? 1 : 0;
 	}
 
 	method display_cluster :override ($cluster) {
@@ -201,9 +205,11 @@ sizes. Dies if not a positive integer.
 
 A single character that is one column wide, or C<undef>. Default:
 C<undef> (the text is shown). When set, every character of the text is
-shown as this character, for passwords. The mask only hides the text on
-the screen: C<value>, the C<Change> and C<Submit> events and copying to
-the clipboard still give the real text. Dies if the mask is not exactly
+shown as this character, for passwords. C<value> and the C<Change> and
+C<Submit> events still give the real text. While the mask is set, the
+text cannot be copied or cut to the clipboard, and the word keys and
+the double click act on the whole text, so they do not tell where its
+spaces are (see L<Term::Fabulous::Widget::TextInput/KEYS>). Dies if the mask is not exactly
 one grapheme cluster one column wide.
 
 =back

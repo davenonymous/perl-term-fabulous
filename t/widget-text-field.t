@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -9,6 +9,7 @@ use lib "$FindBin::Bin/lib";
 
 use InputTest;
 use Term::Fabulous::Termbox qw(TB_MOD_MOTION TB_MOD_SHIFT TB_REVERSE);
+use Term::Fabulous::Editor;
 use Term::Fabulous::Widget::TextField;
 
 sub text_field {
@@ -107,10 +108,35 @@ subtest 'mouse' => sub {
 	click( $field, 3, 0, modifiers => TB_MOD_MOTION );
 	is $field->editor->selected_text, 'ne', 'dragging selects';
 	click( $field, 6, 0, modifiers => TB_MOD_SHIFT );
-	is $field->editor->selected_text, '', 'a click with Shift (which termbox2 never reports) just places the cursor';
+	is $field->editor->selected_text, 'ne tw', 'a click with Shift extends the selection';
 	click( $field, 5, 0 );
 	click( $field, 5, 0 );
 	is $field->editor->selected_text, 'two', 'a double click selects a word';
+};
+
+subtest 'a masked field keeps its words to itself' => sub {
+	my ($field) = text_field( value => 'open sesame', mask => '*' );
+	Term::Fabulous::Editor->clipboard('before');
+	press( $field, 'Ctrl+A' );
+	press( $field, $_ ) foreach 'Ctrl+Insert', 'Ctrl+X', 'Shift+Delete';
+	is [ Term::Fabulous::Editor->clipboard, $field->value ], [ 'before', 'open sesame' ], 'neither copied nor cut';
+
+	press( $field, 'End' );
+	press( $field, 'Ctrl+Left' );
+	is [ $field->editor->cursor ], [ 0, 0 ], 'Ctrl+Left goes to the start';
+	press( $field, 'Ctrl+Right' );
+	is [ $field->editor->cursor ], [ 0, 11 ], 'Ctrl+Right to the end';
+	press( $field, 'Ctrl+W' );
+	is $field->value, '', 'Ctrl+W deletes the whole text before the cursor';
+
+	$field->value('open sesame');
+	click( $field, 1, 0 );
+	click( $field, 1, 0 );
+	is $field->editor->selected_text, 'open sesame', 'a double click selects all of it';
+
+	$field->mask(undef);
+	press( $field, 'Ctrl+Insert' );
+	is( Term::Fabulous::Editor->clipboard, 'open sesame', 'without the mask copying works again' );
 };
 
 subtest 'disabled' => sub {
@@ -130,6 +156,17 @@ subtest 'disabled' => sub {
 	$unfocusable->disabled(1);
 	$unfocusable->disabled(0);
 	ok !$unfocusable->can_focus, 'and survives a disable/enable cycle';
+
+	my ($toggled) = text_field( disabled => 1 );
+	$toggled->can_focus(0);
+	$toggled->disabled(0);
+	ok !$toggled->can_focus, 'can_focus(0) while disabled counts once enabled';
+	$toggled->disabled(1);
+	is $toggled->can_focus(1), 0, 'can_focus(1) while disabled does not make it focusable';
+	like dies { $toggled->can_focus( {} ) }, qr/can_focus must be a plain boolean value, got a HASH reference/, 'a reference dies';
+	like dies { $toggled->can_focus( 1, 0 ) }, qr/can_focus takes one value, got 2/, 'so do two values';
+	$toggled->disabled(0);
+	ok $toggled->can_focus, 'but counts once enabled';
 };
 
 done_testing;

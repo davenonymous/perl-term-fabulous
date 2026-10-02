@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -65,6 +65,12 @@ subtest 'shapes' => sub {
 	$image->clear->draw_circle( 2, 2, 2, 1 );
 	is pixels($image), [ '.###..', '#...#.', '#...#.', '#...#.', '.###..', '......' ], 'draw_circle draws the outline';
 
+	$image->clear->draw_line( -1e6, -1e6 + 2, 1e6, 1e6 + 2, 1 );
+	is pixels($image), [ '......', '......', '#.....', '.#....', '..#...', '...#..' ], 'a line far longer than the canvas draws the part inside it';
+	$image->clear->draw_circle( 3, 1e5 + 2, 1e5, 1 );
+	is pixels($image), [ ('......') x 2, '######', ('......') x 3 ], 'so does a circle far larger than the canvas';
+	$image->clear->draw_circle( -50, 3, 40, 1 );
+	is pixels($image), [ ('......') x 6 ], 'a circle beside the canvas draws nothing';
 	like dies { $image->draw_circle( 1, 1, -1, 1 ) }, qr/radius must not be negative/, 'a negative radius dies';
 	like dies { $image->draw_line( 0, 0, 9**9**9, 0, 1 ) }, qr/x must be a finite number/, 'an infinite end point dies';
 };

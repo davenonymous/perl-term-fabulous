@@ -1,6 +1,6 @@
 package Term::Fabulous::Static;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -282,7 +282,7 @@ Terminal default colors produce no code. Where the style changes in the
 middle of a row, C<ESC [ 0 m> resets the previous style first, so a run
 in default colors is preceded by just C<ESC [ 0 m>. Every row that
 contains a sequence ends with C<ESC [ 0 m>. When false, the strings
-contain only the characters. Other options are ignored.
+contain only the characters.
 
 The strings are Perl character strings; encode them (for example with
 C<Encode::encode('UTF-8', ...)>) before writing them to a handle that

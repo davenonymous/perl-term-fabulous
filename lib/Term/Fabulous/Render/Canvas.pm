@@ -1,6 +1,6 @@
 package Term::Fabulous::Render::Canvas;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -145,11 +145,24 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 		foreach my $y ( $y0 .. $y1 - 1 ) {
 			my ( $row, $from, $to ) = ( $y - $origin_y, $x0 - $origin_x, $x1 - $origin_x );
 			if ( $plan->{intact} ) {
+				$self->_shade_canvas_row( $plan, $row, $from, $to, $buffer );
 				my $span = $changed_spans->[$row] // next;
 				( $from, $to ) = ( max( $from, $span->[0] ), min( $to, $span->[1] ) );
 			}
 			$self->_paint_canvas_row( $plan, $row, $from, $to, $buffer );
 		}
+		return;
+	}
+
+	# Records the backgrounds of the canvas columns [from, to) of one row
+	# in the frame's background buffer without painting them: the cells of
+	# an intact canvas stay on screen, but what is drawn later over their
+	# neighbors (a border's outer half) still blends with them.
+	method _shade_canvas_row ( $plan, $row, $from, $to, $buffer ) {
+		my ( undef, undef, $bgs ) = $plan->{canvas}->cell_row($row);
+		my $origin_x = $plan->{origin}[0];
+		my $shade    = $buffer->[ $plan->{origin}[1] + $row ] //= [];
+		$shade->[ $origin_x + $_ ] = $bgs->[$_] // $plan->{background} foreach $from .. $to - 1;
 		return;
 	}
 

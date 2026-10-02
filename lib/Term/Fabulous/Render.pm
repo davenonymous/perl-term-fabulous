@@ -1,6 +1,6 @@
 package Term::Fabulous::Render;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -111,6 +111,13 @@ role Term::Fabulous::Render
 
 	method get_last_clip_rects () {
 		return @last_clip_rects;
+	}
+
+	# The commands and clip rects of the last frame, as the arrays
+	# themselves, for hit-testing every pointer report without copying.
+	# Read-only for the caller.
+	method last_frame () {
+		return ( \@last_commands, \@last_clip_rects );
 	}
 
 	method _dispatch_command ($command) {
@@ -329,6 +336,16 @@ C<[x0, y0, x1, y1]> rectangle of cells it was allowed to paint into
 outside its rectangle, such as content scrolled out of a scroll
 container, was not drawn. If painting the frame died, the list ends at
 the command that failed.
+
+=head2 last_frame
+
+	my ( $commands, $clip_rects ) = $ui->last_frame;
+
+The same as L</get_last_commands> and L</get_last_clip_rects>, as
+references to the arrays themselves instead of copies, for code that
+looks at the last frame often (L<Term::Fabulous> hit-tests every mouse
+report with it). Read only: changing the arrays changes what the
+renderer believes it drew.
 
 =head2 pointer_state
 

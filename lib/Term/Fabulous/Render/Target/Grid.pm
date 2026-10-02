@@ -1,6 +1,6 @@
 package Term::Fabulous::Render::Target::Grid;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

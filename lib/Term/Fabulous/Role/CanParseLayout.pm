@@ -1,6 +1,6 @@
 package Term::Fabulous::Role::CanParseLayout;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -197,7 +197,7 @@ L<Term::Fabulous::Layout>; you do not pass it yourself.
 
 =head1 REQUIRED METHODS
 
-A class composing the role directly must provide these two methods.
+A class composing the role directly must provide these four methods.
 Subclasses of L<Term::Fabulous::Widget::Box> already have them and
 only override them.
 

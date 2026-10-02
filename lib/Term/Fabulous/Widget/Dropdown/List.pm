@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Dropdown::List;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -75,7 +75,10 @@ class Term::Fabulous::Widget::Dropdown::List
 	method _handle_mouse ($event) {
 		my $key = $event->key;
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
+			my $before = $top;
 			$self->scroll( $key == TB_KEY_MOUSE_WHEEL_UP ? -1 : 1 );
+			return 0 if $top == $before;    # every option shown, or at an end
+			$event->use_wheel;
 			return 1;
 		}
 		return 0 unless $key == TB_KEY_MOUSE_LEFT || $key == TB_KEY_MOUSE_RELEASE;

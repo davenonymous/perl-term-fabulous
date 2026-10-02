@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::PixelCanvas;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -101,46 +101,83 @@ class Term::Fabulous::Widget::PixelCanvas
 	}
 
 	# Bresenham: every pixel the line passes, both end points included.
+	# Along the longer axis every step moves one pixel, and after $i steps
+	# the shorter axis has moved round($i * minor / major) pixels, halves
+	# rounded up: the pixels of the steps inside the canvas are computed
+	# directly, so a line far longer than the canvas costs no more than
+	# one across it.
 	method draw_line ( $from_x, $from_y, $to_x, $to_y, $color ) {
-		my ( $x, $y )         = ( cell_coordinate( x => $from_x ), cell_coordinate( y => $from_y ) );
-		my ( $end_x, $end_y ) = ( cell_coordinate( x => $to_x ),   cell_coordinate( y => $to_y ) );
+		my ( $x0, $y0 ) = ( cell_coordinate( x => $from_x ), cell_coordinate( y => $from_y ) );
+		my ( $x1, $y1 ) = ( cell_coordinate( x => $to_x ),   cell_coordinate( y => $to_y ) );
 		my $attr = cell_color_attr( color => $color );
 
-		my ( $dx, $dy ) = ( abs( $end_x - $x ), -abs( $end_y - $y ) );
-		my ( $step_x, $step_y ) = ( $x < $end_x ? 1 : -1, $y < $end_y ? 1 : -1 );
-		my $error = $dx + $dy;
-		while (1) {
-			$self->_paint_pixel( $x, $y, $attr );
-			last if $x == $end_x && $y == $end_y;
-			my $doubled = 2 * $error;
-			if ( $doubled >= $dy ) { $error += $dy; $x += $step_x }
-			if ( $doubled <= $dx ) { $error += $dx; $y += $step_y }
+		my ( $dx, $dy ) = ( abs( $x1 - $x0 ), abs( $y1 - $y0 ) );
+		my ( $step_x, $step_y ) = ( $x0 < $x1 ? 1 : -1, $y0 < $y1 ? 1 : -1 );
+		if ( $dx >= $dy ) {
+			foreach my $i ( _steps_inside( $x0, $step_x, $dx, $self->pixel_width ) ) {
+				$self->_paint_pixel( $x0 + $step_x * $i, $y0 + $step_y * _minor_steps( $i, $dy, $dx ), $attr );
+			}
+		}
+		else {
+			foreach my $i ( _steps_inside( $y0, $step_y, $dy, $self->pixel_height ) ) {
+				$self->_paint_pixel( $x0 + $step_x * _minor_steps( $i, $dx, $dy ), $y0 + $step_y * $i, $attr );
+			}
 		}
 		return $self;
 	}
 
-	# Midpoint circle: the outline, one pixel wide.
+	# The steps $i in 0 .. $length at which $start + $step * $i lies in
+	# 0 .. $limit - 1.
+	sub _steps_inside ( $start, $step, $length, $limit ) {
+		my ( $first, $last ) = $step > 0 ? ( -$start, $limit - 1 - $start ) : ( $start - $limit + 1, $start );
+		return max( $first, 0 ) .. min( $last, $length );
+	}
+
+	sub _minor_steps ( $i, $minor, $major ) {
+		return 0 unless $major;
+		return int( ( 2 * $minor * $i + $major ) / ( 2 * $major ) );
+	}
+
+	# Midpoint circle: the outline, one pixel wide. In each octant the
+	# point of row $y lies round(sqrt(r^2 - y^2)) pixels out, so only the
+	# rows and columns inside the canvas are computed.
 	method draw_circle ( $center_x, $center_y, $radius, $color ) {
 		my ( $cx, $cy, $r ) = ( cell_coordinate( x => $center_x ), cell_coordinate( y => $center_y ), cell_coordinate( radius => $radius ) );
 		die "Term::Fabulous::Widget::PixelCanvas: radius must not be negative, got $radius" if $r < 0;
 		my $attr = cell_color_attr( color => $color );
+		my ( $width, $height ) = ( $self->pixel_width, $self->pixel_height );
+		return $self if $cx + $r < 0 || $cx - $r >= $width || $cy + $r < 0 || $cy - $r >= $height;
 
-		my ( $x, $y, $error ) = ( $r, 0, 1 - $r );
-		while ( $x >= $y ) {
+		# The octant runs while the point stays on or above the diagonal.
+		my $last = int( $r / sqrt 2 );
+		$last++ while _circle_offset( $r, $last + 1 ) >= $last + 1;
+		$last-- while $last > 0 && _circle_offset( $r, $last ) < $last;
+
+		# A step $y paints rows $cy +- $y and columns $cx +- $y; any other
+		# step paints nothing inside the canvas.
+		my %visible;
+		foreach my $range ( [ $cy, $height ], [ $cx, $width ] ) {
+			my ( $center, $limit ) = @$range;
+			$visible{$_} = 1 foreach max( 0, -$center ) .. min( $last, $limit - 1 - $center ), max( 0, $center - $limit + 1 ) .. min( $last, $center );
+		}
+		foreach my $y ( keys %visible ) {
+			my $x = _circle_offset( $r, $y );
 			foreach my $offset ( [ $x, $y ], [ $y, $x ] ) {
 				my ( $ox, $oy ) = @$offset;
 				$self->_paint_pixel( $cx + $_->[0], $cy + $_->[1], $attr ) foreach [ $ox, $oy ], [ -$ox, $oy ], [ $ox, -$oy ], [ -$ox, -$oy ];
 			}
-			$y++;
-			if ( $error < 0 ) {
-				$error += 2 * $y + 1;
-			}
-			else {
-				$x--;
-				$error += 2 * ( $y - $x ) + 1;
-			}
 		}
 		return $self;
+	}
+
+	# round(sqrt(r^2 - y^2)), corrected to the exact integer answer.
+	sub _circle_offset ( $r, $y ) {
+		my $square = $r * $r - $y * $y;
+		return -1 if $square < 0;
+		my $x = int( sqrt($square) + 0.5 );
+		$x-- while $x > 0 && ( 2 * $x - 1 )**2 > 4 * $square;
+		$x++ while ( 2 * $x + 1 )**2 <= 4 * $square;
+		return $x;
 	}
 
 	method pixel_at ($event) {

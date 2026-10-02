@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
-use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_MOD_MOTION);
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_MOD_MOTION);
 use Term::Fabulous::Widget::Slider;
 
 sub slider {
@@ -58,6 +58,10 @@ subtest 'mouse' => sub {
 	click( $slider, 4, 0, modifiers => TB_MOD_MOTION );
 	click( $slider, 4, 0, key => TB_KEY_MOUSE_WHEEL_UP );
 	is $changes, [ 100, 40, 41 ], 'pressing and dragging set the value at the pointer, the wheel steps';
+
+	$slider->value(100);
+	ok !click( $slider, 4, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used, 'a notch past the end is left to a scroll box around it';
+	ok click( $slider, 4, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch that moves the value is used';
 };
 
 done_testing;

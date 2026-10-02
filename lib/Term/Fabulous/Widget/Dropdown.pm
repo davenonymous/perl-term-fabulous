@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Dropdown;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -27,7 +27,10 @@ class Term::Fabulous::Widget::Dropdown
 	use constant ARROW_DOWN        => "\x{25BE}";
 	use constant ARROW_UP          => "\x{25B4}";
 	use constant TYPEAHEAD_SECONDS => 1;
-	use constant LIST_Z_INDEX      => 1000;
+	# The highest z_index Clay has (int16): an open list belongs to the
+	# focused widget, so it floats over everything, a dialog it is in
+	# included.
+	use constant LIST_Z_INDEX      => 32767;
 
 	field @options;
 	field $selected;    # index into @options, or undef
@@ -450,7 +453,9 @@ list that opens
 
 A dropdown shows the label of the selected option (or a placeholder)
 and a small arrow. When the user opens it, the options appear in a list
-that floats over the other widgets. It opens below the dropdown, unless
+that floats over all other widgets, also over a
+L<Term::Fabulous::Widget::Dialog> the dropdown is in. It opens below
+the dropdown, unless
 it does not fit there and there is more room above the dropdown; then it
 opens above. The list shows up to C<max_visible_options> options at a
 time; when the terminal has less room on the chosen side, it shrinks to
@@ -549,7 +554,7 @@ C<[16, 18, 22, 255]>, almost black.
 
 =item C<background_color>
 
-An C<[r, g, b, a]> array reference or C<{ r, g, b, a }> hash reference.
+Any L<Term::Fabulous::Color> format, stored as C<[r, g, b, a]>.
 Default: C<[36, 40, 48, 255]>, a dark gray, like the text inputs.
 
 =back
@@ -887,7 +892,9 @@ C<options> and C<option> nodes and passes all others on.
 =head1 CAVEATS
 
 Inside a L<Term::Fabulous::Widget::ScrollBox>, the mouse wheel over the
-open list also scrolls the scroll box.
+open list scrolls the list; a list that shows all options, or is at its
+end, leaves the notch to the scroll box, which then moves the dropdown
+and its list.
 
 =head1 SEE ALSO
 

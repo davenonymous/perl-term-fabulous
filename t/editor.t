@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -120,6 +120,30 @@ subtest 'undo and redo' => sub {
 	$editor->undo;
 	is [ $editor->text, $editor->cursor ], [ 'hello ', 0, 0 ], 'undo restores the cursor';
 	ok !editor( text => 'set' )->can_undo, 'set_text starts a fresh history';
+};
+
+subtest 'undo and redo across lines' => sub {
+	my $editor = editor( text => "one\ntwo\nthree" );
+	my @texts  = ( $editor->text );
+	my $record = sub { push @texts, $editor->text };
+
+	$editor->move_to( 1, 1 )->move_to( 2, 2, 1 );
+	$editor->insert("X\nY\nZ");             $record->();
+	$editor->move_document_start->move_line_end(1);
+	$editor->cut;                           $record->();
+	$editor->move_document_end;
+	$editor->insert(" end\nmore");          $record->();
+	$editor->move_to( 1, 0 );
+	$editor->delete_backward;               $record->();
+	$editor->paste;                         $record->();
+
+	my @undone;
+	unshift @undone, $editor->text while $editor->undo;
+	is \@undone, [ @texts[ 0 .. $#texts - 1 ] ], 'undo walks back through every step';
+	my @redone;
+	push @redone, $editor->text while $editor->redo;
+	is $redone[-1], $texts[-1], 'redo walks forward to the last text';
+	is [ $editor->cursor ], [ 0, 3 ], 'with the cursor after the last edit';
 };
 
 subtest 'clipboard' => sub {

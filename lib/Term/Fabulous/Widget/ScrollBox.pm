@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::ScrollBox;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -86,7 +86,10 @@ width, when it scrolls sideways). With the default C<fit> sizing the
 box grows with its content instead of scrolling it.
 
 Under L<Term::Fabulous>, every notch of the mouse wheel scrolls the
-ScrollBox under the pointer by three rows. The scroll position is
+ScrollBox under the pointer by three rows, and every notch of a
+horizontal wheel (or a sideways tilt of the wheel) by three columns,
+unless a widget under the pointer used the notch to scroll itself (see
+L</CAVEATS>). The scroll position is
 clamped, so the content cannot be scrolled past its first or last row.
 The position is applied when the next frame is drawn. Keys do not
 scroll a ScrollBox.
@@ -120,8 +123,7 @@ up and down.
 =item C<horizontal>
 
 A boolean, stored as 1 or 0. Default: 0. Whether the content scrolls
-sideways. The mouse wheel only scrolls vertically, so horizontal
-scrolling needs C<child_offset>.
+sideways, with a horizontal wheel or with C<child_offset>.
 
 =item C<child_offset>
 
@@ -182,8 +184,11 @@ content does not move.
 =item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
 
 Fired for wheel notches and clicks over the box, like on any Box (see
-L<Term::Fabulous::Manual/MOUSE>). The scrolling does not depend on
-your listeners: a listener cannot prevent it.
+L<Term::Fabulous::Manual/MOUSE>). The scrolling does not depend on what
+your listeners return: a listener that stops the event from bubbling
+does not stop the scrolling. Only a call to
+L<Term::Fabulous::Event::Mouse/use_wheel> keeps a notch from scrolling
+the box.
 
 =back
 
@@ -203,9 +208,12 @@ C<child_offset> cannot be set from KDL.
 
 =head1 CAVEATS
 
-A widget inside a ScrollBox that also uses the mouse wheel itself, such
-as L<Term::Fabulous::Widget::TextArea>, does not stop the ScrollBox
-from scrolling: both react to the same notch.
+A widget inside a ScrollBox that uses the mouse wheel itself (a
+L<Term::Fabulous::Widget::TextArea>, a L<Term::Fabulous::Widget::Slider>,
+an open L<Term::Fabulous::Widget::Dropdown> list) takes the notches
+over it while it can move, and the ScrollBox stays put; once the widget
+is at its end, the notches scroll the ScrollBox again. So a long form
+scrolls past a text area as soon as the text area shows its last rows.
 
 =head1 SEE ALSO
 

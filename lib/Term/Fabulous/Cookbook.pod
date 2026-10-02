@@ -1247,9 +1247,10 @@ following on the first move up.
 
 =item *
 
-C<< horizontal =E<gt> 1 >> lets the content be wider than the box. The
-mouse wheel only scrolls vertically, so horizontal scrolling needs code
-such as the Left and Right keys here.
+C<< horizontal =E<gt> 1 >> lets the content be wider than the box. A
+horizontal wheel (or a sideways tilt of the wheel) scrolls it by three
+columns per notch; for a mouse without one, add code such as the Left
+and Right keys here.
 
 =item *
 
@@ -1633,9 +1634,9 @@ focus back on the text area and fires C<Close> on the dialog.
 
 The Ctrl+Q shortcut lives on the root. The text area types letters
 such as q itself, so they never reach the root, but it passes Ctrl+Q
-on. While the dialog is open, the focus is inside it; a Button uses
-only Enter and Space, so Ctrl+Q still reaches the root, where C<open>
-on an open dialog does nothing.
+on. While the dialog is open, no key gets past it: the backdrop stops
+every key the dialog's widgets do not use, so the shortcuts of the
+program behind the dialog are off until it closes.
 
 =item *
 

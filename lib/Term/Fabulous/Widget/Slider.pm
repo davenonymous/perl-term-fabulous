@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Slider;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -223,13 +223,14 @@ class Term::Fabulous::Widget::Slider
 	}
 
 	# The user moved the value: snap, repaint, and fire Change if it moved.
+	# Returns 1 when the value changed.
 	method _move_to ($number) {
 		my $snapped = $self->_snapped( List::Util::min( List::Util::max( $number, $min ), $max ) );
-		return if $snapped == $current;
+		return 0 if $snapped == $current;
 		$current = $snapped;
 		$self->repaint;
 		$self->fire_change($current);
-		return;
+		return 1;
 	}
 
 	# ---------------------------------------------------------------------
@@ -252,7 +253,9 @@ class Term::Fabulous::Widget::Slider
 	method handle_mouse ($event) {
 		my $key = $event->key;
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
-			$self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? $step : -$step ) );
+			# At min or max the notch is left to a scroll box.
+			return 0 unless $self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? $step : -$step ) );
+			$event->use_wheel;
 			return 1;
 		}
 		return 0 unless $key == TB_KEY_MOUSE_LEFT;
@@ -516,10 +519,8 @@ one.
 	my $shown = $slider->show_value;
 	$slider->show_value(0);
 
-Accessor for the C<show_value> parameter. Returns a true or false value:
-the writer stores and returns 1 or 0, but a value passed to C<new> is
-returned exactly as it was given. Writing repaints. Any value is
-accepted.
+Accessor for the C<show_value> parameter. Returns 1 or 0, also for a
+value passed to C<new>. Writing repaints. Any value is accepted.
 
 =head2 value_format
 

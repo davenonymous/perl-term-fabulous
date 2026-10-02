@@ -25,8 +25,6 @@ no warnings 'experimental::signatures';
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
-use Object::Pad 0.825;
-
 use IO::Async::Loop;
 use IO::Async::Timer::Periodic;
 use List::Util qw(max);
@@ -35,7 +33,6 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
-use Clay::UI::Role::Layout::HasFloating;
 use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
 
 use constant PI                   => 4 * atan2( 1, 1 );
@@ -44,9 +41,6 @@ use constant SECONDS_PER_ORBIT    => 20;
 use constant WORDS_IN_THE_TEXT    => 1500;
 use constant BOX_WIDTH            => 30;
 use constant BOX_HEIGHT           => 6;
-
-# A box that floats over its parent at an offset it can be given each frame.
-class My::FloatingBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Layout::HasFloating) :strict(params) { }
 
 # Random text with a few wide words (two columns each) mixed in.
 my @words = qw(
@@ -88,7 +82,7 @@ my @orbit = (
 );
 foreach my $box (@orbit) {
 	$box->{title}  = Term::Fabulous::Widget::Text->new( text_color => [ 255, 240, 160, 255 ] );
-	$box->{widget} = My::FloatingBox->new(
+	$box->{widget} = Term::Fabulous::Widget::Box->new(
 		background_color    => $box->{color},
 		glyphs_show_through => $box->{shows_through},
 		border_width        => 1,

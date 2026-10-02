@@ -3,7 +3,7 @@ package InputTest;
 # Helpers for the input widget tests: lay widgets out without a terminal,
 # send them keys and mouse events, and read back what they painted.
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -75,18 +75,17 @@ sub type_text ( $widget, $text ) {
 }
 
 # A mouse event at a cell of the widget's buffer, as the widget was laid
-# out last.
+# out last. Returns the event.
 sub click ( $widget, $x, $y, %options ) {
 	my ( $origin_x, $origin_y ) = $widget->content_origin;
-	$widget->fire_event(
-		Term::Fabulous::Event::Mouse->new(
-			key       => $options{key} // TB_KEY_MOUSE_LEFT,
-			x         => $origin_x + $x,
-			y         => $origin_y + $y,
-			modifiers => $options{modifiers} // 0,
-		)
+	my $event = Term::Fabulous::Event::Mouse->new(
+		key       => $options{key} // TB_KEY_MOUSE_LEFT,
+		x         => $origin_x + $x,
+		y         => $origin_y + $y,
+		modifiers => $options{modifiers} // 0,
 	);
-	return;
+	$widget->fire_event($event);
+	return $event;
 }
 
 # The glyphs of one buffer row; unset cells read as spaces, and the cells a

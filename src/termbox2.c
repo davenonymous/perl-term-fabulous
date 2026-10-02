@@ -72,12 +72,25 @@ static uint16_t tf_mouse_key(int button, int moving, int released) {
 	return moving ? TF_KEY_MOUSE_MOVE : TB_KEY_MOUSE_RELEASE;
 }
 
+/* The press key of the button an SGR release ("m") names. Button number
+ * 3 is the older "some button was released" form: 0, unknown. */
+static uint32_t tf_released_button(int button) {
+	int low = button & 3;
+
+	if (button & 64) return 0;
+	if (low == 0) return TB_KEY_MOUSE_LEFT;
+	if (low == 1) return TB_KEY_MOUSE_MIDDLE;
+	if (low == 2) return TB_KEY_MOUSE_RIGHT;
+	return 0;
+}
+
 /*
  * An SGR mouse report: ESC [ < button ; column ; row M, or m for a
  * release. Bits 2, 3 and 4 of the button number are Shift, Alt and
  * Ctrl, bit 5 is motion, bit 6 marks the wheel (0 up, 1 down, 2 left,
  * 3 right); a button number of 3 with the motion bit is the pointer
- * moving with no button held. Buttons 8 to 11 (bit 7) are left to
+ * moving with no button held. A release keeps the button it names in
+ * the event's ch (see tf_released_button). Buttons 8 to 11 (bit 7) are left to
  * termbox2. Other encodings (X10, urxvt) are left to it as well.
  */
 static int tf_extract_sgr_mouse(struct tb_event *event, size_t *consumed) {
@@ -110,6 +123,7 @@ static int tf_extract_sgr_mouse(struct tb_event *event, size_t *consumed) {
 
 	event->type = TB_EVENT_MOUSE;
 	event->key  = tf_mouse_key(numbers[0], numbers[0] & 32, trail == 'm');
+	event->ch   = trail == 'm' ? tf_released_button(numbers[0]) : 0;
 	event->mod  = 0;
 	if (numbers[0] & 4) event->mod |= TB_MOD_SHIFT;
 	if (numbers[0] & 8) event->mod |= TB_MOD_ALT;

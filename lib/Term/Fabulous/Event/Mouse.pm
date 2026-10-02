@@ -1,6 +1,6 @@
 package Term::Fabulous::Event::Mouse;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -12,20 +12,44 @@ use Object::Pad 0.825;
 use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::Mouse :isa(Clay::UI::Events::Event) :strict(params) {
-	field $key       :param :reader;
-	field $x         :param :reader;
-	field $y         :param :reader;
-	field $modifiers :param :reader = 0;
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_RELEASE);
+
+	my %IS_BUTTON = map { $_ => 1 } TB_KEY_MOUSE_LEFT, TB_KEY_MOUSE_MIDDLE, TB_KEY_MOUSE_RIGHT;
+
+	field $key             :param :reader;
+	field $x               :param :reader;
+	field $y               :param :reader;
+	field $modifiers       :param :reader = 0;
+	field $released_button :param :reader = undef;
+	field $wheel_used      :reader        = 0;
+
+	ADJUST {
+		_check_released_button( $key, $released_button ) if defined $released_button;
+	}
+
+	sub _check_released_button ( $key, $button ) {
+		die "Term::Fabulous::Event::Mouse: released_button needs the key TB_KEY_MOUSE_RELEASE, got key $key"
+			unless $key == TB_KEY_MOUSE_RELEASE;
+		die "Term::Fabulous::Event::Mouse: released_button must be TB_KEY_MOUSE_LEFT, TB_KEY_MOUSE_MIDDLE or TB_KEY_MOUSE_RIGHT, got '$button'"
+			unless $IS_BUTTON{$button};
+		return;
+	}
 
 	method event_name :common { 'Mouse' }
 
 	method of :common ($ev) {
 		return $class->new(
-			key => $ev->key,
-			x => $ev->x,
-			y => $ev->y,
-			modifiers => $ev->mod,
+			key             => $ev->key,
+			x               => $ev->x,
+			y               => $ev->y,
+			modifiers       => $ev->mod,
+			released_button => $ev->key == TB_KEY_MOUSE_RELEASE && $ev->ch ? $ev->ch : undef,
 		);
+	}
+
+	method use_wheel () {
+		$wheel_used = 1;
+		return $self;
 	}
 }
 
@@ -78,8 +102,9 @@ Terminals report the mouse only in these cases:
 =item * a button is pressed: C<key> is C<TB_KEY_MOUSE_LEFT>,
 C<TB_KEY_MOUSE_MIDDLE> or C<TB_KEY_MOUSE_RIGHT>;
 
-=item * a button is released: C<key> is C<TB_KEY_MOUSE_RELEASE>, which
-does not say which button was released;
+=item * a button is released: C<key> is C<TB_KEY_MOUSE_RELEASE>, and
+C<released_button> says which button it was when the terminal reports
+it (SGR mouse reports, which L<Term::Fabulous> asks for, do);
 
 =item * the pointer moves while a button is held (a drag): C<key> is the
 held button's key again and C<modifiers> has C<TB_MOD_MOTION> set;
@@ -145,6 +170,13 @@ terminal.
 Optional. A bit mask of C<TB_MOD_MOTION>, C<TB_MOD_SHIFT>, C<TB_MOD_ALT>
 and C<TB_MOD_CTRL>. Default: C<0>.
 
+=item C<released_button>
+
+Optional. With C<key> C<TB_KEY_MOUSE_RELEASE> only: the button that was
+released, C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE> or
+C<TB_KEY_MOUSE_RIGHT>. Default: C<undef>, the terminal did not say.
+Anything else dies.
+
 =back
 
 An event object can be fired only once. Build a new one for every
@@ -155,7 +187,9 @@ C<fire_event> call.
 	my $event = Term::Fabulous::Event::Mouse->of($termbox_event);
 
 Builds an event from a C<Term::Fabulous::Termbox::Event>: C<key>, C<x>, C<y> and
-C<modifiers> from its C<key>, C<x>, C<y> and C<mod>. Called by
+C<modifiers> from its C<key>, C<x>, C<y> and C<mod>, and for a release
+C<released_button> from its C<ch> (see
+L<Term::Fabulous::Termbox/tf_install_input_parser>). Called by
 L<Term::Fabulous>; class method.
 
 =head1 METHODS
@@ -179,7 +213,7 @@ constants from L<Term::Fabulous::Termbox>:
 	TB_KEY_MOUSE_LEFT         left button pressed (or dragged)
 	TB_KEY_MOUSE_MIDDLE       middle button pressed (or dragged)
 	TB_KEY_MOUSE_RIGHT        right button pressed (or dragged)
-	TB_KEY_MOUSE_RELEASE      a button was released (which one is unknown)
+	TB_KEY_MOUSE_RELEASE      a button was released (see released_button)
 	TB_KEY_MOUSE_WHEEL_UP     wheel turned up (away from the user) one notch
 	TB_KEY_MOUSE_WHEEL_DOWN   wheel turned down one notch
 	TF_KEY_MOUSE_WHEEL_LEFT   horizontal wheel turned left one notch
@@ -212,6 +246,38 @@ edge of the terminal.
 A bit mask. C<TB_MOD_MOTION> is set when the event reports a move with
 a button held (a drag); C<TB_MOD_SHIFT>, C<TB_MOD_ALT> and C<TB_MOD_CTRL>
 are set for the modifier keys held at the time.
+
+=head2 released_button
+
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_RIGHT);
+
+	if ( $event->key == TB_KEY_MOUSE_RELEASE && ( $event->released_button // 0 ) == TB_KEY_MOUSE_RIGHT ) {
+		close_context_menu();
+	}
+
+For a C<TB_KEY_MOUSE_RELEASE>: the key of the button that was released,
+C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE> or C<TB_KEY_MOUSE_RIGHT>;
+C<undef> when the terminal did not say. L<Term::Fabulous> takes a
+release that names no button for a release of the left button. For
+every other key: C<undef>.
+
+=head2 use_wheel
+
+	$event->use_wheel if $self->scroll_down_one_notch;
+
+For a widget that scrolls itself with the wheel: marks the wheel notch
+of this event as used. L<Term::Fabulous> scrolls the scroll containers
+around the pointer (L<Term::Fabulous::Widget::ScrollBox>) by every notch
+no widget used, so call it only when the notch moved something; a
+widget that is already at its end leaves the notch to its scroll box.
+Whether the event bubbles on is up to the return value of the listener,
+as for any event. Returns the event.
+
+=head2 wheel_used
+
+	my $scrolled_itself = $event->wheel_used;
+
+1 after L</use_wheel>, otherwise 0.
 
 =head1 SEE ALSO
 

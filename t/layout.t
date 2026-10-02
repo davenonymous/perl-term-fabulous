@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
@@ -186,6 +186,15 @@ KDL
 	like dies { build( sprintf $field, 'max_length 2' . "\n" . 'value "abc"' ) }, qr/more than max_length 2/, 'a value longer than max_length dies';
 	like dies { build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\toption \"a\" color=1\n}") }, qr/takes one label and an optional value/,
 		'an option with an unknown property dies';
+
+	$input{color}->disabled(0);
+	ok $input{color}->can_focus, 'an input disabled in the layout takes the focus once enabled';
+	my $group = build("use Term::Fabulous::Widget::RadioGroup as RadioGroup\nRadioGroup {\n\tdisabled #true\n}");
+	$group->disabled(0);
+	ok $group->can_focus, 'so does a radio group';
+	my $kept = build("use Term::Fabulous::Widget::Slider as Slider\nSlider {\n\tcan_focus #false\n\tdisabled #true\n}");
+	$kept->disabled(0);
+	ok !$kept->can_focus, 'can_focus #false in the layout is kept through it';
 };
 
 subtest 'text' => sub {

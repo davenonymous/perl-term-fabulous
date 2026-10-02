@@ -1,6 +1,6 @@
 package Term::Fabulous::Enum::BorderStyle;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -14,22 +14,22 @@ enum Term::Fabulous::Enum::BorderStyle {
 	use Scalar::Util qw(blessed);
 
 	state $heavy_joints = [
-		"\x{2501}",    # h_line  ━
-		"\x{2503}",    # v_line  ┃
-		"\x{254B}",    # cross   ╋
-		"\x{2533}",    # t_down  ┳
-		"\x{253B}",    # t_up    ┻
-		"\x{2523}",    # t_right ┣
-		"\x{252B}",    # t_left  ┫
+		"\x{2501}",    # h_line
+		"\x{2503}",    # v_line
+		"\x{254B}",    # cross
+		"\x{2533}",    # t_down
+		"\x{253B}",    # t_up
+		"\x{2523}",    # t_right
+		"\x{252B}",    # t_left
 	];
 	state $solid_joints = [
-		"\x{2500}",    # h_line  ─
-		"\x{2502}",    # v_line  │
-		"\x{253C}",    # cross   ┼
-		"\x{252C}",    # t_down  ┬
-		"\x{2534}",    # t_up    ┴
-		"\x{251C}",    # t_right ├
-		"\x{2524}",    # t_left  ┤
+		"\x{2500}",    # h_line
+		"\x{2502}",    # v_line
+		"\x{253C}",    # cross
+		"\x{252C}",    # t_down
+		"\x{2534}",    # t_up
+		"\x{251C}",    # t_right
+		"\x{2524}",    # t_left
 	];
 
 	item Ascii (
@@ -58,21 +58,21 @@ enum Term::Fabulous::Enum::BorderStyle {
 		glyphs => [ "\x{2554}", "\x{2550}", "\x{2557}", "\x{2551}", "\x{2551}", "\x{255A}", "\x{2550}", "\x{255D}" ],
 		locations => [ 0, 0, 0, 0, 0, 0, 0, 0 ],
 		joints => [
-			"\x{2550}",    # h_line  ═
-			"\x{2551}",    # v_line  ║
-			"\x{256C}",    # cross   ╬
-			"\x{2566}",    # t_down  ╦
-			"\x{2569}",    # t_up    ╩
-			"\x{2560}",    # t_right ╠
-			"\x{2563}",    # t_left  ╣
+			"\x{2550}",    # h_line
+			"\x{2551}",    # v_line
+			"\x{256C}",    # cross
+			"\x{2566}",    # t_down
+			"\x{2569}",    # t_up
+			"\x{2560}",    # t_right
+			"\x{2563}",    # t_left
 		],
 		mixed_joints => sub {
 			Term::Fabulous::Enum::BorderStyle->Solid, [
-				"\x{256A}",    # cross   ╪  horizontal double, vertical single
-				"\x{2564}",    # t_down  ╤  down single, horizontal double
-				"\x{2567}",    # t_up    ╧  up single, horizontal double
-				"\x{255E}",    # t_right ╞  vertical single, right double
-				"\x{2561}",    # t_left  ╡  vertical single, left double
+				"\x{256A}",    # cross   horizontal double, vertical single
+				"\x{2564}",    # t_down  down single, horizontal double
+				"\x{2567}",    # t_up    up single, horizontal double
+				"\x{255E}",    # t_right vertical single, right double
+				"\x{2561}",    # t_left  vertical single, left double
 			],
 		},
 	);
@@ -82,11 +82,11 @@ enum Term::Fabulous::Enum::BorderStyle {
 		joints => $heavy_joints,
 		mixed_joints => sub {
 			Term::Fabulous::Enum::BorderStyle->Solid, [
-				"\x{253F}",    # cross   ┿  horizontal heavy, vertical light
-				"\x{252F}",    # t_down  ┯  down light, horizontal heavy
-				"\x{2537}",    # t_up    ┷  up light, horizontal heavy
-				"\x{251D}",    # t_right ┝  vertical light, right heavy
-				"\x{2525}",    # t_left  ┥  vertical light, left heavy
+				"\x{253F}",    # cross   horizontal heavy, vertical light
+				"\x{252F}",    # t_down  down light, horizontal heavy
+				"\x{2537}",    # t_up    up light, horizontal heavy
+				"\x{251D}",    # t_right vertical light, right heavy
+				"\x{2525}",    # t_left  vertical light, left heavy
 			],
 		},
 	);
@@ -132,18 +132,18 @@ enum Term::Fabulous::Enum::BorderStyle {
 		joints => $solid_joints,
 		mixed_joints => sub {
 			Term::Fabulous::Enum::BorderStyle->Heavy, [
-				"\x{2542}",    # cross   ╂  vertical heavy, horizontal light
-				"\x{2530}",    # t_down  ┰  down heavy, horizontal light
-				"\x{2538}",    # t_up    ┸  up heavy, horizontal light
-				"\x{2520}",    # t_right ┠  vertical heavy, right light
-				"\x{2528}",    # t_left  ┨  vertical heavy, left light
+				"\x{2542}",    # cross   vertical heavy, horizontal light
+				"\x{2530}",    # t_down  down heavy, horizontal light
+				"\x{2538}",    # t_up    up heavy, horizontal light
+				"\x{2520}",    # t_right vertical heavy, right light
+				"\x{2528}",    # t_left  vertical heavy, left light
 			],
 			Term::Fabulous::Enum::BorderStyle->Double, [
-				"\x{256B}",    # cross   ╫  vertical double, horizontal single
-				"\x{2565}",    # t_down  ╥  down double, horizontal single
-				"\x{2568}",    # t_up    ╨  up double, horizontal single
-				"\x{255F}",    # t_right ╟  vertical double, right single
-				"\x{2562}",    # t_left  ╢  vertical double, left single
+				"\x{256B}",    # cross   vertical double, horizontal single
+				"\x{2565}",    # t_down  down double, horizontal single
+				"\x{2568}",    # t_up    up double, horizontal single
+				"\x{255F}",    # t_right vertical double, right single
+				"\x{2562}",    # t_left  vertical double, left single
 			],
 		}
 	);
@@ -190,8 +190,8 @@ enum Term::Fabulous::Enum::BorderStyle {
 	# `locations` carries one of {0,1,2,3} per Textual's location matrix:
 	#   0 = widget-side bg   (inner)
 	#   1 = parent-side bg   (outer)
-	#   2 = reverse(parent_bg, widget_fg)  — Textual's styles[2]
-	#   3 = reverse(widget_bg, parent_fg)  — Textual's styles[3]
+	#   2 = reverse(parent_bg, widget_fg)  - Textual's styles[2]
+	#   3 = reverse(widget_bg, parent_fg)  - Textual's styles[3]
 	# 8-element arrayref of LOCATIONS indices in the same order as `glyphs`.
 	field $locations :param :reader;
 
@@ -205,13 +205,13 @@ enum Term::Fabulous::Enum::BorderStyle {
 
 	# Mixed-style joint table for grid lines whose horizontal axis
 	# style differs from the vertical axis style (or whose perimeter
-	# style differs from the meeting interior axis style — same
+	# style differs from the meeting interior axis style - same
 	# resolution rule).
 	#
 	#     index:  0      1       2     3        4
 	#     glyph:  cross  t_down  t_up  t_right  t_left
 	#
-	# (h_line / v_line are not in this table — those are
+	# (h_line / v_line are not in this table - those are
 	# axis-uniform and live in `$joints`.)
 	#
 	# 5-element arrayref `[cross, t_down, t_up, t_right, t_left]` for h_style/v_style intersection.

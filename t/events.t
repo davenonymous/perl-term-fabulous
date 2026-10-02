@@ -1,4 +1,4 @@
-use v5.22;
+use v5.24;
 use warnings;
 
 use Test2::V0;
@@ -6,8 +6,9 @@ use Test2::V0;
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
+use Time::HiRes ();
 use Term::Fabulous::Termbox qw(
-	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
+	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
 	TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_RIGHT
 	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION
 );
@@ -15,9 +16,12 @@ use Clay::UI::Revision qw(current_revision);
 use Term::Fabulous;
 use Term::Fabulous::Termbox::Event;
 use Term::Fabulous::Event::KeyPress;
+use Term::Fabulous::Event::Mouse;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Checkbox;
+use Term::Fabulous::Widget::TextArea;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
 
@@ -98,9 +102,29 @@ subtest 'MouseMove follows the pointer without a button' => sub {
 	ref_is $targets{MouseMove}[0], $button, 'MouseMove goes to the widget under the pointer';
 	is $targets{Mouse}, undef, 'and is no Mouse event';
 	is $ui->pointer_state, { x => 1, y => 1, down => 0 }, 'the pointer position follows the move';
-	ok $ui->_frame_is_due, 'a frame shows the new position to Clay';
+	ok $ui->_frame_is_due( Time::HiRes::time() + 1 ), 'a frame shows the new position to Clay';
 	$ui->_draw_pending;
 	ok $button->is_hovered, 'so the widget is hovered';
+};
+
+subtest 'pointer motion alone gets at most every other slice of time' => sub {
+	my ( $seconds, $ended ) = ( 0.05, 1000.05 );
+	{
+		my $calls = 0;
+		no warnings 'redefine';
+		local *Time::HiRes::time = sub { $calls++ ? $ended : $ended - $seconds };
+		$ui->_draw_pending;    # a frame that took 0.05 s
+	}
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TF_KEY_MOUSE_MOVE, x => 5, y => 3, mod => TB_MOD_MOTION );
+	ok !$ui->_frame_is_due( $ended + $seconds / 2 ), 'a move waits while less time passed than the last frame took';
+	ok $ui->_frame_is_due( $ended + $seconds ),       'and is drawn after that';
+
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 5, y => 3 );
+	ok $ui->_frame_is_due( $ended + $seconds / 2 ), 'a press does not wait';
+	$ui->_draw_pending;
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 5, y => 3 );
+	ok $ui->_frame_is_due( $ended ), 'nor does a release';
+	$ui->_draw_pending;
 };
 
 subtest 'frames are drawn only when something changed' => sub {
@@ -161,6 +185,43 @@ subtest 'a left press focuses the widget under the pointer' => sub {
 	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 1 );
 	$focus_ui->draw;
 	is [ map { refaddr $_ } @pressed ], [ refaddr $buttons[1] ], 'Clay hit-tests the cell, not the edge it shares with the widget above';
+};
+
+subtest 'a click where a removed widget was goes to what is left' => sub {
+	my $removal_root = Term::Fabulous::Widget::Box->new( background_color => [ 1, 1, 1, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $doomed       = Term::Fabulous::Widget::Button->new( background_color => [ 2, 2, 2, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(2) } } );
+	$removal_root->add_child($doomed);
+	my $removal_ui = Term::Fabulous->new( width => 20, height => 5, root => $removal_root );
+	my @mouse_targets;
+	$removal_root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
+	$removal_ui->draw;
+
+	$removal_root->clear_children;    # after the frame that still shows the button
+	ok lives { dispatch( $removal_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 ) }, 'the click does not die';
+	ref_is $mouse_targets[0], $removal_root, 'the Mouse event goes to the widget below it';
+	is $removal_ui->interaction->get_focused_widget, undef, 'and nothing is focused';
+};
+
+subtest 'only a release of the left button ends a press' => sub {
+	my $press_ui = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, ch => TB_KEY_MOUSE_RIGHT, x => 2, y => 1 );
+	is $press_ui->pointer_state->{down}, 1, 'a right release keeps the left button down';
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, ch => TB_KEY_MOUSE_LEFT, x => 2, y => 1 );
+	is $press_ui->pointer_state->{down}, 0, 'a left release ends it';
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 2, y => 1 );
+	is $press_ui->pointer_state->{down}, 0, 'so does a release that names no button';
+
+	my @released;
+	$press_ui->root->on( Mouse => sub { push @released, $_[0]->released_button; return } );
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, ch => TB_KEY_MOUSE_MIDDLE, x => 2, y => 1 );
+	dispatch( $press_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 2, y => 1 );
+	is \@released, [ TB_KEY_MOUSE_MIDDLE, undef ], 'the Mouse event names the released button, and only for a release';
+	like dies { Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_LEFT, x => 0, y => 0, released_button => TB_KEY_MOUSE_LEFT ) },
+		qr/released_button needs the key TB_KEY_MOUSE_RELEASE/, 'released_button belongs to a release';
+	like dies { Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_RELEASE, x => 0, y => 0, released_button => 42 ) },
+		qr/released_button must be TB_KEY_MOUSE_LEFT/, 'and names a button';
 };
 
 subtest 'key names' => sub {
@@ -226,10 +287,19 @@ subtest 'scroll boxes' => sub {
 	$scroll_ui->_draw_pending;
 	is $row_top->( $rows[3] ), -1, 'a frame applies the wheel notches reported since the last one';
 
-	$log->on( Mouse => sub { Clay::UI::Enum::Result->HANDLED } );
+	my $stop_bubbling = 1;
+	$log->on( Mouse => sub { return $stop_bubbling ? () : Clay::UI::Enum::Result->CONTINUE } );
+	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_UP, x => 1, y => 3 );
+	$scroll_ui->_draw_pending;
+	is $row_top->( $rows[3] ), 2, 'a listener that stops the bubbling does not stop the scrolling';
+	$stop_bubbling = 0;
 	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 3 );
 	$scroll_ui->_draw_pending;
-	is $row_top->( $rows[3] ), -1, 'a notch a widget handled scrolls no scroll box';
+
+	$log->on( Mouse => sub { $_[0]->use_wheel; return Clay::UI::Enum::Result->CONTINUE } );
+	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 3 );
+	$scroll_ui->_draw_pending;
+	is $row_top->( $rows[3] ), -1, 'a notch a widget used scrolls no scroll box';
 
 	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
 	ref_is $mouse_targets[-1], $header, 'content scrolled out of the box does not take the pointer';
@@ -253,6 +323,45 @@ subtest 'scroll boxes' => sub {
 
 	like dies { $scroll_ui->draw( scroll_cells => 3 ) }, qr/scroll_cells must be \[columns, rows\]/, 'scroll_cells must be a pair';
 	like dies { $scroll_ui->draw( scroll => [ 0, 1 ] ) },  qr/unknown argument\(s\): scroll/,       'unknown draw arguments die';
+};
+
+subtest 'a text area in a scroll box passes on the notches it cannot use' => sub {
+	my $box  = Term::Fabulous::Widget::ScrollBox->new( id => 'form', layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(12), height => sizing_fixed(4) } } );
+	my $area = Term::Fabulous::Widget::TextArea->new( value => join( "\n", 1 .. 6 ), layout => { sizing => { width => sizing_fixed(12), height => sizing_fixed(3) } } );
+	my $rest = Term::Fabulous::Widget::Box->new( background_color => [ 5, 5, 5, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_fixed(6) } } );
+	$box->add_child( $area, $rest );
+	my $form_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$form_root->add_child($box);
+	my $form_ui = Term::Fabulous->new( width => 20, height => 5, root => $form_root );
+	my $rest_top = sub {
+		my ($command) = grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $form_ui->widget_for( $_->{userData} ) // 0 ) == refaddr($rest) } $form_ui->get_last_commands;
+		return $command->{boundingBox}{y};
+	};
+	$form_ui->draw;
+	is [ $area->top_row, $rest_top->() ], [ 3, 3 ], 'the text area shows its last rows at the top of the box';
+
+	dispatch( $form_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_UP, x => 1, y => 1 );
+	$form_ui->_draw_pending;
+	is [ $area->top_row, $rest_top->() ], [ 0, 3 ], 'a notch the text area can use scrolls the text area only';
+
+	dispatch( $form_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 1 );
+	$form_ui->_draw_pending;
+	is [ $area->top_row, $rest_top->() ], [ 3, 3 ], 'down to its end';
+	dispatch( $form_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_WHEEL_DOWN, x => 1, y => 1 );
+	$form_ui->_draw_pending;
+	is [ $area->top_row, $rest_top->() ], [ 3, 0 ], 'a notch past its end scrolls the box';
+};
+
+subtest 'a click within one frame toggles a check box' => sub {
+	my $box     = Term::Fabulous::Widget::Checkbox->new( label => 'Fast' );
+	my $tap_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$tap_root->add_child($box);
+	my $tap_ui = Term::Fabulous->new( width => 20, height => 5, root => $tap_root );
+	$tap_ui->draw;
+	dispatch( $tap_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT,    x => 1, y => 0 );
+	dispatch( $tap_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 1, y => 0 );
+	$tap_ui->_draw_pending;
+	is $box->checked, 1, 'press and release reported before the same frame';
 };
 
 subtest 'root must be an event emitter' => sub {

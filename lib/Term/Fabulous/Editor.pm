@@ -1,6 +1,6 @@
 package Term::Fabulous::Editor;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -37,8 +37,16 @@ class Term::Fabulous::Editor :strict(params) {
 	# Counts text changes, so views can cache what they derive from the text.
 	field $revision :reader = 0;
 
+	# Undo steps, oldest first: { changes, cursor, anchor, cursor_after }.
+	# A change { row, offset, old, new } says that the text $old at
+	# (row, offset) was replaced by $new; a step holds the changes of one
+	# edit, or of a run of typing, in the order they were made, with the
+	# cursor and anchor before the first and the cursor after the last.
 	field @undo_stack;
 	field @redo_stack;
+
+	# The changes the running edit has made so far.
+	field @changes;
 
 	# The kind of the last undo step when typing may extend it: 'word' or
 	# 'space'; undef when the next edit starts a new step.
@@ -311,33 +319,27 @@ class Term::Fabulous::Editor :strict(params) {
 	# changes it can be undone.
 	# ---------------------------------------------------------------------
 
-	method _snapshot () {
-		return { lines => [@lines], cursor => [@cursor], anchor => [@anchor] };
-	}
-
-	method _restore ($snapshot) {
-		@lines  = @{ $snapshot->{lines} };
-		@cursor = @{ $snapshot->{cursor} };
-		@anchor = @{ $snapshot->{anchor} };
-		$typing_run = undef;
-		$revision++;
-		return;
-	}
-
 	# Runs an edit and records an undo step when it changed the text. Typing
 	# extends the last step while the typed text stays words or stays
 	# spaces, so undo takes back a word at a time.
 	method _edit ( $run, $code ) {
-		my $before = $self->_snapshot;
-		my $text   = $self->text;
+		my @before = ( [@cursor], [@anchor] );
+		@changes = ();
 		$code->();
-		if ( $self->text eq $text ) {
+		my @made = grep { $_->{old} ne $_->{new} } splice @changes;
+		if ( !@made ) {
 			$typing_run = undef;
 			return 0;
 		}
 
 		my $extends_step = defined $run && defined $typing_run && $run eq $typing_run && @undo_stack;
-		push @undo_stack, $before unless $extends_step;
+		if ($extends_step) {
+			push @{ $undo_stack[-1]{changes} }, @made;
+			$undo_stack[-1]{cursor_after} = [@cursor];
+		}
+		else {
+			push @undo_stack, { changes => \@made, cursor => $before[0], anchor => $before[1], cursor_after => [@cursor] };
+		}
 		shift @undo_stack while @undo_stack > UNDO_LIMIT;
 		@redo_stack = ();
 		$typing_run = $run;
@@ -345,9 +347,18 @@ class Term::Fabulous::Editor :strict(params) {
 		return 1;
 	}
 
-	# Replaces the text between two ordered positions; the cursor ends up
-	# after the new text, without a selection.
+	# Replaces the text between two ordered positions, recording the change
+	# for undo; the cursor ends up after the new text, without a selection.
 	method _replace ( $row_0, $offset_0, $row_1, $offset_1, $text ) {
+		push @changes, { row => $row_0, offset => $offset_0, old => $self->_text_between( $row_0, $offset_0, $row_1, $offset_1 ), new => $text };
+		my @end = $self->_splice_text( $row_0, $offset_0, $row_1, $offset_1, $text );
+		@cursor = ( $end[0], $self->_snap( @end, 1 ) );
+		@anchor = ();
+		return;
+	}
+
+	# Puts $text between two ordered positions; returns the position after it.
+	method _splice_text ( $row_0, $offset_0, $row_1, $offset_1, $text ) {
 		my @new_lines = split /\n/, $text, -1;
 		@new_lines = ('') unless @new_lines;
 		my $after = substr( $lines[$row_1], $offset_1 );
@@ -356,9 +367,14 @@ class Term::Fabulous::Editor :strict(params) {
 		$new_lines[-1] .= $after;
 
 		splice @lines, $row_0, $row_1 - $row_0 + 1, @new_lines;
-		@cursor = ( $end[0], $self->_snap( @end, 1 ) );
-		@anchor = ();
-		return;
+		return @end;
+	}
+
+	# The position after $text written at ($row, $offset).
+	sub _end_of ( $row, $offset, $text ) {
+		my @segments = split /\n/, $text, -1;
+		return ( $row, $offset + length $text ) if @segments <= 1;
+		return ( $row + $#segments, length $segments[-1] );
 	}
 
 	method _delete_selection () {
@@ -488,18 +504,37 @@ class Term::Fabulous::Editor :strict(params) {
 		return @redo_stack ? 1 : 0;
 	}
 
+	# Takes back the changes of the last step, newest first, and puts the
+	# cursor where it was before them.
 	method undo () {
-		return 0 unless @undo_stack;
-		push @redo_stack, $self->_snapshot;
-		$self->_restore( pop @undo_stack );
+		my $step = pop @undo_stack // return 0;
+		foreach my $change ( reverse @{ $step->{changes} } ) {
+			my @at = @$change{qw(row offset)};
+			$self->_splice_text( @at, _end_of( @at, $change->{new} ), $change->{old} );
+		}
+		$self->_after_history( $step->{cursor}, $step->{anchor} );
+		push @redo_stack, $step;
 		return 1;
 	}
 
+	# Makes the changes of the last undone step again, oldest first.
 	method redo () {
-		return 0 unless @redo_stack;
-		push @undo_stack, $self->_snapshot;
-		$self->_restore( pop @redo_stack );
+		my $step = pop @redo_stack // return 0;
+		foreach my $change ( @{ $step->{changes} } ) {
+			my @at = @$change{qw(row offset)};
+			$self->_splice_text( @at, _end_of( @at, $change->{old} ), $change->{new} );
+		}
+		$self->_after_history( $step->{cursor_after}, [] );
+		push @undo_stack, $step;
 		return 1;
+	}
+
+	method _after_history ( $cursor, $anchor ) {
+		@cursor     = @$cursor;
+		@anchor     = @$anchor;
+		$typing_run = undef;
+		$revision++;
+		return;
 	}
 }
 
@@ -935,14 +970,17 @@ dies.
 
 Takes back the last edit, restoring the text, the cursor and the
 selection as they were before it. Returns 1, or 0 when there is nothing
-to undo. Up to 100 steps are kept; older ones are forgotten.
+to undo. Up to 100 steps are kept; older ones are forgotten. A step
+keeps only the text it replaced and the text it wrote, so the history
+stays small however long the text is.
 
 =head2 redo
 
 	$editor->redo;
 
-Redoes the last undone edit. Returns 1, or 0 when there is nothing to
-redo. Any new edit clears the redo steps.
+Redoes the last undone edit and puts the cursor after it, without a
+selection. Returns 1, or 0 when there is nothing to redo. Any new edit
+clears the redo steps.
 
 =head2 can_undo
 

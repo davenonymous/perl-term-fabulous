@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Button;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -77,7 +77,20 @@ class Term::Fabulous::Widget::Button
 	}
 
 	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(can_focus focus_border_color pressed_background_color) );
+		return ( $self->SUPER::layout_properties, 'can_focus' );
+	}
+
+	method structured_layout_properties :override () {
+		return ( $self->SUPER::structured_layout_properties, qw(focus_border_color pressed_background_color) );
+	}
+
+	# The looks are not plain colors: #null switches a look off, and the
+	# pressed look may be 'reverse'. The accessors check the value.
+	method parse_property :override ($kid) {
+		my $name = $kid->name;
+		return $self->SUPER::parse_property($kid) unless $name eq 'focus_border_color' || $name eq 'pressed_background_color';
+		$self->$name( $self->kdl_argument($kid)->as_perl );
+		return;
 	}
 
 	method boolean_layout_properties :override () {
@@ -379,7 +392,8 @@ C<OnRelease> and C<Activate>.
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<can_focus> (C<#true> or C<#false>), C<focus_border_color> (a color
-string) and C<pressed_background_color> (a color string or C<reverse>):
+string, or C<#null> for no focus look) and C<pressed_background_color>
+(a color string, C<"reverse">, or C<#null> for no pressed look):
 
 	use Term::Fabulous::Widget::Button as Button
 	use Term::Fabulous::Widget::Text as Text
@@ -395,27 +409,6 @@ string) and C<pressed_background_color> (a color string or C<reverse>):
 
 Listeners cannot be given in KDL; attach them in Perl after building
 the layout.
-
-=head1 CAVEATS
-
-Term::Fabulous looks at the mouse button once per frame. A press and a
-release that arrive between two frames still get a frame each, so a
-click is never too fast to be seen. A click sent by a script with the
-release in the same terminal report as the press is the exception; if
-no such click may be missed, listen to C<Mouse> events and act on
-C<TB_KEY_MOUSE_RELEASE>:
-
-	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE);
-
-	$save->on( Mouse => sub ($event) {
-		return Clay::UI::Enum::Result->CONTINUE unless $event->key == TB_KEY_MOUSE_RELEASE;
-		save_document();
-		return;
-	} );
-
-A release is reported for the cell under the pointer, so this also
-fires when the press started elsewhere, and only on cells the Button
-paints.
 
 =head1 SEE ALSO
 

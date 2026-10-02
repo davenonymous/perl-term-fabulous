@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -31,6 +31,18 @@ class Term::Fabulous::Widget
 
 	ADJUST {
 		$glyphs_show_through = _boolean( glyphs_show_through => $glyphs_show_through );
+		$classes             = _class_names($classes);
+	}
+
+	# A copy of an array of class names: defined strings, no references.
+	sub _class_names ($names) {
+		die "Term::Fabulous::Widget: classes must be an array reference of names, got " . ( ref $names ? ref($names) . ' reference' : defined $names ? "'$names'" : 'undef' )
+			unless ref $names eq 'ARRAY';
+		foreach my $name (@$names) {
+			die "Term::Fabulous::Widget: every class name must be a string, got " . ( defined $name ? ref($name) . ' reference' : 'undef' )
+				unless defined $name && !ref $name;
+		}
+		return [@$names];
 	}
 
 	sub _boolean ( $name, $value ) {
@@ -393,7 +405,8 @@ L<Clay::UI::Role::Layout::HasSizingGroup>.
 
 An array reference of strings. Default: C<[]>. Free-form names for
 your own use, returned by L</get_classes>. Term::Fabulous itself does
-not read them.
+not read them. The array is copied; anything but an array of defined,
+non-reference names dies.
 
 =back
 

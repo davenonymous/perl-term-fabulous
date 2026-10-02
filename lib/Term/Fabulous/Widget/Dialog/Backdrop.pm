@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Dialog::Backdrop;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_CENTER_CENTER
 		CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER sizing_grow
 	);
-	use List::Util qw(first);
+	use List::Util qw(any first);
 	use Scalar::Util qw(refaddr weaken);
 
 	field $dialog  :param :weak :reader;
@@ -47,14 +47,43 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		$self->glyphs_show_through(1);
 
 		weaken( my $weak_self = $self );
+		$self->on( KeyPress => sub ($event) { return $weak_self->_handle_key($event) } );
 		$self->on(
-			KeyPress => sub ($event) {
-				my $owner = $weak_self->dialog;
-				return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'Escape' && defined $owner && $owner->close_on_escape;
-				$owner->close;
-				return;
+			OnBlur => sub ($event) {
+				$weak_self->_keep_focus if defined $weak_self;
+				return Clay::UI::Enum::Result->CONTINUE;
 			}
 		);
+	}
+
+	# Every key stops here while the dialog is open: the widgets and key
+	# bindings behind it do not see it. Escape closes the dialog.
+	method _handle_key ($event) {
+		my $owner = $dialog;
+		return Clay::UI::Enum::Result->CONTINUE unless defined $owner && $owner->is_open;
+		$owner->close if ( $event->key_name // '' ) eq 'Escape' && $owner->close_on_escape;
+		return Clay::UI::Enum::Result->HANDLED;
+	}
+
+	# The focus does not leave an open dialog for nothing: when the focused
+	# widget inside it is disabled or removed, the backdrop takes it, so
+	# keys and Tab stay inside the dialog.
+	method _keep_focus () {
+		return unless defined $dialog && $dialog->is_open;
+		my $ui = $self->ui // return;
+		return if defined $ui->interaction->get_focused_widget || $self->_is_leaving_tree;
+		$ui->interaction->set_focused_widget($self);
+		return;
+	}
+
+	# Clay::UI fires the OnBlur of a removal while the parent slots of the
+	# leaving widgets are still set, after their parent dropped them from
+	# its children.
+	method _is_leaving_tree () {
+		for ( my $node = $self; defined( my $parent = $node->parent ); $node = $parent ) {
+			return 1 unless any { refaddr($_) == refaddr($node) } $parent->children->@*;
+		}
+		return 0;
 	}
 
 	# The focusable widgets inside the dialog, in tree order; the backdrop
@@ -80,7 +109,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		my @order   = $self->focus_order;
 		my $focused = $self->ui->interaction->get_focused_widget;
 		my $index   = defined $focused ? first { refaddr( $order[$_] ) == refaddr($focused) } 0 .. $#order : undef;
-		return $order[0] unless defined $index;
+		return $step > 0 ? $order[0] : $order[-1] unless defined $index;
 		return $order[ ( $index + $step ) % @order ];
 	}
 }
@@ -129,8 +158,18 @@ Backdrop alone when there are none;
 
 =item *
 
-closes the dialog on C<Escape>, when the dialog's C<close_on_escape> is
-set.
+stops every key that the widgets inside the dialog let bubble, so the
+widgets and key bindings behind the dialog see none; it closes the
+dialog on C<Escape>, when the dialog's C<close_on_escape> is set;
+
+=item *
+
+takes the focus itself when the focused widget inside the dialog loses
+it without another widget getting it (it is disabled or removed, or
+the program focuses nothing), so keys and Tab stay inside the dialog.
+It learns about that from the C<OnBlur> event bubbling up from the
+widget, so an C<OnBlur> listener inside the dialog must let it bubble
+(return C<Clay::UI::Enum::Result-E<gt>CONTINUE>).
 
 =back
 
@@ -151,6 +190,8 @@ itself when there are none.
 
 The L<Clay::UI::Role::Interaction::HasFocusOrder> methods: the widget
 after or before the focused one in L</focus_order>, wrapping around.
+From the Backdrop itself, Tab goes to the first widget and Shift+Tab to
+the last.
 
 =head1 SEE ALSO
 

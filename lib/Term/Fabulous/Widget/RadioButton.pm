@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::RadioButton;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -273,10 +273,6 @@ A click (left button pressed and released over the button) selects the
 button, as L<Term::Fabulous::Widget::RadioGroup/choose> does, and the
 press focuses the group. Nothing happens while the button or its group
 is disabled.
-
-A click whose press and release both arrive within one frame (1/30
-second), such as a quick touchpad tap, is not seen as a click; see
-L<Term::Fabulous::Manual/Clicks, hover and press>.
 
 =head1 EVENTS
 

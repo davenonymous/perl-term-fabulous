@@ -1,20 +1,18 @@
 package Term::Fabulous::Widget::RadioGroup;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Clay::UI::Role::Interaction::Focusable;
-use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::RadioGroup::Element;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::RadioGroup
-	:isa(Term::Fabulous::Widget::Box)
-	:does(Clay::UI::Role::Interaction::Focusable)
+	:isa(Term::Fabulous::Widget::RadioGroup::Element)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -31,15 +29,16 @@ class Term::Fabulous::Widget::RadioGroup
 	field $value    :param = undef;
 	field $disabled :param = 0;
 
-	# The can_focus the group goes back to when it is enabled again.
-	field $can_focus_when_enabled;
+	# The can_focus last asked for (new, KDL or the accessor), whether or
+	# not the group is disabled; undef until something asks, which leaves
+	# the constructor's can_focus in force.
+	field $wants_focus;
 
 	ADJUST {
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } )
 			unless exists $layout->{layout_direction} || exists $layout->{layoutDirection};
-		$disabled               = $disabled ? 1 : 0;
-		$can_focus_when_enabled = $self->can_focus ? 1 : 0;
+		$disabled = $disabled ? 1 : 0;
 		$self->_sync_focusability;
 
 		weaken( my $weak_self = $self );
@@ -66,17 +65,28 @@ class Term::Fabulous::Widget::RadioGroup
 		return $disabled unless @new;
 		my $disable = $new[0] ? 1 : 0;
 		return $disabled if $disable == $disabled;
-		$can_focus_when_enabled = $self->can_focus ? 1 : 0 if $disable;
-		$disabled               = $disable;
+		$disabled = $disable;
 		$self->_sync_focusability;
 		$self->repaint_buttons;
 		return $disabled;
 	}
 
+	# Reads whether the group can take the focus now; a write records the
+	# wish, which counts while the group is enabled.
+	method can_focus :override (@new) {
+		return $self->SUPER::can_focus unless @new;
+		die ref($self) . ": can_focus takes one value, got " . scalar(@new) . "\n" unless @new == 1;
+		die ref($self) . ": can_focus must be a plain boolean value, got a " . ref( $new[0] ) . " reference\n" if ref $new[0];
+		$wants_focus = $new[0] ? 1 : 0;
+		$self->_sync_focusability;
+		return $self->SUPER::can_focus;
+	}
+
 	# A disabled group cannot take the focus and gives it up; an enabled
-	# one gets back the can_focus it had before it was disabled.
+	# one can when can_focus asked for it.
 	method _sync_focusability () {
-		$self->can_focus( $disabled ? 0 : $can_focus_when_enabled );
+		$wants_focus //= $self->SUPER::can_focus ? 1 : 0;
+		$self->SUPER::can_focus( $wants_focus && !$disabled ? 1 : 0 );
 		my $ui = $self->ui;
 		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
 		return;
@@ -248,10 +258,9 @@ C<disabled_color>.
 
 =item C<can_focus>
 
-A boolean, stored as 1 or 0. Default: 1. Whether the group can take the
-keyboard focus. A disabled group has C<can_focus> 0 whatever was passed;
-the value given here is what it gets back when it is enabled (see
-L</disabled>).
+A boolean. Default: 1. Whether the group may take the keyboard focus.
+It counts while the group is enabled: a disabled group cannot take the
+focus, whatever this says (see L</can_focus>).
 
 =back
 
@@ -278,11 +287,22 @@ fires no C<Change> event. Returns the new value.
 
 Accessor. Returns 1 or 0; writing returns the new value. Writing a true
 value disables the group: its buttons are painted disabled, keys and
-clicks are ignored, C<can_focus> becomes 0 and the group gives up the
-focus if it had it. Writing a false value enables it again and gives
-C<can_focus> back the value it had when the group was disabled (or the
-C<can_focus> passed to C<new>, when it was constructed disabled).
-Writing the value the group already has changes nothing.
+clicks are ignored, C<can_focus> reads 0 and the group gives up the
+focus if it had it. Writing a false value enables it again: it can take
+the focus when C<can_focus> was last set to a true value, through
+C<new>, a layout file or the accessor, also while the group was
+disabled. Writing the value the group already has changes nothing.
+
+=head2 can_focus
+
+	$group->can_focus(0);
+	if ( $group->can_focus ) { ... }
+
+Whether the group can take the focus now: 1 when the last value
+written (through C<new>, a layout file or this accessor) was true and
+the group is enabled, 0 otherwise. Writing records whether the group
+may take the focus and returns what reading returns now. The order of
+C<can_focus> and C<disabled> does not matter.
 
 =head2 is_enabled
 
@@ -373,10 +393,6 @@ button at all, every key bubbles.
 A click on a button (left button pressed and released over it) selects
 it, and the press focuses the group. Clicks are ignored while the group
 or the button is disabled.
-
-A click whose press and release both arrive within one frame (1/30
-second), such as a quick touchpad tap, is not seen as a click; see
-L<Term::Fabulous::Manual/Clicks, hover and press>.
 
 =head1 EVENTS
 

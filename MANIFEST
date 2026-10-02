@@ -60,9 +60,11 @@ lib/Term/Fabulous/Widget/Dropdown.pm
 lib/Term/Fabulous/Widget/Element.pm
 lib/Term/Fabulous/Widget/Dropdown/List.pm
 lib/Term/Fabulous/Widget/Input.pm
+lib/Term/Fabulous/Widget/Input/Element.pm
 lib/Term/Fabulous/Widget/PixelCanvas.pm
 lib/Term/Fabulous/Widget/RadioButton.pm
 lib/Term/Fabulous/Widget/RadioGroup.pm
+lib/Term/Fabulous/Widget/RadioGroup/Element.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Text.pm
@@ -103,9 +105,12 @@ t/widget-inset.t
 t/widget-pixel-canvas.t
 t/widget-radio.t
 t/widget-revision.t
+t/widget-scroll-box.t
 t/widget-slider.t
 t/widget-text-area.t
 t/widget-text-field.t
+t/widget-text.t
+t/widget.t
 typemap
 examples-cookbook/border-sides.pl        
 examples-cookbook/choose-options.pl      

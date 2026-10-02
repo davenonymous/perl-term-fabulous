@@ -11,6 +11,11 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#include <sys/ioctl.h>
+#ifdef __sun
+#include <sys/filio.h>
+#endif
+
 #include "tf_termbox.h"
 
 /*
@@ -207,8 +212,13 @@ tb_send(SV *bytes)
 	PREINIT:
 		STRLEN length;
 		const char *buffer;
+		SV *copy;
 	CODE:
-		buffer = SvPVutf8(bytes, length);
+		/* Bytes go out as they are; only a string with a character above
+		 * 0xFF has no byte form and is sent UTF-8 encoded. */
+		copy = sv_mortalcopy(bytes);
+		if (!sv_utf8_downgrade(copy, TRUE)) sv_utf8_encode(copy);
+		buffer = SvPV(copy, length);
 		RETVAL = tb_send(buffer, length);
 	OUTPUT:
 		RETVAL
@@ -237,6 +247,15 @@ _poll_event()
 
 int
 tf_install_input_parser()
+
+int
+tf_readable_bytes(int fd)
+	PREINIT:
+		int count = 0;
+	CODE:
+		RETVAL = ioctl(fd, FIONREAD, &count) == 0 ? count : -1;
+	OUTPUT:
+		RETVAL
 
 int
 tb_get_fds(SV *tty_ref, SV *resize_ref)

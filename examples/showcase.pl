@@ -20,8 +20,6 @@ no warnings 'experimental::signatures';
 use FindBin;
 use lib "$FindBin::Bin/../lib/";
 
-use Object::Pad 0.825;
-
 use IO::Async::Loop;
 use IO::Async::Timer::Countdown;
 use IO::Async::Timer::Periodic;
@@ -39,15 +37,11 @@ use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Slider;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::TextField;
-use Clay::UI::Role::Layout::HasFloating;
 use Clay::XS qw(
 	sizing_grow sizing_fit sizing_fixed
 	CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT CLAY_ALIGN_Y_CENTER
 	CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_RIGHT_BOTTOM
 );
-
-# A box that floats over its parent instead of taking part in its layout.
-class My::FloatingBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Layout::HasFloating) :strict(params) { }
 
 # The palette, a dark theme.
 my %color = (
@@ -173,7 +167,7 @@ my $chart_panel = panel( 'Requests per second', { width => sizing_grow(), height
 # corner for a few seconds: added to the chart's panel to show it,
 # removed to hide it.
 my $toast_text = text( '', [ 255, 255, 255, 255 ] );
-my $toast      = My::FloatingBox->new(
+my $toast      = Term::Fabulous::Widget::Box->new(
 	background_color    => [ 40, 90, 70, 200 ],
 	glyphs_show_through => 1,
 	border_width        => 1,

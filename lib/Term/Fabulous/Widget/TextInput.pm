@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::TextInput;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::TextInput
 	:abstract
 {
 	use Feature::Compat::Try;
-	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns);
 
@@ -60,6 +60,19 @@ class Term::Fabulous::Widget::TextInput
 		'Ctrl+Y'       => 'redo',
 	);
 
+	# A text that must not show (a password) has no words to move or delete
+	# by, which would tell where its spaces are: these keys act on the
+	# whole text instead. It cannot be copied or cut either.
+	my %WHOLE_TEXT_KEY_FOR = (
+		'Ctrl+Left'        => 'Home',
+		'Ctrl+Shift+Left'  => 'Shift+Home',
+		'Ctrl+Right'       => 'End',
+		'Ctrl+Shift+Right' => 'Shift+End',
+		'Ctrl+W'           => 'Ctrl+U',
+		'Ctrl+Delete'      => 'Ctrl+K',
+	);
+	my %COPIES = map { $_ => 1 } 'Ctrl+X', 'Shift+Delete', 'Ctrl+Insert';
+
 	field $editor :reader = Term::Fabulous::Editor->new( multi_line => __CLASS__->is_multi_line );
 
 	field $placeholder       :param = '';
@@ -95,6 +108,11 @@ class Term::Fabulous::Widget::TextInput
 	}
 
 	method is_multi_line :common () {
+		return 0;
+	}
+
+	# True when the text is not shown as it is (a masked password field).
+	method hides_text () {
 		return 0;
 	}
 
@@ -165,6 +183,10 @@ class Term::Fabulous::Widget::TextInput
 		return $self->apply_edit( $editor->type($text) ) if defined $text && !$read_only;
 
 		my $name = $event->key_name // return 0;
+		if ( $self->hides_text ) {
+			return 0 if $COPIES{$name};
+			$name = $WHOLE_TEXT_KEY_FOR{$name} // $name;
+		}
 		if ( my $movement = $MOVEMENT_BY_KEY{$name} ) {
 			my ( $method, $extend ) = @$movement;
 			$editor->$method($extend);
@@ -200,9 +222,9 @@ class Term::Fabulous::Widget::TextInput
 	}
 
 	# ---------------------------------------------------------------------
-	# Mouse: a press places the cursor, a double click selects a word,
-	# dragging selects. termbox2 reports no Shift with the mouse, so
-	# there is no Shift+click.
+	# Mouse: a press places the cursor, a Shift+click extends the
+	# selection to it, a double click selects a word (the whole text when
+	# it is hidden), dragging selects.
 	# ---------------------------------------------------------------------
 
 	method handle_mouse ($event) {
@@ -223,8 +245,12 @@ class Term::Fabulous::Widget::TextInput
 		}
 
 		my $now = time;
-		if ( @last_press && $now - $last_press[0] <= DOUBLE_CLICK_SECONDS && "@last_press[1, 2]" eq "@position" ) {
-			$editor->select_word_at(@position);
+		if ( $event->modifiers & TB_MOD_SHIFT ) {
+			$editor->move_to( @position, 1 );
+			@last_press = ();
+		}
+		elsif ( @last_press && $now - $last_press[0] <= DOUBLE_CLICK_SECONDS && "@last_press[1, 2]" eq "@position" ) {
+			$self->hides_text ? $editor->select_all : $editor->select_word_at(@position);
 			@last_press = ();
 		}
 		else {
@@ -295,12 +321,15 @@ class Term::Fabulous::Widget::TextInput
 
 	# Paints the part [from, to) of a line on buffer row $y, scrolled left
 	# by $scroll columns, with the selection and (when $cursor_at_end allows
-	# a cursor at $to) the cursor. Returns the column after the text.
-	method paint_line_part ( $y, $row, $from, $to, $scroll, $cursor_at_end ) {
+	# a cursor at $to) the cursor. Text in [hidden_from, from) belongs to
+	# the row unseen; a cursor on it is shown at $from. Returns the column
+	# after the text.
+	method paint_line_part ( $y, $row, $from, $to, $scroll, $cursor_at_end, $hidden_from = $from ) {
 		my $width      = $self->columns;
 		my @selection  = $editor->selection;
 		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
 		my $has_cursor = $self->is_focused && $cursor_row == $row;
+		$cursor_offset = $from if $cursor_offset >= $hidden_from && $cursor_offset < $from;
 		my $fg         = $self->foreground_attr;
 		my $bg         = $self->focus_background_attr;
 		my $selected   = $self->color_attr($selection_color);
@@ -440,7 +469,7 @@ background of selected text. Default: C<[38, 79, 120, 255]>, a dark blue.
 
 =item C<background_color>
 
-An C<[r, g, b, a]> array reference or C<{ r, g, b, a }> hash reference.
+Any L<Term::Fabulous::Color> format, stored as C<[r, g, b, a]>.
 Default: C<[36, 40, 48, 255]>, a dark gray, so the input stands out from
 its surroundings. Pass C<[0, 0, 0, 0]> for no background of its own.
 
@@ -483,9 +512,8 @@ leaves the placeholder unchanged.
 	my $is_read_only = $input->read_only;
 	$input->read_only(1);
 
-Accessor for the C<read_only> flag. Returns a true or false value: the
-writer stores and returns 1 or 0, but a value passed to C<new> is
-returned exactly as it was given. Any value is accepted.
+Accessor for the C<read_only> flag. Returns 1 or 0, also for a value
+passed to C<new>. Any value is accepted.
 
 =head2 placeholder_color
 
@@ -620,6 +648,13 @@ C<Ctrl+K>, C<Ctrl+X>, C<Shift+Delete>, C<Ctrl+V>, C<Shift+Insert>,
 C<Ctrl+Z>, C<Ctrl+Y>) are not used and bubble; movement, selection and
 copying still work.
 
+While the text is hidden (a L<Term::Fabulous::Widget::TextField> with a
+C<mask>), the word keys act on the whole text, so they cannot tell
+where its spaces are: C<Ctrl+Left> and C<Ctrl+Right> move like C<Home>
+and C<End>, C<Ctrl+W> and C<Ctrl+Delete> delete like C<Ctrl+U> and
+C<Ctrl+K>. C<Ctrl+X>, C<Shift+Delete> and C<Ctrl+Insert> do nothing
+and bubble: hidden text is not copied to the clipboard.
+
 L<Term::Fabulous::Widget::TextField> and
 L<Term::Fabulous::Widget::TextArea> add keys of their own (C<Enter>,
 C<Up>, C<Down>, ...); see their KEYS sections.
@@ -631,13 +666,20 @@ C<Up>, C<Down>, ...); see their KEYS sections.
 =item Click
 
 A left click places the cursor at the clicked character and focuses the
-input. The terminal does not report C<Shift>, C<Ctrl> or C<Alt> with
-mouse events, so there is no Shift+click selection; drag instead.
+input.
+
+=item Shift+click
+
+A left click with C<Shift> held extends the selection from the cursor
+to the clicked character. Many terminals keep C<Shift> with the mouse
+for their own text selection and do not pass such a click on; dragging
+works everywhere.
 
 =item Double click
 
 A second left click at the same position within 0.4 seconds selects the
-word there (or the single character, when it is not part of a word).
+word there (or the single character, when it is not part of a word),
+or the whole text while it is hidden.
 
 =item Drag
 
@@ -717,6 +759,15 @@ Required; see L<Term::Fabulous::Widget::Input/natural_size>.
 
 Required; see L<Term::Fabulous::Widget::Input/paint>.
 
+=head2 hides_text
+
+	method hides_text :override () { return defined $mask ? 1 : 0 }
+
+Whether the text is not shown as it is. Default: 0; the text field
+returns 1 while it has a C<mask>. While it is true, the text cannot be
+copied or cut, and the word keys and the double click act on the whole
+text (see L</KEYS>).
+
 =head2 display_cluster
 
 	method display_cluster ($cluster) { return $shown }
@@ -748,12 +799,15 @@ past its end.
 
 =head2 paint_line_part
 
-	my $next_x = $self->paint_line_part( $y, $line, $from, $to, $scroll, $cursor_at_end );
+	my $next_x = $self->paint_line_part( $y, $line, $from, $to, $scroll, $cursor_at_end, $hidden_from );
 
 Paints the part C<[$from, $to)> of a line on buffer row C<$y>, shifted
 left by C<$scroll> columns, with the selection and the cursor. The
 cursor is drawn after the last character only when C<$cursor_at_end> is
-true. Returns the column after the text.
+true. The optional C<$hidden_from> (default C<$from>) says that the
+text C<[$hidden_from, $from)> belongs to the row without being shown,
+like the space at which a text area wraps; a cursor on it is drawn at
+C<$from>. Returns the column after the text.
 
 =head2 paint_placeholder
 

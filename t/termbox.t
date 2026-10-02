@@ -1,10 +1,11 @@
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 use utf8;
 
 use Test2::V0;
+use Feature::Compat::Try;
 
 use Term::Fabulous::Termbox qw(:all);
 use Term::Fabulous::Termbox::Event;
@@ -91,13 +92,53 @@ subtest 'input parser' => sub {
 	is $feed->("\x1b[A")->[0][1], TB_KEY_ARROW_UP, 'CSI sequences are left to termbox2';
 	is $feed->("\x1b[<35;10;5M"), [ [ TB_EVENT_MOUSE, TF_KEY_MOUSE_MOVE, 0, TB_MOD_MOTION, 9, 4 ] ],            'plain motion';
 	is $feed->("\x1b[<32;2;1M"),  [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, TB_MOD_MOTION, 1, 0 ] ],            'a drag with the left button';
-	is $feed->("\x1b[<0;2;1m"),   [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_RELEASE, 0, 0, 1, 0 ] ],                      'a release';
+	is $feed->("\x1b[<0;2;1m"),   [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_RELEASE, TB_KEY_MOUSE_LEFT, 0, 1, 0 ] ],     'a release names its button in ch';
+	is $feed->("\x1b[<2;2;1m")->[0][2], TB_KEY_MOUSE_RIGHT, 'a release of the right button';
+	is $feed->("\x1b[<3;2;1M"),   [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_RELEASE, 0, 0, 1, 0 ] ],                      'the button-3 form names no button';
 	is [ map { $_->[1] } @{ $feed->("\x1b[<64;3;3M\x1b[<65;3;3M\x1b[<66;3;3M\x1b[<67;3;3M") } ],
 		[ TB_KEY_MOUSE_WHEEL_UP, TB_KEY_MOUSE_WHEEL_DOWN, TF_KEY_MOUSE_WHEEL_LEFT, TF_KEY_MOUSE_WHEEL_RIGHT ], 'four wheel directions, queued in one write';
 	is $feed->("\x1b[<20;300;40M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, TB_MOD_SHIFT | TB_MOD_CTRL, 299, 39 ] ], 'modifier bits and coordinates beyond 255';
 	is $feed->("\x1b[<0;1"), [], 'a partial report waits';
 	is $feed->(";1M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, 0, 0, 0 ] ], 'until the rest arrives';
 	tb_shutdown();
+};
+
+# The terminal is a pty, so termbox2 knows its size; what it writes is read
+# back from the master side.
+subtest 'cells and raw output after tb_init' => sub {
+	try { require IO::Pty }
+	catch ($error) { skip_all 'IO::Pty is not installed' }
+	my $pty     = IO::Pty->new;
+	my $display = $pty->slave;
+	$display->set_winsize( 3, 10 );
+	pipe my $read, my $write or die "pipe: $!";
+	my $rc = tb_init_rwfd( fileno $read, fileno $display );
+	skip_all "termbox2 cannot start on a pty here: " . tb_strerror($rc) unless $rc == TB_OK;
+	is [ tb_width(), tb_height() ], [ 10, 3 ], 'the size of the pty';
+
+	is tb_set_cell( 1, 0, 'a', 0x112233, 0x445566 ), TB_OK, 'tb_set_cell';
+	is [ tb_get_cell( 1, 0, 1 ) ], [ TB_OK, 'a', 0x112233, 0x445566 ], 'tb_get_cell reads it back from the back buffer';
+	tb_set_cell( 2, 0, 'e', TB_DEFAULT, TB_DEFAULT );
+	is tb_extend_cell( 2, 0, "\x{301}" ), TB_OK, 'tb_extend_cell';
+	is( ( tb_get_cell( 2, 0, 1 ) )[1], "e\x{301}", 'the cell holds the whole cluster' );
+	is tb_set_cell_ex( 3, 0, "\x{2764}\x{FE0F}", TB_DEFAULT, TB_DEFAULT ), TB_OK, 'tb_set_cell_ex';
+	is( ( tb_get_cell( 3, 0, 1 ) )[1], "\x{2764}\x{FE0F}", 'and its cluster' );
+	is tb_print( 0, 1, TB_DEFAULT, TB_DEFAULT, "x\x{65E5}y" ), TB_OK, 'tb_print';
+	is [ map { ( tb_get_cell( $_, 1, 1 ) )[1] } 0, 1, 3 ], [ 'x', "\x{65E5}", 'y' ], 'advancing by the width of each cluster';
+
+	is tb_send("\xff\x80"), TB_OK, 'tb_send of bytes';
+	my $upgraded = "\xe9";
+	utf8::upgrade($upgraded);
+	tb_send($upgraded);
+	tb_send("\x{263A}");
+	tb_shutdown();
+	my $written = '';
+	vec( my $readable = '', fileno $pty, 1 ) = 1;
+	while ( select( my $ready = $readable, undef, undef, 0.2 ) > 0 ) {
+		sysread( $pty, my $chunk, 65536 ) or last;
+		$written .= $chunk;
+	}
+	like $written, qr/\xff\x80\xe9\xe2\x98\xba/, 'bytes go out as they are, also from an upgraded string; a wide string UTF-8 encoded';
 };
 
 done_testing;

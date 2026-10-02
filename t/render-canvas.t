@@ -1,10 +1,11 @@
-use v5.22;
+use v5.24;
 use warnings;
 use utf8;
 
 use Test2::V0;
 
-use Clay::XS qw(sizing_fixed sizing_grow);
+use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT);
+use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Termbox qw(TB_DEFAULT);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
@@ -65,6 +66,29 @@ subtest 'an unchanged canvas keeps its cells' => sub {
 	$canvas->put( 1, 0, 'c' );
 	$ui->draw;
 	is glyphs_at( $ui, 2, 3, 6 ), 'ZcZ', 'only the changed cell is painted';
+};
+
+subtest 'a border beside an intact canvas blends with the canvas cells every frame' => sub {
+	my $root   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT } );
+	my $canvas = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
+	my $panel  = Term::Fabulous::Widget::Box->new(
+		background_color => [ 0, 0, 200, 255 ],
+		border_width     => 1,
+		border_color     => [ 255, 255, 255, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Tall,
+		layout           => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },
+	);
+	$root->add_child( $canvas, $panel );
+	my $ui = Term::Fabulous::Static->new( root => $root, width => 10, height => 3 );
+	$ui->draw;
+	$canvas->fill( 0, 0, 4, 3, 'x', 0xFFFFFF, 0xFF0000 );
+
+	my @backgrounds;
+	foreach ( 1 .. 3 ) {
+		$ui->draw;
+		push @backgrounds, $ui->cell( 4, 1 )->[2];
+	}
+	is \@backgrounds, [ (0xFF0000) x 3 ], "the border's outer half shows the canvas cell, also while the canvas is kept";
 };
 
 subtest 'a canvas is painted in full when it cannot keep its cells' => sub {

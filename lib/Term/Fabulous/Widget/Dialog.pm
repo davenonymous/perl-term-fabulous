@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::Dialog;
 
-use v5.22;
+use v5.24;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -33,7 +33,11 @@ class Term::Fabulous::Widget::Dialog
 	field $z_index         :param = 1000;
 	field $close_on_escape :param = 1;
 
-	field $_backdrop;        # the Term::Fabulous::Widget::Dialog::Backdrop while open
+	# The Term::Fabulous::Widget::Dialog::Backdrop while open. The tree owns
+	# it (it holds the dialog as its child), so the reference is weak: a
+	# dialog left open in a dropped UI is freed with it.
+	field $_backdrop;
+	field $_is_open = 0;
 	field $_focus_before;    # the widget focused when the dialog opened
 
 	# A dialog looks like a dialog unless told otherwise: a panel with a
@@ -96,7 +100,7 @@ class Term::Fabulous::Widget::Dialog
 	}
 
 	method is_open () {
-		return defined $_backdrop ? 1 : 0;
+		return $_is_open;
 	}
 
 	method backdrop () {
@@ -113,26 +117,34 @@ class Term::Fabulous::Widget::Dialog
 		$_focus_before = $interaction->get_focused_widget;
 		weaken $_focus_before if defined $_focus_before;
 
-		$_backdrop = Term::Fabulous::Widget::Dialog::Backdrop->new(
+		my $backdrop = Term::Fabulous::Widget::Dialog::Backdrop->new(
 			dialog           => $self,
 			background_color => $backdrop_color,
 			z_index          => $z_index,
 		);
-		$_backdrop->add_child($self);
-		$ui->root->add_child($_backdrop);
-		$interaction->set_focused_widget( ( $_backdrop->focus_order )[0] );
+		$backdrop->add_child($self);
+		$ui->root->add_child($backdrop);
+		weaken( $_backdrop = $backdrop );
+		$_is_open = 1;
+		$interaction->set_focused_widget( ( $backdrop->focus_order )[0] );
 		return $self;
 	}
 
+	# The program may have taken the backdrop out of the tree already (with
+	# clear_children on the root, for example): then there is nothing to
+	# remove and no UI to give the focus back in, but Close still fires.
 	method close () {
-		return $self unless defined $_backdrop;
+		return $self unless $_is_open;
 		my $backdrop = $_backdrop;
 		my $ui       = $self->ui;
-		$_backdrop = undef;
+		( $_is_open, $_backdrop ) = ( 0, undef );
 
-		$ui->root->remove_children_with( sub ($child) { refaddr($child) == refaddr($backdrop) } );
-		$backdrop->clear_children;
-		$self->_restore_focus($ui);
+		if ( defined $backdrop ) {
+			my $holder = $backdrop->parent;
+			$holder->remove_children_with( sub ($child) { refaddr($child) == refaddr($backdrop) } ) if defined $holder;
+			$backdrop->clear_children;
+		}
+		$self->_restore_focus($ui) if defined $ui;
 		$self->fire_event( Term::Fabulous::Event::Close->new );
 		return $self;
 	}
@@ -203,14 +215,23 @@ Tab and Shift+Tab cycle through the widgets inside the dialog only;
 =item *
 
 mouse clicks outside the dialog reach nothing behind it; they only
-move the focus onto the backdrop, which is still inside the dialog's
-Tab cycle;
+move the focus onto the backdrop, from where Tab goes to the first
+widget of the dialog and Shift+Tab to the last;
 
 =item *
 
 key presses go to the focused widget inside the dialog and bubble up
 through the dialog to the backdrop, where C<Escape> closes the dialog
-(unless C<close_on_escape> is off), and then to the root;
+(unless C<close_on_escape> is off). They go no further: the widgets
+and key bindings behind the dialog do not see them. Ctrl+C still ends
+the program, Tab and Shift+Tab still move the focus;
+
+=item *
+
+the focus stays inside the dialog: when the focused widget is disabled
+or removed, the backdrop takes the focus (an C<OnBlur> listener inside
+the dialog must let the event bubble for that, see
+L<Term::Fabulous::Widget::Dialog::Backdrop>);
 
 =item *
 
@@ -255,8 +276,9 @@ hides it; alpha 0 leaves it as it is.
 =item C<z_index>
 
 An integer. Dialogs and other floating widgets with a higher value are
-drawn over those with a lower one. Default: 1000, above a dropdown's
-list.
+drawn over those with a lower one. Default: 1000. The open list of a
+L<Term::Fabulous::Widget::Dropdown> floats over every z_index, so it is
+drawn over the dialog it is in.
 
 =item C<close_on_escape>
 
@@ -287,7 +309,10 @@ widget as a child. Returns the dialog.
 Closes the dialog: removes it from the screen, gives the focus back to
 the widget that had it when the dialog opened (if that widget still
 exists and can take the focus) and fires C<Close> on the dialog.
-Closing a closed dialog does nothing. Returns the dialog.
+Closing a closed dialog does nothing. A dialog whose backdrop the
+program took out of the tree itself (with C<clear_children> on the
+root, for example) is still open until C<close> is called; C<close>
+then only fires C<Close>. Returns the dialog.
 
 =head2 is_open
 
@@ -300,7 +325,8 @@ Closing a closed dialog does nothing. Returns the dialog.
 	my $backdrop = $dialog->backdrop;
 
 The L<Term::Fabulous::Widget::Dialog::Backdrop> behind the open dialog,
-or C<undef> while it is closed. Rarely needed.
+or C<undef> while it is closed or after the program took it out of the
+tree. Rarely needed.
 
 =head2 backdrop_color, z_index, close_on_escape
 

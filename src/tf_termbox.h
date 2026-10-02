@@ -38,6 +38,10 @@ int tf_cluster_width(const uint32_t *codepoints, size_t count);
  * a key, and SGR mouse reports with their motion, modifier and
  * horizontal wheel bits. Call it after every tb_init(); tb_shutdown()
  * forgets it. Returns a termbox2 status code.
+ *
+ * It relies on tb_set_func(TB_FUNC_EXTRACT_PRE) and on termbox2's
+ * input buffer (global.in), which upstream removes in version 3.x; see
+ * README.termbox2 before updating termbox2.h.
  */
 int tf_install_input_parser(void);
 
