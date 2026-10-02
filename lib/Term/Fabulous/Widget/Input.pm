@@ -334,7 +334,7 @@ Term::Fabulous::Widget::Input - Common base class of the input widgets
 		}
 
 		method handle_key ($event) {
-			return 0 unless ( $event->key_name // '' ) eq 'Space';
+			return 0 unless ( $event->main_key_name // '' ) eq 'Space';
 			$self->activate;
 			return 1;                               # used: stops bubbling
 		}

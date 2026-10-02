@@ -22,7 +22,8 @@ $EXPORT_TAGS{api} = [
 		tb_width tb_height tb_set_input_mode tb_set_output_mode
 		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
 		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send tf_reset_attrs tf_flush
-		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_cursor_position tf_readable_bytes
+		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_cursor_position tf_kitty_keyboard_query
+		tf_readable_bytes
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -138,7 +139,8 @@ L</tb_iswprint>, L</tb_wcwidth>, L</tb_cluster_width>.
 
 Every C<TB_KEY_*> constant, plus the Term::Fabulous additions
 C<TF_KEY_MOUSE_MOVE>, C<TF_KEY_MOUSE_WHEEL_LEFT> and
-C<TF_KEY_MOUSE_WHEEL_RIGHT> (see L</tf_install_input_parser>): the
+C<TF_KEY_MOUSE_WHEEL_RIGHT>, and the keys only the kitty keyboard
+protocol reports (see L</tf_install_input_parser> and L</Kitty keys>): the
 ASCII control range (C<TB_KEY_CTRL_A> to
 C<TB_KEY_CTRL_Z>, C<TB_KEY_TAB>, C<TB_KEY_ENTER>, C<TB_KEY_ESC>,
 C<TB_KEY_SPACE>, C<TB_KEY_BACKSPACE>, C<TB_KEY_BACKSPACE2>, ...), the
@@ -164,7 +166,9 @@ C<TB_TRUECOLOR_BLACK> are exported too.
 =item C<:event>
 
 C<TB_EVENT_KEY>, C<TB_EVENT_RESIZE>, C<TB_EVENT_MOUSE>; the modifiers
-C<TB_MOD_ALT>, C<TB_MOD_CTRL>, C<TB_MOD_SHIFT>, C<TB_MOD_MOTION>; the input
+C<TB_MOD_ALT>, C<TB_MOD_CTRL>, C<TB_MOD_SHIFT>, C<TB_MOD_MOTION>, and the
+Term::Fabulous additions C<TF_MOD_SUPER>, C<TF_MOD_HYPER>, C<TF_MOD_META>
+(16, 32, 64; only the kitty keyboard protocol reports them); the input
 modes C<TB_INPUT_CURRENT>, C<TB_INPUT_ESC>, C<TB_INPUT_ALT>,
 C<TB_INPUT_MOUSE>; the output modes C<TB_OUTPUT_CURRENT>,
 C<TB_OUTPUT_NORMAL>, C<TB_OUTPUT_256>, C<TB_OUTPUT_216>,
@@ -179,6 +183,29 @@ C<TB_OK> and every C<TB_ERR_*> code, L<tb_strerror|/"tb_last_errno, tb_strerror"
 Everything.
 
 =back
+
+=head2 Kitty keys
+
+The keys of the kitty keyboard protocol's functional key table that
+neither termbox2 nor the legacy encodings have a code for, numbered
+from C<0xFFFF - 32> down in the order of kitty's table:
+C<TF_KEY_CAPS_LOCK>, C<TF_KEY_SCROLL_LOCK>, C<TF_KEY_NUM_LOCK>,
+C<TF_KEY_PRINT_SCREEN>, C<TF_KEY_PAUSE>, C<TF_KEY_MENU>; C<TF_KEY_F13>
+to C<TF_KEY_F35>; the keypad keys C<TF_KEY_KP_0> to C<TF_KEY_KP_9>,
+C<TF_KEY_KP_DECIMAL>, C<TF_KEY_KP_DIVIDE>, C<TF_KEY_KP_MULTIPLY>,
+C<TF_KEY_KP_SUBTRACT>, C<TF_KEY_KP_ADD>, C<TF_KEY_KP_ENTER>,
+C<TF_KEY_KP_EQUAL>, C<TF_KEY_KP_SEPARATOR>, C<TF_KEY_KP_LEFT>,
+C<TF_KEY_KP_RIGHT>, C<TF_KEY_KP_UP>, C<TF_KEY_KP_DOWN>,
+C<TF_KEY_KP_PAGE_UP>, C<TF_KEY_KP_PAGE_DOWN>, C<TF_KEY_KP_HOME>,
+C<TF_KEY_KP_END>, C<TF_KEY_KP_INSERT>, C<TF_KEY_KP_DELETE>,
+C<TF_KEY_KP_BEGIN>; and the media keys C<TF_KEY_MEDIA_PLAY>,
+C<TF_KEY_MEDIA_PAUSE>, C<TF_KEY_MEDIA_PLAY_PAUSE>,
+C<TF_KEY_MEDIA_REVERSE>, C<TF_KEY_MEDIA_STOP>,
+C<TF_KEY_MEDIA_FAST_FORWARD>, C<TF_KEY_MEDIA_REWIND>,
+C<TF_KEY_MEDIA_TRACK_NEXT>, C<TF_KEY_MEDIA_TRACK_PREVIOUS>,
+C<TF_KEY_MEDIA_RECORD>, C<TF_KEY_LOWER_VOLUME>,
+C<TF_KEY_RAISE_VOLUME>, C<TF_KEY_MUTE_VOLUME>. They are exported with
+C<:keys>.
 
 =head1 FUNCTIONS
 
@@ -331,6 +358,58 @@ sequences that begin with C<ESC [> or C<ESC O> and are not SGR mouse
 reports are left to termbox2. C<tb_shutdown> forgets the parser, so
 call this after every C<tb_init>. Returns C<TB_OK>.
 
+It also decodes the key reports of the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>,
+C<ESC [ code ; modifiers u>, and the legacy forms of the function keys,
+C<ESC [ number ; modifiers ~> and C<ESC [ 1 ; modifiers letter>, when
+they carry modifiers. kitty's Super, Hyper and Meta become
+C<TF_MOD_SUPER>, C<TF_MOD_HYPER> and C<TF_MOD_META>; Caps Lock and Num
+Lock are dropped. The keys come as termbox2 would report them from a
+legacy terminal wherever that report is exact, so code written for
+termbox2 keeps working:
+
+=over
+
+=item *
+
+Escape is C<TB_KEY_ESC>; Enter, Tab and Backspace without Ctrl are
+their control byte with C<TB_MOD_CTRL>, as termbox2 reports the bytes;
+Shift+Tab is C<TB_KEY_BACK_TAB>.
+
+=item *
+
+Ctrl plus a letter, Space, C<\> or C<]> is its control byte (Ctrl+C is
+C<TB_KEY_CTRL_C>), with C<TB_MOD_SHIFT> and the other modifiers added
+when they were held.
+
+=item *
+
+What the legacy encoding cannot carry has its character in C<ch>
+instead, with exact modifiers: Ctrl plus Enter, Tab, Backspace or
+Escape (C<ch> is the control byte), and Ctrl plus a key whose control
+byte is another key's or that has none (Ctrl+I, Ctrl+M, Ctrl+H, Ctrl+[,
+Ctrl+1, ...; C<ch> is the unshifted character).
+
+=item *
+
+Alt, Super, Hyper or Meta plus a key without Ctrl is the character
+Shift makes in C<ch>, without C<TB_MOD_SHIFT>, like Alt plus a key from
+a legacy terminal: Alt+Shift+1 is C<!> with C<TB_MOD_ALT> when the
+terminal reports the shifted key (kitty's "report alternate keys"
+flag), and Alt+Shift+a is C<A> either way.
+
+=item *
+
+The keys without a legacy encoding are the L</Kitty keys>.
+
+=back
+
+kitty sends these reports for the keys that have no legacy encoding
+even to programs that did not ask for the protocol. For the others,
+ask the terminal with C<< tb_send("\e[>5u") >> after
+L</tf_kitty_keyboard_query> found it supported, and send C<"\e[<u">
+before C<tb_shutdown>, as L<Term::Fabulous> does.
+
 The parser only decodes; to receive motion reports at all, ask the
 terminal with C<< tb_send("\e[?1003h") >> (and send C<"\e[?1003l">
 before C<tb_shutdown>), as L<Term::Fabulous> does.
@@ -348,6 +427,24 @@ terminal descriptor no longer reports it as readable. Returns
 C<TB_OK>, C<TB_ERR_NO_EVENT> when no answer arrived in time, or
 another error; the references are untouched unless the result is
 C<TB_OK>. Dies unless both references are scalar references.
+
+=head3 tf_kitty_keyboard_query
+
+	my $rc = tf_kitty_keyboard_query( $timeout_ms, \my $supported );
+
+A Term::Fabulous addition. Asks the terminal whether it speaks the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>:
+it sends the query for the protocol's flags (C<ESC [ ? u>) followed by
+the one for the primary device attributes (C<ESC [ c>), which every
+terminal answers, and waits up to C<$timeout_ms> milliseconds for
+that answer. C<$supported> is then 1 when the terminal reported its
+flags, 0 when it answered the device attributes alone. Both answers
+are taken out of the input; keys that arrive meanwhile stay queued for
+L</tb_peek_event>, as with L</tf_cursor_position>. Returns C<TB_OK>,
+C<TB_ERR_NO_EVENT> when no answer arrived in time (the terminal is
+taken not to speak the protocol), or another error; C<$supported> is
+untouched unless the result is C<TB_OK>. Dies unless the argument is
+a scalar reference.
 
 =head3 tf_readable_bytes
 

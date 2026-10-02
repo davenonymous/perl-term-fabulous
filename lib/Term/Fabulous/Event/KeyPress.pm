@@ -12,14 +12,7 @@ use Object::Pad 0.825;
 use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(params) {
-	use Term::Fabulous::Termbox qw(
-		TB_KEY_ARROW_LEFT TB_KEY_ARROW_RIGHT TB_KEY_ARROW_UP TB_KEY_ARROW_DOWN
-		TB_KEY_HOME TB_KEY_END TB_KEY_PGUP TB_KEY_PGDN TB_KEY_INSERT TB_KEY_DELETE TB_KEY_BACK_TAB
-		TB_KEY_F1 TB_KEY_F2 TB_KEY_F3 TB_KEY_F4 TB_KEY_F5 TB_KEY_F6
-		TB_KEY_F7 TB_KEY_F8 TB_KEY_F9 TB_KEY_F10 TB_KEY_F11 TB_KEY_F12
-		TB_KEY_BACKSPACE TB_KEY_TAB TB_KEY_ENTER TB_KEY_ESC TB_KEY_SPACE TB_KEY_BACKSPACE2
-		TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT
-	);
+	use Term::Fabulous::Termbox qw(:keys TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TF_MOD_SUPER TF_MOD_HYPER TF_MOD_META);
 
 	field $key       :param :reader;
 	field $char      :param :reader;
@@ -57,6 +50,112 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 		TB_KEY_F10()         => 'F10',
 		TB_KEY_F11()         => 'F11',
 		TB_KEY_F12()         => 'F12',
+
+		# Keys only the kitty keyboard protocol reports.
+		TF_KEY_CAPS_LOCK()            => 'CapsLock',
+		TF_KEY_SCROLL_LOCK()          => 'ScrollLock',
+		TF_KEY_NUM_LOCK()             => 'NumLock',
+		TF_KEY_PRINT_SCREEN()         => 'PrintScreen',
+		TF_KEY_PAUSE()                => 'Pause',
+		TF_KEY_MENU()                 => 'Menu',
+		TF_KEY_F13()                  => 'F13',
+		TF_KEY_F14()                  => 'F14',
+		TF_KEY_F15()                  => 'F15',
+		TF_KEY_F16()                  => 'F16',
+		TF_KEY_F17()                  => 'F17',
+		TF_KEY_F18()                  => 'F18',
+		TF_KEY_F19()                  => 'F19',
+		TF_KEY_F20()                  => 'F20',
+		TF_KEY_F21()                  => 'F21',
+		TF_KEY_F22()                  => 'F22',
+		TF_KEY_F23()                  => 'F23',
+		TF_KEY_F24()                  => 'F24',
+		TF_KEY_F25()                  => 'F25',
+		TF_KEY_F26()                  => 'F26',
+		TF_KEY_F27()                  => 'F27',
+		TF_KEY_F28()                  => 'F28',
+		TF_KEY_F29()                  => 'F29',
+		TF_KEY_F30()                  => 'F30',
+		TF_KEY_F31()                  => 'F31',
+		TF_KEY_F32()                  => 'F32',
+		TF_KEY_F33()                  => 'F33',
+		TF_KEY_F34()                  => 'F34',
+		TF_KEY_F35()                  => 'F35',
+		TF_KEY_KP_0()                 => 'Keypad0',
+		TF_KEY_KP_1()                 => 'Keypad1',
+		TF_KEY_KP_2()                 => 'Keypad2',
+		TF_KEY_KP_3()                 => 'Keypad3',
+		TF_KEY_KP_4()                 => 'Keypad4',
+		TF_KEY_KP_5()                 => 'Keypad5',
+		TF_KEY_KP_6()                 => 'Keypad6',
+		TF_KEY_KP_7()                 => 'Keypad7',
+		TF_KEY_KP_8()                 => 'Keypad8',
+		TF_KEY_KP_9()                 => 'Keypad9',
+		TF_KEY_KP_DECIMAL()           => 'KeypadDecimal',
+		TF_KEY_KP_DIVIDE()            => 'KeypadDivide',
+		TF_KEY_KP_MULTIPLY()          => 'KeypadMultiply',
+		TF_KEY_KP_SUBTRACT()          => 'KeypadSubtract',
+		TF_KEY_KP_ADD()               => 'KeypadAdd',
+		TF_KEY_KP_ENTER()             => 'KeypadEnter',
+		TF_KEY_KP_EQUAL()             => 'KeypadEqual',
+		TF_KEY_KP_SEPARATOR()         => 'KeypadSeparator',
+		TF_KEY_KP_LEFT()              => 'KeypadLeft',
+		TF_KEY_KP_RIGHT()             => 'KeypadRight',
+		TF_KEY_KP_UP()                => 'KeypadUp',
+		TF_KEY_KP_DOWN()              => 'KeypadDown',
+		TF_KEY_KP_PAGE_UP()           => 'KeypadPageUp',
+		TF_KEY_KP_PAGE_DOWN()         => 'KeypadPageDown',
+		TF_KEY_KP_HOME()              => 'KeypadHome',
+		TF_KEY_KP_END()               => 'KeypadEnd',
+		TF_KEY_KP_INSERT()            => 'KeypadInsert',
+		TF_KEY_KP_DELETE()            => 'KeypadDelete',
+		TF_KEY_KP_BEGIN()             => 'KeypadBegin',
+		TF_KEY_MEDIA_PLAY()           => 'MediaPlay',
+		TF_KEY_MEDIA_PAUSE()          => 'MediaPause',
+		TF_KEY_MEDIA_PLAY_PAUSE()     => 'MediaPlayPause',
+		TF_KEY_MEDIA_REVERSE()        => 'MediaReverse',
+		TF_KEY_MEDIA_STOP()           => 'MediaStop',
+		TF_KEY_MEDIA_FAST_FORWARD()   => 'MediaFastForward',
+		TF_KEY_MEDIA_REWIND()         => 'MediaRewind',
+		TF_KEY_MEDIA_TRACK_NEXT()     => 'MediaTrackNext',
+		TF_KEY_MEDIA_TRACK_PREVIOUS() => 'MediaTrackPrevious',
+		TF_KEY_MEDIA_RECORD()         => 'MediaRecord',
+		TF_KEY_LOWER_VOLUME()         => 'LowerVolume',
+		TF_KEY_RAISE_VOLUME()         => 'RaiseVolume',
+		TF_KEY_MUTE_VOLUME()          => 'MuteVolume',
+	);
+
+	# The keypad keys the kitty keyboard protocol tells apart, and the
+	# main keyboard keys legacy terminals report for them instead.
+	my %MAIN_NAME_BY_KEYPAD_NAME = (
+		Keypad0         => '0',
+		Keypad1         => '1',
+		Keypad2         => '2',
+		Keypad3         => '3',
+		Keypad4         => '4',
+		Keypad5         => '5',
+		Keypad6         => '6',
+		Keypad7         => '7',
+		Keypad8         => '8',
+		Keypad9         => '9',
+		KeypadDecimal   => '.',
+		KeypadDivide    => '/',
+		KeypadMultiply  => '*',
+		KeypadSubtract  => '-',
+		KeypadAdd       => '+',
+		KeypadEnter     => 'Enter',
+		KeypadEqual     => '=',
+		KeypadSeparator => ',',
+		KeypadLeft      => 'Left',
+		KeypadRight     => 'Right',
+		KeypadUp        => 'Up',
+		KeypadDown      => 'Down',
+		KeypadPageUp    => 'PageUp',
+		KeypadPageDown  => 'PageDown',
+		KeypadHome      => 'Home',
+		KeypadEnd       => 'End',
+		KeypadInsert    => 'Insert',
+		KeypadDelete    => 'Delete',
 	);
 
 	method event_name :common { 'KeyPress' }
@@ -78,29 +177,52 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	method _base_key () {
 		return ( 'Space', 0 ) if $char == 0x20;
 		return ( undef, 0 ) if $char >= 0x80 && $char <= 0x9F;    # C1 control characters have no name
-		return ( chr($char), 0 ) if $char != 0;
+		return ( $self->_base_of_char, 0 ) if $char != 0;
 		return ( $NAME_BY_KEY{$key}, 0 ) if exists $NAME_BY_KEY{$key};
 		return ( 'Space', 1 ) if $key == 0x00;
 		return ( chr( $key + 0x40 ), 1 ) if $key < 0x20;
 		return ( undef, 0 );
 	}
 
+	# The kitty keyboard protocol puts the key of a Ctrl combination the
+	# legacy encoding cannot carry into the char: a named control key
+	# (Ctrl+Enter), or a character, named in upper case like Ctrl+W.
+	method _base_of_char () {
+		return $NAME_BY_KEY{$char} if _is_control_byte($char);
+		my $character = chr $char;
+		return $character unless $modifiers & TB_MOD_CTRL;
+		my $upper = uc $character;
+		return length($upper) == 1 ? $upper : $character;    # 'ß' would become 'SS'
+	}
+
 	# termbox2 sets TB_MOD_CTRL on every byte of the control range, Enter
 	# and Tab included; there the byte alone says whether Ctrl was held.
-	method key_name () {
-		my ( $base, $implies_ctrl ) = $self->_base_key;
-		return undef unless defined $base;
-
+	method _with_modifiers ( $base, $implies_ctrl ) {
 		my $ctrl = $char == 0 && _is_control_byte($key) ? $implies_ctrl : $modifiers & TB_MOD_CTRL;
 		my @names;
 		push @names, 'Ctrl'  if $ctrl;
 		push @names, 'Alt'   if $modifiers & TB_MOD_ALT;
 		push @names, 'Shift' if $modifiers & TB_MOD_SHIFT;
+		push @names, 'Super' if $modifiers & TF_MOD_SUPER;
+		push @names, 'Hyper' if $modifiers & TF_MOD_HYPER;
+		push @names, 'Meta'  if $modifiers & TF_MOD_META;
 		return join '+', @names, $base;
 	}
 
+	method key_name () {
+		my ( $base, $implies_ctrl ) = $self->_base_key;
+		return undef unless defined $base;
+		return $self->_with_modifiers( $base, $implies_ctrl );
+	}
+
+	method main_key_name () {
+		my ( $base, $implies_ctrl ) = $self->_base_key;
+		return undef unless defined $base;
+		return $self->_with_modifiers( $MAIN_NAME_BY_KEYPAD_NAME{$base} // $base, $implies_ctrl );
+	}
+
 	method text () {
-		return undef if $modifiers & ( TB_MOD_CTRL | TB_MOD_ALT );
+		return undef if $modifiers & ( TB_MOD_CTRL | TB_MOD_ALT | TF_MOD_SUPER | TF_MOD_HYPER | TF_MOD_META );
 		return chr($char) if $char >= 0x20 && ( $char < 0x7F || $char > 0x9F );
 		return ' ' if $char == 0 && $key == 0x20;
 		return undef;
@@ -151,9 +273,16 @@ C<current_target>, C<name> (C<'KeyPress'> unless given to the
 constructor) and C<bubble_mode> (C<IF_CONTINUE>) are available as well.
 
 The most useful methods are L</key_name>, which turns the key into a
-readable name such as C<'Ctrl+Left'> for key bindings, and L</text>,
-which returns the character a key types. The raw termbox2 values are
-available through L</key>, L</char> and L</modifiers>.
+readable name such as C<'Ctrl+Left'> for key bindings, L</main_key_name>,
+which names the keypad keys after the main keyboard keys they stand
+for, and L</text>, which returns the character a key types. The raw
+termbox2 values are available through L</key>, L</char> and
+L</modifiers>.
+
+Terminals that speak the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
+report more keys and modifiers than others; see
+L</THE KITTY KEYBOARD PROTOCOL>.
 
 =head1 CONSTRUCTOR
 
@@ -181,19 +310,27 @@ accepted as well.
 =item C<key>
 
 An integer. The termbox2 key code: a C<TB_KEY_*> constant for special
-keys (arrows, Home, F1, ...), the byte value for keys of the ASCII
-control range (C<0x0D> for Enter, C<0x17> for Ctrl+W, ...), and C<0>
-for a typed character.
+keys (arrows, Home, F1, ...), a C<TF_KEY_*> constant for the keys only
+the kitty keyboard protocol reports (F13, the keypad, media keys, ...;
+see L<Term::Fabulous::Termbox/Kitty keys>), the byte value for keys of
+the ASCII control range (C<0x0D> for Enter, C<0x17> for Ctrl+W, ...),
+and C<0> for a typed character.
 
 =item C<char>
 
 An integer. The Unicode code point of a typed character (C<ord 'a'>),
-or C<0> for a special key.
+or C<0> for a special key. With the kitty keyboard protocol it also
+holds the key of a Ctrl combination the legacy encoding cannot carry:
+the control byte of Enter, Tab, Backspace or Escape for Ctrl+Enter and
+so on, or the unshifted character for Ctrl+I, Ctrl+1 and the like (see
+L<Term::Fabulous::Termbox/tf_install_input_parser>).
 
 =item C<modifiers>
 
 An integer. A bit mask of the termbox2 constants C<TB_MOD_ALT> (1),
-C<TB_MOD_CTRL> (2) and C<TB_MOD_SHIFT> (4); C<0> for none.
+C<TB_MOD_CTRL> (2) and C<TB_MOD_SHIFT> (4), and of C<TF_MOD_SUPER>
+(16), C<TF_MOD_HYPER> (32) and C<TF_MOD_META> (64), which only the
+kitty keyboard protocol reports; C<0> for none.
 
 =back
 
@@ -230,8 +367,10 @@ The name is built as follows:
 =item *
 
 The modifiers come first, joined with C<+>, always in the order
-C<Ctrl>, C<Alt>, C<Shift>: C<'Ctrl+Alt+Shift+Left'>, never
-C<'Shift+Ctrl+Left'>.
+C<Ctrl>, C<Alt>, C<Shift>, C<Super>, C<Hyper>, C<Meta>:
+C<'Ctrl+Alt+Shift+Left'>, never C<'Shift+Ctrl+Left'>. Only terminals
+that speak the kitty keyboard protocol report C<Super>, C<Hyper> and
+C<Meta>.
 
 =item *
 
@@ -240,6 +379,20 @@ letter or a symbol after C<Ctrl+> (C<'Ctrl+W'>), or the typed character
 itself (C<'a'>, C<'A'>, C<'?'>, C<'E<eacute>'>).
 
 =back
+
+=head2 main_key_name
+
+	my $name = $event->main_key_name;    # 'Left' for both Left and the keypad's Left
+
+Like L</key_name>, except that a keypad key the kitty keyboard
+protocol tells apart is named after the main keyboard key it stands
+for, as terminals without the protocol report it: C<KeypadLeft> is
+C<'Left'>, C<KeypadEnter> is C<'Enter'>, C<Keypad7> is C<'7'>,
+C<KeypadAdd> is C<'+'>, and C<'Ctrl+KeypadHome'> is C<'Ctrl+Home'>.
+C<KeypadBegin> has no such key and keeps its name. For every other key
+the result is the same as L</key_name>. The built-in widgets bind
+their keys with C<main_key_name>, so the keypad works in them with or
+without the protocol; use it for bindings that should do the same.
 
 =head2 text
 
@@ -262,8 +415,8 @@ The space bar returns C<' '>, however the terminal reports it.
 =item *
 
 Special keys (arrows, Enter, Tab, Backspace, Escape, function keys, ...),
-Ctrl and Alt combinations, and control characters (U+0000 to U+001F,
-U+007F to U+009F) return C<undef>.
+combinations with Ctrl, Alt, Super, Hyper or Meta, and control
+characters (U+0000 to U+001F, U+007F to U+009F) return C<undef>.
 
 =back
 
@@ -288,8 +441,9 @@ which also filters out control characters.
 	use Term::Fabulous::Termbox qw(TB_MOD_CTRL);
 	my $ctrl_held = $event->modifiers & TB_MOD_CTRL;
 
-The raw bit mask of C<TB_MOD_ALT>, C<TB_MOD_CTRL> and C<TB_MOD_SHIFT>.
-Note that termbox2 sets C<TB_MOD_CTRL> on every key of the ASCII control
+The raw bit mask of C<TB_MOD_ALT>, C<TB_MOD_CTRL> and C<TB_MOD_SHIFT>,
+and of C<TF_MOD_SUPER>, C<TF_MOD_HYPER> and C<TF_MOD_META> from the
+kitty keyboard protocol. Note that termbox2 sets C<TB_MOD_CTRL> on every key of the ASCII control
 range, including Enter, Tab, Escape and Backspace; L</key_name> takes
 care of that, so prefer it over testing the bits yourself.
 
@@ -319,6 +473,47 @@ These are all the names L</key_name> returns, without modifiers.
 	Space         The space bar (key 0x20, or key 0 with char 0x20)
 	F1 .. F12     Function keys
 
+Terminals that speak the kitty keyboard protocol report these keys as
+well:
+
+	Name                 Key
+	-------------------  ------------------------------------------
+	F13 .. F35           Function keys beyond F12
+	CapsLock             Caps Lock
+	ScrollLock           Scroll Lock
+	NumLock              Num Lock
+	PrintScreen          Print Screen
+	Pause                Pause
+	Menu                 Menu (context menu key)
+	Keypad0 .. Keypad9   Keypad digits
+	KeypadDecimal        Keypad . (decimal point)
+	KeypadDivide         Keypad /
+	KeypadMultiply       Keypad *
+	KeypadSubtract       Keypad -
+	KeypadAdd            Keypad +
+	KeypadEnter          Keypad Enter
+	KeypadEqual          Keypad =
+	KeypadSeparator      Keypad separator
+	KeypadLeft           Keypad Left (Num Lock off), and so on:
+	KeypadRight          KeypadUp, KeypadDown, KeypadPageUp,
+	                     KeypadPageDown, KeypadHome, KeypadEnd,
+	                     KeypadInsert, KeypadDelete
+	KeypadBegin          Keypad 5 with Num Lock off
+	MediaPlay            Media keys: MediaPause, MediaPlayPause,
+	                     MediaReverse, MediaStop, MediaFastForward,
+	                     MediaRewind, MediaTrackNext,
+	                     MediaTrackPrevious, MediaRecord
+	LowerVolume          Volume down
+	RaiseVolume          Volume up
+	MuteVolume           Mute
+
+kitty reports the keypad keys only when they do not type text: with
+Num Lock on, a keypad digit typed alone is the character C<'7'>, but
+Ctrl plus that key is C<'Ctrl+Keypad7'>. L</main_key_name> names the
+keypad keys after their main keyboard keys instead. Whether the lock
+keys, Print Screen and the media keys reach the program at all depends
+on the terminal and the desktop.
+
 =head2 Ctrl and a letter
 
 Terminals send Ctrl plus a letter as a single control byte, and the name
@@ -340,7 +535,9 @@ Ctrl+2), C<'Ctrl+\'>, C<'Ctrl+]'>, C<'Ctrl+^'> and C<'Ctrl+_'>. Ctrl+J
 
 termbox2 marks every control byte with C<TB_MOD_CTRL>. For these keys
 C<key_name> ignores that bit and decides from the byte alone, so Enter is
-always C<'Enter'>, never C<'Ctrl+Enter'>.
+always C<'Enter'>, never C<'Ctrl+Enter'>. Terminals that speak the kitty
+keyboard protocol tell all of these keys apart; see
+L</THE KITTY KEYBOARD PROTOCOL>.
 
 =head2 Modifier combinations
 
@@ -357,8 +554,9 @@ xterm modifier sequences: the four arrow keys, Home, End, Insert,
 Delete, Page Up, Page Down and F1 to F12. Any combination of Ctrl, Alt
 and Shift with these keys gets a name, as far as the terminal sends it.
 
-For every other key, terminals cannot report modifiers, which leads to
-these rules:
+For every other key, terminals cannot report modifiers, unless they
+speak the kitty keyboard protocol (see L</THE KITTY KEYBOARD PROTOCOL>),
+which leads to these rules:
 
 =over
 
@@ -390,10 +588,56 @@ in the same read looks like Alt plus that key.
 C<key_name> returns C<undef> for key codes it does not know, for
 example a C<TB_KEY_MOUSE_*> code given to the constructor by mistake.
 
+=head1 THE KITTY KEYBOARD PROTOCOL
+
+L<Term::Fabulous> asks the terminal for the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
+when it supports it (kitty and a growing number of other terminals;
+see the C<kitty_keyboard> parameter of L<Term::Fabulous/new>). Such a terminal reports keys
+without the ambiguities of the legacy encodings, and the names follow:
+
+=over
+
+=item *
+
+Every Ctrl combination gets its own name: Ctrl+I is C<'Ctrl+I'>, not
+C<'Tab'>; Ctrl+M is C<'Ctrl+M'>, Ctrl+H C<'Ctrl+H'>, Ctrl+[ C<'Ctrl+['>;
+Ctrl+Enter, Ctrl+Tab, Ctrl+Backspace and Ctrl+Escape are
+C<'Ctrl+Enter'> and so on; Ctrl+1 is C<'Ctrl+1'>.
+
+=item *
+
+Shift is named together with Ctrl: Ctrl+Shift+W is C<'Ctrl+Shift+W'>,
+no longer the same as C<'Ctrl+W'>. Shift+Enter is C<'Shift+Enter'>.
+
+=item *
+
+Alt plus a key no longer depends on timing, and Alt+[ and Alt+O get
+names. Alt plus a character is still named after the character Shift
+makes, as in other terminals: Alt+Shift+a is C<'Alt+A'>, Alt+Shift+1 on
+a US keyboard C<'Alt+!'>.
+
+=item *
+
+Super, Hyper and Meta are reported; they behave like Alt:
+C<'Super+a'>, C<'Ctrl+Super+Left'>.
+
+=item *
+
+The keys in the second table of L</Named keys> are reported.
+
+=back
+
+Keys typed without a modifier are unchanged: the character, Enter, Tab,
+Backspace and Shift+Tab (C<'BackTab'>) are reported as in any other
+terminal, and so are the names of Ctrl+C, Tab and Shift+Tab that
+L<Term::Fabulous> acts on itself.
+
 =head1 BINDING KEYS
 
-Compare L</key_name> with the name of the key you want. A dispatch table
-keeps longer lists readable:
+Compare L</key_name> with the name of the key you want, or
+L</main_key_name> when the keypad keys should count as the main keyboard
+keys they stand for. A dispatch table keeps longer lists readable:
 
 	use Clay::UI::Enum::Result;
 

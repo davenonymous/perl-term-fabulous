@@ -69,15 +69,19 @@ One of C<TB_EVENT_KEY>, C<TB_EVENT_RESIZE>, C<TB_EVENT_MOUSE>.
 
 =item C<mod>
 
-Bitwise C<TB_MOD_*> modifiers.
+Bitwise C<TB_MOD_*> modifiers, and the C<TF_MOD_SUPER>,
+C<TF_MOD_HYPER> and C<TF_MOD_META> of the kitty keyboard protocol.
 
 =item C<key>
 
-A C<TB_KEY_*> code, 0 for a printable character.
+A C<TB_KEY_*> or C<TF_KEY_*> code, 0 for a printable character.
 
 =item C<ch>
 
 The Unicode codepoint of a printable character, 0 for a special key.
+With the kitty keyboard protocol it also holds the key of a Ctrl
+combination the legacy encoding cannot carry, such as Ctrl+Enter or
+Ctrl+I (see L<Term::Fabulous::Termbox/tf_install_input_parser>).
 
 =item C<w>, C<h>
 

@@ -8,7 +8,7 @@ The compile-time options Term::Fabulous builds it with live in tf_termbox.h;
 termbox2.c is the one translation unit that defines TB_IMPL.
 
 Updating termbox2: the Term::Fabulous input parser in termbox2.c (Alt
-keys, SGR mouse reports) hooks in through tb_set_func(TB_FUNC_EXTRACT_PRE)
+keys, SGR mouse reports, kitty keyboard protocol key reports) hooks in through tb_set_func(TB_FUNC_EXTRACT_PRE)
 and reads the input buffer global.in directly. Upstream marks tb_set_func
 and TB_FUNC_EXTRACT_PRE for removal in version 3.x (ABI version 3, see the
 "Deprecation notice" in termbox2.h). Before taking a 3.x release,
@@ -18,7 +18,8 @@ it feeds raw escape sequences through the parser.
 Inline mode (tf_init_inline_rwfd() in termbox2.c) repeats the steps of
 tb_init_rwfd() with termbox2's static init functions and empties the
 TB_CAP_ENTER_CA, TB_CAP_EXIT_CA and TB_CAP_CLEAR_SCREEN entries of
-global.caps; tf_cursor_position() appends to global.in, and
+global.caps; tf_cursor_position() and tf_kitty_keyboard_query() append
+to global.in, and
 tf_reset_attrs() resets global.last_fg and global.last_bg. After
 updating termbox2.h, compare tb_init_rwfd() with tf_init_inline_rwfd()
 and check that tb_deinit() and resize_cellbufs() still take the screen

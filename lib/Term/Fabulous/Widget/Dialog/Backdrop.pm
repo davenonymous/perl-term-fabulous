@@ -61,7 +61,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 	method _handle_key ($event) {
 		my $owner = $dialog;
 		return Clay::UI::Enum::Result->CONTINUE unless defined $owner && $owner->is_open;
-		$owner->close if ( $event->key_name // '' ) eq 'Escape' && $owner->close_on_escape;
+		$owner->close if ( $event->main_key_name // '' ) eq 'Escape' && $owner->close_on_escape;
 		return Clay::UI::Enum::Result->HANDLED;
 	}
 

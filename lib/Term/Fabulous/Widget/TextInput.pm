@@ -182,7 +182,7 @@ class Term::Fabulous::Widget::TextInput
 		my $text = $event->text;
 		return $self->apply_edit( $editor->type($text) ) if defined $text && !$read_only;
 
-		my $name = $event->key_name // return 0;
+		my $name = $event->main_key_name // return 0;
 		if ( $self->hides_text ) {
 			return 0 if $COPIES{$name};
 			$name = $WHOLE_TEXT_KEY_FOR{$name} // $name;
@@ -558,8 +558,9 @@ Returns 1.
 
 =head1 KEYS
 
-The keys below are named as L<Term::Fabulous::Event::KeyPress/key_name>
-returns them. A text input uses them while it has the focus and is
+The keys below are named as L<Term::Fabulous::Event::KeyPress/main_key_name>
+returns them, so the keypad keys a terminal with the kitty keyboard
+protocol tells apart work as their main keyboard keys. A text input uses them while it has the focus and is
 enabled; they then do not bubble. All other keys bubble on to the
 ancestors: for example C<Escape>, C<Tab>, C<BackTab> (C<Shift+Tab>),
 C<F1> to C<F12> and C<Alt+> combinations. L<Term::Fabulous> moves the

@@ -104,7 +104,7 @@ class Term::Fabulous::Widget::Checkbox
 	}
 
 	method handle_key ($event) {
-		my $name = $event->key_name // return 0;
+		my $name = $event->main_key_name // return 0;
 		return 0 unless $name eq 'Space' || $name eq 'Enter';
 		$self->toggle;
 		return 1;

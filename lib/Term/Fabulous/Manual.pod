@@ -1287,7 +1287,8 @@ modifiers in front in the fixed order C<Ctrl+>, C<Alt+>, C<Shift+>, for
 example C<Ctrl+W> or C<Ctrl+Shift+Left>. C<key_name> returns C<undef> for
 keys without a name.
 
-What a terminal can report is limited, and the names reflect it:
+What a terminal can report is limited, and the names reflect it, unless
+the terminal speaks the kitty keyboard protocol (see below):
 
 =over
 
@@ -1313,6 +1314,20 @@ sequences of other keys. Modifiers on special keys work in most
 terminals: C<Alt+Down>, C<Ctrl+Left>, C<Shift+Home>.
 
 =back
+
+Terminals that speak the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
+lift these limits. L<Term::Fabulous/run> switches the protocol on when
+the terminal has it (the C<kitty_keyboard> parameter of
+L<Term::Fabulous/new> turns that off). Then every Ctrl combination has
+its own name (C<Ctrl+I>, C<Ctrl+Shift+W>, C<Ctrl+Enter>), C<Alt+[> can
+be bound, the modifiers C<Super+>, C<Hyper+> and C<Meta+> follow
+C<Shift+>, and keys such as C<F13> to C<F35>, C<KeypadEnter> and the
+media keys are reported. Keys typed without a modifier keep their
+names. Bindings that should treat the keypad keys like the main
+keyboard keys compare C<< $event->main_key_name >> instead, as the
+built-in widgets do. See
+L<Term::Fabulous::Event::KeyPress/THE KITTY KEYBOARD PROTOCOL>.
 
 For typing, use C<< $event->text >>: it returns the typed character as a
 character string, or C<undef> for keys that do not type anything (and

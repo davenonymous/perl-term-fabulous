@@ -1,6 +1,21 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Kitty keyboard protocol: run asks the terminal whether it
+          speaks the protocol and switches it on (flags 1 and 4) until
+          run returns; terminals without it are read as before, and
+          Term::Fabulous->new( kitty_keyboard => 0 ) leaves it off.
+          kitty_keyboard_active tells whether run uses it. Ctrl
+          combinations get their own names (Ctrl+I, Ctrl+Shift+W,
+          Ctrl+Enter), Alt+[ can be bound, the Super, Hyper and Meta
+          modifiers and the keys F13 to F35, the keypad, the lock and
+          media keys are reported. KeyPress gains main_key_name, which
+          names the keypad keys after the main keyboard keys; the
+          built-in widgets bind their keys with it.
+          Term::Fabulous::Termbox gains tf_kitty_keyboard_query, the
+          TF_KEY_* kitty keys and TF_MOD_SUPER, TF_MOD_HYPER and
+          TF_MOD_META; its input parser decodes CSI u key reports and
+          modified function keys with any modifier
         - Inline mode: Term::Fabulous->new( inline => $rows ) draws the
           user interface into that many rows below the shell's output
           instead of taking over the screen, draws the final state and

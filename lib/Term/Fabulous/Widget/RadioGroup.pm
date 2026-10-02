@@ -152,7 +152,7 @@ class Term::Fabulous::Widget::RadioGroup
 	}
 
 	method handle_key ($event) {
-		my $name = $event->key_name // return 0;
+		my $name = $event->main_key_name // return 0;
 		my $cursor = $self->cursor_button // return 0;
 
 		if ( $name eq 'Space' || $name eq 'Enter' ) {
@@ -451,7 +451,7 @@ buttons' values when they are painted.
 
 	class My::RadioGroup :isa(Term::Fabulous::Widget::RadioGroup) {
 		method handle_key :override ($event) {
-			if ( ( $event->key_name // '' ) eq 'Delete' ) {
+			if ( ( $event->main_key_name // '' ) eq 'Delete' ) {
 				$self->value(undef);    # clear the selection
 				return 1;
 			}

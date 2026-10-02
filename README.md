@@ -177,6 +177,23 @@ first. Unknown parameters die
     `Mouse` or `MouseMove` events are fired. Inline mode has no mouse
     support: `mouse` with a true value and `inline` together die.
 
+- `kitty_keyboard`
+
+    A boolean. Default: 1. With 1, ["run"](#run) asks the terminal whether it
+    speaks the
+    [kitty keyboard protocol](https://sw.kovidgoyal.net/kitty/keyboard-protocol/)
+    and, if it does, switches the protocol on until `run` returns. The
+    terminal then reports keys the legacy encodings cannot tell apart
+    (Ctrl+I and Tab, Ctrl+Shift+W and Ctrl+W, Escape and the start of Alt
+    plus a key), the Super, Hyper and Meta modifiers, and keys such as F13
+    to F35, the keypad and media keys; see
+    ["THE KITTY KEYBOARD PROTOCOL" in Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress#THE-KITTY-KEYBOARD-PROTOCOL). A
+    terminal without the protocol answers that it has none, and the keys
+    are read as before. The question costs one exchange with the terminal
+    when `run` starts, at most half a second for a terminal that does not
+    answer at all. With 0, the terminal is not asked and the protocol stays
+    off. ["kitty\_keyboard\_active"](#kitty_keyboard_active) tells whether `run` uses it.
+
 - `output_mode`
 
     Optional, and only one value is allowed: `TB_OUTPUT_TRUECOLOR` from
@@ -358,6 +375,26 @@ Returns the `inline` constructor parameter. Read only.
 
 Returns whether the mouse is reported: the `mouse` constructor
 parameter, or its default (1, or 0 in inline mode). Read only.
+
+## kitty\_keyboard
+
+```perl
+     my $wanted = $ui->kitty_keyboard;
+```
+
+Returns the `kitty_keyboard` constructor parameter, or its default
+(1). Read only.
+
+## kitty\_keyboard\_active
+
+```perl
+     my $in_use = $ui->kitty_keyboard_active;
+```
+
+Returns 1 while ["run"](#run) uses the kitty keyboard protocol: from the
+start of `run`, before `Start` fires, until `run` returns, when the
+terminal speaks the protocol and `kitty_keyboard` is 1. Returns 0
+otherwise, and always outside `run`. Read only.
 
 ## output\_mode
 

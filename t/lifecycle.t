@@ -47,6 +47,7 @@ sub eof_reached { return Term::Fabulous::Termbox::tf_readable_bytes( fileno $tty
 		tb_set_output_mode => sub {TB_OK},
 		tb_send            => sub {TB_OK},
 		tf_install_input_parser => sub {TB_OK},
+		tf_kitty_keyboard_query => sub { $calls{tf_kitty_keyboard_query}++; ${ $_[1] } = 0; TB_OK },    # a terminal without the protocol
 		tb_get_fds         => sub { ${ $_[0] } = fileno $tty_read; ${ $_[1] } = fileno $resize_read; TB_OK },
 		tb_last_errno      => sub {$last_errno},
 		tb_peek_event      => sub {
@@ -217,6 +218,27 @@ subtest 'inline mode' => sub {
 
 	$cursor = undef;
 	like dies { $inline->run }, qr/^Term::Fabulous: the terminal did not report its cursor position/, 'a terminal that does not answer ends run';
+};
+
+subtest 'kitty keyboard protocol' => sub {
+	my ( $sent, @active_at_start ) = ('');
+	no warnings 'redefine';
+	local *Term::Fabulous::tf_kitty_keyboard_query = sub { $calls{tf_kitty_keyboard_query}++; ${ $_[1] } = 1; TB_OK };
+	local *Term::Fabulous::tb_send                 = sub { $sent .= $_[0]; TB_OK };
+
+	my $kitty = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, mouse => 0 );
+	$kitty->root->on( Start => sub { push @active_at_start, $kitty->kitty_keyboard_active; $kitty->loop->stop; return } );
+	ok lives { $kitty->run }, 'run returns';
+	is \@active_at_start, [1], 'a terminal that reports its flags gets the protocol';
+	is $sent, "\e[>5u\e[<u", 'the flags are pushed at the start and popped at the end';
+	is $kitty->kitty_keyboard_active, 0, 'and run no longer uses it';
+
+	( $sent, @active_at_start ) = ('');
+	my $queries = $calls{tf_kitty_keyboard_query};
+	my $legacy  = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, mouse => 0, kitty_keyboard => 0 );
+	$legacy->root->on( Start => sub { push @active_at_start, $legacy->kitty_keyboard_active; $legacy->loop->stop; return } );
+	ok lives { $legacy->run }, 'run returns with kitty_keyboard => 0';
+	is [ $calls{tf_kitty_keyboard_query}, \@active_at_start, $sent ], [ $queries, [0], '' ], 'the terminal is not asked';
 };
 
 subtest 'terminal input errors' => sub {

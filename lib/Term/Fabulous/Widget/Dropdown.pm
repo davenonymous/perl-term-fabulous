@@ -313,7 +313,7 @@ class Term::Fabulous::Widget::Dropdown
 		my $text = $event->text;
 		return $self->_type_ahead($text) if defined $text && $text ne ' ';
 
-		my $name = $event->key_name // return 0;
+		my $name = $event->main_key_name // return 0;
 		return $self->_handle_key_while_open($name) if $self->is_open;
 
 		if ( $name eq 'Enter' || $name eq 'Space' || $name eq 'Alt+Down' || $name eq 'F4' ) {

@@ -40,7 +40,7 @@ class Term::Fabulous
 		tb_init tf_init_inline tb_shutdown tb_width tb_height tb_hide_cursor tb_clear
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
 		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
-		tf_cursor_position tf_reset_attrs
+		tf_cursor_position tf_reset_attrs tf_kitty_keyboard_query
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
@@ -66,11 +66,20 @@ class Term::Fabulous
 	use constant REPORT_MOUSE_MOTION      => "\x1b[?1003h";
 	use constant STOP_MOUSE_MOTION_REPORT => "\x1b[?1003l";
 
+	# The kitty keyboard protocol with its flags 1 (disambiguate escape
+	# codes) and 4 (report alternate keys), pushed onto the terminal's
+	# stack of flags and popped off again.
+	use constant PUSH_KITTY_KEYBOARD             => "\x1b[>5u";
+	use constant POP_KITTY_KEYBOARD              => "\x1b[<u";
+	use constant KITTY_KEYBOARD_QUERY_TIMEOUT_MS => 500;
+
 	use constant CURSOR_REPORT_TIMEOUT_MS => 1000;
 	use constant ERASE_BELOW              => "\x1b[J";
 
 	field $inline :param :reader = undef;    # the rows of the inline region, or undef for the full screen
 	field $mouse :param :reader  = undef;
+	field $kitty_keyboard :param :reader = 1;
+	field $kitty_keyboard_active :reader = 0;    # whether run asked the terminal for the protocol
 	field $loop :reader;
 	field $termbox_draw_interval :reader            = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
@@ -162,6 +171,8 @@ class Term::Fabulous
 		$_terminal_is_open = 0;
 		$self->_detach_notifiers;
 		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
+		tb_send(POP_KITTY_KEYBOARD) if $kitty_keyboard_active;    # before termbox2 leaves the alternate screen, which has a stack of its own
+		$kitty_keyboard_active = 0;
 		$self->_leave_inline_region if defined $self->termbox_inline_top;
 		tb_shutdown();
 		return;
@@ -241,6 +252,7 @@ class Term::Fabulous
 		_check_termbox( 'tb_set_input_mode',  tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
 		_check_termbox( 'tf_install_input_parser', tf_install_input_parser() );
 		_check_termbox( 'tb_send', tb_send(REPORT_MOUSE_MOTION) ) if $mouse;
+		$self->_use_kitty_keyboard if $kitty_keyboard;
 		_check_termbox( 'tb_hide_cursor', tb_hide_cursor() );
 
 		my ( $width, $height ) = ( tb_width(), tb_height() );
@@ -248,6 +260,18 @@ class Term::Fabulous
 			if $width < 1 || $height < 1;
 		$self->width($width);
 		$self->height( defined $inline ? $self->_anchor_inline_region($height) : $height );
+		return;
+	}
+
+	# A terminal that does not answer the query does not speak the
+	# protocol; the input parser reads the legacy encodings as before.
+	method _use_kitty_keyboard () {
+		my $rc = tf_kitty_keyboard_query( KITTY_KEYBOARD_QUERY_TIMEOUT_MS, \my $supported );
+		return if $rc == TB_ERR_NO_EVENT;
+		_check_termbox( 'tf_kitty_keyboard_query', $rc );
+		return unless $supported;
+		_check_termbox( 'tb_send', tb_send(PUSH_KITTY_KEYBOARD) );
+		$kitty_keyboard_active = 1;
 		return;
 	}
 
@@ -286,7 +310,7 @@ class Term::Fabulous
 		$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
 		$_draw_timer->start;
 		$self->_watch_terminal_input;
-		$self->_drain_termbox_events if defined $inline;    # keys the cursor position query read ahead
+		$self->_drain_termbox_events if defined $inline || $kitty_keyboard;    # keys the terminal queries read ahead
 		return;
 	}
 
@@ -760,6 +784,23 @@ for itself, so the user can select and copy text as usual, and no
 C<Mouse> or C<MouseMove> events are fired. Inline mode has no mouse
 support: C<mouse> with a true value and C<inline> together die.
 
+=item C<kitty_keyboard>
+
+A boolean. Default: 1. With 1, L</run> asks the terminal whether it
+speaks the
+L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
+and, if it does, switches the protocol on until C<run> returns. The
+terminal then reports keys the legacy encodings cannot tell apart
+(Ctrl+I and Tab, Ctrl+Shift+W and Ctrl+W, Escape and the start of Alt
+plus a key), the Super, Hyper and Meta modifiers, and keys such as F13
+to F35, the keypad and media keys; see
+L<Term::Fabulous::Event::KeyPress/THE KITTY KEYBOARD PROTOCOL>. A
+terminal without the protocol answers that it has none, and the keys
+are read as before. The question costs one exchange with the terminal
+when C<run> starts, at most half a second for a terminal that does not
+answer at all. With 0, the terminal is not asked and the protocol stays
+off. L</kitty_keyboard_active> tells whether C<run> uses it.
+
 =item C<output_mode>
 
 Optional, and only one value is allowed: C<TB_OUTPUT_TRUECOLOR> from
@@ -957,6 +998,22 @@ Returns the C<inline> constructor parameter. Read only.
 
 Returns whether the mouse is reported: the C<mouse> constructor
 parameter, or its default (1, or 0 in inline mode). Read only.
+
+=head2 kitty_keyboard
+
+	my $wanted = $ui->kitty_keyboard;
+
+Returns the C<kitty_keyboard> constructor parameter, or its default
+(1). Read only.
+
+=head2 kitty_keyboard_active
+
+	my $in_use = $ui->kitty_keyboard_active;
+
+Returns 1 while L</run> uses the kitty keyboard protocol: from the
+start of C<run>, before C<Start> fires, until C<run> returns, when the
+terminal speaks the protocol and C<kitty_keyboard> is 1. Returns 0
+otherwise, and always outside C<run>. Read only.
 
 =head2 output_mode
 

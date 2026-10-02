@@ -278,7 +278,7 @@ class Term::Fabulous::Widget::TextArea
 	# ---------------------------------------------------------------------
 
 	method handle_key :override ($event) {
-		my $name = $event->key_name // '';
+		my $name = $event->main_key_name // '';
 		if ( my $vertical = $VERTICAL_BY_KEY{$name} ) {
 			my ( $direction, $unit, $extend ) = @$vertical;
 			$self->_move_vertically( $direction * ( $unit eq 'page' ? max( 1, $self->rows - 1 ) : 1 ), $extend );

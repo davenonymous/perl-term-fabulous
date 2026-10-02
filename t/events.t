@@ -9,8 +9,8 @@ use Scalar::Util qw(refaddr);
 use Time::HiRes ();
 use Term::Fabulous::Termbox qw(
 	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
-	TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_RIGHT
-	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION
+	TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_RIGHT TF_KEY_F13 TF_KEY_KP_LEFT TF_KEY_KP_7 TF_KEY_KP_BEGIN
+	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION TF_MOD_SUPER TF_MOD_HYPER TF_MOD_META
 );
 use Clay::UI::Revision qw(current_revision);
 use Term::Fabulous;
@@ -257,6 +257,21 @@ subtest 'key names' => sub {
 		'named control keys, without the Ctrl bit termbox2 sets on them';
 	is [ $name->( 0x20, 0 )->key_name, $name->( 0, 0x20 )->key_name, $name->( 0x20, 0 )->text ], [ 'Space', 'Space', ' ' ], 'Space either way';
 	is [ $name->( 0, 0x85 )->key_name, $name->( 0, 0x85 )->text ], [ undef, undef ], 'a C1 control character has neither a name nor a text';
+};
+
+subtest 'key names of the kitty keyboard protocol' => sub {
+	my $name = sub { Term::Fabulous::Event::KeyPress->new( key => $_[0], char => $_[1], modifiers => $_[2] // 0 ) };
+	is [ map { $_->key_name } $name->( 0, ord 'i', TB_MOD_CTRL ), $name->( 0, ord '1', TB_MOD_CTRL | TB_MOD_SHIFT ) ], [ 'Ctrl+I', 'Ctrl+Shift+1' ],
+		'a Ctrl combination in char is named in upper case';
+	is $name->( 0, 0x0D, TB_MOD_CTRL )->key_name, 'Ctrl+Enter', 'a named control key in char takes the Ctrl bit as it is';
+	is $name->( 0x17, 0, TB_MOD_CTRL | TB_MOD_SHIFT )->key_name, 'Ctrl+Shift+W', 'Shift with a control byte';
+	is $name->( TB_KEY_ARROW_LEFT, 0, TB_MOD_CTRL | TB_MOD_SHIFT | TF_MOD_SUPER | TF_MOD_HYPER | TF_MOD_META )->key_name, 'Ctrl+Shift+Super+Hyper+Meta+Left',
+		'Super, Hyper and Meta after Shift';
+	is [ $name->( 0, ord 'a', TF_MOD_SUPER )->key_name, $name->( 0, ord 'a', TF_MOD_SUPER )->text ], [ 'Super+a', undef ], 'Super types nothing';
+	is $name->( TF_KEY_F13, 0 )->key_name, 'F13', 'keys without a legacy encoding';
+	is [ map { [ $_->key_name, $_->main_key_name ] } $name->( TF_KEY_KP_LEFT, 0, TB_MOD_CTRL ), $name->( TF_KEY_KP_7, 0, TB_MOD_ALT ), $name->( TF_KEY_KP_BEGIN, 0 ) ],
+		[ [ 'Ctrl+KeypadLeft', 'Ctrl+Left' ], [ 'Alt+Keypad7', 'Alt+7' ], [ 'KeypadBegin', 'KeypadBegin' ] ],
+		'main_key_name names the keypad keys after the main keyboard keys';
 };
 
 subtest 'Tab and Shift-Tab move focus' => sub {

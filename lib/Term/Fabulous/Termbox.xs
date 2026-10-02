@@ -277,6 +277,17 @@ tf_cursor_position(int timeout_ms, SV *x_ref, SV *y_ref)
 		RETVAL
 
 int
+tf_kitty_keyboard_query(int timeout_ms, SV *supported_ref)
+	PREINIT:
+		int supported = 0;
+	CODE:
+		scalar_ref_or_croak(aTHX_ supported_ref, "tf_kitty_keyboard_query", "answer");
+		RETVAL = tf_kitty_keyboard_query(timeout_ms, &supported);
+		if (RETVAL == TB_OK) sv_setiv(SvRV(supported_ref), supported);
+	OUTPUT:
+		RETVAL
+
+int
 tf_readable_bytes(int fd)
 	PREINIT:
 		int count = 0;
@@ -425,6 +436,78 @@ BOOT:
 	EXPORT_IV("keys", TF_KEY_MOUSE_MOVE);
 	EXPORT_IV("keys", TF_KEY_MOUSE_WHEEL_LEFT);
 	EXPORT_IV("keys", TF_KEY_MOUSE_WHEEL_RIGHT);
+	/* Keys only the kitty keyboard protocol reports, see tf_termbox.h. */
+	EXPORT_IV("keys", TF_KEY_CAPS_LOCK);
+	EXPORT_IV("keys", TF_KEY_SCROLL_LOCK);
+	EXPORT_IV("keys", TF_KEY_NUM_LOCK);
+	EXPORT_IV("keys", TF_KEY_PRINT_SCREEN);
+	EXPORT_IV("keys", TF_KEY_PAUSE);
+	EXPORT_IV("keys", TF_KEY_MENU);
+	EXPORT_IV("keys", TF_KEY_F13);
+	EXPORT_IV("keys", TF_KEY_F14);
+	EXPORT_IV("keys", TF_KEY_F15);
+	EXPORT_IV("keys", TF_KEY_F16);
+	EXPORT_IV("keys", TF_KEY_F17);
+	EXPORT_IV("keys", TF_KEY_F18);
+	EXPORT_IV("keys", TF_KEY_F19);
+	EXPORT_IV("keys", TF_KEY_F20);
+	EXPORT_IV("keys", TF_KEY_F21);
+	EXPORT_IV("keys", TF_KEY_F22);
+	EXPORT_IV("keys", TF_KEY_F23);
+	EXPORT_IV("keys", TF_KEY_F24);
+	EXPORT_IV("keys", TF_KEY_F25);
+	EXPORT_IV("keys", TF_KEY_F26);
+	EXPORT_IV("keys", TF_KEY_F27);
+	EXPORT_IV("keys", TF_KEY_F28);
+	EXPORT_IV("keys", TF_KEY_F29);
+	EXPORT_IV("keys", TF_KEY_F30);
+	EXPORT_IV("keys", TF_KEY_F31);
+	EXPORT_IV("keys", TF_KEY_F32);
+	EXPORT_IV("keys", TF_KEY_F33);
+	EXPORT_IV("keys", TF_KEY_F34);
+	EXPORT_IV("keys", TF_KEY_F35);
+	EXPORT_IV("keys", TF_KEY_KP_0);
+	EXPORT_IV("keys", TF_KEY_KP_1);
+	EXPORT_IV("keys", TF_KEY_KP_2);
+	EXPORT_IV("keys", TF_KEY_KP_3);
+	EXPORT_IV("keys", TF_KEY_KP_4);
+	EXPORT_IV("keys", TF_KEY_KP_5);
+	EXPORT_IV("keys", TF_KEY_KP_6);
+	EXPORT_IV("keys", TF_KEY_KP_7);
+	EXPORT_IV("keys", TF_KEY_KP_8);
+	EXPORT_IV("keys", TF_KEY_KP_9);
+	EXPORT_IV("keys", TF_KEY_KP_DECIMAL);
+	EXPORT_IV("keys", TF_KEY_KP_DIVIDE);
+	EXPORT_IV("keys", TF_KEY_KP_MULTIPLY);
+	EXPORT_IV("keys", TF_KEY_KP_SUBTRACT);
+	EXPORT_IV("keys", TF_KEY_KP_ADD);
+	EXPORT_IV("keys", TF_KEY_KP_ENTER);
+	EXPORT_IV("keys", TF_KEY_KP_EQUAL);
+	EXPORT_IV("keys", TF_KEY_KP_SEPARATOR);
+	EXPORT_IV("keys", TF_KEY_KP_LEFT);
+	EXPORT_IV("keys", TF_KEY_KP_RIGHT);
+	EXPORT_IV("keys", TF_KEY_KP_UP);
+	EXPORT_IV("keys", TF_KEY_KP_DOWN);
+	EXPORT_IV("keys", TF_KEY_KP_PAGE_UP);
+	EXPORT_IV("keys", TF_KEY_KP_PAGE_DOWN);
+	EXPORT_IV("keys", TF_KEY_KP_HOME);
+	EXPORT_IV("keys", TF_KEY_KP_END);
+	EXPORT_IV("keys", TF_KEY_KP_INSERT);
+	EXPORT_IV("keys", TF_KEY_KP_DELETE);
+	EXPORT_IV("keys", TF_KEY_KP_BEGIN);
+	EXPORT_IV("keys", TF_KEY_MEDIA_PLAY);
+	EXPORT_IV("keys", TF_KEY_MEDIA_PAUSE);
+	EXPORT_IV("keys", TF_KEY_MEDIA_PLAY_PAUSE);
+	EXPORT_IV("keys", TF_KEY_MEDIA_REVERSE);
+	EXPORT_IV("keys", TF_KEY_MEDIA_STOP);
+	EXPORT_IV("keys", TF_KEY_MEDIA_FAST_FORWARD);
+	EXPORT_IV("keys", TF_KEY_MEDIA_REWIND);
+	EXPORT_IV("keys", TF_KEY_MEDIA_TRACK_NEXT);
+	EXPORT_IV("keys", TF_KEY_MEDIA_TRACK_PREVIOUS);
+	EXPORT_IV("keys", TF_KEY_MEDIA_RECORD);
+	EXPORT_IV("keys", TF_KEY_LOWER_VOLUME);
+	EXPORT_IV("keys", TF_KEY_RAISE_VOLUME);
+	EXPORT_IV("keys", TF_KEY_MUTE_VOLUME);
 	/* Colors and style bits. */
 	EXPORT_UV("colors", TB_DEFAULT);
 	EXPORT_UV("colors", TB_BLACK);
@@ -462,6 +545,9 @@ BOOT:
 	EXPORT_IV("event", TB_MOD_CTRL);
 	EXPORT_IV("event", TB_MOD_SHIFT);
 	EXPORT_IV("event", TB_MOD_MOTION);
+	EXPORT_IV("event", TF_MOD_SUPER);
+	EXPORT_IV("event", TF_MOD_HYPER);
+	EXPORT_IV("event", TF_MOD_META);
 	EXPORT_IV("event", TB_INPUT_CURRENT);
 	EXPORT_IV("event", TB_INPUT_ESC);
 	EXPORT_IV("event", TB_INPUT_ALT);

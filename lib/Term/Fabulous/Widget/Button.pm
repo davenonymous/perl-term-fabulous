@@ -53,7 +53,7 @@ class Term::Fabulous::Widget::Button
 		);
 		$self->on(
 			KeyPress => sub ($event) {
-				return $continue unless $ACTIVATES{ $event->key_name // '' };
+				return $continue unless $ACTIVATES{ $event->main_key_name // '' };
 				$weak_self->activate;
 				return;
 			}

@@ -76,7 +76,7 @@ class Term::Fabulous::Widget::TextField
 	}
 
 	method handle_key :override ($event) {
-		return $self->SUPER::handle_key($event) unless ( $event->key_name // '' ) eq 'Enter';
+		return $self->SUPER::handle_key($event) unless ( $event->main_key_name // '' ) eq 'Enter';
 		$self->fire_event( Term::Fabulous::Event::Submit->new( value => $self->value ) );
 		return 1;
 	}

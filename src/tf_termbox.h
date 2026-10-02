@@ -27,6 +27,92 @@
 #define TF_KEY_MOUSE_WHEEL_RIGHT (0xffff - 31)
 
 /*
+ * Keys only the kitty keyboard protocol reports, numbered below the
+ * mouse keys in the order of kitty's functional key table: the lock and
+ * system keys, then F13 to F35, the keypad and the media keys.
+ * tf_install_input_parser() makes tb_peek_event report them.
+ */
+#define TF_KEY_CAPS_LOCK            (0xffff - 32)
+#define TF_KEY_SCROLL_LOCK          (0xffff - 33)
+#define TF_KEY_NUM_LOCK             (0xffff - 34)
+#define TF_KEY_PRINT_SCREEN         (0xffff - 35)
+#define TF_KEY_PAUSE                (0xffff - 36)
+#define TF_KEY_MENU                 (0xffff - 37)
+#define TF_KEY_F13                  (0xffff - 38)
+#define TF_KEY_F14                  (0xffff - 39)
+#define TF_KEY_F15                  (0xffff - 40)
+#define TF_KEY_F16                  (0xffff - 41)
+#define TF_KEY_F17                  (0xffff - 42)
+#define TF_KEY_F18                  (0xffff - 43)
+#define TF_KEY_F19                  (0xffff - 44)
+#define TF_KEY_F20                  (0xffff - 45)
+#define TF_KEY_F21                  (0xffff - 46)
+#define TF_KEY_F22                  (0xffff - 47)
+#define TF_KEY_F23                  (0xffff - 48)
+#define TF_KEY_F24                  (0xffff - 49)
+#define TF_KEY_F25                  (0xffff - 50)
+#define TF_KEY_F26                  (0xffff - 51)
+#define TF_KEY_F27                  (0xffff - 52)
+#define TF_KEY_F28                  (0xffff - 53)
+#define TF_KEY_F29                  (0xffff - 54)
+#define TF_KEY_F30                  (0xffff - 55)
+#define TF_KEY_F31                  (0xffff - 56)
+#define TF_KEY_F32                  (0xffff - 57)
+#define TF_KEY_F33                  (0xffff - 58)
+#define TF_KEY_F34                  (0xffff - 59)
+#define TF_KEY_F35                  (0xffff - 60)
+#define TF_KEY_KP_0                 (0xffff - 61)
+#define TF_KEY_KP_1                 (0xffff - 62)
+#define TF_KEY_KP_2                 (0xffff - 63)
+#define TF_KEY_KP_3                 (0xffff - 64)
+#define TF_KEY_KP_4                 (0xffff - 65)
+#define TF_KEY_KP_5                 (0xffff - 66)
+#define TF_KEY_KP_6                 (0xffff - 67)
+#define TF_KEY_KP_7                 (0xffff - 68)
+#define TF_KEY_KP_8                 (0xffff - 69)
+#define TF_KEY_KP_9                 (0xffff - 70)
+#define TF_KEY_KP_DECIMAL           (0xffff - 71)
+#define TF_KEY_KP_DIVIDE            (0xffff - 72)
+#define TF_KEY_KP_MULTIPLY          (0xffff - 73)
+#define TF_KEY_KP_SUBTRACT          (0xffff - 74)
+#define TF_KEY_KP_ADD               (0xffff - 75)
+#define TF_KEY_KP_ENTER             (0xffff - 76)
+#define TF_KEY_KP_EQUAL             (0xffff - 77)
+#define TF_KEY_KP_SEPARATOR         (0xffff - 78)
+#define TF_KEY_KP_LEFT              (0xffff - 79)
+#define TF_KEY_KP_RIGHT             (0xffff - 80)
+#define TF_KEY_KP_UP                (0xffff - 81)
+#define TF_KEY_KP_DOWN              (0xffff - 82)
+#define TF_KEY_KP_PAGE_UP           (0xffff - 83)
+#define TF_KEY_KP_PAGE_DOWN         (0xffff - 84)
+#define TF_KEY_KP_HOME              (0xffff - 85)
+#define TF_KEY_KP_END               (0xffff - 86)
+#define TF_KEY_KP_INSERT            (0xffff - 87)
+#define TF_KEY_KP_DELETE            (0xffff - 88)
+#define TF_KEY_KP_BEGIN             (0xffff - 89)
+#define TF_KEY_MEDIA_PLAY           (0xffff - 90)
+#define TF_KEY_MEDIA_PAUSE          (0xffff - 91)
+#define TF_KEY_MEDIA_PLAY_PAUSE     (0xffff - 92)
+#define TF_KEY_MEDIA_REVERSE        (0xffff - 93)
+#define TF_KEY_MEDIA_STOP           (0xffff - 94)
+#define TF_KEY_MEDIA_FAST_FORWARD   (0xffff - 95)
+#define TF_KEY_MEDIA_REWIND         (0xffff - 96)
+#define TF_KEY_MEDIA_TRACK_NEXT     (0xffff - 97)
+#define TF_KEY_MEDIA_TRACK_PREVIOUS (0xffff - 98)
+#define TF_KEY_MEDIA_RECORD         (0xffff - 99)
+#define TF_KEY_LOWER_VOLUME         (0xffff - 100)
+#define TF_KEY_RAISE_VOLUME         (0xffff - 101)
+#define TF_KEY_MUTE_VOLUME          (0xffff - 102)
+
+/*
+ * Modifiers only the kitty keyboard protocol reports, in the bits of
+ * the event's mod that termbox2 leaves free.
+ */
+#define TF_MOD_SUPER 16
+#define TF_MOD_HYPER 32
+#define TF_MOD_META  64
+
+/*
  * Width of a grapheme cluster the way tb_present() measures it. termbox2
  * keeps tb_cluster_width() static, so termbox2.c exports this wrapper
  * from the same translation unit.
@@ -35,9 +121,11 @@ int tf_cluster_width(const uint32_t *codepoints, size_t count);
 
 /*
  * Reads the input termbox2 gets wrong before termbox2 sees it: Alt plus
- * a key, and SGR mouse reports with their motion, modifier and
- * horizontal wheel bits. Call it after every tb_init(); tb_shutdown()
- * forgets it. Returns a termbox2 status code.
+ * a key, SGR mouse reports with their motion, modifier and horizontal
+ * wheel bits, the kitty keyboard protocol's CSI u key reports, and
+ * modified function keys with modifiers termbox2 has no entry for.
+ * Call it after every tb_init(); tb_shutdown() forgets it. Returns a
+ * termbox2 status code.
  *
  * It relies on tb_set_func(TB_FUNC_EXTRACT_PRE) and on termbox2's
  * input buffer (global.in), which upstream removes in version 3.x; see
@@ -68,6 +156,18 @@ int tf_init_inline_rwfd(int rfd, int wfd);
  * status code.
  */
 int tf_cursor_position(int timeout_ms, int *x, int *y);
+
+/*
+ * Asks whether the terminal speaks the kitty keyboard protocol: the
+ * query for its flags (ESC [ ? u) followed by the one for its primary
+ * device attributes (ESC [ c), which every terminal answers. Waits up
+ * to timeout_ms milliseconds for that answer and sets *supported to 1
+ * when the flags were reported, else to 0. Input that arrives
+ * meanwhile stays queued for tb_peek_event. Returns TB_ERR_NO_EVENT
+ * when no device attributes arrived in time and no flags either, else
+ * a termbox2 status code.
+ */
+int tf_kitty_keyboard_query(int timeout_ms, int *supported);
 
 /*
  * Queues the reset of all colors and styles (SGR 0), and makes the next

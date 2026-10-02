@@ -29,6 +29,8 @@ subtest 'constants' => sub {
 	is [ sort keys %Term::Fabulous::Termbox::EXPORT_TAGS ], [qw(all api colors event keys return width)], 'export tags';
 	ok( ( grep { $_ eq 'TB_KEY_MOUSE_WHEEL_DOWN' } @{ $Term::Fabulous::Termbox::EXPORT_TAGS{keys} } ), 'constants are listed under their tag' );
 	is [ TF_KEY_MOUSE_MOVE, TF_KEY_MOUSE_WHEEL_LEFT, TF_KEY_MOUSE_WHEEL_RIGHT ], [ 0xFFFF - 29, 0xFFFF - 30, 0xFFFF - 31 ], 'the Term::Fabulous mouse keys sit below the termbox2 ones';
+	is [ TF_KEY_CAPS_LOCK, TF_KEY_MUTE_VOLUME ], [ 0xFFFF - 32, 0xFFFF - 102 ], 'the kitty keys below them';
+	is [ TF_MOD_SUPER, TF_MOD_HYPER, TF_MOD_META ], [ 16, 32, 64 ], 'the kitty modifiers in the bits termbox2 leaves free';
 };
 
 subtest 'widths' => sub {
@@ -100,6 +102,45 @@ subtest 'input parser' => sub {
 	is $feed->("\x1b[<20;300;40M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, TB_MOD_SHIFT | TB_MOD_CTRL, 299, 39 ] ], 'modifier bits and coordinates beyond 255';
 	is $feed->("\x1b[<0;1"), [], 'a partial report waits';
 	is $feed->(";1M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, 0, 0, 0 ] ], 'until the rest arrives';
+
+	# kitty keyboard protocol key reports, as [key, ch, mod].
+	my $key = sub ($bytes) { [ map { [ @$_[ 1 .. 3 ] ] } @{ $feed->($bytes) } ] };
+	is $key->("\x1b[27u"),        [ [ TB_KEY_ESC, 0, 0 ] ],                                'Escape';
+	is $key->("\x1b[99;5u"),      [ [ TB_KEY_CTRL_C, 0, TB_MOD_CTRL ] ],                   'Ctrl plus a letter is its control byte';
+	is $key->("\x1b[119;6u"),     [ [ TB_KEY_CTRL_W, 0, TB_MOD_CTRL | TB_MOD_SHIFT ] ],    'and keeps Shift';
+	is $key->("\x1b[105;5u"),     [ [ 0, ord 'i', TB_MOD_CTRL ] ],                         'Ctrl+I is not Tab';
+	is $key->("\x1b[13;5u"),      [ [ 0, TB_KEY_ENTER, TB_MOD_CTRL ] ],                    'Ctrl+Enter has the byte in ch';
+	is $key->("\x1b[13;2u"),      [ [ TB_KEY_ENTER, 0, TB_MOD_SHIFT | TB_MOD_CTRL ] ],     'Shift+Enter is the byte, as termbox2 reports it';
+	is $key->("\x1b[9;2u"),       [ [ TB_KEY_BACK_TAB, 0, 0 ] ],                           'Shift+Tab is BackTab';
+	is $key->("\x1b[49:33;4u"),   [ [ 0, ord '!', TB_MOD_ALT ] ],                          'Alt+Shift takes the shifted key';
+	is $key->("\x1b[97;67u"),     [ [ 0, ord 'a', TB_MOD_ALT ] ],                          'Caps Lock is dropped';
+	is $key->("\x1b[97;9u"),      [ [ 0, ord 'a', TF_MOD_SUPER ] ],                        'Super';
+	is $key->("\x1b[57376u\x1b[57414;5u\x1b[57440u"),
+		[ [ TF_KEY_F13, 0, 0 ], [ TF_KEY_KP_ENTER, 0, TB_MOD_CTRL ], [ TF_KEY_MUTE_VOLUME, 0, 0 ] ], 'keys without a legacy encoding';
+	is $key->("\x1b[1;9A\x1b[3;5~"), [ [ TB_KEY_ARROW_UP, 0, TF_MOD_SUPER ], [ TB_KEY_DELETE, 0, TB_MOD_CTRL ] ], 'legacy function keys with any modifier';
+	is $key->("\x1b[E"),          [ [ TF_KEY_KP_BEGIN, 0, 0 ] ],                           'the keypad Begin key';
+	is $key->("\x1b[99;"),        [],                                                      'a partial report waits';
+	is $key->("5u"),               [ [ TB_KEY_CTRL_C, 0, TB_MOD_CTRL ] ],                   'until the rest arrives';
+	tb_shutdown();
+};
+
+subtest 'kitty keyboard query' => sub {
+	pipe my $read, my $write or die "pipe: $!";
+	open my $sink, '>', '/dev/null' or die "/dev/null: $!";
+	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
+	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
+
+	syswrite $write, "a\x1b[?5u\x1b[?62;22c";
+	is tf_kitty_keyboard_query( 1000, \my $supported ), TB_OK, 'the terminal answers';
+	is $supported, 1, 'with its flags: it speaks the protocol';
+	my $event = Term::Fabulous::Termbox::Event->new;
+	is [ tb_peek_event( $event, 100 ), $event->ch ], [ TB_OK, ord 'a' ], 'the key before the answers stays queued';
+	is tb_peek_event( $event, 50 ), TB_ERR_NO_EVENT, 'the answers do not';
+
+	syswrite $write, "\x1b[?62;22c";
+	is [ tf_kitty_keyboard_query( 1000, \$supported ), $supported ], [ TB_OK, 0 ], 'device attributes alone: no protocol';
+	is tf_kitty_keyboard_query( 50, \$supported ), TB_ERR_NO_EVENT, 'no answer in time';
+	like dies { tf_kitty_keyboard_query( 50, 1 ) }, qr/tf_kitty_keyboard_query needs a scalar reference/, 'tf_kitty_keyboard_query wants a reference';
 	tb_shutdown();
 };
 

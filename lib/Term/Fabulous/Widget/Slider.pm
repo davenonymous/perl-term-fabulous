@@ -238,7 +238,7 @@ class Term::Fabulous::Widget::Slider
 	# ---------------------------------------------------------------------
 
 	method handle_key ($event) {
-		my $name = $event->key_name // return 0;
+		my $name = $event->main_key_name // return 0;
 		my $move = $MOVE_BY_KEY{$name} // return 0;
 		my ( $unit, $direction ) = @$move;
 		$self->_move_to(

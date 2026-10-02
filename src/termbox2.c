@@ -5,11 +5,13 @@
  * defines feature-test macros and hundreds of static helpers that have
  * no business meeting Perl's macros.
  *
- * Besides the library this file holds the two readers termbox2 lacks.
- * They run as termbox2's TB_FUNC_EXTRACT_PRE hook, before its own
- * parsers, and read the raw input buffer, which is static to this
+ * Besides the library this file holds the readers termbox2 lacks: Alt
+ * keys, SGR mouse reports and the kitty keyboard protocol's key
+ * reports. They run as termbox2's TB_FUNC_EXTRACT_PRE hook, before its
+ * own parsers, and read the raw input buffer, which is static to this
  * translation unit. It also holds inline mode (tf_init_inline and its
- * helpers), which reaches into termbox2's internals the same way.
+ * helpers) and the terminal queries, which reach into termbox2's
+ * internals the same way.
  */
 #define TB_IMPL
 #include "tf_termbox.h"
@@ -136,12 +138,258 @@ static int tf_extract_sgr_mouse(struct tb_event *event, size_t *consumed) {
 	return TB_OK;
 }
 
+/* Any larger number is not a key report: the largest Unicode codepoint. */
+#define TF_KEY_NUMBER_LIMIT 0x10ffff
+
+/* kitty's numbers for the keys of its functional key table that have
+ * no legacy encoding, and the private use area they come from. */
+#define TF_KITTY_CAPS_LOCK   57358
+#define TF_KITTY_MENU        57363
+#define TF_KITTY_F13         57376
+#define TF_KITTY_MUTE_VOLUME 57440
+#define TF_KITTY_KP_BEGIN    57427
+#define TF_PRIVATE_USE_FIRST 0xe000
+#define TF_PRIVATE_USE_LAST  0xf8ff
+
+/*
+ * The numbers of a CSI key report, ESC [ code:shifted ; modifiers ...
+ * final, that matter here; -1 marks one that is absent. Further
+ * sub-fields (base layout key, event type) and fields (text) are read
+ * over and ignored.
+ */
+struct tf_csi_key {
+	int code;
+	int shifted;
+	int modifiers;
+	char final;
+};
+
+static void tf_store_csi_number(struct tf_csi_key *report, int field, int sub_field, int value) {
+	if (field == 0 && sub_field == 0) report->code = value;
+	if (field == 0 && sub_field == 1) report->shifted = value;
+	if (field == 1 && sub_field == 0) report->modifiers = value;
+}
+
+/*
+ * Reads ESC [ followed by decimal numbers, ':' and ';', up to its final
+ * byte. Any other byte, such as the private markers '<', '?' and '>',
+ * means it is not a key report.
+ */
+static int tf_parse_csi_key(struct tf_csi_key *report, size_t *length) {
+	const char *buf = global.in.buf;
+	size_t len      = global.in.len;
+	int field       = 0;
+	int sub_field   = 0;
+	int value       = -1;
+	size_t i;
+
+	report->code      = -1;
+	report->shifted   = -1;
+	report->modifiers = -1;
+	for (i = 2; i < len; i++) {
+		char c = buf[i];
+		if (c >= '0' && c <= '9') {
+			value = (value < 0 ? 0 : value) * 10 + (c - '0');
+			if (value > TF_KEY_NUMBER_LIMIT) return TB_ERR;
+			continue;
+		}
+		tf_store_csi_number(report, field, sub_field, value);
+		value = -1;
+		if (c == ':') {
+			sub_field++;
+		} else if (c == ';') {
+			if (++field > 2) return TB_ERR;
+			sub_field = 0;
+		} else if (c >= 0x40 && c <= 0x7e) {
+			report->final = c;
+			*length       = i + 1;
+			return TB_OK;
+		} else {
+			return TB_ERR;
+		}
+	}
+	return TB_ERR_NEED_MORE;
+}
+
+/* kitty sends 1 plus a bit field; the lock keys (Caps Lock, Num Lock) are dropped. */
+static uint8_t tf_kitty_modifiers(int encoded) {
+	int bits    = encoded > 0 ? encoded - 1 : 0;
+	uint8_t mod = 0;
+
+	if (bits & 1) mod |= TB_MOD_SHIFT;
+	if (bits & 2) mod |= TB_MOD_ALT;
+	if (bits & 4) mod |= TB_MOD_CTRL;
+	if (bits & 8) mod |= TF_MOD_SUPER;
+	if (bits & 16) mod |= TF_MOD_HYPER;
+	if (bits & 32) mod |= TF_MOD_META;
+	return mod;
+}
+
+static int tf_key_event(struct tb_event *event, uint16_t key, uint32_t ch, uint8_t mod) {
+	event->type = TB_EVENT_KEY;
+	event->key  = key;
+	event->ch   = ch;
+	event->mod  = mod;
+	return TB_OK;
+}
+
+/* The TF_KEY_* code of a kitty functional key number, 0 for none. The
+ * codes run in the order of the numbers (see tf_termbox.h). */
+static uint16_t tf_kitty_functional_key(int code) {
+	if (code >= TF_KITTY_CAPS_LOCK && code <= TF_KITTY_MENU) return (uint16_t)(TF_KEY_CAPS_LOCK - (code - TF_KITTY_CAPS_LOCK));
+	if (code >= TF_KITTY_F13 && code <= TF_KITTY_MUTE_VOLUME) return (uint16_t)(TF_KEY_F13 - (code - TF_KITTY_F13));
+	return 0;
+}
+
+/* The key of CSI number ~, 0 for a number that is not a key. */
+static uint16_t tf_tilde_key(int number) {
+	switch (number) {
+		case 2: return TB_KEY_INSERT;
+		case 3: return TB_KEY_DELETE;
+		case 5: return TB_KEY_PGUP;
+		case 6: return TB_KEY_PGDN;
+		case 7: return TB_KEY_HOME;
+		case 8: return TB_KEY_END;
+		case 11: return TB_KEY_F1;
+		case 12: return TB_KEY_F2;
+		case 13: return TB_KEY_F3;
+		case 14: return TB_KEY_F4;
+		case 15: return TB_KEY_F5;
+		case 17: return TB_KEY_F6;
+		case 18: return TB_KEY_F7;
+		case 19: return TB_KEY_F8;
+		case 20: return TB_KEY_F9;
+		case 21: return TB_KEY_F10;
+		case 23: return TB_KEY_F11;
+		case 24: return TB_KEY_F12;
+		case TF_KITTY_KP_BEGIN: return TF_KEY_KP_BEGIN;
+	}
+	return 0;
+}
+
+/* The key of CSI 1 ; modifiers letter, 0 for a letter that is not a key.
+ * F3 has no letter: CSI 1 ; modifiers R is also a cursor position report. */
+static uint16_t tf_letter_key(char final) {
+	switch (final) {
+		case 'A': return TB_KEY_ARROW_UP;
+		case 'B': return TB_KEY_ARROW_DOWN;
+		case 'C': return TB_KEY_ARROW_RIGHT;
+		case 'D': return TB_KEY_ARROW_LEFT;
+		case 'E': return TF_KEY_KP_BEGIN;
+		case 'F': return TB_KEY_END;
+		case 'H': return TB_KEY_HOME;
+		case 'P': return TB_KEY_F1;
+		case 'Q': return TB_KEY_F2;
+		case 'S': return TB_KEY_F4;
+	}
+	return 0;
+}
+
+/*
+ * The legacy forms of the function keys, CSI number ; modifiers ~ and
+ * CSI 1 ; modifiers letter, when they carry modifiers: kitty adds Super,
+ * Hyper, Meta and the lock keys to the modifiers termbox2 knows. The
+ * unmodified forms are left to termbox2, which knows them from
+ * terminfo, except for the keypad's Begin key, which it has no code for.
+ */
+static int tf_function_key_event(const struct tf_csi_key *report, struct tb_event *event) {
+	uint16_t key = report->final == '~' ? tf_tilde_key(report->code) : tf_letter_key(report->final);
+
+	if (key == 0) return TB_ERR;
+	if (report->final != '~' && report->code > 1) return TB_ERR;
+	if (report->modifiers < 0 && key != TF_KEY_KP_BEGIN) return TB_ERR;
+	return tf_key_event(event, key, 0, tf_kitty_modifiers(report->modifiers));
+}
+
+/*
+ * Escape, Enter, Tab, Backspace and the other control codes. Without
+ * Ctrl they come as termbox2 reports their bytes: the byte as the key,
+ * with TB_MOD_CTRL on all but Escape, and Shift+Tab as TB_KEY_BACK_TAB.
+ * With Ctrl, which their bytes cannot carry, ch holds the byte instead
+ * and mod is exact.
+ */
+static int tf_kitty_control_key(struct tb_event *event, int code, uint8_t mod) {
+	if (mod & TB_MOD_CTRL) return tf_key_event(event, 0, (uint32_t)code, mod);
+	if (code == TB_KEY_TAB && mod == TB_MOD_SHIFT) return tf_key_event(event, TB_KEY_BACK_TAB, 0, 0);
+	if (code == TB_KEY_ESC) return tf_key_event(event, TB_KEY_ESC, 0, mod);
+	return tf_key_event(event, (uint16_t)code, 0, mod | TB_MOD_CTRL);
+}
+
+/*
+ * The control byte terminals send for Ctrl and this key, or -1 when it
+ * has none or its byte is also another key's: Ctrl+H is Backspace,
+ * Ctrl+I Tab, Ctrl+M Enter and Ctrl+[ Escape.
+ */
+static int tf_control_byte(int code) {
+	if (code >= 'A' && code <= 'Z') code += 'a' - 'A';
+	if (code == 'h' || code == 'i' || code == 'm') return -1;
+	if (code >= 'a' && code <= 'z') return code - 'a' + 1;
+	if (code == ' ') return 0x00;
+	if (code == '\\') return 0x1c;
+	if (code == ']') return 0x1d;
+	return -1;
+}
+
+/*
+ * A key that types text, reported because of its modifiers. With Ctrl,
+ * a key with a control byte of its own comes as termbox2 reports that
+ * byte, any other with its unshifted character in ch; Shift stays a
+ * modifier either way. Without Ctrl, ch is the character Shift makes,
+ * as legacy terminals send it after the Escape of Alt.
+ */
+static int tf_kitty_text_key(struct tb_event *event, int code, int shifted, uint8_t mod) {
+	int control_byte;
+
+	if (mod & TB_MOD_CTRL) {
+		control_byte = tf_control_byte(code);
+		if (control_byte >= 0) return tf_key_event(event, (uint16_t)control_byte, 0, mod);
+		return tf_key_event(event, 0, (uint32_t)code, mod);
+	}
+	if (!(mod & TB_MOD_SHIFT)) return tf_key_event(event, 0, (uint32_t)code, mod);
+	if (shifted > 0) return tf_key_event(event, 0, (uint32_t)shifted, mod & ~TB_MOD_SHIFT);
+	if (code >= 'a' && code <= 'z') return tf_key_event(event, 0, (uint32_t)(code - 'a' + 'A'), mod & ~TB_MOD_SHIFT);
+	return tf_key_event(event, 0, (uint32_t)code, mod);
+}
+
+/*
+ * A kitty key report, CSI code ; modifiers u. kitty sends it for keys
+ * the legacy encodings cannot tell apart once the program asked for it
+ * (see Term::Fabulous), and for keys that have no legacy encoding at
+ * all even before that. The keys of the private use area that are not
+ * in the functional key table, such as the modifier keys themselves,
+ * are not reported.
+ */
+static int tf_kitty_key_event(const struct tf_csi_key *report, struct tb_event *event) {
+	int code    = report->code;
+	uint8_t mod     = tf_kitty_modifiers(report->modifiers);
+	uint16_t functional;
+
+	if (code < 0) return TB_ERR;
+	functional = tf_kitty_functional_key(code);
+	if (functional != 0) return tf_key_event(event, functional, 0, mod);
+	if (code >= TF_PRIVATE_USE_FIRST && code <= TF_PRIVATE_USE_LAST) return TB_ERR;
+	if (code < 0x20 || code == 0x7f) return tf_kitty_control_key(event, code, mod);
+	return tf_kitty_text_key(event, code, report->shifted, mod);
+}
+
+static int tf_extract_csi_key(struct tb_event *event, size_t *consumed) {
+	struct tf_csi_key report;
+	size_t length;
+	int rv;
+
+	if_err_return(rv, tf_parse_csi_key(&report, &length));
+	rv = report.final == 'u' ? tf_kitty_key_event(&report, event) : tf_function_key_event(&report, event);
+	if (rv == TB_OK) *consumed = length;
+	return rv;
+}
+
 static int tf_extract_input(struct tb_event *event, size_t *consumed) {
 	const char *buf = global.in.buf;
 
 	if (global.in.len < 2 || buf[0] != '\x1b') return TB_ERR;
-	if (buf[1] == '[') return tf_extract_sgr_mouse(event, consumed);
-	return tf_extract_alt_key(event, consumed);
+	if (buf[1] != '[') return tf_extract_alt_key(event, consumed);
+	if (global.in.len >= 3 && buf[2] == '<') return tf_extract_sgr_mouse(event, consumed);
+	return tf_extract_csi_key(event, consumed);
 }
 
 int tf_install_input_parser(void) {
@@ -276,32 +524,93 @@ static int tf_read_input_before(const struct timeval *deadline) {
 	return bytebuf_nputs(&global.in, buf, (size_t)count);
 }
 
+/* Sends a question to the terminal and returns the time its answer must arrive by. */
+static int tf_ask_terminal(const char *question, int timeout_ms, struct timeval *deadline) {
+	struct timeval timeout;
+	int rv;
+
+	if_err_return(rv, bytebuf_puts(&global.out, question));
+	if_err_return(rv, bytebuf_flush(&global.out, global.wfd));
+
+	gettimeofday(deadline, NULL);
+	timeout.tv_sec  = timeout_ms / 1000;
+	timeout.tv_usec = (timeout_ms % 1000) * 1000;
+	timeradd(deadline, &timeout, deadline);
+	return TB_OK;
+}
+
+/* Takes an answer out of the input buffer, so that only keys stay queued. */
+static void tf_drop_input(size_t at, size_t length) {
+	memmove(global.in.buf + at, global.in.buf + at + length, global.in.len - at - length);
+	global.in.len -= length;
+	global.in.buf[global.in.len] = '\0';
+}
+
 int tf_cursor_position(int timeout_ms, int *x, int *y) {
-	struct timeval deadline, timeout;
+	struct timeval deadline;
 	size_t from, at, length;
 	int rv, row, column;
 
 	if_not_init_return();
 	from = global.in.len; /* input from before the question cannot hold the answer */
-	if_err_return(rv, bytebuf_puts(&global.out, "\x1b[6n"));
-	if_err_return(rv, bytebuf_flush(&global.out, global.wfd));
-
-	gettimeofday(&deadline, NULL);
-	timeout.tv_sec  = timeout_ms / 1000;
-	timeout.tv_usec = (timeout_ms % 1000) * 1000;
-	timeradd(&deadline, &timeout, &deadline);
+	if_err_return(rv, tf_ask_terminal("\x1b[6n", timeout_ms, &deadline));
 
 	while (tf_find_cursor_report(from, &at, &length, &row, &column) != TB_OK) {
 		if_err_return(rv, tf_read_input_before(&deadline));
 	}
-
-	memmove(global.in.buf + at, global.in.buf + at + length, global.in.len - at - length);
-	global.in.len -= length;
-	global.in.buf[global.in.len] = '\0';
+	tf_drop_input(at, length);
 
 	*x = column > 0 ? column - 1 : 0;
 	*y = row > 0 ? row - 1 : 0;
 	return TB_OK;
+}
+
+/*
+ * Finds a private mode answer, ESC [ ? parameters final with the
+ * parameters made of digits and ';', in the input buffer from offset
+ * `from` on: TB_OK with its offset and length, or TB_ERR while there is
+ * no complete one. The kitty keyboard flags end in 'u', the primary
+ * device attributes in 'c'.
+ */
+static int tf_find_private_answer(size_t from, char final, size_t *at, size_t *length) {
+	const char *buf = global.in.buf;
+	size_t len      = global.in.len;
+	size_t start, i;
+
+	for (start = from; start + 2 < len; start++) {
+		if (buf[start] != '\x1b' || buf[start + 1] != '[' || buf[start + 2] != '?') continue;
+		for (i = start + 3; i < len && ((buf[i] >= '0' && buf[i] <= '9') || buf[i] == ';'); i++) {}
+		if (i < len && buf[i] == final) {
+			*at     = start;
+			*length = i + 1 - start;
+			return TB_OK;
+		}
+	}
+	return TB_ERR;
+}
+
+int tf_kitty_keyboard_query(int timeout_ms, int *supported) {
+	struct timeval deadline;
+	size_t from, at, length;
+	int rv, attributes_arrived;
+
+	*supported = 0;
+	if_not_init_return();
+	from = global.in.len; /* input from before the question cannot hold the answer */
+	if_err_return(rv, tf_ask_terminal("\x1b[?u\x1b[c", timeout_ms, &deadline));
+
+	for (;;) {
+		attributes_arrived = tf_find_private_answer(from, 'c', &at, &length) == TB_OK;
+		if (attributes_arrived) break;
+		rv = tf_read_input_before(&deadline);
+		if (rv == TB_ERR_NO_EVENT) break;
+		if (rv != TB_OK) return rv;
+	}
+	if (attributes_arrived) tf_drop_input(at, length);
+
+	*supported = tf_find_private_answer(from, 'u', &at, &length) == TB_OK;
+	if (*supported) tf_drop_input(at, length);
+	return attributes_arrived || *supported ? TB_OK : TB_ERR_NO_EVENT;
 }
 
 int tf_reset_attrs(void) {
