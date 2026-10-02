@@ -246,8 +246,22 @@ The number of empty cells between two neighboring children.
 
 =item C<layout_direction>
 
-C<CLAY_LEFT_TO_RIGHT> (the default) or C<CLAY_TOP_TO_BOTTOM>, constants
-exported by L<Clay::XS>.
+C<CLAY_LEFT_TO_RIGHT> (the default), C<CLAY_TOP_TO_BOTTOM> or
+C<CLAY_LEFT_TO_RIGHT_WRAP> (left to right, wrapping onto new lines; see
+L<Term::Fabulous::Manual/Flow layout>), constants exported by
+L<Clay::XS>.
+
+=item C<line_gap>
+
+The number of empty rows between two lines of a
+C<CLAY_LEFT_TO_RIGHT_WRAP> layout. Default: 0.
+
+=item C<line_sizing>
+
+C<CLAY_LINE_SIZING_GROW> (the default) or C<CLAY_LINE_SIZING_FIT>,
+constants exported by L<Clay::XS>: whether the lines of a
+C<CLAY_LEFT_TO_RIGHT_WRAP> layout share the rows left over below them
+or keep the height of their tallest child.
 
 =item C<child_alignment>
 

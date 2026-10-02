@@ -5,7 +5,7 @@ use utf8;
 use Test2::V0;
 
 use Clay::XS qw(
-	Clay_GetElementId CLAY__SIZING_TYPE_FIT CLAY__SIZING_TYPE_GROW CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_BOTTOM CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_ALIGN_RIGHT
+	Clay_GetElementId CLAY__SIZING_TYPE_FIT CLAY__SIZING_TYPE_GROW CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_LINE_SIZING_FIT CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_ALIGN_RIGHT
 	CLAY_ATTACH_TO_ELEMENT_WITH_ID CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_RIGHT_BOTTOM CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH CLAY_CLIP_TO_ATTACHED_PARENT
 );
 use Term::Fabulous::Layout;
@@ -96,6 +96,14 @@ subtest 'child alignment' => sub {
 	my $root = build( sprintf $box, "child_alignment x=center\nchild_alignment y=bottom" );
 	is $root->layout->{child_alignment}, { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_BOTTOM }, 'a second child_alignment node keeps the other key';
 	like dies { build( sprintf $box, 'child_alignment x=middle' ) }, qr/invalid child_alignment x 'middle' \(known: center, left, right\)/, 'an unknown name dies';
+};
+
+subtest 'flow layout' => sub {
+	my $box  = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
+	my $root = build( sprintf $box, 'layout direction=wrap gap=1 line_gap=2 line_sizing=fit' );
+	is $root->layout, { layout_direction => CLAY_LEFT_TO_RIGHT_WRAP, child_gap => 1, line_gap => 2, line_sizing => CLAY_LINE_SIZING_FIT }, 'direction=wrap with line_gap and line_sizing';
+	like dies { build( sprintf $box, 'layout line_sizing=shrink' ) }, qr/invalid layout line_sizing 'shrink' \(known: fit, grow\)/, 'an unknown line_sizing dies';
+	like dies { build( sprintf $box, 'layout line_gap=-1' ) },        qr/layout line_gap must be a non-negative integer/,          'a negative line_gap dies';
 };
 
 subtest 'floating' => sub {

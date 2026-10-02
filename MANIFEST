@@ -4,6 +4,7 @@ examples/border-showcase.pl
 examples/buttons-and-keys.pl
 examples/canvas.pl
 examples/custom-widget.pl
+examples/flow.pl
 examples/form.pl
 examples/kdl-form.pl
 examples/kdl-layout.pl
@@ -174,6 +175,7 @@ screenshots/example-border-showcase.svg
 screenshots/example-buttons-and-keys.svg 
 screenshots/example-canvas.svg           
 screenshots/example-custom-widget.svg    
+screenshots/example-flow.svg             
 screenshots/example-form.svg             
 screenshots/example-kdl-form.svg         
 screenshots/example-pixel-paint.svg      

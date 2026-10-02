@@ -6,7 +6,7 @@ use Test2::V0;
 
 use Encode qw(decode);
 use Object::Pad 0.825;
-use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
+use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
 use Clay::UI::Role::Layout::HasFloating;
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
@@ -104,6 +104,14 @@ subtest 'scroll box' => sub {
 
 	is [ Term::Fabulous::Static->new( root => $root, width => 8 )->render_lines( colors => 0 ) ], [ "╭──────╮", "│line 1│", "│line 2│", "╰──────╯", "below" ],
 		'content beyond the box is clipped and the layout continues after it';
+};
+
+subtest 'flow layout' => sub {
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT_WRAP, sizing => { width => sizing_grow() }, child_gap => 1, line_gap => 1 } );
+	$root->add_child( Term::Fabulous::Widget::Text->new( text => $_ ) ) foreach qw(one two three four);
+
+	is [ Term::Fabulous::Static->new( root => $root, width => 13 )->render_lines( colors => 0 ) ], [ 'one two three', '', 'four' ], 'a child that does not fit starts a new line, line_gap rows below';
+	is [ Term::Fabulous::Static->new( root => $root, width => 9 )->render_lines( colors => 0 ) ], [ 'one two', '', 'three', '', 'four' ], 'a narrower root breaks the lines earlier';
 };
 
 subtest 'print' => sub {

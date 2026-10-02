@@ -232,9 +232,8 @@ edge of the widget.
 C<border_width> is a number for all four sides, or a hash reference
 C<< { left => ..., right => ..., top => ..., bottom => ... } >> in which
 missing sides count as 0. Each width must be an integer from 0 to 65535
-(checked by Clay::UI when it is set). Clay's C<between_children> key is
-accepted but has no effect in Term::Fabulous. The widget's stored
-C<layout> is not modified; only the configuration handed to Clay is.
+(checked by Clay::UI when it is set). The widget's stored C<layout> is
+not modified; only the configuration handed to Clay is.
 
 =head1 CONSTRUCTOR PARAMETERS
 

@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Box
 {
 	use Clay::XS qw(
 		Clay_GetElementId sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
+		CLAY_LEFT_TO_RIGHT_WRAP CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
 		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_TO_ROOT CLAY_ATTACH_TO_ELEMENT_WITH_ID
 		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_CENTER CLAY_ATTACH_POINT_LEFT_BOTTOM
@@ -27,13 +28,18 @@ class Term::Fabulous::Widget::Box
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my %DIRECTION_BY_NAME = (
-		top_to_bottom => CLAY_TOP_TO_BOTTOM,
-		ttb           => CLAY_TOP_TO_BOTTOM,
-		down          => CLAY_TOP_TO_BOTTOM,
-		left_to_right => CLAY_LEFT_TO_RIGHT,
-		ltr           => CLAY_LEFT_TO_RIGHT,
-		right         => CLAY_LEFT_TO_RIGHT,
+		top_to_bottom      => CLAY_TOP_TO_BOTTOM,
+		ttb                => CLAY_TOP_TO_BOTTOM,
+		down               => CLAY_TOP_TO_BOTTOM,
+		left_to_right      => CLAY_LEFT_TO_RIGHT,
+		ltr                => CLAY_LEFT_TO_RIGHT,
+		right              => CLAY_LEFT_TO_RIGHT,
+		wrap               => CLAY_LEFT_TO_RIGHT_WRAP,
+		ltr_wrap           => CLAY_LEFT_TO_RIGHT_WRAP,
+		left_to_right_wrap => CLAY_LEFT_TO_RIGHT_WRAP,
 	);
+
+	my %LINE_SIZING_BY_NAME = ( grow => CLAY_LINE_SIZING_GROW, fit => CLAY_LINE_SIZING_FIT );
 
 	my $DECIMAL = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
 
@@ -162,7 +168,7 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method _parse_layout ($kid) {
-		my $props = $self->kdl_properties( $kid, qw(direction child_gap gap) );
+		my $props = $self->kdl_properties( $kid, qw(direction child_gap gap line_gap line_sizing) );
 		die "Term::Fabulous::Widget::Box: layout accepts 'child_gap' or its alias 'gap', not both"
 			if exists $props->{child_gap} && exists $props->{gap};
 
@@ -175,6 +181,8 @@ class Term::Fabulous::Widget::Box
 		foreach my $gap_name ( grep { exists $props->{$_} } qw(child_gap gap) ) {
 			$layout{child_gap} = _non_negative_integer( "layout $gap_name", $props->{$gap_name} );
 		}
+		$layout{line_gap}    = _non_negative_integer( 'layout line_gap', $props->{line_gap} ) if exists $props->{line_gap};
+		$layout{line_sizing} = _named( 'layout line_sizing', \%LINE_SIZING_BY_NAME, $props->{line_sizing} ) if exists $props->{line_sizing};
 		$self->layout( \%layout );
 		return;
 	}
@@ -321,7 +329,8 @@ Default: C<undef> (no id).
 =item C<layout>
 
 A hash reference with the keys C<sizing>, C<padding>, C<child_gap>,
-C<layout_direction> and C<child_alignment> that decides the size of
+C<layout_direction>, C<child_alignment>, C<line_gap> and
+C<line_sizing> that decides the size of
 the box and how its children are arranged. Default: C<{}>, which fits
 the box to its content and places the children from left to right.
 
@@ -429,13 +438,18 @@ unknown keys and invalid values die, naming the property.
 
 =over
 
-=item C<layout direction=... gap=N>
+=item C<layout direction=... gap=N line_gap=N line_sizing=...>
 
-C<direction> is C<down> (aliases C<ttb>, C<top_to_bottom>) or C<right>
-(aliases C<ltr>, C<left_to_right>). C<gap> (alias C<child_gap>; giving
-both dies) is the number of cells between children, a non-negative
-integer. Each key is optional, but at least one must be given: a bare
-C<layout> node dies.
+C<direction> is C<down> (aliases C<ttb>, C<top_to_bottom>), C<right>
+(aliases C<ltr>, C<left_to_right>) or C<wrap> (aliases C<ltr_wrap>,
+C<left_to_right_wrap>; see L<Term::Fabulous::Manual/Flow layout>).
+C<gap> (alias C<child_gap>; giving both dies) is the number of cells
+between children, a non-negative integer. C<line_gap> is the number of
+rows between the lines of a C<wrap> box, a non-negative integer.
+C<line_sizing> is C<grow> (the default) or C<fit> and decides what a
+C<wrap> box taller than its lines does with the leftover rows. Each key
+is optional, but at least one must be given: a bare C<layout> node
+dies.
 
 =item C<sizing width=... height=...>
 

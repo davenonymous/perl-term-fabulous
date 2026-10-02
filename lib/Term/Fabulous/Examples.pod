@@ -175,6 +175,18 @@ combining marks one. See L<Term::Fabulous::Manual/Wide characters and emoji>.
 
 =end html
 
+=head2 examples/flow.pl
+
+Colored tags in a box with the flow layout: they are placed from left
+to right and wrap onto a new line when the row is full, so they rewrap
+whenever the terminal is resized. See L<Term::Fabulous::Manual/Flow layout>.
+
+=begin html
+
+<p><img src="/screenshots/example-flow.svg" alt="Twenty colored tags in a rounded box, wrapped onto several lines"></p>
+
+=end html
+
 =head2 examples/canvas.pl
 
 Waves plotted with half blocks on a L<Term::Fabulous::Widget::Canvas>

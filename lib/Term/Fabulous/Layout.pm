@@ -445,10 +445,15 @@ L<RadioGroup|Term::Fabulous::Widget::RadioGroup> and all input widgets.
 	Property node                              Value
 	-----------------------------------------  -----------------------------------------
 	layout direction=... gap=N                 direction: down, ttb, top_to_bottom
-	                                           (children top to bottom) or right, ltr,
-	                                           left_to_right (left to right);
+	       line_gap=N line_sizing=...          (children top to bottom), right, ltr,
+	                                           left_to_right (left to right) or wrap,
+	                                           ltr_wrap, left_to_right_wrap (left to
+	                                           right, wrapping onto new lines);
 	                                           gap (alias child_gap): cells between
-	                                           children, an integer >= 0
+	                                           children, an integer >= 0;
+	                                           line_gap: rows between wrapped lines,
+	                                           an integer >= 0; line_sizing: grow
+	                                           (the default) or fit
 	sizing width=... height=...                each: grow, fit, "grow(MIN)",
 	                                           "grow(MIN, MAX)", "fit(MIN)",
 	                                           "fit(MIN, MAX)" with MIN and MAX integers

@@ -68,6 +68,11 @@ screenshot "example-custom-widget" {
 	}
 }
 
+screenshot "example-flow" {
+	script "examples/flow.pl"
+	size 60 14
+}
+
 screenshot "example-form" {
 	script "examples/form.pl"
 	size 80 19

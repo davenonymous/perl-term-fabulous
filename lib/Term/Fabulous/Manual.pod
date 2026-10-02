@@ -447,6 +447,11 @@ Children are placed next to each other, from left to right.
 
 Children are stacked from top to bottom.
 
+=item C<CLAY_LEFT_TO_RIGHT_WRAP>
+
+Children are placed from left to right and wrap onto a new line when the
+row is full. See L</Flow layout>.
+
 =back
 
 A column of form rows, each row a left-to-right box of a label and an
@@ -536,6 +541,69 @@ C<CLAY_ALIGN_Y_BOTTOM>.
 In a KDL layout, write C<child_alignment x=right>: C<x> is C<left>,
 C<center> or C<right>, C<y> is C<top>, C<center> or C<bottom>, and
 either may be left out. See L<Term::Fabulous::Layout/Box properties>.
+
+=head2 Flow layout
+
+With C<layout_direction =E<gt> CLAY_LEFT_TO_RIGHT_WRAP> a widget places
+its children from left to right, like C<CLAY_LEFT_TO_RIGHT>, but starts
+a new I<line> below whenever the next child does not fit into the
+remaining width. Tag lists, toolbars and button rows that should adapt
+to the terminal width need no code of their own:
+
+	use Clay::XS qw(sizing_grow CLAY_LEFT_TO_RIGHT_WRAP CLAY_LINE_SIZING_FIT);
+
+	my $tags = Term::Fabulous::Widget::Box->new(
+		layout => {
+			layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
+			sizing           => { width => sizing_grow() },
+			child_gap        => 1,
+			line_gap         => 0,
+			line_sizing      => CLAY_LINE_SIZING_FIT,
+		},
+	);
+	$tags->add_child( Term::Fabulous::Widget::Text->new( text => $_ ) ) foreach qw(perl terminal layout flow);
+
+=over
+
+=item *
+
+C<child_gap> is the number of columns between neighbors on a line,
+C<line_gap> the number of rows between two lines (default 0).
+
+=item *
+
+Lines break at the children's preferred widths. A child wider than the
+widget gets a line of its own and is narrowed to fit.
+
+=item *
+
+Give the widget a C<grow>, C<fixed> or C<percent> width. With
+C<sizing_fit()> it prefers a single line and only wraps when its parent
+is too narrow for that line.
+
+=item *
+
+When the widget is taller than its lines, C<line_sizing> decides what
+happens to the leftover rows: C<CLAY_LINE_SIZING_GROW> (the default)
+shares them equally between the lines, C<CLAY_LINE_SIZING_FIT> keeps
+every line as tall as its tallest child.
+
+=item *
+
+C<child_alignment> C<x> aligns every line on its own. C<y> aligns each
+child within its line and, with C<CLAY_LINE_SIZING_FIT>, the block of
+lines within the widget.
+
+=item *
+
+A C<grow> child takes the rest of its own line.
+
+=back
+
+Wrapping is horizontal only; there is no top-to-bottom variant. In a KDL
+layout, write C<layout direction=wrap gap=1 line_gap=0 line_sizing=fit>.
+See C<examples/flow.pl> for a tag list that rewraps when the terminal is
+resized.
 
 =head2 Borders take space
 
