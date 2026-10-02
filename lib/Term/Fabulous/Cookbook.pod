@@ -637,18 +637,18 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 	sub button ( $id, $caption, $action ) {
 		my $button = Term::Fabulous::Widget::Button->new(
 			id               => $id,
-			background_color => [ $button_color->to_rgba ],
-			border_color     => [ $border_color->to_rgba ],
+			background_color => $button_color,
+			border_color     => $border_color,
 			border_width     => 1,
 			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 			layout           => { padding => { left => 1, right => 1 } },
 		);
 		$button->add_child( label($caption) );
 
-		my $look_normal = sub { $button->background_color( [ $button_color->to_rgba ] ); return };
-		$button->on( OnFocus        => sub ($event) { $button->border_color( [ $focus_color->to_rgba ] );  return $CONTINUE } );
-		$button->on( OnBlur         => sub ($event) { $button->border_color( [ $border_color->to_rgba ] ); return $CONTINUE } );
-		$button->on( OnPress        => sub ($event) { $button->background_color( [ $press_color->to_rgba ] ); return } );
+		my $look_normal = sub { $button->background_color( $button_color ); return };
+		$button->on( OnFocus        => sub ($event) { $button->border_color( $focus_color );  return $CONTINUE } );
+		$button->on( OnBlur         => sub ($event) { $button->border_color( $border_color ); return $CONTINUE } );
+		$button->on( OnPress        => sub ($event) { $button->background_color( $press_color ); return } );
 		$button->on( OnHoverStopped => sub ($event) { $look_normal->(); return } );
 
 		# A click: the left button pressed and released over the button.
@@ -2304,11 +2304,11 @@ dark and a light theme with a key.
 	# Clay-side colors (background_color, border_color, text_color of Box and
 	# Text) take [r, g, b, a]; the input widgets take Color objects directly.
 	sub apply_theme ($theme) {
-		$root->background_color( [ $theme->{background}->to_rgba ] );
-		$panel->background_color( [ $theme->{panel}->to_rgba ] );
-		$panel->border_color( [ $theme->{border}->to_rgba ] );
-		$label->text_color( [ $theme->{text}->to_rgba ] );
-		$field->background_color( [ $theme->{background}->to_rgba ] );
+		$root->background_color( $theme->{background} );
+		$panel->background_color( $theme->{panel} );
+		$panel->border_color( $theme->{border} );
+		$label->text_color( $theme->{text} );
+		$field->background_color( $theme->{background} );
 		$field->text_color( $theme->{text} );
 		$field->accent_color( $theme->{accent} );
 		$field->focus_background_color( $theme->{background}->blend( $theme->{accent}, 0.2 ) );
@@ -2342,14 +2342,10 @@ See L<Term::Fabulous::Manual/Working with colors>.
 
 =item *
 
-Colors of Box and Text widgets (C<background_color>, C<border_color>,
-C<text_color>) take only C<[ r, g, b, a ]> arrays or C<{ r, g, b, a }>
-hashes, hence C<< [ $color->to_rgba ] >>. The colors of input widgets
-(C<text_color>, C<accent_color>, C<focus_background_color>, ...) take a
-Color object, a color string or an array directly. An input's
-C<background_color> and C<border_color>, however, are Box colors and
-take only arrays and hashes, like the Box colors above: the recipe sets
-the field's background with C<< [ $color->to_rgba ] >>. See
+Every widget color (C<background_color>, C<border_color>,
+C<text_color>, the input colors such as C<accent_color>) takes a Color
+object, a color string or an C<[ r, g, b, a ]> array directly, so the
+recipe passes the theme's objects as they are. See
 L<Term::Fabulous::Manual/Color formats>.
 
 =item *
@@ -3047,7 +3043,6 @@ The widget, saved as F<lib/My/Panel.pm>:
 	class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
 		use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
 		use Encode qw(decode encode);
-		use Term::Fabulous::Color;
 		use Term::Fabulous::Enum::BorderStyle;
 		use Term::Fabulous::Widget::Text;
 
@@ -3084,7 +3079,7 @@ The widget, saved as F<lib/My/Panel.pm>:
 				unless @args == 1 && $args[0]->is_string && !grep { $_ ne 'color' } keys %props;
 
 			$self->title( $args[0]->value );
-			$title_widget->text_color( [ Term::Fabulous::Color->new( color => $props{color} )->to_rgba ] ) if exists $props{color};
+			$title_widget->text_color( $props{color} ) if exists $props{color};
 			return;
 		}
 	}

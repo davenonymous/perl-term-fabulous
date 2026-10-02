@@ -127,6 +127,7 @@ subtest 'key names' => sub {
 	is [ map { $name->( $_, 0, TB_MOD_CTRL )->key_name } 0x7F, 0x0D, 0x1B, 0x09 ], [qw(Backspace Enter Escape Tab)],
 		'named control keys, without the Ctrl bit termbox2 sets on them';
 	is [ $name->( 0x20, 0 )->key_name, $name->( 0, 0x20 )->key_name, $name->( 0x20, 0 )->text ], [ 'Space', 'Space', ' ' ], 'Space either way';
+	is [ $name->( 0, 0x85 )->key_name, $name->( 0, 0x85 )->text ], [ undef, undef ], 'a C1 control character has neither a name nor a text';
 };
 
 subtest 'Tab and Shift-Tab move focus' => sub {

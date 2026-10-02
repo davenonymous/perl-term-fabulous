@@ -15,7 +15,6 @@ class Term::Fabulous::Widget::Box
 	:strict(params)
 {
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM);
-	use Term::Fabulous::Color;
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my %DIRECTION_BY_NAME = (
@@ -63,6 +62,14 @@ class Term::Fabulous::Widget::Box
 		return qw(background_color glyphs_show_through border_color border_width width_group height_group);
 	}
 
+	method boolean_layout_properties () {
+		return qw(glyphs_show_through);
+	}
+
+	method structured_layout_properties () {
+		return qw(layout border sizing padding);
+	}
+
 	method parse_node ($node) {
 		$self->parse_property($_) foreach $node->children->@*;
 		return;
@@ -106,7 +113,7 @@ class Term::Fabulous::Widget::Box
 			my $accessor = "border_style_$side";
 			$self->$accessor( _border_style( $props->{$style_key} ) );
 		}
-		$self->border_color( [ Term::Fabulous::Color->new( color => $props->{color} )->to_rgba ] ) if exists $props->{color};
+		$self->border_color( $props->{color} ) if exists $props->{color};
 		return;
 	}
 
@@ -119,8 +126,10 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method _parse_padding ($kid) {
-		my $props = $self->kdl_properties( $kid, qw(left right top bottom) );
-		$self->layout( { %{ $self->layout }, padding => { map { $_ => _non_negative_integer( "padding $_", $props->{$_} ) } keys %$props } } );
+		my $props  = $self->kdl_properties( $kid, qw(left right top bottom) );
+		my %layout = %{ $self->layout };
+		$layout{padding} = { %{ $layout{padding} // {} }, map { $_ => _non_negative_integer( "padding $_", $props->{$_} ) } keys %$props };
+		$self->layout( \%layout );
 		return;
 	}
 }
@@ -211,8 +220,10 @@ the box to its content and places the children from left to right.
 
 =item C<background_color>
 
-The color of the box's area, as C<[r, g, b, a]> or C<{ r, g, b, a }>.
-Default: C<undef>, so the box is transparent.
+The color of the box's area, in any format L<Term::Fabulous::Color>
+accepts (C<[r, g, b, a]>, C<{ r, g, b, a }>, a string such as
+C<'#14192b'>, a Color object). Default: C<undef>, so the box is
+transparent.
 
 =item C<border_width>
 
@@ -222,9 +233,9 @@ no border.
 
 =item C<border_color>
 
-The color of the border glyphs, as C<[r, g, b, a]> or C<{ r, g, b, a }>.
-Default: C<undef>, which draws the border in the terminal's default
-foreground color.
+The color of the border glyphs, in the same formats as
+C<background_color>. Default: C<undef>, which draws the border in the
+terminal's default foreground color.
 
 =item C<border_style>
 
@@ -323,8 +334,7 @@ changes only the axes it names.
 =item C<padding left=N right=N top=N bottom=N>
 
 Any subset of the four sides; non-negative integers. A second
-C<padding> node replaces the first completely: sides it leaves out
-become 0.
+C<padding> node changes only the sides it names, like C<sizing>.
 
 =item C<border style=... style-top=... style-right=... style-bottom=... style-left=... color=...>
 
@@ -390,10 +400,32 @@ normally do not call or override it.
 	}
 
 The names of the accessors a layout may set with a simple
-C<name value> property: C<background_color>, C<border_color>,
-C<border_width>, C<width_group> and C<height_group> for a Box.
-Subclasses extend the list as shown. See
+C<name value> property: C<background_color>, C<glyphs_show_through>,
+C<border_color>, C<border_width>, C<width_group> and C<height_group>
+for a Box. Subclasses extend the list as shown. See
 L<Term::Fabulous::Role::CanParseLayout/layout_properties>.
+
+=head2 boolean_layout_properties
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(collapsed) );
+	}
+
+The names of the boolean properties among L</layout_properties>; a
+layout must write them as C<#true> or C<#false> (or C<0> and C<1>).
+C<glyphs_show_through> for a Box. Subclasses extend the list as shown.
+
+=head2 structured_layout_properties
+
+	method structured_layout_properties :override () {
+		return ( $self->SUPER::structured_layout_properties, qw(shortcut) );
+	}
+
+The names of the properties L</parse_property> handles itself:
+C<layout>, C<border>, C<sizing> and C<padding> for a Box. They are
+listed as known names in the error for an unknown property. A subclass
+that handles more nodes in C<parse_property> extends the list as
+shown.
 
 =head1 SEE ALSO
 

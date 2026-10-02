@@ -98,6 +98,10 @@ class Term::Fabulous::Color :strict(params) {
 	}
 
 	sub _channels_from_string ($spec) {
+		if ( $spec =~ /\A[0-9]+\z/ ) {
+			die "Term::Fabulous::Color: a packed integer color must be in 0..0xFFFFFF, got $spec" if $spec > 0xFFFFFF;
+			return ( ( $spec >> 16 ) & 0xFF, ( $spec >> 8 ) & 0xFF, $spec & 0xFF, 255 );
+		}
 		if ( my ($hex) = $spec =~ $HEX_SPEC ) {
 			my @channels = map { CORE::hex($_) } unpack '(A2)*', $hex;
 			return @channels == 3 ? ( @channels, 255 ) : @channels;
@@ -117,9 +121,11 @@ class Term::Fabulous::Color :strict(params) {
 		die "Term::Fabulous::Color: unrecognized color string '$spec'";
 	}
 
-	# Alpha grammar of rgba()/hsla(): "N%" is a percentage, a number with a
-	# decimal point is a fraction of 1, a bare integer is the 0..255 channel.
+	# Alpha grammar of rgba()/hsla(), string and factory alike: "N%" is a
+	# percentage, a number with a decimal point is a fraction of 1, a bare
+	# integer is the 0..255 channel.
 	sub _alpha_from_token ($token) {
+		die "Term::Fabulous::Color: alpha must be a number, got " . _describe($token) unless defined $token && !ref $token;
 		if ( my ($percent) = $token =~ /\A(.+)%\z/ ) {
 			return _checked_range( 'alpha percentage', $percent, 0, 100 ) / 100 * 255;
 		}
@@ -185,14 +191,17 @@ class Term::Fabulous::Color :strict(params) {
 	}
 
 	method blend ( $other, $ratio ) {
+		die "Term::Fabulous::Color: blend needs a Term::Fabulous::Color to blend with, got " . _describe($other)
+			unless blessed $other && $other->isa('Term::Fabulous::Color');
+		_checked_range( 'blend ratio', $ratio, 0, 1 );
 		my $inv_ratio = 1 - $ratio;
 
 		return Term::Fabulous::Color->new(
 			color => [
-				int( $red * $inv_ratio + $other->red * $ratio ),
-				int( $green * $inv_ratio + $other->green * $ratio ),
-				int( $blue * $inv_ratio + $other->blue * $ratio ),
-				int( $alpha * $inv_ratio + $other->alpha * $ratio ),
+				$red * $inv_ratio + $other->red * $ratio,
+				$green * $inv_ratio + $other->green * $ratio,
+				$blue * $inv_ratio + $other->blue * $ratio,
+				$alpha * $inv_ratio + $other->alpha * $ratio,
 			],
 		);
 	}
@@ -291,7 +300,7 @@ class Term::Fabulous::Color :strict(params) {
 	}
 
 	method rgba :common ( $r, $g, $b, $a ) {
-		return Term::Fabulous::Color->new( color => [ $r, $g, $b, $a ] );
+		return Term::Fabulous::Color->new( color => [ $r, $g, $b, _alpha_from_token($a) ] );
 	}
 
 	method hex :common ( $spec ) {
@@ -305,8 +314,7 @@ class Term::Fabulous::Color :strict(params) {
 	}
 
 	method hsla :common ( $h, $s, $l, $a ) {
-		my $alpha_fraction = _checked_range( 'alpha fraction', $a, 0, 1 );
-		return Term::Fabulous::Color->new( color => [ _hsl_to_rgb_float( _normalized_hsl( $h, $s, $l ) ), $alpha_fraction * 255 ] );
+		return Term::Fabulous::Color->new( color => [ _hsl_to_rgb_float( _normalized_hsl( $h, $s, $l ) ), _alpha_from_token($a) ] );
 	}
 
 }
@@ -342,8 +350,8 @@ Term::Fabulous::Color - An immutable RGBA color, parsed from many notations
 	my $shadow = $purple->darken(0.2);
 	my $mix    = $red->blend( $blue, 0.25 );
 
-	# Use it where Clay::UI wants [r, g, b, a].
-	my $box = Term::Fabulous::Widget::Box->new( background_color => [ $shadow->to_rgba ] );
+	# Widgets take the object itself, or any of the formats new() accepts.
+	my $box = Term::Fabulous::Widget::Box->new( background_color => $shadow );
 
 =head1 DESCRIPTION
 
@@ -354,12 +362,10 @@ L</lighten> and L</blend> return a new object.
 Term::Fabulous uses this class to parse every color given as a string:
 colors in L<KDL layout files|Term::Fabulous::Layout>, the colors of the
 input widgets and the cell colors of a
-L<canvas|Term::Fabulous::Widget::Canvas>. Clay::UI widget parameters
+L<canvas|Term::Fabulous::Widget::Canvas>, and every widget color
 (C<background_color>, C<border_color>, the C<text_color> of a Text
-widget) accept only C<[r, g, b, a]> or C<{ r, g, b, a }>; pass
-C<< [ $color->to_rgba ] >> there. See
-L<Term::Fabulous::Manual/COLORS> for which place accepts which
-notation.
+widget, the input widget colors) takes a Color object or any input
+L</new> accepts. See L<Term::Fabulous::Manual/COLORS>.
 
 =head2 Alpha
 
@@ -419,13 +425,18 @@ L<Term::Fabulous::Enum::WebColor> has the CSS named colors as objects.
 	------------------  --------------------------  -------------------------------
 	#rrggbb             '#7c3aed', '7c3aed'         hex, alpha 255; '#' is optional
 	#rrggbbaa           '#7c3aed80'                 hex with alpha
+	packed integer      0xFF8800, '16746496'        0xRRGGBB as one number, alpha 255
 	rgb(r, g, b)        'rgb(124, 58, 237)'         channels 0..255, alpha 255
 	rgba(r, g, b, a)    'rgba(124, 58, 237, 0.5)'   alpha as described below
 	hsl(h, s%, l%)      'hsl(262, 83%, 58%)'        hue in degrees, alpha 255
 	hsla(h, s%, l%, a)  'hsla(262, 83%, 58%, 50%)'  alpha as described below
 
-Hex digits may be upper or lower case. Channel values in C<rgb()> and
-C<rgba()> may have decimals; they are rounded (see L</Channel rules>).
+Hex digits may be upper or lower case. A string of digits only is a
+packed C<0xRRGGBB> integer (the form the canvas drawing methods take as
+well), so a hex color that consists of digits only, such as
+C<'123456'>, needs its C<#>. A packed integer above C<0xFFFFFF> dies.
+Channel values in C<rgb()> and C<rgba()> may have decimals; they are
+rounded (see L</Channel rules>).
 
 In C<hsl()> and C<hsla()>, the hue is in degrees and taken modulo 360,
 so C<360> is the same as C<0> and C<-90> the same as C<270>. Saturation
@@ -433,7 +444,8 @@ and lightness are percentages from 0 to 100 and must be written with a
 C<%> sign.
 
 The alpha of C<rgba()> and C<hsla()> is read according to how it is
-written:
+written, in the strings and in the L</rgba> and L</hsla> class methods
+alike:
 
 	Written as             Example   Meaning               Alpha
 	---------------------  --------  --------------------  -----
@@ -443,7 +455,10 @@ written:
 
 Watch the difference between C<1> and C<1.0>: C<'rgba(0, 0, 0, 1)'> has
 alpha 1 (almost fully transparent),
-while C<'rgba(0, 0, 0, 1.0)'> has alpha 255.
+while C<'rgba(0, 0, 0, 1.0)'> has alpha 255. In Perl code, a number
+without a fractional part is written without a point when it becomes a
+string, so C<< ->rgba( 0, 0, 0, 1.0 ) >> is alpha 1 as well; pass
+C<'100%'> or C<255> for opaque.
 
 =back
 
@@ -461,7 +476,10 @@ Class method. An opaque color (alpha 255) from three channels from 0 to
 
 	my $color = Term::Fabulous::Color->rgba( $r, $g, $b, $a );
 
-Class method. Like L</rgb> with an explicit alpha channel from 0 to 255.
+Class method. Like L</rgb> with an explicit alpha, read with the alpha
+grammar of the C<rgba()> string (see L</new>): a bare integer is the
+channel value from 0 to 255, a number with a decimal point a fraction
+of 1, and a string ending in C<%> a percentage.
 
 =head2 hex
 
@@ -485,11 +503,10 @@ is rounded once at the end.
 
 	my $color = Term::Fabulous::Color->hsla( $hue, $saturation, $lightness, $alpha );
 
-Class method. Like L</hsl>, plus an alpha given as a fraction from 0 to
-1, as in CSS. Note that this differs from the C<hsla()> string notation,
-where a bare integer is the 0..255 channel value:
-C<< ->hsla(0, 0, 0, 1) >> is opaque, the string
-C<'hsla(0, 0%, 0%, 1)'> is not.
+Class method. Like L</hsl>, plus an alpha read with the same grammar
+as in L</rgba> and in the C<hsla()> string: C<< ->hsla( 0, 0, 0, 0.5 ) >>
+and C<< ->hsla( 0, 0, 0, '50%' ) >> give alpha 128, while
+C<< ->hsla( 0, 0, 0, 1 ) >> gives alpha 1, not opaque.
 
 =head1 METHODS
 
@@ -528,10 +545,10 @@ with what is below it; see L</Alpha>.
 =head2 to_rgba
 
 	my ( $r, $g, $b, $a ) = $color->to_rgba;
-	$box->background_color( [ $color->to_rgba ] );
 
-Returns the four channels as a list. Wrap the result in C<[ ]> to get
-the array reference Clay::UI widgets take.
+Returns the four channels as a list. Widgets take the Color object
+itself; wrap the result in C<[ ]> where a plain C<[r, g, b, a]> array
+is wanted.
 
 =head2 to_hsl
 
@@ -563,11 +580,11 @@ The same as C<< $color->lighten(-$amount) >>.
 
 Returns a mix of this color and C<$other>, channel by channel, alpha
 included: C<$ratio> 0 gives this color, 1 gives C<$other>, 0.5 the
-middle. Channels of the result are truncated to integers, not rounded:
-black blended with white at 0.5 is C<(127, 127, 127)>. C<$other> must be
-a Term::Fabulous::Color object, and C<$ratio> should be between 0 and 1;
-values outside that range can produce channels outside 0..255, which
-die.
+middle. Channels of the result are rounded like every other channel
+(see L</Channel rules>): black blended with white at 0.5 is
+C<(128, 128, 128)>. C<$other> must be a Term::Fabulous::Color object
+and C<$ratio> a number from 0 to 1; anything else dies with a message
+that names the offending argument.
 
 =head2 with_alpha
 

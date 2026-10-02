@@ -10,17 +10,47 @@ use Object::Pad 0.825;
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Text
-	:does(Clay::UI::Text)
+	:isa(Term::Fabulous::Widget::TextNode)
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:strict(params)
 {
 	use Encode qw(encode);
+	use Feature::Compat::Try;
 	use Term::Fabulous::Color;
 
 	field $id :param :reader = undef;
 
+	# Clay::UI validates text_color before any ADJUST of this class runs,
+	# so it is converted while the arguments are still a plain list.
+	sub BUILDARGS ( $class, %params ) {
+		$params{text_color} = _rgba( $params{text_color} ) if defined $params{text_color};
+		return %params;
+	}
+
+	# Any Term::Fabulous::Color input as the [r, g, b, a] array Clay::UI takes.
+	sub _rgba ($value) {
+		try {
+			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
+		}
+		catch ($error) {
+			die "Term::Fabulous::Widget::Text: text_color is not a color: $error";
+		}
+	}
+
+	method text_color :override (@new) {
+		return $self->SUPER::text_color( @new && defined $new[0] ? _rgba( $new[0] ) : @new );
+	}
+
 	method layout_properties () {
 		return qw(font_id font_size letter_spacing line_height);
+	}
+
+	method boolean_layout_properties () {
+		return ();
+	}
+
+	method structured_layout_properties () {
+		return qw(text text_color);
 	}
 
 	method parse_node ($node) {
@@ -32,7 +62,7 @@ class Term::Fabulous::Widget::Text
 				$self->text( encode( 'UTF-8', $text->value ) );
 			}
 			elsif ( $name eq 'text_color' ) {
-				$self->text_color( [ Term::Fabulous::Color->new( color => $self->kdl_argument($kid)->as_perl )->to_rgba ] );
+				$self->text_color( $self->kdl_argument($kid)->as_perl );
 			}
 			else {
 				$self->parse_generic($kid);
@@ -115,13 +145,14 @@ one space and every other control character as U+FFFD. Wide characters
 
 =item C<text_color>
 
-The color of the characters: C<[r, g, b, a]> with four numbers from 0
-to 255, or C<{ r, g, b, a }>. Default: C<[0, 0, 0, 255]>, opaque black,
-which is invisible on a dark background; you will almost always want
-to set it. Pass C<[0, 0, 0, 0]> (alpha 0) for the terminal's default
-foreground color.
-Color strings are only accepted in KDL layouts. See
-L<Term::Fabulous::Manual/COLORS>.
+The color of the characters, in any format L<Term::Fabulous::Color>
+accepts: C<[r, g, b, a]> (or C<[r, g, b]>), C<{ r, g, b, a }>, a string
+such as C<'#ffffff'> or C<'rgb(255, 255, 255)'>, or a
+Term::Fabulous::Color object; it is stored as C<[r, g, b, a]>. Default:
+C<[0, 0, 0, 255]>, opaque black, which is invisible on a dark
+background; you will almost always want to set it. Pass
+C<[0, 0, 0, 0]> (alpha 0) for the terminal's default foreground color.
+See L<Term::Fabulous::Manual/COLORS>.
 
 =item C<id>
 
@@ -197,11 +228,13 @@ text is in UTF-8 bytes; the layout adapts to the new length.
 
 	my $rgba = $label->text_color;
 	$label->text_color( [ 255, 80, 80, 255 ] );
+	$label->text_color('#ff5050');
 
-Accessor. Without an argument it returns the current value; with an
-argument it sets it and returns the new value. An invalid value dies
-like the constructor parameter. The change shows in the next frame. The
-reader returns the value as it was given: an array or a hash reference.
+Accessor. Without an argument it returns the current value as
+C<[r, g, b, a]>; with an argument it sets it, in any format the
+constructor parameter accepts, and returns the stored C<[r, g, b, a]>.
+An invalid value dies like the constructor parameter. The change shows
+in the next frame.
 
 =head2 id
 
@@ -316,6 +349,21 @@ The names of the properties a KDL layout may set with
 L<Term::Fabulous::Role::CanParseLayout/parse_generic>: C<font_id>,
 C<font_size>, C<letter_spacing> and C<line_height>. C<text> and
 C<text_color> are handled by L</parse_node>; see L</KDL PROPERTIES>.
+
+=head2 boolean_layout_properties
+
+	my @names = $text->boolean_layout_properties;
+
+The names of the boolean properties among L</layout_properties>: none
+for a Text widget.
+
+=head2 structured_layout_properties
+
+	my @names = $text->structured_layout_properties;
+
+The names of the properties L</parse_node> handles itself: C<text> and
+C<text_color>. They appear in the "known" list of the error for an
+unknown property.
 
 =head2 parse_node
 

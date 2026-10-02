@@ -65,11 +65,18 @@ subtest 'properties' => sub {
 	like dies { build( sprintf $box, 'padding middle=1' ) }, qr/does not accept middle/, 'unknown padding key';
 	like dies { build( sprintf $box, 'sizing width="percent(150)"' ) }, qr/percentage must be in 0\.\.100/, 'percent above 100';
 
-	my $root = build( sprintf $box, qq{sizing width="percent(50)" height="fixed(3)"\nborder_width left=1 top=2\nlayout direction=down gap=0} );
+	my $root = build( sprintf $box, qq{sizing width="percent(50)" height="fixed(3)"\nborder_width left=1 top=2\nlayout direction=down gap=0\npadding left=1\npadding top=2} );
 	is $root->layout->{sizing}{width}{percent}, 0.5, 'percent(50) becomes 0.5';
 	is $root->layout->{sizing}{height}{min},    3,   'fixed(3)';
 	is $root->layout->{child_gap},              0,   'gap 0 is kept';
 	is $root->border_width, { left => 1, top => 2 }, 'properties form a hash';
+	is $root->layout->{padding}, { left => 1, top => 2 }, 'a second padding node keeps the sides of the first';
+
+	like dies { build( sprintf $box, 'colour "#000000"' ) }, qr/known: background_color, border, border_color, border_width, glyphs_show_through, height_group, layout, padding, sizing, width_group\)/, 'the known names include the structured properties';
+	like dies { build( sprintf $box, '_note "x"' ) }, qr/unknown layout property '_note'/, 'a node not starting with an uppercase letter is a property';
+	is build( sprintf $box, 'glyphs_show_through 1' )->glyphs_show_through, 1, 'a boolean property takes 1';
+	like dies { build( sprintf $box, 'glyphs_show_through "false"' ) }, qr/'glyphs_show_through' must be #true or #false, got 'false'/, 'a boolean property rejects strings';
+	like dies { build( sprintf $box, 'glyphs_show_through #null' ) },   qr/must be #true or #false, got #null/,                          'a boolean property rejects #null';
 };
 
 subtest 'scroll box' => sub {

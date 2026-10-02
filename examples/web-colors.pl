@@ -83,7 +83,7 @@ sub contrasting_text_color ($color) {
 
 sub color_cell ($color) {
 	my $swatch = Term::Fabulous::Widget::Box->new(
-		background_color => [ $color->to_rgba ],
+		background_color => $color,
 		layout           => { sizing => { width => sizing_grow(), height => sizing_fixed(2) }, padding => { left => 1 } },
 	);
 	$swatch->add_child( text( substr( $color->hexString, 0, 7 ), contrasting_text_color($color) ) );

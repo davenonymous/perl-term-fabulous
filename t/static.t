@@ -113,10 +113,13 @@ subtest 'print' => sub {
 	close $fh;
 	is decode( 'UTF-8', $output ), "╭──────────╮\n│ Grüße    │\n╰──────────╯\n", 'UTF-8 bytes without colors on a non-terminal handle';
 	like dies { page()->print( fh => 'not a handle' ) }, qr/fh must be an open file handle/, 'invalid handle dies';
+	like dies { page()->print( file => \*STDERR ) },     qr/print does not accept file \(known options: fh, colors\)/, 'unknown print option dies';
+	like dies { page()->render_lines( colour => 0 ) },   qr/render_lines does not accept colour/,                      'unknown render_lines option dies';
 };
 
 subtest 'construction' => sub {
 	like dies { Term::Fabulous::Static->new( root => Term::Fabulous::Widget::Box->new, width => 10, bogus => 1 ) }, qr/bogus/, 'unknown parameters die';
+	like dies { Term::Fabulous::Static->new( root => Term::Fabulous::Widget::Box->new, width => 10, measure_text => sub { } ) }, qr/measure_text cannot be replaced/, 'measure_text dies';
 	is( Term::Fabulous::Static->new( root => Term::Fabulous::Widget::Box->new, width => 10 )->height, 4096, 'default height' );
 	is( Term::Fabulous::Static->new( root => Term::Fabulous::Widget::Box->new, width => 10, height => 7 )->height, 7, 'explicit height' );
 };

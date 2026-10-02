@@ -108,6 +108,7 @@ class Term::Fabulous::Editor :strict(params) {
 	}
 
 	method line ($row) {
+		return undef if $row < 0;
 		return $lines[$row];
 	}
 
@@ -405,8 +406,8 @@ class Term::Fabulous::Editor :strict(params) {
 	# word by word.
 	method type ($text) {
 		$text = $self->_fitting( $self->_normalize($text) );
-		return 0 unless length $text;
-		my $run = $text =~ /\A\s+\z/ ? 'space' : 'word';
+		return 0 unless length $text || $self->has_selection;
+		my $run = !length $text ? undef : $text =~ /\A\s+\z/ ? 'space' : 'word';
 		return $self->_edit( $run, sub { $self->_replace( $self->_replaced_range, $text ) } );
 	}
 
@@ -452,7 +453,8 @@ class Term::Fabulous::Editor :strict(params) {
 	# Clipboard
 	# ---------------------------------------------------------------------
 
-	method clipboard :common (@new) {
+	# A plain sub, so that it can be called on the class and on an editor.
+	sub clipboard ( $invocant, @new ) {
 		return $clipboard unless @new;
 		die "Term::Fabulous::Editor: the clipboard holds a string, got " . ( ref $new[0] || 'undef' ) unless defined $new[0] && !ref $new[0];
 		return $clipboard = $new[0];
@@ -630,9 +632,7 @@ one line (an empty text has one empty line).
 	my $line = $editor->line($row);
 
 One line of the text, without its line break. Valid rows are 0 to
-C<< line_count - 1 >>; a row past the end returns C<undef>, and negative
-rows are not supported (they currently count from the end, like Perl
-array indices).
+C<< line_count - 1 >>; a row past the end or below 0 returns C<undef>.
 
 =head2 line_count
 
@@ -846,8 +846,8 @@ selection deletes the selection.
 Like L</insert>, for text the user types: consecutive calls are merged
 into one undo step per word and per run of spaces, so undo takes back a
 word at a time. Any cursor movement, and any other edit, ends the
-current step. Unlike C<insert>, C<type('')> does nothing, even with a
-selection.
+current step. Typing an empty string with a selection deletes the
+selection, as C<insert> does, in an undo step of its own.
 
 =head2 delete_backward
 
@@ -919,9 +919,9 @@ the text changed.
 
 	my $text = Term::Fabulous::Editor->clipboard;
 	Term::Fabulous::Editor->clipboard('text to paste');
+	$editor->clipboard('text to paste');    # the same clipboard
 
-Class method: call it on the class, C<Term::Fabulous::Editor>; calling
-it on an editor object dies. Reads or sets the clipboard: one character
+Reads or sets the clipboard, called on the class or on any editor: one character
 string shared by all editors, and therefore by all text inputs, of the
 program. It is not connected to the clipboard of your desktop; set it
 yourself to bring text in from there. Setting anything but a string

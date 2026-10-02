@@ -49,6 +49,7 @@ class Term::Fabulous::Widget::Slider
 	field $current;
 
 	ADJUST :params ( :$value = undef ) {
+		$show_value = $show_value ? 1 : 0;
 		$self->_check_range( $min, $max, $step );
 		$self->_checked_page_step($page_step);
 		$self->_checked_format($value_format);
@@ -199,6 +200,10 @@ class Term::Fabulous::Widget::Slider
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties,
 			qw(min max step page_step value show_value value_format preferred_columns fill_glyph track_glyph thumb_glyph track_color) );
+	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, 'show_value' );
 	}
 
 	method format_value ($number) {
@@ -388,7 +393,8 @@ value.
 
 =item C<show_value>
 
-A boolean. Default: 1. Whether the value is shown right of the track.
+A boolean, stored as 1 or 0. Default: 1. Whether the value is shown
+right of the track.
 
 =item C<value_format>
 

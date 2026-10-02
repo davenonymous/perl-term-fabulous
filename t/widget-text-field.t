@@ -31,6 +31,8 @@ subtest 'size and value' => sub {
 	$field->value("a\nb");
 	is $field->value, 'a b', 'line breaks become spaces';
 	like dies { Term::Fabulous::Widget::TextField->new( mask => '**' ) },             qr/mask must be a single character/, 'an invalid mask dies';
+	like dies { $field->max_length(1) }, qr/^Term::Fabulous::Widget::TextField: the text has 3 characters, more than max_length 1/, 'editor errors name the widget';
+	is( Term::Fabulous::Widget::TextField->new( read_only => 'yes', disabled => 'no' )->read_only, 1, 'read_only is stored as 1 or 0' );
 	like dies { Term::Fabulous::Widget::TextField->new( preferred_columns => 0 ) }, qr/positive integer/,                'an invalid width dies';
 };
 

@@ -77,6 +77,7 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	# unnamed bytes of the control range are Ctrl plus a letter or symbol.
 	method _base_key () {
 		return ( 'Space', 0 ) if $char == 0x20;
+		return ( undef, 0 ) if $char >= 0x80 && $char <= 0x9F;    # C1 control characters have no name
 		return ( chr($char), 0 ) if $char != 0;
 		return ( $NAME_BY_KEY{$key}, 0 ) if exists $NAME_BY_KEY{$key};
 		return ( 'Space', 1 ) if $key == 0x00;
@@ -215,7 +216,9 @@ L<Term::Fabulous>; class method.
 	my $name = $event->key_name;    # 'Left', 'Ctrl+Shift+Right', 'Enter', 'a', 'Ctrl+W', ...
 
 Returns a readable name of the key together with its modifiers, or
-C<undef> for a key code that has no name. Compare it with C<eq> to bind
+C<undef> for a key code that has no name (including the C1 control
+characters U+0080 to U+009F, which L</text> does not return either).
+Compare it with C<eq> to bind
 keys; see L</KEY NAMES> for every possible result. Because the result
 can be C<undef>, write C<< ( $event->key_name // '' ) eq 'Ctrl+S' >>
 to avoid "uninitialized" warnings.

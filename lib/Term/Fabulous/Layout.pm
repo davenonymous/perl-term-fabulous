@@ -140,7 +140,7 @@ class Term::Fabulous::Layout :strict(params) {
 		}
 
 		foreach my $child ( $node->children->@* ) {
-			next if $child->name =~ /\A[a-z]/;    # properties, parsed by the widget itself
+			next unless Term::Fabulous::Role::CanParseLayout::is_widget_node_name( $child->name );    # properties are parsed by the widget itself
 			die "Term::Fabulous::Layout: widget '$name' cannot contain child widgets (found '" . $child->name . "')"
 				unless $widget->can('add_child');
 			$widget->add_child( $self->_build_widget($child) );
@@ -323,9 +323,9 @@ Values are written like this:
 
 Strings that contain spaces, parentheses, C<#>, C<=> or other special
 characters must be quoted: C<"#141937">, C<"fixed(10)">,
-C<"rgb(1, 2, 3)">. Booleans must be written C<#true> and C<#false>;
-other values are taken as Perl truth values, so C<"no"> or C<"false">
-in quotes count as true.
+C<"rgb(1, 2, 3)">. Boolean properties must be written C<#true> and
+C<#false> (C<1> and C<0> are accepted too); any other value, such as
+C<"no"> or C<"false"> in quotes, dies.
 
 Comments are C<// to the end of the line>, C</* blocks */>, and C</->
 in front of a node, which comments out the whole node with its
@@ -378,16 +378,16 @@ C<key=value> properties. Inside its braces:
 
 =item *
 
-Nodes whose names start with a B<lowercase> letter are properties of
-the widget, such as C<sizing> or C<text>. They are listed per widget in
-L</PROPERTIES>.
-
-=item *
-
 Nodes whose names start with an B<uppercase> letter are child widgets.
 Their names must be declared aliases, and only containers (widgets with
 an C<add_child> method, such as Box, ScrollBox and RadioGroup) accept
 children.
+
+=item *
+
+Every other node is a property of the widget, such as C<sizing> or
+C<text>. They are listed per widget in L</PROPERTIES>; an unknown one
+dies.
 
 =back
 
@@ -430,13 +430,8 @@ C<_color> takes any color string L<Term::Fabulous::Color> understands
 The property nodes each widget accepts, with the value they take. A
 name in the form C<name> without further explanation sets the Perl
 accessor of the same name; follow the link to the widget's
-documentation for the meaning. An unknown property name dies. The
-message lists the names the widget sets through its generic accessors
-(C<layout_properties>, see L<Term::Fabulous::Role::CanParseLayout>);
-the structured properties described below, such as C<layout>,
-C<sizing>, C<padding>, C<border>, C<text>, C<text_color>, C<options> and
-C<option>, are accepted as well even though the message does not list
-them.
+documentation for the meaning. An unknown property name dies with the
+list of the names the widget knows.
 
 =head2 Box properties
 
@@ -481,10 +476,9 @@ C<width_group> and C<height_group> give widgets in different parts of
 the tree the same width or height; see
 L<Term::Fabulous::Manual/Equal sizes across the tree>.
 
-A property node may appear more than once. A second C<padding> node
-replaces the padding of the first one completely (sides it does not
-name become 0), while a second C<sizing> or C<layout> node changes only
-the keys it names and keeps the others.
+A property node may appear more than once. A second C<padding>,
+C<sizing> or C<layout> node changes only the keys it names and keeps
+the others.
 
 	Box "panel" {
 		layout direction=down gap=1
@@ -798,12 +792,7 @@ L</build>. Messages start with C<Term::Fabulous::Layout:>; errors in a
 widget's properties also name the widget and its id, followed by the
 widget class's own message:
 
-	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border_color, border_width, height_group, width_group)
-
-The list of known names in such a message contains only the properties
-set through generic accessors (the widget's C<layout_properties>); the
-structured properties of L</PROPERTIES>, such as C<sizing> or C<text>,
-are valid too.
+	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 
 L</new> dies for:
 

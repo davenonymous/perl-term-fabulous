@@ -46,6 +46,7 @@ class Term::Fabulous::Widget::Input
 	method paint;
 
 	ADJUST {
+		$disabled = $disabled ? 1 : 0;
 		$self->_checked_color( $_ => $self->$_ ) foreach @COLOR_NAMES;
 		$self->_sync_focusability;
 
@@ -260,6 +261,10 @@ class Term::Fabulous::Widget::Input
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties, 'can_focus', 'disabled', @COLOR_NAMES );
 	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(can_focus disabled) );
+	}
 }
 
 1;
@@ -461,9 +466,10 @@ grown accordingly.
 
 =item C<disabled>
 
-A boolean. Default: 0. A disabled input is painted in C<disabled_color>,
-ignores keys, clicks and the mouse wheel, never fires C<Change> (or
-C<Submit>) and cannot take the focus. See L</disabled>.
+A boolean, stored as 1 or 0. Default: 0. A disabled input is painted in
+C<disabled_color>, ignores keys, clicks and the mouse wheel, never
+fires C<Change> (or C<Submit>) and cannot take the focus. See
+L</disabled>.
 
 =item C<can_focus>
 

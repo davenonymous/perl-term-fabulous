@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::TextInput
 	:isa(Term::Fabulous::Widget::Input)
 	:abstract
 {
+	use Feature::Compat::Try;
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns);
@@ -72,12 +73,25 @@ class Term::Fabulous::Widget::TextInput
 	field @last_press;
 
 	ADJUST :params ( :$value = undef, :$max_length = undef ) {
+		$read_only = $read_only ? 1 : 0;
 		$self->_checked_placeholder($placeholder);
 		$self->_checked_color( placeholder_color => $placeholder_color );
 		$self->_checked_color( selection_color   => $selection_color );
 		$self->background_color( [ @{ +DEFAULT_BACKGROUND } ] ) unless defined $self->background_color;
-		$editor->set_max_length($max_length) if defined $max_length;
-		$self->value($value)                 if defined $value;
+		$self->max_length($max_length) if defined $max_length;
+		$self->value($value)           if defined $value;
+	}
+
+	# Runs an editor call for a public method; the editor's errors are
+	# reworded to name this widget, which is the class the caller used.
+	method _in_editor ($code) {
+		try {
+			return $code->();
+		}
+		catch ($error) {
+			$error =~ s/\ATerm::Fabulous::Editor:/ref($self) . ':'/e;
+			die $error;
+		}
 	}
 
 	method is_multi_line :common () {
@@ -96,7 +110,7 @@ class Term::Fabulous::Widget::TextInput
 
 	method value (@new) {
 		return $editor->text unless @new;
-		$editor->set_text( $new[0] );
+		$self->_in_editor( sub { $editor->set_text( $new[0] ) } );
 		$self->scroll_to_cursor;
 		$self->repaint;
 		return $editor->text;
@@ -104,7 +118,7 @@ class Term::Fabulous::Widget::TextInput
 
 	method max_length (@new) {
 		return $editor->max_length unless @new;
-		$editor->set_max_length( $new[0] );
+		$self->_in_editor( sub { $editor->set_max_length( $new[0] ) } );
 		return $editor->max_length;
 	}
 
@@ -136,6 +150,10 @@ class Term::Fabulous::Widget::TextInput
 
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties, qw(value placeholder max_length read_only placeholder_color selection_color) );
+	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, 'read_only' );
 	}
 
 	# ---------------------------------------------------------------------
@@ -404,7 +422,7 @@ limit: pasted text is cut to fit. Dies if the initial C<value> is longer.
 
 =item C<read_only>
 
-A boolean. Default: 0. A read-only input can still take the focus, and
+A boolean, stored as 1 or 0. Default: 0. A read-only input can still take the focus, and
 its text can be selected and copied, but the user cannot change it:
 typing and the editing keys are not used and bubble on to the
 ancestors. Programmatic writes to C<value> still work.

@@ -22,6 +22,12 @@ subtest 'painting and size' => sub {
 	is $box->cell( 1, 0 )->[1], $box->color_attr( $box->accent_color ), 'the checked mark has the accent color';
 	$box->indeterminate(1);
 	is row_text( $box, 0 ), '[-] Accept', 'indeterminate';
+
+	my $wide = Term::Fabulous::Widget::Checkbox->new( label => 'Go', checked_mark => '[yes]', unchecked_mark => '[]', checked => 'yes' );
+	layout_ui($wide);
+	is [ $wide->checked, row_text( $wide, 0 ) ], [ 1, '[yes] Go' ], 'checked is stored as 1; the label follows the widest mark';
+	$wide->checked(0);
+	is row_text( $wide, 0 ), '[]    Go', 'the label stays in place with a narrower mark';
 };
 
 subtest 'Space, Enter and clicks toggle' => sub {

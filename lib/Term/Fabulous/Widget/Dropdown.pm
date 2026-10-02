@@ -170,6 +170,10 @@ class Term::Fabulous::Widget::Dropdown
 		return ( $self->SUPER::layout_properties, qw(value selected_index placeholder max_visible_options placeholder_color list_background_color highlight_text_color) );
 	}
 
+	method structured_layout_properties :override () {
+		return ( $self->SUPER::structured_layout_properties, qw(options option) );
+	}
+
 	# The options come as 'options "Red" "Green"' or as one 'option "Red"
 	# value="r"' node per option.
 	method parse_property :override ($kid) {

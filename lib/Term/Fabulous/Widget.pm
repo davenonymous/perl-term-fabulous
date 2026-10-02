@@ -10,24 +10,24 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 class Term::Fabulous::Widget
-	:does(Clay::UI::Role::Core::Container)
-
-	:does(Clay::UI::Role::Events::Listener)
-	:does(Clay::UI::Role::Events::Emitter)
-
-	:does(Clay::UI::Role::Layout::HasLayout)
-	:does(Clay::UI::Role::Layout::HasParent)
-	:does(Clay::UI::Role::Layout::HasSizingGroup)
-
-	:does(Clay::UI::Role::Style::HasBackground)
-	:does(Clay::UI::Role::Style::HasStates)
-
-	:does(Clay::UI::Role::Style::HasBorder)
+	:isa(Term::Fabulous::Widget::Element)
 	:does(Term::Fabulous::Role::HasBorderStyle)
 	:abstract
 {
+	use Feature::Compat::Try;
+	use Term::Fabulous::Color;
+
+	my @COLOR_PARAMS = qw(background_color border_color);
+
 	field $classes             :param = [];
 	field $glyphs_show_through :param = 0;
+
+	# Clay::UI validates the colors before any ADJUST of this class runs,
+	# so they are converted while the arguments are still a plain list.
+	sub BUILDARGS ( $class, %params ) {
+		$params{$_} = _rgba( $_ => $params{$_} ) foreach grep { defined $params{$_} } @COLOR_PARAMS;
+		return %params;
+	}
 
 	ADJUST {
 		$glyphs_show_through = _boolean( glyphs_show_through => $glyphs_show_through );
@@ -36,6 +36,24 @@ class Term::Fabulous::Widget
 	sub _boolean ( $name, $value ) {
 		die "Term::Fabulous::Widget: $name must be a boolean, got a " . ref($value) . " reference" if ref $value;
 		return $value ? 1 : 0;
+	}
+
+	# Any Term::Fabulous::Color input as the [r, g, b, a] array Clay::UI takes.
+	sub _rgba ( $name, $value ) {
+		try {
+			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
+		}
+		catch ($error) {
+			die "Term::Fabulous::Widget: $name is not a color: $error";
+		}
+	}
+
+	method background_color :override (@new) {
+		return $self->SUPER::background_color( @new && defined $new[0] ? _rgba( background_color => $new[0] ) : @new );
+	}
+
+	method border_color :override (@new) {
+		return $self->SUPER::border_color( @new && defined $new[0] ? _rgba( border_color => $new[0] ) : @new );
 	}
 
 	method get_classes () {
@@ -101,7 +119,8 @@ This page is the reference for everything these widgets have in common:
 the constructor parameters for layout, background, border and ids, and
 the methods for children, events and states. Most of it comes from
 L<Clay::UI>, the widget layer on top of the Clay layout engine, through
-the roles this class composes:
+the roles this class inherits from L<Term::Fabulous::Widget::Element>
+and the one it composes itself:
 
 =over
 
@@ -203,13 +222,14 @@ L<Term::Fabulous::Manual/LAYOUT> for how these work together.
 
 =item C<background_color>
 
-The color of the widget's area. An array reference C<[r, g, b, a]> of
-exactly four numbers from 0 to 255, or a hash reference
-C<{ r => ..., g => ..., b => ..., a => ... }>. Default: none, so the
-widget's area shows what is behind it. Strings such as C<'#ff0000'> are
-not accepted here (they are in KDL layouts); convert them with
-C<< [ Term::Fabulous::Color->new( color => '#ff0000' )->to_rgba ] >>.
-An alpha of 0 means no color, 255 is opaque, and 1 to 254 is
+The color of the widget's area, in any format
+L<Term::Fabulous::Color> accepts: an array reference C<[r, g, b, a]>
+(or C<[r, g, b]>, alpha 255), a hash reference
+C<{ r => ..., g => ..., b => ..., a => ... }>, a string such as
+C<'#ff0000'> or C<'rgb(255, 0, 0)'>, or a Term::Fabulous::Color
+object. The value is stored as C<[r, g, b, a]>, which is what the
+reader returns. Default: none, so the widget's area shows what is
+behind it. An alpha of 0 means no color, 255 is opaque, and 1 to 254 is
 translucent: the color is blended with whatever is below the widget
 (see C<glyphs_show_through>). See L<Term::Fabulous::Manual/COLORS>.
 
@@ -429,12 +449,14 @@ hash as above to change a single key.
 =head2 background_color
 
 	$box->background_color( [ 60, 90, 140, 255 ] );
+	$box->background_color('#3c5a8c');
 
-Accessor. Without an argument it returns the current value (C<undef>
-when none is set); with an argument it sets the value and returns the
-new value. C<undef> removes the background color. An invalid value dies
-like the constructor parameter of the same name. The change shows in the
-next frame.
+Accessor. Without an argument it returns the current value as
+C<[r, g, b, a]> (C<undef> when none is set); with an argument it sets
+the value, in any format the constructor parameter accepts, and returns
+the stored C<[r, g, b, a]>. C<undef> removes the background color. An
+invalid value dies like the constructor parameter of the same name. The
+change shows in the next frame.
 
 =head2 glyphs_show_through
 
@@ -448,12 +470,14 @@ frame.
 =head2 border_color
 
 	$box->border_color( [ 97, 175, 239, 255 ] );
+	$box->border_color( Term::Fabulous::Enum::WebColor->SteelBlue );
 
-Accessor. Without an argument it returns the current value (C<undef>
-when none is set); with an argument it sets the value and returns the
-new value. C<undef> returns to the terminal's default color. An invalid
-value dies like the constructor parameter of the same name. The change
-shows in the next frame.
+Accessor. Without an argument it returns the current value as
+C<[r, g, b, a]> (C<undef> when none is set); with an argument it sets
+the value, in any format the constructor parameter accepts, and returns
+the stored C<[r, g, b, a]>. C<undef> returns to the terminal's default
+color. An invalid value dies like the constructor parameter of the same
+name. The change shows in the next frame.
 
 =head2 border_width
 

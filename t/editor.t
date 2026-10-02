@@ -84,6 +84,10 @@ subtest 'editing' => sub {
 	$editor->type('x');
 	is $editor->text, 'x', 'typing replaces the selection';
 	ok !$editor->delete_forward, 'deleting at the end changes nothing';
+	$editor->select_all;
+	ok $editor->type(''), 'typing an empty string with a selection is an edit';
+	is $editor->text, '', 'it deletes the selection';
+	is $editor->line(-1), undef, 'a negative row has no line';
 };
 
 subtest 'max_length' => sub {
@@ -131,6 +135,7 @@ subtest 'clipboard' => sub {
 	Term::Fabulous::Editor->clipboard('set');
 	$other->paste;
 	is $other->text, 'xcutset', 'the clipboard can be set';
+	is $other->clipboard, 'set', 'the clipboard can be read through an editor';
 };
 
 done_testing;

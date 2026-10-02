@@ -2,6 +2,8 @@ package Term::Fabulous::Widget::Button;
 
 use v5.22;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
@@ -14,8 +16,18 @@ class Term::Fabulous::Widget::Button
 	:does(Clay::UI::Role::Interaction::Hoverable)
 	:strict(params)
 {
+	# Clay::UI stores can_focus as given; the constructor takes any truth value.
+	sub BUILDARGS ( $class, %params ) {
+		$params{can_focus} = $params{can_focus} ? 1 : 0 if exists $params{can_focus};
+		return $class->SUPER::BUILDARGS(%params);
+	}
+
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties, 'can_focus' );
+	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, 'can_focus' );
 	}
 }
 
@@ -112,7 +124,7 @@ C<background_color>, C<border_width>, C<border_color>, C<border_style>,
 
 =item C<can_focus>
 
-A boolean. Default: 1. With 0 the Button is skipped by Tab and
+A boolean, stored as 1 or 0. Default: 1. With 0 the Button is skipped by Tab and
 Shift+Tab, a click does not focus it, and
 C<< $ui->interaction->set_focused_widget($button) >> dies. Mouse
 clicks still fire C<OnPress> and C<OnRelease>.

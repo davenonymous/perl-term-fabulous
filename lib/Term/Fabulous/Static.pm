@@ -35,8 +35,16 @@ class Term::Fabulous::Static
 
 	# Clay::UI needs a height, and content is expected to end far before it.
 	sub BUILDARGS ( $class, %params ) {
+		die "Term::Fabulous::Static: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
 		$params{height} //= DEFAULT_MAX_HEIGHT;
 		return %params;
+	}
+
+	sub _checked_options ( $method, $options, @known ) {
+		my %is_known = map { $_ => 1 } @known;
+		my @unknown  = sort grep { !$is_known{$_} } keys %$options;
+		die "Term::Fabulous::Static: $method does not accept " . join( ', ', @unknown ) . " (known options: " . join( ', ', @known ) . ")" if @unknown;
+		return;
 	}
 
 	method pointer_state () {
@@ -44,16 +52,19 @@ class Term::Fabulous::Static
 	}
 
 	method render_lines ( %options ) {
+		_checked_options( render_lines => \%options, 'colors' );
 		my $colors = $options{colors} // 1;
 		$self->draw;
 		return map { $self->_format_row( $_, $colors ) } 0 .. $self->grid_height - 1;
 	}
 
 	method render_string ( %options ) {
+		_checked_options( render_string => \%options, 'colors' );
 		return join '', map { "$_\n" } $self->render_lines(%options);
 	}
 
 	method print ( %options ) {
+		_checked_options( print => \%options, qw(fh colors) );
 		my $fh = $options{fh} // \*STDOUT;
 		die "Term::Fabulous::Static: fh must be an open file handle" unless openhandle($fh);
 		my $colors = $options{colors} // ( -t $fh ? 1 : 0 );
@@ -193,7 +204,8 @@ are available too.
 
 	my $page = Term::Fabulous::Static->new( root => $root, width => 80 );
 
-Unknown parameters die.
+Unknown parameters die, and so does C<measure_text>: text is always
+measured in terminal columns.
 
 =over
 
@@ -257,7 +269,8 @@ Passed to L<Clay::UI>; see there.
 Lays the tree out, paints it and returns one character string per row,
 from the first row to the last row anything was painted in. The strings
 contain no newlines. Each call renders the tree again, so changes to the
-widgets show in the next call.
+widgets show in the next call. C<colors> is the only option; any other
+option name dies (so does C<colour>).
 
 C<colors> is a boolean, default 1. When true, every run of cells with
 the same colors and attributes is preceded by one SGR escape sequence
@@ -288,7 +301,8 @@ followed by C<"\n">. Takes the same C<colors> option.
 	$page->print( fh => \*STDERR, colors => 0 );
 	$page->print( fh => $file_handle );
 
-Writes L</render_string>, encoded as UTF-8, to a file handle.
+Writes L</render_string>, encoded as UTF-8, to a file handle. Any
+option other than the two below dies.
 
 =over
 

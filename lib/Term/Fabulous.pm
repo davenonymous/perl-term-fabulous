@@ -63,6 +63,11 @@ class Term::Fabulous
 	field $_pointer;
 	field $_wheel_rows = 0;    # wheel scrolling since the last frame
 
+	sub BUILDARGS ( $class, %params ) {
+		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
+		return %params;
+	}
+
 	ADJUST {
 		die "Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got " . ref( $self->root )
 			unless $self->root->DOES('Clay::UI::Role::Events::Emitter');
@@ -524,8 +529,9 @@ C<Clay error: ...>. See L<Clay::UI/new>.
 
 =item C<measure_text>
 
-Accepted because L<Clay::UI> accepts it, but ignored: Term::Fabulous
-always installs its own measurement, which counts terminal columns.
+Not accepted, although L<Clay::UI> has it: Term::Fabulous always
+measures text in terminal columns itself, so passing C<measure_text>
+dies.
 
 =back
 

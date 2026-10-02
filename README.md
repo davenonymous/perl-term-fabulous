@@ -181,8 +181,9 @@ first. Unknown parameters die
 
 - `measure_text`
 
-    Accepted because [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) accepts it, but ignored: Term::Fabulous
-    always installs its own measurement, which counts terminal columns.
+    Not accepted, although [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) has it: Term::Fabulous always
+    measures text in terminal columns itself, so passing `measure_text`
+    dies.
 
 # METHODS
 

@@ -53,6 +53,7 @@ class Term::Fabulous::Widget::TextArea
 	ADJUST {
 		$preferred_columns = _checked_size( preferred_columns => $preferred_columns );
 		$preferred_rows    = _checked_size( preferred_rows    => $preferred_rows );
+		( $wrap, $scrollbar ) = ( $wrap ? 1 : 0, $scrollbar ? 1 : 0 );
 	}
 
 	method is_multi_line :common :override () {
@@ -92,6 +93,10 @@ class Term::Fabulous::Widget::TextArea
 
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties, qw(preferred_columns preferred_rows wrap scrollbar) );
+	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(wrap scrollbar) );
 	}
 
 	method natural_size () {
@@ -411,14 +416,14 @@ C<layout> gives the area no height. Dies if not a positive integer.
 
 =item C<wrap>
 
-A boolean. Default: 1. When true, a line longer than the area continues
+A boolean, stored as 1 or 0. Default: 1. When true, a line longer than the area continues
 on the next row, broken after the last space that fits, or inside a word
 that is wider than the area. When false, every line takes exactly one
 row and the view scrolls sideways with the cursor.
 
 =item C<scrollbar>
 
-A boolean. Default: 1. When true, a scrollbar is shown in the rightmost
+A boolean, stored as 1 or 0. Default: 1. When true, a scrollbar is shown in the rightmost
 column while the text has more rows than the area; it then takes one
 column from the text. The scrollbar only shows the position; it cannot
 be dragged.

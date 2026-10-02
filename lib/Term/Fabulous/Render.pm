@@ -222,8 +222,9 @@ L<Term::Fabulous::Render::Clip>.
 
 When it is constructed, the role checks C<output_mode> and installs its
 own measure-text callback in Clay::UI (C<measure_text>), which reports
-text widths in terminal columns (see L<Term::Fabulous::Unicode>). Any
-C<measure_text> given to the constructor is replaced.
+text widths in terminal columns (see L<Term::Fabulous::Unicode>). The
+constructors of L<Term::Fabulous> and L<Term::Fabulous::Static> die
+when given a C<measure_text> of their own.
 
 Loading this module dies if the termbox2 library was built without
 truecolor support; see L<Term::Fabulous::Render::Attr>.

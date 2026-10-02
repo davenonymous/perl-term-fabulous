@@ -61,3 +61,16 @@ Revision history for Term::Fabulous
           cell targets gained painted_cell to read a cell back
         - Term::Fabulous::Enum::WebColor holds the 148 CSS named colors
           as Term::Fabulous::Color objects (it was an empty placeholder)
+        - Every widget color (background_color, border_color, the
+          text_color of a Text widget) takes any Term::Fabulous::Color
+          input, and Color->new reads a packed 0xRRGGBB integer. The
+          rgba and hsla class methods read alpha like the string forms,
+          and blend validates its arguments and rounds. KDL boolean
+          properties accept only #true/#false (or 0/1), a second
+          padding node merges, and the "unknown layout property" error
+          lists the structured properties too. Boolean parameters are
+          stored as 1 or 0, checkbox and radio labels stay in place when
+          the mark changes, Static rejects unknown options, the
+          constructors reject measure_text, key_name has no name for C1
+          control characters, editor errors name the text input, and
+          the editor clipboard can be read through an editor

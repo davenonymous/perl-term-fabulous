@@ -71,18 +71,18 @@ sub set_count ($new) {
 sub button ( $id, $caption, $action ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		id               => $id,
-		background_color => [ $button_color->to_rgba ],
-		border_color     => [ $border_color->to_rgba ],
+		background_color => $button_color,
+		border_color     => $border_color,
 		border_width     => 1,
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },
 	);
 	$button->add_child( label($caption) );
 
-	my $look_normal = sub { $button->background_color( [ $button_color->to_rgba ] ); return };
-	$button->on( OnFocus        => sub ($event) { $button->border_color( [ $focus_color->to_rgba ] );  return $CONTINUE } );
-	$button->on( OnBlur         => sub ($event) { $button->border_color( [ $border_color->to_rgba ] ); return $CONTINUE } );
-	$button->on( OnPress        => sub ($event) { $button->background_color( [ $press_color->to_rgba ] ); return } );
+	my $look_normal = sub { $button->background_color( $button_color ); return };
+	$button->on( OnFocus        => sub ($event) { $button->border_color( $focus_color );  return $CONTINUE } );
+	$button->on( OnBlur         => sub ($event) { $button->border_color( $border_color ); return $CONTINUE } );
+	$button->on( OnPress        => sub ($event) { $button->background_color( $press_color ); return } );
 	$button->on( OnHoverStopped => sub ($event) { $look_normal->(); return } );
 
 	# A click: the left button pressed and released over the button.

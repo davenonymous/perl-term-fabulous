@@ -20,6 +20,16 @@ subtest 'string grammar' => sub {
 	is rgba_of('hsl(720, 100%, 50%)'),  [ 255, 0,   0,   255 ], 'hue is taken modulo 360';
 	is rgba_of('hsla(120, 100%, 50%, 0.5)'), [ 0, 255, 0, 128 ], 'hsla()';
 	like dies { $Color->new( color => 'white' ) }, qr/unrecognized color string 'white'/, 'named colors are not supported';
+	is rgba_of(0xFF8800),  [ 255, 136, 0, 255 ], 'a packed integer';
+	is rgba_of('#123456'), [ 18,  52,  86, 255 ], 'digits-only hex with #';
+	like dies { rgba_of( 0xFFFFFF + 1 ) }, qr/packed integer color must be in 0\.\.0xFFFFFF/, 'a packed integer above 0xFFFFFF dies';
+};
+
+subtest 'blend' => sub {
+	my $black = $Color->rgb( 0, 0, 0 );
+	is [ $black->blend( $Color->rgb( 255, 255, 255 ), 0.5 )->to_rgba ], [ 128, 128, 128, 255 ], 'channels are rounded';
+	like dies { $black->blend( [ 255, 255, 255 ], 0.5 ) }, qr/blend needs a Term::Fabulous::Color/,   'a non-Color dies';
+	like dies { $black->blend( $black, 2 ) },              qr/blend ratio must be a number in 0\.\.1/, 'a ratio outside 0..1 dies';
 };
 
 subtest 'alpha grammar' => sub {
@@ -64,8 +74,10 @@ subtest 'HSL conversions round once' => sub {
 	is [ $Color->hsl_to_rgb( 0, 100, 50 ) ], [ 255, 0, 0 ], 'hsl_to_rgb';
 	is [ $Color->rgb_to_hsl( 255, 0, 0 ) ], [ 0, 100, 50 ], 'rgb_to_hsl';
 	is [ $Color->hsl( 174, 72, 56 )->to_rgba ], [ $Color->new( color => 'hsl(174, 72%, 56%)' )->to_rgba ], 'hsl factory matches the string form';
-	is [ $Color->hsla( 174, 72, 56, 0.5 )->to_rgba ]->[3], 128, 'hsla alpha is a 0..1 fraction';
-	like dies { $Color->hsla( 0, 0, 0, 2 ) }, qr/alpha fraction must be a number in 0\.\.1/, 'hsla alpha above 1 dies';
+	is [ map { $Color->hsla( 174, 72, 56, $_ )->alpha } 0.5, '50%', 128 ], [ 128, 128, 128 ], 'hsla alpha uses the string grammar';
+	is [ map { $Color->rgba( 1, 2, 3, $_ )->alpha } 0.5, '50%', 128 ],    [ 128, 128, 128 ], 'rgba alpha uses the string grammar';
+	like dies { $Color->hsla( 0, 0, 0, 1.5 ) }, qr/alpha fraction must be a number in 0\.\.1/, 'hsla alpha fraction above 1 dies';
+	like dies { $Color->rgba( 0, 0, 0, undef ) }, qr/alpha must be a number, got undef/,         'rgba alpha undef dies';
 	is [ $color->darken(0.1)->to_rgba ], [ $color->lighten(-0.1)->to_rgba ], 'darken is negative lighten';
 };
 

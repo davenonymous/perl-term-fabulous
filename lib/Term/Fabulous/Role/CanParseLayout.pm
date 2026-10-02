@@ -26,18 +26,39 @@ role Term::Fabulous::Role::CanParseLayout {
 	# Names of the accessors parse_generic may set from a layout.
 	method layout_properties;
 
+	# The names among layout_properties that take #true or #false.
+	method boolean_layout_properties;
+
+	# Names of the properties parse_node handles itself (not parse_generic).
+	method structured_layout_properties;
+
+	# A node inside a widget's block is a child widget when its name starts
+	# with an uppercase letter; every other node is a property.
+	sub is_widget_node_name ($name) {
+		return $name =~ /\A[A-Z]/ ? 1 : 0;
+	}
+
 	method parse_generic ($kid) {
 		my $name = $kid->name;
-		return if $name =~ /\A[A-Z]/;    # child widgets are built by Term::Fabulous::Layout
+		return if is_widget_node_name($name);    # child widgets are built by Term::Fabulous::Layout
 
-		my @known = $self->layout_properties;
-		die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort @known ) )
-			unless grep { $_ eq $name } @known;
+		my @settable = $self->layout_properties;
+		die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort @settable, $self->structured_layout_properties ) )
+			unless grep { $_ eq $name } @settable;
 
-		my $value = $self->kdl_value($kid);
+		my $value = ( grep { $_ eq $name } $self->boolean_layout_properties ) ? $self->kdl_boolean($kid) : $self->kdl_value($kid);
 		$value = [ Term::Fabulous::Color->new( color => $value )->to_rgba ] if $name =~ /_color\z/;
 		$self->$name($value);
 		return;
+	}
+
+	# The single argument of a boolean property node as 1 or 0: #true,
+	# #false, 1 or 0. Any other value dies, so "false" cannot count as true.
+	method kdl_boolean ($kid) {
+		my $argument = $self->kdl_argument($kid);
+		return $argument->as_perl ? 1 : 0 if $argument->is_bool;
+		return $argument->as_perl + 0 if $argument->is_number && $argument->as_perl =~ /\A[01]\z/;
+		die sprintf( "%s: layout property '%s' must be #true or #false, got %s", ref $self, $kid->name, $argument->is_null ? '#null' : "'" . $argument->as_perl . "'" );
 	}
 
 	# The value of a property node: its single argument, or a hashref of its
@@ -157,9 +178,11 @@ your own.
 Inside a widget's block, a node whose name starts with an uppercase
 letter (C<Text>, C<Box>, ...) is a child widget; L<Term::Fabulous::Layout>
 builds it and adds it with C<add_child> after the widget itself has
-been constructed. Every other node is a property of the widget and is
-handled by the widget's L</parse_node>. Properties are processed in the
-order they appear in the layout.
+been constructed. Every other node (C<text>, C<_note>, C<1st>, ...) is
+a property of the widget and is handled by the widget's
+L</parse_node>. Both sides use the same rule, the function
+C<Term::Fabulous::Role::CanParseLayout::is_widget_node_name($name)>.
+Properties are processed in the order they appear in the layout.
 
 =head1 CONSTRUCTOR PARAMETERS
 
@@ -205,6 +228,30 @@ property that is not in it dies (with the list of known names), so a
 layout file can neither call arbitrary methods nor silently ignore a
 misspelled property.
 
+=head2 boolean_layout_properties
+
+	method boolean_layout_properties () {
+		return qw(collapsed);
+	}
+
+Returns the names among L</layout_properties> that take a boolean.
+L</parse_generic> reads them with L</kdl_boolean>, so a layout must
+write C<#true> or C<#false> (or C<1> and C<0>); a quoted C<"false">
+dies instead of counting as true. Return an empty list when there are
+none.
+
+=head2 structured_layout_properties
+
+	method structured_layout_properties () {
+		return qw(shortcut);
+	}
+
+Returns the names of the property nodes that L</parse_node> (or a
+C<parse_property> override) handles itself, without
+L</parse_generic>. They are only used for the error message of an
+unknown property, so that its list of known names is complete. Return
+an empty list when there are none.
+
 =head1 METHODS
 
 These helpers are for implementations of L</parse_node> and
@@ -218,15 +265,27 @@ the widget's node).
 Sets one simple property: for a node C<name value>, it calls
 C<< $self->name($value) >>. The value is read with L</kdl_value>, so it
 is either the node's single argument or a hash reference of its
-C<key=value> pairs. For names ending in C<_color>, the value is parsed
-with L<Term::Fabulous::Color> first and passed as an
+C<key=value> pairs; a name listed by L</boolean_layout_properties> is
+read with L</kdl_boolean> instead. For names ending in C<_color>, the
+value is parsed with L<Term::Fabulous::Color> first and passed as an
 C<[r, g, b, a]> array reference, so layouts can use color strings
 (C<"#ffcc00">, C<"rgb(255, 204, 0)">, ...).
 
 Nodes whose name starts with an uppercase letter (child widgets) are
-skipped. Dies when the name is not listed by L</layout_properties>,
+skipped. Dies when the name is not listed by L</layout_properties>
+(the message lists those names and L</structured_layout_properties>),
 when the node's shape is wrong (see L</kdl_value>) or when the accessor
 rejects the value.
+
+=head2 kdl_boolean
+
+	my $flag = $self->kdl_boolean($kid);    # 1 or 0
+
+The single argument of a boolean property node: C<#true> and C<1> give
+C<1>, C<#false> and C<0> give C<0>. Anything else dies, including
+C<#null>, other numbers and strings such as C<"false">:
+
+	Term::Fabulous::Widget::Checkbox: layout property 'checked' must be #true or #false, got 'false'
 
 =head2 kdl_value
 

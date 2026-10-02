@@ -88,16 +88,21 @@ class Term::Fabulous::Widget::RadioButton
 		return $self->color_attr( $self->focus_background_color );
 	}
 
+	# The columns reserved for the mark: those of the wider one, so the
+	# label stays in place when the selection changes.
+	method _mark_columns () {
+		return max map { string_columns($_) } $selected_mark, $unselected_mark;
+	}
+
 	method natural_size () {
-		my $mark_columns = max map { string_columns($_) } $selected_mark, $unselected_mark;
-		return ( $mark_columns + ( length $label ? 1 + string_columns($label) : 0 ), 1 );
+		return ( $self->_mark_columns + ( length $label ? 1 + string_columns($label) : 0 ), 1 );
 	}
 
 	method paint () {
 		my $bg       = $self->paint_focus_background;
 		my $selected = $self->is_selected;
-		my $x        = $self->paint_text( 0, 0, $selected ? $selected_mark : $unselected_mark, $selected ? $self->accent_attr : $self->foreground_attr, $bg );
-		$self->paint_text( $x + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
+		$self->paint_text( 0, 0, $selected ? $selected_mark : $unselected_mark, $selected ? $self->accent_attr : $self->foreground_attr, $bg );
+		$self->paint_text( $self->_mark_columns + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
 		return;
 	}
 

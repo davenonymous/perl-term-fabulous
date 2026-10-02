@@ -71,20 +71,29 @@ class Term::Fabulous::Widget::Checkbox
 		return ( $self->SUPER::layout_properties, qw(label checked indeterminate checked_mark unchecked_mark indeterminate_mark) );
 	}
 
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(checked indeterminate) );
+	}
+
 	method _mark () {
 		return $indeterminate ? $indeterminate_mark : $checked ? $checked_mark : $unchecked_mark;
 	}
 
+	# The columns reserved for the mark: those of the widest one, so the
+	# label stays in place when the mark changes.
+	method _mark_columns () {
+		return max map { string_columns($_) } $checked_mark, $unchecked_mark, $indeterminate_mark;
+	}
+
 	method natural_size () {
-		my $mark_columns = max map { string_columns($_) } $checked_mark, $unchecked_mark, $indeterminate_mark;
-		return ( $mark_columns + ( length $label ? 1 + string_columns($label) : 0 ), 1 );
+		return ( $self->_mark_columns + ( length $label ? 1 + string_columns($label) : 0 ), 1 );
 	}
 
 	method paint () {
 		my $bg = $self->paint_focus_background;
 		my $mark_fg = $checked || $indeterminate ? $self->accent_attr : $self->foreground_attr;
-		my $x       = $self->paint_text( 0, 0, $self->_mark, $mark_fg, $bg );
-		$self->paint_text( $x + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
+		$self->paint_text( 0, 0, $self->_mark, $mark_fg, $bg );
+		$self->paint_text( $self->_mark_columns + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
 		return;
 	}
 
@@ -198,9 +207,8 @@ painted in C<accent_color>. Dies if not a string.
 
 =back
 
-The natural width of the checkbox reserves room for the widest mark,
-but the label is painted right after the mark that is shown. Use marks
-of the same width if the label should not move when the box is toggled.
+The label is painted after the width of the widest mark, so it stays
+in place when the box is toggled, even with marks of different widths.
 
 =head1 METHODS
 

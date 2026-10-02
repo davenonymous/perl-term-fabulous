@@ -3,8 +3,11 @@ use warnings;
 
 use Test2::V0;
 
+use Term::Fabulous::Color;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::ScrollBox;
+use Term::Fabulous::Widget::Text;
 
 my $Style = 'Term::Fabulous::Enum::BorderStyle';
 
@@ -28,6 +31,16 @@ subtest 'widget border styles are validated' => sub {
 	ref_is $box->border_style_left, $Style->Round, 'border_style sets every side';
 	like dies { $box->border_style_left('Round') }, qr/border_style_left/, 'accessor write is checked';
 	ok lives { $box->border_style_left(undef) }, 'undef clears a side';
+};
+
+subtest 'widget colors take every Term::Fabulous::Color format' => sub {
+	my $box = Term::Fabulous::Widget::Box->new( background_color => '#ff8800', border_color => Term::Fabulous::Color->rgb( 1, 2, 3 ) );
+	is [ $box->background_color, $box->border_color ], [ [ 255, 136, 0, 255 ], [ 1, 2, 3, 255 ] ], 'constructor strings and objects become [r, g, b, a]';
+	is $box->background_color('rgb(4, 5, 6)'), [ 4, 5, 6, 255 ], 'the writer converts too';
+	is $box->background_color(undef), undef, 'undef still clears the color';
+	like dies { Term::Fabulous::Widget::Box->new( border_color => 'nope' ) }, qr/border_color is not a color: Term::Fabulous::Color: unrecognized color string 'nope'/, 'an invalid color names the parameter';
+	is( Term::Fabulous::Widget::Text->new( text => 'x', text_color => '#ffffff' )->text_color, [ 255, 255, 255, 255 ], 'Text text_color' );
+	is( Term::Fabulous::Widget::ScrollBox->new( id => 's', vertical => '' )->vertical, 0, 'ScrollBox booleans are stored as 1 or 0' );
 };
 
 done_testing;

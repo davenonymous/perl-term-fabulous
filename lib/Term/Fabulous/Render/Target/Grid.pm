@@ -14,8 +14,9 @@ use Term::Fabulous::Render::Target::Mask;
 role Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::Mask) {
 
 	# Painted cells, indexed [y][x]; a cell is [ $glyph, $fg, $bg ] or undef
-	# when nothing has been painted there. A wide cluster occupies only the
-	# cell it starts in; its continuation cells stay undef.
+	# when nothing has been painted there. A wide cluster is stored only in
+	# the cell it starts in; its continuation cells keep whatever was
+	# painted there before (undef on a cleared grid).
 	field @rows;
 
 	method clear_cells (@kept_rects) {

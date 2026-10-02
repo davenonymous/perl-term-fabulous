@@ -2,6 +2,8 @@ package Term::Fabulous::Widget::ScrollBox;
 
 use v5.22;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
@@ -15,8 +17,18 @@ class Term::Fabulous::Widget::ScrollBox
 	:does(Clay::UI::Role::Layout::HasScroll)
 	:strict(params)
 {
+	# Clay::UI stores these as given; the constructor takes any truth value.
+	sub BUILDARGS ( $class, %params ) {
+		$params{$_} = $params{$_} ? 1 : 0 foreach grep { exists $params{$_} } qw(horizontal vertical);
+		return $class->SUPER::BUILDARGS(%params);
+	}
+
 	method layout_properties :override () {
 		return ( $self->SUPER::layout_properties, qw(horizontal vertical) );
+	}
+
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(horizontal vertical) );
 	}
 }
 
@@ -96,16 +108,14 @@ one frame to the next.
 
 =item C<vertical>
 
-A boolean. Default: 1. Whether the content scrolls up and down. The
-value is not checked: any value is stored as given and treated as true
-or false.
+A boolean, stored as 1 or 0. Default: 1. Whether the content scrolls
+up and down.
 
 =item C<horizontal>
 
-A boolean. Default: 0. Whether the content scrolls sideways. As with
-C<vertical>, any value is stored unchecked and treated as a boolean. The mouse
-wheel only scrolls vertically, so horizontal scrolling needs
-C<child_offset>.
+A boolean, stored as 1 or 0. Default: 0. Whether the content scrolls
+sideways. The mouse wheel only scrolls vertically, so horizontal
+scrolling needs C<child_offset>.
 
 =item C<child_offset>
 

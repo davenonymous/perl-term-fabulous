@@ -75,6 +75,10 @@ class Term::Fabulous::Widget::RadioGroup
 		return ( $self->SUPER::layout_properties, qw(value disabled can_focus) );
 	}
 
+	method boolean_layout_properties :override () {
+		return ( $self->SUPER::boolean_layout_properties, qw(disabled can_focus) );
+	}
+
 	# The radio buttons of the group in tree order: its descendants, except
 	# those of nested groups.
 	method buttons () {

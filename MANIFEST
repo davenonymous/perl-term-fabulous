@@ -51,6 +51,7 @@ lib/Term/Fabulous/Widget/Button.pm
 lib/Term/Fabulous/Widget/Canvas.pm
 lib/Term/Fabulous/Widget/Checkbox.pm
 lib/Term/Fabulous/Widget/Dropdown.pm
+lib/Term/Fabulous/Widget/Element.pm
 lib/Term/Fabulous/Widget/Dropdown/List.pm
 lib/Term/Fabulous/Widget/Input.pm
 lib/Term/Fabulous/Widget/PixelCanvas.pm
@@ -60,6 +61,7 @@ lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Text.pm
 lib/Term/Fabulous/Widget/TextArea.pm
+lib/Term/Fabulous/Widget/TextNode.pm
 lib/Term/Fabulous/Widget/TextField.pm
 lib/Term/Fabulous/Widget/TextInput.pm
 Makefile.PL

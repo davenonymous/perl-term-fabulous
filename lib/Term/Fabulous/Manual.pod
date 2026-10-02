@@ -666,37 +666,31 @@ Colors are red, green, blue and alpha (opacity) channels, each from 0 to
 
 =head2 Color formats
 
-Which formats are accepted depends on where the color is given:
+Every color a widget takes accepts the same formats: anything
+C<< Term::Fabulous::Color->new( color => ... ) >> accepts.
 
 =over
 
-=item Box, Text, Button, ScrollBox and canvas widgets in Perl code
+=item Perl code
 
 C<background_color>, C<border_color> and the C<text_color> of a Text
-widget take an array reference of exactly four numbers,
-C<[ $red, $green, $blue, $alpha ]>, or a hash reference
-C<{ r =E<gt> ..., g =E<gt> ..., b =E<gt> ..., a =E<gt> ... }>. Strings
-such as C<'#ff0000'> die here.
+widget, the colors of the input widgets (C<text_color>,
+C<accent_color>, C<focus_background_color> and so on) and the C<$fg>
+and C<$bg> arguments of the canvas drawing methods take strings such
+as C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'hsl(32, 100%, 50%)'>,
+three- or four-element arrays, C<{ r, g, b, a }> hashes, a
+L<Term::Fabulous::Color> object, or a packed C<0xRRGGBB> integer such
+as C<0xFF8800>.
 
-	background_color => [ 20, 25, 35, 255 ],
+	background_color => '#14192b',
+	border_color     => Term::Fabulous::Enum::WebColor->SteelBlue,
+	text_color       => [ 220, 220, 220, 255 ],
 
-To use another format, convert it with L<Term::Fabulous::Color>:
-
-	background_color => [ Term::Fabulous::Color->hex('#14192b')->to_rgba ],
-	border_color     => [ Term::Fabulous::Enum::WebColor->SteelBlue->to_rgba ],
-
+The box colors (C<background_color>, C<border_color>, Text
+C<text_color>) are stored and read back as C<[r, g, b, a]> whatever
+was given; the input and canvas colors keep the value as given.
 L<Term::Fabulous::Enum::WebColor> has the 148 CSS named colors as
 L<Term::Fabulous::Color> objects.
-
-=item Input widget colors and canvas cells
-
-The colors of the input widgets (C<text_color>, C<accent_color>,
-C<focus_background_color> and so on) and the C<$fg> and C<$bg> arguments
-of the canvas drawing methods accept much more: anything
-C<< Term::Fabulous::Color->new( color => ... ) >> accepts (strings such as
-C<'#ff8800'>, C<'rgb(255, 136, 0)'>, C<'hsl(32, 100%, 50%)'>, three- or
-four-element arrays, hashes), a L<Term::Fabulous::Color> object, or a
-packed C<0xRRGGBB> integer such as C<0xFF8800>.
 
 =item KDL layout files
 
@@ -764,7 +758,7 @@ useful for themes:
 	my $pressed = $accent->darken(0.1);
 	my $muted   = $accent->blend( Term::Fabulous::Color->rgb( 128, 128, 128 ), 0.5 );
 
-	$button->background_color( [ $hover->to_rgba ] );
+	$button->background_color($hover);
 
 Colors are immutable; every method returns a new object.
 
@@ -1584,7 +1578,7 @@ Colors: C<text_color>, C<disabled_color>, C<accent_color> (check marks,
 selection, slider fill) and C<focus_background_color>, in any format
 L<Term::Fabulous::Color> accepts. (A RadioGroup has none of these; its
 buttons have them.) C<background_color> and C<border_color> are box
-colors and take only C<[r, g, b, a]> or C<{ r, g, b, a }>.
+colors and take the same formats.
 
 =item *
 
@@ -2023,11 +2017,6 @@ installed locales).
 
 The terminal does not support 24-bit colors. Use a terminal that does;
 inside tmux, enable truecolor (C<set -as terminal-features ",*:RGB">).
-
-=head2 "expected a hash or array reference" or "expected an array of 4 numbers"
-
-Box, Text, Button, ScrollBox and canvas widgets take colors only as
-C<[r, g, b, a]> or C<{ r, g, b, a }> in Perl code. See L</Color formats>.
 
 =head2 A KeyPress listener on the root never sees some keys
 
