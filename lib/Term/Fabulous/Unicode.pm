@@ -14,16 +14,24 @@ use I18N::Langinfo qw(langinfo CODESET);
 use Term::Fabulous::Termbox qw(tb_cluster_width);
 use Unicode::GCString;
 
-use constant CLUSTER_CACHE_LIMIT => 4096;
+use constant CACHE_LIMIT => 4096;
 
-my %columns_by_cluster;
+# The same texts are segmented and measured on every frame (layout
+# callbacks, text and canvas drawing), so each result is remembered per
+# input string. A cache is emptied once it reaches CACHE_LIMIT entries.
+my ( %clusters_by_text, %columns_by_cluster, %columns_by_text );
 
 sub sanitize_text ($text) {
 	return $text =~ tr/\t\x00-\x08\x0A-\x1F\x7F-\x9F/ \x{FFFD}/r;
 }
 
 sub grapheme_clusters ($text) {
-	return map { $_->as_string } @{ Unicode::GCString->new( sanitize_text($text) )->as_arrayref };
+	my $clusters = $clusters_by_text{$text};
+	return @$clusters if defined $clusters;
+
+	%clusters_by_text = () if keys(%clusters_by_text) >= CACHE_LIMIT;
+	$clusters = $clusters_by_text{$text} = [ map { $_->as_string } @{ Unicode::GCString->new( sanitize_text($text) )->as_arrayref } ];
+	return @$clusters;
 }
 
 sub cluster_columns ($cluster) {
@@ -31,14 +39,18 @@ sub cluster_columns ($cluster) {
 	return $columns if defined $columns;
 
 	die "Term::Fabulous::Unicode: cluster_columns needs a non-empty cluster" unless length $cluster;
-	%columns_by_cluster = () if keys(%columns_by_cluster) >= CLUSTER_CACHE_LIMIT;
+	%columns_by_cluster = () if keys(%columns_by_cluster) >= CACHE_LIMIT;
 	return $columns_by_cluster{$cluster} = _terminal_columns($cluster);
 }
 
 sub string_columns ($text) {
-	my $columns = 0;
+	my $columns = $columns_by_text{$text};
+	return $columns if defined $columns;
+
+	%columns_by_text = () if keys(%columns_by_text) >= CACHE_LIMIT;
+	$columns = 0;
 	$columns += cluster_columns($_) foreach grapheme_clusters($text);
-	return $columns;
+	return $columns_by_text{$text} = $columns;
 }
 
 sub terminal_is_utf8 () {
@@ -161,6 +173,9 @@ Sanitizes C<$text> (see L</sanitize_text>) and returns its grapheme
 clusters as a list of character strings, in order. Returns the empty
 list for the empty string.
 
+Results are cached per text; the cache is emptied when it reaches 4096
+entries.
+
 =head2 cluster_columns
 
 	my $columns = cluster_columns($cluster);
@@ -185,6 +200,9 @@ Returns the number of columns C<$text> occupies on screen: the sum of
 L</cluster_columns> over all L</grapheme_clusters> of C<$text>. Returns
 0 for the empty string. This is the width Term::Fabulous reports to Clay
 for layout.
+
+Results are cached per text; the cache is emptied when it reaches 4096
+entries.
 
 =head2 terminal_is_utf8
 

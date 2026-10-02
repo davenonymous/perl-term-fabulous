@@ -28,4 +28,12 @@ subtest 'widths follow the termbox2 rule' => sub {
 	like dies { cluster_columns('') }, qr/non-empty cluster/, 'empty cluster dies';
 };
 
+subtest 'results are cached' => sub {
+	my @first = grapheme_clusters("a\x{1F1E9}\x{1F1EA}");
+	push @first, 'x';
+	is [ grapheme_clusters("a\x{1F1E9}\x{1F1EA}") ], [ 'a', "\x{1F1E9}\x{1F1EA}" ], 'a cached cluster list is returned as a copy';
+	is string_columns("a\x{1F1E9}\x{1F1EA}"), 3, 'first measurement';
+	is string_columns("a\x{1F1E9}\x{1F1EA}"), 3, 'the cached measurement';
+};
+
 done_testing;

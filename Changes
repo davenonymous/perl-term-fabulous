@@ -16,6 +16,9 @@ Revision history for Term::Fabulous
           gone. Text is measured with termbox2's own width functions,
           so emoji presentation sequences (U+FE0F), ZWJ sequences and
           flags take two columns
+        - Term::Fabulous::Unicode remembers the grapheme clusters and
+          the width of every text it has measured, so layout callbacks
+          and drawing no longer segment the same strings on every frame
         - Scroll containers: the renderer honors Clay's scissor commands
           (Render::Clip), Widget::ScrollBox is a Box that scrolls, and
           the mouse wheel scrolls the box under the pointer by three
