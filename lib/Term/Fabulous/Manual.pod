@@ -257,10 +257,9 @@ C<SIGTERM>. Then it restores the terminal and returns.
 
 =item *
 
-Quitting on C<Escape> has a catch: terminals send C<Alt> plus a letter as
-C<Escape> followed by the letter, so this program also quits on, say,
-C<Alt+x>. If that matters, quit on C<q> or C<Ctrl+Q> only (see
-L</Key names>).
+Quitting on C<Escape> does not catch C<Alt> plus a letter: terminals
+send it as C<Escape> followed by the letter, in one write, and
+Term::Fabulous names that C<Alt+x> (see L</Key names>).
 
 =back
 

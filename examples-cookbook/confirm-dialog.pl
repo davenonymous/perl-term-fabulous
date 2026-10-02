@@ -27,7 +27,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	},
 );
 my $notes = Term::Fabulous::Widget::TextArea->new( id => 'notes', layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
-$root->add_child( text('Type some notes. q asks before quitting.'), $notes );
+$root->add_child( text('Type some notes. Ctrl+Q asks before quitting.'), $notes );
 
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
@@ -54,7 +54,7 @@ $dialog->add_child( text('Really quit? Unsaved notes are lost.'), $buttons );
 
 $root->on(
 	KeyPress => sub ($event) {
-		return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'q';
+		return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'Ctrl+Q';
 		$dialog->open($ui);
 		return;
 	}

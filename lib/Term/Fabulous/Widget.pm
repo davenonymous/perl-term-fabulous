@@ -420,10 +420,10 @@ Appends one or more widgets (or L<Term::Fabulous::Widget::Text>s) as
 children, in order. Returns the widget, so calls chain:
 C<< $root->add_child($a)->add_child($b) >>.
 
-A widget can be attached only once in its life. Adding a widget that
-already has (or had) a parent dies, and so does adding the root of a
-L<Term::Fabulous> or a widget to itself or one of its descendants.
-Create a new widget instead of moving one. See
+A widget has at most one parent at a time. Adding a widget that still
+has a parent dies, and so does adding the root of a L<Term::Fabulous>
+or a widget to itself or one of its descendants. To move a widget,
+remove it from its parent first. See
 L<Clay::UI::Role::Core::Container/add_child>.
 
 =head2 remove_child
@@ -432,8 +432,8 @@ L<Clay::UI::Role::Core::Container/add_child>.
 
 Removes every direct child whose C<id> equals the argument. Unknown ids
 are ignored. Text widgets are never removed this way, even when they
-have an C<id> (use L</remove_children_with>). Removed widgets cannot be
-added again. Returns the widget.
+have an C<id> (use L</remove_children_with>). A removed widget keeps
+its children and its state and can be added again. Returns the widget.
 
 Removing a subtree that holds the focused widget or a hovered widget
 fires C<OnBlur> or C<OnHoverStopped> on it during the call; C<OnBlur>

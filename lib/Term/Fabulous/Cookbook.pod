@@ -574,11 +574,13 @@ L<Term::Fabulous::Manual/Keys Term::Fabulous handles itself>.
 
 =item *
 
-Alt with a printable key, such as Alt+x, cannot be bound: the terminal
-sends it as Escape followed by x, and the program receives two key
-presses, C<Escape> and C<x>. Alt with a special key (arrows, Home, End,
-Page Up, Page Down, Insert, Delete, F1 to F12) arrives as one key, such
-as C<Alt+Down>. See L<Term::Fabulous::Manual/Key names>.
+Alt with a printable key arrives as one key, such as C<Alt+x>: the
+terminal sends it as Escape followed by x, in one write, and
+Term::Fabulous tells that from a lone Escape. Only Alt+[ and Alt+O
+cannot be bound, because they begin the escape sequences of other keys.
+Alt with a special key (arrows, Home, End, Page Up, Page Down, Insert,
+Delete, F1 to F12) arrives as one key too, such as C<Alt+Down>. See
+L<Term::Fabulous::Manual/Key names>.
 
 =item *
 
@@ -1050,8 +1052,9 @@ L</Scroll a ScrollBox from code (keep a log at the newest line)>.
 =item *
 
 C<remove_children_with> removes every child for which the code returns
-true. A removed widget cannot be added again anywhere; build a new one
-instead. See L<Term::Fabulous::Manual/Changing the tree>.
+true. A removed widget can be added again, to the same box or another
+one, and keeps its children and its state. See
+L<Term::Fabulous::Manual/Changing the tree>.
 
 =back
 
@@ -1216,7 +1219,8 @@ lowest possible C<y> is the box height minus the content height.
 =item *
 
 C<Clay::XS::set_scroll_position( $element_id, { x =E<gt> ..., y =E<gt> ... } )>
-moves the view; the next frame shows it. The recipe keeps the values
+moves the view and asks for a frame, which shows it, even when nothing
+else changed. The recipe keeps the values
 within the content itself. A value outside is pulled back into the
 content by the next frame, which counts as scrolling and fires
 C<OnScroll>.
@@ -1533,7 +1537,7 @@ L</Ask a question in a dialog (Dialog widget)>.
 =head2 Ask a question in a dialog (Dialog widget)
 
 Goal: a "Really quit?" dialog that opens over the screen when the user
-presses q, keeps the keyboard focus inside itself, and closes on Escape
+presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
 This program is shipped as F<examples-cookbook/confirm-dialog.pl>.
@@ -1567,7 +1571,7 @@ This program is shipped as F<examples-cookbook/confirm-dialog.pl>.
 		},
 	);
 	my $notes = Term::Fabulous::Widget::TextArea->new( id => 'notes', layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
-	$root->add_child( text('Type some notes. q asks before quitting.'), $notes );
+	$root->add_child( text('Type some notes. Ctrl+Q asks before quitting.'), $notes );
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
@@ -1594,7 +1598,7 @@ This program is shipped as F<examples-cookbook/confirm-dialog.pl>.
 
 	$root->on(
 		KeyPress => sub ($event) {
-			return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'q';
+			return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'Ctrl+Q';
 			$dialog->open($ui);
 			return;
 		}
@@ -1627,9 +1631,11 @@ focus back on the text area and fires C<Close> on the dialog.
 
 =item *
 
-The q shortcut lives on the root. While the dialog is open, the focus is
-inside it; a Button uses only Enter and Space, so q still reaches the
-root, where C<open> on an open dialog does nothing.
+The Ctrl+Q shortcut lives on the root. The text area types letters
+such as q itself, so they never reach the root, but it passes Ctrl+Q
+on. While the dialog is open, the focus is inside it; a Button uses
+only Enter and Space, so Ctrl+Q still reaches the root, where C<open>
+on an open dialog does nothing.
 
 =item *
 

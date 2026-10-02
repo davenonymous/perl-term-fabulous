@@ -192,9 +192,6 @@ screenshot "cookbook-show-output" {
 	size 72 14
 	steps {
 		wait 1
-		// Moving the pointer asks for a frame, which shows the newest
-		// line; see "Scroll a ScrollBox from code".
-		move 70 13
 	}
 }
 
@@ -214,10 +211,7 @@ screenshot "cookbook-confirm-dialog" {
 	size 72 14
 	steps {
 		type "Buy milk and a new punch card reader."
-		// While the notes have the focus they take the q as text; a click
-		// on the root (outside any input) takes the focus away first.
-		click 4 1
-		key "q"
+		key "Ctrl+Q"
 	}
 }
 

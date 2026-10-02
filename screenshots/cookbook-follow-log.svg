@@ -31,16 +31,16 @@
 <g class="terminal">
 <text x="39" y="74" textLength="666" fill="#e6e6e6">Wheel or Up/Down scroll, Left/Right scroll sideways, Home goes to the top,</text>
 <text x="39" y="92" textLength="252" fill="#e6e6e6">End follows the newest line.</text>
-<text x="48" y="128" textLength="684" fill="#c8d2e6">Line   25 ------------------------------------------------------------------</text>
-<text x="48" y="146" textLength="81" fill="#c8d2e6">Line   26</text>
-<text x="48" y="164" textLength="81" fill="#c8d2e6">Line   27</text>
-<text x="48" y="182" textLength="81" fill="#c8d2e6">Line   28</text>
-<text x="48" y="200" textLength="81" fill="#c8d2e6">Line   29</text>
-<text x="48" y="218" textLength="684" fill="#c8d2e6">Line   30 ------------------------------------------------------------------</text>
-<text x="48" y="236" textLength="81" fill="#c8d2e6">Line   31</text>
-<text x="48" y="254" textLength="81" fill="#c8d2e6">Line   32</text>
-<text x="48" y="272" textLength="81" fill="#c8d2e6">Line   33</text>
-<text x="48" y="290" textLength="81" fill="#c8d2e6">Line   34</text>
+<text x="48" y="128" textLength="81" fill="#c8d2e6">Line   26</text>
+<text x="48" y="146" textLength="81" fill="#c8d2e6">Line   27</text>
+<text x="48" y="164" textLength="81" fill="#c8d2e6">Line   28</text>
+<text x="48" y="182" textLength="81" fill="#c8d2e6">Line   29</text>
+<text x="48" y="200" textLength="684" fill="#c8d2e6">Line   30 ------------------------------------------------------------------</text>
+<text x="48" y="218" textLength="81" fill="#c8d2e6">Line   31</text>
+<text x="48" y="236" textLength="81" fill="#c8d2e6">Line   32</text>
+<text x="48" y="254" textLength="81" fill="#c8d2e6">Line   33</text>
+<text x="48" y="272" textLength="81" fill="#c8d2e6">Line   34</text>
+<text x="48" y="290" textLength="684" fill="#c8d2e6">Line   35 ------------------------------------------------------------------</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

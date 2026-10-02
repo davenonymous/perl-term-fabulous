@@ -33,7 +33,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 
 $root->add_child(Term::Fabulous::Widget::Text->new(
-	text       => 'Two waves plotted with half blocks; only moved pixels are redrawn  (Ctrl+C to quit)',
+	text       => 'Three waves plotted with half blocks; only moved pixels are redrawn  (Ctrl+C to quit)',
 	text_color => [220, 220, 220, 255],
 ));
 

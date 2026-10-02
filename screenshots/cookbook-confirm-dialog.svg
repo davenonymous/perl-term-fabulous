@@ -42,7 +42,7 @@
 <polyline points="160.5 222 160.5 226 160.538 226.587 160.653 227.165 160.843 227.722 161.103 228.25 161.43 228.739 161.818 229.182 162.261 229.57 162.75 229.897 163.278 230.157 163.835 230.347 164.413 230.462 165 230.5 165 230.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="547.5 222 547.5 226 547.462 226.587 547.347 227.165 547.157 227.722 546.897 228.25 546.57 228.739 546.182 229.182 545.739 229.57 545.25 229.897 544.722 230.157 544.165 230.347 543.587 230.462 543 230.5 543 230.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <g class="terminal">
-<text x="48" y="92" textLength="360" fill="#6e6e6e">Type some notes. q asks before quitting.</text>
+<text x="48" y="92" textLength="405" fill="#6e6e6e">Type some notes. Ctrl+Q asks before quitting.</text>
 <text x="48" y="128" textLength="108" fill="#6e6f72">Buy milk and</text>
 <text x="174" y="164" textLength="324" fill="#dcdcdc">Really quit? Unsaved notes are lost.</text>
 <text x="183" y="200" textLength="126" fill="#dcdcdc">Quit    Cancel</text>

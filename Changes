@@ -19,7 +19,8 @@ Revision history for Term::Fabulous
           make release; tools/screenshot takes an SVG or PNG screenshot
           of any Term::Fabulous program
         - Frames are drawn only when something changed: a widget setter
-          (Clay::UI::Revision), input, a resize or $ui->invalidate.
+          (Clay::UI::Revision), Clay::XS::set_scroll_position, input,
+          a resize or $ui->invalidate.
           Widget classes of your own call mark_changed (or repaint)
           after changing drawn state
         - The terminal reports mouse movement without a button (mode
