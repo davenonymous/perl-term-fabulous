@@ -56,13 +56,40 @@ class Term::Fabulous::Widget
 		return $self->SUPER::border_color( @new && defined $new[0] ? _rgba( border_color => $new[0] ) : @new );
 	}
 
+	# The first node at or below $node, in depth-first pre-order, whose id
+	# is $id. Text leaves have an id but no children.
+	sub _first_with_id ( $node, $id ) {
+		my $node_id = $node->can('id') ? $node->id : undef;
+		return $node if defined $node_id && $node_id eq $id;
+		return undef unless $node->can('children');
+		foreach my $child ( $node->children->@* ) {
+			my $found = _first_with_id( $child, $id );
+			return $found if defined $found;
+		}
+		return undef;
+	}
+
+	method find_by_id ($id) {
+		die "Term::Fabulous::Widget: find_by_id needs an id, got undef" unless defined $id;
+		return _first_with_id( $self, $id );
+	}
+
 	method get_classes () {
 		return (@$classes, map { 'state_' . lc($_) } $self->states);
 	}
 
 	method glyphs_show_through (@new) {
 		return $glyphs_show_through unless @new;
-		return $glyphs_show_through = _boolean( glyphs_show_through => $new[0] );
+		$glyphs_show_through = _boolean( glyphs_show_through => $new[0] );
+		$self->mark_changed;
+		return $glyphs_show_through;
+	}
+
+	# Whether the renderer swaps the foreground and background colors of
+	# every cell the widget and its children paint. Button overrides it
+	# while it is pressed.
+	method reverse_video () {
+		return 0;
 	}
 }
 
@@ -128,6 +155,8 @@ and the one it composes itself:
 
 =item * L<Clay::UI::Role::Events::Listener> and L<Clay::UI::Role::Events::Emitter>: events (C<on>, C<fire_event>)
 
+=item * L<Clay::UI::Role::Layout::HasFloating>: the C<floating> hash
+
 =item * L<Clay::UI::Role::Layout::HasLayout>: the C<layout> hash
 
 =item * L<Clay::UI::Role::Layout::HasParent>: C<parent>, C<root>, C<ui>
@@ -165,13 +194,12 @@ empty; add children afterwards with L</add_child>.
 A non-empty string. Default: none. Names the widget: L</remove_child>
 removes children by id, listeners can tell widgets apart with
 C<< $event->target->id >>, and Clay keeps state (such as a scroll
-position) for it between frames. There is no lookup by id; see
-L<Term::Fabulous::Layout/Finding widgets by id> for walking the tree.
-Ids must be unique in a widget tree: two widgets with the same id make
-drawing die with a C<Clay error>. Ids starting with C<anon:> are
-reserved and die. Widgets without an id get one generated from their
-position in the tree. L<Term::Fabulous::Widget::ScrollBox> requires an
-id.
+position) for it between frames. L</find_by_id> finds a widget in a
+tree by its id. Ids must be unique in a widget tree: two widgets with
+the same id make drawing die with a C<Clay error>. Ids starting with
+C<anon:> are reserved and die. Widgets without an id get one
+generated from their position in the tree.
+L<Term::Fabulous::Widget::ScrollBox> requires an id.
 
 =item C<layout>
 
@@ -220,6 +248,72 @@ C<CLAY_ALIGN_Y_CENTER> or C<CLAY_ALIGN_Y_BOTTOM>. Default: left and top.
 Any other key, or a value of the wrong shape, dies. See
 L<Term::Fabulous::Manual/LAYOUT> for how these work together.
 
+=item C<floating>
+
+A hash reference that takes the widget out of its parent's layout and
+draws it on top of the other widgets, positioned against its parent,
+the root or another widget. It takes no space in its parent. Default:
+C<undef>, the widget is laid out normally. The keys, all optional, take
+constants exported by L<Clay::XS>:
+
+=over
+
+=item C<attach_to>
+
+What the widget is positioned against: C<CLAY_ATTACH_TO_PARENT>,
+C<CLAY_ATTACH_TO_ROOT> (the whole screen) or
+C<CLAY_ATTACH_TO_ELEMENT_WITH_ID> (the widget named by C<parent_id>).
+The default, C<CLAY_ATTACH_TO_NONE>, does not make the widget float.
+
+=item C<parent_id>
+
+With C<CLAY_ATTACH_TO_ELEMENT_WITH_ID>, the Clay element id number of
+the widget to attach to: C<< Clay::XS::Clay_GetElementId($id)->{id} >>
+for the widget with the id C<$id>. That widget does not have to be an
+ancestor.
+
+=item C<attach_points>
+
+C<< { element => $point, parent => $point } >>: the point of this
+widget that is placed on the point of the widget it is attached to,
+each one of C<CLAY_ATTACH_POINT_LEFT_TOP>, C<..._LEFT_CENTER>,
+C<..._LEFT_BOTTOM>, C<..._CENTER_TOP>, C<..._CENTER_CENTER>,
+C<..._CENTER_BOTTOM>, C<..._RIGHT_TOP>, C<..._RIGHT_CENTER> and
+C<..._RIGHT_BOTTOM>. Default: both C<CLAY_ATTACH_POINT_LEFT_TOP>.
+
+=item C<offset>
+
+C<< { x => $columns, y => $rows } >>, added to the position; negative
+values move left and up.
+
+=item C<expand>
+
+C<< { width => $columns, height => $rows } >>, enlarges the widget's
+area without changing the space its children get.
+
+=item C<z_index>
+
+An integer from -32768 to 32767. Floating widgets with a higher value
+are drawn on top of those with a lower one.
+
+=item C<pointer_capture_mode>
+
+C<CLAY_POINTER_CAPTURE_MODE_CAPTURE> (the default) or
+C<CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH>, Clay's pointer setting for
+the widget. Term::Fabulous delivers C<Mouse> events to the topmost
+widget painted under the pointer either way.
+
+=item C<clip_to>
+
+C<CLAY_CLIP_TO_NONE> (the default) or C<CLAY_CLIP_TO_ATTACHED_PARENT>,
+which cuts the widget off at the clipping area (such as a
+L<Term::Fabulous::Widget::ScrollBox>) of the widget it is attached to.
+
+=back
+
+Any other key, or a value of the wrong shape, dies. See
+L<Clay::UI::Role::Layout::HasFloating>.
+
 =item C<background_color>
 
 The color of the widget's area, in any format
@@ -256,7 +350,9 @@ The border's thickness: a number for all four sides, or a hash
 reference C<< { left => $n, right => $n, top => $n, bottom => $n } >>
 (missing sides are 0). Default: no border. In a terminal a drawn border
 is always one cell thick; any positive width draws the side, and the
-width is the space the side takes from the widget. Use C<1>.
+width is the space the side takes from the widget, except on a side
+whose style is C<Hidden>, which draws nothing and takes no space. Use
+C<1>.
 
 =item C<border_color>
 
@@ -366,6 +462,17 @@ in L</remove_child>.
 The C<id> given to the constructor, or C<undef> when none was given
 (the generated id is not returned). There is no writer.
 
+=head2 find_by_id
+
+	my $volume = $root->find_by_id('volume');
+
+The first widget, in depth-first pre-order, whose C<id> equals the
+argument: the widget itself, then its first child and that child's
+descendants, then the second child, and so on. Text widgets with an id
+are found too. Returns C<undef> when there is none. Dies when the
+argument is C<undef>. The tree is walked on every call; keep the result
+instead of searching in every event.
+
 =head2 children
 
 	my @kids = @{ $box->children };
@@ -445,6 +552,18 @@ returns the stored hash reference; with an argument it replaces the
 whole hash and returns the new one. An invalid hash dies like the
 constructor parameter. The change shows in the next frame. Copy the old
 hash as above to change a single key.
+
+=head2 floating
+
+	my $floating = $popup->floating;
+	$popup->floating( { %{ $popup->floating // {} }, offset => { x => 4, y => 2 } } );
+
+Accessor for the C<floating> hash (see L</new>). Without an argument it
+returns the stored hash reference (C<undef> when none is set); with an
+argument it replaces the whole hash and returns the new one. C<undef>
+makes the widget part of its parent's layout again. An invalid hash
+dies like the constructor parameter. The change shows in the next
+frame.
 
 =head2 background_color
 

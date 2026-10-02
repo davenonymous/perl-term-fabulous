@@ -1,5 +1,7 @@
 use v5.22;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 use utf8;
 
 use Test2::V0;
@@ -25,6 +27,7 @@ subtest 'constants' => sub {
 	is TB_OUTPUT_TRUECOLOR, 5,             'output modes';
 	is [ sort keys %Term::Fabulous::Termbox::EXPORT_TAGS ], [qw(all api colors event keys return width)], 'export tags';
 	ok( ( grep { $_ eq 'TB_KEY_MOUSE_WHEEL_DOWN' } @{ $Term::Fabulous::Termbox::EXPORT_TAGS{keys} } ), 'constants are listed under their tag' );
+	is [ TF_KEY_MOUSE_MOVE, TF_KEY_MOUSE_WHEEL_LEFT, TF_KEY_MOUSE_WHEEL_RIGHT ], [ 0xFFFF - 29, 0xFFFF - 30, 0xFFFF - 31 ], 'the Term::Fabulous mouse keys sit below the termbox2 ones';
 };
 
 subtest 'widths' => sub {
@@ -59,6 +62,42 @@ subtest 'event object' => sub {
 	$event->key(TB_KEY_MOUSE_RELEASE);
 	is $event->key, TB_KEY_MOUSE_RELEASE, 'accessors also set';
 	like dies { Term::Fabulous::Termbox::Event->new( button => 1 ) }, qr/button/, 'unknown fields die';
+};
+
+subtest 'input parser' => sub {
+	pipe my $read, my $write or die "pipe: $!";
+	open my $sink, '>', '/dev/null' or die "/dev/null: $!";
+	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
+	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
+	tb_set_input_mode( TB_INPUT_ESC | TB_INPUT_MOUSE );
+	is tf_install_input_parser(), TB_OK, 'the parser installs';
+
+	# Writes the bytes and returns every event they produce as [type, key, ch, mod, x, y].
+	my $feed = sub ($bytes) {
+		syswrite $write, $bytes;
+		my @events;
+		while (1) {
+			my $event = Term::Fabulous::Termbox::Event->new;
+			last unless tb_peek_event( $event, 100 ) == TB_OK;
+			push @events, [ map { $event->$_ } qw(type key ch mod x y) ];
+		}
+		return \@events;
+	};
+
+	is $feed->("\x1bx"),        [ [ TB_EVENT_KEY, 0, ord('x'), TB_MOD_ALT, 0, 0 ] ],                      'Alt+x';
+	is $feed->("\x1b\xc3\xa9"), [ [ TB_EVENT_KEY, 0, 0xE9, TB_MOD_ALT, 0, 0 ] ],                              'Alt plus a two-byte character';
+	is $feed->("\x1b\r"),       [ [ TB_EVENT_KEY, TB_KEY_ENTER, 0, TB_MOD_ALT | TB_MOD_CTRL, 0, 0 ] ],         'Alt+Enter keeps the control byte as its key';
+	is $feed->("\x1b"),          [ [ TB_EVENT_KEY, TB_KEY_ESC, 0, 0, 0, 0 ] ],                                 'a lone Escape is still Escape';
+	is $feed->("\x1b[A")->[0][1], TB_KEY_ARROW_UP, 'CSI sequences are left to termbox2';
+	is $feed->("\x1b[<35;10;5M"), [ [ TB_EVENT_MOUSE, TF_KEY_MOUSE_MOVE, 0, TB_MOD_MOTION, 9, 4 ] ],            'plain motion';
+	is $feed->("\x1b[<32;2;1M"),  [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, TB_MOD_MOTION, 1, 0 ] ],            'a drag with the left button';
+	is $feed->("\x1b[<0;2;1m"),   [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_RELEASE, 0, 0, 1, 0 ] ],                      'a release';
+	is [ map { $_->[1] } @{ $feed->("\x1b[<64;3;3M\x1b[<65;3;3M\x1b[<66;3;3M\x1b[<67;3;3M") } ],
+		[ TB_KEY_MOUSE_WHEEL_UP, TB_KEY_MOUSE_WHEEL_DOWN, TF_KEY_MOUSE_WHEEL_LEFT, TF_KEY_MOUSE_WHEEL_RIGHT ], 'four wheel directions, queued in one write';
+	is $feed->("\x1b[<20;300;40M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, TB_MOD_SHIFT | TB_MOD_CTRL, 299, 39 ] ], 'modifier bits and coordinates beyond 255';
+	is $feed->("\x1b[<0;1"), [], 'a partial report waits';
+	is $feed->(";1M"), [ [ TB_EVENT_MOUSE, TB_KEY_MOUSE_LEFT, 0, 0, 0, 0 ] ], 'until the rest arrives';
+	tb_shutdown();
 };
 
 done_testing;

@@ -59,11 +59,10 @@ Resizes are debounced: while the user drags the window border, nothing
 is fired; one tenth of a second after the last size change, the event is
 fired twice for the final size, always on the root widget. No C<Resize>
 is fired when C<run> starts and replaces the C<width> and C<height>
-given to C<new> with the terminal's size; to react to the starting size,
-read C<< $ui->width >> from code that runs once the loop has started,
-for example C<< IO::Async::Loop->new->later( sub { ... } ) >> (see
-L<Term::Fabulous::Cookbook/Resize-aware layout (Resize event)>). The two
-events of a resize:
+given to C<new> with the terminal's size: that fires C<Start>
+(L<Term::Fabulous::Event::Start>) instead (see
+L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>).
+The two events of a resize:
 
 =over
 
@@ -153,7 +152,7 @@ applied.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous>, L<Term::Fabulous::Event::CanvasResize>,
-L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous>, L<Term::Fabulous::Event::Start>,
+L<Term::Fabulous::Event::CanvasResize>, L<Term::Fabulous::Manual/EVENTS>.
 
 =cut

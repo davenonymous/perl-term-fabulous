@@ -8,8 +8,10 @@ use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_
 use Scalar::Util qw(refaddr);
 use Term::Fabulous::Termbox qw(
 	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
+	TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_RIGHT
 	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION
 );
+use Clay::UI::Revision qw(current_revision);
 use Term::Fabulous;
 use Term::Fabulous::Termbox::Event;
 use Term::Fabulous::Event::KeyPress;
@@ -41,7 +43,7 @@ my $ui = Term::Fabulous->new( width => 20, height => 5, root => $root );
 # Handlers on the root see every event through bubbling; record the widget
 # each event was fired on.
 my %targets;
-foreach my $name (qw(KeyPress Mouse OnPress OnRelease)) {
+foreach my $name (qw(KeyPress Mouse MouseMove OnPress OnRelease)) {
 	$root->on( $name => sub { push @{ $targets{$name} }, $_[0]->target; return } );
 }
 
@@ -87,6 +89,36 @@ subtest 'a press and a release within one frame both reach Clay' => sub {
 	$ui->_draw_pending;
 	is [ map { refaddr $_ } $targets{OnPress}[0], $targets{OnRelease}[0] ], [ ( refaddr $button ) x 2 ], 'the frame shows the press and then the release';
 	is $ui->pointer_state, { x => 2, y => 1, down => 0 }, 'and leaves the newest report as the pointer';
+};
+
+subtest 'MouseMove follows the pointer without a button' => sub {
+	$ui->_draw_pending;
+	%targets = ();
+	dispatch( $ui, type => TB_EVENT_MOUSE, key => TF_KEY_MOUSE_MOVE, x => 1, y => 1, mod => TB_MOD_MOTION );
+	ref_is $targets{MouseMove}[0], $button, 'MouseMove goes to the widget under the pointer';
+	is $targets{Mouse}, undef, 'and is no Mouse event';
+	is $ui->pointer_state, { x => 1, y => 1, down => 0 }, 'the pointer position follows the move';
+	ok $ui->_frame_is_due, 'a frame shows the new position to Clay';
+	$ui->_draw_pending;
+	ok $button->is_hovered, 'so the widget is hovered';
+};
+
+subtest 'frames are drawn only when something changed' => sub {
+	$ui->_draw_pending;
+	ok !$ui->_frame_is_due, 'nothing changed since the last frame';
+	$button->background_color( [ 3, 3, 3, 255 ] );
+	ok $ui->_frame_is_due, 'a widget setter makes a frame due';
+	$ui->_draw_pending;
+	ok !$ui->_frame_is_due, 'and the frame clears it';
+	dispatch( $ui, type => TB_EVENT_KEY, ch => ord 'a' );
+	ok $ui->_frame_is_due, 'input makes a frame due';
+	$ui->_draw_pending;
+	ref_is $ui->invalidate, $ui, 'invalidate returns the UI';
+	ok $ui->_frame_is_due, 'and makes a frame due';
+	$ui->_draw_pending;
+	my $revision = current_revision();
+	$ui->_draw_pending;
+	is current_revision(), $revision, 'drawing an unchanged tree changes nothing';
 };
 
 subtest 'Mouse targets a canvas without a background' => sub {
@@ -201,6 +233,23 @@ subtest 'scroll boxes' => sub {
 
 	dispatch( $scroll_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
 	ref_is $mouse_targets[-1], $header, 'content scrolled out of the box does not take the pointer';
+
+	my $sideways = Term::Fabulous::Widget::ScrollBox->new(
+		id         => 'sideways',
+		horizontal => 1,
+		vertical   => 0,
+		layout     => { sizing => { width => sizing_fixed(6), height => sizing_fixed(1) } },
+	);
+	my @columns = map { Term::Fabulous::Widget::Box->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } } ) } 20 .. 29;
+	$sideways->add_child(@columns);
+	my $sideways_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$sideways_root->add_child($sideways);
+	my $sideways_ui = Term::Fabulous->new( width => 20, height => 5, root => $sideways_root );
+	$sideways_ui->draw;
+	dispatch( $sideways_ui, type => TB_EVENT_MOUSE, key => TF_KEY_MOUSE_WHEEL_RIGHT, x => 1, y => 0 );
+	$sideways_ui->_draw_pending;
+	my ($first) = grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $sideways_ui->widget_for( $_->{userData} ) // 0 ) == refaddr( $columns[1] ) } $sideways_ui->get_last_commands;
+	is $first->{boundingBox}{x}, -1, 'a horizontal wheel notch scrolls the box under the pointer by three columns';
 
 	like dies { $scroll_ui->draw( scroll_cells => 3 ) }, qr/scroll_cells must be \[columns, rows\]/, 'scroll_cells must be a pair';
 	like dies { $scroll_ui->draw( scroll => [ 0, 1 ] ) },  qr/unknown argument\(s\): scroll/,       'unknown draw arguments die';

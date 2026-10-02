@@ -22,7 +22,7 @@ $EXPORT_TAGS{api} = [
 		tb_width tb_height tb_set_input_mode tb_set_output_mode
 		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
 		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send
-		tb_peek_event tb_poll_event tb_get_fds
+		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -136,7 +136,10 @@ L</tb_iswprint>, L</tb_wcwidth>, L</tb_cluster_width>.
 
 =item C<:keys>
 
-Every C<TB_KEY_*> constant: the ASCII control range (C<TB_KEY_CTRL_A> to
+Every C<TB_KEY_*> constant, plus the Term::Fabulous additions
+C<TF_KEY_MOUSE_MOVE>, C<TF_KEY_MOUSE_WHEEL_LEFT> and
+C<TF_KEY_MOUSE_WHEEL_RIGHT> (see L</tf_install_input_parser>): the
+ASCII control range (C<TB_KEY_CTRL_A> to
 C<TB_KEY_CTRL_Z>, C<TB_KEY_TAB>, C<TB_KEY_ENTER>, C<TB_KEY_ESC>,
 C<TB_KEY_SPACE>, C<TB_KEY_BACKSPACE>, C<TB_KEY_BACKSPACE2>, ...), the
 function and navigation keys (C<TB_KEY_F1> to C<TB_KEY_F12>,
@@ -269,6 +272,26 @@ unless the result is C<TB_OK>.
 	my $rc = tb_poll_event($event);
 
 Like L</tb_peek_event> without a timeout.
+
+=head3 tf_install_input_parser
+
+	my $rc = tf_install_input_parser();
+
+A Term::Fabulous addition. Installs a reader that runs before termbox2's
+own escape sequence parsers and decodes what they get wrong: Escape
+followed by a key in the same read becomes that key with C<TB_MOD_ALT>
+(Alt+x, Alt+Enter, Alt plus an umlaut), and SGR mouse reports keep
+their modifier bits (C<TB_MOD_SHIFT>, C<TB_MOD_ALT>, C<TB_MOD_CTRL>),
+report the pointer moving with no button as C<TF_KEY_MOUSE_MOVE> with
+C<TB_MOD_MOTION>, and report a horizontal wheel as
+C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>. Escape
+sequences that begin with C<ESC [> or C<ESC O> and are not SGR mouse
+reports are left to termbox2. C<tb_shutdown> forgets the parser, so
+call this after every C<tb_init>. Returns C<TB_OK>.
+
+The parser only decodes; to receive motion reports at all, ask the
+terminal with C<< tb_send("\e[?1003h") >> (and send C<"\e[?1003l">
+before C<tb_shutdown>), as L<Term::Fabulous> does.
 
 =head3 tb_get_fds
 

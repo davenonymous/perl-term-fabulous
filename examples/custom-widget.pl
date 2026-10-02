@@ -118,18 +118,7 @@ KDL
 
 my $root = $layout->build;
 
-# The first widget at or below $node whose id is $id, or undef.
-sub find_widget ( $node, $id ) {
-	return $node if defined $node->id && $node->id eq $id;
-	return undef unless $node->can('children');
-	foreach my $child ( @{ $node->children } ) {
-		my $found = find_widget( $child, $id );
-		return $found if defined $found;
-	}
-	return undef;
-}
-
-my $status = find_widget( $root, 'status' );
+my $status = $root->find_by_id('status');
 
 $root->on(
 	Change => sub ($event) {

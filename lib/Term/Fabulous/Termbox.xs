@@ -236,6 +236,9 @@ _poll_event()
 		PUSH_EVENT(status);
 
 int
+tf_install_input_parser()
+
+int
 tb_get_fds(SV *tty_ref, SV *resize_ref)
 	PREINIT:
 		int ttyfd    = -1;
@@ -371,6 +374,10 @@ BOOT:
 	EXPORT_IV("keys", TB_KEY_MOUSE_RELEASE);
 	EXPORT_IV("keys", TB_KEY_MOUSE_WHEEL_UP);
 	EXPORT_IV("keys", TB_KEY_MOUSE_WHEEL_DOWN);
+	/* Term::Fabulous additions, see tf_termbox.h. */
+	EXPORT_IV("keys", TF_KEY_MOUSE_MOVE);
+	EXPORT_IV("keys", TF_KEY_MOUSE_WHEEL_LEFT);
+	EXPORT_IV("keys", TF_KEY_MOUSE_WHEEL_RIGHT);
 	/* Colors and style bits. */
 	EXPORT_UV("colors", TB_DEFAULT);
 	EXPORT_UV("colors", TB_BLACK);

@@ -14,7 +14,16 @@ class Term::Fabulous::Widget::Box
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:strict(params)
 {
-	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM);
+	use Clay::XS qw(
+		Clay_GetElementId sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
+		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
+		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_TO_ROOT CLAY_ATTACH_TO_ELEMENT_WITH_ID
+		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_CENTER CLAY_ATTACH_POINT_LEFT_BOTTOM
+		CLAY_ATTACH_POINT_CENTER_TOP CLAY_ATTACH_POINT_CENTER_CENTER CLAY_ATTACH_POINT_CENTER_BOTTOM
+		CLAY_ATTACH_POINT_RIGHT_TOP CLAY_ATTACH_POINT_RIGHT_CENTER CLAY_ATTACH_POINT_RIGHT_BOTTOM
+		CLAY_POINTER_CAPTURE_MODE_CAPTURE CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
+		CLAY_CLIP_TO_NONE CLAY_CLIP_TO_ATTACHED_PARENT
+	);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my %DIRECTION_BY_NAME = (
@@ -28,6 +37,47 @@ class Term::Fabulous::Widget::Box
 
 	my $DECIMAL = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
 
+	my %SIZING_WITH_LIMITS = ( grow => \&sizing_grow, fit => \&sizing_fit );
+
+	my %ALIGN_X_BY_NAME = ( left => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, right  => CLAY_ALIGN_X_RIGHT );
+	my %ALIGN_Y_BY_NAME = ( top  => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, bottom => CLAY_ALIGN_Y_BOTTOM );
+
+	my %ATTACH_TO_BY_NAME = (
+		parent  => CLAY_ATTACH_TO_PARENT,
+		root    => CLAY_ATTACH_TO_ROOT,
+		element => CLAY_ATTACH_TO_ELEMENT_WITH_ID,
+	);
+
+	my %ATTACH_POINT_BY_NAME = (
+		left_top      => CLAY_ATTACH_POINT_LEFT_TOP,
+		left_center   => CLAY_ATTACH_POINT_LEFT_CENTER,
+		left_bottom   => CLAY_ATTACH_POINT_LEFT_BOTTOM,
+		center_top    => CLAY_ATTACH_POINT_CENTER_TOP,
+		center_center => CLAY_ATTACH_POINT_CENTER_CENTER,
+		center_bottom => CLAY_ATTACH_POINT_CENTER_BOTTOM,
+		right_top     => CLAY_ATTACH_POINT_RIGHT_TOP,
+		right_center  => CLAY_ATTACH_POINT_RIGHT_CENTER,
+		right_bottom  => CLAY_ATTACH_POINT_RIGHT_BOTTOM,
+	);
+
+	my %POINTER_CAPTURE_BY_NAME = ( capture => CLAY_POINTER_CAPTURE_MODE_CAPTURE, passthrough => CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH );
+	my %CLIP_TO_BY_NAME         = ( none => CLAY_CLIP_TO_NONE, attached_parent => CLAY_CLIP_TO_ATTACHED_PARENT );
+
+	# Each key of a floating node: where its value goes in the
+	# Clay_FloatingElementConfig hash (a key, or a key and a subkey), and
+	# how the KDL value is parsed.
+	my %FLOATING_KEY = (
+		attach_to       => [ ['attach_to'],                  sub ($value) { _named( 'floating attach_to', \%ATTACH_TO_BY_NAME, $value ) } ],
+		parent_id       => [ ['parent_id'],                  sub ($value) { _element_id( 'floating parent_id', $value ) } ],
+		element         => [ [ attach_points => 'element' ], sub ($value) { _named( 'floating element', \%ATTACH_POINT_BY_NAME, $value ) } ],
+		parent          => [ [ attach_points => 'parent' ],  sub ($value) { _named( 'floating parent', \%ATTACH_POINT_BY_NAME, $value ) } ],
+		offset_x        => [ [ offset => 'x' ],              sub ($value) { _integer( 'floating offset_x', $value ) } ],
+		offset_y        => [ [ offset => 'y' ],              sub ($value) { _integer( 'floating offset_y', $value ) } ],
+		z_index         => [ ['z_index'],                    sub ($value) { _integer( 'floating z_index', $value ) } ],
+		pointer_capture => [ ['pointer_capture_mode'],       sub ($value) { _named( 'floating pointer_capture', \%POINTER_CAPTURE_BY_NAME, $value ) } ],
+		clip_to         => [ ['clip_to'],                    sub ($value) { _named( 'floating clip_to', \%CLIP_TO_BY_NAME, $value ) } ],
+	);
+
 	sub _describe ($value) {
 		return defined $value ? "'$value'" : 'null';
 	}
@@ -38,10 +88,34 @@ class Term::Fabulous::Widget::Box
 		return $value + 0;
 	}
 
+	sub _integer ( $what, $value ) {
+		die "Term::Fabulous::Widget::Box: $what must be an integer, got " . _describe($value)
+			unless defined $value && $value =~ /\A-?[0-9]+\z/;
+		return $value + 0;
+	}
+
+	# The value a name stands for in %$value_by_name; an unknown name dies
+	# with the known ones.
+	sub _named ( $what, $value_by_name, $name ) {
+		return $value_by_name->{$name} if defined $name && exists $value_by_name->{$name};
+		die "Term::Fabulous::Widget::Box: invalid $what " . _describe($name) . " (known: " . join( ', ', sort keys %$value_by_name ) . ")";
+	}
+
+	# The Clay element id number of the widget with the id $id, hashed the
+	# way Clay::UI hashes widget ids.
+	sub _element_id ( $what, $id ) {
+		die "Term::Fabulous::Widget::Box: $what must be a widget id, got " . _describe($id) unless defined $id && length $id;
+		return Clay_GetElementId($id)->{id};
+	}
+
 	sub _sizing ( $axis, $spec ) {
 		$spec //= '';
 		return sizing_grow() if $spec eq 'grow';
 		return sizing_fit()  if $spec eq 'fit';
+		if ( my ( $kind, $min, $max ) = $spec =~ /\A(grow|fit)\(\s*([0-9]+)\s*(?:,\s*([0-9]+)\s*)?\)\z/ ) {
+			die "Term::Fabulous::Widget::Box: sizing $axis minimum $min is greater than maximum $max in '$spec'" if defined $max && $min > $max;
+			return $SIZING_WITH_LIMITS{$kind}->( $min + 0, defined $max ? $max + 0 : undef );
+		}
 		if ( my ($percent) = $spec =~ /\Apercent\(\s*($DECIMAL)\s*\)\z/ ) {
 			die "Term::Fabulous::Widget::Box: sizing $axis percentage must be in 0..100, got '$spec'" if $percent > 100;
 			return sizing_percent( $percent / 100 );
@@ -49,7 +123,7 @@ class Term::Fabulous::Widget::Box
 		if ( my ($cells) = $spec =~ /\Afixed\(\s*([0-9]+)\s*\)\z/ ) {
 			return sizing_fixed( $cells + 0 );
 		}
-		die "Term::Fabulous::Widget::Box: invalid sizing $axis '$spec' (expected grow, fit, percent(0..100) or fixed(N))";
+		die "Term::Fabulous::Widget::Box: invalid sizing $axis '$spec' (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100) or fixed(N))";
 	}
 
 	sub _border_style ($name) {
@@ -67,7 +141,7 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method structured_layout_properties () {
-		return qw(layout border sizing padding);
+		return qw(layout border sizing padding child_alignment floating);
 	}
 
 	method parse_node ($node) {
@@ -77,11 +151,13 @@ class Term::Fabulous::Widget::Box
 
 	method parse_property ($kid) {
 		my $name = $kid->name;
-		if    ( $name eq 'layout' )  { $self->_parse_layout($kid) }
-		elsif ( $name eq 'border' )  { $self->_parse_border($kid) }
-		elsif ( $name eq 'sizing' )  { $self->_parse_sizing($kid) }
-		elsif ( $name eq 'padding' ) { $self->_parse_padding($kid) }
-		else                         { $self->parse_generic($kid) }
+		if    ( $name eq 'layout' )          { $self->_parse_layout($kid) }
+		elsif ( $name eq 'border' )          { $self->_parse_border($kid) }
+		elsif ( $name eq 'sizing' )          { $self->_parse_sizing($kid) }
+		elsif ( $name eq 'padding' )         { $self->_parse_padding($kid) }
+		elsif ( $name eq 'child_alignment' ) { $self->_parse_child_alignment($kid) }
+		elsif ( $name eq 'floating' )        { $self->_parse_floating($kid) }
+		else                                 { $self->parse_generic($kid) }
 		return;
 	}
 
@@ -130,6 +206,31 @@ class Term::Fabulous::Widget::Box
 		my %layout = %{ $self->layout };
 		$layout{padding} = { %{ $layout{padding} // {} }, map { $_ => _non_negative_integer( "padding $_", $props->{$_} ) } keys %$props };
 		$self->layout( \%layout );
+		return;
+	}
+
+	method _parse_child_alignment ($kid) {
+		my $props            = $self->kdl_properties( $kid, qw(x y) );
+		my %alignment_by_key = ( x => \%ALIGN_X_BY_NAME, y => \%ALIGN_Y_BY_NAME );
+		my %layout           = %{ $self->layout };
+		$layout{child_alignment} = { %{ $layout{child_alignment} // {} }, map { $_ => _named( "child_alignment $_", $alignment_by_key{$_}, $props->{$_} ) } keys %$props };
+		$self->layout( \%layout );
+		return;
+	}
+
+	method _parse_floating ($kid) {
+		my $props    = $self->kdl_properties( $kid, qw(attach_to parent_id element parent offset_x offset_y z_index pointer_capture clip_to) );
+		my %floating = %{ $self->floating // {} };
+		foreach my $key ( sort keys %$props ) {
+			my ( $slot, $parse ) = $FLOATING_KEY{$key}->@*;
+			my ( $field, $subfield ) = @$slot;
+			my $value = $parse->( $props->{$key} );
+			$floating{$field} = defined $subfield ? { %{ $floating{$field} // {} }, $subfield => $value } : $value;
+		}
+		$floating{attach_to} //= CLAY_ATTACH_TO_PARENT;    # a floating node means "float"
+		die "Term::Fabulous::Widget::Box: floating attach_to=element needs parent_id"
+			if ( $floating{attach_to} // -1 ) == CLAY_ATTACH_TO_ELEMENT_WITH_ID && !defined $floating{parent_id};
+		$self->floating( \%floating );
 		return;
 	}
 }
@@ -218,6 +319,12 @@ C<layout_direction> and C<child_alignment> that decides the size of
 the box and how its children are arranged. Default: C<{}>, which fits
 the box to its content and places the children from left to right.
 
+=item C<floating>
+
+A hash reference that takes the box out of its parent's layout and
+draws it on top of other widgets, attached to its parent, the root or
+another widget. Default: C<undef> (the box is laid out normally).
+
 =item C<background_color>
 
 The color of the box's area, in any format L<Term::Fabulous::Color>
@@ -272,7 +379,8 @@ L<Term::Fabulous::Widget/get_classes>. Default: C<[]>.
 
 A Box has all methods of L<Term::Fabulous::Widget>: children
 (C<add_child>, C<remove_child>, C<children>, ...), events (C<on>,
-C<fire_event>), the accessors C<layout>, C<background_color>,
+C<fire_event>), the search L<Term::Fabulous::Widget/find_by_id>, the
+accessors C<layout>, C<floating>, C<background_color>,
 C<border_color>, C<border_width>, C<border_style_top>,
 C<border_style_right>, C<border_style_bottom>, C<border_style_left>,
 C<width_group> and C<height_group>, and the state methods. It adds
@@ -302,8 +410,9 @@ unknown keys and invalid values die, naming the property.
 
 	Box "card" {
 		layout direction=down gap=1
-		sizing width="fixed(30)" height=fit
+		sizing width="fixed(30)" height="fit(3, 10)"
 		padding left=1 right=1
+		child_alignment x=center
 		border style=Round color="#61afef"
 		border_width 1
 		background_color "rgb(30, 35, 50)"
@@ -320,16 +429,85 @@ C<direction> is C<down> (aliases C<ttb>, C<top_to_bottom>) or C<right>
 (aliases C<ltr>, C<left_to_right>). C<gap> (alias C<child_gap>; giving
 both dies) is the number of cells between children, a non-negative
 integer. Each key is optional, but at least one must be given: a bare
-C<layout> node dies. Child alignment cannot be set from KDL.
+C<layout> node dies.
 
 =item C<sizing width=... height=...>
 
-Each value is C<grow>, C<fit>, C<"fixed(N)"> with N a non-negative
+Each value is C<grow>, C<fit>, C<"grow(MIN)">, C<"grow(MIN, MAX)">,
+C<"fit(MIN)">, C<"fit(MIN, MAX)">, C<"fixed(N)"> with N a non-negative
 integer number of cells, or C<"percent(N)"> with N a number from 0 to
 100 (C<"percent(50)"> is half of the parent; note that Perl code uses a
-fraction instead: C<sizing_percent(0.5)>). Values with parentheses
-must be quoted. Either key may be left out. A second C<sizing> node
-changes only the axes it names.
+fraction instead: C<sizing_percent(0.5)>). MIN and MAX are
+non-negative integer numbers of cells, the limits of
+C<sizing_grow($min, $max)> and C<sizing_fit($min, $max)>; without MAX
+there is no maximum, and a MIN greater than MAX dies. Values with
+parentheses must be quoted. Either key may be left out. A second
+C<sizing> node changes only the axes it names.
+
+=item C<child_alignment x=... y=...>
+
+Where the children are placed when they do not fill the box: C<x> is
+C<left> (the default), C<center> or C<right>, C<y> is C<top> (the
+default), C<center> or C<bottom>. Either key may be left out, but at
+least one must be given. A second C<child_alignment> node changes only
+the key it names. An unknown name dies with the known ones.
+
+=item C<floating attach_to=... parent_id=... element=... parent=... offset_x=N offset_y=N z_index=N pointer_capture=... clip_to=...>
+
+Sets the C<floating> hash (see L<Term::Fabulous::Widget/floating>).
+Each key is optional, but at least one must be given:
+
+=over
+
+=item C<attach_to>
+
+C<parent> (the default), C<root> or C<element>. C<element> requires
+C<parent_id>.
+
+=item C<parent_id>
+
+The id of the widget to attach to with C<attach_to=element>, a string.
+
+=item C<element>
+
+=item C<parent>
+
+The point of this box (C<element>) that is placed on the point of the
+widget it is attached to (C<parent>): C<left_top> (the default),
+C<left_center>, C<left_bottom>, C<center_top>, C<center_center>,
+C<center_bottom>, C<right_top>, C<right_center> or C<right_bottom>.
+
+=item C<offset_x>
+
+=item C<offset_y>
+
+Integers added to the position, in cells; negative values move left
+and up.
+
+=item C<z_index>
+
+An integer from -32768 to 32767; floating widgets with a higher value
+are drawn on top.
+
+=item C<pointer_capture>
+
+C<capture> (the default) or C<passthrough>.
+
+=item C<clip_to>
+
+C<none> (the default) or C<attached_parent>.
+
+=back
+
+A second C<floating> node changes only the keys it names. An unknown
+name dies with the known ones.
+
+	Box "menu" {
+		floating attach_to=element parent_id="menu-button" element=left_top parent=left_bottom
+		floating z_index=10
+		border style=Round
+		border_width 1
+	}
 
 =item C<padding left=N right=N top=N bottom=N>
 
@@ -379,7 +557,8 @@ L<Term::Fabulous::Role::CanParseLayout>.
 
 Called once for every child node of the widget's KDL node, in the order
 they appear, with the L<Text::KDL::XS::Node>. Box handles C<layout>,
-C<sizing>, C<padding> and C<border> itself and passes every other node
+C<sizing>, C<padding>, C<border>, C<child_alignment> and C<floating>
+itself and passes every other node
 to L<Term::Fabulous::Role::CanParseLayout/parse_generic>, which sets
 the properties listed by L</layout_properties> and skips child widget
 nodes. Override it to parse structured properties of your own, and
@@ -422,7 +601,8 @@ C<glyphs_show_through> for a Box. Subclasses extend the list as shown.
 	}
 
 The names of the properties L</parse_property> handles itself:
-C<layout>, C<border>, C<sizing> and C<padding> for a Box. They are
+C<layout>, C<border>, C<sizing>, C<padding>, C<child_alignment> and
+C<floating> for a Box. They are
 listed as known names in the error for an unknown property. A subclass
 that handles more nodes in C<parse_property> extends the list as
 shown.

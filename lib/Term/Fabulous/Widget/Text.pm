@@ -14,8 +14,12 @@ class Term::Fabulous::Widget::Text
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:strict(params)
 {
+	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use Feature::Compat::Try;
 	use Term::Fabulous::Color;
+
+	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
+	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
 
 	field $id :param :reader = undef;
 
@@ -36,6 +40,13 @@ class Term::Fabulous::Widget::Text
 		}
 	}
 
+	# The value a name stands for in %$value_by_name; an unknown name dies
+	# with the known ones.
+	sub _named ( $what, $value_by_name, $name ) {
+		return $value_by_name->{$name} if defined $name && exists $value_by_name->{$name};
+		die "Term::Fabulous::Widget::Text: invalid $what " . ( defined $name ? "'$name'" : 'null' ) . " (known: " . join( ', ', sort keys %$value_by_name ) . ")";
+	}
+
 	method text_color :override (@new) {
 		return $self->SUPER::text_color( @new && defined $new[0] ? _rgba( $new[0] ) : @new );
 	}
@@ -49,7 +60,7 @@ class Term::Fabulous::Widget::Text
 	}
 
 	method structured_layout_properties () {
-		return qw(text text_color);
+		return qw(text text_color wrap_mode text_alignment);
 	}
 
 	method parse_node ($node) {
@@ -62,6 +73,12 @@ class Term::Fabulous::Widget::Text
 			}
 			elsif ( $name eq 'text_color' ) {
 				$self->text_color( $self->kdl_argument($kid)->as_perl );
+			}
+			elsif ( $name eq 'wrap_mode' ) {
+				$self->wrap_mode( _named( wrap_mode => \%WRAP_MODE_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
+			}
+			elsif ( $name eq 'text_alignment' ) {
+				$self->text_alignment( _named( text_alignment => \%TEXT_ALIGNMENT_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
 			}
 			else {
 				$self->parse_generic($kid);
@@ -158,6 +175,7 @@ Text in a tree built from a layout). Default: none. Unlike a Box's id,
 it is not passed to Clay and does not need to be unique, and
 L<Term::Fabulous::Widget/remove_child> does not remove Text widgets by
 id. Read it with C<< $text->id >>; there is no writer.
+L<Term::Fabulous::Widget/find_by_id> finds Text widgets by this id.
 
 =item C<wrap_mode>
 
@@ -301,6 +319,8 @@ spacing is drawn.
 		text "Gr\u{fc}\u{df}e, world"
 		text_color "#e6e6e6"
 		line_height 2
+		wrap_mode newlines
+		text_alignment center
 	}
 
 The node's argument (C<"greeting">) is the C<id>. Inside the block:
@@ -318,6 +338,18 @@ Exactly one argument: any color string L<Term::Fabulous::Color>
 understands, such as C<"#ffffff">, C<"rgb(255, 255, 255)"> or
 C<"hsl(0, 0%, 100%)">.
 
+=item C<wrap_mode words>
+
+Exactly one name: C<words> (C<CLAY_TEXT_WRAP_WORDS>), C<newlines>
+(C<CLAY_TEXT_WRAP_NEWLINES>) or C<none> (C<CLAY_TEXT_WRAP_NONE>). See
+the C<wrap_mode> parameter of L</new>.
+
+=item C<text_alignment left>
+
+Exactly one name: C<left> (C<CLAY_TEXT_ALIGN_LEFT>), C<center>
+(C<CLAY_TEXT_ALIGN_CENTER>) or C<right> (C<CLAY_TEXT_ALIGN_RIGHT>). See
+the C<text_alignment> parameter of L</new>.
+
 =item C<line_height N>
 
 =item C<font_id N>
@@ -330,8 +362,8 @@ One number each; see L</new> for their (lack of) meaning.
 
 =back
 
-C<wrap_mode> and C<text_alignment> cannot be set from KDL. Any other
-property dies. A Text node cannot have child widgets.
+An unknown C<wrap_mode> or C<text_alignment> name dies with the known
+names. Any other property dies. A Text node cannot have child widgets.
 
 =head1 SUBCLASS INTERFACE
 
@@ -344,8 +376,9 @@ them yourself.
 
 The names of the properties a KDL layout may set with
 L<Term::Fabulous::Role::CanParseLayout/parse_generic>: C<font_id>,
-C<font_size>, C<letter_spacing> and C<line_height>. C<text> and
-C<text_color> are handled by L</parse_node>; see L</KDL PROPERTIES>.
+C<font_size>, C<letter_spacing> and C<line_height>. C<text>,
+C<text_color>, C<wrap_mode> and C<text_alignment> are handled by
+L</parse_node>; see L</KDL PROPERTIES>.
 
 =head2 boolean_layout_properties
 
@@ -358,8 +391,8 @@ for a Text widget.
 
 	my @names = $text->structured_layout_properties;
 
-The names of the properties L</parse_node> handles itself: C<text> and
-C<text_color>. They appear in the "known" list of the error for an
+The names of the properties L</parse_node> handles itself: C<text>,
+C<text_color>, C<wrap_mode> and C<text_alignment>. They appear in the "known" list of the error for an
 unknown property.
 
 =head2 parse_node

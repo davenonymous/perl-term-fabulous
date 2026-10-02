@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Element
 	:does(Clay::UI::Role::Events::Listener)
 	:does(Clay::UI::Role::Events::Emitter)
 
+	:does(Clay::UI::Role::Layout::HasFloating)
 	:does(Clay::UI::Role::Layout::HasLayout)
 	:does(Clay::UI::Role::Layout::HasParent)
 	:does(Clay::UI::Role::Layout::HasSizingGroup)

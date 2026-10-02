@@ -65,6 +65,7 @@ L</Show the output of a running command>
 =item Forms
 
 L</A login form (centered dialog, masked password)>,
+L</Ask a question in a dialog (Dialog widget)>,
 L</Choose from options in Perl (Dropdown, RadioGroup, Slider)>,
 L</Read all values of a form>, L</Find widgets by id>,
 L</Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>,
@@ -79,7 +80,7 @@ L</Equal-width labels with width_group>,
 L</Per-side border styles>,
 L</Change colors at run time (a theme with lighten and darken)>,
 L</Mark widgets with states and classes>,
-L</Resize-aware layout (Resize event)>
+L</Resize-aware layout (Start and Resize events)>
 
 =item Canvases
 
@@ -214,11 +215,10 @@ L<Term::Fabulous::Manual/Which widget receives key presses>.
 
 =item *
 
-Terminals send Alt plus a letter as Escape followed by the letter, so
-with Escape bound to quit, every Alt+letter combination quits as well.
-If your users may press Alt combinations, quit on q or Ctrl+Q instead;
-L<Term::Fabulous::Manual/Key names> explains which Alt combinations
-arrive as such.
+Terminals send Alt plus a letter as Escape followed by the letter, in
+one write; Term::Fabulous tells that from a lone Escape and names it
+C<Alt+x>, so binding Escape does not catch Alt combinations.
+L<Term::Fabulous::Manual/Key names> has the details.
 
 =item *
 
@@ -549,11 +549,10 @@ L<Term::Fabulous::Manual/Application shortcuts>.
 =head2 Clickable buttons with focus and press styling
 
 Goal: buttons that can be clicked with the mouse and pressed with the
-keyboard, that show which one has the focus and which one is being
-pressed, together with application shortcuts and a clock. This program
-is also shipped as F<examples/buttons-and-keys.pl>.
-
-	#!/usr/bin/env perl
+keyboard, that show which one has the focus, which one the pointer is
+over and which one is being pressed, together with application
+shortcuts and a clock. This program is also shipped as
+F<examples/buttons-and-keys.pl>.
 
 	# Buttons that react to the mouse and the keyboard, application key
 	# bindings and a clock that a timer updates once per second.
@@ -579,15 +578,11 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 	use Term::Fabulous::Widget::Button;
 	use Term::Fabulous::Widget::Text;
 
-	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
-	my $CONTINUE = Clay::UI::Enum::Result->CONTINUE;
-
 	my $button_color = Term::Fabulous::Color->new( color => '#2b3a55' );
-	my $press_color  = $button_color->lighten(0.15);
+	my $hover_color  = $button_color->lighten(0.15);
 	my $border_color = Term::Fabulous::Color->new( color => '#5a6b8c' );
-	my $focus_color  = Term::Fabulous::Color->new( color => '#61afef' );
 
 	my $root = Term::Fabulous::Widget::Box->new(
 		background_color => [ 20, 25, 35, 255 ],
@@ -605,7 +600,7 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 
 	my $clock   = label( 'Time: --:--:--', [ 150, 160, 180, 255 ] );
 	my $counter = label('Counter: 0');
-	my $status  = label('Tab focuses a button, Enter or Space presses it. + - r change the counter, q or Ctrl+Q quits.');
+	my $status  = label('Tab focuses a button, Enter or Space presses it, or click one. + - r change the counter, q, Escape or Ctrl+Q quits.');
 	$root->add_child( $clock, $counter );
 
 	my $count = 0;
@@ -616,13 +611,12 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 		return;
 	}
 
-	# A Button is a Box that can take the focus and tracks hover and press
-	# state. It has no look of its own, so the listeners below give it one:
-	# a bright border while it has the focus, a lighter background while the
-	# mouse button is held on it. Terminals report the mouse only when a
-	# button is pressed, released or dragged, or the wheel turns, so there is
-	# no live hover highlight; OnHoverStopped fires when a press is dragged
-	# off the button or released elsewhere.
+	# A Button shows its state by itself: its border takes the focus color
+	# while it has the focus, and its colors are swapped while the mouse
+	# button is held on it. The pointer is reported as it moves, so
+	# OnHoverStart and OnHoverStopped follow the mouse; here they lighten the
+	# background. Activate fires for a click and for Enter or Space while the
+	# button has the focus.
 	sub button ( $id, $caption, $action ) {
 		my $button = Term::Fabulous::Widget::Button->new(
 			id               => $id,
@@ -634,25 +628,9 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 		);
 		$button->add_child( label($caption) );
 
-		my $look_normal = sub { $button->background_color( $button_color ); return };
-		$button->on( OnFocus        => sub ($event) { $button->border_color( $focus_color );  return $CONTINUE } );
-		$button->on( OnBlur         => sub ($event) { $button->border_color( $border_color ); return $CONTINUE } );
-		$button->on( OnPress        => sub ($event) { $button->background_color( $press_color ); return } );
-		$button->on( OnHoverStopped => sub ($event) { $look_normal->(); return } );
-
-		# A click: the left button pressed and released over the button.
-		$button->on( OnRelease => sub ($event) { $look_normal->(); $action->(); return } );
-
-		# Enter and Space press the focused button; every other key bubbles
-		# on to the root, where the application shortcuts live.
-		$button->on(
-			KeyPress => sub ($event) {
-				my $key = $event->key_name // '';
-				return $CONTINUE unless $key eq 'Enter' || $key eq 'Space';
-				$action->();
-				return;
-			}
-		);
+		$button->on( OnHoverStart   => sub ($event) { $button->background_color($hover_color);  return } );
+		$button->on( OnHoverStopped => sub ($event) { $button->background_color($button_color); return } );
+		$button->on( Activate       => sub ($event) { $action->(); return } );
 		return $button;
 	}
 
@@ -667,14 +645,15 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 	my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 
 	# Application shortcuts. KeyPress reaches the root when nothing has the
-	# focus, or when the focused widget's listeners let it bubble. Escape is
-	# not used to quit: terminals send Alt plus a key as Escape followed by
-	# the key, so any Alt combination would end the program.
+	# focus, or when the focused widget's listeners let it bubble; a Button
+	# keeps only Enter and Space for itself. Alt plus a letter arrives as one
+	# key (Alt+x), so binding Escape does not catch Alt combinations.
 	my %action_by_key = (
 		'+'      => sub { set_count( $count + 1 ) },
 		'-'      => sub { set_count( $count - 1 ) },
 		'r'      => sub { set_count(0) },
 		'q'      => sub { $ui->loop->stop },
+		'Escape' => sub { $ui->loop->stop },
 		'Ctrl+Q' => sub { $ui->loop->stop },
 	);
 	$root->on(
@@ -685,7 +664,7 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 		}
 	);
 
-	# The screen is redrawn 30 times per second, so changing the text is all
+	# A frame is drawn whenever a widget changed, so changing the text is all
 	# the timer has to do.
 	my $timer = IO::Async::Timer::Periodic->new(
 		interval       => 1,
@@ -702,39 +681,32 @@ is also shipped as F<examples/buttons-and-keys.pl>.
 =item *
 
 L<Term::Fabulous::Widget::Button> is a Box that can take the focus and
-that tracks hover and press state. It has no look and no key handling
-of its own: you style it in listeners and decide which keys press it.
+that tracks hover and press state. It draws its border in
+C<focus_border_color> while it has the focus and swaps its colors while
+the mouse button is held on it; both can be changed or switched off
+with the C<focus_border_color> and C<pressed_background_color>
+parameters.
 
 =item *
 
-C<OnFocus> and C<OnBlur> fire when the button gets or loses the
-keyboard focus (by Tab, Shift+Tab, a click or
-C<< $ui->interaction->set_focused_widget >>). They return
-C<CONTINUE> so that ancestors can react to focus changes too.
+C<Activate> fires for a complete click (the left button pressed and
+released over the button) and for Enter or Space while the button has
+the focus, so one listener covers the mouse and the keyboard. The
+lower-level C<OnPress>, C<OnRelease> and C<KeyPress> events are still
+there.
 
 =item *
 
-C<OnPress> fires when the left mouse button goes down on the button,
-C<OnRelease> when it comes up over the same button: that is a complete
-click. A press that is dragged off the button and released elsewhere
-fires no C<OnRelease>, but C<OnHoverStopped>, which restores the normal
-look here.
+The terminal reports the pointer as it moves, so C<OnHoverStart> and
+C<OnHoverStopped> follow the mouse; the program lightens the background
+of the button under the pointer. See
+L<Term::Fabulous::Manual/Clicks, hover and press>.
 
 =item *
 
-Hover styling (C<OnHoverStart>) is possible, but terminals report the
-mouse only when a button is pressed, released or dragged, or the wheel
-turns. Plain mouse movement is not reported, so a hover highlight would
-change only on those occasions. This program therefore styles focus and
-press, not hover. See L<Term::Fabulous::Manual/What the terminal reports>
-and L<Term::Fabulous::Manual/Clicks, hover and press>.
-
-=item *
-
-The button's C<KeyPress> listener handles Enter and Space and returns
-C<CONTINUE> for every other key, so the shortcuts on the root keep
-working while a button has the focus. See
-L<Term::Fabulous::Manual/Return values and bubbling>.
+A Button keeps only Enter and Space for itself and lets every other key
+bubble, so the shortcuts on the root keep working while a button has
+the focus. See L<Term::Fabulous::Manual/Return values and bubbling>.
 
 =item *
 
@@ -744,9 +716,8 @@ not receive mouse events, the box behind them does.
 =item *
 
 C<< $ui->loop >> is used to stop the program from a shortcut; see
-L</Quit with q or Escape>. The program quits on q and Ctrl+Q, not on
-Escape, because any Alt+letter arrives as Escape first. The clock is
-explained in L</Update the screen from a timer (a clock)>.
+L</Quit with q or Escape>. The clock is explained in
+L</Update the screen from a timer (a clock)>.
 
 =back
 
@@ -1440,6 +1411,111 @@ focus from code: here to the first field at the start, and to the
 empty field when the input is incomplete. See
 L<Term::Fabulous::Manual/Moving the focus>.
 
+=item *
+
+This dialog is the whole screen. For a dialog that opens over a running
+screen and closes again, use L<Term::Fabulous::Widget::Dialog>; see
+L</Ask a question in a dialog (Dialog widget)>.
+
+=back
+
+=head2 Ask a question in a dialog (Dialog widget)
+
+Goal: a "Really quit?" dialog that opens over the screen when the user
+presses q, keeps the keyboard focus inside itself, and closes on Escape
+or a button.
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Button;
+	use Term::Fabulous::Widget::Dialog;
+	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::Widget::TextArea;
+	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
+
+	sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
+		return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
+	}
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $notes = Term::Fabulous::Widget::TextArea->new( id => 'notes', layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child( text('Type some notes. q asks before quitting.'), $notes );
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	# The dialog is built once and opened as often as needed. Its look
+	# (border, background, padding) comes with the widget.
+	my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { sizing => { width => sizing_fixed(44) } } );
+
+	sub button ( $caption, $action ) {
+		my $button = Term::Fabulous::Widget::Button->new(
+			background_color => [ 43, 58, 85, 255 ],
+			layout           => { padding => { left => 1, right => 1 } },
+		);
+		$button->add_child( text($caption) );
+		$button->on( Activate => sub ($event) { $action->(); return } );
+		return $button;
+	}
+
+	my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+	$buttons->add_child(
+		button( 'Quit',   sub { $ui->loop->stop } ),
+		button( 'Cancel', sub { $dialog->close } ),
+	);
+	$dialog->add_child( text('Really quit? Unsaved notes are lost.'), $buttons );
+
+	$root->on(
+		KeyPress => sub ($event) {
+			return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'q';
+			$dialog->open($ui);
+			return;
+		}
+	);
+
+	$ui->interaction->set_focused_widget($notes);
+	$ui->run;
+
+=over
+
+=item *
+
+C<< $dialog->open($ui) >> adds the dialog to the screen: centered, on
+top of everything, behind a translucent backdrop that dims the rest.
+The first focusable widget inside it (the Quit button) gets the focus,
+Tab and Shift+Tab cycle through the dialog's widgets only, and clicks
+outside it reach nothing behind it.
+
+=item *
+
+Escape closes the dialog (C<close_on_escape>, on by default), and so
+does C<< $dialog->close >>; the Cancel button calls it. Closing puts the
+focus back on the text area and fires C<Close> on the dialog.
+
+=item *
+
+The q shortcut lives on the root. While the dialog is open, the focus is
+inside it; a Button uses only Enter and Space, so q still reaches the
+root, where C<open> on an open dialog does nothing.
+
+=item *
+
+The text area keeps its text while the dialog is open and after it
+closes: the dialog is added to and removed from the tree, nothing else
+changes. The dialog itself keeps its children between openings.
+
 =back
 
 =head2 Choose from options in Perl (Dropdown, RadioGroup, Slider)
@@ -1598,32 +1674,18 @@ C<TextField "name"> in KDL.
 Goal: get hold of a widget by the id you gave it, typically after
 building the tree from a KDL layout, which returns only the root.
 
-	# The first widget at or below $node whose id is $id, or undef.
-	sub find_widget ( $node, $id ) {
-		return $node if defined $node->id && $node->id eq $id;
-		return undef unless $node->can('children');
-		foreach my $child ( @{ $node->children } ) {
-			my $found = find_widget( $child, $id );
-			return $found if defined $found;
-		}
-		return undef;
-	}
-
-	my $volume = find_widget( $root, 'volume' );
+	my $volume = $root->find_by_id('volume');
 	say $volume->value;
 
 =over
 
 =item *
 
-Every widget has an C<id> reader; it returns C<undef> for widgets
-without an id.
-
-=item *
-
-Text widgets have no children, hence the C<can('children')> check.
-C<children> returns a new array reference each time; changing that
-array does not change the widget.
+L<Term::Fabulous::Widget/find_by_id> searches the widget itself and
+everything below it, depth first, and returns the first widget whose
+id is the argument, or C<undef> when there is none. Text widgets with
+an id are found too. Call it on any widget to search only its part of
+the tree.
 
 =item *
 
@@ -1740,20 +1802,8 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 
 	my $root = $layout->build;
 
-	# Term::Fabulous::Layout returns the root widget only; this walks the tree
-	# to find a widget by the id given in the layout.
-	sub find_widget ( $node, $id ) {
-		return $node if defined $node->id && $node->id eq $id;
-		return undef unless $node->can('children');
-		foreach my $child ( @{ $node->children } ) {
-			my $found = find_widget( $child, $id );
-			return $found if defined $found;
-		}
-		return undef;
-	}
-
-	my %input  = map { $_ => find_widget( $root, $_ ) } qw(name password size color volume newsletter);
-	my $status = find_widget( $root, 'status' );
+	my %input  = map { $_ => $root->find_by_id($_) } qw(name password size color volume newsletter);
+	my $status = $root->find_by_id('status');
 
 	# The password is shown as stars, here and in the status line.
 	sub shown_value ( $id, $value ) {
@@ -1766,7 +1816,7 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 	}
 
 	# Change events bubble from every input up to the form box.
-	find_widget( $root, 'form' )->on(
+	$root->find_by_id('form')->on(
 		Change => sub ($event) {
 			my $id = $event->target->id;
 			$status->text( sprintf '%s is now %s', $id, shown_value( $id, $event->value ) );
@@ -2427,7 +2477,7 @@ states (C<OnFocus>, C<OnBlur>, C<OnPress>, C<OnRelease>).
 
 =back
 
-=head2 Resize-aware layout (Resize event)
+=head2 Resize-aware layout (Start and Resize events)
 
 Goal: arrange two panes side by side on a wide terminal and above each
 other on a narrow one.
@@ -2468,8 +2518,10 @@ other on a narrow one.
 		return;
 	}
 
-	# Resize is fired on the root twice per resize: before the new size is
-	# applied (is_pre_event) and after it (is_post_event).
+	# Start is fired on the root once, when run() has opened the terminal
+	# and knows its size. Resize is fired twice per resize: before the new
+	# size is applied (is_pre_event) and after it (is_post_event).
+	$root->on( Start => sub ($event) { arrange( $event->width ); return } );
 	$root->on(
 		Resize => sub ($event) {
 			arrange( $event->width ) if $event->is_post_event;
@@ -2478,11 +2530,6 @@ other on a narrow one.
 	);
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
-
-	# run() replaces the 80 x 24 given above with the real terminal size
-	# without firing Resize. later() runs the code once the loop is running,
-	# when $ui->width is the real width.
-	IO::Async::Loop->new->later( sub { arrange( $ui->width ) } );
 	$ui->run;
 
 =over
@@ -2498,9 +2545,9 @@ cells.
 =item *
 
 C<run> starts with the real terminal size, not the 80 x 24 given to
-C<new>, but it does not fire C<Resize> for it. The C<later> callback
-runs as soon as the event loop runs, when C<< $ui->width >> already is
-the real width.
+C<new>, and fires L<Term::Fabulous::Event::Start> with it before the
+first frame, so the same C<arrange> runs at the start and after every
+resize.
 
 =item *
 
@@ -2934,18 +2981,7 @@ F<examples/custom-widget.pl>.
 
 	my $root = $layout->build;
 
-	# The first widget at or below $node whose id is $id, or undef.
-	sub find_widget ( $node, $id ) {
-		return $node if defined $node->id && $node->id eq $id;
-		return undef unless $node->can('children');
-		foreach my $child ( @{ $node->children } ) {
-			my $found = find_widget( $child, $id );
-			return $found if defined $found;
-		}
-		return undef;
-	}
-
-	my $status = find_widget( $root, 'status' );
+	my $status = $root->find_by_id('status');
 
 	$root->on(
 		Change => sub ($event) {
@@ -2981,8 +3017,11 @@ C<focus_background_color> while it has the focus. C<accent_color
 
 =item *
 
-Call C<repaint> after every change of what the widget shows, and
-C<fire_change> only for changes the user makes.
+Call C<repaint> after every change of what the widget shows or of the
+size it asks for, and C<fire_change> only for changes the user makes.
+C<repaint> also marks the widget changed, so the change is drawn in the
+next frame even when it is made from a timer: Term::Fabulous skips
+frames while nothing changed.
 
 =item *
 

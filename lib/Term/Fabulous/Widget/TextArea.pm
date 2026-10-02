@@ -68,12 +68,16 @@ class Term::Fabulous::Widget::TextArea
 
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		return $preferred_columns = _checked_size( preferred_columns => $new[0] );
+		$preferred_columns = _checked_size( preferred_columns => $new[0] );
+		$self->mark_changed;
+		return $preferred_columns;
 	}
 
 	method preferred_rows (@new) {
 		return $preferred_rows unless @new;
-		return $preferred_rows = _checked_size( preferred_rows => $new[0] );
+		$preferred_rows = _checked_size( preferred_rows => $new[0] );
+		$self->mark_changed;
+		return $preferred_rows;
 	}
 
 	method wrap (@new) {

@@ -5,6 +5,7 @@ use Test2::V0;
 
 use Term::Fabulous::Color;
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Layout;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
@@ -21,6 +22,13 @@ subtest 'mixed joints' => sub {
 	is $Style->Solid->get_mixed_joint( $Style->Round ), undef, 'no table for that vertical style';
 	like dies { $Style->Solid->get_mixed_joint('Heavy') }, qr/vertical style must be a Term::Fabulous::Enum::BorderStyle/, 'a name is rejected';
 	ref_is $Style->Dashed->joints, $Style->Heavy->joints, 'Dashed uses the heavy joints';
+};
+
+subtest 'style list' => sub {
+	is $Style->from_name('Tab'), undef, 'Tab is gone';
+	isa_ok $Style->from_name('Hidden'), [$Style], 'Hidden exists';
+	like dies { Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox {\n\tborder style=Tab\n}" )->build },
+		qr/invalid border style 'Tab' \(known: Ascii, .*Wide\)/, 'a layout with style=Tab dies';
 };
 
 subtest 'widget border styles are validated' => sub {

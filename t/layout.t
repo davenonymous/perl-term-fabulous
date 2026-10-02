@@ -4,6 +4,10 @@ use utf8;
 
 use Test2::V0;
 
+use Clay::XS qw(
+	Clay_GetElementId CLAY__SIZING_TYPE_FIT CLAY__SIZING_TYPE_GROW CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_BOTTOM CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_ALIGN_RIGHT
+	CLAY_ATTACH_TO_ELEMENT_WITH_ID CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_RIGHT_BOTTOM CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH CLAY_CLIP_TO_ATTACHED_PARENT
+);
 use Term::Fabulous::Layout;
 
 sub layout {
@@ -71,11 +75,53 @@ subtest 'properties' => sub {
 	is $root->border_width, { left => 1, top => 2 }, 'properties form a hash';
 	is $root->layout->{padding}, { left => 1, top => 2 }, 'a second padding node keeps the sides of the first';
 
-	like dies { build( sprintf $box, 'colour "#000000"' ) }, qr/known: background_color, border, border_color, border_width, glyphs_show_through, height_group, layout, padding, sizing, width_group\)/, 'the known names include the structured properties';
+	like dies { build( sprintf $box, 'colour "#000000"' ) }, qr/known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group\)/, 'the known names include the structured properties';
 	like dies { build( sprintf $box, '_note "x"' ) }, qr/unknown layout property '_note'/, 'a node not starting with an uppercase letter is a property';
 	is build( sprintf $box, 'glyphs_show_through 1' )->glyphs_show_through, 1, 'a boolean property takes 1';
 	like dies { build( sprintf $box, 'glyphs_show_through "false"' ) }, qr/'glyphs_show_through' must be #true or #false, got 'false'/, 'a boolean property rejects strings';
 	like dies { build( sprintf $box, 'glyphs_show_through #null' ) },   qr/must be #true or #false, got #null/,                          'a boolean property rejects #null';
+};
+
+subtest 'sizing with minimum and maximum' => sub {
+	my $box  = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
+	my $root = build( sprintf $box, 'sizing width="grow( 2 , 40 )" height="fit(3)"' );
+	is $root->layout->{sizing}{width},  { type => CLAY__SIZING_TYPE_GROW, min => 2, max => 40 }, 'grow(MIN, MAX)';
+	is $root->layout->{sizing}{height}, { type => CLAY__SIZING_TYPE_FIT,  min => 3, max => 0 }, 'fit(MIN) has no maximum';
+	like dies { build( sprintf $box, 'sizing width="grow(5, 2)"' ) }, qr/sizing width minimum 5 is greater than maximum 2/, 'MIN above MAX dies';
+	like dies { build( sprintf $box, 'sizing width="fit(-1)"' ) },    qr/invalid sizing width 'fit\(-1\)'/,                'a negative MIN dies';
+};
+
+subtest 'child alignment' => sub {
+	my $box  = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
+	my $root = build( sprintf $box, "child_alignment x=center\nchild_alignment y=bottom" );
+	is $root->layout->{child_alignment}, { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_BOTTOM }, 'a second child_alignment node keeps the other key';
+	like dies { build( sprintf $box, 'child_alignment x=middle' ) }, qr/invalid child_alignment x 'middle' \(known: center, left, right\)/, 'an unknown name dies';
+};
+
+subtest 'floating' => sub {
+	my $root = build(<<'KDL');
+use Term::Fabulous::Widget::Box as Box
+Box "root" {
+	Box "popup" {
+		floating attach_to=element parent_id=root element=left_top offset_x=-2
+		floating parent=right_bottom offset_y=3 z_index=5 pointer_capture=passthrough clip_to=attached_parent
+	}
+}
+KDL
+	is $root->children->[0]->floating, {
+		attach_to            => CLAY_ATTACH_TO_ELEMENT_WITH_ID,
+		parent_id            => Clay_GetElementId('root')->{id},
+		attach_points        => { element => CLAY_ATTACH_POINT_LEFT_TOP, parent => CLAY_ATTACH_POINT_RIGHT_BOTTOM },
+		offset               => { x => -2, y => 3 },
+		z_index              => 5,
+		pointer_capture_mode => CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+		clip_to              => CLAY_CLIP_TO_ATTACHED_PARENT,
+	}, 'a second floating node merges key by key';
+
+	my $box = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
+	like dies { build( sprintf $box, 'floating attach_to=element' ) }, qr/floating attach_to=element needs parent_id/,   'attaching to an element needs parent_id';
+	like dies { build( sprintf $box, 'floating element=top' ) },       qr/invalid floating element 'top' \(known: center_bottom/, 'an unknown attach point dies';
+	like dies { build( sprintf $box, 'floating z_index=1.5' ) },       qr/floating z_index must be an integer, got '1\.5'/,      'z_index must be an integer';
 };
 
 subtest 'scroll box' => sub {
@@ -158,8 +204,29 @@ KDL
 	is $text->text, "Grüße 🎉", 'text is stored as a character string';
 	is $text->text_color, [ 1, 2, 3, 255 ], 'text_color';
 
+	my $styled = build("use Term::Fabulous::Widget::Text as Text\nText {\n\twrap_mode newlines\n\ttext_alignment right\n}");
+	is [ $styled->wrap_mode, $styled->text_alignment ], [ CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_ALIGN_RIGHT ], 'wrap_mode and text_alignment';
+	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\twrap_mode lines\n}") },     qr/invalid wrap_mode 'lines' \(known: newlines, none, words\)/,  'an unknown wrap_mode dies';
+	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext_alignment top\n}") }, qr/invalid text_alignment 'top' \(known: center, left, right\)/, 'an unknown text_alignment dies';
+
 	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext\n}") },   qr/'text' needs exactly one argument/, 'text without argument';
 	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext 5\n}") }, qr/'text' needs a string argument/,     'text with a number';
+};
+
+subtest 'find_by_id' => sub {
+	my $root = build(<<'KDL');
+use Term::Fabulous::Widget::Box as Box
+use Term::Fabulous::Widget::Text as Text
+Box "root" {
+	Box "panel" {
+		Text "title" { text "Title"; }
+	}
+}
+KDL
+	is $root->find_by_id('root')->id, 'root', 'the widget itself is searched';
+	is $root->find_by_id('title')->text, 'Title', 'a nested Text is found';
+	is $root->find_by_id('missing'), undef, 'undef for a missing id';
+	like dies { $root->find_by_id(undef) }, qr/find_by_id needs an id/, 'an undefined id dies';
 };
 
 done_testing;

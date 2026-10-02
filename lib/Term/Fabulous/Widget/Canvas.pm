@@ -84,7 +84,7 @@ class Term::Fabulous::Widget::Canvas
 
 	method put ( $x, $y, $glyph, $fg = undef, $bg = undef ) {
 		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), _glyph($glyph), cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method put_text ( $x, $y, $text, $fg = undef, $bg = undef ) {
@@ -98,7 +98,7 @@ class Term::Fabulous::Widget::Canvas
 			$self->_store( $column, $row, $glyph, $fg_attr, $bg_attr );
 			$column += $glyph->[1];
 		}
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method fill ( $x, $y, $width, $height, $glyph, $fg = undef, $bg = undef ) {
@@ -115,23 +115,23 @@ class Term::Fabulous::Widget::Canvas
 				$self->_store( $column, $row, $record, $fg_attr, $bg_attr );
 			}
 		}
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method put_attrs ( $x, $y, $glyph, $fg_attr, $bg_attr ) {
 		$self->_store( $x, $y, defined $glyph ? _glyph($glyph) : undef, $fg_attr, $bg_attr );
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method erase ( $x, $y ) {
 		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), undef, undef, undef );
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method clear () {
 		@$_ = () foreach @glyph_rows, @fg_rows, @bg_rows;
 		$everything_changed = 1;
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method cell ( $x, $y ) {
@@ -150,6 +150,9 @@ class Term::Fabulous::Widget::Canvas
 		return ( $column, $row );
 	}
 
+	# Records where the frame being drawn puts the buffer. Nothing is drawn
+	# from it, and the renderer calls this every frame, so it does not mark
+	# the canvas changed.
 	method set_content_origin ( $x, $y ) {
 		@content_origin = ( $x, $y );
 		return;
@@ -192,6 +195,7 @@ class Term::Fabulous::Widget::Canvas
 		( $columns, $rows ) = ( $new_columns + 0, $new_rows + 0 );
 		@changed_spans      = ();
 		$everything_changed = 1;
+		$self->mark_changed;
 		$self->fire_event( Term::Fabulous::Event::CanvasResize->new( columns => $columns, rows => $rows ) );
 		return;
 	}
@@ -385,8 +389,10 @@ always give it a size.
 The drawing methods (C<put>, C<put_text>, C<fill>, C<erase>, C<clear>)
 return the canvas, so calls chain:
 C<< $canvas->clear->put_text( 0, 0, 'Score: 0' ) >>. A drawn change
-appears in the next frame. A Canvas also has all methods of
-L<Term::Fabulous::Widget>.
+appears in the next frame, also when it is drawn from a timer: the
+drawing methods mark the canvas changed (see
+L<Clay::UI::Role::Core::Element/mark_changed>). A Canvas also has all
+methods of L<Term::Fabulous::Widget>.
 
 =head2 put
 

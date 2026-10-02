@@ -33,7 +33,8 @@ role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 		die "Term::Fabulous::Render::Border: invalid border location code '$location'";
 	}
 
-	# Draws one glyph line per side whose Clay border width is positive. The
+	# Draws one glyph line per side whose Clay border width is positive;
+	# HasBorderStyle has already set the width of Hidden sides to 0. The
 	# "inner" background of a cell is the shadow buffer at that cell, the
 	# "outer" one is the cell just outside the box on the same side. A side
 	# without a border style is drawn with the Blank style.
@@ -149,7 +150,10 @@ otherwise the top or bottom edge glyph continues to the end of the row.
 In a box only one cell high, the top and bottom sides would share the
 same row: when both are to be drawn, only the top side is. Likewise in
 a box one cell wide only the left side is drawn when both the left and
-the right side are to be drawn.
+the right side are to be drawn. A side with the C<Hidden> style arrives
+with a width of 0 (see L<Term::Fabulous::Role::HasBorderStyle>), so it
+is not painted and the neighboring sides treat it like a side without a
+width.
 
 =item *
 

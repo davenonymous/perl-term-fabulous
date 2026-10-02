@@ -46,7 +46,9 @@ class Term::Fabulous::Widget::TextField
 
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		return $preferred_columns = $self->_checked_preferred_columns( $new[0] );
+		$preferred_columns = $self->_checked_preferred_columns( $new[0] );
+		$self->mark_changed;
+		return $preferred_columns;
 	}
 
 	method mask (@new) {

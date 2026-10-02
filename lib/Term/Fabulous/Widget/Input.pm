@@ -164,7 +164,10 @@ class Term::Fabulous::Widget::Input
 	# Painting
 	# ---------------------------------------------------------------------
 
+	# Marks the widget changed even before it has a buffer to paint: what
+	# it paints from may also be what it sizes itself by (natural_size).
 	method repaint () {
+		$self->mark_changed;
 		return $self unless $self->columns > 0 && $self->rows > 0;
 		$self->clear;
 		$self->paint;
@@ -592,11 +595,15 @@ L</text_color>.
 
 	$input->repaint;
 
-Clears the input's buffer and paints it again from its current state.
-The input calls it whenever something visible changes, so you only need
-it after changing state behind the widget's back (for example through
-L<Term::Fabulous::Widget::TextInput/editor>). Does nothing before the
-input has been laid out for the first time. Returns the input.
+Clears the input's buffer, paints it again from its current state and
+marks the input changed (see
+L<Clay::UI::Role::Core::Element/mark_changed>), so that the next frame
+shows it and sizes it again, also when the change was made from a
+timer. The input calls it whenever something visible changes, so you
+only need it after changing state behind the widget's back (for
+example through L<Term::Fabulous::Widget::TextInput/editor>). Before
+the input has been laid out for the first time it only marks the input
+changed. Returns the input.
 
 =head2 can_focus
 
@@ -736,6 +743,14 @@ the other methods as needed. Paint with C<put_attrs>
 (L<Term::Fabulous::Widget::Canvas/put_attrs>) and the helpers below,
 which take termbox2 attributes (the integers returned by
 C<foreground_attr>, C<color_attr> and friends) instead of colors.
+
+Term::Fabulous draws a frame only when something changed. Whenever your
+widget changes state that C<paint> or C<natural_size> uses, call
+L</repaint>: it paints the new state and marks the widget changed. State
+that only C<natural_size> uses may instead call
+C<< $self->mark_changed >> (see
+L<Clay::UI::Role::Core::Element/mark_changed>). Without either, the
+change shows only when something else causes a frame.
 
 =head2 natural_size
 

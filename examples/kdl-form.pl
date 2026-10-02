@@ -92,20 +92,8 @@ KDL
 
 my $root = $layout->build;
 
-# Term::Fabulous::Layout returns the root widget only; this walks the tree
-# to find a widget by the id given in the layout.
-sub find_widget ( $node, $id ) {
-	return $node if defined $node->id && $node->id eq $id;
-	return undef unless $node->can('children');
-	foreach my $child ( @{ $node->children } ) {
-		my $found = find_widget( $child, $id );
-		return $found if defined $found;
-	}
-	return undef;
-}
-
-my %input  = map { $_ => find_widget( $root, $_ ) } qw(name password size color volume newsletter);
-my $status = find_widget( $root, 'status' );
+my %input  = map { $_ => $root->find_by_id($_) } qw(name password size color volume newsletter);
+my $status = $root->find_by_id('status');
 
 # The password is shown as stars, here and in the status line.
 sub shown_value ( $id, $value ) {
@@ -118,7 +106,7 @@ sub values_text () {
 }
 
 # Change events bubble from every input up to the form box.
-find_widget( $root, 'form' )->on(
+$root->find_by_id('form')->on(
 	Change => sub ($event) {
 		my $id = $event->target->id;
 		$status->text( sprintf '%s is now %s', $id, shown_value( $id, $event->value ) );

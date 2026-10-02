@@ -33,6 +33,8 @@ my $tty_was_nonblocking;
 		tb_hide_cursor     => sub {TB_OK},
 		tb_set_input_mode  => sub {TB_OK},
 		tb_set_output_mode => sub {TB_OK},
+		tb_send            => sub {TB_OK},
+		tf_install_input_parser => sub {TB_OK},
 		tb_get_fds         => sub { ${ $_[0] } = fileno $tty_read; ${ $_[1] } = fileno $resize_read; TB_OK },
 		tb_peek_event      => sub {
 			my ($event) = @_;
@@ -68,11 +70,14 @@ subtest 'a draw that dies' => sub {
 
 subtest 'a second run works' => sub {
 	$draw_dies     = 0;
+	my @starts;
+	$ui->root->on( Start => sub { push @starts, [ $_[0]->width, $_[0]->height, $ui->width ]; return } );
 	@queued_events = ( { type => TB_EVENT_KEY, key => 3, ch => 0 } );    # Ctrl+C
 	syswrite $tty_write, 'x';                                              # makes the terminal readable
 
 	ok lives { $ui->run }, 'run returns after Ctrl+C';
 	is $tty_was_nonblocking, 0, "termbox's descriptor stays blocking while it is watched";
+	is \@starts, [ [ 20, 5, 20 ] ], 'Start fires once, with the terminal size already applied';
 	is $calls{tb_shutdown}, 2, 'the terminal is restored again';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
 };

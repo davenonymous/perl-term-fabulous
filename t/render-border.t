@@ -29,8 +29,8 @@ my $red    = { r => 200, g => 0, b => 0, a => 255 };
 
 sub draw_border {
 	my (%args) = @_;
-	my $widget = Term::Fabulous::Widget::Box->new( border_style => Term::Fabulous::Enum::BorderStyle->from_name( $args{style} // 'Solid' ) );
-	my %width  = ( top => 0, right => 0, bottom => 0, left => 0, betweenChildren => 0, %{ $args{width} } );
+	my $widget = $args{widget} // Term::Fabulous::Widget::Box->new( border_style => Term::Fabulous::Enum::BorderStyle->from_name( $args{style} // 'Solid' ) );
+	my %width  = ( top => 0, right => 0, bottom => 0, left => 0, betweenChildren => 0, %{ $args{width} // $widget->to_config->{border}{width} } );
 	%cells = ();
 	$canvas->render_border(
 		{
@@ -67,6 +67,23 @@ subtest 'degenerate and clipped boxes' => sub {
 
 	draw_border( width => { top => 1, right => 1, bottom => 1, left => 1 }, bbox => { x => -2, y => -1, width => 5, height => 3 } );
 	is [ sort keys %cells ], [ '0,1', '1,1', '2,0', '2,1' ], 'only visible cells, no negative coordinates';
+};
+
+subtest 'Hidden sides' => sub {
+	my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
+	my $box    = sub { Term::Fabulous::Widget::Box->new( border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, @_ ) };
+
+	is draw_border( widget => $box->( border_style_bottom => $hidden, border_style_left => $hidden ) ),
+		{ '1,1' => "\x{2500}", '2,1' => "\x{2500}", '3,1' => "\x{2500}", '4,1' => "\x{2510}", '4,2' => "\x{2502}", '4,3' => "\x{2502}" },
+		'nothing on the Hidden sides, the top edge runs straight into the left end, the right side runs to the bottom';
+
+	is draw_border( widget => $box->( border_style_bottom => $hidden ), bbox => { x => 1, y => 1, width => 4, height => 1 } ),
+		{ '1,1' => "\x{250C}", '2,1' => "\x{2500}", '3,1' => "\x{2500}", '4,1' => "\x{2510}" },
+		'one row high: the top side is drawn';
+
+	is draw_border( widget => $box->( border_style_left => $hidden ), bbox => { x => 1, y => 1, width => 1, height => 3 } ),
+		{ '1,1' => "\x{2510}", '1,2' => "\x{2502}", '1,3' => "\x{2518}" },
+		'one column wide: the right side is drawn';
 };
 
 subtest 'location colors' => sub {

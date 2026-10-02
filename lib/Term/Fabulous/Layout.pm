@@ -449,10 +449,20 @@ L<RadioGroup|Term::Fabulous::Widget::RadioGroup> and all input widgets.
 	                                           left_to_right (left to right);
 	                                           gap (alias child_gap): cells between
 	                                           children, an integer >= 0
-	sizing width=... height=...                each: grow, fit, "percent(N)" with N in
-	                                           0..100 (decimals allowed), or "fixed(N)"
-	                                           with N an integer >= 0
+	sizing width=... height=...                each: grow, fit, "grow(MIN)",
+	                                           "grow(MIN, MAX)", "fit(MIN)",
+	                                           "fit(MIN, MAX)" with MIN and MAX integers
+	                                           >= 0 and MIN <= MAX (no MAX: no maximum),
+	                                           "percent(N)" with N in 0..100 (decimals
+	                                           allowed), or "fixed(N)" with N an
+	                                           integer >= 0
 	padding left=N right=N top=N bottom=N      any subset; integers >= 0
+	child_alignment x=... y=...                x: left (the default), center or right;
+	                                           y: top (the default), center or bottom
+	floating attach_to=... parent_id="..."     takes the box out of the layout and
+	         element=... parent=...            draws it on top (see below)
+	         offset_x=N offset_y=N z_index=N
+	         pointer_capture=... clip_to=...
 	border style=... style-top=...             style: a border style name (Round, Solid,
 	       style-right=... style-bottom=...    Heavy, ...) for all four sides; the
 	       style-left=... color=...            style-SIDE keys override it for one side;
@@ -467,8 +477,9 @@ L<RadioGroup|Term::Fabulous::Widget::RadioGroup> and all input widgets.
 	width_group N                              an integer 0..1048575; 0 means no group
 	height_group N                             an integer 0..1048575; 0 means no group
 
-C<layout>, C<sizing>, C<padding> and C<border> take only the keys
-shown, and at least one of them. The border style names are those of
+C<layout>, C<sizing>, C<padding>, C<border>, C<child_alignment> and
+C<floating> take only the keys shown, and at least one of them. The
+border style names are those of
 L<Term::Fabulous::Enum::BorderStyle> and are case sensitive. A border
 is only drawn on sides with a positive C<border_width>.
 
@@ -476,9 +487,38 @@ C<width_group> and C<height_group> give widgets in different parts of
 the tree the same width or height; see
 L<Term::Fabulous::Manual/Equal sizes across the tree>.
 
+C<floating> sets the widget's C<floating> hash (see
+L<Term::Fabulous::Widget/floating>); its keys are:
+
+	Key              Value
+	---------------  -------------------------------------------------------
+	attach_to        parent (the default), root or element; element
+	                 requires parent_id
+	parent_id        the id of the widget to attach to (with attach_to=element)
+	element          the point of this box placed on the point "parent" of
+	parent           the widget it is attached to: left_top (the default),
+	                 left_center, left_bottom, center_top, center_center,
+	                 center_bottom, right_top, right_center, right_bottom
+	offset_x         an integer added to the position, in cells
+	offset_y         an integer added to the position, in cells
+	z_index          an integer -32768..32767; higher is drawn on top
+	pointer_capture  capture (the default) or passthrough
+	clip_to          none (the default) or attached_parent
+
+	Box "root" {
+		Button "menu-button" { Text { text "Menu"; } }
+		Box "menu" {
+			floating attach_to=element parent_id="menu-button" parent=left_bottom
+			floating z_index=10
+		}
+	}
+
+An unknown name in C<child_alignment> or C<floating> dies with the
+known names.
+
 A property node may appear more than once. A second C<padding>,
-C<sizing> or C<layout> node changes only the keys it names and keeps
-the others.
+C<sizing>, C<layout>, C<child_alignment> or C<floating> node changes
+only the keys it names and keeps the others.
 
 	Box "panel" {
 		layout direction=down gap=1
@@ -497,6 +537,8 @@ L<Term::Fabulous::Widget::Text>:
 	-------------------  -----------------------------------------------
 	text "..."           the text, exactly one string argument
 	text_color "..."     a color string
+	wrap_mode ...        words (the default), newlines or none
+	text_alignment ...   left (the default), center or right
 	line_height N        rows per line of text (0 means 1)
 	font_id N            no visible effect in a terminal
 	font_size N          no visible effect in a terminal
@@ -720,56 +762,27 @@ defaults (0 and 100).
 =head2 Finding widgets by id
 
 L</build> returns only the root widget. To get at the other widgets,
-walk the tree from the root with this helper, which returns the first
-widget (in depth-first order) whose id is C<$id>, or C<undef> when there
-is none. The same helper is used in
+call L<Term::Fabulous::Widget/find_by_id> on the root: it returns the
+first widget (in depth-first order) whose id is the argument, Text
+widgets included, or C<undef> when there is none. See also
 L<Term::Fabulous::Cookbook/Find widgets by id>.
 
-	# The first widget at or below $node whose id is $id, or undef.
-	sub find_widget ( $node, $id ) {
-		return $node if defined $node->id && $node->id eq $id;
-		return undef unless $node->can('children');
-		foreach my $child ( @{ $node->children } ) {
-			my $found = find_widget( $child, $id );
-			return $found if defined $found;
-		}
-		return undef;
-	}
-
-	my $country = find_widget( $root, 'country' );
+	my $country = $root->find_by_id('country');
 	say $country->value;    # CH
 
 =head2 Adding what a layout cannot express
 
 Build first, then set the remaining options in Perl:
 
-	use Clay::XS qw(CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
-
-	my $panel = find_widget( $root, 'panel' );
-	$panel->layout( {
-		%{ $panel->layout },
-		child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
-	} );
+	my $volume = $root->find_by_id('volume');
+	$volume->value_format( sub ($value) { $value == 0 ? 'muted' : "$value%" } );
+	$volume->on( Change => sub ($event) { ...; return } );
 
 =head1 LIMITATIONS
 
 These options exist in Perl but cannot be written in a layout:
 
 =over
-
-=item *
-
-minimum and maximum sizes, as in C<< sizing_grow(10, 40) >> or
-C<< sizing_fit(0, 60) >> (a layout knows only C<grow>, C<fit>,
-C<percent(N)> and C<fixed(N)>);
-
-=item *
-
-C<child_alignment> of a Box (see L<Term::Fabulous::Manual/Aligning and centering children>);
-
-=item *
-
-C<wrap_mode> and C<text_alignment> of a Text widget;
 
 =item *
 
@@ -781,7 +794,11 @@ a code reference for a Slider's C<value_format>;
 
 =item *
 
-the C<child_offset> of a ScrollBox.
+the C<child_offset> of a ScrollBox;
+
+=item *
+
+the C<expand> key of a widget's C<floating> hash.
 
 =back
 
@@ -792,7 +809,7 @@ L</build>. Messages start with C<Term::Fabulous::Layout:>; errors in a
 widget's properties also name the widget and its id, followed by the
 widget class's own message:
 
-	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, glyphs_show_through, height_group, layout, padding, sizing, width_group)
+	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 
 L</new> dies for:
 

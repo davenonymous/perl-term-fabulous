@@ -375,13 +375,13 @@ so it is C<'Ctrl+W'> too.
 
 =item *
 
-Alt plus a character is sent as Escape followed by the character.
-L<Term::Fabulous> reads input in termbox2's C<TB_INPUT_ESC> mode, so
-Alt+x arrives as two separate key presses, C<'Escape'> and then C<'x'>.
-Ctrl+Alt+W likewise arrives as C<'Escape'> and then C<'Ctrl+W'>. Names
-such as C<'Alt+x'> therefore only occur for events you build yourself
-with C<< modifiers => TB_MOD_ALT >>; a real terminal never produces
-them, and Alt plus a letter cannot be bound as one key.
+Alt plus a character is sent as Escape followed by the character, in
+one write. L<Term::Fabulous> recognizes that pair and names it
+C<'Alt+x'>, C<'Alt+Enter'>, C<'Alt+E<uuml>'>; Ctrl+Alt+W arrives as
+C<'Ctrl+Alt+W'>. A lone Escape is still C<'Escape'>. Alt+[ and Alt+O
+cannot be told from the start of the escape sequences of other keys and
+are not named. An Escape followed so quickly by a key that both arrive
+in the same read looks like Alt plus that key.
 
 =back
 

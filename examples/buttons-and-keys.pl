@@ -24,15 +24,11 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
-use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
-my $CONTINUE = Clay::UI::Enum::Result->CONTINUE;
-
 my $button_color = Term::Fabulous::Color->new( color => '#2b3a55' );
-my $press_color  = $button_color->lighten(0.15);
+my $hover_color  = $button_color->lighten(0.15);
 my $border_color = Term::Fabulous::Color->new( color => '#5a6b8c' );
-my $focus_color  = Term::Fabulous::Color->new( color => '#61afef' );
 
 my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
@@ -50,7 +46,7 @@ sub label ( $text, $color = [ 220, 220, 220, 255 ] ) {
 
 my $clock   = label( 'Time: --:--:--', [ 150, 160, 180, 255 ] );
 my $counter = label('Counter: 0');
-my $status  = label('Tab focuses a button, Enter or Space presses it. + - r change the counter, q or Ctrl+Q quits.');
+my $status  = label('Tab focuses a button, Enter or Space presses it, or click one. + - r change the counter, q, Escape or Ctrl+Q quits.');
 $root->add_child( $clock, $counter );
 
 my $count = 0;
@@ -61,13 +57,12 @@ sub set_count ($new) {
 	return;
 }
 
-# A Button is a Box that can take the focus and tracks hover and press
-# state. It has no look of its own, so the listeners below give it one:
-# a bright border while it has the focus, a lighter background while the
-# mouse button is held on it. Terminals report the mouse only when a
-# button is pressed, released or dragged, or the wheel turns, so there is
-# no live hover highlight; OnHoverStopped fires when a press is dragged
-# off the button or released elsewhere.
+# A Button shows its state by itself: its border takes the focus color
+# while it has the focus, and its colors are swapped while the mouse
+# button is held on it. The pointer is reported as it moves, so
+# OnHoverStart and OnHoverStopped follow the mouse; here they lighten the
+# background. Activate fires for a click and for Enter or Space while the
+# button has the focus.
 sub button ( $id, $caption, $action ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		id               => $id,
@@ -79,25 +74,9 @@ sub button ( $id, $caption, $action ) {
 	);
 	$button->add_child( label($caption) );
 
-	my $look_normal = sub { $button->background_color( $button_color ); return };
-	$button->on( OnFocus        => sub ($event) { $button->border_color( $focus_color );  return $CONTINUE } );
-	$button->on( OnBlur         => sub ($event) { $button->border_color( $border_color ); return $CONTINUE } );
-	$button->on( OnPress        => sub ($event) { $button->background_color( $press_color ); return } );
-	$button->on( OnHoverStopped => sub ($event) { $look_normal->(); return } );
-
-	# A click: the left button pressed and released over the button.
-	$button->on( OnRelease => sub ($event) { $look_normal->(); $action->(); return } );
-
-	# Enter and Space press the focused button; every other key bubbles
-	# on to the root, where the application shortcuts live.
-	$button->on(
-		KeyPress => sub ($event) {
-			my $key = $event->key_name // '';
-			return $CONTINUE unless $key eq 'Enter' || $key eq 'Space';
-			$action->();
-			return;
-		}
-	);
+	$button->on( OnHoverStart   => sub ($event) { $button->background_color($hover_color);  return } );
+	$button->on( OnHoverStopped => sub ($event) { $button->background_color($button_color); return } );
+	$button->on( Activate       => sub ($event) { $action->(); return } );
 	return $button;
 }
 
@@ -112,14 +91,15 @@ $root->add_child( $buttons, $status );
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 
 # Application shortcuts. KeyPress reaches the root when nothing has the
-# focus, or when the focused widget's listeners let it bubble. Escape is
-# not used to quit: terminals send Alt plus a key as Escape followed by
-# the key, so any Alt combination would end the program.
+# focus, or when the focused widget's listeners let it bubble; a Button
+# keeps only Enter and Space for itself. Alt plus a letter arrives as one
+# key (Alt+x), so binding Escape does not catch Alt combinations.
 my %action_by_key = (
 	'+'      => sub { set_count( $count + 1 ) },
 	'-'      => sub { set_count( $count - 1 ) },
 	'r'      => sub { set_count(0) },
 	'q'      => sub { $ui->loop->stop },
+	'Escape' => sub { $ui->loop->stop },
 	'Ctrl+Q' => sub { $ui->loop->stop },
 );
 $root->on(
@@ -130,7 +110,7 @@ $root->on(
 	}
 );
 
-# The screen is redrawn 30 times per second, so changing the text is all
+# A frame is drawn whenever a widget changed, so changing the text is all
 # the timer has to do.
 my $timer = IO::Async::Timer::Periodic->new(
 	interval       => 1,

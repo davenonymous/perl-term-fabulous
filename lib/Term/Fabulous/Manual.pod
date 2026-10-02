@@ -77,8 +77,8 @@ and writes characters with 24-bit colors.
 =item IO::Async
 
 The event loop (L<IO::Async::Loop>). It waits for input, redraws the
-screen 30 times per second, and runs your timers and other asynchronous
-work in the same loop.
+screen when something changed, and runs your timers and other
+asynchronous work in the same loop.
 
 =back
 
@@ -88,8 +88,12 @@ rest.
 
 =head2 How a frame is drawn
 
-While L<Term::Fabulous/run> is active, the following happens 30 times per
-second:
+While L<Term::Fabulous/run> is active, Term::Fabulous checks 30 times per
+second whether anything changed since the last frame: a widget was
+changed through one of its methods, input arrived, the terminal was
+resized, or the program asked for a frame with
+L<Term::Fabulous/invalidate>. When nothing changed, nothing is drawn.
+When something did, a frame is drawn:
 
 =over
 
@@ -112,7 +116,9 @@ sends only the cells that changed.
 Because the whole screen is laid out again for every frame, you never
 call a "redraw" method. Change a widget (its text, color, size or
 children) and the change is visible in the next frame, at most 1/30
-second later.
+second later. The widget methods tell Term::Fabulous that a frame is
+needed; only a widget of your own that draws from state it keeps
+itself has to say so (see L</WRITING YOUR OWN WIDGETS>).
 
 =head1 REQUIREMENTS
 
@@ -277,8 +283,14 @@ children.
 
 =item L<Term::Fabulous::Widget::Button>
 
-A box that can take the keyboard focus and reports clicks
-(C<OnPress>, C<OnRelease>). It has no look of its own; you style it.
+A box that can take the keyboard focus and fires C<Activate> when it is
+clicked or Enter or Space is pressed on it. It shows its focus with the
+border color and inverts its colors while it is pressed.
+
+=item L<Term::Fabulous::Widget::Dialog>
+
+A box that opens over the whole screen, centered, behind a dimming
+backdrop; Tab stays inside it and Escape closes it.
 
 =item L<Term::Fabulous::Widget::ScrollBox>
 
@@ -356,9 +368,15 @@ The id cannot be changed after construction.
 
 =back
 
-Term::Fabulous has no built-in "find widget by id" method. A small
-recursive search does the job; see
-L<Term::Fabulous::Cookbook/Find widgets by id>.
+Every container widget has a C<find_by_id> method. It searches the
+widget itself and everything below it, depth first, and returns the
+first widget whose id is the argument (Text widgets included), or
+C<undef> when there is none:
+
+	my $status = $root->find_by_id('status');
+
+C<< $ui->find_by_id >> searches from the root. See
+L<Term::Fabulous::Widget/find_by_id>.
 
 =head2 Changing the tree
 
@@ -375,11 +393,10 @@ C<remove_child> never removes Text widgets, even when they have that id;
 remove them with C<remove_children_with>, for example
 C<< $box->remove_children_with( sub ($child) { ( $child->id // '' ) eq 'status' } ) >>.
 
-B<A widget can be attached only once in its lifetime.> After it has been
-removed, it cannot be added again, not even to the same parent; adding it
-dies. Create a new widget instead. The same applies to a widget that was
-ever part of a tree: it cannot become the root of another
-L<Term::Fabulous>. This rule keeps parent links simple and is enforced by
+B<A widget has at most one parent at a time.> Adding a widget that is
+still a child of another widget dies; remove it from its parent first,
+then add it wherever you like, to the same parent or another one. A
+removed widget keeps its children and its state. The rule is enforced by
 L<Clay::UI::Role::Layout::HasParent>.
 
 Removing a widget that has the keyboard focus clears the focus first, and
@@ -460,7 +477,9 @@ L</KDL LAYOUT FILES>.)
 =back
 
 C<sizing_fit> and C<sizing_grow> take an optional minimum and maximum:
-C<sizing_grow(10, 40)> grows, but stays between 10 and 40 cells.
+C<sizing_grow(10, 40)> grows, but stays between 10 and 40 cells. (In KDL
+layouts, write C<"grow(10, 40)"> or C<"fit(MIN, MAX)">; leave out MAX
+for no maximum.)
 
 	# A sidebar of 20 columns and a main area that takes the rest:
 	my $columns = Term::Fabulous::Widget::Box->new(
@@ -508,7 +527,9 @@ C<CLAY_ALIGN_Y_BOTTOM>.
 		},
 	);
 
-KDL layout files cannot set C<child_alignment> yet; set it from Perl.
+In a KDL layout, write C<child_alignment x=right>: C<x> is C<left>,
+C<center> or C<right>, C<y> is C<top>, C<center> or C<bottom>, and
+either may be left out. See L<Term::Fabulous::Layout/Box properties>.
 
 =head2 Borders take space
 
@@ -517,7 +538,8 @@ Term::Fabulous adds the border width to the padding, so the children
 always start inside the border: a box with C<border_width =E<gt> 1> and
 C<padding =E<gt> { left =E<gt> 1 }> has its first child at the third
 column. A box without a C<sizing> rule grows by the border, so its
-content keeps its size. See L</BORDERS>.
+content keeps its size. A side with the C<Hidden> border style takes no
+space and draws nothing. See L</BORDERS>.
 
 =head2 Equal sizes across the tree
 
@@ -621,6 +643,9 @@ A single word longer than the available width is not broken. It runs
 past the right edge of its parent and is cut off only at the edge of the
 terminal, or of an enclosing L<Term::Fabulous::Widget::ScrollBox>.
 
+In a KDL layout, write C<wrap_mode newlines> (C<words>, C<newlines> or
+C<none>).
+
 =head2 Alignment
 
 C<text_alignment> aligns each line within the width of the Text widget:
@@ -628,7 +653,8 @@ C<CLAY_TEXT_ALIGN_LEFT> (the default), C<CLAY_TEXT_ALIGN_CENTER> or
 C<CLAY_TEXT_ALIGN_RIGHT>. The Text widget is only as wide as its longest
 line, so alignment is visible on multi-line text. To center a short text
 in a wider box, use the box's C<child_alignment> (see
-L</Aligning and centering children>).
+L</Aligning and centering children>). In a KDL layout, write
+C<text_alignment center> (C<left>, C<center> or C<right>).
 
 =head2 Line height
 
@@ -777,18 +803,21 @@ Three parameters control it:
 How many cells wide the border is: a number for all four sides, or a hash
 C<{ left =E<gt> 1, right =E<gt> 1, top =E<gt> 0, bottom =E<gt> 0 }>.
 Only one line of border glyphs is drawn per side, so use 1 for a visible
-side and 0 for none; a larger width adds empty space inside the border.
+side and 0 for none (or give the side the C<Hidden> style, which
+switches it off without changing the width); a larger width adds empty
+space inside the border.
 
 =item C<border_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item that decides the characters:
 C<Round>, C<Solid>, C<Heavy>, C<Double>, C<Dashed>, C<Ascii>, C<Thick>,
-C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Tab>, C<Inner>, C<Outer>,
-C<Hkey>, C<Vkey>, C<LightShade>, C<MediumShade>, C<DarkShade>, C<Hidden>
-and C<Blank>. C<border_style> sets all four sides;
-C<border_style_top>, C<border_style_right>, C<border_style_bottom> and
-C<border_style_left> set one side each. A side with a width but no style
-is drawn with C<Blank> (spaces).
+C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Inner>, C<Outer>, C<Hkey>,
+C<Vkey>, C<LightShade>, C<MediumShade>, C<DarkShade>, C<Hidden> and
+C<Blank>. C<border_style> sets all four sides; C<border_style_top>,
+C<border_style_right>, C<border_style_bottom> and C<border_style_left>
+set one side each. A side with a width but no style is drawn with
+C<Blank> (spaces). C<Hidden> switches a side off: it draws nothing and
+takes no space, whatever its width.
 
 =item C<border_color>
 
@@ -814,7 +843,7 @@ L<Term::Fabulous::Layout>.)
 
 	my $by_name = Term::Fabulous::Enum::BorderStyle->from_name('Double');
 
-Some styles (C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Tab>, C<Inner>) use
+Some styles (C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Inner>) use
 half-block characters that blend into the background of the parent
 widget; they look best when the widget and its parent have different
 background colors. The script F<examples/border-showcase.pl> shows all
@@ -946,7 +975,18 @@ C<key_name> and C<text>. See L</KEYBOARD>.
 A mouse button was pressed or released, the mouse was dragged, or the
 wheel was turned. Fired on the topmost widget under the pointer (see
 L</MOUSE>). Fields: C<key> (which button or wheel direction), C<x>,
-C<y> (the cell), C<modifiers>.
+C<y> (the cell), C<modifiers> (Shift, Alt, Ctrl and the motion flag).
+
+=item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
+
+The pointer moved with no button held. Fired on the topmost widget
+under the pointer, like C<Mouse>. Fields: C<x>, C<y>, C<modifiers>.
+
+=item C<Start> (L<Term::Fabulous::Event::Start>)
+
+C<run> opened the terminal. Fired on the root widget once per C<run>,
+before the first frame, when C<< $ui->width >> and C<< $ui->height >>
+already hold the terminal size. Fields: C<width>, C<height>.
 
 =item C<Resize> (L<Term::Fabulous::Event::Resize>)
 
@@ -968,11 +1008,9 @@ hide a sidebar on narrow terminals:
 		}
 	);
 
-No C<Resize> is fired when C<run> starts, although C<run> replaces the
-C<width> and C<height> given to C<new> with the terminal size; read
-C<< $ui->width >> from code that runs once the loop has started, for
-example C<< IO::Async::Loop->new->later( sub { ... } ) >> (see
-L<Term::Fabulous::Cookbook/Resize-aware layout (Resize event)>).
+The starting size does not fire C<Resize>; it fires C<Start>, so a
+program that lays itself out by the terminal size listens to both (see
+L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>).
 
 =item C<CanvasResize> (L<Term::Fabulous::Event::CanvasResize>)
 
@@ -993,6 +1031,17 @@ C<< $checkbox->toggle >> and C<< $group->choose($button) >>, do fire it.
 The user pressed C<Enter> in a L<Term::Fabulous::Widget::TextField>.
 Field: C<value>, the text.
 
+=item C<Activate> (L<Term::Fabulous::Event::Activate>)
+
+The user activated a L<Term::Fabulous::Widget::Button>: clicked it, or
+pressed C<Enter> or C<Space> while it had the focus. Fired on the
+button. No fields.
+
+=item C<Close> (L<Term::Fabulous::Event::Close>)
+
+A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
+code. Fired on the dialog, after it has left the screen. No fields.
+
 =item C<OnFocus>, C<OnBlur> (L<Clay::UI::Events::OnFocus>, L<Clay::UI::Events::OnBlur>)
 
 A widget got or lost the keyboard focus. Fired on that widget. See
@@ -1010,8 +1059,8 @@ C<button> (always 1).
 =item C<OnHoverStart>, C<OnHoverStopped> (L<Clay::UI::Events::OnHoverStart>, L<Clay::UI::Events::OnHoverStopped>)
 
 The pointer came over a hoverable widget (Button and the input widgets),
-or left it. Never bubble. Note that terminals report the pointer only
-while a button is pressed or the wheel turns, see L</MOUSE>.
+or left it. Never bubble. The hover state follows every pointer move,
+with the next frame.
 
 =item C<OnScroll> (L<Clay::UI::Events::OnScroll>)
 
@@ -1105,9 +1154,12 @@ C<Shift+> prefix.
 
 =item *
 
-C<Alt> plus a printable key arrives as two key presses, C<Escape> and then
-the key, so C<Alt+x> cannot be bound. Modifiers on special keys work
-in most terminals: C<Alt+Down>, C<Ctrl+Left>, C<Shift+Home>.
+C<Alt> plus a key is named C<Alt+x>, C<Alt+Enter>, C<Alt+E<uuml>> and
+so on. Terminals send it as C<Escape> followed by the key in one go,
+which is how Term::Fabulous tells it from a real C<Escape>; only
+C<Alt+[> and C<Alt+O> cannot be bound, because they begin the escape
+sequences of other keys. Modifiers on special keys work in most
+terminals: C<Alt+Down>, C<Ctrl+Left>, C<Shift+Home>.
 
 =back
 
@@ -1210,13 +1262,18 @@ only react to its own focus. C<< $widget->is_focused >> tells whether a
 widget has the focus now.
 
 The input widgets show their focus themselves (a different background and
-a cursor). A L<Term::Fabulous::Widget::Button> has no built-in look; give
-it one in these listeners:
+a cursor). A L<Term::Fabulous::Widget::Button> draws its border in its
+C<focus_border_color> while it has the focus. For another look, use
+these listeners:
 
 	use Clay::UI::Enum::Result;
 
 	$button->on( OnFocus => sub ($event) { $button->background_color( [ 60, 90, 160, 255 ] ); return Clay::UI::Enum::Result->CONTINUE } );
 	$button->on( OnBlur  => sub ($event) { $button->background_color( [ 40, 45, 60, 255 ] );  return Clay::UI::Enum::Result->CONTINUE } );
+
+A L<Term::Fabulous::Widget::Dialog> keeps the focus inside itself while
+it is open: Tab and Shift+Tab cycle through its widgets only, and when
+it closes the focus goes back to the widget that had it before.
 
 =head2 Custom focus order
 
@@ -1269,19 +1326,17 @@ can select and copy text as usual).
 
 =head2 What the terminal reports
 
-termbox2 asks the terminal to report the mouse when a button is pressed
-or released, when the mouse moves while a button is held (a drag), and
-when the wheel turns. B<Movement without a pressed button is not
-reported.> As a consequence,
-Term::Fabulous only learns where the pointer is when one of these things
-happens, and hover effects (C<OnHoverStart>, C<OnHoverStopped>,
-C<is_hovered>) change only on clicks, drags and wheel turns, not while the
-mouse simply moves.
+Term::Fabulous asks the terminal to report every mouse event: a button
+pressed or released, the pointer moving (with or without a button held)
+and the wheel turning, with the Shift, Alt and Ctrl keys held at the
+time. Hover effects (C<OnHoverStart>, C<OnHoverStopped>, C<is_hovered>)
+follow the pointer as it moves. Terminals report positions in cells;
+Term::Fabulous reads them in full, so wide terminals work.
 
 =head2 Mouse events
 
-Every report becomes a C<Mouse> event (L<Term::Fabulous::Event::Mouse>)
-with these fields:
+Every report with a button or the wheel becomes a C<Mouse> event
+(L<Term::Fabulous::Event::Mouse>) with these fields:
 
 =over
 
@@ -1291,7 +1346,9 @@ What happened, as a termbox2 constant: C<TB_KEY_MOUSE_LEFT>,
 C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RIGHT> (a button was pressed, or
 is held during a drag), C<TB_KEY_MOUSE_RELEASE> (a button was released;
 the terminal does not say which), C<TB_KEY_MOUSE_WHEEL_UP>,
-C<TB_KEY_MOUSE_WHEEL_DOWN>. Import the constants from L<Term::Fabulous::Termbox>:
+C<TB_KEY_MOUSE_WHEEL_DOWN>, and for a horizontal wheel
+C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>. Import the
+constants from L<Term::Fabulous::Termbox>:
 
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
 
@@ -1302,9 +1359,16 @@ terminal.
 
 =item C<modifiers>
 
-C<TB_MOD_MOTION> is set while dragging.
+A bit mask: C<TB_MOD_MOTION> is set while dragging, and C<TB_MOD_SHIFT>,
+C<TB_MOD_ALT> and C<TB_MOD_CTRL> for the keys held during the click.
 
 =back
+
+A report of the pointer moving with no button held becomes a
+C<MouseMove> event (L<Term::Fabulous::Event::MouseMove>) with C<x>, C<y>
+and C<modifiers>, fired on the same widget a C<Mouse> event would go to.
+Terminals send a move for every cell the pointer crosses, so keep these
+listeners cheap.
 
 The event is fired on the topmost widget that drew something in that cell
 in the last frame: its background, its border or its canvas. Text widgets
@@ -1333,30 +1397,20 @@ L</CANVASES>.
 For buttons, C<Mouse> events are too low level. Widgets that compose
 L<Clay::UI::Role::Interaction::Pressable> (Button and the input widgets)
 get C<OnPress> when the left button goes down over them and C<OnRelease>
-when it goes up over the same widget. Use C<OnRelease> to run an action,
-because the user can still cancel a click by releasing the button
-somewhere else:
+when it goes up over the same widget. A L<Term::Fabulous::Widget::Button>
+turns a complete click, and C<Enter> or C<Space> while it has the focus,
+into one C<Activate> event, which is what most programs want:
 
-	$ok_button->on( OnRelease => sub ($event) { submit_form(); return } );
+	$ok_button->on( Activate => sub ($event) { submit_form(); return } );
 
-A Button does not react to the keyboard by itself: when it has the focus,
-C<Enter> and C<Space> do nothing unless you add a listener. Most programs
-handle both the click and the keys:
-
-	use Clay::UI::Enum::Result;
-
-	$ok_button->on(
-		KeyPress => sub ($event) {
-			my $key = $event->key_name // '';
-			return Clay::UI::Enum::Result->CONTINUE unless $key eq 'Enter' || $key eq 'Space';
-			submit_form();
-			return;
-		}
-	);
+Use C<OnRelease> for a mouse-only action; the user can still cancel a
+click by releasing the button somewhere else.
 
 C<< $button->is_pressed >> is true while the button is held down over the
-widget, and C<< $button->is_hovered >> while the pointer (as last
-reported) is over it.
+widget, and C<< $button->is_hovered >> while the pointer is over it. A
+Button inverts its colors while it is pressed and draws its border in
+C<focus_border_color> while it has the focus; see
+L<Term::Fabulous::Widget::Button>.
 
 A press on a pressable widget fires both C<Mouse> and C<OnPress>.
 C<Mouse> comes first, as soon as the terminal reports the press;
@@ -1364,17 +1418,6 @@ C<OnPress> follows when the next frame is drawn. They can go to different
 widgets: C<Mouse> goes to the widget that drew the cell, C<OnPress> to the
 innermost pressable widget whose box contains the pointer, even if it
 draws nothing there.
-
-One limitation follows from termbox2:
-
-=over
-
-=item *
-
-When the terminal sends several mouse reports at once (fast wheel
-scrolling), termbox2 delivers only the first one.
-
-=back
 
 =head1 SCROLLING
 
@@ -1754,8 +1797,9 @@ UI, so what you see in the text is what the terminal would show.
 =head1 THE EVENT LOOP
 
 C<< $ui->run >> starts an L<IO::Async::Loop> and returns when it stops.
-While it runs, it redraws the screen every 1/30 second and turns terminal
-input into events. See L<Term::Fabulous/run> for the details.
+While it runs, it redraws the screen whenever something changed (checking
+every 1/30 second) and turns terminal input into events. See
+L<Term::Fabulous/run> for the details.
 
 =head2 Timers and other asynchronous work
 
@@ -1876,6 +1920,15 @@ L<Term::Fabulous::Widget::Input>.
 
 =back
 
+Term::Fabulous draws a frame only when something changed. A widget that
+keeps state of its own, which its drawing or its size depends on, must
+say so whenever that state changes: an Input subclass calls
+C<< $self->repaint >>, a Canvas subclass draws with the canvas methods
+(which mark it changed), and any other widget calls
+C<< $self->mark_changed >> (see
+L<Clay::UI::Role::Core::Element/mark_changed>). Otherwise a change made
+from a timer only shows when something else causes a frame.
+
 A minimal container widget:
 
 	use Object::Pad 0.825;
@@ -1989,13 +2042,13 @@ The default C<text_color> of a Text widget is opaque black, which is
 invisible on a dark background. Always pass a C<text_color>, or
 C<[0, 0, 0, 0]> for the terminal's default text color. See L</TEXT>.
 
-=head2 "There were still open layout elements when EndLayout was called"
+=head2 "the widget tree has more elements than max_element_count (8192) allows"
 
-This Clay error means the widget tree is too large: Clay lays out at most
-8190 widgets per frame (the maximum number of widgets). Show fewer
-widgets at a time, for example by building only the visible part of a
-long list, or by drawing many small items on a canvas instead. See
-L<Term::Fabulous/LIMITATIONS>.
+The widget tree is too large for Clay's element table: by default at
+most 8190 widgets fit in a frame. Pass a larger C<max_element_count> to
+C<< Term::Fabulous->new >>, or show fewer widgets at a time, for example
+by building only the visible part of a long list, or by drawing many
+small items on a canvas instead. See L<Term::Fabulous/new>.
 
 =head2 Garbled characters in a Text widget, input, canvas or KDL layout
 
@@ -2031,8 +2084,16 @@ widget. Give the box a background color, or listen on an ancestor.
 
 =head2 Hover effects do not follow the mouse
 
-Terminals only report the mouse while a button is pressed or the wheel
-turns. See L</What the terminal reports>.
+The terminal does not report mouse movement (mode 1003), or a terminal
+multiplexer between it and the program drops the reports. Clicks, drags
+and the wheel still work. See L</What the terminal reports>.
+
+=head2 A change from a timer does not show
+
+Term::Fabulous draws a frame only when it knows that something changed.
+The widget methods tell it; state a widget of your own keeps itself does
+not. Call C<repaint> (inputs) or C<mark_changed> after changing it, or
+C<< $ui->invalidate >>. See L</WRITING YOUR OWN WIDGETS>.
 
 =head2 Unrecognised parameters for ... constructor
 
@@ -2040,10 +2101,10 @@ Every Term::Fabulous class rejects constructor parameters it does not
 know, to catch typos. Check the spelling against the class's
 documentation.
 
-=head2 The program dies when re-adding a widget
+=head2 The program dies with "is still attached to a parent"
 
-A widget can be attached only once. Create a new widget instead; see
-L</Changing the tree>.
+A widget has one parent at a time. Remove it from its current parent
+before adding it elsewhere; see L</Changing the tree>.
 
 =head1 GLOSSARY
 
@@ -2092,8 +2153,9 @@ Which widget receives key presses. See L</FOCUS>.
 
 =item frame
 
-One complete layout and drawing of the screen. L<Term::Fabulous> draws
-30 frames per second, so a change "shows in the next frame" within 1/30
+One complete layout and drawing of the screen. L<Term::Fabulous> checks
+30 times per second whether a frame is needed and draws one when
+something changed, so a change "shows in the next frame" within 1/30
 second.
 
 =item grapheme cluster
@@ -2205,9 +2267,15 @@ L</FOCUS>.
 L</Clicks, hover and press>, L<Term::Fabulous::Widget::Button>,
 L<Term::Fabulous::Cookbook/Clickable buttons with focus and press styling>.
 
-=item Low-level mouse handling, dragging
+=item Low-level mouse handling, dragging, pointer movement
 
-L</MOUSE>, L<Term::Fabulous::Event::Mouse>.
+L</MOUSE>, L<Term::Fabulous::Event::Mouse>,
+L<Term::Fabulous::Event::MouseMove>.
+
+=item Dialogs, modal windows
+
+L<Term::Fabulous::Widget::Dialog>,
+L<Term::Fabulous::Cookbook/Ask a question in a dialog (Dialog widget)>.
 
 =item Scrollable areas
 
@@ -2244,9 +2312,10 @@ L</RENDERING WITHOUT A TERMINAL>, L<Term::Fabulous::Static>.
 
 L</Timers and other asynchronous work>.
 
-=item Terminal resize
+=item Terminal size and resize
 
-L</Event reference> (C<Resize>), L<Term::Fabulous::Event::Resize>.
+L</Event reference> (C<Start>, C<Resize>), L<Term::Fabulous::Event::Start>,
+L<Term::Fabulous::Event::Resize>.
 
 =item Your own widgets
 

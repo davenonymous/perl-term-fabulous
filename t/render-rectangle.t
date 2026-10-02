@@ -115,4 +115,20 @@ subtest 'translucent background with glyphs showing through' => sub {
 	is [ \@cells, scalar @prints ], [ [], 1 ], 'with the flag off the widget covers the glyphs again';
 };
 
+subtest 'reverse video' => sub {
+	class ReversedBox :isa(Term::Fabulous::Widget::Box) {
+		method reverse_video :override () { return 1 }
+	}
+	my $widget = ReversedBox->new( glyphs_show_through => 1 );
+	my $buffer = [ [ (0xFFFFFF) x 2 ] ];
+	fill( $buffer, x => 0, y => 0, width => 2, height => 1, widget => $widget );
+	is $prints[0][3], 0x010203 | TB_REVERSE, 'an opaque fill carries TB_REVERSE';
+	is $buffer->[0], [ ( 0x010203 | TB_REVERSE ) x 2 ], 'so does the shadow buffer, for the text drawn on top';
+
+	%painted = ( '0,0' => [ 'A', 0xFFFFFF, 0xFFFFFF ] );
+	$buffer  = [ [0xFFFFFF] ];
+	fill( $buffer, x => 0, y => 0, width => 1, height => 1, color => \%half_black, widget => $widget );
+	is $cells[0][4], 0x7F7F7F | TB_REVERSE, 'a tinted cell carries it too';
+};
+
 done_testing;

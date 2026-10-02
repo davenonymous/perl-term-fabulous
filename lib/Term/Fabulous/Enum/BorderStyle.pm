@@ -90,6 +90,8 @@ enum Term::Fabulous::Enum::BorderStyle {
 			],
 		},
 	);
+	# Hidden sides take no space and draw nothing: HasBorderStyle gives
+	# them a Clay border width of 0, so these glyphs are never painted.
 	item Hidden (
 		glyphs => [ ' ',        ' ',        ' ',        ' ',        ' ',        ' ',        ' ',        ' ' ],
 		locations => [ 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -146,10 +148,6 @@ enum Term::Fabulous::Enum::BorderStyle {
 		}
 	);
 
-	item Tab (
-		glyphs => [ "\x{2581}", "\x{2581}", "\x{2581}", "\x{258E}", "\x{258A}", "\x{2594}", "\x{2594}", "\x{2594}" ],
-		locations => [ 1, 1, 1, 0, 3, 1, 1, 1 ],
-	);
 	item Tall (
 		glyphs => [ "\x{258A}", "\x{2594}", "\x{258E}", "\x{258A}", "\x{258E}", "\x{258A}", "\x{2581}", "\x{258E}" ],
 		locations => [ 2, 0, 1, 2, 1, 2, 0, 1 ],
@@ -316,7 +314,7 @@ Term::Fabulous::Enum::BorderStyle - The border styles a widget can be drawn with
 
 =head1 DESCRIPTION
 
-This enumeration holds the 21 border styles Term::Fabulous can draw.
+This enumeration holds the 20 border styles Term::Fabulous can draw.
 Each style is a single, shared object that you get with a class method
 named after the style, for example
 C<< Term::Fabulous::Enum::BorderStyle->Round >>. Give it to a widget's
@@ -324,7 +322,8 @@ C<border_style> parameter (all four sides) or to one of
 C<border_style_top>, C<border_style_right>, C<border_style_bottom> and
 C<border_style_left> (one side each); see
 L<Term::Fabulous::Role::HasBorderStyle>. A border is only drawn on the
-sides where the widget's C<border_width> is positive; see
+sides where the widget's C<border_width> is positive and the style is
+not L</Hidden>; see
 L<Term::Fabulous::Manual/BORDERS>.
 
 The styles and their glyphs come from the Python TUI library Textual.
@@ -370,7 +369,9 @@ Heavy (bold) box-drawing lines.
 
 =head2 Hidden
 
-Like L</Blank>: the border takes space but shows only spaces.
+The side takes no space and draws nothing, even when its
+C<border_width> is positive. Use it to switch one side off without
+changing C<border_width>; see L<Term::Fabulous::Role::HasBorderStyle>.
 
 =head2 Hkey
 
@@ -409,11 +410,6 @@ Light box-drawing lines with rounded corners.
 
 Light box-drawing lines with square corners.
 
-=head2 Tab
-
-A tab-like frame: a line below the top edge, a line above the bottom
-edge, and bars at the sides. Currently looks exactly like L</Wide>.
-
 =head2 Tall
 
 Like L</Panel>, but with a thin top line instead of a solid top bar.
@@ -429,7 +425,10 @@ bottom.
 
 =head2 Wide
 
-Like L</Tab>.
+A frame drawn just outside the widget's content: a thin line (lower
+one eighth block) along the bottom of the top row, a thin line (upper
+one eighth block) along the top of the bottom row, and bars at the
+sides. The top and bottom rows show the parent's background.
 
 =head1 METHODS
 

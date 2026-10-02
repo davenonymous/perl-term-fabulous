@@ -1,6 +1,44 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Frames are drawn only when something changed: a widget setter
+          (Clay::UI::Revision), input, a resize or $ui->invalidate.
+          Widget classes of your own call mark_changed (or repaint)
+          after changing drawn state
+        - The terminal reports mouse movement without a button (mode
+          1003): MouseMove events, hover that follows the pointer, and
+          Shift, Alt and Ctrl in Mouse events. A horizontal wheel
+          scrolls sideways (TF_KEY_MOUSE_WHEEL_LEFT/RIGHT). The SGR
+          mouse reports and Alt+key are decoded by Term::Fabulous's own
+          parser (tf_install_input_parser), so Alt+x, Alt+Enter and
+          Alt plus an umlaut are key names of their own
+        - A Start event with the terminal size is fired on the root when
+          run opens the terminal, before the first frame
+        - Button fires Activate for a click and for Enter or Space,
+          draws its border in focus_border_color while focused and
+          inverts its colors while pressed (pressed_background_color)
+        - Widget::Dialog opens a box centered over the screen behind a
+          dimming backdrop, keeps Tab inside, closes on Escape and
+          fires Close; it can be opened again. Requires Clay::UI with
+          re-attachable widgets (a removed widget can be added again)
+        - KDL layouts: sizing takes "grow(MIN)", "grow(MIN, MAX)",
+          "fit(MIN)" and "fit(MIN, MAX)"; Box has the new property
+          nodes child_alignment x=... y=... and floating attach_to=...
+          parent_id=... element=... parent=... offset_x=... offset_y=...
+          z_index=... pointer_capture=... clip_to=...; Text has
+          wrap_mode and text_alignment; Button has focus_border_color
+          and pressed_background_color
+        - Every container widget composes
+          Clay::UI::Role::Layout::HasFloating and accepts a floating
+          parameter and accessor
+        - Widget::find_by_id and $ui->find_by_id find a widget (Text
+          included) by its id, depth first
+        - max_element_count raises Clay's element limit (8192 by
+          default); a too-large tree dies with a message that names it
+        - Border styles: Tab is gone (it was identical to Wide).
+          Hidden now switches a side off: it draws nothing and takes
+          no space, whatever the side's border_width; Blank still
+          takes space and draws spaces
         - First version. Terminal UIs from Clay layouts, drawn with
           termbox2: Box, Text and Button widgets, border styles,
           truecolor rendering, KDL layout files and an IO::Async

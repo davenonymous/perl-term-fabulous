@@ -20,6 +20,7 @@ class Term::Fabulous
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
+	use Clay::UI::Revision qw(current_revision);
 	use Clay::XS qw(
 		CLAY_RENDER_COMMAND_TYPE_BORDER
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM
@@ -35,22 +36,31 @@ class Term::Fabulous
 	use POSIX qw(EINTR);
 	use Term::Fabulous::Termbox qw(
 		tb_init tb_shutdown tb_width tb_height tb_hide_cursor
-		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event
-		tb_last_errno tb_strerror
+		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
+		tb_last_errno tb_strerror tf_install_input_parser
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
+		TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_LEFT TF_KEY_MOUSE_WHEEL_RIGHT
 		TB_KEY_CTRL_C TB_KEY_TAB TB_KEY_BACK_TAB TB_MOD_MOTION
 	);
 	use Term::Fabulous::Termbox::Event;
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Event::Mouse;
+	use Term::Fabulous::Event::MouseMove;
 	use Term::Fabulous::Event::Resize;
+	use Term::Fabulous::Event::Start;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
 
-	use constant WHEEL_NOTCH_ROWS => 3;
+	use constant WHEEL_NOTCH_ROWS    => 3;
+	use constant WHEEL_NOTCH_COLUMNS => 3;
+
+	# Mouse mode 1003 (any-event tracking) reports the pointer moving with
+	# no button held; termbox2 asks only for buttons, drags and the wheel.
+	use constant REPORT_MOUSE_MOTION      => "\x1b[?1003h";
+	use constant STOP_MOUSE_MOTION_REPORT => "\x1b[?1003l";
 
 	field $mouse :param :reader = 1;
 	field $loop :reader;
@@ -63,7 +73,10 @@ class Term::Fabulous
 	field $_pending_resize;
 	field $_pointer;             # the pointer state as last reported
 	field @_pointer_queue;       # pointer states no frame has shown to Clay yet
-	field $_wheel_rows = 0;      # wheel scrolling since the last frame
+	field $_wheel_rows    = 0;   # wheel scrolling since the last frame
+	field $_wheel_columns = 0;
+	field $_frame_requested = 1;    # invalidate() or input since the last frame
+	field $_drawn_revision  = -1;   # the Clay::UI revision the last frame showed
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -80,6 +93,17 @@ class Term::Fabulous
 		return {%$_pointer};
 	}
 
+	method invalidate () {
+		$_frame_requested = 1;
+		return $self;
+	}
+
+	method find_by_id ($id) {
+		my $root = $self->root;
+		die "Term::Fabulous: the root widget " . ref($root) . " cannot search by id (no find_by_id method)" unless $root->can('find_by_id');
+		return $root->find_by_id($id);
+	}
+
 	method run () {
 		warn "Term::Fabulous: the locale's character set is not UTF-8; wide characters will be misaligned\n"
 			unless terminal_is_utf8();
@@ -91,6 +115,7 @@ class Term::Fabulous
 
 		try {
 			$self->_prepare_terminal;
+			$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
 			$loop = IO::Async::Loop->new;
 			$self->_attach_notifiers;
 			$loop->run;
@@ -111,6 +136,7 @@ class Term::Fabulous
 		return unless $_terminal_is_open;
 		$_terminal_is_open = 0;
 		$self->_detach_notifiers;
+		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
 		tb_shutdown();
 		return;
 	}
@@ -150,7 +176,9 @@ class Term::Fabulous
 	method _prepare_terminal () {
 		_check_termbox( 'tb_set_output_mode', tb_set_output_mode( $self->output_mode ) );
 		_check_termbox( 'tb_set_input_mode',  tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
-		_check_termbox( 'tb_hide_cursor',     tb_hide_cursor() );
+		_check_termbox( 'tf_install_input_parser', tf_install_input_parser() );
+		_check_termbox( 'tb_send', tb_send(REPORT_MOUSE_MOTION) ) if $mouse;
+		_check_termbox( 'tb_hide_cursor', tb_hide_cursor() );
 
 		my ( $width, $height ) = ( tb_width(), tb_height() );
 		die "Term::Fabulous: the terminal reports an unusable size of ${width}x${height}\n"
@@ -209,30 +237,45 @@ class Term::Fabulous
 		}
 		@_notifiers      = ();
 		$_resize_timer   = undef;
-		$_pending_resize = undef;
-		$_wheel_rows     = 0;
-		@_pointer_queue  = ();
+		$_pending_resize  = undef;
+		$_wheel_rows      = 0;
+		$_wheel_columns   = 0;
+		@_pointer_queue   = ();
+		$_frame_requested = 1;    # the next run starts with a frame
 		return;
 	}
 
 	method _draw_frame () {
 		return if $_resize_timer->is_running;
+		return unless $self->_frame_is_due;
 		$self->_draw_pending;
 		return;
 	}
 
+	# A frame is due when something asked for one (invalidate, input, a
+	# resize), when pointer or wheel input waits to be shown to Clay, or
+	# when a widget changed since the last frame (the Clay::UI revision).
+	method _frame_is_due () {
+		return 1 if $_frame_requested || @_pointer_queue || $_wheel_rows || $_wheel_columns;
+		return current_revision() != $_drawn_revision;
+	}
+
 	# Clay takes one button state per frame, so every queued pointer state
-	# gets a frame of its own; the wheel rows go with the first.
+	# gets a frame of its own; the wheel movement goes with the first. The
+	# revision is read before drawing: a frame that changes widgets (hover
+	# and press events fire during it) leaves the next frame due.
 	method _draw_pending () {
 		my @pointers = splice @_pointer_queue;
 		push @pointers, $_pointer unless @pointers;
-		my $rows = $_wheel_rows;
-		$_wheel_rows = 0;
+		my ( $columns, $rows ) = ( $_wheel_columns, $_wheel_rows );
+		( $_wheel_columns, $_wheel_rows ) = ( 0, 0 );
+		$_drawn_revision  = current_revision();
+		$_frame_requested = 0;
 
 		foreach my $pointer (@pointers) {
 			$_pointer = $pointer;
-			$self->draw( scroll_cells => [ 0, $rows ] );
-			$rows = 0;
+			$self->draw( scroll_cells => [ $columns, $rows ] );
+			( $columns, $rows ) = ( 0, 0 );
 		}
 		return;
 	}
@@ -255,6 +298,7 @@ class Term::Fabulous
 	}
 
 	method _dispatch_termbox_event ($event) {
+		$_frame_requested = 1;    # listeners may change anything
 		my $type = $event->type;
 		return $self->_on_key($event)    if $type == TB_EVENT_KEY;
 		return $self->_on_mouse($event)  if $type == TB_EVENT_MOUSE;
@@ -284,14 +328,21 @@ class Term::Fabulous
 		$self->_queue_pointer($_pointer);
 
 		my $target = $self->_emitter_at( $x, $y ) // $self->root;
+		if ( $key == TF_KEY_MOUSE_MOVE ) {
+			$target->fire_event( Term::Fabulous::Event::MouseMove->of($event) );
+			return;
+		}
+
 		$self->interaction->set_focused_widget( _focusable_at_or_above($target) )
 			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
 		my $result = $target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
 
 		# A widget that scrolls itself has used the wheel notch.
 		return if $result == Clay::UI::Enum::Result->HANDLED;
-		$_wheel_rows += WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_UP;
-		$_wheel_rows -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		$_wheel_rows    += WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_UP;
+		$_wheel_rows    -= WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		$_wheel_columns += WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_LEFT;
+		$_wheel_columns -= WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_RIGHT;
 		return;
 	}
 
@@ -333,6 +384,7 @@ class Term::Fabulous
 		$self->width($width);
 		$self->height($height);
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 1 ) );
+		$_frame_requested = 1;
 		return;
 	}
 
@@ -418,7 +470,7 @@ Highlights:
 =item *
 
 Flexible layout: rows and columns, growing, fitting, fixed and
-percentage sizes, padding, gaps, alignment, borders in 21 styles.
+percentage sizes, padding, gaps, alignment, borders in 20 styles.
 
 =item *
 
@@ -454,8 +506,9 @@ alongside the user interface.
 =back
 
 This class is the application object: it owns the widget tree, opens the
-terminal, runs the event loop, draws the screen 30 times per second and
-dispatches input events. It is a subclass of L<Clay::UI>.
+terminal, runs the event loop, draws a frame whenever something changed
+(checking 30 times per second) and dispatches input events. It is a
+subclass of L<Clay::UI>.
 
 =head1 DOCUMENTATION
 
@@ -535,10 +588,11 @@ L</run> starts, then the terminal's height.
 
 =item C<mouse>
 
-A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags
-and the wheel to the program (see L<Term::Fabulous::Manual/MOUSE>). With
-0, the terminal keeps the mouse for itself, so the user can select and
-copy text as usual, and no C<Mouse> events are fired.
+A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags,
+movement and the wheel to the program (see
+L<Term::Fabulous::Manual/MOUSE>). With 0, the terminal keeps the mouse
+for itself, so the user can select and copy text as usual, and no
+C<Mouse> or C<MouseMove> events are fired.
 
 =item C<output_mode>
 
@@ -549,9 +603,20 @@ with 24-bit colors.
 =item C<memory_size>
 
 Optional, rarely needed. The number of bytes Clay reserves for laying out
-a frame: an integer of at least C<Clay::XS::Clay_MinMemorySize()> (about
-6 MB), which is also the default. It does not raise the limit on the
-number of widgets; see L</LIMITATIONS>.
+a frame: an integer of at least what C<Clay::XS::Clay_MinMemorySize()>
+reports for the UI's C<max_element_count> (about 6 MB for the default
+count), which is also the default. It does not raise the limit on the
+number of widgets; C<max_element_count> does.
+
+=item C<max_element_count>
+
+Optional. The number of Clay elements a frame may hold: a positive
+integer, default 8192. Every widget is one element and Term::Fabulous
+uses two more, so the default allows 8190 widgets on the screen at
+once; a larger tree dies with
+C<Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...>.
+Raise it for very large trees; the memory Clay reserves grows with it.
+See L<Clay::UI/new>.
 
 =item C<error_handler>
 
@@ -582,13 +647,21 @@ While it runs:
 
 =item *
 
-the screen is laid out and drawn every 1/30 second (see
-L</termbox_draw_interval>), using the real terminal size;
+a C<Start> event is fired on the root widget as soon as the terminal is
+open, with its size;
+
+=item *
+
+every 1/30 second (see L</termbox_draw_interval>) the screen is laid
+out and drawn again, using the real terminal size, if anything changed
+since the last frame: a widget was changed, input arrived, the terminal
+was resized or L</invalidate> was called. Nothing is drawn while
+nothing happens;
 
 =item *
 
 terminal input is read as soon as it arrives and dispatched as
-C<KeyPress> and C<Mouse> events (see L</EVENTS>);
+C<KeyPress>, C<Mouse> and C<MouseMove> events (see L</EVENTS>);
 
 =item *
 
@@ -706,19 +779,42 @@ C<TB_OUTPUT_TRUECOLOR>. Read only.
 Returns where the mouse pointer was last reported: a new hash reference
 with the cell coordinates C<x> and C<y> and C<down>, which is 1 while the
 left button is held and 0 otherwise. Returns C<undef> until the first
-mouse event. The pointer is reported only on button presses, releases,
-drags and wheel turns (see L<Term::Fabulous::Manual/What the terminal reports>),
-so this is not the live mouse position. Term::Fabulous
-passes it to Clay with every frame, which derives the hover and press
-state of the widgets from it. When the button went down and up again
-between two frames, each state gets a frame of its own, so a click is
-never too fast to press a widget.
+mouse report. The terminal reports every move, so this is the live
+mouse position as of the last report. Term::Fabulous passes it to Clay
+with every frame, which derives the hover and press state of the
+widgets from it. When the button went down and up again between two
+frames, each state gets a frame of its own, so a click is never too
+fast to press a widget.
+
+=head2 invalidate
+
+	$ui->invalidate;
+
+Asks for a frame: the screen is laid out and drawn again at the next
+tick of the frame timer, even if Term::Fabulous saw no change. Returns
+the object. Frames are drawn by themselves whenever a widget was
+changed through its methods, input arrived or the terminal was resized,
+so most programs never need this; call it when something the frame
+depends on changed behind Term::Fabulous's back, for example state a
+custom widget reads while it draws without calling C<mark_changed>
+(see L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>).
+
+=head2 find_by_id
+
+	my $field = $ui->find_by_id('name');
+
+Returns the widget with the given id, searching the whole tree from the
+root, or C<undef> when there is none; see
+L<Term::Fabulous::Widget/find_by_id>. Dies when the root widget has no
+C<find_by_id> method (every Term::Fabulous widget has one).
 
 =head2 termbox_draw_interval
 
 	my $seconds = $ui->termbox_draw_interval;    # 1/30
 
-Returns the time between two frames in seconds: 1/30. Read only.
+Returns the time between two checks for a due frame in seconds: 1/30.
+A frame is drawn at a tick only when something changed since the last
+one. Read only.
 
 =head2 termbox_resize_debounce_interval
 
@@ -732,9 +828,10 @@ While a resize is pending, no frames are drawn. Read only.
 
 	$ui->draw;
 
-Lays out and draws one frame immediately. C<run> calls it 30 times per
-second, so programs do not need it. It only has a visible effect while
-the terminal is open. See L<Term::Fabulous::Render/draw>.
+Lays out and draws one frame immediately. C<run> calls it whenever a
+frame is due, so programs do not need it; see L</invalidate> to ask for
+a frame instead. It only has a visible effect while the terminal is
+open. See L<Term::Fabulous::Render/draw>.
 
 =head2 Other inherited methods
 
@@ -758,30 +855,42 @@ nothing has the focus.
 
 =item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
 
-For every mouse report (button press, release, drag, wheel), on the
-topmost widget that drew something in the cell under the pointer in the
-last frame: its background, its border or its canvas. Text widgets are
-skipped, and so are widgets that draw nothing there. When no widget
-qualifies, the event is fired on the root widget. Content that is
-scrolled out of view in a L<Term::Fabulous::Widget::ScrollBox> is not
-drawn and never receives the event.
+For every mouse report with a button or the wheel (button press,
+release, drag, wheel), on the topmost widget that drew something in the
+cell under the pointer in the last frame: its background, its border or
+its canvas. Text widgets are skipped, and so are widgets that draw
+nothing there. When no widget qualifies, the event is fired on the root
+widget. Content that is scrolled out of view in a
+L<Term::Fabulous::Widget::ScrollBox> is not drawn and never receives
+the event.
+
+=item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
+
+For every report of the pointer moving with no button held, on the same
+widget a C<Mouse> event would go to. The hover state of the widgets
+follows these moves.
+
+=item C<Start> (L<Term::Fabulous::Event::Start>)
+
+On the root widget, once per C<run>, after the terminal is open and
+C<width> and C<height> hold its size, before the first frame.
 
 =item C<Resize> (L<Term::Fabulous::Event::Resize>)
 
 On the root widget, twice per resize: first with C<is_pre_event> true,
 before the new size is applied, then with C<is_post_event> true, after
 it. Resizes are debounced (see L</termbox_resize_debounce_interval>),
-and a size with zero columns or rows is ignored. No C<Resize> is fired
-when C<run> starts and adopts the terminal's size; see
-L<Term::Fabulous::Event::Resize>.
+and a size with zero columns or rows is ignored. The starting size
+fires C<Start> instead; see L<Term::Fabulous::Event::Resize>.
 
 =back
 
 Widgets fire further events themselves: C<Change> from the input
 widgets, C<Submit> from L<Term::Fabulous::Widget::TextField>,
-C<CanvasResize> from canvases, and Clay::UI's C<OnPress>, C<OnRelease>,
-C<OnHoverStart>, C<OnHoverStopped>, C<OnFocus>, C<OnBlur> and
-C<OnScroll>. The complete list is in
+C<Activate> from L<Term::Fabulous::Widget::Button>, C<Close> from
+L<Term::Fabulous::Widget::Dialog>, C<CanvasResize> from canvases, and
+Clay::UI's C<OnPress>, C<OnRelease>, C<OnHoverStart>, C<OnHoverStopped>,
+C<OnFocus>, C<OnBlur> and C<OnScroll>. The complete list is in
 L<Term::Fabulous::Manual/Event reference>.
 
 =head1 KEYBOARD AND FOCUS
@@ -821,15 +930,14 @@ L<Term::Fabulous::Manual/FOCUS>.
 
 Each notch of the mouse wheel scrolls the scroll box under the
 pointer (for example a L<Term::Fabulous::Widget::ScrollBox>) by three
-rows. Notches that arrive between two frames are added up and applied
-when the next frame is drawn. A C<Mouse> event is fired for every notch
-termbox2 reports (see L</LIMITATIONS> for reports it loses), before the
-notch is counted: when a listener returns C<HANDLED> for it, the notch
-scrolls no scroll box. Widgets that scroll themselves, like
-L<Term::Fabulous::Widget::TextArea>, handle the wheel this way, so the
-scroll box around them stays put while the pointer is over them. Only
-vertical scrolling is driven by the wheel; there is no horizontal wheel
-input.
+rows, and each notch of a horizontal wheel (or a sideways tilt of the
+wheel) by three columns. Notches that arrive between two frames are
+added up and applied when the next frame is drawn. A C<Mouse> event is
+fired for every notch, before the notch is counted: when a listener
+returns C<HANDLED> for it, the notch scrolls no scroll box. Widgets
+that scroll themselves, like L<Term::Fabulous::Widget::TextArea>,
+handle the wheel this way, so the scroll box around them stays put
+while the pointer is over them.
 
 =head1 MODULES
 
@@ -869,7 +977,13 @@ Shows text in one color; wraps and aligns it.
 
 =item L<Term::Fabulous::Widget::Button>
 
-A box that can take the keyboard focus and reports mouse clicks.
+A box that can take the keyboard focus, shows when it is focused or
+pressed, and fires C<Activate> for a click or Enter.
+
+=item L<Term::Fabulous::Widget::Dialog>
+
+A box that opens over the whole screen, keeps the keyboard focus inside
+itself and closes on Escape.
 
 =item L<Term::Fabulous::Widget::ScrollBox>
 
@@ -943,6 +1057,10 @@ inputs, without any drawing.
 
 The list an open dropdown shows. Used internally by the dropdown.
 
+=item L<Term::Fabulous::Widget::Dialog::Backdrop>
+
+The layer behind an open dialog. Used internally by the dialog.
+
 =back
 
 =head2 Events
@@ -957,6 +1075,14 @@ A key was pressed. Provides readable key names for key bindings.
 
 A mouse button was pressed or released, the mouse was dragged, or the
 wheel was turned.
+
+=item L<Term::Fabulous::Event::MouseMove>
+
+The mouse pointer moved with no button held.
+
+=item L<Term::Fabulous::Event::Start>
+
+The terminal is open and its size is known.
 
 =item L<Term::Fabulous::Event::Resize>
 
@@ -974,6 +1100,14 @@ The user changed the value of an input widget.
 
 The user pressed Enter in a text field.
 
+=item L<Term::Fabulous::Event::Activate>
+
+The user activated a button, by click or key.
+
+=item L<Term::Fabulous::Event::Close>
+
+A dialog was closed.
+
 =back
 
 =head2 Colors, borders and text
@@ -987,7 +1121,7 @@ making colors lighter, darker or mixed.
 
 =item L<Term::Fabulous::Enum::BorderStyle>
 
-The 21 border styles and their characters.
+The 20 border styles and their characters.
 
 =item L<Term::Fabulous::Role::HasBorderStyle>
 
@@ -1080,39 +1214,29 @@ Converts Clay's layout boxes into terminal cells.
 
 =item *
 
-The whole screen is laid out and drawn 30 times per second, also when
-nothing changed. Only the cells that changed are sent to the terminal,
-but very large widget trees cost CPU time.
+A frame lays out and draws the whole screen, whatever changed. Only the
+cells that changed are sent to the terminal, but a very large widget
+tree costs CPU time on every frame it needs.
 
 =item *
 
-termbox2 asks the terminal to report mouse buttons, drags and the wheel,
-but not movement without a pressed button, so hover effects follow
-clicks, drags and the wheel only.
+C<Alt> plus a key is recognized when the terminal sends the Escape and
+the key in one write, which terminals do. C<Escape> followed quickly
+by a key that arrives in the same read looks like C<Alt> plus that key.
+C<Alt+[> and C<Alt+O> cannot be bound: they begin the escape sequences
+of other keys.
 
 =item *
 
-When the terminal sends several mouse reports at once (for example
-during fast wheel scrolling), termbox2 delivers only the first, so some
-wheel notches and fast releases are lost.
+Mouse reports with the buttons 8 to 11 (extra buttons of some mice)
+are decoded by termbox2 as the left, middle or right button.
 
 =item *
 
-C<Alt> plus a printable key cannot be told apart from C<Escape> followed
-by that key.
-
-=item *
-
-There are no floating windows or dialogs for application use yet; only
-the dropdown list floats over other widgets.
-
-=item *
-
-Clay lays out at most 8192 elements per frame; every widget is one
-element and Term::Fabulous uses two more, so at most 8190 widgets can
-be shown. A larger tree makes drawing die with a misleading Clay error
-(C<There were still open layout elements when EndLayout was called>).
-C<memory_size> does not change this limit.
+Clay lays out at most C<max_element_count> elements per frame (8192 by
+default); every widget is one element and Term::Fabulous uses two
+more. A larger tree makes drawing die with a message that names the
+limit; raise C<max_element_count> in L</new>.
 
 =back
 

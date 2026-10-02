@@ -7,14 +7,12 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Clay::UI::Role::Layout::HasFloating;
 use Term::Fabulous::Widget::Canvas;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Dropdown::List
 	:isa(Term::Fabulous::Widget::Canvas)
-	:does(Clay::UI::Role::Layout::HasFloating)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -98,6 +96,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	}
 
 	method repaint () {
+		$self->mark_changed;
 		return $self unless $self->columns > 0 && $self->rows > 0 && defined $dropdown;
 		$self->clear;
 
@@ -180,7 +179,7 @@ for tests.
 
 Called by the dropdown with these parameters, plus C<background_color>,
 C<border_color>, C<border_width>, C<border_style>, C<layout> and
-C<floating> (see L<Clay::UI::Role::Layout::HasFloating>). Unknown
+C<floating> (see L<Term::Fabulous::Widget/floating>). Unknown
 parameters die.
 
 =over
@@ -235,8 +234,9 @@ or C<undef> for a row without an option.
 
 	$list->repaint;
 
-Paints the visible options and, when the list scrolls, the scrollbar.
-Returns the list.
+Paints the visible options and, when the list scrolls, the scrollbar,
+and marks the list changed (see
+L<Clay::UI::Role::Core::Element/mark_changed>). Returns the list.
 
 =head1 MOUSE
 

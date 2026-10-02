@@ -5,6 +5,7 @@ use Test2::V0;
 
 use Clay::UI;
 use Clay::XS qw(CLAY_RENDER_COMMAND_TYPE_TEXT);
+use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
@@ -25,6 +26,15 @@ subtest 'border width is added to the padding' => sub {
 	is $plain->to_config->{layout}, $plain->layout, 'without a border the layout is passed through';
 
 	like dies { Term::Fabulous::Widget::Box->new( border_width => -1 ) }, qr/'border_width'.*'-1'/, 'Clay::UI rejects a negative width when it is set';
+};
+
+subtest 'Hidden sides take no space and draw nothing' => sub {
+	my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
+	my $box    = Term::Fabulous::Widget::Box->new( border_width => { left => 1, right => 1, top => 2, bottom => 1 }, border_style_top => $hidden, border_style_left => $hidden );
+	my $config = $box->to_config;
+	is $config->{layout}{padding}, { left => 0, right => 1, top => 0, bottom => 1 }, 'only the other sides add an inset';
+	is $config->{border}{width}, { left => 0, right => 1, top => 0, bottom => 1 }, 'Clay sees a width of 0 on the Hidden sides';
+	is $box->border_width, { left => 1, right => 1, top => 2, bottom => 1 }, 'the widget border_width is unchanged';
 };
 
 subtest 'the stored layout is never modified' => sub {

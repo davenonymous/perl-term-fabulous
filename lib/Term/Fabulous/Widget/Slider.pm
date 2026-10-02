@@ -188,7 +188,9 @@ class Term::Fabulous::Widget::Slider
 
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		return $preferred_columns = $self->_checked_columns( $new[0] );
+		$preferred_columns = $self->_checked_columns( $new[0] );
+		$self->mark_changed;
+		return $preferred_columns;
 	}
 
 	method fill_glyph (@new)  { return @new ? $self->_set_glyph( fill_glyph  => \$fill_glyph,  @new ) : $fill_glyph }

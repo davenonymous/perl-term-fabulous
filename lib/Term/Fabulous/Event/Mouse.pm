@@ -85,19 +85,19 @@ does not say which button was released;
 held button's key again and C<modifiers> has C<TB_MOD_MOTION> set;
 
 =item * the wheel turns: C<key> is C<TB_KEY_MOUSE_WHEEL_UP> or
-C<TB_KEY_MOUSE_WHEEL_DOWN>, one event per notch.
+C<TB_KEY_MOUSE_WHEEL_DOWN>, one event per notch; a horizontal wheel
+(or a sideways tilt of the wheel) gives C<TF_KEY_MOUSE_WHEEL_LEFT> or
+C<TF_KEY_MOUSE_WHEEL_RIGHT>.
 
 =back
 
-Moving the pointer without a button held is not reported at all.
-Clay::UI's hover state (C<OnHoverStart>, C<OnHoverStopped>,
-C<is_hovered>) therefore changes only when one of the reports above
-arrives, not while the pointer merely moves.
+The pointer moving without a button held is reported as well, but it
+is not a C<Mouse> event: it fires C<MouseMove>
+(L<Term::Fabulous::Event::MouseMove>) instead.
 
-Terminals encode Shift, Ctrl and Alt in their mouse reports, but
-termbox2 decodes only the button, the motion flag and the wheel and
-drops the modifier bits. C<modifiers> is therefore always C<0> or
-C<TB_MOD_MOTION>; Shift+click cannot be told apart from a click.
+Terminals encode Shift, Ctrl and Alt in their mouse reports;
+C<modifiers> carries them as C<TB_MOD_SHIFT>, C<TB_MOD_CTRL> and
+C<TB_MOD_ALT>, so a Shift+click can be told from a click.
 
 =head1 CONSTRUCTOR
 
@@ -142,7 +142,8 @@ terminal.
 
 =item C<modifiers>
 
-Optional. A bit mask; only C<TB_MOD_MOTION> is meaningful. Default: C<0>.
+Optional. A bit mask of C<TB_MOD_MOTION>, C<TB_MOD_SHIFT>, C<TB_MOD_ALT>
+and C<TB_MOD_CTRL>. Default: C<0>.
 
 =back
 
@@ -169,6 +170,7 @@ constants from L<Term::Fabulous::Termbox>:
 	use Term::Fabulous::Termbox qw(
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT
 		TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
+		TF_KEY_MOUSE_WHEEL_LEFT TF_KEY_MOUSE_WHEEL_RIGHT
 		TB_MOD_MOTION
 	);
 
@@ -180,36 +182,41 @@ constants from L<Term::Fabulous::Termbox>:
 	TB_KEY_MOUSE_RELEASE      a button was released (which one is unknown)
 	TB_KEY_MOUSE_WHEEL_UP     wheel turned up (away from the user) one notch
 	TB_KEY_MOUSE_WHEEL_DOWN   wheel turned down one notch
+	TF_KEY_MOUSE_WHEEL_LEFT   horizontal wheel turned left one notch
+	TF_KEY_MOUSE_WHEEL_RIGHT  horizontal wheel turned right one notch
+
+The C<TF_KEY_*> constants are Term::Fabulous additions; termbox2 has no
+codes for a horizontal wheel.
 
 =head2 x
 
 	my $column = $event->x;
 
 The column of the cell under the pointer, an integer from 0 at the left
-edge of the terminal. termbox2 stores reported positions in 8 bits, so
-on very large terminals clicks at column 255 or further right arrive
-with wrong coordinates. To get a position inside a canvas, use
-L<Term::Fabulous::Widget::Canvas/cell_at> or
-L<Term::Fabulous::Widget::PixelCanvas/pixel_at>.
+edge of the terminal, also on terminals wider than 255 columns. To get a
+position inside a canvas, use L<Term::Fabulous::Widget::Canvas/cell_at>
+or L<Term::Fabulous::Widget::PixelCanvas/pixel_at>.
 
 =head2 y
 
 	my $row = $event->y;
 
 The row of the cell under the pointer, an integer from 0 at the top
-edge of the terminal. As for L</x>, rows from 255 on arrive wrong.
+edge of the terminal.
 
 =head2 modifiers
 
 	my $dragging = $event->modifiers & TB_MOD_MOTION;
+	my $shifted  = $event->modifiers & TB_MOD_SHIFT;
 
 A bit mask. C<TB_MOD_MOTION> is set when the event reports a move with
-a button held (a drag); otherwise the value is C<0>.
+a button held (a drag); C<TB_MOD_SHIFT>, C<TB_MOD_ALT> and C<TB_MOD_CTRL>
+are set for the modifier keys held at the time.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual/MOUSE>, L<Term::Fabulous>,
-L<Term::Fabulous::Event::KeyPress>, L<Clay::UI::Events::Event>,
-L<Term::Fabulous::Termbox>.
+L<Term::Fabulous::Event::MouseMove>, L<Term::Fabulous::Event::KeyPress>,
+L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>.
 
 =cut

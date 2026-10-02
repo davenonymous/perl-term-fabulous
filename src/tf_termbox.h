@@ -18,10 +18,27 @@
 #include "termbox2.h"
 
 /*
+ * Mouse keys termbox2 has no code for, numbered below its own
+ * TB_KEY_MOUSE_* codes. tf_install_input_parser() makes tb_peek_event
+ * report them.
+ */
+#define TF_KEY_MOUSE_MOVE        (0xffff - 29)
+#define TF_KEY_MOUSE_WHEEL_LEFT  (0xffff - 30)
+#define TF_KEY_MOUSE_WHEEL_RIGHT (0xffff - 31)
+
+/*
  * Width of a grapheme cluster the way tb_present() measures it. termbox2
  * keeps tb_cluster_width() static, so termbox2.c exports this wrapper
  * from the same translation unit.
  */
 int tf_cluster_width(const uint32_t *codepoints, size_t count);
+
+/*
+ * Reads the input termbox2 gets wrong before termbox2 sees it: Alt plus
+ * a key, and SGR mouse reports with their motion, modifier and
+ * horizontal wheel bits. Call it after every tb_init(); tb_shutdown()
+ * forgets it. Returns a termbox2 status code.
+ */
+int tf_install_input_parser(void);
 
 #endif /* TF_TERMBOX_H */

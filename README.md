@@ -60,7 +60,7 @@ code reacts to.
 Highlights:
 
 - Flexible layout: rows and columns, growing, fitting, fixed and
-percentage sizes, padding, gaps, alignment, borders in 21 styles.
+percentage sizes, padding, gaps, alignment, borders in 20 styles.
 - Input widgets for forms: single- and multi-line text with selection,
 undo and a clipboard shared by all text fields of the program; check
 boxes; radio buttons; dropdowns; sliders.
@@ -76,8 +76,9 @@ colors) for reports and tests, through [Term::Fabulous::Static](https://metacpan
 alongside the user interface.
 
 This class is the application object: it owns the widget tree, opens the
-terminal, runs the event loop, draws the screen 30 times per second and
-dispatches input events. It is a subclass of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
+terminal, runs the event loop, draws a frame whenever something changed
+(checking 30 times per second) and dispatches input events. It is a
+subclass of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
 
 # DOCUMENTATION
 
@@ -153,10 +154,11 @@ first. Unknown parameters die
 
 - `mouse`
 
-    A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags
-    and the wheel to the program (see ["MOUSE" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#MOUSE)). With
-    0, the terminal keeps the mouse for itself, so the user can select and
-    copy text as usual, and no `Mouse` events are fired.
+    A boolean. Default: 1. With 1, the terminal reports mouse clicks, drags,
+    movement and the wheel to the program (see
+    ["MOUSE" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#MOUSE)). With 0, the terminal keeps the mouse
+    for itself, so the user can select and copy text as usual, and no
+    `Mouse` or `MouseMove` events are fired.
 
 - `output_mode`
 
@@ -167,9 +169,20 @@ first. Unknown parameters die
 - `memory_size`
 
     Optional, rarely needed. The number of bytes Clay reserves for laying out
-    a frame: an integer of at least `Clay::XS::Clay_MinMemorySize()` (about
-    6 MB), which is also the default. It does not raise the limit on the
-    number of widgets; see ["LIMITATIONS"](#limitations).
+    a frame: an integer of at least what `Clay::XS::Clay_MinMemorySize()`
+    reports for the UI's `max_element_count` (about 6 MB for the default
+    count), which is also the default. It does not raise the limit on the
+    number of widgets; `max_element_count` does.
+
+- `max_element_count`
+
+    Optional. The number of Clay elements a frame may hold: a positive
+    integer, default 8192. Every widget is one element and Term::Fabulous
+    uses two more, so the default allows 8190 widgets on the screen at
+    once; a larger tree dies with
+    `Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...`.
+    Raise it for very large trees; the memory Clay reserves grows with it.
+    See ["new" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#new).
 
 - `error_handler`
 
@@ -196,10 +209,15 @@ stopped, and restores the terminal. It returns nothing.
 
 While it runs:
 
-- the screen is laid out and drawn every 1/30 second (see
-["termbox\_draw\_interval"](#termbox_draw_interval)), using the real terminal size;
+- a `Start` event is fired on the root widget as soon as the terminal is
+open, with its size;
+- every 1/30 second (see ["termbox\_draw\_interval"](#termbox_draw_interval)) the screen is laid
+out and drawn again, using the real terminal size, if anything changed
+since the last frame: a widget was changed, input arrived, the terminal
+was resized or ["invalidate"](#invalidate) was called. Nothing is drawn while
+nothing happens;
 - terminal input is read as soon as it arrives and dispatched as
-`KeyPress` and `Mouse` events (see ["EVENTS"](#events));
+`KeyPress`, `Mouse` and `MouseMove` events (see ["EVENTS"](#events));
 - terminal resizes fire `Resize` on the root widget;
 - everything else you added to the [IO::Async::Loop](https://metacpan.org/pod/IO%3A%3AAsync%3A%3ALoop) (IO::Async calls
 these objects _notifiers_: timers, sockets, child processes, ...) runs
@@ -313,13 +331,38 @@ Returns the `output_mode` constructor parameter, always
 Returns where the mouse pointer was last reported: a new hash reference
 with the cell coordinates `x` and `y` and `down`, which is 1 while the
 left button is held and 0 otherwise. Returns `undef` until the first
-mouse event. The pointer is reported only on button presses, releases,
-drags and wheel turns (see ["What the terminal reports" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#What-the-terminal-reports)),
-so this is not the live mouse position. Term::Fabulous
-passes it to Clay with every frame, which derives the hover and press
-state of the widgets from it. When the button went down and up again
-between two frames, each state gets a frame of its own, so a click is
-never too fast to press a widget.
+mouse report. The terminal reports every move, so this is the live
+mouse position as of the last report. Term::Fabulous passes it to Clay
+with every frame, which derives the hover and press state of the
+widgets from it. When the button went down and up again between two
+frames, each state gets a frame of its own, so a click is never too
+fast to press a widget.
+
+## invalidate
+
+```perl
+     $ui->invalidate;
+```
+
+Asks for a frame: the screen is laid out and drawn again at the next
+tick of the frame timer, even if Term::Fabulous saw no change. Returns
+the object. Frames are drawn by themselves whenever a widget was
+changed through its methods, input arrived or the terminal was resized,
+so most programs never need this; call it when something the frame
+depends on changed behind Term::Fabulous's back, for example state a
+custom widget reads while it draws without calling `mark_changed`
+(see ["WRITING YOUR OWN WIDGETS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#WRITING-YOUR-OWN-WIDGETS)).
+
+## find\_by\_id
+
+```perl
+     my $field = $ui->find_by_id('name');
+```
+
+Returns the widget with the given id, searching the whole tree from the
+root, or `undef` when there is none; see
+["find\_by\_id" in Term::Fabulous::Widget](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget#find_by_id). Dies when the root widget has no
+`find_by_id` method (every Term::Fabulous widget has one).
 
 ## termbox\_draw\_interval
 
@@ -327,7 +370,9 @@ never too fast to press a widget.
      my $seconds = $ui->termbox_draw_interval;    # 1/30
 ```
 
-Returns the time between two frames in seconds: 1/30. Read only.
+Returns the time between two checks for a due frame in seconds: 1/30.
+A frame is drawn at a tick only when something changed since the last
+one. Read only.
 
 ## termbox\_resize\_debounce\_interval
 
@@ -345,9 +390,10 @@ While a resize is pending, no frames are drawn. Read only.
      $ui->draw;
 ```
 
-Lays out and draws one frame immediately. `run` calls it 30 times per
-second, so programs do not need it. It only has a visible effect while
-the terminal is open. See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw).
+Lays out and draws one frame immediately. `run` calls it whenever a
+frame is due, so programs do not need it; see ["invalidate"](#invalidate) to ask for
+a frame instead. It only has a visible effect while the terminal is
+open. See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw).
 
 ## Other inherited methods
 
@@ -369,28 +415,40 @@ on to the root, as described in
 
 - `Mouse` ([Term::Fabulous::Event::Mouse](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouse))
 
-    For every mouse report (button press, release, drag, wheel), on the
-    topmost widget that drew something in the cell under the pointer in the
-    last frame: its background, its border or its canvas. Text widgets are
-    skipped, and so are widgets that draw nothing there. When no widget
-    qualifies, the event is fired on the root widget. Content that is
-    scrolled out of view in a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox) is not
-    drawn and never receives the event.
+    For every mouse report with a button or the wheel (button press,
+    release, drag, wheel), on the topmost widget that drew something in the
+    cell under the pointer in the last frame: its background, its border or
+    its canvas. Text widgets are skipped, and so are widgets that draw
+    nothing there. When no widget qualifies, the event is fired on the root
+    widget. Content that is scrolled out of view in a
+    [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox) is not drawn and never receives
+    the event.
+
+- `MouseMove` ([Term::Fabulous::Event::MouseMove](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouseMove))
+
+    For every report of the pointer moving with no button held, on the same
+    widget a `Mouse` event would go to. The hover state of the widgets
+    follows these moves.
+
+- `Start` ([Term::Fabulous::Event::Start](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AStart))
+
+    On the root widget, once per `run`, after the terminal is open and
+    `width` and `height` hold its size, before the first frame.
 
 - `Resize` ([Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize))
 
     On the root widget, twice per resize: first with `is_pre_event` true,
     before the new size is applied, then with `is_post_event` true, after
     it. Resizes are debounced (see ["termbox\_resize\_debounce\_interval"](#termbox_resize_debounce_interval)),
-    and a size with zero columns or rows is ignored. No `Resize` is fired
-    when `run` starts and adopts the terminal's size; see
-    [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize).
+    and a size with zero columns or rows is ignored. The starting size
+    fires `Start` instead; see [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize).
 
 Widgets fire further events themselves: `Change` from the input
 widgets, `Submit` from [Term::Fabulous::Widget::TextField](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextField),
-`CanvasResize` from canvases, and Clay::UI's `OnPress`, `OnRelease`,
-`OnHoverStart`, `OnHoverStopped`, `OnFocus`, `OnBlur` and
-`OnScroll`. The complete list is in
+`Activate` from [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton), `Close` from
+[Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog), `CanvasResize` from canvases, and
+Clay::UI's `OnPress`, `OnRelease`, `OnHoverStart`, `OnHoverStopped`,
+`OnFocus`, `OnBlur` and `OnScroll`. The complete list is in
 ["Event reference" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#Event-reference).
 
 # KEYBOARD AND FOCUS
@@ -426,15 +484,14 @@ See ["KEYBOARD" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFa
 
 Each notch of the mouse wheel scrolls the scroll box under the
 pointer (for example a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox)) by three
-rows. Notches that arrive between two frames are added up and applied
-when the next frame is drawn. A `Mouse` event is fired for every notch
-termbox2 reports (see ["LIMITATIONS"](#limitations) for reports it loses), before the
-notch is counted: when a listener returns `HANDLED` for it, the notch
-scrolls no scroll box. Widgets that scroll themselves, like
-[Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea), handle the wheel this way, so the
-scroll box around them stays put while the pointer is over them. Only
-vertical scrolling is driven by the wheel; there is no horizontal wheel
-input.
+rows, and each notch of a horizontal wheel (or a sideways tilt of the
+wheel) by three columns. Notches that arrive between two frames are
+added up and applied when the next frame is drawn. A `Mouse` event is
+fired for every notch, before the notch is counted: when a listener
+returns `HANDLED` for it, the notch scrolls no scroll box. Widgets
+that scroll themselves, like [Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea),
+handle the wheel this way, so the scroll box around them stays put
+while the pointer is over them.
 
 # MODULES
 
@@ -468,7 +525,13 @@ Every module has its own page. They are grouped here by purpose.
 
 - [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton)
 
-    A box that can take the keyboard focus and reports mouse clicks.
+    A box that can take the keyboard focus, shows when it is focused or
+    pressed, and fires `Activate` for a click or Enter.
+
+- [Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog)
+
+    A box that opens over the whole screen, keeps the keyboard focus inside
+    itself and closes on Escape.
 
 - [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox)
 
@@ -538,6 +601,10 @@ Every module has its own page. They are grouped here by purpose.
 
     The list an open dropdown shows. Used internally by the dropdown.
 
+- [Term::Fabulous::Widget::Dialog::Backdrop](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog%3A%3ABackdrop)
+
+    The layer behind an open dialog. Used internally by the dialog.
+
 ## Events
 
 - [Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress)
@@ -548,6 +615,14 @@ Every module has its own page. They are grouped here by purpose.
 
     A mouse button was pressed or released, the mouse was dragged, or the
     wheel was turned.
+
+- [Term::Fabulous::Event::MouseMove](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AMouseMove)
+
+    The mouse pointer moved with no button held.
+
+- [Term::Fabulous::Event::Start](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AStart)
+
+    The terminal is open and its size is known.
 
 - [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize)
 
@@ -565,6 +640,14 @@ Every module has its own page. They are grouped here by purpose.
 
     The user pressed Enter in a text field.
 
+- [Term::Fabulous::Event::Activate](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AActivate)
+
+    The user activated a button, by click or key.
+
+- [Term::Fabulous::Event::Close](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AClose)
+
+    A dialog was closed.
+
 ## Colors, borders and text
 
 - [Term::Fabulous::Color](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AColor)
@@ -574,7 +657,7 @@ Every module has its own page. They are grouped here by purpose.
 
 - [Term::Fabulous::Enum::BorderStyle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEnum%3A%3ABorderStyle)
 
-    The 21 border styles and their characters.
+    The 20 border styles and their characters.
 
 - [Term::Fabulous::Role::HasBorderStyle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3AHasBorderStyle)
 
@@ -657,24 +740,20 @@ from layout files, or your own application or output class.
 
 # LIMITATIONS
 
-- The whole screen is laid out and drawn 30 times per second, also when
-nothing changed. Only the cells that changed are sent to the terminal,
-but very large widget trees cost CPU time.
-- termbox2 asks the terminal to report mouse buttons, drags and the wheel,
-but not movement without a pressed button, so hover effects follow
-clicks, drags and the wheel only.
-- When the terminal sends several mouse reports at once (for example
-during fast wheel scrolling), termbox2 delivers only the first, so some
-wheel notches and fast releases are lost.
-- `Alt` plus a printable key cannot be told apart from `Escape` followed
-by that key.
-- There are no floating windows or dialogs for application use yet; only
-the dropdown list floats over other widgets.
-- Clay lays out at most 8192 elements per frame; every widget is one
-element and Term::Fabulous uses two more, so at most 8190 widgets can
-be shown. A larger tree makes drawing die with a misleading Clay error
-(`There were still open layout elements when EndLayout was called`).
-`memory_size` does not change this limit.
+- A frame lays out and draws the whole screen, whatever changed. Only the
+cells that changed are sent to the terminal, but a very large widget
+tree costs CPU time on every frame it needs.
+- `Alt` plus a key is recognized when the terminal sends the Escape and
+the key in one write, which terminals do. `Escape` followed quickly
+by a key that arrives in the same read looks like `Alt` plus that key.
+`Alt+[` and `Alt+O` cannot be bound: they begin the escape sequences
+of other keys.
+- Mouse reports with the buttons 8 to 11 (extra buttons of some mice)
+are decoded by termbox2 as the left, middle or right button.
+- Clay lays out at most `max_element_count` elements per frame (8192 by
+default); every widget is one element and Term::Fabulous uses two
+more. A larger tree makes drawing die with a message that names the
+limit; raise `max_element_count` in ["new"](#new).
 
 # SEE ALSO
 
