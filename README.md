@@ -123,7 +123,9 @@ parent chain as described in [Clay::UI::Role::Events::Emitter](https://metacpan.
     Fired on the topmost event emitter painted at the pointer's cell in the
     last frame (a widget's background, text or canvas, or the edge cells of
     its border), or on the root when there is none. Content scrolled out of a
-    scroll container is not painted, so it never receives the event.
+    scroll container is not painted, so it never receives the event. A left
+    button press moves the keyboard focus first (see
+    ["KEYBOARD FOCUS AND SCROLLING"](#keyboard-focus-and-scrolling)).
 
 - [Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize)
 
@@ -142,15 +144,57 @@ focus to the next or previous focusable widget
 around), for example a [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton). Listeners see
 the key but cannot keep the focus from moving.
 
+A left mouse button press focuses the widget it is fired on, or its
+nearest ancestor that can take focus, before the Mouse event is fired.
+When neither can, the focused widget loses the focus, so clicking an
+empty area blurs a text field and closes an open dropdown. Dragging
+with the button held does not move the focus.
+
 Every mouse-wheel notch scrolls the scroll container under the pointer,
 for example a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), by three rows. The
 notches since the last frame are applied together when the next frame
 is drawn (["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw)), and the Mouse event for each
 notch is fired as usual.
 
+# INPUT WIDGETS
+
+Forms are built from these widgets; every one of them can take the
+keyboard focus (a radio group as a whole), works with the mouse, and
+fires a [Term::Fabulous::Event::Change](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AChange) when the user changes its
+value:
+
+- [Term::Fabulous::Widget::TextField](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextField)
+
+    One line of text, with an optional mask for passwords.
+
+- [Term::Fabulous::Widget::TextArea](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextArea)
+
+    Several lines of text, wrapped or scrolled sideways.
+
+- [Term::Fabulous::Widget::Checkbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACheckbox)
+
+    A box to check, with an optional indeterminate state.
+
+- [Term::Fabulous::Widget::RadioGroup](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ARadioGroup) and [Term::Fabulous::Widget::RadioButton](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ARadioButton)
+
+    One choice of several, all visible.
+
+- [Term::Fabulous::Widget::Dropdown](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADropdown)
+
+    One choice of several, from a list that opens over the other widgets.
+
+- [Term::Fabulous::Widget::Slider](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ASlider)
+
+    A number from a range.
+
+They share [Term::Fabulous::Widget::Input](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AInput), which describes their
+colors, sizing and disabled state; the text inputs share
+[Term::Fabulous::Widget::TextInput](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextInput) and its editing keys. Bind keys of
+your own with ["key\_name" in Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress#key_name).
+
 # SEE ALSO
 
-[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas), [Term::Fabulous::Widget::PixelCanvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APixelCanvas), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
+[Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic), [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender), [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout), [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas), [Term::Fabulous::Widget::PixelCanvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APixelCanvas), [Term::Fabulous::Widget::Input](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AInput), [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), [Termbox](https://metacpan.org/pod/Termbox).
 
 # AUTHOR
 

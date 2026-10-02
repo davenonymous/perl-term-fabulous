@@ -40,7 +40,7 @@ class Term::Fabulous
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
 		TB_INPUT_ESC TB_INPUT_MOUSE
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
-		TB_KEY_BACK_TAB
+		TB_KEY_BACK_TAB TB_MOD_MOTION
 	);
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Event::Mouse;
@@ -265,8 +265,18 @@ class Term::Fabulous
 		$_wheel_rows -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
 
 		my $target = $self->_emitter_at( $x, $y ) // $self->root;
+		$self->interaction->set_focused_widget( _focusable_at_or_above($target) )
+			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
 		$target->fire_event( Term::Fabulous::Event::Mouse->of($event) );
 		return;
+	}
+
+	# The widget a click focuses: the nearest one that can take focus now.
+	sub _focusable_at_or_above ($widget) {
+		for ( my $node = $widget; defined $node; $node = $node->parent ) {
+			return $node if $node->DOES('Clay::UI::Role::Interaction::Focusable') && $node->can_focus;
+		}
+		return undef;
 	}
 
 	method _on_resize ($event) {
@@ -435,7 +445,9 @@ or on the root when nothing has focus.
 Fired on the topmost event emitter painted at the pointer's cell in the
 last frame (a widget's background, text or canvas, or the edge cells of
 its border), or on the root when there is none. Content scrolled out of a
-scroll container is not painted, so it never receives the event.
+scroll container is not painted, so it never receives the event. A left
+button press moves the keyboard focus first (see
+L</KEYBOARD FOCUS AND SCROLLING>).
 
 =item L<Term::Fabulous::Event::Resize>
 
@@ -456,15 +468,61 @@ focus to the next or previous focusable widget
 around), for example a L<Term::Fabulous::Widget::Button>. Listeners see
 the key but cannot keep the focus from moving.
 
+A left mouse button press focuses the widget it is fired on, or its
+nearest ancestor that can take focus, before the Mouse event is fired.
+When neither can, the focused widget loses the focus, so clicking an
+empty area blurs a text field and closes an open dropdown. Dragging
+with the button held does not move the focus.
+
 Every mouse-wheel notch scrolls the scroll container under the pointer,
 for example a L<Term::Fabulous::Widget::ScrollBox>, by three rows. The
 notches since the last frame are applied together when the next frame
 is drawn (L<Term::Fabulous::Render/draw>), and the Mouse event for each
 notch is fired as usual.
 
+=head1 INPUT WIDGETS
+
+Forms are built from these widgets; every one of them can take the
+keyboard focus (a radio group as a whole), works with the mouse, and
+fires a L<Term::Fabulous::Event::Change> when the user changes its
+value:
+
+=over
+
+=item L<Term::Fabulous::Widget::TextField>
+
+One line of text, with an optional mask for passwords.
+
+=item L<Term::Fabulous::Widget::TextArea>
+
+Several lines of text, wrapped or scrolled sideways.
+
+=item L<Term::Fabulous::Widget::Checkbox>
+
+A box to check, with an optional indeterminate state.
+
+=item L<Term::Fabulous::Widget::RadioGroup> and L<Term::Fabulous::Widget::RadioButton>
+
+One choice of several, all visible.
+
+=item L<Term::Fabulous::Widget::Dropdown>
+
+One choice of several, from a list that opens over the other widgets.
+
+=item L<Term::Fabulous::Widget::Slider>
+
+A number from a range.
+
+=back
+
+They share L<Term::Fabulous::Widget::Input>, which describes their
+colors, sizing and disabled state; the text inputs share
+L<Term::Fabulous::Widget::TextInput> and its editing keys. Bind keys of
+your own with L<Term::Fabulous::Event::KeyPress/key_name>.
+
 =head1 SEE ALSO
 
-L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>, L<Clay::UI>, L<Termbox>.
+L<Term::Fabulous::Static>, L<Term::Fabulous::Render>, L<Term::Fabulous::Layout>, L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>, L<Term::Fabulous::Widget::Input>, L<Clay::UI>, L<Termbox>.
 
 =head1 AUTHOR
 

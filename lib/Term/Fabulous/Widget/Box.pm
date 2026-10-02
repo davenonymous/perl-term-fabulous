@@ -64,14 +64,17 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method parse_node ($node) {
-		foreach my $kid ( $node->children->@* ) {
-			my $name = $kid->name;
-			if    ( $name eq 'layout' )  { $self->_parse_layout($kid) }
-			elsif ( $name eq 'border' )  { $self->_parse_border($kid) }
-			elsif ( $name eq 'sizing' )  { $self->_parse_sizing($kid) }
-			elsif ( $name eq 'padding' ) { $self->_parse_padding($kid) }
-			else                         { $self->parse_generic($kid) }
-		}
+		$self->parse_property($_) foreach $node->children->@*;
+		return;
+	}
+
+	method parse_property ($kid) {
+		my $name = $kid->name;
+		if    ( $name eq 'layout' )  { $self->_parse_layout($kid) }
+		elsif ( $name eq 'border' )  { $self->_parse_border($kid) }
+		elsif ( $name eq 'sizing' )  { $self->_parse_sizing($kid) }
+		elsif ( $name eq 'padding' ) { $self->_parse_padding($kid) }
+		else                         { $self->parse_generic($kid) }
 		return;
 	}
 
@@ -187,5 +190,20 @@ take any L<Term::Fabulous::Color> string; C<border_width> takes a number
 or C<left=N right=N top=N bottom=N>.
 
 =back
+
+=head1 SUBCLASS INTERFACE
+
+=head2 parse_property
+
+	method parse_property :override ($kid) {
+		return $self->_parse_options($kid) if $kid->name eq 'options';
+		return $self->SUPER::parse_property($kid);
+	}
+
+Called by C<parse_node> for every child node of the widget's KDL node,
+property nodes and child widget nodes alike. Handles the properties
+above and hands everything else to
+L<Term::Fabulous::Role::CanParseLayout/parse_generic>. Subclasses
+override it to parse structured properties of their own.
 
 =cut

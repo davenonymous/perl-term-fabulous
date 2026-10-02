@@ -27,3 +27,17 @@ Revision history for Term::Fabulous
         - Widget::PixelCanvas: a canvas of half-block pixels, two per
           cell, with pixel, rect, line and circle drawing. Canvas::cell_at
           and PixelCanvas::pixel_at map mouse events to cells and pixels
+        - Input widgets: TextField, TextArea, Checkbox, RadioGroup with
+          RadioButton, Dropdown and Slider, built on Widget::Input (a
+          canvas that paints itself, takes the focus and sizes itself to
+          its content) and fired Change events; TextField fires Submit.
+          The text inputs share Term::Fabulous::Editor: grapheme-aware
+          cursor movement, selection, word editing keys, undo and redo,
+          and a clipboard. All of them can be built from KDL layouts
+        - A left mouse press focuses the widget under the pointer (or its
+          nearest focusable ancestor) and blurs when there is none
+        - Clay gets the pointer at the center of its cell, so pressing the
+          top row of a widget no longer also presses the widget above it
+        - Event::KeyPress::key_name and text name keys for bindings
+          ('Ctrl+Shift+Left', 'Enter', 'a'); Widget::Box::parse_property
+          lets subclasses parse KDL properties of their own

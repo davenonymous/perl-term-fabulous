@@ -69,6 +69,7 @@ WriteMakefile(
 		'Scalar::Util'                    => '0',
 		'Termbox'                         => '2',
 		'Text::KDL::XS'                   => '0',
+		'Time::HiRes'                     => '0',
 		'Unicode::GCString'               => '0',
 	},
 	META_MERGE => {

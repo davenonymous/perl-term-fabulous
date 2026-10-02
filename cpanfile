@@ -16,6 +16,7 @@ requires 'POSIX';
 requires 'Scalar::Util';
 requires 'Termbox', '2';
 requires 'Text::KDL::XS';
+requires 'Time::HiRes';
 requires 'Unicode::GCString';
 
 on test => sub {

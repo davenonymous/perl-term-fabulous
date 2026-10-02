@@ -78,6 +78,64 @@ subtest 'scroll box' => sub {
 	like dies { build("use Term::Fabulous::Widget::ScrollBox as ScrollBox\nScrollBox") }, qr/requires an explicit 'id'/, 'a ScrollBox needs an id';
 };
 
+subtest 'input widgets' => sub {
+	my $root = build(<<'KDL');
+use Term::Fabulous::Widget::Box as Box
+use Term::Fabulous::Widget::TextField as TextField
+use Term::Fabulous::Widget::TextArea as TextArea
+use Term::Fabulous::Widget::Checkbox as Checkbox
+use Term::Fabulous::Widget::RadioGroup as RadioGroup
+use Term::Fabulous::Widget::RadioButton as RadioButton
+use Term::Fabulous::Widget::Dropdown as Dropdown
+use Term::Fabulous::Widget::Slider as Slider
+
+Box {
+	TextField "name" {
+		max_length 10
+		value "Grüße"
+		mask "*"
+		accent_color "#ff0000"
+	}
+	TextArea "notes" {
+		wrap #false
+		preferred_rows 3
+	}
+	Checkbox "terms" {
+		label "Accept"
+		checked #true
+	}
+	RadioGroup "size" {
+		RadioButton { label "Small"; value "s"; }
+		RadioButton { label "Large"; value "l"; }
+		value "l"
+	}
+	Dropdown "color" {
+		options "Red" "Green"
+		option "Dark blue" value="navy"
+		value "navy"
+		disabled #true
+	}
+	Slider "volume" {
+		max 11
+		step 0.5
+		value 5.5
+	}
+}
+KDL
+	my %input = map { $_->id => $_ } @{ $root->children };
+	is [ $input{name}->value, $input{name}->max_length, $input{name}->mask, $input{name}->accent_color ], [ 'Grüße', 10, '*', [ 255, 0, 0, 255 ] ], 'TextField';
+	is [ $input{notes}->wrap, $input{notes}->preferred_rows ], [ 0, 3 ], 'TextArea';
+	is [ $input{terms}->label, $input{terms}->checked ], [ 'Accept', 1 ], 'Checkbox';
+	is [ $input{size}->value, $input{size}->selected_button->label ], [ 'l', 'Large' ], 'RadioGroup with its buttons';
+	is [ $input{color}->selected_label, $input{color}->disabled, scalar $input{color}->options ], [ 'Dark blue', 1, 3 ], 'Dropdown';
+	is [ $input{volume}->max, $input{volume}->value ], [ 11, 5.5 ], 'Slider';
+
+	my $field = "use Term::Fabulous::Widget::TextField as TextField\nTextField {\n%s\n}";
+	like dies { build( sprintf $field, 'max_length 2' . "\n" . 'value "abc"' ) }, qr/more than max_length 2/, 'a value longer than max_length dies';
+	like dies { build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\toption \"a\" color=1\n}") }, qr/takes one label and an optional value/,
+		'an option with an unknown property dies';
+};
+
 subtest 'text' => sub {
 	my $root = build( <<'KDL' );
 use Term::Fabulous::Widget::Box as Box

@@ -5,8 +5,12 @@ use Test2::V0;
 
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
-use Termbox 2 qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB);
+use Termbox 2 qw(
+	TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_BACK_TAB TB_KEY_ARROW_LEFT
+	TB_MOD_ALT TB_MOD_CTRL TB_MOD_SHIFT TB_MOD_MOTION
+);
 use Term::Fabulous;
+use Term::Fabulous::Event::KeyPress;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Canvas;
@@ -82,6 +86,46 @@ subtest 'Mouse targets a canvas without a background' => sub {
 	$canvas_ui->draw;
 	dispatch( $canvas_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 1 );
 	ref_is $mouse_targets[0], $canvas, 'the canvas paints its box';
+};
+
+subtest 'a left press focuses the widget under the pointer' => sub {
+	my $focus_root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my @buttons    = map { Term::Fabulous::Widget::Button->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } ) } 1 .. 2;
+	my $inner = Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } } );
+	$buttons[1]->add_child($inner);
+	$focus_root->add_child(@buttons);
+	my $focus_ui = Term::Fabulous->new( width => 20, height => 5, root => $focus_root );
+	my @focused_at_mouse;
+	$focus_root->on( Mouse => sub { push @focused_at_mouse, $focus_ui->interaction->get_focused_widget; return } );
+	$focus_ui->draw;
+
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 0 );
+	ref_is $focused_at_mouse[0], $buttons[0], 'the button is focused before the Mouse event';
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 0, y => 1 );
+	ref_is $focus_ui->interaction->get_focused_widget, $buttons[1], 'a press on a child focuses its focusable ancestor';
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 0, mod => TB_MOD_MOTION );
+	ref_is $focus_ui->interaction->get_focused_widget, $buttons[1], 'dragging does not move the focus';
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 10, y => 3 );
+	is $focus_ui->interaction->get_focused_widget, undef, 'a press on nothing focusable blurs';
+
+	my @pressed;
+	$_->on( OnPress => sub { push @pressed, $_[0]->target; return } ) foreach @buttons;
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_RELEASE, x => 1, y => 1 );
+	$focus_ui->draw;
+	dispatch( $focus_ui, type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 3, y => 1 );
+	$focus_ui->draw;
+	is [ map { refaddr $_ } @pressed ], [ refaddr $buttons[1] ], 'Clay hit-tests the cell, not the edge it shares with the widget above';
+};
+
+subtest 'key names' => sub {
+	my $name = sub { Term::Fabulous::Event::KeyPress->new( key => $_[0], char => $_[1], modifiers => $_[2] // 0 ) };
+	is $name->( 0, ord 'a' )->key_name, 'a', 'a character';
+	is [ $name->( 0, ord 'a' )->text, $name->( 0, ord 'a', TB_MOD_ALT )->text ], [ 'a', undef ], 'text without Ctrl or Alt only';
+	is $name->( TB_KEY_ARROW_LEFT, 0, TB_MOD_CTRL | TB_MOD_SHIFT )->key_name, 'Ctrl+Shift+Left', 'modifiers in a fixed order';
+	is $name->( 0x17, 0 )->key_name, 'Ctrl+W', 'a control byte is Ctrl and a letter';
+	is [ map { $name->( $_, 0, TB_MOD_CTRL )->key_name } 0x7F, 0x0D, 0x1B, 0x09 ], [qw(Backspace Enter Escape Tab)],
+		'named control keys, without the Ctrl bit termbox2 sets on them';
+	is [ $name->( 0x20, 0 )->key_name, $name->( 0, 0x20 )->key_name, $name->( 0x20, 0 )->text ], [ 'Space', 'Space', ' ' ], 'Space either way';
 };
 
 subtest 'Tab and Shift-Tab move focus' => sub {

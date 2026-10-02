@@ -142,13 +142,20 @@ role Term::Fabulous::Render
 		return @commands;
 	}
 
+	# Clay counts the right and bottom edges of a box as inside it, so a
+	# cell's corner would also lie in the boxes left of and above it; its
+	# center lies in the box of the cell only.
+	sub _clay_pointer ($pointer) {
+		return { %$pointer, x => $pointer->{x} + 0.5, y => $pointer->{y} + 0.5 };
+	}
+
 	method draw (%args) {
 		my @unknown = grep { $_ ne 'scroll_cells' } sort keys %args;
 		die "Term::Fabulous::Render: draw got unknown argument(s): @unknown" if @unknown;
 
 		my $pointer  = $self->pointer_state;
 		my $commands = $self->render(
-			( defined $pointer            ? ( pointer_state => $pointer )                                    : () ),
+			( defined $pointer            ? ( pointer_state => _clay_pointer($pointer) )                     : () ),
 			( defined $args{scroll_cells} ? ( scroll_delta  => _clay_scroll_delta( $args{scroll_cells} ) ) : () ),
 		);
 		@last_commands   = _backgrounds_first(@$commands);
@@ -199,7 +206,7 @@ because colors are always emitted as 24-bit values. Anything else dies.
 	$ui->draw( scroll_cells => [ $columns, $rows ] );
 
 Renders the layout (passing the consumer's C<pointer_state>, when
-defined, to C<render>), plans the canvases
+defined, to C<render>; see L</pointer_state>), plans the canvases
 (L<Term::Fabulous::Render::Canvas/plan_canvases>), calls the target's
 C<begin_frame> with the rects of the canvases whose cells stay, paints
 every render command through the target and calls C<end_frame>.
@@ -273,7 +280,12 @@ reverse video, which also inverts terminal-default colors correctly.
 
 =head2 pointer_state
 
-Required from the consumer: C<undef> or C<< { x => ..., y => ..., down => 0|1 } >>.
+Required from the consumer: C<undef> or C<< { x => ..., y => ..., down => 0|1 } >>,
+with C<x> and C<y> in cells. C<draw> hands Clay the center of that cell
+(C<x + 0.5>, C<y + 0.5>): Clay counts the right and bottom edges of a
+box as inside it, so the cell's top-left corner would also be over the
+widgets left of and above it. The coordinates of Clay::UI's C<OnPress>
+and C<OnRelease> events are therefore cell centers.
 
 =head1 CELL TARGET
 
