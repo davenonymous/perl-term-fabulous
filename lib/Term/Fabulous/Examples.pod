@@ -639,6 +639,19 @@ Right (or PageUp, PageDown, Home and End) change the value.
 
 =end html
 
+=head3 examples/widgets/star-rating.pl
+
+L<Term::Fabulous::Widget::StarRating>: a focused rating, one with half
+stars that shows its value, a read-only one, one out of ten without
+gaps, and a disabled one. Left and Right, the digits, Home and End
+change the value; so does a click on a star.
+
+=begin html
+
+<p><img src="/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
+
+=end html
+
 =head3 examples/widgets/text-field.pl
 
 L<Term::Fabulous::Widget::TextField>: a focused field to type in, an

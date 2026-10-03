@@ -1,6 +1,9 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::StarRating: a rating of whole or half
+          stars, chosen with the keys, a click or the wheel, with a hover
+          preview, a value label, a read-only form and KDL properties
         - Term::Fabulous::Widget::Divider: a horizontal or vertical line
           between widgets, with an optional text at its start, center or
           end, in any border style or glyph and color; a vertical divider

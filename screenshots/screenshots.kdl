@@ -683,6 +683,11 @@ screenshot "widget-slider" {
 	size 64 7
 }
 
+screenshot "widget-star-rating" {
+	script "examples/widgets/star-rating.pl"
+	size 60 7
+}
+
 screenshot "widget-text-field" {
 	script "examples/widgets/text-field.pl"
 	size 64 9

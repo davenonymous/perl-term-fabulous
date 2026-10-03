@@ -90,6 +90,11 @@ See L</Dropdowns>.
 
 A number from a range. See L</Sliders>.
 
+=item L<Term::Fabulous::Widget::StarRating>
+
+A number of stars, whole or half, editable or read-only. See
+L</Star ratings>.
+
 =back
 
 F<examples/form.pl> uses all of them in one form. The picture shows it
@@ -600,6 +605,41 @@ In KDL:
 		value_format "%d%%"
 	}
 
+=head2 Star ratings
+
+A L<Term::Fabulous::Widget::StarRating> shows C<max> stars (five by
+default), the first C<value> of them filled, and lets the user choose
+with the arrow keys, the digits, a click on a star or the wheel; while
+the pointer hovers over a star, the stars up to it are previewed. With
+C<half> the value moves in half stars. C<read_only> shows a rating
+without letting the user change it, for lists and cards, and
+C<show_value> adds the value as text.
+
+	use Term::Fabulous::Widget::StarRating;
+
+	my $rating = Term::Fabulous::Widget::StarRating->new(
+		id         => 'rating',
+		value      => 3,
+		show_value => 1,
+	);
+
+The picture shows a focused rating, one with half stars, a read-only
+one, one out of ten without gaps and a disabled one
+(F<examples/widgets/star-rating.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
+
+=end html
+
+In KDL:
+
+	StarRating "rating" {
+		value 3
+		show_value #true
+	}
+
 =head1 EDITING TEXT
 
 The text field and the text area are edited the same way. What follows is a summary; the reference is the
@@ -719,6 +759,8 @@ KEYS section.
 	              letters: jump to a label
 	Slider        Left/Down, Right/Up: one step; PageDown, PageUp: one
 	              page_step; Home, End: lowest, highest value
+	StarRating    Left/Down, Right/Up: one star (or half); Home, End: no
+	              stars, all stars; 0-9: that many stars
 
 The class pages: L<Term::Fabulous::Widget::TextInput/KEYS>,
 L<Term::Fabulous::Widget::TextField/KEYS>,
@@ -726,7 +768,8 @@ L<Term::Fabulous::Widget::TextArea/KEYS>,
 L<Term::Fabulous::Widget::Checkbox/KEYS>,
 L<Term::Fabulous::Widget::RadioGroup/KEYS>,
 L<Term::Fabulous::Widget::Dropdown/KEYS>,
-L<Term::Fabulous::Widget::Slider/KEYS>.
+L<Term::Fabulous::Widget::Slider/KEYS>,
+L<Term::Fabulous::Widget::StarRating/KEYS>.
 
 =head1 COMPLETE FORMS
 
@@ -881,6 +924,7 @@ L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextField>,
 L<Term::Fabulous::Widget::TextArea>, L<Term::Fabulous::Widget::Checkbox>,
 L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::RadioButton>,
 L<Term::Fabulous::Widget::Dropdown>, L<Term::Fabulous::Widget::Slider>,
+L<Term::Fabulous::Widget::StarRating>,
 L<Term::Fabulous::Editor>, L<Term::Fabulous::Event::Change>,
 L<Term::Fabulous::Event::Submit>.
 

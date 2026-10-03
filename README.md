@@ -71,7 +71,7 @@ Highlights:
 percentage sizes, padding, gaps, alignment, borders in 20 styles.
 - Input widgets for forms: single- and multi-line text with selection,
 undo and a clipboard shared by all text fields of the program; check
-boxes; radio buttons; dropdowns; sliders.
+boxes; radio buttons; dropdowns; sliders; star ratings.
 - A table widget for rows of data: sorting by one or several columns,
 filtering (also by the user, in a filter row), groups and trees that
 open and close, pages, single and multiple selection, any widget as a
@@ -896,6 +896,11 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::Slider](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ASlider)
 
     A number from a range, chosen by moving a thumb.
+
+- [Term::Fabulous::Widget::StarRating](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AStarRating)
+
+    A number of stars, whole or half, chosen with the keys or a click, or
+    read-only.
 
 - [Term::Fabulous::Widget::Input](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AInput)
 

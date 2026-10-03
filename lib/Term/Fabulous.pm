@@ -542,7 +542,7 @@ percentage sizes, padding, gaps, alignment, borders in 20 styles.
 
 Input widgets for forms: single- and multi-line text with selection,
 undo and a clipboard shared by all text fields of the program; check
-boxes; radio buttons; dropdowns; sliders.
+boxes; radio buttons; dropdowns; sliders; star ratings.
 
 =item *
 
@@ -1447,6 +1447,11 @@ One choice from a list that opens over the other widgets.
 =item L<Term::Fabulous::Widget::Slider>
 
 A number from a range, chosen by moving a thumb.
+
+=item L<Term::Fabulous::Widget::StarRating>
+
+A number of stars, whole or half, chosen with the keys or a click, or
+read-only.
 
 =item L<Term::Fabulous::Widget::Input>
 

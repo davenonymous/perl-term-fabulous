@@ -214,6 +214,7 @@ lib/Term/Fabulous/Widget/ScatterPlot.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Sparkline.pm
+lib/Term/Fabulous/Widget/StarRating.pm
 lib/Term/Fabulous/Widget/Table.pm
 lib/Term/Fabulous/Widget/Table/Borders.pm
 lib/Term/Fabulous/Widget/Table/Cell.pm
@@ -295,6 +296,7 @@ t/widget-revision.t
 t/widget-scroll-box.t
 t/widget-slider.t
 t/widget-sparkline.t
+t/widget-star-rating.t
 t/widget-table.t
 t/widget-text-area.t
 t/widget-text-field.t
@@ -325,6 +327,7 @@ examples/widgets/radio.pl
 examples/widgets/scatter-plot.pl
 examples/widgets/slider.pl               
 examples/widgets/sparkline.pl
+examples/widgets/star-rating.pl
 examples/widgets/table.pl
 examples/widgets/text-area.pl            
 examples/widgets/text-field.pl           
@@ -444,6 +447,7 @@ screenshots/widget-radio.svg
 screenshots/widget-scatter-plot.svg
 screenshots/widget-slider.svg            
 screenshots/widget-sparkline.svg
+screenshots/widget-star-rating.svg
 screenshots/widget-table.svg
 screenshots/widget-text-area.svg         
 screenshots/widget-text-field.svg        

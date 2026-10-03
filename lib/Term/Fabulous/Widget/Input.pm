@@ -257,6 +257,10 @@ L<Term::Fabulous::Widget::Dropdown> - one choice from a list that opens
 
 L<Term::Fabulous::Widget::Slider> - a number from a range
 
+=item *
+
+L<Term::Fabulous::Widget::StarRating> - a number of stars
+
 =back
 
 You do not create an C<Input> directly (the class is abstract and

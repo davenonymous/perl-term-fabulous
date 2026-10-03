@@ -481,6 +481,8 @@ the L</Box properties>.
 	RadioButton      Term::Fabulous::Widget::RadioButton      input widget + label, value
 	Dropdown         Term::Fabulous::Widget::Dropdown         input widget + options, value
 	Slider           Term::Fabulous::Widget::Slider           input widget + range, value
+	StarRating       Term::Fabulous::Widget::StarRating       input widget + max, value, half
+	Divider          Term::Fabulous::Widget::Divider          Box + text, line_style, ...
 	Table            Term::Fabulous::Widget::Table            Box + columns, lines, sort, ...
 	LineChart        Term::Fabulous::Widget::LineChart        chart + series, axes, ...
 	AreaChart        Term::Fabulous::Widget::AreaChart        chart + series, axes, ...
@@ -524,6 +526,10 @@ The properties of each class:
 =item * L<Dropdown|Term::Fabulous::Widget::Dropdown/KDL PROPERTIES>
 
 =item * L<Slider|Term::Fabulous::Widget::Slider/KDL PROPERTIES>
+
+=item * L<StarRating|Term::Fabulous::Widget::StarRating/KDL PROPERTIES>
+
+=item * L<Divider|Term::Fabulous::Widget::Divider/KDL PROPERTIES>
 
 =item * L<Table|Term::Fabulous::Widget::Table/KDL PROPERTIES>
 

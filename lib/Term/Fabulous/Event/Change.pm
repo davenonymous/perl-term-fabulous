@@ -49,8 +49,9 @@ widget: by typing into a L<Term::Fabulous::Widget::TextField> or
 L<Term::Fabulous::Widget::TextArea>, toggling a
 L<Term::Fabulous::Widget::Checkbox>, selecting a radio button of a
 L<Term::Fabulous::Widget::RadioGroup>, choosing an option of a
-L<Term::Fabulous::Widget::Dropdown> or moving a
-L<Term::Fabulous::Widget::Slider>.
+L<Term::Fabulous::Widget::Dropdown>, moving a
+L<Term::Fabulous::Widget::Slider> or choosing the stars of a
+L<Term::Fabulous::Widget::StarRating>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<Change>; listen for
 it with C<< $widget->on( Change => sub ($event) { ... } ) >>.
@@ -138,6 +139,10 @@ L<Term::Fabulous::Widget::Dropdown>: the C<value> of the chosen option.
 =item *
 
 L<Term::Fabulous::Widget::Slider>: the new number.
+
+=item *
+
+L<Term::Fabulous::Widget::StarRating>: the new number of stars.
 
 =back
 
