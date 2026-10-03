@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::PieChart
 	use List::Util qw(max min sum0 first);
 	use POSIX qw(floor ceil);
 	use Scalar::Util qw(looks_like_number);
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean describe);
 	use Term::Fabulous::Chart::Format qw(format_value check_number_format);
 	use Term::Fabulous::Chart::Marker;
 	use Term::Fabulous::Chart::Palette qw(chart_color contrast_rgb mix_rgb);
@@ -84,12 +84,6 @@ class Term::Fabulous::Widget::PieChart
 	method default_slice_labels ()  { return 'percent' }
 	method default_legend_values () { return 'percent' }
 
-	sub _describe ($value) {
-		return 'undef' unless defined $value;
-		return ref($value) . ' reference' if ref $value;
-		return "'$value'";
-	}
-
 	method _checked_hole ($value) {
 		$self->_fail( 'hole', 'a number from 0 to 0.9', $value ) unless defined $value && !ref $value && looks_like_number($value) && $value >= 0 && $value <= 0.9;
 		return $value + 0;
@@ -106,7 +100,7 @@ class Term::Fabulous::Widget::PieChart
 	}
 
 	method _checked_value ( $label, $value ) {
-		croak ref($self) . ": the value of slice '$label' must be a number of at least 0, got " . _describe($value)
+		croak ref($self) . ": the value of slice '$label' must be a number of at least 0, got " . describe($value)
 			unless defined $value && !ref $value && looks_like_number($value) && $value == $value && $value - $value == 0 && $value >= 0;
 		return $value + 0;
 	}
@@ -118,7 +112,7 @@ class Term::Fabulous::Widget::PieChart
 	# A new slice hash; a label the chart knows keeps its palette slot
 	# (its color), a new label gets one from _place.
 	method _slice ( $label, $value, $color ) {
-		croak ref($self) . ": a slice label must be a non-empty string, got " . _describe($label) unless defined $label && !ref $label && length $label;
+		croak ref($self) . ": a slice label must be a non-empty string, got " . describe($label) unless defined $label && !ref $label && length $label;
 		my $known = $_slice_by_label{$label};
 		my %slice = ( label => "$label", slot => $known ? $known->{slot} : undef, value => $self->_checked_value( $label, $value ) );
 		( $slice{color}, $slice{opacity} ) = defined $color ? chart_color( $self, "color of slice '$label'", $color ) : ( undef, 1 );
@@ -137,9 +131,9 @@ class Term::Fabulous::Widget::PieChart
 	# data: numbers (named by labels), [ label, value ] pairs, or
 	# { label, value, color } hashes.
 	method set_data ( $data, $labels = undef, $colors = undef ) {
-		croak ref($self) . ": data must be an array reference, got " . _describe($data) unless ref $data eq 'ARRAY';
-		croak ref($self) . ": labels must be an array reference, got " . _describe($labels) if defined $labels && ref $labels ne 'ARRAY';
-		croak ref($self) . ": colors must be an array reference, got " . _describe($colors) if defined $colors && ref $colors ne 'ARRAY';
+		croak ref($self) . ": data must be an array reference, got " . describe($data) unless ref $data eq 'ARRAY';
+		croak ref($self) . ": labels must be an array reference, got " . describe($labels) if defined $labels && ref $labels ne 'ARRAY';
+		croak ref($self) . ": colors must be an array reference, got " . describe($colors) if defined $colors && ref $colors ne 'ARRAY';
 		my @slices;
 		foreach my $index ( 0 .. $#$data ) {
 			my $item = $data->[$index];
@@ -178,7 +172,7 @@ class Term::Fabulous::Widget::PieChart
 
 	method remove_slice (@labels) {
 		foreach my $label (@labels) {
-			croak ref($self) . ": no slice labeled " . _describe($label) unless defined $label && $_slice_by_label{$label};
+			croak ref($self) . ": no slice labeled " . describe($label) unless defined $label && $_slice_by_label{$label};
 		}
 		my %gone = map { $_ => 1 } @labels;
 		@_slices = grep { !$gone{ $_->{label} } } @_slices;
@@ -195,7 +189,7 @@ class Term::Fabulous::Widget::PieChart
 	}
 
 	method set_slice_color ( $label, $color ) {
-		my $slice = $_slice_by_label{ $label // '' } // croak ref($self) . ": no slice labeled " . _describe($label);
+		my $slice = $_slice_by_label{ $label // '' } // croak ref($self) . ": no slice labeled " . describe($label);
 		( $slice->{color}, $slice->{opacity} ) = defined $color ? chart_color( $self, "color of slice '$label'", $color ) : ( undef, 1 );
 		$self->mark_changed;
 		return $self;
@@ -308,7 +302,7 @@ class Term::Fabulous::Widget::PieChart
 				return () if $distance < $inner || $distance > $radius;
 				my $index = first { $angle >= $geometry[$_][0] && $angle < $geometry[$_][1] } 0 .. $#geometry;
 				return () unless defined $index;
-				my ( $from, $to, $reach ) = @{ $geometry[$index] };
+				my ( $from, $to, $reach ) = $geometry[$index]->@*;
 				return () if $distance > $reach * $radius;
 				if ($gaps) {
 					my $turns = min( $angle - $from, $to - $angle, 0.25 );
@@ -334,7 +328,7 @@ class Term::Fabulous::Widget::PieChart
 	method _draw_slice_labels ( $surface, $x, $y, $circle, $slices, $geometry, $look, $start, $inner ) {
 		foreach my $index ( 0 .. $#$slices ) {
 			my $slice = $slices->[$index];
-			my ( $from, $to, $reach ) = @{ $geometry->[$index] };
+			my ( $from, $to, $reach ) = $geometry->[$index]->@*;
 			my $outer = $reach * $circle->{radius};
 			next if $outer - $inner < 2;
 			my $text

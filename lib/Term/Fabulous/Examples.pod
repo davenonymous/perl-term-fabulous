@@ -953,7 +953,7 @@ L<Term::Fabulous::Cookbook/Grouped, stacked and horizontal bars (BarChart)>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-bars.svg" alt="Three bar charts: orders of the shop and the app as grouped bars with their values, support tickets as stacked bars, and the views of four pages as horizontal bars with their values"></p>
+<p><img src="/screenshots/cookbook-chart-bars.svg" alt="Three bar charts: orders of the shop and the app per weekday as grouped bars with their values, support tickets per weekday as stacked bars, and the views of four pages as horizontal bars with their values"></p>
 
 =end html
 
@@ -963,7 +963,7 @@ L<Term::Fabulous::Cookbook/Show shares as a pie or donut (PieChart, DonutChart)>
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-pie.svg" alt="A pie chart of disk usage with percentages on the slices and the legend below it, and a donut chart of sales by region with the small regions folded into Rest of world, amounts in the legend and 1150k orders in the middle"></p>
+<p><img src="/screenshots/cookbook-chart-pie.svg" alt="A pie chart of disk usage with percentages on the slices and the legend below it, and a donut chart of sales by region with percentages on its slices, the small regions folded into Rest of world, amounts in the legend and 1150k orders in the middle"></p>
 
 =end html
 
@@ -973,7 +973,7 @@ L<Term::Fabulous::Cookbook/A scatter plot with trend lines (ScatterPlot)>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-scatter.svg" alt="A scatter plot of petal length and width of three species in three clusters, with dashed trend lines through two of them, diamonds for one species and dotted vertical grid lines"></p>
+<p><img src="/screenshots/cookbook-chart-scatter.svg" alt="A scatter plot of petal length and width of three species as three clusters of dots, the largest flowers drawn as diamonds, over dotted vertical grid lines"></p>
 
 =end html
 
@@ -983,7 +983,7 @@ L<Term::Fabulous::Cookbook/Stacked areas and shares of 100% (AreaChart)>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-stacked-areas.svg" alt="Two stacked area charts of electricity from coal, gas, wind and solar from 2016 to 2026: the amounts on the left, each source's share of 100 percent on the right"></p>
+<p><img src="/screenshots/cookbook-chart-stacked-areas.svg" alt="Two stacked area charts of electricity from coal, gas, wind and solar from 2016 to 2026: the amounts in TWh on the left, each source's share of 100 percent on the right"></p>
 
 =end html
 
@@ -1024,7 +1024,7 @@ the picture shows it after 30 seconds.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-live.svg" alt="A live chart of network traffic over the last minute: received traffic as a filled area with a line on top, sent traffic as a line, time labels below and a status line with the newest values"></p>
+<p><img src="/screenshots/cookbook-chart-live.svg" alt="A live chart of network traffic: received traffic as a filled area with a line on top and sent traffic as a line fill the right half of a one-minute time axis after 30 seconds, with a status line of the newest values below"></p>
 
 =end html
 
@@ -1116,7 +1116,7 @@ L<Term::Fabulous::Cookbook/Show sparklines in table cells (Sparkline)>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-sparklines.svg" alt="A table of four stocks with symbol, name, last price and change, and a column of area sparklines of the month's prices, green for rising and red for falling stocks"></p>
+<p><img src="/screenshots/cookbook-chart-sparklines.svg" alt="A table of four stocks with symbol, name, last price and the change over 30 days, and a Trend column of area sparklines that span the month's prices, green for rising and red for falling stocks"></p>
 
 =end html
 

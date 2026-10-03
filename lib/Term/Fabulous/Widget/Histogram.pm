@@ -330,6 +330,17 @@ C<bins>, C<bin_width>, C<range>, C<measure> and C<cumulative> read and
 set the parameters (C<range> returns a copy), and the methods of
 L<Term::Fabulous::Widget::XYChart/METHODS> manage the series.
 
+=head2 bin_edges
+
+	my @edges = $chart->bin_edges( \@durations_eu, \@durations_us );    # 0, 25, 50, ...
+
+The edges of the bins the chart's settings give for the observations
+passed, one array reference of numbers per series: one value more than
+there are bins, the first the left edge of the first bin and the last
+the right edge of the last. The chart calls it with the observations of
+its visible series (after their transforms) whenever it is drawn; call
+it yourself to label or to count things the way the chart does.
+
 =head1 KDL PROPERTIES
 
 	use Term::Fabulous::Widget::Histogram as Histogram

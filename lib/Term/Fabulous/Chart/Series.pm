@@ -12,7 +12,7 @@ use Object::Pad 0.825;
 class Term::Fabulous::Chart::Series :strict(params) {
 	use Carp qw(croak);
 	use Scalar::Util qw(blessed looks_like_number);
-	use Term::Fabulous::Check qw(glyph);
+	use Term::Fabulous::Check qw(describe glyph);
 	use Term::Fabulous::Chart::Curve qw(check_curve);
 	use Term::Fabulous::Chart::Palette qw(chart_color);
 	use Term::Fabulous::Chart::Transform qw(parse_transforms);
@@ -36,6 +36,7 @@ class Term::Fabulous::Chart::Series :strict(params) {
 
 	field $owner        :param;            # the chart class, for messages
 	field $described_as :param = undef;    # how messages name the series; undef: series 'NAME', '': not at all
+	field $check_points :param = undef;    # called with the series and its new points before they are stored
 	field $name  :param :reader;
 	field $type  :param :reader;
 	field $slot  :param :reader;    # the palette slot, kept for life
@@ -47,19 +48,13 @@ class Term::Fabulous::Chart::Series :strict(params) {
 	field $revision = 0;
 
 	ADJUST :params (%options) {
-		croak "$owner: a series name must be a non-empty string, got " . _describe($name) unless defined $name && !ref $name && length $name;
-		croak "$owner: series '$name' has an unknown type " . _describe($type) . " (known: line, area, bar, scatter)" unless defined $type && !ref $type && $IS_TYPE{$type};
+		croak "$owner: a series name must be a non-empty string, got " . describe($name) unless defined $name && !ref $name && length $name;
+		croak "$owner: series '$name' has an unknown type " . describe($type) . " (known: line, area, bar, scatter)" unless defined $type && !ref $type && $IS_TYPE{$type};
 		my ( $data, $given_color ) = ( delete $options{data} // [], delete $options{color} );
 		$self->set_color($given_color);
 		$self->set_option( $_ => delete $options{$_} ) foreach grep { exists $options{$_} } @OPTIONS;
 		croak "$owner: series '$name' does not take " . join( ', ', sort keys %options ) . " (known: name, type, data, color, " . join( ', ', @OPTIONS ) . ")" if %options;
 		$self->set_data($data);
-	}
-
-	sub _describe ($value) {
-		return 'undef' unless defined $value;
-		return ref($value) . ' reference' if ref $value;
-		return "'$value'";
 	}
 
 	sub _is_number ($value) {
@@ -76,7 +71,7 @@ class Term::Fabulous::Chart::Series :strict(params) {
 
 	# A new type; a marker the new type cannot draw with is dropped.
 	method set_type ($new) {
-		croak "$owner: series '$name' has an unknown type " . _describe($new) . " (known: line, area, bar, scatter)" unless defined $new && !ref $new && $IS_TYPE{$new};
+		croak "$owner: series '$name' has an unknown type " . describe($new) . " (known: line, area, bar, scatter)" unless defined $new && !ref $new && $IS_TYPE{$new};
 		$type = $new;
 		delete $option{marker} if defined $option{marker} && !grep { $_ eq $option{marker} } $MARKERS{$type}->@*;
 		$revision++;
@@ -115,41 +110,41 @@ class Term::Fabulous::Chart::Series :strict(params) {
 		}
 		elsif ( $key eq 'marker' ) {
 			my @allowed = $MARKERS{$type}->@*;
-			croak "$owner: $label must be one of " . join( ', ', @allowed ) . " for a $type series, got " . _describe($value) unless !ref $value && grep { $_ eq $value } @allowed;
+			croak "$owner: $label must be one of " . join( ', ', @allowed ) . " for a $type series, got " . describe($value) unless !ref $value && grep { $_ eq $value } @allowed;
 			$option{$key} = $value;
 		}
 		elsif ( $key eq 'curve' ) {
 			$option{$key} = check_curve( $owner, $label, $value );
 		}
 		elsif ( $key eq 'line_style' ) {
-			croak "$owner: $label must be solid, dashed or dotted, got " . _describe($value) unless !ref $value && exists $LINE_STYLE{$value};
+			croak "$owner: $label must be solid, dashed or dotted, got " . describe($value) unless !ref $value && exists $LINE_STYLE{$value};
 			$option{$key} = $value;
 		}
 		elsif ( $key eq 'tension' || $key eq 'fill_opacity' ) {
-			croak "$owner: $label must be a number from 0 to 1, got " . _describe($value) unless _is_number($value) && $value >= 0 && $value <= 1;
+			croak "$owner: $label must be a number from 0 to 1, got " . describe($value) unless _is_number($value) && $value >= 0 && $value <= 1;
 			$option{$key} = $value + 0;
 		}
 		elsif ( $key eq 'point' ) {
 			$option{$key} = !ref $value && ( $value eq 'dot' || $value eq 'square' ) ? $value : glyph( $owner, $label, $value );
 		}
 		elsif ( $key eq 'stack' ) {
-			croak "$owner: $label must be a group name, got " . _describe($value) if ref $value;
+			croak "$owner: $label must be a group name, got " . describe($value) if ref $value;
 			$option{$key} = "$value";
 		}
 		elsif ( $key eq 'from' || $key eq 'to' ) {
-			croak "$owner: $label must be an x value, got " . _describe($value) if ref $value && !( blessed $value && $value->can('epoch') );
+			croak "$owner: $label must be an x value, got " . describe($value) if ref $value && !( blessed $value && $value->can('epoch') );
 			$option{$key} = $value;
 		}
 		elsif ( $key eq 'transform' ) {
 			$option{$key} = parse_transforms( $owner, $label, $value );
 		}
 		elsif ( $key eq 'max_points' ) {
-			croak "$owner: $label must be a positive integer, got " . _describe($value) unless !ref $value && $value =~ /\A[1-9][0-9]*\z/;
+			croak "$owner: $label must be a positive integer, got " . describe($value) unless !ref $value && $value =~ /\A[1-9][0-9]*\z/;
 			$option{$key} = $value + 0;
 			$self->_trim;
 		}
 		else {    # line points span_gaps visible trend value_labels
-			croak "$owner: $label must be a plain true or false value, got " . _describe($value) if ref $value;
+			croak "$owner: $label must be a plain true or false value, got " . describe($value) if ref $value;
 			$option{$key} = $value ? 1 : 0;
 		}
 		$revision++;
@@ -195,26 +190,33 @@ class Term::Fabulous::Chart::Series :strict(params) {
 			( $x, $y ) = @$item{qw(x y)};
 		}
 		else {
-			croak "$owner: data point $index of series '$name' must be a number, [ x, y ] or { x, y }, got " . _describe($item);
+			croak "$owner: data point $index of series '$name' must be a number, [ x, y ] or { x, y }, got " . describe($item);
 		}
-		croak "$owner: the y value of data point $index of series '$name' must be a finite number or undef, got " . _describe($y) if defined $y && !_is_number($y);
-		croak "$owner: the x value of data point $index of series '$name' must be a number, a label or a date, got " . _describe($x)
+		croak "$owner: the y value of data point $index of series '$name' must be a finite number or undef, got " . describe($y) if defined $y && !_is_number($y);
+		croak "$owner: the x value of data point $index of series '$name' must be a number, a label or a date, got " . describe($x)
 			if ref $x && !( blessed $x && $x->can('epoch') );
 		return [ $x, defined $y ? $y + 0 : undef ];
 	}
 
+	# The points of new data, parsed and checked; nothing is stored until
+	# every point passed.
+	method _parsed_points ( $items, $first_index ) {
+		my $index = $first_index;
+		my @new   = map { $self->_point( $_, $index++ ) } @$items;
+		$check_points->( $self, \@new ) if $check_points;
+		return @new;
+	}
+
 	method set_data ($data) {
-		croak "$owner: the data of series '$name' must be an array reference, got " . _describe($data) unless ref $data eq 'ARRAY';
-		my $index = 0;
-		@points = map { $self->_point( $_, $index++ ) } @$data;
+		croak "$owner: the data of series '$name' must be an array reference, got " . describe($data) unless ref $data eq 'ARRAY';
+		@points = $self->_parsed_points( $data, 0 );
 		$self->_trim;
 		$revision++;
 		return $self;
 	}
 
 	method add_points (@items) {
-		my $index = @points;
-		push @points, map { $self->_point( $_, $index++ ) } @items;
+		push @points, $self->_parsed_points( \@items, scalar @points );
 		$self->_trim;
 		$revision++;
 		return $self;
@@ -278,6 +280,48 @@ own methods; you do not need this class directly. It checks every option
 and data point when it is given, so a wrong value dies at once with the
 series' name in the message.
 
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $series = Term::Fabulous::Chart::Series->new(
+		owner => 'My::Chart',
+		name  => 'CPU',
+		type  => 'line',
+		slot  => 0,
+		data  => [ 12, 40, 33 ],
+		color => '#3987e5',
+		curve => 'monotone',
+	);
+
+C<owner> (the class name of the chart, which starts every message),
+C<name> (a non-empty string), C<type> (C<line>, C<area>, C<bar> or
+C<scatter>) and C<slot> (the palette slot) are required. C<data>
+(default: none) and C<color> (default: C<undef>, the palette's) are
+checked as L</set_data, add_points, clear> and
+L</color, color_opacity, set_color> check them, and every option of
+L<Term::Fabulous::Widget::XYChart/SERIES> may be given. Two more
+parameters serve the charts:
+
+=over
+
+=item C<described_as>
+
+How the messages about the options name the series. Default: C<undef>,
+C<series 'NAME'> (C<curve of series 'CPU' must be ...>); the empty string
+leaves the series out (C<curve must be ...>), for the options a chart
+takes for all of its series.
+
+=item C<check_points>
+
+A code reference called with the series and an array reference of its
+new points (as L</points, count> holds them) before they are stored: from
+the constructor, C<set_data> and C<add_points>. It dies for points the
+chart cannot show (a radar chart: a label it does not have), and the
+data stays as it was. Default: none.
+
+=back
+
 =head1 METHODS
 
 =head2 name, type, slot
@@ -303,7 +347,8 @@ C<undef> means the chart's setting.
 Replace, extend or empty the data. A data point is a number (the y value,
 its x is its position in the series), C<undef> (a gap), C<[ $x, $y ]> or
 C<< { x =E<gt> $x, y =E<gt> $y } >>. With C<max_points>, the oldest points
-are dropped.
+are dropped. An invalid point, or one C<check_points> refuses, dies and
+changes nothing.
 
 =head2 points, count
 

@@ -1849,6 +1849,15 @@ program for each feature.
 	$chart->append( undef, { api => 180, web => 99 } );    # the next point of both series
 	$chart->on( SeriesHover => sub ($event) { $status->text( $event->series // '' ); return } );
 
+F<examples/widgets/line-chart.pl> (L<Term::Fabulous::Examples>) draws
+such a chart:
+
+=begin html
+
+<p><img src="/screenshots/widget-line-chart.svg" alt="A line chart of monthly active users on web, iOS and Android with smooth curves, a legend at the top and the y axis titled thousands"></p>
+
+=end html
+
 =head2 The chart widgets
 
 Charts with an x and a y axis are L<Term::Fabulous::Widget::LineChart>,

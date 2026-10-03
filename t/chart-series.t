@@ -26,7 +26,7 @@ subtest 'construction' => sub {
 	is [ series()->points ], [ [] ], 'no data';
 
 	like dies { series( name => '' ) },      qr/\AChart: a series name must be a non-empty string, got ''/, 'an empty name dies';
-	like dies { series( name => [] ) },      qr/a series name must be a non-empty string, got ARRAY reference/, 'so does a reference';
+	like dies { series( name => [] ) },      qr/a series name must be a non-empty string, got an ARRAY reference/, 'so does a reference';
 	like dies { series( type => 'pie' ) },   qr/series 'CPU' has an unknown type 'pie' \(known: line, area, bar, scatter\)/, 'an unknown type dies';
 	like dies { series( shape => 'round' ) }, qr/series 'CPU' does not take shape \(known: name, type, data, color, marker, curve, /, 'an unknown option dies';
 };
@@ -72,11 +72,11 @@ subtest 'options' => sub {
 		[ 'a tension above 1',                  [ tension      => 1.5 ],         qr/tension of series 'CPU' must be a number from 0 to 1, got '1.5'/ ],
 		[ 'a word as fill_opacity',             [ fill_opacity => 'half' ],      qr/fill_opacity of series 'CPU' must be a number from 0 to 1/ ],
 		[ 'a wide point glyph',                 [ point        => "\x{65E5}" ],  qr/point of series 'CPU' must be a single character one column wide/ ],
-		[ 'a reference as stack',               [ stack        => [] ],          qr/stack of series 'CPU' must be a group name, got ARRAY reference/ ],
-		[ 'a reference as from',                [ from         => {} ],          qr/from of series 'CPU' must be an x value, got HASH reference/ ],
+		[ 'a reference as stack',               [ stack        => [] ],          qr/stack of series 'CPU' must be a group name, got an ARRAY reference/ ],
+		[ 'a reference as from',                [ from         => {} ],          qr/from of series 'CPU' must be an x value, got a HASH reference/ ],
 		[ 'an invalid transform',               [ transform    => 'blur' ],      qr/every step of transform of series 'CPU' must be a transform name/ ],
 		[ 'max_points 0',                       [ max_points   => 0 ],           qr/max_points of series 'CPU' must be a positive integer, got '0'/ ],
-		[ 'a reference as switch',              [ visible      => [] ],          qr/visible of series 'CPU' must be a plain true or false value, got ARRAY reference/ ],
+		[ 'a reference as switch',              [ visible      => [] ],          qr/visible of series 'CPU' must be a plain true or false value, got an ARRAY reference/ ],
 	);
 	foreach my $case (@cases) {
 		my ( $name, $option, $error ) = @$case;
@@ -91,13 +91,13 @@ subtest 'data points' => sub {
 	isa_ok series( data => [ [ Moment->new(1), 2 ] ] )->points->[0][0], 'Moment';
 
 	my @cases = (
-		[ 'not an array',          {},                       qr/\AChart: the data of series 'CPU' must be an array reference, got HASH reference/ ],
+		[ 'not an array',          {},                       qr/\AChart: the data of series 'CPU' must be an array reference, got a HASH reference/ ],
 		[ 'three values',          [ 1, [ 1, 2, 3 ] ],       qr/data point 1 of series 'CPU' must be \[ x, y \], got an array of 3 values/ ],
 		[ 'unknown keys',          [ { x => 1, z => 2 } ],   qr/data point 0 of series 'CPU' takes only the keys x and y, got z/ ],
-		[ 'a scalar reference',    [ \'5' ],                 qr/data point 0 of series 'CPU' must be a number, \[ x, y \] or \{ x, y \}, got SCALAR reference/ ],
+		[ 'a scalar reference',    [ \'5' ],                 qr/data point 0 of series 'CPU' must be a number, \[ x, y \] or \{ x, y \}, got a SCALAR reference/ ],
 		[ 'a word as y',           [ 'abc' ],                qr/the y value of data point 0 of series 'CPU' must be a finite number or undef, got 'abc'/ ],
 		[ 'an infinite y',         [ [ 1, 'inf' ] ],         qr/the y value of data point 0 .* must be a finite number or undef, got 'inf'/ ],
-		[ 'a reference as x',      [ [ [1], 2 ] ],           qr/the x value of data point 0 of series 'CPU' must be a number, a label or a date, got ARRAY reference/ ],
+		[ 'a reference as x',      [ [ [1], 2 ] ],           qr/the x value of data point 0 of series 'CPU' must be a number, a label or a date, got an ARRAY reference/ ],
 	);
 	foreach my $case (@cases) {
 		my ( $name, $data, $error ) = @$case;
@@ -111,6 +111,23 @@ subtest 'data points' => sub {
 	like dies { $series->add_points( 4, 'x' ) }, qr/data point 4 of series 'CPU'/, 'and counts the points on';
 	ref_is $series->clear, $series, 'clear returns the series';
 	is $series->count, 0, 'clear removes all points';
+};
+
+subtest 'check_points' => sub {
+	my @seen;
+	my $refuse_tens = sub {
+		my ( $series, $points ) = @_;
+		push @seen, [ map { $_->[1] } @$points ];
+		die "no tens\n" if grep { ( $_->[1] // 0 ) >= 10 } @$points;
+	};
+	my $series = series( data => [ 1, 2 ], check_points => $refuse_tens );
+	is \@seen, [ [ 1, 2 ] ], 'the constructor runs the check on the parsed points';
+	like dies { $series->add_points( 3, 10 ) }, qr/\Ano tens\n\z/, 'a refused point dies';
+	is $series->count, 2, 'and nothing is added';
+	like dies { $series->set_data( [10] ) }, qr/\Ano tens\n\z/, 'set_data runs it too';
+	is [ map { $_->[1] } $series->points->@* ], [ 1, 2 ], 'and the data is as it was';
+	$series->add_points(3);
+	is $seen[-1], [3], 'the check gets the new points only';
 };
 
 subtest 'max_points and keep_last' => sub {

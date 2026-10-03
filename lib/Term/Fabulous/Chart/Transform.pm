@@ -14,6 +14,7 @@ use Carp qw(croak);
 use List::Util qw(max min sum0 first);
 use POSIX qw(floor);
 use Scalar::Util qw(looks_like_number);
+use Term::Fabulous::Check qw(describe);
 
 sub _is_number ($value) {
 	return defined $value && !ref $value && looks_like_number($value) && $value == $value && $value - $value == 0;
@@ -251,17 +252,11 @@ sub transform_names () {
 	return sort keys %TRANSFORM;
 }
 
-sub _describe ($value) {
-	return 'undef' unless defined $value;
-	return ref($value) . ' reference' if ref $value;
-	return "'$value'";
-}
-
 # One step: a name, [ name, arguments ], or a code reference.
 sub _step ( $owner, $name, $step ) {
 	return [ 'code', sub ( $xs, $ys ) { _checked_result( $owner, $name, $step->( [@$xs], [@$ys] ) ) } ] if ref $step eq 'CODE';
 	my ( $transform, @arguments ) = ref $step eq 'ARRAY' ? @$step : ($step);
-	croak "$owner: every step of $name must be a transform name (" . join( ', ', transform_names() ) . "), [ name, arguments ] or a code reference, got " . _describe($transform)
+	croak "$owner: every step of $name must be a transform name (" . join( ', ', transform_names() ) . "), [ name, arguments ] or a code reference, got " . describe($transform)
 		unless defined $transform && !ref $transform && $TRANSFORM{$transform};
 	my $spec = $TRANSFORM{$transform};
 	my ( $least, $most, $defaults ) = $spec->{arguments}->@*;
@@ -270,10 +265,10 @@ sub _step ( $owner, $name, $step ) {
 	my @values = map { $_ < @arguments ? $arguments[$_] : $defaults->[$_] } 0 .. $most - 1;
 	if ( $spec->{check} ) {
 		my $problem = $spec->{check}->(@values);
-		croak "$owner: the $name step '$transform' needs $problem, got " . join( ', ', map { _describe($_) } @arguments ) if defined $problem;
+		croak "$owner: the $name step '$transform' needs $problem, got " . join( ', ', map { describe($_) } @arguments ) if defined $problem;
 	}
 	foreach my $value ( grep { defined } @values ) {
-		croak "$owner: the arguments of the $name step '$transform' must be plain values, got " . _describe($value) if ref $value;
+		croak "$owner: the arguments of the $name step '$transform' must be plain values, got " . describe($value) if ref $value;
 	}
 	return [ $transform, sub ( $xs, $ys ) { $spec->{apply}->( $xs, $ys, @values ) } ];
 }

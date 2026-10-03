@@ -51,10 +51,15 @@ subtest 'title, legend and axis titles' => sub {
 	is [ @lines[ -2, -1 ] ], [ '', $legend ], 'at the bottom';
 	@lines = draw( sized( 'Term::Fabulous::Widget::BarChart', 30, 14, legend => 'bottom', labels => [qw(A B)], y_axis => { max => 3 }, series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ] ) );
 	is [ @lines[ 10 .. 13 ] ], [ match qr/\A +A +B\z/, '', "\x{25A0} one   \x{25A0} two", '' ], 'right below the plot when the ticks leave rows free';
+	@lines = draw( sized( 'Term::Fabulous::Widget::BarChart', 30, 16, legend => 'bottom', labels => [qw(A B)], x_axis => { title => 'quarter' }, y_axis => { max => 3, title => 'units' }, series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ] ) );
+	is [ $lines[0], @lines[ 11 .. 14 ] ], [ 'units', match qr/\A +A +B\z/, match qr/\A +quarter\z/, '', "\x{25A0} one   \x{25A0} two" ], 'below the x axis title when both axes have one';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 30, 6, series => [ map { { name => "Series number $_", data => [ 1, 2 ] } } 1 .. 6 ] ) );
 	is [ @lines[ 0, 1 ] ], [ "\x{2501}\x{2501} Series number 1", "\x{2501}\x{2501} Series number 2   +4 more" ], 'entries that do not fit are counted';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 20, 8, series => [ map { { name => "Series number $_", data => [ 1, 2 ] } } 1 .. 3 ] ) );
 	like $lines[1], qr/\A\x{2501}\x{2501} Series\S*   \+1 more\z/, 'a lone entry is cut short before the count';
+	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 14, 8, series => [ map { { name => "Series number $_", data => [ 1, 2 ] } } 1 .. 3 ] ) );
+	unlike join( '', @lines ), qr/\x{2501}|more/, 'a chart too narrow for a letter of the entry beside the count has no legend';
+	like $lines[0], qr/\A2 /, 'and the plot takes its rows';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 40, 2, legend => 'left', series => [ map { { name => "s$_", data => [ 1, 2 ] } } 1 .. 4 ] ) );
 	like $lines[1], qr/\A\+3 more /, 'a legend beside the plot has room for the count';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 30, 1, legend => 'bottom', series => [@series] ) );
@@ -136,6 +141,7 @@ subtest 'grouped, stacked and stack groups' => sub {
 	$groups->add_series( name => 'c', data => [ 2, 1 ], stack => 'g2', color => '#0000ff' );
 	draw($groups);
 	is [ bar_eighths( $groups, 6, $RED ), bar_eighths( $groups, 6, $GREEN ), bar_eighths( $groups, 10, $BLUE ) ], [ 12, 36, 24 ], 'each stack group is a bar of its own';
+	is [ map { bar_chart( stacked => $_ )->stacked } 0, '', undef, 1, 'percent' ], [ 0, 0, 0, 1, 'percent' ], 'stacked takes 0, the empty string, undef, 1 and percent';
 };
 
 subtest 'percent stacking' => sub {
@@ -255,6 +261,9 @@ subtest 'from, to and span' => sub {
 	$chart = line_chart( x_axis => { span => 2 }, series => [ { name => 'p', data => [ 1, 2, 3, 2, 1 ] } ] );
 	@lines = draw($chart);
 	like $lines[-1], qr/\A  2 +3 +4\z/, 'span shows the newest x values';
+	$chart = line_chart( x_axis => { span => 2 }, series => [ { name => 'p', data => [ 50, 1, 2, 3, 2 ] } ] );
+	@lines = draw($chart);
+	like $lines[0], qr/\A3 /, 'points older than the span do not count for the y axis';
 };
 
 subtest 'grids' => sub {
@@ -344,7 +353,7 @@ subtest 'invalid input dies' => sub {
 		[ sub { $chart->add_series( name => 'a' ) },                                 qr/a series named 'a' exists already/,                                   'a duplicate name' ],
 		[ sub { line_chart( series => [ { type => 'pie' } ] ) },                     qr/draws series of the types line, area, bar, scatter, not 'pie'/,       'an unknown type' ],
 		[ sub { line_chart( series => [ { name => 'a', marker => 'block' } ] ) },    qr/marker of series 'a' must be one of braille, half, quadrant, sextant, box for a line series/, 'a marker the type cannot draw' ],
-		[ sub { $chart->set_data( a => { 1 => 2 } ) },                               qr/the data of series 'a' must be an array reference, got HASH reference/, 'data that is no array' ],
+		[ sub { $chart->set_data( a => { 1 => 2 } ) },                               qr/the data of series 'a' must be an array reference, got a HASH reference/, 'data that is no array' ],
 		[ sub { $chart->set_data( a => [ [ 1, 2, 3 ] ] ) },                          qr/data point 0 of series 'a' must be \[ x, y \], got an array of 3 values/, 'a point of three values' ],
 		[ sub { $chart->set_data( a => [ 1, { x => 1, z => 2 } ] ) },                qr/data point 1 of series 'a' takes only the keys x and y, got z/,       'a point hash with other keys' ],
 		[ sub { $chart->set_data( a => ['abc'] ) },                                  qr/the y value of data point 0 of series 'a' must be a finite number or undef, got 'abc'/, 'a y value that is no number' ],
@@ -353,13 +362,13 @@ subtest 'invalid input dies' => sub {
 		[ sub { $chart->append( 1, [1] ) },                                          qr/append needs a hash reference of values by series name/,             'append without a hash' ],
 		[ sub { $chart->series_default( stack => 'x' ) },                            qr/unknown series default 'stack'/,                                      'an unknown series default' ],
 		[ sub { line_chart( x_axis => { kind => 'time' } ) },                        qr/x_axis does not take kind \(known: type min max/,                    'an unknown axis key' ],
-		[ sub { line_chart( x_axis => [] ) },                                        qr/x_axis must be a hash reference, got ARRAY reference/,                'an axis that is no hash' ],
+		[ sub { line_chart( x_axis => [] ) },                                        qr/x_axis must be a hash reference, got an ARRAY reference/,                'an axis that is no hash' ],
 		[ sub { line_chart( y_axis => { type => 'time' } ) },                        qr/the type of y_axis must be one of linear, log, got 'time'/,           'a y axis of time' ],
 		[ sub { line_chart( y_axis => { grid => 'wavy' } ) },                        qr/the grid of y_axis must be 0, 1, solid, dashed or dotted, got 'wavy'/, 'an unknown grid style' ],
 		[ sub { line_chart( y_axis => { ticks => 0 } ) },                            qr/the ticks of y_axis must be a positive integer, got '0'/,             'zero ticks' ],
 		[ sub { line_chart( y_axis => { min => 'low' } ) },                          qr/the min of y_axis must be a number, got 'low'/,                       'a y minimum that is no number' ],
 		[ sub { line_chart( x_axis => { base => 1 } ) },                             qr/the base of x_axis must be a number greater than 1/,                  'a log base of 1' ],
-		[ sub { line_chart( stacked => [] ) },                                       qr/stacked must be 0, 1 or 'percent', got ARRAY reference/,                   'stacked as an array' ],
+		[ sub { line_chart( stacked => [] ) },                                       qr/stacked must be 0, 1 or 'percent', got an ARRAY reference/,                   'stacked as an array' ],
 		[ sub { line_chart( stacked => 'percents' ) },                               qr/stacked must be 0, 1 or 'percent', got 'percents'/,                        'stacked as a misspelled percent' ],
 		[ sub { line_chart( stacked => '1.0' ) },                                    qr/stacked must be 0, 1 or 'percent', got '1.0'/,                             'stacked as 1.0' ],
 		[ sub { line_chart( curve => 'wiggly' ) },                                   qr/LineChart: curve must be /,                                                'a chart-wide option names no series' ],
@@ -371,7 +380,7 @@ subtest 'invalid input dies' => sub {
 		[ sub { line_chart( theme => 'blue' ) },                                     qr/theme must be auto, dark, light, got 'blue'/,                         'an unknown theme' ],
 		[ sub { line_chart( palette => 'nope' ) },                                   qr/palette must be a palette name \(classic, default, pastel, vivid\) or an array reference of colors, got 'nope'/, 'an unknown palette' ],
 		[ sub { line_chart( hover_fade => 2 ) },                                     qr/hover_fade must be a number from 0 to 1, got '2'/,                    'a fade above 1' ],
-		[ sub { line_chart( title => [] ) },                                         qr/title must be a string or undef, got ARRAY reference/,                'a title that is no string' ],
+		[ sub { line_chart( title => [] ) },                                         qr/title must be a string or undef, got an ARRAY reference/,                'a title that is no string' ],
 	);
 	foreach my $case (@cases) {
 		like dies { $case->[0]->() }, $case->[1], $case->[2];

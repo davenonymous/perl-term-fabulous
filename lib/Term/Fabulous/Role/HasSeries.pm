@@ -13,11 +13,14 @@ use Term::Fabulous::Chart::Series;
 
 role Term::Fabulous::Role::HasSeries {
 	use Carp qw(croak);
+	use Scalar::Util qw(weaken);
+	use Term::Fabulous::Check qw(describe);
 
 	field @_series;
 	field %_series_by_name;
 	field $_next_slot = 0;
-	field %_defaults;    # the series options given to the chart
+	field %_defaults;       # the series options given to the chart
+	field $_point_check;    # what every series checks its new points with
 
 	# The type a series has when it gives none.
 	method default_series_type;
@@ -33,15 +36,23 @@ role Term::Fabulous::Role::HasSeries {
 	# is added or changes its type.
 	method check_series_type;
 
-	sub _describe ($value) {
-		return 'undef' unless defined $value;
-		return ref($value) . ' reference' if ref $value;
-		return "'$value'";
+	# Dies when the chart cannot show data points (a radar chart takes
+	# only its labels as x); called with the parsed points before a
+	# series stores them.
+	method check_series_points;
+
+	# The chart's point check as a series calls it: with the series and
+	# its new points. The series must not keep the chart alive.
+	method _point_check () {
+		return $_point_check //= do {
+			weaken( my $chart = $self );
+			sub ( $series, $points ) { $chart->check_series_points( $series->name, $points ) if defined $chart; return };
+		};
 	}
 
 	method _check_type ($type) {
 		my @types = $self->series_types;
-		croak ref($self) . ": a " . ref($self) . " draws series of the types " . join( ', ', @types ) . ", not " . _describe($type)
+		croak ref($self) . ": a " . ref($self) . " draws series of the types " . join( ', ', @types ) . ", not " . describe($type)
 			unless defined $type && !ref $type && grep { $_ eq $type } @types;
 		return $type;
 	}
@@ -59,7 +70,7 @@ role Term::Fabulous::Role::HasSeries {
 		}
 		elsif ( $key eq 'marker' ) {
 			my %all = map { $_ => 1 } map { Term::Fabulous::Chart::Series->marker_names($_) } $self->series_types;
-			croak ref($self) . ": marker must be one of " . join( ', ', sort keys %all ) . ", got " . _describe($value) unless !ref $value && $all{$value};
+			croak ref($self) . ": marker must be one of " . join( ', ', sort keys %all ) . ", got " . describe($value) unless !ref $value && $all{$value};
 			$_defaults{$key} = $value;
 		}
 		else {
@@ -104,16 +115,17 @@ role Term::Fabulous::Role::HasSeries {
 
 	method add_series (@specs) {
 		croak ref($self) . ": add_series needs a hash reference or key-value pairs" if @specs != 1 && @specs % 2;
-		my %spec = @specs == 1 && ref $specs[0] eq 'HASH' ? %{ $specs[0] } : @specs;
+		my %spec = @specs == 1 && ref $specs[0] eq 'HASH' ? $specs[0]->%* : @specs;
 		my $name = delete $spec{name} // 'Series ' . ( @_series + 1 );
 		croak ref($self) . ": a series named '$name' exists already" if $_series_by_name{$name};
 		my $type = $self->_check_type( delete $spec{type} // $self->default_series_type );
 		$self->check_series_type( $name, $type );
 		my $series = Term::Fabulous::Chart::Series->new(
-			owner => ref $self,
-			name  => $name,
-			type  => $type,
-			slot  => $_next_slot,
+			owner        => ref $self,
+			name         => $name,
+			type         => $type,
+			slot         => $_next_slot,
+			check_points => $self->_point_check,
 			%spec,
 		);
 		$_next_slot++;
@@ -125,7 +137,7 @@ role Term::Fabulous::Role::HasSeries {
 	}
 
 	method _series ($name) {
-		return $_series_by_name{ $name // '' } // croak ref($self) . ": no series named " . _describe($name);
+		return $_series_by_name{ $name // '' } // croak ref($self) . ": no series named " . describe($name);
 	}
 
 	method remove_series (@names) {
@@ -170,7 +182,7 @@ role Term::Fabulous::Role::HasSeries {
 			type => $series->type,
 			( defined $series->color ? ( color => sprintf '#%06x', $series->color ) : () ),
 			%options,
-			data => [ map { defined $_->[0] ? [@$_] : $_->[1] } $series->points->@* ],
+			data => [ map { defined $_->[0] ? [ $_->@* ] : $_->[1] } $series->points->@* ],
 		};
 	}
 
@@ -182,7 +194,7 @@ role Term::Fabulous::Role::HasSeries {
 
 		# Everything is checked on a probe first, so a bad option leaves
 		# the series as it was.
-		Term::Fabulous::Chart::Series->new( owner => ref $self, name => $name, type => $type, slot => $series->slot, %options );
+		Term::Fabulous::Chart::Series->new( owner => ref $self, name => $name, type => $type, slot => $series->slot, check_points => $self->_point_check, %options );
 		$series->set_type($type) if $type ne $series->type;
 		foreach my $key ( sort keys %options ) {
 			$key eq 'color' ? $series->set_color( $options{$key} ) : $key eq 'data' ? $series->set_data( $options{$key} ) : $series->set_option( $key => $options{$key} );
@@ -217,8 +229,8 @@ role Term::Fabulous::Role::HasSeries {
 	# One new point for several series at once: the value of each series
 	# named in %$values at $x (undef: the next index).
 	method append ( $x, $values ) {
-		croak ref($self) . ": append needs a hash reference of values by series name, got " . _describe($values) unless ref $values eq 'HASH';
-		my @series = map { $self->_series($_) } sort keys %$values;
+		croak ref($self) . ": append needs a hash reference of values by series name, got " . describe($values) unless ref $values eq 'HASH';
+		my @series = map { $self->_series($_) } sort keys $values->%*;
 		foreach my $series (@series) {
 			my $value = $values->{ $series->name };
 			$series->add_points( defined $x ? [ $x, $value ] : $value );
@@ -287,7 +299,8 @@ series that has none of its own.
 Adds a series at the end; see L<Term::Fabulous::Widget::XYChart/SERIES>
 for its keys. A series without a name is called C<Series 1>, C<Series 2>,
 and so on. Dies for a name the chart has already, a type the chart cannot
-draw, and invalid options or data.
+draw, invalid options or data, and data the chart cannot show (a radar
+chart: a value for a label it does not have); nothing is added then.
 
 =head2 remove_series, clear_series
 
@@ -320,7 +333,8 @@ removes an option (the chart's applies again). The name cannot change.
 	$chart->clear_data('web');
 
 Replace, extend or empty the data of a series. With C<max_points> (the
-series' own or the chart's), the oldest points are dropped.
+series' own or the chart's), the oldest points are dropped. Invalid data,
+or data the chart cannot show, dies and changes nothing.
 
 =head2 append
 
@@ -357,10 +371,15 @@ for the chart's own drawing code.
 =head1 REQUIRED METHODS
 
 C<default_series_type>, C<series_types> (the types the chart draws),
-C<series_default_names> (the options it takes for all its series) and
+C<series_default_names> (the options it takes for all its series),
 C<< check_series_type( $name, $type ) >>, which dies when the chart cannot
-show a series of that type in its current state; the role calls it
-before a series is added or changes its type.
+show a series of that type in its current state (the role calls it
+before a series is added or changes its type), and
+C<< check_series_points( $name, $points ) >>, which dies when the chart
+cannot show the points (C<[ $x, $y ]> pairs, as
+L<Term::Fabulous::Chart::Series/points> holds them); the role has every
+series call it with its new points before they are stored, so bad data
+dies at once and leaves the series as it was.
 
 =head1 SEE ALSO
 

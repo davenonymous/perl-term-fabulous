@@ -163,6 +163,7 @@ t/render-canvas.t
 t/render-frame.t
 t/render-rectangle.t
 t/render-text.t
+t/screenshot-box-drawing.t
 t/static.t
 t/table-borders.t
 t/table-filter.t

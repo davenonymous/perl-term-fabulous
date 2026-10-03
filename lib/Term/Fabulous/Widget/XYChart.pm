@@ -22,7 +22,7 @@ class Term::Fabulous::Widget::XYChart
 	use List::Util qw(any first max min sum0 uniq);
 	use POSIX qw(ceil floor strftime);
 	use Scalar::Util qw(blessed looks_like_number);
-	use Term::Fabulous::Check qw(boolean glyph);
+	use Term::Fabulous::Check qw(boolean describe glyph);
 	use Term::Fabulous::Chart::Curve qw(curve_points y_at check_curve);
 	use Term::Fabulous::Chart::Format qw(number_formatter format_value format_values check_number_format check_time_format time_formatter);
 	use Term::Fabulous::Chart::Marker;
@@ -86,7 +86,7 @@ class Term::Fabulous::Widget::XYChart
 		$stacked    = $self->_checked_stacked($stacked);
 		$horizontal = boolean( $self, horizontal => $horizontal );
 		$bar_width  = $self->_checked_fraction( bar_width => $bar_width );
-		croak ref($self) . ": series must be an array reference of series hashes, got " . _describe($initial_series) unless ref $initial_series eq 'ARRAY';
+		croak ref($self) . ": series must be an array reference of series hashes, got " . describe($initial_series) unless ref $initial_series eq 'ARRAY';
 		$self->add_series($_) foreach @$initial_series;
 		$initial_series = undef;
 	}
@@ -95,36 +95,30 @@ class Term::Fabulous::Widget::XYChart
 	# Checks
 	# ---------------------------------------------------------------------
 
-	sub _describe ($value) {
-		return 'undef' unless defined $value;
-		return ref($value) . ' reference' if ref $value;
-		return "'$value'";
-	}
-
 	method _checked_labels ($value) {
-		croak ref($self) . ": labels must be an array reference of strings, got " . _describe($value) unless ref $value eq 'ARRAY';
+		croak ref($self) . ": labels must be an array reference of strings, got " . describe($value) unless ref $value eq 'ARRAY';
 		foreach my $label (@$value) {
-			croak ref($self) . ": every label must be a string, got " . _describe($label) unless defined $label && !ref $label;
+			croak ref($self) . ": every label must be a string, got " . describe($label) unless defined $label && !ref $label;
 		}
 		return [@$value];
 	}
 
 	method _checked_stacked ($value) {
 		return 0 unless defined $value;
-		croak ref($self) . ": stacked must be 0, 1 or 'percent', got " . _describe($value) unless !ref $value && $value =~ /\A(?:0|1|percent|)\z/;
+		croak ref($self) . ": stacked must be 0, 1 or 'percent', got " . describe($value) unless !ref $value && $value =~ /\A(?:0|1|percent|)\z/;
 		return $value eq 'percent' ? 'percent' : $value ? 1 : 0;
 	}
 
 	method _checked_axis ( $which, $spec ) {
 		my $owner = ref $self;
-		croak "$owner: $which must be a hash reference, got " . _describe($spec) unless ref $spec eq 'HASH';
+		croak "$owner: $which must be a hash reference, got " . describe($spec) unless ref $spec eq 'HASH';
 		my %axis    = %$spec;
 		my %allowed = map { $_ => 1 } @AXIS_KEYS;
 		my @unknown = grep { !$allowed{$_} } sort keys %axis;
 		croak "$owner: $which does not take @unknown (known: @AXIS_KEYS)" if @unknown;
 		my $types = $which eq 'x_axis' ? \%IS_X_TYPE : \%IS_Y_TYPE;
 		$axis{type} //= $which eq 'x_axis' ? 'auto' : 'linear';
-		croak "$owner: the type of $which must be one of " . join( ', ', sort keys %$types ) . ", got " . _describe( $axis{type} ) unless !ref $axis{type} && $types->{ $axis{type} };
+		croak "$owner: the type of $which must be one of " . join( ', ', sort keys %$types ) . ", got " . describe( $axis{type} ) unless !ref $axis{type} && $types->{ $axis{type} };
 
 		foreach my $key (qw(visible utc nice)) {
 			$axis{$key} = boolean( $self, "$which $key", $axis{$key} ) if exists $axis{$key};
@@ -136,16 +130,16 @@ class Term::Fabulous::Widget::XYChart
 				= !defined $grid || ( !ref $grid && $grid =~ /\A(?:0|)\z/ ) ? 0
 				: !ref $grid && $grid eq '1' ? 'solid'
 				: !ref $grid && $GRID_GLYPHS{$grid} ? $grid
-				: croak "$owner: the grid of $which must be 0, 1, solid, dashed or dotted, got " . _describe($grid);
+				: croak "$owner: the grid of $which must be 0, 1, solid, dashed or dotted, got " . describe($grid);
 		}
-		croak "$owner: the title of $which must be a string, got " . _describe( $axis{title} ) if ref $axis{title};
+		croak "$owner: the title of $which must be a string, got " . describe( $axis{title} ) if ref $axis{title};
 		foreach my $key (qw(ticks)) {
-			croak "$owner: the $key of $which must be a positive integer, got " . _describe( $axis{$key} ) if defined $axis{$key} && ( ref $axis{$key} || $axis{$key} !~ /\A[1-9][0-9]*\z/ );
+			croak "$owner: the $key of $which must be a positive integer, got " . describe( $axis{$key} ) if defined $axis{$key} && ( ref $axis{$key} || $axis{$key} !~ /\A[1-9][0-9]*\z/ );
 		}
 		foreach my $key (qw(step span)) {
-			croak "$owner: the $key of $which must be a positive number, got " . _describe( $axis{$key} ) if defined $axis{$key} && !( defined number_of( $axis{$key} ) && $axis{$key} > 0 );
+			croak "$owner: the $key of $which must be a positive number, got " . describe( $axis{$key} ) if defined $axis{$key} && !( defined number_of( $axis{$key} ) && $axis{$key} > 0 );
 		}
-		croak "$owner: the base of $which must be a number greater than 1, got " . _describe( $axis{base} ) if defined $axis{base} && !( defined number_of( $axis{base} ) && $axis{base} > 1 );
+		croak "$owner: the base of $which must be a number greater than 1, got " . describe( $axis{base} ) if defined $axis{base} && !( defined number_of( $axis{base} ) && $axis{base} > 1 );
 		if ( $axis{type} eq 'time' ) {
 			check_time_format( $owner, "the format of $which", $axis{format} );
 		}
@@ -157,11 +151,11 @@ class Term::Fabulous::Widget::XYChart
 		}
 		if ( $which eq 'y_axis' ) {
 			foreach my $end (qw(min max)) {
-				croak "$owner: the $end of $which must be a number, got " . _describe( $axis{$end} ) if defined $axis{$end} && !defined number_of( $axis{$end} );
+				croak "$owner: the $end of $which must be a number, got " . describe( $axis{$end} ) if defined $axis{$end} && !defined number_of( $axis{$end} );
 			}
 		}
 		foreach my $end (qw(min max)) {
-			croak "$owner: the $end of $which must be a value, got " . _describe( $axis{$end} ) if ref $axis{$end} && !( blessed $axis{$end} && $axis{$end}->can('epoch') );
+			croak "$owner: the $end of $which must be a value, got " . describe( $axis{$end} ) if ref $axis{$end} && !( blessed $axis{$end} && $axis{$end}->can('epoch') );
 		}
 		return \%axis;
 	}
@@ -263,9 +257,9 @@ class Term::Fabulous::Widget::XYChart
 			return $categories->{index}{$label} //= do { push $categories->{labels}->@*, $label; $categories->{labels}->$#* };
 		}
 		if ( $kind eq 'time' ) {
-			return date_epoch($x) // croak ref($self) . ": the x value " . _describe($x) . " of series '$series_name' is not a date (the x axis is a time axis)";
+			return date_epoch($x) // croak ref($self) . ": the x value " . describe($x) . " of series '$series_name' is not a date (the x axis is a time axis)";
 		}
-		return number_of($x) // croak ref($self) . ": the x value " . _describe($x) . " of series '$series_name' is not a number (the x axis is $kind)";
+		return number_of($x) // croak ref($self) . ": the x value " . describe($x) . " of series '$series_name' is not a number (the x axis is $kind)";
 	}
 
 	# The series as the frame draws them: x as numbers, prepared,
@@ -372,6 +366,12 @@ class Term::Fabulous::Widget::XYChart
 		return;
 	}
 
+	# Any point an axis can show later; what the axes cannot show is
+	# found when the frame is prepared.
+	method check_series_points ( $name, $points ) {
+		return;
+	}
+
 	method _check_horizontal () {
 		$self->check_series_type( $_->name, $_->type ) foreach $self->all_series;
 		return;
@@ -431,29 +431,36 @@ class Term::Fabulous::Widget::XYChart
 	}
 
 	# The extent of x values (with the half slot bars need on numeric
-	# axes) and of y values (bases included) over the drawn series.
-	# Values a logarithmic axis cannot show (0 and below) do not count.
+	# axes) and of y values (bases included) over the drawn series. With
+	# a span on the x axis, x runs over the last span up to the newest
+	# point, and only the points in it count for y. Values a logarithmic
+	# axis cannot show (0 and below) do not count.
 	method _extents ( $kind, $prepared ) {
-		my ( @xs, @ys );
+		my ( @xs, @samples );    # a sample: [ x, y, the y it rises from or undef ]
 		foreach my $entry (@$prepared) {
 			foreach my $index ( 0 .. $entry->{xs}->$#* ) {
 				my $y = $entry->{highs}[$index] // next;
 				my $x = $entry->{xs}[$index];
 				next if defined $entry->{from} && $x < $entry->{from};
 				next if defined $entry->{to}   && $x > $entry->{to};
-				push @xs, $x;
-				push @ys, $y, $entry->{lows}[$index] // ();
-				push @xs, $entry->{edges}[$index]->@* if $entry->{edges};
+				push @xs, $x, ( $entry->{edges} ? $entry->{edges}[$index]->@* : () );
+				push @samples, [ $x, $y, $entry->{lows}[$index] ];
 			}
 		}
 		@xs = grep { $_ > 0 } @xs if $kind eq 'log';
-		@ys = grep { $_ > 0 } @ys if $y_axis->{type} eq 'log';
 		my $x_extent = @xs ? [ min(@xs), max(@xs) ] : undef;
-		my $y_extent = @ys ? [ min(@ys), max(@ys) ] : undef;
 		if ( $kind ne 'category' && $x_extent && !grep { $_->{edges} } @$prepared ) {
 			my $spacing = $self->_bar_spacing($prepared);
 			$x_extent = [ $x_extent->[0] - $spacing / 2, $x_extent->[1] + $spacing / 2 ] if $spacing;
 		}
+		my $span = $x_axis->{span};
+		if ( defined $span && $x_extent && $kind ne 'category' ) {
+			$x_extent = [ $x_extent->[1] - $span, $x_extent->[1] ];
+			@samples = grep { $_->[0] >= $x_extent->[0] } @samples;
+		}
+		my @ys = map { ( $_->[1], $_->[2] // () ) } @samples;
+		@ys = grep { $_ > 0 } @ys if $y_axis->{type} eq 'log';
+		my $y_extent = @ys ? [ min(@ys), max(@ys) ] : undef;
 		return ( $x_extent, $y_extent );
 	}
 
@@ -483,11 +490,6 @@ class Term::Fabulous::Widget::XYChart
 		my ( $value_axis, $index_axis ) = ( $y_axis, $x_axis );
 		my $value_shown = _shown( $value_axis, 'visible' );
 		my $index_shown = _shown( $index_axis, 'visible' );
-
-		my $span = $x_axis->{span};
-		if ( defined $span && $x_extent && $kind ne 'category' ) {
-			$x_extent = [ $x_extent->[1] - $span, $x_extent->[1] ];
-		}
 
 		my $fit_value = sub ( $cells, $orientation ) {
 			my %common = ( cells => $cells, orientation => $orientation, measure => $measure, extent => $y_extent, format => $self->value_format );
@@ -1590,8 +1592,8 @@ For a time axis: true labels the ticks in UTC instead of local time.
 =item C<span>
 
 For a numeric or time x axis: how much of x is shown, counted back from
-the last point (C<3600> for the last hour of epoch seconds). See
-L</From, to and span>.
+the last point (C<3600> for the last hour of epoch seconds); older points
+are neither drawn nor counted for the y axis. See L</From, to and span>.
 
 =item C<base>
 
@@ -1810,7 +1812,9 @@ ends interpolated, so a dashed forecast can start exactly where the
 measured data ends. The points outside do not count for the axes.
 C<span> of the x axis shows only the last so much of x (in the unit of
 the axis: seconds for a time axis), counted from the newest point of all
-series, so a live chart scrolls with its data.
+series, so a live chart scrolls with its data; the points that scrolled
+out do not count for the y axis either, so a peak leaves the axis when
+it leaves the plot.
 
 =head2 Live data
 

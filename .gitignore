@@ -36,3 +36,6 @@
 /nytprof/
 /.claude/
 /lsp.log
+
+# Local HTML rendering of the documentation
+/docs.html

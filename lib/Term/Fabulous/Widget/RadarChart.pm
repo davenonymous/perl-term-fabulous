@@ -69,6 +69,21 @@ class Term::Fabulous::Widget::RadarChart
 	method series_default_names () { return @DEFAULTS }
 	method check_series_type ( $name, $type ) { return }
 
+	# A point given by label needs an axis of that name.
+	method check_series_points ( $name, $points ) {
+		$self->_check_axes_of( $labels, $name, $points );
+		return;
+	}
+
+	method _check_axes_of ( $axes, $name, $points ) {
+		my %is_axis = map { $_ => 1 } @$axes;
+		foreach my $point (@$points) {
+			my $x = $point->[0] // next;
+			croak ref($self) . ": series '$name' has a value for '$x', which is not one of the labels" unless $is_axis{$x};
+		}
+		return;
+	}
+
 	method _checked_labels ($value) {
 		croak ref($self) . ": labels must be an array reference of strings" unless ref $value eq 'ARRAY' && !grep { !defined || ref } @$value;
 		return [ map {"$_"} @$value ];
@@ -89,7 +104,6 @@ class Term::Fabulous::Widget::RadarChart
 		return $value;
 	}
 
-	method labels (@new)      { return @new ? [ @{ $self->_set( \$labels, $self->_checked_labels( $new[0] ) ) } ] : [@$labels] }
 	method min (@new)         { return @new ? $self->_set( \$min, $self->_checked_end( min => $new[0] ) ) : $min }
 	method max (@new)         { return @new ? $self->_set( \$max, $self->_checked_end( max => $new[0] ) ) : $max }
 	method grid (@new)        { return @new ? $self->_set( \$grid, $self->_check_choice( grid => $new[0], \%IS_GRID ) ) : $grid }
@@ -99,6 +113,14 @@ class Term::Fabulous::Widget::RadarChart
 	method points (@new)       { return $self->series_default( points       => @new ) }
 	method point (@new)        { return $self->series_default( point        => @new ) }
 	method fill_opacity (@new) { return $self->series_default( fill_opacity => @new ) }
+
+	# New labels must still give every value its axis.
+	method labels (@new) {
+		return [@$labels] unless @new;
+		my $axes = $self->_checked_labels( $new[0] );
+		$self->_check_axes_of( $axes, $_->name, $_->points ) foreach $self->all_series;
+		return [ $self->_set( \$labels, $axes )->@* ];
+	}
 
 	method ticks (@new) {
 		return $ticks unless @new;
@@ -122,7 +144,8 @@ class Term::Fabulous::Widget::RadarChart
 	# ---------------------------------------------------------------------
 
 	# The values of each visible series by axis: a number per label, in
-	# the order of the labels ([ label, value ] points name their axis).
+	# the order of the labels ([ label, value ] points name their axis;
+	# check_series_points saw to it that the label is one).
 	method _prepared () {
 		my %axis_of = map { $labels->[$_] => $_ } 0 .. $#$labels;
 		my @prepared;
@@ -131,7 +154,7 @@ class Term::Fabulous::Widget::RadarChart
 			my $index  = 0;
 			foreach my $point ( $series->points->@* ) {
 				my ( $x, $y ) = @$point;
-				my $axis = defined $x ? $axis_of{$x} // croak ref($self) . ": series '" . $series->name . "' has a value for '$x', which is not one of the labels" : $index;
+				my $axis = defined $x ? $axis_of{$x} : $index;
 				$values[$axis] = $y if $axis < @$labels;
 				$index++;
 			}
@@ -429,10 +452,11 @@ L<Term::Fabulous::Widget::Chart>.
 	data => [ 9, undef, 8 ]                                         # a missing value
 
 A series gives its values in the order of the labels, or as
-C<[ label, value ]> pairs (a label that is not an axis dies). A missing
-value (C<undef>, or a label left out) is drawn at the center. Values
-beyond the labels are ignored. A series' C<transform> runs on its values
-in axis order.
+C<[ label, value ]> pairs; a label that is not an axis dies when the data
+is given (C<add_series>, C<set_data>, C<add_points>, ...), and the
+series keeps the data it had. A missing value (C<undef>, or a label left
+out) is drawn at the center. Values beyond the labels are ignored. A
+series' C<transform> runs on its values in axis order.
 
 =head1 CONSTRUCTOR
 
@@ -490,7 +514,9 @@ default), and transform steps.
 =head1 METHODS
 
 Every parameter has an accessor of the same name (C<labels> returns a
-copy; C<transform> only sets); the series methods of
+copy, and dies without changing anything for labels that would leave a
+value of a series without its axis; C<transform> only sets); the series
+methods of
 L<Term::Fabulous::Role::HasSeries> (C<add_series>, C<set_series>,
 C<set_data>, C<add_points>, C<remove_series>, C<hide_series>, ...); and
 C<hovered>, C<revision> and C<effective_background> from

@@ -74,4 +74,6 @@ subtest 'sizing' => sub {
 my $owner = bless {}, 'My::Widget';
 like dies { $check{string}->( $owner, label => undef ) }, qr/\AMy::Widget: label must be a string/, 'an object owner is named by its class';
 
+is [ map { Term::Fabulous::Check::describe($_) } undef, 'nope', 12, [], {}, \'x' ], [ 'undef', "'nope'", "'12'", 'an ARRAY reference', 'a HASH reference', 'a SCALAR reference' ], 'describe names values as the messages do';
+
 done_testing;

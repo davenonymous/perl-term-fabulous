@@ -22,7 +22,7 @@ class Term::Fabulous::Widget::Chart
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(max min sum0);
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean describe);
 	use Term::Fabulous::Chart::Palette qw(palette_colors is_palette_name palette_names chart_color mix_rgb is_light_rgb ink_colors);
 	use Term::Fabulous::Chart::Surface;
 	use Term::Fabulous::Event::SeriesHover;
@@ -87,14 +87,8 @@ class Term::Fabulous::Widget::Chart
 		);
 	}
 
-	sub _describe ($value) {
-		return 'undef' unless defined $value;
-		return ref($value) . ' reference' if ref $value;
-		return "'$value'";
-	}
-
 	method _fail ( $name, $expected, $value ) {
-		croak ref($self) . ": $name must be $expected, got " . _describe($value);
+		croak ref($self) . ": $name must be $expected, got " . describe($value);
 	}
 
 	method _check_title ( $name, $value ) {
@@ -227,8 +221,8 @@ class Term::Fabulous::Widget::Chart
 		my @entries  = $self->legend_entries($look);
 		my $position = $legend eq 'auto' ? ( @entries >= 2 ? $self->default_legend_position : 'none' ) : $legend;
 		my $layout;
-		if ( @entries && $position ne 'none' ) {
-			$layout = $self->_legend_layout( \@entries, $position, $left, $top, $right, $bottom );
+		$layout = $self->_legend_layout( \@entries, $position, $left, $top, $right, $bottom ) if @entries && $position ne 'none';
+		if ($layout) {
 			( $left, $top, $right, $bottom ) = $layout->{plot}->@*;
 			$self->_paint_legend( $surface, $look, $layout ) unless $position eq 'bottom';
 		}
@@ -289,7 +283,8 @@ class Term::Fabulous::Widget::Chart
 
 	# Lays the legend out at one side of the area: where its entries go
 	# and the area left for the plot. Entries that do not fit are left
-	# out, and the last row (or line) says how many.
+	# out, and the last row (or line) says how many. Nothing when a row
+	# could not show even one entry beside the count.
 	method _legend_layout ( $entries, $position, $left, $top, $right, $bottom ) {
 		my $width = $right - $left;
 		$entries = _joined_values( $entries, $position eq 'left' || $position eq 'right' );
@@ -314,11 +309,15 @@ class Term::Fabulous::Widget::Chart
 					$hidden++;
 				}
 
-				# The one entry left is cut short rather than the count.
+				# The one entry left is cut short rather than the count; when
+				# that leaves it less than a letter of its label, the legend
+				# is left out.
 				if ( !$fits->() ) {
-					my $item = $last->{items}[0];
-					$item->[1] = max( 1, $width - LEGEND_GAP - length _more_text($hidden) );
-					$last->{used} = $item->[1];
+					my $item    = $last->{items}[0];
+					my $columns = $width - LEGEND_GAP - length _more_text($hidden);
+					return undef if $columns < $SYMBOL_COLUMNS{ $item->[0]{symbol} } + 3;
+					$item->[1]    = $columns;
+					$last->{used} = $columns;
 				}
 				$more = { text => _more_text($hidden), x => $left + $last->{used} + LEGEND_GAP };
 			}
@@ -603,8 +602,9 @@ with axes put it at the C<top>, round charts on the C<right>. A legend at
 the top or bottom wraps into more rows when the entries do not fit in one
 (up to a third of the chart's height); a legend beside the plot lists one
 entry per row and cuts long labels. When not all entries fit, the legend
-ends with C<+N more>. A legend at the bottom sits right below the plot,
-also when the axis ticks leave rows free.
+ends with C<+N more>; a chart too narrow to show even one entry beside
+that count (about 15 columns) has no legend. A legend at the bottom sits
+right below the plot, also when the axis ticks leave rows free.
 
 =head2 Colors and themes
 

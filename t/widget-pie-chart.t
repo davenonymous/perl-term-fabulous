@@ -112,6 +112,11 @@ subtest 'gaps between the slices' => sub {
 	like $lines[5], qr/\A +\x{259D}\x{2580}+\x{2598}\x{259D}\x{2580}+\x{2598}\z/, 'half a row free between the upper and the lower slices';
 	is scalar( grep { defined bg_at( $chart, 14, $_ ) || defined bg_at( $chart, 15, $_ ) } 0 .. 11 ), 0, 'the gap has no color';
 
+	$chart = sized( 'Term::Fabulous::Widget::PieChart', 30, 12, gap => 1, hole => 0.9, legend => 'none', slice_labels => 'none', data => [ [ A => 1 ], [ B => 1 ], [ C => 1 ], [ D => 1 ] ] );
+	@lines = draw($chart);
+	like $lines[0], qr/\A +\x{2597}\x{2584}+\x{2596}\x{2597}\x{2584}+\x{2596}\z/, 'a thin ring keeps the gaps between its arcs';
+	like $lines[5], qr/\A +\x{259D}\x{2580} +4 +\x{2580}\x{2598}\z/, 'and is a column thick at the sides, around the total';
+
 	$chart = sized( 'Term::Fabulous::Widget::PieChart', 30, 5, data => [ map { [ "Slice $_" => $_ ] } 1 .. 6 ] );
 	like( ( draw($chart) )[4], qr/\A.* \+2 more\z/, 'a legend beside the plot counts the entries it has no room for' );
 };
@@ -147,7 +152,7 @@ subtest 'invalid input dies' => sub {
 		[ sub { pie( data => [ [ A => 1 ], [ A => 2 ] ] ) },            qr/two slices are labeled 'A'/,                                      'a label twice' ],
 		[ sub { pie( data => [ { label => 'A', value => 1, size => 2 } ] ) }, qr/slice 0 takes only label, value and color, got size/,    'an unknown key' ],
 		[ sub { pie( data => [ ['A'] ] ) },                             qr/slice 0 must be \[ label, value \], got an array of 1 values/,    'a pair of one' ],
-		[ sub { pie( data => { A => 1 } ) },                            qr/data must be an array reference, got HASH reference/,            'data that is no array' ],
+		[ sub { pie( data => { A => 1 } ) },                            qr/data must be an array reference, got a HASH reference/,            'data that is no array' ],
 		[ sub { pie( data => [ [ '', 1 ] ] ) },                         qr/a slice label must be a non-empty string/,                        'an empty label' ],
 		[ sub { $chart->add_slice( A => 1 ) },                          qr/a slice labeled 'A' exists already/,                              'add_slice of a known label' ],
 		[ sub { $chart->remove_slice('Z') },                            qr/no slice labeled 'Z'/,                                            'remove_slice of an unknown label' ],

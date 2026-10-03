@@ -30,11 +30,13 @@ $root->add_child(
 	)
 );
 
+# Text has no color of its own in a report: give it one, as the chart
+# gives its labels.
 my $line = Term::Fabulous::Widget::Box->new( layout => { child_gap => 1 } );
 $line->add_child(
-	Term::Fabulous::Widget::Text->new( text => 'Load, last 18 hours:' ),
+	Term::Fabulous::Widget::Text->new( text => 'Load, last 18 hours:', text_color => [ 230, 230, 230, 255 ] ),
 	Term::Fabulous::Widget::Sparkline->new( type => 'bar', values => \@load, layout => { sizing => { width => sizing_fixed(18) } } ),
-	Term::Fabulous::Widget::Text->new( text => sprintf( 'now %.1f', $load[-1] ) ),
+	Term::Fabulous::Widget::Text->new( text => sprintf( 'now %.1f', $load[-1] ), text_color => [ 230, 230, 230, 255 ] ),
 );
 $root->add_child($line);
 

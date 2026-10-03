@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing);
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing describe);
 
 use Carp qw(croak);
 use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
@@ -23,14 +23,16 @@ sub _owner_name ($owner) {
 	return ref $owner || $owner;
 }
 
-sub _describe ($value) {
+# How the messages name a value: undef, a reference by its type, or the
+# value quoted.
+sub describe ($value) {
 	return 'undef' unless defined $value;
 	return ( ref($value) =~ /\A[AEIOU]/ ? 'an ' : 'a ' ) . ref($value) . ' reference' if ref $value;
 	return "'$value'";
 }
 
 sub _fail ( $owner, $name, $expected, $value, $detail = undef ) {
-	croak _owner_name($owner) . ": $name must be $expected, got " . _describe($value) . ( defined $detail ? " ($detail)" : '' );
+	croak _owner_name($owner) . ": $name must be $expected, got " . describe($value) . ( defined $detail ? " ($detail)" : '' );
 }
 
 sub _is_plain ($value) {
@@ -104,7 +106,7 @@ sub sizing ( $owner, $name, $value ) {
 		return {%$value};
 	}
 	my $spec = $value // '';
-	croak _owner_name($owner) . ": invalid $name " . _describe($value) . " (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)"
+	croak _owner_name($owner) . ": invalid $name " . describe($value) . " (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)"
 		if ref $spec;
 	return sizing_grow() if $spec eq 'grow';
 	return sizing_fit()  if $spec eq 'fit';
@@ -226,6 +228,15 @@ C<NAME percentage must be in 0..100, got 'SPEC'>.
 Like L</color>, and also a packed C<0xRRGGBB> integer, opaque, as the
 cells of a L<Term::Fabulous::Widget::Canvas> take it. Returns
 C<[r, g, b, a]>.
+
+=head2 describe
+
+	croak ref($self) . ": a slice label must be a string, got " . describe($label);
+
+Not a check: the words the messages of this module use for a value, for
+messages of your own. C<undef> for an undefined value, C<an ARRAY
+reference>, C<a HASH reference> and so on for references, and the value
+in single quotes otherwise (C<'nope'>).
 
 =head1 SEE ALSO
 

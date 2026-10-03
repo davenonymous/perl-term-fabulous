@@ -75,6 +75,7 @@ KDL
 
 	my $bars = chart_from( BarChart => 'stacked "percent"; horizontal #true; bar_width 0.5; series "x" { data 1 2; }' );
 	is [ $bars->stacked, $bars->horizontal, $bars->bar_width ], [ 'percent', 1, 0.5 ], 'bar settings';
+	is chart_from( BarChart => 'stacked #true; series "x" { data 1 2; }' )->stacked, 1, 'stacked takes a KDL boolean';
 };
 
 subtest 'a layout draws what the same Perl code draws' => sub {

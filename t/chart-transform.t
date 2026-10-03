@@ -111,9 +111,9 @@ subtest 'invalid steps die' => sub {
 		[ 'a resample interval of 0',        [ [ 'resample', 0 ] ],               qr/needs a positive interval/ ],
 		[ 'an unknown aggregate',            [ [ 'resample', 10, 'median' ] ],    qr/needs an aggregate of mean, sum, min, max, first, last or count/ ],
 		[ 'downsampling to two points',      [ [ 'downsample', 2 ] ],             qr/needs a number of points of at least 3/ ],
-		[ 'a reference as argument',         [ [ 'normalize', [0] ] ],            qr/the arguments of the transform step 'normalize' must be plain values, got ARRAY reference/ ],
+		[ 'a reference as argument',         [ [ 'normalize', [0] ] ],            qr/the arguments of the transform step 'normalize' must be plain values, got an ARRAY reference/ ],
 		[ 'a step with arguments as a flat list', [ 'moving_average', 3 ], qr/\AChart: transform is a list of steps; write \[ \[ 'moving_average', \.\.\. \] \] for one step with arguments/ ],
-		[ 'a hash as step',                  [ { name => 'abs' } ],               qr/got HASH reference/ ],
+		[ 'a hash as step',                  [ { name => 'abs' } ],               qr/got a HASH reference/ ],
 	);
 	foreach my $case (@cases) {
 		my ( $name, $spec, $error ) = @$case;

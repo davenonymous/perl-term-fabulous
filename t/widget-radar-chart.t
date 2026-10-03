@@ -42,6 +42,9 @@ subtest 'labels around the web, ring values up the first spoke' => sub {
 	@lines = draw( sized( 'Term::Fabulous::Widget::RadarChart', 24, 9, labels => [@LABELS], start_angle => 90, max => 1000, ticks => 5, series => [ { name => 'X', data => [ 400, 300, 500, 200 ] } ] ) );
 	unlike join( "\n", @lines ), qr/[0-9]{5}/, 'ring values that would touch are left out';
 	like join( "\n", @lines ), qr/\b1000\b/, 'the outer ring keeps its value';
+	my %eight = ( labels => [ map { "L$_" } 1 .. 8 ], max => 100, ticks => 2, series => [ { name => 'X', data => [ (50) x 8 ] } ] );
+	like join( "\n", draw( sized( 'Term::Fabulous::Widget::RadarChart', 30, 10, %eight, format => '%.0f' ) ) ), qr/\b100\b/, 'a ring value fits beside the label of the next axis';
+	unlike join( "\n", draw( sized( 'Term::Fabulous::Widget::RadarChart', 30, 10, %eight, format => '%.2f' ) ) ), qr/100\.00/, 'a wider one that would touch the label is left out';
 };
 
 subtest 'series' => sub {
@@ -59,8 +62,10 @@ subtest 'series' => sub {
 	is filled($chart), 0, 'a line series is not filled';
 	like $lines[7], qr/\x{2022}\S*Power\z/, 'a value given by label is on its axis';
 
-	$chart->set_data( Y => [ [ Speed => 1 ], [ Weight => 2 ] ] );
-	like dies { draw($chart) }, qr/series 'Y' has a value for 'Weight', which is not one of the labels/, 'a label the chart does not have dies';
+	like dies { $chart->set_data( Y => [ [ Speed => 1 ], [ Weight => 2 ] ] ) }, qr/series 'Y' has a value for 'Weight', which is not one of the labels/, 'a label the chart does not have dies at once';
+	is $chart->series('Y')->{data}, [ [ Power => 5 ] ], 'and the data is as it was';
+	like dies { $chart->labels( [qw(Speed Range Cost)] ) }, qr/series 'Y' has a value for 'Power', which is not one of the labels/, 'labels that take the axis from a value die';
+	is $chart->labels, \@LABELS, 'and the labels are as they were';
 };
 
 subtest 'grids' => sub {
@@ -82,6 +87,7 @@ subtest 'fewer than three labels draw no plot' => sub {
 
 subtest 'invalid input dies' => sub {
 	like dies { radar( series => [ { name => 'X', type => 'bar' } ] ) }, qr/draws series of the types area, line, not 'bar'/, 'a bar series';
+	like dies { radar( series => [ { name => 'X', data => [ [ Weight => 1 ] ] } ] ) }, qr/series 'X' has a value for 'Weight', which is not one of the labels/, 'a value for a label the chart does not have';
 	like dies { radar( grid => 'square' ) },                            qr/grid must be circle, none, polygon, got 'square'/,   'an unknown grid';
 	like dies { radar( min => 'low' ) },                                qr/min must be a number or undef, got 'low'/,           'a min that is no number';
 	like dies { radar( ticks => 0 ) },                                  qr/ticks must be a positive integer or undef, got '0'/, 'zero ticks';

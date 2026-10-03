@@ -37,7 +37,8 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 
 # A column whose cells are sparklines of the row's prices, green or red
-# by the change over the month.
+# by the change over the month. Prices are far from 0, so the areas span
+# the prices instead of growing from 0.
 my $table = Term::Fabulous::Widget::Table->new(
 	id           => 'stocks',
 	row_id       => 'symbol',
@@ -59,7 +60,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 			filterable => 0,
 			cell       => sub ($cell) {
 				my $row = $cell->{row};
-				return Term::Fabulous::Widget::Sparkline->new( type => 'area', values => $row->{prices}, color => $row->{change} >= 0 ? '#1baf7a' : '#e66767' );
+				return Term::Fabulous::Widget::Sparkline->new( type => 'area', zero => 0, values => $row->{prices}, color => $row->{change} >= 0 ? '#1baf7a' : '#e66767' );
 			},
 		},
 	],

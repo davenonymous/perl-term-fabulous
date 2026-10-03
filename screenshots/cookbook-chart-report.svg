@@ -64,8 +64,8 @@
 <text x="39" y="164" textLength="36" fill="#989898">/var</text>
 <text x="309" y="164" textLength="18" fill="#d1d1d1">46</text>
 <text x="84" y="218" textLength="468" fill="#989898">0        20        40        60        80        100</text>
-<text x="30" y="254" textLength="180" fill="#000000">Load, last 18 hours:</text>
-<text x="390" y="254" textLength="63" fill="#000000">now 0.8</text>
+<text x="30" y="254" textLength="180" fill="#e6e6e6">Load, last 18 hours:</text>
+<text x="390" y="254" textLength="63" fill="#e6e6e6">now 0.8</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

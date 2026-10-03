@@ -18,8 +18,9 @@ class Term::Fabulous::Widget::Sparkline
 	use Carp qw(croak);
 	use Clay::XS qw(sizing_fixed sizing_grow);
 	use List::Util ();
+	use Term::Fabulous::Check qw(boolean);
 
-	use constant { SERIES => 'values', NATURAL_WIDTH => 20 };
+	use constant SERIES => 'values';
 
 	my %IS_TYPE = map { $_ => 1 } qw(line area bar);
 
@@ -28,12 +29,14 @@ class Term::Fabulous::Widget::Sparkline
 	field $color  :param = undef;
 	field $min    :param = undef;
 	field $max    :param = undef;
+	field $zero   :param = undef;    # undef: by type
 
 	ADJUST {
 		croak ref($self) . ": type must be line, area or bar, got " . ( $type // 'undef' ) unless defined $type && !ref $type && $IS_TYPE{$type};
+		$zero = $self->_checked_zero($zero);
 		$self->legend('none');
 		$self->x_axis( { visible => 0 } );
-		$self->_set_value_axis( $type, $min, $max );
+		$self->_set_value_axis( $type, $min, $max, $zero );
 		$self->add_series( { name => SERIES, type => $type, data => $values, ( defined $color ? ( color => $color ) : () ) } );
 		$values = undef;
 	}
@@ -48,7 +51,7 @@ class Term::Fabulous::Widget::Sparkline
 			my $count = $entry->{xs}->@*;
 			next if $count <= $width;
 			my @kept = $count - $width .. $count - 1;
-			$entry->{$_} = [ @{ $entry->{$_} }[@kept] ] foreach grep { $entry->{$_} } qw(ys lows highs);
+			$entry->{$_} = [ $entry->{$_}->@[@kept] ] foreach grep { $entry->{$_} } qw(ys lows highs);
 			$entry->{xs} = [ 0 .. $#kept ];
 		}
 		my $shown = List::Util::min( scalar @$categories, $width );
@@ -57,10 +60,15 @@ class Term::Fabulous::Widget::Sparkline
 	method value_axis_edges :override () { return 1 }
 	method draws_baseline :override ()   { return 0 }
 
+	method _checked_zero ($value) {
+		return defined $value ? boolean( $self, zero => $value ) : undef;
+	}
+
 	# The value axis for a type and its ends; dies (changing nothing) for
-	# ends that are no numbers.
-	method _set_value_axis ( $kind, $low, $high ) {
-		$self->y_axis( { visible => 0, grid => 0, zero => $kind eq 'line' ? 0 : 1, ( defined $low ? ( min => $low ) : () ), ( defined $high ? ( max => $high ) : () ) } );
+	# ends that are no numbers. Areas and bars include zero unless told
+	# otherwise, lines never.
+	method _set_value_axis ( $kind, $low, $high, $from_zero ) {
+		$self->y_axis( { visible => 0, grid => 0, zero => $from_zero // ( $kind eq 'line' ? 0 : 1 ), ( defined $low ? ( min => $low ) : () ), ( defined $high ? ( max => $high ) : () ) } );
 		return;
 	}
 
@@ -73,7 +81,7 @@ class Term::Fabulous::Widget::Sparkline
 	}
 
 	method values (@new) {
-		return [ @{ $self->series(SERIES)->{data} } ] unless @new;
+		return [ $self->series(SERIES)->{data}->@* ] unless @new;
 		$self->set_data( SERIES, $new[0] );
 		return $self->values;
 	}
@@ -88,7 +96,7 @@ class Term::Fabulous::Widget::Sparkline
 		return $type unless @new;
 		croak ref($self) . ": type must be line, area or bar, got " . ( $new[0] // 'undef' ) unless defined $new[0] && !ref $new[0] && $IS_TYPE{ $new[0] };
 		$self->check_series_type( SERIES, $new[0] );
-		$self->_set_value_axis( $new[0], $min, $max );
+		$self->_set_value_axis( $new[0], $min, $max, $zero );
 		$self->set_series( SERIES, type => $new[0] );
 		$type = $new[0];
 		return $type;
@@ -103,20 +111,28 @@ class Term::Fabulous::Widget::Sparkline
 
 	method min (@new) {
 		return $min unless @new;
-		$self->_set_value_axis( $type, $new[0], $max );
+		$self->_set_value_axis( $type, $new[0], $max, $zero );
 		$min = $new[0];
 		return $min;
 	}
 
 	method max (@new) {
 		return $max unless @new;
-		$self->_set_value_axis( $type, $min, $new[0] );
+		$self->_set_value_axis( $type, $min, $new[0], $zero );
 		$max = $new[0];
 		return $max;
 	}
 
+	method zero (@new) {
+		return $zero unless @new;
+		my $from_zero = $self->_checked_zero( $new[0] );
+		$self->_set_value_axis( $type, $min, $max, $from_zero );
+		$zero = $from_zero;
+		return $zero;
+	}
+
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, type => 'scalar', color => 'color', min => 'scalar', max => 'scalar', values => \&_parse_values );
+		return ( $class->SUPER::layout_properties, type => 'scalar', color => 'color', min => 'scalar', max => 'scalar', zero => 'boolean', values => \&_parse_values );
 	}
 
 	# values 3 5 2 8
@@ -172,7 +188,8 @@ blocks; when there are more values than columns, the newest that fit).
 The row covers the range from the smallest to the largest value, so the
 shape fills the height; C<min> and C<max> fix the range instead, so
 several sparklines compare (and a bar sparkline grows from C<min>). A
-line uses the whole range; areas and bars include zero.
+line uses the whole range; areas and bars include zero unless C<zero>
+says otherwise.
 
 A Sparkline is a L<Term::Fabulous::Widget::XYChart> with one series
 named C<values>, so its options apply: C<curve>, C<marker>,
@@ -210,6 +227,14 @@ The color of the series. Default: the first palette color.
 Numbers: the fixed ends of the value range. Default: C<undef>, from the
 data.
 
+=item C<zero>
+
+A boolean: whether the range includes 0. Default: C<undef>, which means
+true for C<area> and C<bar> (they grow from 0) and false for C<line>.
+With C<< zero =E<gt> 0 >>, an area or bar sparkline of values far from 0
+(prices) spends the row on their changes, and its bars grow from the
+smallest value.
+
 =back
 
 =head1 METHODS
@@ -227,7 +252,7 @@ Reads (a copy) or replaces the values.
 
 Appends values; with C<max_points>, the oldest are dropped.
 
-=head2 type, color, min, max
+=head2 type, color, min, max, zero
 
 Read and set the parameters; an invalid value dies and changes nothing.
 
@@ -246,8 +271,8 @@ Everything else: L<Term::Fabulous::Widget::XYChart/METHODS>.
 		values 12 15 11 18 16
 	}
 
-C<type>, C<color>, C<min>, C<max> as the parameters, C<values> with the
-numbers as its arguments, and the properties of
+C<type>, C<color>, C<min>, C<max>, C<zero> as the parameters, C<values>
+with the numbers as its arguments, and the properties of
 L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 
 =head1 SEE ALSO
