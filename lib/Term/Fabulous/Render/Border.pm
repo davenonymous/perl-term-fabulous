@@ -9,16 +9,17 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Render::Clip;
-
-role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
+role Term::Fabulous::Render::Border {
 	use List::Util qw(min max);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);    # checks truecolor support first
 	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_REVERSE);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 
-	method set_cell;
+	# The cells the command being painted may touch (Term::Fabulous::Render).
+	method clip_rect;
+	# The cell target the frame is painted into (Term::Fabulous::Render).
+	method cell_target;
 
 	# Attributes for a border cell from its location code, following
 	# Textual's get_box styles: 0 = border color on the widget's background,
@@ -57,6 +58,7 @@ role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
 		my $border_attr = color_attr( clay_color( $data->{color} ) );
 		my $blank       = Term::Fabulous::Enum::BorderStyle->Blank;
+		my $target      = $self->cell_target;
 
 		my $shade_at = sub ( $x, $y ) {
 			return TB_DEFAULT if $x < 0 || $y < 0;
@@ -66,7 +68,7 @@ role Term::Fabulous::Render::Border :does(Term::Fabulous::Render::Clip) {
 		my $paint = sub ( $x, $y, $glyph, $location, $outer_x, $outer_y ) {
 			return if $y < $clip_y0 || $y >= $clip_y1;
 			my ( $fg, $bg ) = _location_attrs( $location, $border_attr, $shade_at->( $x, $y ), $shade_at->( $outer_x, $outer_y ) );
-			$self->set_cell( $x, $y, $glyph, $fg, $bg );
+			$target->set_cell( $x, $y, $glyph, $fg, $bg );
 		};
 		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations ) {
 			foreach my $x ( max( $x0, $clip_x0 ) .. min( $last_x, $clip_x1 - 1 ) ) {
@@ -184,8 +186,8 @@ during the frame.
 =head1 REQUIRED METHODS
 
 The consuming class provides C<set_cell> (from a cell target, see
-L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height> (for
-L<Term::Fabulous::Render::Clip>).
+L<Term::Fabulous::Render/CELL TARGET>) and
+C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 

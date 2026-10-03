@@ -1414,10 +1414,16 @@ example to start with the cursor in the first field.
 To take a widget out of the focus order, pass C<can_focus =E<gt> 0> to
 C<new> (or C<can_focus #false> in a layout file), or call
 C<< $widget->can_focus(0) >> later; Tab skips it, a click does not focus
-it, and C<set_focused_widget> dies for it. Disabled inputs cannot take
-the focus: while C<< $input->disabled(1) >> is in force, C<can_focus>
-reads 0. Once the input is enabled again it reads what it was last set
-to, also when that was set while the input was disabled.
+it, and C<set_focused_widget> dies for it. A widget that has the focus
+when it stops being able to take it loses the focus at once (C<OnBlur>).
+Disabled widgets (the inputs and Buttons, through
+L<Clay::UI::Role::Interaction::Disableable>) cannot take the focus:
+while C<< $widget->disabled(1) >> is in force, C<can_focus> reads 0, and
+Clay::UI does not press them either. Once the widget is enabled again
+C<can_focus> reads what it was last set to, also when that was set
+while the widget was disabled. To ask whether a widget can take the
+focus now, ask the tracker:
+C<< $ui->interaction->can_take_focus($widget) >>.
 
 =head2 Reacting to focus changes
 
@@ -1798,7 +1804,7 @@ C<< $event->target >> is the input that changed.
 =item *
 
 C<disabled> greys the input out: it ignores keys and clicks and cannot
-take the focus.
+take the focus. Buttons have C<disabled> too.
 
 =item *
 
@@ -1942,10 +1948,11 @@ message that names the problem.
 
 =back
 
-Properties are applied in the order they appear. When one property
-depends on another, give it after the other: a dropdown's C<value> after
-its C<options>, a slider's C<value> after its C<min> and C<max>, a text
-field's C<value> after its C<max_length>.
+Properties are applied after the widget was constructed, in the order
+they appear, except that values depending on each other are applied
+together wherever they stand: a dropdown's C<options> before its
+C<value>, a slider's C<min>, C<max> and C<step> as one range before its
+C<value>, a text field's C<max_length> before its C<value>.
 
 Text in a KDL layout is a character string and is passed to Text widgets
 as is.
@@ -2103,7 +2110,7 @@ for a widget that draws itself cell by cell.
 =item Derive from L<Term::Fabulous::Widget::Input>
 
 for an interactive widget: you get focus handling, colors, the disabled
-state, C<Change> events and automatic repainting. You write
+state, C<Change> events and painting at the right time. You write
 C<natural_size> (how many cells it needs) and C<paint> (how it looks),
 and handle keys and clicks in C<handle_key>, C<handle_mouse> and
 C<activate>. See the SUBCLASS INTERFACE of
@@ -2113,12 +2120,13 @@ L<Term::Fabulous::Widget::Input>.
 
 Term::Fabulous draws a frame only when something changed. A widget that
 keeps state of its own, which its drawing or its size depends on, must
-say so whenever that state changes: an Input subclass calls
-C<< $self->repaint >>, a Canvas subclass draws with the canvas methods
-(which mark it changed), and any other widget calls
-C<< $self->mark_changed >> (see
-L<Clay::UI::Role::Core::Element/mark_changed>). Otherwise a change made
-from a timer only shows when something else causes a frame.
+say so whenever that state changes: it calls C<< $self->mark_changed >>
+(see L<Clay::UI::Role::Core::Element/mark_changed>), and a Canvas
+subclass that draws with the canvas methods gets that from them. An
+Input subclass does not paint in its setters: the frame that
+C<mark_changed> makes due calls its C<paint> (see
+L<Term::Fabulous::Widget::Input/Painting>). Otherwise a change made from
+a timer only shows when something else causes a frame.
 
 A minimal container widget:
 
@@ -2146,81 +2154,82 @@ A minimal container widget:
 
 A widget class can be used in KDL layouts once it composes
 L<Term::Fabulous::Role::CanParseLayout>. Classes derived from Box already
-do; they list the properties a layout may set in C<layout_properties>.
+do; they declare the properties a layout may set, and how each is read,
+in C<layout_properties>. A layout applies them after the widget was
+constructed, through the same accessors a program calls.
 See L<Term::Fabulous::Role::CanParseLayout> and
 L<Term::Fabulous::Cookbook/Make a widget usable from KDL>.
 
 =head1 TESTING
 
-You can test widgets and whole screens without a terminal:
+You can test widgets and whole programs without a terminal:
 
 =over
 
 =item *
 
-Lay out and draw the tree with L<Term::Fabulous::Static> and compare
-the lines it returns.
+Run the program's widget tree on a L<Term::Fabulous::Terminal::Memory>,
+a terminal in memory. Queue keys, clicks and resizes on it, let
+L<Term::Fabulous/step> handle them as L<Term::Fabulous/run> would, and
+compare what the screen shows.
 
 =item *
 
-Send events by building them yourself and calling C<fire_event> on the
-widget that would receive them.
+Lay out and draw a tree once with L<Term::Fabulous::Static> and compare
+the lines it returns, for output that takes no input.
 
 =back
 
 	use Test2::V0;
-	use Term::Fabulous::Termbox qw(TB_KEY_ARROW_LEFT);
-	use Term::Fabulous::Event::KeyPress;
-	use Term::Fabulous::Static;
+	use Term::Fabulous;
+	use Term::Fabulous::Terminal::Memory;
 
-	my $page = Term::Fabulous::Static->new( root => $root, width => 40, height => 10 );
-	$page->render_lines;    # lay out once, so inputs know their size
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 40, height => 10 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 40, height => 10, terminal => $terminal );
+	$ui->step;    # opens the terminal, fires Start, draws the first frame
 
-	# Type "hi" into the field, then press Left.
-	$field->fire_event( Term::Fabulous::Event::KeyPress->new( key => 0, char => ord $_, modifiers => 0 ) ) foreach qw(h i);
-	$field->fire_event( Term::Fabulous::Event::KeyPress->new( key => TB_KEY_ARROW_LEFT, char => 0, modifiers => 0 ) );
+	# Focus the field, type "hi", press Left, click the OK button.
+	$terminal->press_key('Tab')->type_text('hi')->press_key('Left');
+	$terminal->click( 2, 4 );
+	$ui->step;
 
 	is $field->value, 'hi', 'typed text';
-	like [ $page->render_lines( colors => 0 ) ]->[0], qr/hi/, 'the text is shown';
+	like [ $terminal->lines ]->[0], qr/hi/, 'the text is shown';
+	ok $saved, 'the click activated the button';
 
 	done_testing;
 
-An input needs to have been laid out at least once (C<render_lines>)
-before it paints anything, because its size comes from the layout.
+The input goes through everything real input goes through: keys go to
+the focused widget, C<Tab> and C<Shift+Tab> move the focus, a click is
+hit-tested against the last frame, focuses what it hits and presses and
+releases it (C<OnPress>, C<OnRelease>), the wheel scrolls the scroll
+box under the pointer, and a resize fires C<Resize>. C<step> draws
+every frame that is due, so after it the screen and the widgets are in
+the state a user would see. It returns the number of frames it drew,
+which shows whether something changed.
 
-Events fired by hand go only through the widgets and their listeners.
-What L<Term::Fabulous> does around real input does not happen: C<Tab>
-does not move the focus, a click does not focus anything, C<Ctrl+C> does
-not stop anything, the wheel does not scroll, and C<OnPress> and
-C<OnRelease> are not fired for C<Mouse> events. Do these steps yourself
-when a test needs them:
+A few things differ from C<run>, because there is no event loop:
+C<Ctrl+C> fires its C<KeyPress> but stops nothing, timers you added to
+the loop do not run (call the code they would run from the test), and a
+resize is applied at once instead of after the size settled. Mouse
+events are dropped when the program runs without the mouse (as a real
+terminal would not send them), for example in inline mode.
 
-=over
+To test the key handling of a single widget in isolation, you can fire
+events at it directly with C<fire_event>. They go only through the
+widget and its listeners: nothing is focused, Tab does nothing, and a
+L<Term::Fabulous::Event::Mouse> fired this way is not hit-tested and
+does not press anything.
 
-=item *
+	use Term::Fabulous::Event::KeyPress;
+	use Term::Fabulous::Termbox::Event;
 
-To focus a widget, call C<< $page->interaction->set_focused_widget($field) >>.
+	my %fields = Term::Fabulous::Event::KeyPress->fields_for_name('Ctrl+Left');
+	$field->fire_event( Term::Fabulous::Event::KeyPress->of( Term::Fabulous::Termbox::Event->new(%fields) ) );
 
-=item *
-
-To click a Button or an input widget, fire C<OnRelease> at it: that is
-the event they react to (a Checkbox toggles, a Button runs its
-C<OnRelease> listeners). The coordinates do not matter to them.
-
-	use Clay::UI::Events::OnRelease;
-
-	$checkbox->fire_event( Clay::UI::Events::OnRelease->new( x => 0.5, y => 0.5 ) );
-	ok $checkbox->checked, 'a click checks the box';
-
-=item *
-
-Fire a L<Term::Fabulous::Event::Mouse> only to test C<Mouse> listeners,
-such as your own canvas painting or a text field's cursor placement:
-C<< Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_LEFT, x => $column, y => $row ) >>,
-with viewport coordinates (C<< $widget->content_origin >> gives the cell
-where a canvas or input starts).
-
-=back
+An input needs to have been laid out at least once (a C<step>, or
+C<render_lines> of L<Term::Fabulous::Static>) before it paints
+anything, because its size comes from the layout.
 
 The Cookbook has a complete test file:
 L<Term::Fabulous::Cookbook/Test a widget without a terminal>.
@@ -2283,7 +2292,7 @@ and the wheel still work. See L</What the terminal reports>.
 
 Term::Fabulous draws a frame only when it knows that something changed.
 The widget methods tell it; state a widget of your own keeps itself does
-not. Call C<repaint> (inputs) or C<mark_changed> after changing it, or
+not. Call C<mark_changed> on the widget after changing it, or
 C<< $ui->invalidate >>. See L</WRITING YOUR OWN WIDGETS>.
 
 =head2 Unrecognised parameters for ... constructor

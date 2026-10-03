@@ -70,11 +70,21 @@ subtest 'focus is shown on the cursor button' => sub {
 	my ( $group, $buttons, $ui ) = radio_group( value => 'm' );
 	my $focus = $buttons->[1]->color_attr( $buttons->[1]->focus_background_color );
 	$ui->interaction->set_focused_widget($group);
-	is [ map { $_->cell( 0, 0 )->[2] } @$buttons ], [ undef, $focus, undef ], 'the selected button shows the focus';
+	is [ map { shown($_)->cell( 0, 0 )->[2] } @$buttons ], [ undef, $focus, undef ], 'the selected button shows the focus';
 
 	$group->disabled(1);
 	ok !$group->is_focused, 'disabling the group removes its focus';
 	ok !$buttons->[0]->is_enabled, 'its buttons are disabled with it';
+};
+
+subtest 'the focus follows the cursor when its button is disabled' => sub {
+	my ( $group, $buttons, $ui ) = radio_group( value => 'm' );
+	my $focus = $buttons->[0]->color_attr( $buttons->[0]->focus_background_color );
+	$ui->interaction->set_focused_widget($group);
+	shown($group);
+	$buttons->[1]->disabled(1);
+	ref_is $group->cursor_button, $buttons->[0], 'the cursor moves to the first enabled button';
+	is [ map { shown($_)->cell( 0, 0 )->[2] } @$buttons ], [ $focus, undef, undef ], 'and the next frame shows it there';
 };
 
 subtest 'a button outside a group' => sub {

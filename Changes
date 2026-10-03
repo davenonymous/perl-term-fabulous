@@ -1,6 +1,94 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::TextView lays out the text of the text
+          inputs: visual rows with wrapping, the cursor's cell, the
+          scroll position, the text position under a cell and moves by
+          rows. TextField is a view of one row, TextArea one that may
+          wrap; TextInput paints for both. Sideways scrolling has one
+          rule for both: the view starts at a whole character of the
+          cursor's line and scrolls no further than needed to fill it.
+          TextInput's subclass interface shrinks to is_multi_line, view,
+          paint, hides_text, display_cluster and apply_edit
+          (scroll_to_cursor, position_at, clusters_between, columns_to,
+          offset_at_column, paint_line_part, paint_placeholder and
+          shows_placeholder are gone)
+        - "Disabled" is Clay::UI's: the inputs, RadioGroup and Button
+          compose Clay::UI::Role::Interaction::Disableable and
+          Focusable directly, and Clay::UI derives can_focus, never
+          presses a disabled widget and takes the focus away at once
+          from a widget that is disabled or written can_focus(0). The
+          derived state disabled shows in get_classes as
+          state_disabled. Button gains disabled and disabled_color
+          (also in KDL): a disabled button ignores clicks, Enter and
+          Space and draws its border and its text in disabled_color.
+          "Can this widget take the focus now" is asked in one place,
+          Clay::UI's interaction->can_take_focus
+        - Input widgets paint when a frame is drawn: setters record the
+          value and call mark_changed, and the renderer calls the new
+          Canvas hook refresh, where an input compares its paint key
+          (its size, its own changes, focus, enabled, and what other
+          widgets decide: a radio button's group, a dropdown list's
+          colors and highlight, a text input's editor) and paints only
+          when it changed. Fixes a disabled cursor button that left the
+          focus look on the wrong radio button, an accent_color change
+          that did not reach an open dropdown list, and a text field
+          edited through $field->editor that stayed scrolled away from
+          its cursor. Input->repaint, TextInput->cursor_moved,
+          RadioGroup->repaint_buttons, Dropdown::List->repaint and the
+          size_changed hook are gone; call mark_changed instead. A
+          canvas reports a changed span only for cells that really
+          changed, so clearing and drawing the same cells again sends
+          nothing to the terminal. Editor->revision now counts changes
+          of the text, the cursor and the selection; text_revision
+          counts text changes
+        - Widget properties are checked by one module,
+          Term::Fabulous::Check, so every positive integer, string,
+          boolean, single-column glyph and color is checked the same
+          way and fails with one wording ("NAME must be a positive
+          integer, got '0'"). Input colors are kept and returned as
+          [r, g, b, a], like the colors of every widget
+        - KDL properties are declared once per class:
+          layout_properties is a class method returning name =>
+          'scalar', 'boolean', 'color' or a parsing handler, and
+          replaces boolean_layout_properties,
+          structured_layout_properties, parse_node, parse_property and
+          parse_generic; colors are declared, not recognized by a
+          _color suffix. Term::Fabulous::Layout builds a widget with
+          new( id => $id ) and then applies the layout node to the
+          finished widget (apply_layout_node, apply_layout_settings);
+          kdl_node is gone. Related values apply together in any order:
+          a Slider's min, max and step (also new as set_range), a
+          Dropdown's options before its value, a text input's
+          max_length before its value
+        - Term::Fabulous talks to the terminal only through a terminal
+          object (Term::Fabulous::Role::Terminal), given to new as
+          terminal: Term::Fabulous::Terminal::Termbox, the real terminal
+          and the default (it also runs on other terminals through its
+          input and output handles), or Term::Fabulous::Terminal::Memory,
+          a terminal in memory for tests that queues keys by name
+          (press_key), typed text, clicks, mouse events and resizes, and
+          shows the screen as lines and cells. step is one turn of run
+          without an event loop: it opens the terminal, reads and
+          dispatches the queued input as run does, applies a resize at
+          once and draws every due frame, returning how many; with
+          paced => 1 and the new clock parameter it paces pointer motion
+          like run. KeyPress->fields_for_name turns a key name back into
+          termbox2's event fields. The renderer paints into one cell
+          target object (cell_target) instead of seven target methods;
+          Render::Target::Grid is a class that also formats its rows as
+          text (row_text), and Render::Target::Termbox is replaced by
+          Terminal::Termbox::Cells. The errors of opening the real
+          terminal start with Term::Fabulous::Terminal::Termbox:
+        - Term::Fabulous::Render::Frame works out once per frame what
+          it paints: the paint order, the clip rect of every command
+          and the cells every command paints. Drawing, canvas planning
+          and hit-testing all read it. last_frame returns the Frame of
+          the last frame (get_last_commands and get_last_clip_rects are
+          gone), and it is complete even when painting died partway.
+          Term::Fabulous::Render::Clip is gone; the painters' clip_rect
+          comes from Term::Fabulous::Render. A border wider than one
+          cell takes the mouse only on the cells it draws
         - Kitty keyboard protocol: run asks the terminal whether it
           speaks the protocol and switches it on (flags 1 and 4) until
           run returns; terminals without it are read as before, and
@@ -37,8 +125,7 @@ Revision history for Term::Fabulous
         - can_focus and disabled no longer depend on their order: an
           input or radio group built with disabled #true takes the
           focus once it is enabled, and can_focus written while
-          disabled counts once enabled (Widget::Input::Element and
-          Widget::RadioGroup::Element hold the Clay::UI roles)
+          disabled counts once enabled
         - Wheel scrolling is explicit: a widget that scrolled itself
           calls use_wheel on the Mouse event; what listeners return no
           longer keeps a ScrollBox from scrolling. TextArea, Slider and

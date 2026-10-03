@@ -15,52 +15,34 @@ class Term::Fabulous::Widget::TextField
 	:isa(Term::Fabulous::Widget::TextInput)
 	:strict(params)
 {
+	use Term::Fabulous::Check qw(glyph positive_integer);
 	use Term::Fabulous::Event::Submit;
-	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	field $preferred_columns :param = 20;
 	field $mask              :param = undef;
 
-	# Columns of the text scrolled out of view on the left; always the
-	# start of a cluster.
-	field $scroll = 0;
-
 	ADJUST {
-		$self->_checked_preferred_columns($preferred_columns);
-		$self->_checked_mask($mask);
-	}
-
-	method _checked_preferred_columns ($columns) {
-		die "Term::Fabulous::Widget::TextField: preferred_columns must be a positive integer, got " . ( defined $columns ? "'$columns'" : 'undef' )
-			unless defined $columns && !ref $columns && $columns =~ /\A[0-9]+\z/ && $columns > 0;
-		return $columns + 0;
-	}
-
-	method _checked_mask ($glyph) {
-		return undef unless defined $glyph;
-		my @clusters = !ref $glyph ? grapheme_clusters($glyph) : ();
-		die "Term::Fabulous::Widget::TextField: mask must be a single character one column wide, got " . ( ref $glyph || "'$glyph'" )
-			unless @clusters == 1 && cluster_columns( $clusters[0] ) == 1;
-		return $glyph;
+		$preferred_columns = positive_integer( $self, preferred_columns => $preferred_columns );
+		$mask              = glyph( $self, mask => $mask ) if defined $mask;
 	}
 
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		$preferred_columns = $self->_checked_preferred_columns( $new[0] );
+		$preferred_columns = positive_integer( $self, preferred_columns => $new[0] );
 		$self->mark_changed;
 		return $preferred_columns;
 	}
 
 	method mask (@new) {
 		return $mask unless @new;
-		$mask = $self->_checked_mask( $new[0] );
-		$self->scroll_to_cursor;
-		$self->repaint;
+		$mask = defined $new[0] ? glyph( $self, mask => $new[0] ) : undef;
+		$self->view->display_changed;    # masked text has other widths
+		$self->mark_changed;
 		return $mask;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(preferred_columns mask) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, preferred_columns => 'scalar', mask => 'scalar' );
 	}
 
 	method natural_size () {
@@ -79,51 +61,6 @@ class Term::Fabulous::Widget::TextField
 		return $self->SUPER::handle_key($event) unless ( $event->main_key_name // '' ) eq 'Enter';
 		$self->fire_event( Term::Fabulous::Event::Submit->new( value => $self->value ) );
 		return 1;
-	}
-
-	# Scrolls just enough to show the cursor (and the cell after the text
-	# when the cursor is there), and no further than needed to fill the
-	# field.
-	method scroll_to_cursor () {
-		my $width = $self->columns;
-		return $scroll = 0 if $width < 1;
-
-		my $editor = $self->editor;
-		my ( undef, $offset ) = $editor->cursor;
-		my @clusters = $self->clusters_between( 0, 0, length $editor->line(0) );
-		my ( $cursor_x, $cursor_columns, $x ) = ( undef, 1, 0 );
-		foreach my $cluster (@clusters) {
-			( $cursor_x, $cursor_columns ) = ( $x, $cluster->[2] ) if $cluster->[0] == $offset;
-			$x += $cluster->[2];
-		}
-		$cursor_x //= $x;
-
-		my $last_scroll = $x + 1 - $width;
-		$scroll = $last_scroll if $scroll > $last_scroll;
-		$scroll = $cursor_x                           if $cursor_x < $scroll;
-		$scroll = $cursor_x + $cursor_columns - $width if $cursor_x + $cursor_columns > $scroll + $width;
-		$scroll = 0 if $scroll < 0;
-
-		# Start the view at a cluster, never inside a wide one.
-		my $start = 0;
-		foreach my $cluster (@clusters) {
-			last if $start >= $scroll;
-			$start += $cluster->[2];
-		}
-		$scroll = $start;
-		return $scroll;
-	}
-
-	method position_at ( $column, $row ) {
-		my $editor = $self->editor;
-		return ( 0, $self->offset_at_column( 0, 0, length $editor->line(0), $column + $scroll ) );
-	}
-
-	method paint () {
-		$self->paint_focus_background;
-		return $self->paint_placeholder(0) if $self->shows_placeholder;
-		$self->paint_line_part( 0, 0, 0, length $self->editor->line(0), $scroll, 1 );
-		return;
 	}
 }
 
@@ -166,7 +103,11 @@ Term::Fabulous::Widget::TextField - Single-line text input
 
 A text field holds one line of text that the user can type, edit, select
 and copy. When the text is wider than the field, the field scrolls
-sideways to keep the cursor visible. Line breaks never get into the
+sideways to keep the cursor visible: just far enough to show the
+cursor's cell (the cell after the text when the cursor is at its end),
+never so far that the field ends in empty cells while text is hidden on
+the left, and always starting at a whole character (see
+L<Term::Fabulous::TextView/Scrolling>). Line breaks never get into the
 text: in pasted or assigned text they become spaces. Pressing C<Enter>
 fires a L<Term::Fabulous::Event::Submit>.
 
@@ -218,9 +159,9 @@ one grapheme cluster one column wide.
 
 The methods of L<Term::Fabulous::Widget::TextInput/METHODS> (C<value>,
 C<max_length>, C<placeholder>, C<read_only>, C<placeholder_color>,
-C<selection_color>, C<editor>, C<cursor_moved>) and of
+C<selection_color>, C<editor>) and of
 L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>, C<is_enabled>,
-the color accessors, C<repaint>), plus:
+the color accessors, C<mark_changed>), plus:
 
 =head2 preferred_columns
 
@@ -236,7 +177,7 @@ positive integer; the old value then stays.
 	$field->mask('*');      # hide the text
 	$field->mask(undef);    # show it again
 
-Accessor for the C<mask> parameter. Writing repaints the field and
+Accessor for the C<mask> parameter. Writing marks the field changed and
 returns the new mask. A mask that is not a single one-column character
 dies; the old mask then stays.
 

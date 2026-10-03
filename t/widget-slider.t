@@ -8,6 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use InputTest;
+use Term::Fabulous::Layout;
 use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_MOD_MOTION);
 use Term::Fabulous::Widget::Slider;
 
@@ -23,7 +24,7 @@ subtest 'painting' => sub {
 	my ( $slider, $ui ) = slider( value => 50 );
 	is [ $slider->columns, row_text( $slider, 0 ) ], [ 15, ( "\x{2501}" x 5 ) . "\x{25CF}" . ( "\x{2500}" x 5 ) . '  50' ], 'track, thumb and value';
 	$slider->show_value(0);
-	is row_text( $slider, 0 ), ( "\x{2501}" x 7 ) . "\x{25CF}" . ( "\x{2500}" x 7 ), 'without the value the track takes the width';
+	is [ row_text( $slider, 0 ), $slider->columns ], [ ( "\x{2501}" x 5 ) . "\x{25CF}" . ( "\x{2500}" x 5 ), 11 ], 'without the value the track takes the width';
 	$slider->value_format('%d%%');
 	$slider->show_value(1);
 	like row_text( $slider, 0 ), qr/ 50%\z/, 'a sprintf format';
@@ -62,6 +63,24 @@ subtest 'mouse' => sub {
 	$slider->value(100);
 	ok !click( $slider, 4, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used, 'a notch past the end is left to a scroll box around it';
 	ok click( $slider, 4, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch that moves the value is used';
+};
+
+subtest 'a range set in one go' => sub {
+	my ($slider) = slider( value => 50 );
+	ref_is $slider->set_range( min => 200, max => 300 ), $slider, 'set_range returns the slider';
+	is [ $slider->min, $slider->max, $slider->value ], [ 200, 300, 200 ], 'a range above the old one; the value moves into it';
+	like dies { $slider->set_range( min => 400 ) }, qr/min \(400\) must be less than max \(300\)/, 'the combination is checked';
+	like dies { $slider->set_range( low => 1 ) },   qr/set_range takes min, max and step, got low/, 'unknown parts die';
+
+	my $build = sub {
+		my ($properties) = @_;
+		return Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Slider as Slider\nSlider { $properties }" )->build;
+	};
+	foreach my $properties ( 'min 200; max 300; value 250;', 'value 250; max 300; min 200;' ) {
+		my $built = $build->($properties);
+		is [ $built->min, $built->max, $built->value ], [ 200, 300, 250 ], "KDL '$properties' works in any order";
+	}
+	like dies { $build->('min 300; max 200;') }, qr/min \(300\) must be less than max \(200\)/, 'and checks the range as a whole';
 };
 
 done_testing;

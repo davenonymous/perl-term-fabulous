@@ -16,6 +16,12 @@ class TextCanvas :does(Term::Fabulous::Render::Text) {
 	field $width  :param :reader = 20;
 	field $height :param :reader = 5;
 
+	# Painted outside any scissor: commands may touch the whole viewport.
+	method clip_rect () { return [ 0, 0, $width, $height ] }
+
+	# The painter is its own cell target: it records what it is given.
+	method cell_target () { return $self }
+
 	method set_cell ( @args ) {
 		push @calls, [ set => @args ];
 		return;

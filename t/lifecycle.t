@@ -2,75 +2,28 @@ use v5.24;
 use warnings;
 
 use Test2::V0;
-use Feature::Compat::Try;
 
+use Object::Pad 0.825;
 use IO::Async::Loop;
 use IO::Async::Signal;
+use Clay::XS qw(sizing_fixed sizing_grow);
 use Fcntl qw(F_GETFL O_NONBLOCK);
-use POSIX qw(EINTR EIO);
 use Scalar::Util qw(weaken);
-use Term::Fabulous::Termbox qw(TB_OK TB_ERR_INIT_OPEN TB_ERR_NO_EVENT TB_ERR_POLL TB_ERR_READ TB_EVENT_KEY TB_EVENT_RESIZE);
+use Term::Fabulous::Termbox qw(TB_EVENT_RESIZE);
 use Term::Fabulous;
+use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Text;
 
-# termbox is replaced by stubs; the "terminal" input is a pipe we control.
-pipe my $tty_read,    my $tty_write    or die "pipe: $!";
-pipe my $resize_read, my $resize_write or die "pipe: $!";
-
-my %calls;
-my $init_result = TB_OK;
-my $draw_dies   = 0;
-my @queued_events;    # termbox event fields, or [ status, errno ] for a failure
-my $last_errno = 0;
-my $tty_was_nonblocking;
-
-# Empties the pipe that stands for the terminal, as termbox reads it.
-sub drain_tty {
-	vec( my $readable = '', fileno $tty_read, 1 ) = 1;
-	sysread $tty_read, my $bytes, 4096 while select( my $ready = $readable, undef, undef, 0 ) > 0 && !eof_reached();
-	return;
+# A memory terminal whose input cannot be read, and one that cannot be
+# opened.
+class BrokenInput :isa(Term::Fabulous::Terminal::Memory) {
+	method next_event :override () { die "Term::Fabulous::Terminal::Memory: reading terminal input failed\n" }
 }
 
-sub eof_reached { return Term::Fabulous::Termbox::tf_readable_bytes( fileno $tty_read ) == 0 }
-
-{
-	no strict 'refs';
-	no warnings 'redefine';
-	my %termbox_stubs = (
-		tb_init            => sub { $calls{tb_init}++;     $init_result },
-		tb_shutdown        => sub { $calls{tb_shutdown}++; return },
-		tb_strerror        => sub { "stub error $_[0]" },
-		tb_width           => sub {20},
-		tb_height          => sub {5},
-		tb_hide_cursor     => sub {TB_OK},
-		tb_set_input_mode  => sub {TB_OK},
-		tb_set_output_mode => sub {TB_OK},
-		tb_send            => sub {TB_OK},
-		tf_install_input_parser => sub {TB_OK},
-		tf_kitty_keyboard_query => sub { $calls{tf_kitty_keyboard_query}++; ${ $_[1] } = 0; TB_OK },    # a terminal without the protocol
-		tb_get_fds         => sub { ${ $_[0] } = fileno $tty_read; ${ $_[1] } = fileno $resize_read; TB_OK },
-		tb_last_errno      => sub {$last_errno},
-		tb_peek_event      => sub {
-			my ($event) = @_;
-			$tty_was_nonblocking = fcntl( $tty_read, F_GETFL, 0 ) & O_NONBLOCK ? 1 : 0;
-			my $queued = shift @queued_events;
-			if ( !defined $queued ) {
-				drain_tty();
-				return TB_ERR_NO_EVENT;
-			}
-			if ( ref $queued eq 'ARRAY' ) {
-				( my $status, $last_errno ) = @$queued;
-				return $status;
-			}
-			$event->$_( $queued->{$_} ) foreach keys %$queued;
-			return TB_OK;
-		},
-	);
-	*{"Term::Fabulous::$_"} = $termbox_stubs{$_} foreach keys %termbox_stubs;
-
-	*Term::Fabulous::Render::Target::Termbox::tb_clear   = sub { die "draw failed\n" if $draw_dies; return };
-	*Term::Fabulous::Render::Target::Termbox::tb_present = sub { $calls{tb_present}++; return };
-	*Term::Fabulous::Render::Target::Termbox::tb_print = sub {0};
+class Unopenable :isa(Term::Fabulous::Terminal::Memory) {
+	method open :override (%options) { die "Unopenable: no terminal here\n" }
 }
 
 my $loop = IO::Async::Loop->new;
@@ -81,43 +34,64 @@ my $warmup_signal = IO::Async::Signal->new( name => 'HUP', on_receipt => sub { }
 $loop->add($warmup_signal);
 $loop->remove($warmup_signal);
 my $notifiers_before = scalar $loop->notifiers;
-my $ui               = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
+
+# A Term::Fabulous on a 20x5 memory terminal, with a root that paints every
+# cell, so the screen shows whether a frame was drawn.
+sub memory_ui {
+	my (%params) = @_;
+	my $terminal = delete $params{terminal} // Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 );
+	my $root     = delete $params{root} // Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	return ( Term::Fabulous->new( width => 20, height => 5, root => $root, terminal => $terminal, %params ), $terminal );
+}
+
+sub is_blank {
+	my ($terminal) = @_;
+	return !grep { length } $terminal->lines;
+}
+
+my $draw_dies = 1;
+my $canvas    = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(2) } } );
+$canvas->on( CanvasResize => sub { die "draw failed\n" if $draw_dies; return } );
+my $canvas_root = Term::Fabulous::Widget::Box->new;
+$canvas_root->add_child($canvas);
+my ( $ui, $terminal ) = memory_ui( root => $canvas_root );
 
 subtest 'a draw that dies' => sub {
-	$draw_dies = 1;
 	like dies { $ui->run }, qr/^draw failed/, 'the exception propagates out of run';
-	is $calls{tb_shutdown}, 1, 'the terminal is restored exactly once';
+	is [ $terminal->is_open, $terminal->session_count ], [ 0, 1 ], 'the terminal is restored';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
 };
 
 subtest 'a second run works' => sub {
-	$draw_dies     = 0;
-	my @starts;
+	$draw_dies = 0;
+	my ( @starts, @blocking );
 	$ui->root->on( Start => sub { push @starts, [ $_[0]->width, $_[0]->height, $ui->width ]; return } );
-	@queued_events = ( { type => TB_EVENT_KEY, key => 3, ch => 0 } );    # Ctrl+C
-	syswrite $tty_write, 'x';                                              # makes the terminal readable
+	$ui->root->on(
+		KeyPress => sub {
+			push @blocking, map { fcntl( $_, F_GETFL, 0 ) & O_NONBLOCK ? 0 : 1 } $terminal->read_handles;
+			return;
+		}
+	);
+	$terminal->press_key('Ctrl+C');
 
 	ok lives { $ui->run }, 'run returns after Ctrl+C';
-	is $tty_was_nonblocking, 0, "termbox's descriptor stays blocking while it is watched";
+	is \@blocking, [1], 'the watched terminal handles stay blocking';
 	is \@starts, [ [ 20, 5, 20 ] ], 'Start fires once, with the terminal size already applied';
-	is $calls{tb_shutdown}, 2, 'the terminal is restored again';
+	is [ $terminal->is_open, $terminal->session_count ], [ 0, 2 ], 'the terminal is restored again';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
 };
 
 subtest 'Start fires inside the running loop' => sub {
 	my $handler = sub { };
-	local $SIG{INT}  = $handler;
-	local $SIG{HUP}  = 'IGNORE';
-	my $loop_in_start;
-	my $start = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
-	$start->root->on( Start => sub { $loop_in_start = $start->loop; $start->loop->stop; return } );
+	local $SIG{INT} = $handler;
+	local $SIG{HUP} = 'IGNORE';
+	my ( $start, $start_terminal ) = memory_ui();
+	my ( $loop_in_start, $blank_at_start );
+	$start->root->on( Start => sub { $loop_in_start = $start->loop; $blank_at_start = is_blank($start_terminal); $start->loop->stop; return } );
 
-	my $presents_before = $calls{tb_present} // 0;
-	my $presents_at_start;
-	$start->root->on( Start => sub { $presents_at_start = $calls{tb_present} // 0; return } );
 	ok lives { $start->run }, 'a Start listener can stop the loop';
 	ref_is $loop_in_start, $loop, 'and sees it';
-	is $presents_at_start, $presents_before, 'no frame is drawn before Start';
+	ok $blank_at_start, 'no frame is drawn before Start';
 	ref_is $SIG{INT}, $handler, 'run gives back the INT handler it found';
 	is $SIG{HUP}, 'IGNORE', 'and the HUP setting';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
@@ -126,7 +100,7 @@ subtest 'Start fires inside the running loop' => sub {
 subtest 'a signal watcher of the program outlives run' => sub {
 	my $received = 0;
 	my $watcher  = IO::Async::Signal->new( name => 'TERM', on_receipt => sub { $received++ } );
-	my $watching = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
+	my ($watching) = memory_ui();
 	$watching->root->on( Start => sub { $watching->loop->add($watcher); $watching->loop->stop; return } );
 	$watching->run;
 	kill TERM => $$;
@@ -137,160 +111,151 @@ subtest 'a signal watcher of the program outlives run' => sub {
 
 subtest 'INT, TERM and HUP end run' => sub {
 	foreach my $signal (qw(INT TERM HUP)) {
-		my $signalled = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
+		my ($signalled) = memory_ui();
 		$signalled->root->on( Start => sub { kill $signal => $$; return } );
 		ok lives { $signalled->run }, "run returns after SIG$signal";
 	}
 };
 
 subtest 'a resize' => sub {
-	my $resizing = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
-	my ( @resizes, $presents_at_input, $invalidated );
+	my ( $resizing, $resizing_terminal ) = memory_ui();
+	my ( @resizes, $blank_after_resize );
 	$resizing->root->on(
 		Resize => sub {
 			my ($event) = @_;
 			push @resizes, [ $event->width, $event->height, $event->is_post_event, $resizing->width ];
-			$resizing->loop->stop if $event->is_post_event;
+			return unless $event->is_post_event;
+			$blank_after_resize = is_blank($resizing_terminal);
+			$resizing->loop->stop;
 			return;
 		}
 	);
-	@queued_events = (
-		{ type => TB_EVENT_RESIZE, w => 10, h => 3 },
-		{ type => TB_EVENT_RESIZE, w => 0,  h => 0 },
-		{ type => TB_EVENT_RESIZE, w => 30, h => 8 },
+	$resizing->root->on(
+		Start => sub {
+			$resizing_terminal->resize( 10, 3 )->push_event( type => TB_EVENT_RESIZE, w => 0, h => 0 )->resize( 30, 8 );
+			return;
+		}
 	);
-	$resizing->root->on( Start => sub { $presents_at_input = $calls{tb_present} // 0; syswrite $tty_write, 'x'; return } );
-	{
-		my $original = \&Term::Fabulous::invalidate_canvases;
-		no warnings 'redefine';
-		local *Term::Fabulous::invalidate_canvases = sub { $invalidated++; return $original->(@_) };
-		ok lives { $resizing->run }, 'run returns';
-	}
+	ok lives { $resizing->run }, 'run returns';
 
 	is \@resizes, [ [ 30, 8, 0, 20 ], [ 30, 8, 1, 30 ] ], 'one Resize pair for the last usable size, the size applied in between';
-	is $calls{tb_present} // 0, $presents_at_input, 'no frame is drawn while the size settles';
-	ok $invalidated >= 2, 'every reported size makes termbox rebuild its cells, so no canvas is kept';
+	ok $blank_after_resize, 'no frame is drawn while the size settles';
+	is [ $resizing_terminal->width, $resizing_terminal->height ], [ 30, 8 ], 'the terminal has the new size';
+};
+
+subtest 'a resize that ends at the old size repaints the canvases' => sub {
+	my $box  = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(3), height => sizing_fixed(1) } } );
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child($box);
+	my ( $resizing, $resizing_terminal ) = memory_ui( root => $root );
+	$resizing->step;
+	$box->put_text( 0, 0, 'abc' );
+	$resizing->step;
+	$resizing->invalidate->step;    # now the canvas keeps its cells
+	$resizing_terminal->cell_target->set_cell( 1, 0, 'Z', 0, 0 );    # a stand-in for what is on the screen
+
+	$resizing_terminal->resize( 10, 3 )->resize( 20, 5 );
+	$resizing->step;
+	is [ $resizing_terminal->lines ]->[0], 'abc', 'every reported size makes the terminal lose its cells, so no canvas is kept';
 };
 
 subtest 'inline mode' => sub {
 	my $box = sub { Term::Fabulous::Widget::Box->new };
 	like dies { Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 0 ) }, qr/inline must be a whole number of rows of at least 1, got '0'/, 'inline needs rows';
 	like dies { Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3, mouse => 1 ) }, qr/inline mode has no mouse support/, 'and has no mouse';
-	my $inline = Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3 );
+
+	my $text = Term::Fabulous::Widget::Text->new( text => 'asking' );
+	my $root = $box->();
+	$root->add_child($text);
+	my ( $inline, $inline_terminal ) = memory_ui( root => $root, inline => 3 );
 	is $inline->mouse, 0, 'the mouse is off by default';
 
-	# The stubbed terminal has 5 rows; the cursor is reported as [column, row].
-	my ( $sent, $cursor, @seen ) = ( '', [ 4, 4 ] );
-	no warnings 'redefine';
-	local *Term::Fabulous::tf_init_inline     = sub { $calls{tf_init_inline}++; TB_OK };
-	local *Term::Fabulous::tf_cursor_position = sub {
-		return TB_ERR_NO_EVENT unless defined $cursor;
-		( ${ $_[1] }, ${ $_[2] } ) = @$cursor;
-		return TB_OK;
-	};
-	local *Term::Fabulous::tf_reset_attrs     = sub {TB_OK};
-	local *Term::Fabulous::tb_clear           = sub {TB_OK};
-	local *Term::Fabulous::tb_send            = sub { $sent .= $_[0]; TB_OK };
-
-	$inline->root->on( Start => sub { push @seen, [ $_[0]->height, $inline->termbox_inline_top ]; $inline->loop->stop; return } );
-	my $presents = $calls{tb_present} // 0;
+	my @seen;
+	$inline->root->on(
+		Start => sub {
+			push @seen, [ $_[0]->height, $inline_terminal->inline_rows, $inline_terminal->mouse_enabled ];
+			$text->text('done');
+			$inline->loop->stop;
+			return;
+		}
+	);
 	ok lives { $inline->run }, 'run returns';
-	is $calls{tf_init_inline}, 1, 'the terminal is opened inline';
-	is $calls{tb_present}, $presents + 1, 'the state the loop stopped in is drawn before run returns';
-	is \@seen, [ [ 3, 2 ] ], 'Start reports the rows of the region, moved up to fit the screen';
-	is $sent, "\e[5;1H\n\n\n" . "\e[3;1H\e[J" . "\e[5;1H\n", 'the terminal scrolls, the region is erased, and the shell goes on below its last row';
-	is $inline->termbox_inline_top, undef, 'the region is forgotten after run';
+	is \@seen, [ [ 3, 3, 0 ] ], 'Start reports the rows of the region; the terminal reports no mouse';
+	is [ $inline_terminal->lines ], [ 'done', '', '' ], 'the state the loop stopped in is drawn before run returns';
+	is $inline_terminal->inline_rows, undef, 'the region is given back after run';
 
-	my $resizing = Term::Fabulous->new( width => 20, height => 5, root => $box->(), inline => 3 );
-	( $sent, $cursor, @seen ) = ( '', [ 0, 0 ] );
-	@queued_events = ( { type => TB_EVENT_RESIZE, w => 30, h => 8 } );
-	$resizing->root->on( Start => sub { $cursor = [ 0, 1 ]; syswrite $tty_write, 'x'; return } );
+	my ( $resizing, $resizing_terminal ) = memory_ui( root => $box->(), inline => 3 );
+	$resizing->root->on( Start => sub { $resizing_terminal->resize( 30, 8 ); return } );
 	$resizing->root->on(
 		Resize => sub {
 			return unless $_[0]->is_post_event;
-			push @seen, [ $_[0]->width, $_[0]->height, $resizing->termbox_inline_top ];
+			push @seen, [ $_[0]->width, $_[0]->height ];
 			$resizing->loop->stop;
 			return;
 		}
 	);
 	ok lives { $resizing->run }, 'run returns after a resize';
-	is \@seen, [ [ 30, 3, 1 ] ], 'the region is found again where the terminal moved the cursor';
-
-	$cursor = undef;
-	like dies { $inline->run }, qr/^Term::Fabulous: the terminal did not report its cursor position/, 'a terminal that does not answer ends run';
+	is $seen[-1], [ 30, 3 ], 'the region keeps its rows on a resize';
 };
 
 subtest 'kitty keyboard protocol' => sub {
-	my ( $sent, @active_at_start ) = ('');
-	no warnings 'redefine';
-	local *Term::Fabulous::tf_kitty_keyboard_query = sub { $calls{tf_kitty_keyboard_query}++; ${ $_[1] } = 1; TB_OK };
-	local *Term::Fabulous::tb_send                 = sub { $sent .= $_[0]; TB_OK };
-
-	my $kitty = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, mouse => 0 );
+	my @active_at_start;
+	my $speaking = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5, kitty_keyboard => 1 );
+	my ($kitty) = memory_ui( terminal => $speaking, mouse => 0 );
 	$kitty->root->on( Start => sub { push @active_at_start, $kitty->kitty_keyboard_active; $kitty->loop->stop; return } );
 	ok lives { $kitty->run }, 'run returns';
-	is \@active_at_start, [1], 'a terminal that reports its flags gets the protocol';
-	is $sent, "\e[>5u\e[<u", 'the flags are pushed at the start and popped at the end';
+	is \@active_at_start, [1], 'a terminal that speaks the protocol gets it';
 	is $kitty->kitty_keyboard_active, 0, 'and run no longer uses it';
 
-	( $sent, @active_at_start ) = ('');
-	my $queries = $calls{tf_kitty_keyboard_query};
-	my $legacy  = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, mouse => 0, kitty_keyboard => 0 );
+	my $also_speaking = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5, kitty_keyboard => 1 );
+	my ($legacy) = memory_ui( terminal => $also_speaking, kitty_keyboard => 0 );
 	$legacy->root->on( Start => sub { push @active_at_start, $legacy->kitty_keyboard_active; $legacy->loop->stop; return } );
 	ok lives { $legacy->run }, 'run returns with kitty_keyboard => 0';
-	is [ $calls{tf_kitty_keyboard_query}, \@active_at_start, $sent ], [ $queries, [0], '' ], 'the terminal is not asked';
+	is \@active_at_start, [ 1, 0 ], 'the protocol is not asked for';
 };
 
 subtest 'terminal input errors' => sub {
-	my $reading = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
-	$reading->root->on( Start => sub { syswrite $tty_write, 'x'; return } );
-	@queued_events = ( [ TB_ERR_POLL, EINTR ], { type => TB_EVENT_KEY, key => 3, ch => 0 } );
-	ok lives { $reading->run }, 'an interrupted poll is retried';
+	my ($reading) = memory_ui( terminal => BrokenInput->new( width => 20, height => 5 ) );
+	$reading->root->on( Start => sub { $reading->terminal->type_text('x'); return } );
+	like dies { $reading->run }, qr/^Term::Fabulous::Terminal::Memory: reading terminal input failed/, 'a terminal that cannot read its input ends run';
+	is $reading->terminal->is_open, 0, 'and is restored';
 
-	@queued_events = ( [ TB_ERR_READ, EIO ] );
-	like dies { $reading->run }, qr/^Term::Fabulous: reading terminal input failed: stub error -\d+/, 'any other error ends run';
-	@queued_events = ();
-	drain_tty();
-
-	pipe my $closed_read, my $closed_write or die "pipe: $!";
-	close $closed_write;
-	my $open_read = $tty_read;
-	$tty_read = $closed_read;
-	like dies { $reading->run }, qr/^Term::Fabulous: the terminal was closed/, 'the end of the terminal input ends run';
-	$tty_read = $open_read;
+	my ( $ending, $ending_terminal ) = memory_ui();
+	$ending->root->on( Start => sub { $ending_terminal->end_input; return } );
+	like dies { $ending->run }, qr/^Term::Fabulous: the terminal was closed/, 'the end of the terminal input ends run';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
 };
 
-subtest 'end of input' => sub {
-	pipe my $read, my $write or die "pipe: $!";
-	ok !Term::Fabulous::_input_is_at_eof($read), 'nothing to read yet';
-	syswrite $write, 'a';
-	ok !Term::Fabulous::_input_is_at_eof($read), 'a byte to read';
-	sysread $read, my $byte, 1;
-	close $write;
-	ok Term::Fabulous::_input_is_at_eof($read), 'readable with nothing to read: end of file';
+subtest 'a terminal that cannot be opened' => sub {
+	my ($failing) = memory_ui( terminal => Unopenable->new( width => 20, height => 5 ) );
+	like dies { $failing->run }, qr/^Unopenable: no terminal here/, 'run dies with the error of the terminal';
+	is scalar( $loop->notifiers ), $notifiers_before, 'nothing was added to the loop';
+	like dies { $failing->step }, qr/^Unopenable: no terminal here/, 'so does step';
+};
 
-	try { require IO::Pty }
-	catch ($error) { skip_all 'IO::Pty is not installed' }
-	my $pty      = IO::Pty->new;
-	my $terminal = $pty->slave;
-	ok !Term::Fabulous::_input_is_at_eof($terminal), 'a live terminal';
-	close $pty;
-	ok Term::Fabulous::_input_is_at_eof($terminal), 'a terminal that hung up';
+subtest 'step outside run' => sub {
+	my ( $stepping, $stepping_terminal ) = memory_ui();
+	my @starts;
+	$stepping->root->on( Start => sub { push @starts, $stepping->loop; return } );
+	$stepping->step;
+	is [ scalar @starts, $stepping_terminal->is_open ], [ 1, 1 ], 'the first step opens the terminal and fires Start';
+	$stepping_terminal->press_key('Ctrl+C');
+	ok lives { $stepping->step }, 'Ctrl+C has no loop to stop';
+	is scalar @starts, 1, 'Start fires once per opening';
+
+	$stepping_terminal->press_key('Ctrl+C');
+	ok lives { $stepping->run }, 'run uses the terminal step opened';
+	is [ scalar @starts, $stepping_terminal->is_open ], [ 1, 0 ], 'without firing Start again, and closes it';
+
+	my ($nested) = memory_ui();
+	$nested->root->on( Start => sub { $nested->step; return } );
+	like dies { $nested->run }, qr/step cannot be called while run is active/, 'step inside run dies';
 };
 
 subtest 'nothing pins the object after run' => sub {
 	weaken( my $weak = $ui );
 	undef $ui;
 	ok !defined $weak, 'Term::Fabulous is freed';
-};
-
-subtest 'tb_init failure' => sub {
-	$init_result = TB_ERR_INIT_OPEN;
-	my $shutdowns = $calls{tb_shutdown};
-	my $failing   = Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new );
-	like dies { $failing->run }, qr/^Term::Fabulous: tb_init failed: stub error -4/, 'dies with the termbox error';
-	is $calls{tb_shutdown}, $shutdowns, 'no shutdown without a successful init';
 };
 
 done_testing;

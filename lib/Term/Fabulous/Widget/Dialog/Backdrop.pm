@@ -89,17 +89,14 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 	# The focusable widgets inside the dialog, in tree order; the backdrop
 	# itself when there are none, so the focus has somewhere to stay.
 	method focus_order () {
-		my @inside = _focusables_below( $self->dialog );
+		my $ui     = $self->ui // return ($self);
+		my @inside = _focusables_below( $ui->interaction, $self->dialog );
 		return @inside ? @inside : ($self);
 	}
 
-	sub _focusables_below ($node) {
+	sub _focusables_below ( $interaction, $node ) {
 		return () unless defined $node && $node->can('children');
-		return map { ( ( _can_take_focus($_) ? $_ : () ), _focusables_below($_) ) } $node->children->@*;
-	}
-
-	sub _can_take_focus ($widget) {
-		return $widget->DOES('Clay::UI::Role::Interaction::Focusable') && $widget->can_focus;
+		return map { ( ( $interaction->can_take_focus($_) ? $_ : () ), _focusables_below( $interaction, $_ ) ) } $node->children->@*;
 	}
 
 	method get_next_focus ()     { return $self->_step_focus(1) }

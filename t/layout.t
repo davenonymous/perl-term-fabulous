@@ -199,6 +199,7 @@ KDL
 	like dies { build( sprintf $field, 'max_length 2' . "\n" . 'value "abc"' ) }, qr/more than max_length 2/, 'a value longer than max_length dies';
 	like dies { build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\toption \"a\" color=1\n}") }, qr/takes one label and an optional value/,
 		'an option with an unknown property dies';
+	is build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\tvalue \"b\"\n\toptions \"a\" \"b\"\n}")->value, 'b', 'a Dropdown value may come before its options';
 
 	$input{color}->disabled(0);
 	ok $input{color}->can_focus, 'an input disabled in the layout takes the focus once enabled';

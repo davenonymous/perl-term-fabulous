@@ -2175,8 +2175,11 @@ This program is shipped as F<examples-cookbook/disable-inputs.pl>.
 
 C<< $input->disabled(1) >> grays the input out (it is drawn in its
 C<disabled_color>), makes it ignore keys and the mouse, removes the
-focus from it and makes Tab skip it. C<< disabled(0) >> undoes all of
-that. See L<Term::Fabulous::Widget::Input/disabled>.
+focus from it at once and makes Tab skip it. C<< disabled(0) >> undoes
+all of that. Buttons can be disabled the same way. The flag comes from
+L<Clay::UI::Role::Interaction::Disableable>, so
+C<< $widget->DOES('Clay::UI::Role::Interaction::Disableable') >> tells
+whether a widget has it. See L<Term::Fabulous::Widget::Input/disabled>.
 
 =item *
 
@@ -2364,7 +2367,7 @@ Goal: exchange text between the program and the text inputs' clipboard.
 	# Copy the whole text of a field from code, and show the selection.
 	$field->editor->select_all;
 	$field->editor->copy;
-	$field->repaint;
+	$field->mark_changed;
 
 =over
 
@@ -2385,7 +2388,8 @@ L<Term::Fabulous::Widget::TextInput/KEYS>.
 
 C<< $field->editor >> gives access to the cursor, the selection and
 undo of a text input. After changing them from code, call
-C<< $field->repaint >> so the field shows the change.
+C<< $field->mark_changed >> so that a frame is drawn: the field scrolls
+to the cursor and shows the change in it.
 
 =back
 
@@ -3067,8 +3071,9 @@ row padded to C<width> columns, for example for fixed-width files.
 
 =head2 Test a widget without a terminal
 
-Goal: test the behavior of widgets in an automated test, by firing key
-events at them and checking their values and what they show.
+Goal: test the behavior of a screen in an automated test: type into it,
+press keys, click it, and check the values and what the screen shows,
+exactly as a user at a real terminal would see it.
 
 This program is shipped as F<examples-cookbook/test-a-widget.pl>.
 
@@ -3080,46 +3085,52 @@ This program is shipped as F<examples-cookbook/test-a-widget.pl>.
 	no warnings 'experimental::signatures';
 
 	use Test2::V0;
-	use Term::Fabulous::Termbox qw(TB_KEY_ARROW_LEFT);
-	use Term::Fabulous::Event::KeyPress;
-	use Term::Fabulous::Static;
+	use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);
+	use Term::Fabulous;
+	use Term::Fabulous::Terminal::Memory;
 	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Button;
+	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextField;
 
-	# A key press as termbox2 would report it: a typed character, or a
-	# special key code.
-	sub type_text ( $widget, $text ) {
-		$widget->fire_event( Term::Fabulous::Event::KeyPress->new( key => 0, char => ord $_, modifiers => 0 ) ) foreach split //, $text;
-		return;
-	}
-
-	sub press_key ( $widget, $key ) {
-		$widget->fire_event( Term::Fabulous::Event::KeyPress->new( key => $key, char => 0, modifiers => 0 ) );
-		return;
-	}
-
 	my $field = Term::Fabulous::Widget::TextField->new( preferred_columns => 10, max_length => 8 );
-	my @changes;
+	my $save  = Term::Fabulous::Widget::Button->new(
+		background_color => [ 40, 90, 160, 255 ],
+		layout           => { sizing => { width => sizing_fixed(6), height => sizing_fixed(1) }, padding => { left => 1 } },
+	);
+	$save->add_child( Term::Fabulous::Widget::Text->new( text => 'Save', text_color => [ 255, 255, 255, 255 ] ) );
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 } );
+	$root->add_child( $field, $save );
+
+	my ( @changes, @saved );
 	$field->on( Change => sub ($event) { push @changes, $event->value; return } );
+	$save->on( Activate => sub ($event) { push @saved, $field->value; return } );
 
-	my $root = Term::Fabulous::Widget::Box->new;
-	$root->add_child($field);
-	my $page = Term::Fabulous::Static->new( root => $root, width => 20 );
-	$page->render_lines;    # lays the widgets out once, so the field has a size
+	# The program's widget tree on a terminal in memory, 20 columns by 3 rows.
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 20, height => 3 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 20, height => 3, terminal => $terminal );
+	$ui->step;    # opens the terminal and draws the first frame
 
-	type_text( $field, 'hello' );
-	press_key( $field, TB_KEY_ARROW_LEFT );
-	type_text( $field, 'X' );
-
+	# Tab focuses the field; the keys go to it as on a real terminal.
+	$terminal->press_key('Tab')->type_text('hello')->press_key('Left')->type_text('X');
+	$ui->step;
 	is $field->value, 'hellXo', 'typing and cursor movement';
 	is $changes[-1], 'hellXo', 'Change carries the new text';
 
-	type_text( $field, 'abcdef' );
+	$terminal->type_text('abcdef');
+	$ui->step;
 	is $field->value, 'hellXabo', 'max_length stops the input at 8 characters';
 
 	# The field is 10 columns wide and has a background color, so its
 	# empty cells are kept as spaces.
-	is [ $page->render_lines( colors => 0 ) ], ['hellXabo  '], 'what the screen shows';
+	is [ $terminal->lines ], [ 'hellXabo  ', '', ' Save ' ], 'what the screen shows';
+
+	# A click on the button: hit-tested, pressed and released like a real one.
+	$terminal->click( 2, 2 );
+	$ui->step;
+	is \@saved, ['hellXabo'], 'the click activates the button';
+	ref_is $ui->interaction->get_focused_widget, $save, 'and focuses it';
 
 	done_testing;
 
@@ -3127,41 +3138,36 @@ This program is shipped as F<examples-cookbook/test-a-widget.pl>.
 
 =item *
 
-The test lays the tree out once with L<Term::Fabulous::Static>, so that
-the widgets have their size, then fires events directly at the widget
-with C<fire_event>. Events fired this way bubble exactly as they do
-under L<Term::Fabulous>. What L<Term::Fabulous> itself does around the
-events does not happen: Tab does not move the focus, a click does not
-focus anything, the wheel does not scroll and Ctrl+C does not stop
-anything. Do that from the test where it matters, for example with
-C<< $page->interaction->set_focused_widget($field) >>.
+L<Term::Fabulous::Terminal::Memory> is a terminal that exists only in
+memory. Given to C<new> as C<terminal>, it receives the frames and
+supplies the input. L<Term::Fabulous/step> is one turn of C<run>
+without an event loop: the first call opens the terminal and fires
+C<Start>, and every call reads the queued input, dispatches it and
+draws the frames that are due.
 
 =item *
 
-To test a click on a Button or an input widget, fire the C<OnRelease>
-event they react to:
-C<< $checkbox->fire_event( Clay::UI::Events::OnRelease->new( x => 0.5, y => 0.5 ) ) >>
-(after C<use Clay::UI::Events::OnRelease;>). See
+The input goes through everything real input goes through: the keys go
+to the focused widget, Tab moves the focus, a click is hit-tested
+against the last frame, focuses the button and presses and releases it,
+which fires C<Activate>. C<press_key> takes the names
+L<Term::Fabulous::Event::KeyPress/key_name> gives keys (C<'Enter'>,
+C<'Ctrl+Shift+Left'>, C<'BackTab'>), C<click> the cell on the screen.
+
+=item *
+
+C<lines> returns what the screen shows, one string per row, without the
+blanks at the end of a row unless they have a background color: the
+field has one, so its empty cells are kept as spaces. C<cell> returns a
+single cell with its colors.
+
+=item *
+
+To test one widget's own key handling in isolation, fire events at it
+directly instead: C<< $widget->fire_event($event) >> with a
+L<Term::Fabulous::Event::KeyPress>. Such events bubble to the root, but
+nothing around them happens (no focus, no Tab, no hit-testing). See
 L<Term::Fabulous::Manual/TESTING>.
-
-=item *
-
-A L<Term::Fabulous::Event::KeyPress> takes termbox2's three numbers: a
-typed character goes into C<char> (with C<key> 0), a special key into
-C<key> (with C<char> 0, using a C<TB_KEY_*> constant of L<Term::Fabulous::Termbox> or
-the control code, such as 13 for Enter), and C<modifiers> holds
-C<TB_MOD_*> bits.
-
-=item *
-
-C<render_lines( colors =E<gt> 0 )> returns what the screen would show.
-The field has a background color, so its empty cells are kept as
-spaces at the end of the line.
-
-=item *
-
-Event objects can be fired once only; build a new one for every
-key press. See L<Term::Fabulous::Manual/TESTING>.
 
 =back
 
@@ -3207,24 +3213,26 @@ F<examples/custom-widget.pl>.
 		field $label :param = '';
 
 		# Accessor of the state. Like the built-in inputs, a write from the
-		# program repaints but fires no Change event.
+		# program marks the widget changed, so the next frame paints it, but
+		# fires no Change event.
 		method value (@new) {
 			return $on unless @new;
 			$on = $new[0] ? 1 : 0;
-			$self->repaint;
+			$self->mark_changed;
 			return $on;
 		}
 
 		method label (@new) {
 			return $label unless @new;
 			$label = $new[0];
-			$self->repaint;
+			$self->mark_changed;
 			return $label;
 		}
 
-		# The names a KDL layout may set, on top of those of every input.
-		method layout_properties :override () {
-			return ( $self->SUPER::layout_properties, qw(value label) );
+		# The properties a KDL layout may set, on top of those of every input,
+		# and how each is read: value takes #true or #false.
+		method layout_properties :common () {
+			return ( $class->SUPER::layout_properties, value => 'boolean', label => 'scalar' );
 		}
 
 		# Columns and rows of content the widget needs when the layout does
@@ -3234,8 +3242,8 @@ F<examples/custom-widget.pl>.
 			return ( string_columns(ON_MARK) + $label_columns, 1 );
 		}
 
-		# Draws into the cleared buffer; called whenever the state, the focus,
-		# the colors or the size change.
+		# Draws into the cleared buffer; called while a frame is drawn, when
+		# the state, the focus, the colors or the size changed.
 		method paint () {
 			my $bg   = $self->paint_focus_background;
 			my $mark = $on ? ON_MARK : OFF_MARK;
@@ -3244,7 +3252,7 @@ F<examples/custom-widget.pl>.
 			return;
 		}
 
-		# The user changes the state: repaint and tell the listeners.
+		# The user changes the state: show it and tell the listeners.
 		method _switch ($new) {
 			return if $new == $on;
 			$self->value($new);
@@ -3336,11 +3344,12 @@ C<focus_background_color> while it has the focus. C<accent_color
 
 =item *
 
-Call C<repaint> after every change of what the widget shows or of the
-size it asks for, and C<fire_change> only for changes the user makes.
-C<repaint> also marks the widget changed, so the change is drawn in the
-next frame even when it is made from a timer: Term::Fabulous skips
-frames while nothing changed.
+Call C<mark_changed> after every change of what the widget shows or of
+the size it asks for, and C<fire_change> only for changes the user
+makes. The widget does not paint itself: C<mark_changed> makes a frame
+due, also when the change is made from a timer, and that frame calls
+C<paint> (Term::Fabulous skips frames while nothing changed). See
+L<Term::Fabulous::Widget::Input/Painting>.
 
 =item *
 
@@ -3349,7 +3358,8 @@ base class; the widget does nothing for them.
 
 =item *
 
-C<layout_properties> lists the accessors a KDL layout may set. A layout
+C<layout_properties> declares the accessors a KDL layout may set and
+how each is read (C<value> takes C<#true> or C<#false>). A layout
 that is to use a class defined inside the program needs the
 C<$INC{...}> line, because L<Term::Fabulous::Layout> loads every class
 it names with C<require>. A class in its own F<.pm> file somewhere in
@@ -3385,8 +3395,8 @@ The widget, saved as F<lib/My/Panel.pm>:
 
 		field $title_widget = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 255, 200, 80, 255 ] );
 
-		# Runs after the layout properties were applied: fill in what the
-		# layout left out.
+		# Defaults; a layout's properties are applied after construction and
+		# override them.
 		ADJUST {
 			my $layout = $self->layout;
 			$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } ) unless exists $layout->{layout_direction};
@@ -3405,11 +3415,13 @@ The widget, saved as F<lib/My/Panel.pm>:
 		}
 
 		# A structured property: 'title "Settings" color="#ffcc00"' has an
-		# argument and a key=value property, which parse_generic does not
-		# accept, so it is parsed here.
-		method parse_property :override ($kid) {
-			return $self->SUPER::parse_property($kid) unless $kid->name eq 'title';
+		# argument and a key=value property, so a handler of its own parses
+		# the node.
+		method layout_properties :common () {
+			return ( $class->SUPER::layout_properties, title => \&_parse_title );
+		}
 
+		method _parse_title ($kid) {
 			my @args  = $kid->args->@*;
 			my %props = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
 			die "My::Panel: 'title' takes one string and an optional color=..."
@@ -3481,20 +3493,21 @@ The program prints two framed panels: "Network" (in blue) above
 =item *
 
 L<Term::Fabulous::Layout> creates every widget with
-C<< $class->new( id => $id, kdl_node => $node ) >>. Every class based
-on L<Term::Fabulous::Widget::Box> accepts these parameters through
-L<Term::Fabulous::Role::CanParseLayout> and parses its property nodes
-during construction, before the class's own C<ADJUST> blocks run. That
-is why the C<ADJUST> block above sees the layout's properties and only
-fills in what the layout left out.
+C<< $class->new( id => $id ) >> and then applies the layout's
+properties to the finished widget with C<apply_layout_node> (from
+L<Term::Fabulous::Role::CanParseLayout>, which every class based on
+L<Term::Fabulous::Widget::Box> has). So the C<ADJUST> block above runs
+first and sets defaults, and the layout's properties override them, as
+if a program called the accessors after C<new>.
 
 =item *
 
-C<parse_property> is called for every child node of the widget's node.
-Override it for properties that need special parsing and pass all
-others on to C<SUPER::parse_property>, which handles the Box properties
-and the names listed by C<layout_properties>. See
-L<Term::Fabulous::Widget::Box/SUBCLASS INTERFACE>.
+C<layout_properties> declares how each property node is read: the
+inherited Box properties plus C<title>, a structured property whose
+handler, C<_parse_title>, gets the node and parses it itself. Simple
+properties are declared as C<'scalar'>, C<'boolean'> or C<'color'>
+instead and set through the accessor of the same name. See
+L<Term::Fabulous::Role::CanParseLayout/layout_properties>.
 
 =item *
 

@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Checkbox
 	:strict(params)
 {
 	use List::Util qw(max);
+	use Term::Fabulous::Check qw(boolean string);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	field $label              :param = '';
@@ -26,20 +27,18 @@ class Term::Fabulous::Widget::Checkbox
 	field $indeterminate_mark :param = '[-]';
 
 	ADJUST {
-		$self->_checked_string( $_->[0], $_->[1] )
-			foreach [ label => $label ], [ checked_mark => $checked_mark ], [ unchecked_mark => $unchecked_mark ], [ indeterminate_mark => $indeterminate_mark ];
-		( $checked, $indeterminate ) = ( $checked ? 1 : 0, $indeterminate ? 1 : 0 );
-	}
-
-	method _checked_string ( $name, $value ) {
-		die "Term::Fabulous::Widget::Checkbox: $name must be a string, got " . ( ref $value || 'undef' ) unless defined $value && !ref $value;
-		return $value;
+		$label              = string( $self, label              => $label );
+		$checked_mark       = string( $self, checked_mark       => $checked_mark );
+		$unchecked_mark     = string( $self, unchecked_mark     => $unchecked_mark );
+		$indeterminate_mark = string( $self, indeterminate_mark => $indeterminate_mark );
+		$checked            = boolean( $self, checked           => $checked );
+		$indeterminate      = boolean( $self, indeterminate     => $indeterminate );
 	}
 
 	method _set_string ( $name, $field_ref, @new ) {
 		return $$field_ref unless @new;
-		$$field_ref = $self->_checked_string( $name => $new[0] );
-		$self->repaint;
+		$$field_ref = string( $self, $name => $new[0] );
+		$self->mark_changed;
 		return $$field_ref;
 	}
 
@@ -50,16 +49,16 @@ class Term::Fabulous::Widget::Checkbox
 
 	method checked (@new) {
 		return $checked unless @new;
-		$checked       = $new[0] ? 1 : 0;
+		$checked       = boolean( $self, checked => $new[0] );
 		$indeterminate = 0;
-		$self->repaint;
+		$self->mark_changed;
 		return $checked;
 	}
 
 	method indeterminate (@new) {
 		return $indeterminate unless @new;
-		$indeterminate = $new[0] ? 1 : 0;
-		$self->repaint;
+		$indeterminate = boolean( $self, indeterminate => $new[0] );
+		$self->mark_changed;
 		return $indeterminate;
 	}
 
@@ -67,12 +66,16 @@ class Term::Fabulous::Widget::Checkbox
 		return $checked;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(label checked indeterminate checked_mark unchecked_mark indeterminate_mark) );
-	}
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, qw(checked indeterminate) );
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			label              => 'scalar',
+			checked            => 'boolean',
+			indeterminate      => 'boolean',
+			checked_mark       => 'scalar',
+			unchecked_mark     => 'scalar',
+			indeterminate_mark => 'scalar',
+		);
 	}
 
 	method _mark () {
@@ -219,7 +222,7 @@ in place when the box is toggled, even with marks of different widths.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>,
-C<is_enabled>, the color accessors, C<repaint>), plus:
+C<is_enabled>, the color accessors, C<mark_changed>), plus:
 
 =head2 checked
 
@@ -227,7 +230,7 @@ C<is_enabled>, the color accessors, C<repaint>), plus:
 	$checkbox->checked(1);
 
 Accessor. Returns 1 or 0. Writing sets the state, clears
-C<indeterminate>, repaints, and returns the new state. Writing fires no
+C<indeterminate>, marks the input changed, and returns the new state. Writing fires no
 C<Change> event.
 
 =head2 value
@@ -242,7 +245,7 @@ change the state. This is the value C<Change> events carry.
 	my $is_indeterminate = $checkbox->indeterminate;
 	$checkbox->indeterminate(1);
 
-Accessor. Returns 1 or 0. Writing repaints, returns the new state and
+Accessor. Returns 1 or 0. Writing marks the input changed, returns the new state and
 fires no event; it does not change C<checked>.
 
 =head2 toggle
@@ -259,7 +262,7 @@ disabled. Returns the checkbox.
 	my $label = $checkbox->label;
 	$checkbox->label('Remember me');
 
-Accessor for the label. Writing repaints and returns the new label; the
+Accessor for the label. Writing marks the input changed and returns the new label; the
 new width takes effect at the next frame. A value that is not a string
 dies and leaves the label unchanged.
 
@@ -268,7 +271,7 @@ dies and leaves the label unchanged.
 	my $mark = $checkbox->checked_mark;
 	$checkbox->checked_mark('[*]');
 
-Accessor for the C<checked_mark> parameter. Writing repaints and returns
+Accessor for the C<checked_mark> parameter. Writing marks the input changed and returns
 the new mark. A value that is not a string dies and leaves the mark
 unchanged.
 

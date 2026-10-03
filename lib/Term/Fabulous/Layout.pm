@@ -133,7 +133,8 @@ class Term::Fabulous::Layout :strict(params) {
 
 		my $widget;
 		try {
-			$widget = $class->new( id => $id, kdl_node => $node );
+			$widget = $class->new( id => $id );
+			$widget->apply_layout_node($node);
 		}
 		catch ($error) {
 			die "Term::Fabulous::Layout: cannot build widget '$name'" . ( defined $id ? " \"$id\"" : '' ) . ": $error";
@@ -258,10 +259,14 @@ only once: later calls return the same root widget. Since a widget can
 be part of only one tree, build a new Term::Fabulous::Layout object if
 you need a second copy of the same widgets.
 
-Each widget is built with C<< $class->new( id => $id, kdl_node => $node ) >>
-and parses its own property nodes (see
-L<Term::Fabulous::Role::CanParseLayout>). Invalid properties die here,
-not in L</new>.
+Each widget is built with C<< $class->new( id => $id ) >>, then its
+property nodes are applied to the finished widget with
+C<< $widget->apply_layout_node($node) >> (see
+L<Term::Fabulous::Role::CanParseLayout>), and then its child widgets
+are built and added. So a layout sets properties like a program calling
+the accessors after C<new>, and the order of the properties of related
+values does not matter (a Slider's C<min> and C<max>, a Dropdown's
+C<options> and C<value>). Invalid properties die here, not in L</new>.
 
 =head2 root_widget
 
@@ -391,11 +396,12 @@ dies.
 
 =back
 
-Properties are applied in the order they appear, with the same checks
-as the Perl method of the same name. When one value depends on another,
-give it later: a dropdown's options before its C<value>, a slider's
-C<min> and C<max> before its C<value>, a text field's C<max_length>
-before its C<value>.
+Properties are applied after the widget was constructed, with the same
+checks as the Perl method of the same name, in the order they appear;
+values that depend on each other are applied together, wherever they
+stand: a dropdown's options before its C<value>, a slider's C<min>,
+C<max> and C<step> as one range before its C<value>, a text field's
+C<max_length> before its C<value>.
 
 Ids are optional. They are used by Clay to keep track of widgets between
 frames, they are required for a ScrollBox, and they are how you find
@@ -586,7 +592,7 @@ accept the L</Box properties> plus:
 	Property node                    Value
 	-------------------------------  ----------------------------------
 	disabled #true                   boolean
-	can_focus #false                 boolean (see CAVEATS)
+	can_focus #false                 boolean
 	text_color "..."                 color string
 	disabled_color "..."             color string
 	accent_color "..."               color string
@@ -631,7 +637,7 @@ C<label>, C<checked_mark>, C<unchecked_mark>, C<indeterminate_mark>
 
 L<Term::Fabulous::Widget::RadioGroup>: the L</Box properties> plus
 C<value> (the value of the selected button), C<disabled> and
-C<can_focus> (booleans; for C<can_focus> see L</CAVEATS>). Without a
+C<can_focus> (booleans). Without a
 C<layout direction=...>, its children are stacked from top to bottom.
 
 L<Term::Fabulous::Widget::RadioButton>: the input widget properties plus
@@ -663,7 +669,8 @@ L<Term::Fabulous::Widget::Dropdown>: the input widget properties plus:
 	highlight_text_color "..."     color string
 
 C<options> and C<option> may be repeated; each adds to the end of the
-list. Give the options before C<value> or C<selected_index>.
+list. They are applied before C<value> and C<selected_index>, wherever
+those stand.
 
 	Dropdown "color" {
 		placeholder "Pick a color"
@@ -679,10 +686,10 @@ C<min>, C<max>, C<step>, C<page_step>, C<value> (numbers),
 C<show_value> (boolean), C<value_format> (a C<sprintf> format string;
 a code reference is possible only from Perl), C<preferred_columns> (a
 positive integer), C<fill_glyph>, C<track_glyph>, C<thumb_glyph> (single
-characters) and C<track_color> (a color string). Give C<min>, C<max>
-and C<step> before C<value>; and since C<min> must stay below C<max> at
-every step, raise C<max> before C<min> when both grow beyond the
-defaults (0 and 100).
+characters) and C<track_color> (a color string). C<min>, C<max> and
+C<step> are applied together as one range, before C<value>, so their
+order does not matter, also when the range moves beyond the defaults
+(0 and 100).
 
 	Slider "volume" {
 		max 11
@@ -858,15 +865,9 @@ has already run. A layout can therefore load and run any module
 installed on the system. Treat layout files like program code: do not
 load layouts from untrusted sources.
 
-Properties can only call the accessors a widget class lists in its
+Properties can only call the accessors a widget class declares in its
 C<layout_properties> (see L<Term::Fabulous::Role::CanParseLayout>), so a
 layout cannot call arbitrary methods.
-
-=head1 CAVEATS
-
-C<can_focus #false> currently has no effect on input widgets and on
-RadioGroup: they set C<can_focus> again while they are constructed. Call
-C<< $widget->can_focus(0) >> from Perl after L</build> instead.
 
 =head1 SEE ALSO
 

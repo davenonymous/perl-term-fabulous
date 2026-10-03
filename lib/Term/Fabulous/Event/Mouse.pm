@@ -137,8 +137,10 @@ C<TB_MOD_ALT>, so a Shift+click can be told from a click.
 	$canvas->fire_event($press);
 
 Programs rarely build mouse events themselves; L<Term::Fabulous> does it
-for every report. Building one by hand is useful in tests (see
-L<Term::Fabulous::Manual/TESTING>). Note that firing a hand-built event
+for every report. Building one by hand is useful in tests of one
+widget's C<Mouse> listeners; L<Term::Fabulous::Terminal::Memory/click>
+clicks like a real mouse (see L<Term::Fabulous::Manual/TESTING>). Note
+that firing a hand-built event
 on a widget only runs the listeners. For a real left press,
 L<Term::Fabulous> records the pointer position and moves the keyboard
 focus (see L<Term::Fabulous::Manual/FOCUS>) before it fires the

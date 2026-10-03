@@ -89,7 +89,7 @@ protect kept cells during a frame
 	use Term::Fabulous::Render::Target::Mask;
 
 	# A cell target that records which cells were written.
-	role My::Target::Log :does(Term::Fabulous::Render::Target::Mask) {
+	class My::Target::Log :does(Term::Fabulous::Render::Target::Mask) {
 		field @written;
 
 		method clear_cells (@kept_rects)            { @written = (); return }
@@ -103,12 +103,13 @@ protect kept cells during a frame
 
 Most programs never use this module directly. Read on if you want to
 paint Term::Fabulous frames somewhere other than the terminal
-(L<Term::Fabulous::Render::Target::Termbox>) or memory
+(L<Term::Fabulous::Terminal::Termbox::Cells>) or memory
 (L<Term::Fabulous::Render::Target::Grid>).
 
-A I<cell target> is the role that receives the cells
+A I<cell target> is the object that receives the cells
 L<Term::Fabulous::Render> paints (see
-L<Term::Fabulous::Render/CELL TARGET>). This role implements the
+L<Term::Fabulous::Render/CELL TARGET>). The class of a cell target
+composes this role. This role implements the
 target methods the renderer calls (C<begin_frame>, C<end_frame>,
 C<release_rect>, C<set_cell>, C<extend_cell>, C<fill_row>) on top of
 five simple primitives that a concrete target provides. On the way, it
@@ -202,7 +203,7 @@ and the terminal default foreground, from C<($x, $y)> to the right.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Render/CELL TARGET>,
-L<Term::Fabulous::Render::Target::Termbox>,
+L<Term::Fabulous::Terminal::Termbox::Cells>,
 L<Term::Fabulous::Render::Target::Grid>.
 
 =cut

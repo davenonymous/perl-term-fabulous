@@ -25,56 +25,38 @@ role Term::Fabulous::Render
 	:does(Term::Fabulous::Render::Canvas)
 {
 	use Clay::XS qw(
-		CLAY_RENDER_COMMAND_TYPE_NONE
 		CLAY_RENDER_COMMAND_TYPE_RECTANGLE
 		CLAY_RENDER_COMMAND_TYPE_BORDER
 		CLAY_RENDER_COMMAND_TYPE_TEXT
-		CLAY_RENDER_COMMAND_TYPE_IMAGE
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-		CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START
-		CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM
 	);
+	use Feature::Compat::Try;
 	use Scalar::Util qw(looks_like_number);
 	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR);
+	use Term::Fabulous::Render::Frame;
 	use Term::Fabulous::Unicode qw(string_columns);
 
+	# Scissors paint nothing: the Frame has turned them into clip rects.
 	my %handler_by_command_type = (
-		CLAY_RENDER_COMMAND_TYPE_RECTANGLE()     => 'render_rectangle',
-		CLAY_RENDER_COMMAND_TYPE_BORDER()        => 'render_border',
-		CLAY_RENDER_COMMAND_TYPE_TEXT()          => 'render_text',
-		CLAY_RENDER_COMMAND_TYPE_CUSTOM()        => 'render_custom',
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START() => 'render_scissor_start',
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END()   => 'render_scissor_end',
+		CLAY_RENDER_COMMAND_TYPE_RECTANGLE() => 'render_rectangle',
+		CLAY_RENDER_COMMAND_TYPE_BORDER()    => 'render_border',
+		CLAY_RENDER_COMMAND_TYPE_TEXT()      => 'render_text',
+		CLAY_RENDER_COMMAND_TYPE_CUSTOM()    => 'render_custom',
 	);
 
 	# Clay_UpdateScrollContainers moves a scroll container by ten layout
 	# units, here cells, per unit of scroll delta.
 	use constant CELLS_PER_CLAY_SCROLL_UNIT => 10;
 
-	my %command_type_name = (
-		CLAY_RENDER_COMMAND_TYPE_NONE()                => 'NONE',
-		CLAY_RENDER_COMMAND_TYPE_RECTANGLE()           => 'RECTANGLE',
-		CLAY_RENDER_COMMAND_TYPE_BORDER()              => 'BORDER',
-		CLAY_RENDER_COMMAND_TYPE_TEXT()                => 'TEXT',
-		CLAY_RENDER_COMMAND_TYPE_IMAGE()               => 'IMAGE',
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START()       => 'SCISSOR_START',
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END()         => 'SCISSOR_END',
-		CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_START() => 'OVERLAY_COLOR_START',
-		CLAY_RENDER_COMMAND_TYPE_OVERLAY_COLOR_END()   => 'OVERLAY_COLOR_END',
-		CLAY_RENDER_COMMAND_TYPE_CUSTOM()              => 'CUSTOM',
-	);
-
 	field $output_mode :param :reader = TB_OUTPUT_TRUECOLOR;
 
 	# Background attribute of every cell painted this frame, indexed [y][x].
 	field $buffer = [];
-	field @last_commands;
+	field $_last_frame;
 
-	# The clip rect each of @last_commands was painted under; shorter than
-	# @last_commands when painting the frame died.
-	field @last_clip_rects;
+	# The paint-order index of the command being painted, undef between
+	# commands.
+	field $_painting_index;
 
 	# Provided by Clay::UI.
 	method render;
@@ -84,14 +66,9 @@ role Term::Fabulous::Render
 	# Provided by the consumer: undef, or { x, y, down } of the pointer.
 	method pointer_state;
 
-	# Provided by a cell target role (Term::Fabulous::Render::Target::*).
-	method begin_frame;
-	method end_frame;
-	method set_cell;
-	method extend_cell;
-	method fill_row;
-	method painted_cell;
-	method release_rect;
+	# Provided by the consumer: the cell target the frames are painted
+	# into (see CELL TARGET).
+	method cell_target;
 
 	ADJUST {
 		die "Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR (" . TB_OUTPUT_TRUECOLOR . "), got '$output_mode'"
@@ -105,28 +82,13 @@ role Term::Fabulous::Render
 		return { width => string_columns($text), height => 1 };
 	}
 
-	method get_last_commands () {
-		return @last_commands;
-	}
-
-	method get_last_clip_rects () {
-		return @last_clip_rects;
-	}
-
-	# The commands and clip rects of the last frame, as the arrays
-	# themselves, for hit-testing every pointer report without copying.
-	# Read-only for the caller.
 	method last_frame () {
-		return ( \@last_commands, \@last_clip_rects );
+		return $_last_frame // Term::Fabulous::Render::Frame->new( commands => [], width => $self->width, height => $self->height );
 	}
 
-	method _dispatch_command ($command) {
-		my $type    = $command->{commandType};
-		my $handler = $handler_by_command_type{$type}
-			// die sprintf( "Term::Fabulous::Render: unhandled render command type %s", $command_type_name{$type} // $type );
-		push @last_clip_rects, $self->clip_rect;
-		$self->$handler( $command, $self->widget_for( $command->{userData} ), $buffer );
-		return;
+	method clip_rect () {
+		die "Term::Fabulous::Render: clip_rect is only known while a render command is painted" unless defined $_painting_index;
+		return $_last_frame->clip_rect($_painting_index);
 	}
 
 	sub _clay_scroll_delta ($scroll_cells) {
@@ -136,24 +98,31 @@ role Term::Fabulous::Render
 		return { x => $columns / CELLS_PER_CLAY_SCROLL_UNIT, y => $rows / CELLS_PER_CLAY_SCROLL_UNIT };
 	}
 
-	# Clay emits an element's custom command before its background
-	# rectangle; paint the background first, below the custom content.
-	sub _backgrounds_first (@commands) {
-		foreach my $index ( 0 .. $#commands - 1 ) {
-			my ( $custom, $next ) = @commands[ $index, $index + 1 ];
-			next unless $custom->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM
-				&& $next->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
-				&& $next->{id} == $custom->{id};
-			@commands[ $index, $index + 1 ] = ( $next, $custom );
-		}
-		return @commands;
-	}
-
 	# Clay counts the right and bottom edges of a box as inside it, so a
 	# cell's corner would also lie in the boxes left of and above it; its
 	# center lies in the box of the cell only.
 	sub _clay_pointer ($pointer) {
 		return { %$pointer, x => $pointer->{x} + 0.5, y => $pointer->{y} + 0.5 };
+	}
+
+	# clip_rect answers for the command being painted, and for no other
+	# time, even when a handler dies.
+	method _paint_commands ($frame) {
+		my @commands = $frame->commands;
+		try {
+			foreach my $index ( 0 .. $#commands ) {
+				my $command = $commands[$index];
+				my $handler = $handler_by_command_type{ $command->{commandType} } // next;
+				$_painting_index = $index;
+				$self->$handler( $command, $self->widget_for( $command->{userData} ), $buffer );
+			}
+		}
+		catch ($error) {
+			$_painting_index = undef;
+			die $error;
+		}
+		$_painting_index = undef;
+		return;
 	}
 
 	method draw (%args) {
@@ -165,14 +134,16 @@ role Term::Fabulous::Render
 			( defined $pointer            ? ( pointer_state => _clay_pointer($pointer) )                     : () ),
 			( defined $args{scroll_cells} ? ( scroll_delta  => _clay_scroll_delta( $args{scroll_cells} ) ) : () ),
 		);
-		@last_commands   = _backgrounds_first(@$commands);
-		@last_clip_rects = ();
 
-		$self->begin_frame( $self->plan_canvases( \@last_commands ) );
+		# Complete before painting starts, so hit-testing sees the whole
+		# frame even when painting dies partway.
+		$_last_frame = Term::Fabulous::Render::Frame->new( commands => $commands, width => $self->width, height => $self->height );
+
+		my $target = $self->cell_target;
+		$target->begin_frame( $self->plan_canvases($_last_frame) );
 		$buffer = [];
-		$self->close_scissors;
-		$self->_dispatch_command($_) foreach @last_commands;
-		$self->end_frame;
+		$self->_paint_commands($_last_frame);
+		$target->end_frame;
 		$self->finish_canvases;
 		return;
 	}
@@ -195,17 +166,15 @@ terminal cells
 	use Term::Fabulous::Render::Target::Grid;
 
 	# A UI class that paints into memory and never sees a pointer.
-	class My::Snapshot
-		:isa(Clay::UI)
-		:does(Term::Fabulous::Render)
-		:does(Term::Fabulous::Render::Target::Grid)
-	{
+	class My::Snapshot :isa(Clay::UI) :does(Term::Fabulous::Render) {
+		field $cell_target :reader = Term::Fabulous::Render::Target::Grid->new;
+
 		method pointer_state () { return undef }
 	}
 
 	my $ui = My::Snapshot->new( root => $root, width => 10, height => 2 );
 	$ui->draw;
-	my ( $glyph, $fg, $bg ) = @{ $ui->cell( 0, 0 ) };
+	my ( $glyph, $fg, $bg ) = @{ $ui->cell_target->cell( 0, 0 ) };
 
 =head1 DESCRIPTION
 
@@ -218,13 +187,14 @@ Term::Fabulous::Render is an L<Object::Pad> role for a subclass of
 L<Clay::UI>. It turns a laid-out widget tree into terminal cells:
 L</draw> asks Clay::UI for the frame's render commands (rectangles,
 borders, text, clipping and canvases) and paints each of them, cell by
-cell. Where the cells go is decided by a second role, the I<cell
-target>, which the class composes as well (see L</CELL TARGET>).
+cell. Where the cells go is decided by an object the class provides,
+the I<cell target> (see L</CELL TARGET>).
 
 The role is composed of smaller roles, one per kind of render command:
 L<Term::Fabulous::Render::Rectangle>, L<Term::Fabulous::Render::Border>,
-L<Term::Fabulous::Render::Text>, L<Term::Fabulous::Render::Canvas> and
-L<Term::Fabulous::Render::Clip>.
+L<Term::Fabulous::Render::Text> and L<Term::Fabulous::Render::Canvas>.
+What a frame paints where is worked out once per frame, before any
+painting, by L<Term::Fabulous::Render::Frame>.
 
 When it is constructed, the role checks C<output_mode> and installs its
 own measure-text callback in Clay::UI (C<measure_text>), which reports
@@ -245,7 +215,7 @@ The class that composes this role must provide:
 
 =item * C<pointer_state> (see L</pointer_state>);
 
-=item * the cell target methods (compose one of the target roles; see L</CELL TARGET>).
+=item * C<cell_target>, which returns the object the frames are painted into (see L</CELL TARGET>).
 
 =back
 
@@ -282,20 +252,26 @@ events (hover, press, scroll) during this call.
 
 =item 2.
 
+Builds the L<Term::Fabulous::Render::Frame> of the commands: their
+paint order, the clip rect of each and the cells each paints.
+L</last_frame> returns it from now on.
+
+=item 3.
+
 Sizes every canvas to its new content box and decides which canvases
 can keep the cells of the previous frame
 (L<Term::Fabulous::Render::Canvas/plan_canvases>). Canvases fire
 C<CanvasResize> here.
 
-=item 3.
-
-Calls the target's C<begin_frame>, paints every render command in order
-and calls C<end_frame>.
-
 =item 4.
 
+Calls the cell target's C<begin_frame>, paints every render command in
+paint order and calls C<end_frame>.
+
+=item 5.
+
 Calls L<Term::Fabulous::Render::Canvas/finish_canvases>, which
-remembers this completely painted frame for the comparison in step 2 of
+remembers this completely painted frame for the comparison in step 3 of
 the next frame. If painting died, this step is skipped and the next
 frame paints every canvas in full.
 
@@ -311,41 +287,35 @@ the result within the content. L<Term::Fabulous> passes the wheel
 notches since the last frame here.
 
 Any other argument dies. Render command types other than rectangle,
-border, text, scissor (clipping) and custom (canvas) die; Term::Fabulous
-widgets produce only these. With the termbox2 target, the terminal must
-have been opened (L<Term::Fabulous/run> does that); otherwise termbox2
-ignores the drawing.
-
-=head2 get_last_commands
-
-	my @commands = $ui->get_last_commands;
-
-The render commands of the last L</draw>, in the order they were
-painted, as hash references in the format of L<Clay::XS/RENDER COMMANDS>.
-L<Term::Fabulous> uses them to find the widget under the mouse pointer.
-Use C<< $ui->widget_for( $command->{userData} ) >> to get the widget a
-command belongs to.
-
-=head2 get_last_clip_rects
-
-	my @clip_rects = $ui->get_last_clip_rects;
-
-For each command of L</get_last_commands>, in the same order, the
-C<[x0, y0, x1, y1]> rectangle of cells it was allowed to paint into
-(see L<Term::Fabulous::Render::Clip/clip_rect>). A command that lies
-outside its rectangle, such as content scrolled out of a scroll
-container, was not drawn. If painting the frame died, the list ends at
-the command that failed.
+border, text, scissor (clipping) and custom (canvas) die (see
+L<Term::Fabulous::Render::Frame/new>); Term::Fabulous widgets produce
+only these. With the termbox2 cell target, the terminal must have been
+opened (L<Term::Fabulous/run> and L<Term::Fabulous/step> do that);
+otherwise termbox2 ignores the drawing.
 
 =head2 last_frame
 
-	my ( $commands, $clip_rects ) = $ui->last_frame;
+	my $frame = $ui->last_frame;
+	my @indices = $frame->topmost_at( $x, $y );
 
-The same as L</get_last_commands> and L</get_last_clip_rects>, as
-references to the arrays themselves instead of copies, for code that
-looks at the last frame often (L<Term::Fabulous> hit-tests every mouse
-report with it). Read only: changing the arrays changes what the
-renderer believes it drew.
+The L<Term::Fabulous::Render::Frame> of the last L</draw>: its render
+commands in paint order, the clip rect of each and the cells each
+painted. L<Term::Fabulous> hit-tests every mouse report with it. Before
+the first frame, an empty Frame of the current size. The Frame is
+complete even when painting the frame died partway, so it always
+describes one whole layout. Use
+C<< $ui->widget_for( $command->{userData} ) >> to get the widget a
+command belongs to.
+
+=head2 clip_rect
+
+	my ( $x0, $y0, $x1, $y1 ) = @{ $ui->clip_rect };
+
+The rectangle of cells the render command being painted may touch, as
+a new array reference (see L<Term::Fabulous::Render::Frame/clip_rect>).
+The paint roles call it from their render command handlers; it dies
+when no command is being painted
+(C<Term::Fabulous::Render: clip_rect is only known while a render command is painted>).
 
 =head2 pointer_state
 
@@ -367,7 +337,7 @@ as C<12.5>.
 Clay positions boxes in fractional layout units. They are snapped to
 whole cells (see L<Term::Fabulous::Render::Geometry/cell_rect>) and
 clipped to the viewport (C<width> x C<height>) and to the innermost
-open scissor (see L<Term::Fabulous::Render::Clip>). Nothing outside
+scissor around the command (see L<Term::Fabulous::Render::Frame>). Nothing outside
 these limits is painted. Colors are turned into termbox2 attributes as
 described in L<Term::Fabulous::Render::Attr>; alpha 0 means "no color",
 and only a background with an alpha from 1 to 254 is blended.
@@ -405,39 +375,47 @@ in its border styles. See L<Term::Fabulous::Render::Border>.
 =item Scissors
 
 Start and end of a clipping area, for example around the content of a
-scroll container. See L<Term::Fabulous::Render::Clip>.
+scroll container. They paint nothing themselves; the Frame turns them
+into the clip rects of the commands between them. See
+L<Term::Fabulous::Render::Frame>.
 
 =back
 
 =head1 CELL TARGET
 
+	method cell_target () { return $grid }
+
 The paint roles do not write to the terminal themselves. They compute a
-glyph and two termbox2 attributes per cell and hand them to the
-following methods, which the consuming class gets by composing a target
-role:
+glyph and two termbox2 attributes per cell and hand them to the I<cell
+target>, the object the consuming class returns from C<cell_target>.
+The renderer asks for it once per render command, so C<cell_target>
+should return a stored object, not build one. The distribution has two:
 
 =over
 
-=item L<Term::Fabulous::Render::Target::Termbox>
+=item L<Term::Fabulous::Terminal::Termbox::Cells>
 
-Draws into the terminal through termbox2. Used by L<Term::Fabulous>.
+Draws into the terminal through termbox2. L<Term::Fabulous> paints into
+the cell target of its terminal
+(L<Term::Fabulous::Role::Terminal/cell_target>), which is this one for
+the real terminal.
 
 =item L<Term::Fabulous::Render::Target::Grid>
 
 Keeps the cells in memory. Used by L<Term::Fabulous::Static> and by
-tests.
+L<Term::Fabulous::Terminal::Memory>.
 
 =back
 
-Both build on L<Term::Fabulous::Render::Target::Mask>, which implements
+Both compose L<Term::Fabulous::Render::Target::Mask>, which implements
 the methods below on top of a few primitives; write your own target the
 same way. All coordinates are cells, counted from 0 at the top-left, and
-always lie inside the viewport and the open clip area: clipping happens
-before a target method is called.
+always lie inside the viewport and the clip rect of the command:
+clipping happens before a target method is called.
 
 =head2 begin_frame
 
-	$ui->begin_frame(@kept_rects);
+	$target->begin_frame(@kept_rects);
 
 Called once before the commands of a frame are painted. Resets every
 cell outside the given C<[x0, y0, x1, y1]> rectangles (all cells when
@@ -447,14 +425,14 @@ rectangle is released with L</release_rect>.
 
 =head2 end_frame
 
-	$ui->end_frame;
+	$target->end_frame;
 
 Called once after all commands of a frame are painted. Releases all
 kept rectangles and shows the frame.
 
 =head2 release_rect
 
-	$ui->release_rect($rect);
+	$target->release_rect($rect);
 
 Stops protecting one of the rectangles given to L</begin_frame>
 (identified by being the same array reference). The canvas that owns it
@@ -462,7 +440,7 @@ then paints its changed cells into it.
 
 =head2 set_cell
 
-	$ui->set_cell( $x, $y, $glyph, $fg, $bg );
+	$target->set_cell( $x, $y, $glyph, $fg, $bg );
 
 Paints one cell: C<$glyph> is a character string with one character
 (the base character of a grapheme cluster), C<$fg> and C<$bg> are
@@ -470,21 +448,21 @@ termbox2 attributes.
 
 =head2 extend_cell
 
-	$ui->extend_cell( $x, $y, $character );
+	$target->extend_cell( $x, $y, $character );
 
 Appends a combining character (a character string of length one) to the
 cell set last at that position, to complete a grapheme cluster.
 
 =head2 fill_row
 
-	$ui->fill_row( $x, $y, $columns, $bg );
+	$target->fill_row( $x, $y, $columns, $bg );
 
 Paints C<$columns> cells of spaces with the background attribute C<$bg>,
 starting at C<($x, $y)> and going right.
 
 =head2 painted_cell
 
-	my ( $glyph, $fg, $bg ) = $ui->painted_cell( $x, $y );
+	my ( $glyph, $fg, $bg ) = $target->painted_cell( $x, $y );
 
 Reads back what the frame holds at a cell so far: the glyph (a
 character string, the base character plus any combining characters),
@@ -496,6 +474,7 @@ the glyph. Kept rectangles do not affect reading.
 =head1 SEE ALSO
 
 L<Term::Fabulous>, L<Term::Fabulous::Static>, L<Clay::UI>,
-L<Term::Fabulous::Render::Target::Mask>, L<Term::Fabulous::Render::Attr>.
+L<Term::Fabulous::Render::Frame>, L<Term::Fabulous::Render::Target::Mask>,
+L<Term::Fabulous::Render::Attr>.
 
 =cut

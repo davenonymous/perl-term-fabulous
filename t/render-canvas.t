@@ -59,7 +59,7 @@ subtest 'an unchanged canvas keeps its cells' => sub {
 	$canvas->put( 0, 0, 'a' );
 	$ui->draw;
 
-	$ui->set_cell( $_, 2, 'Z', 0, 0 ) foreach 3 .. 5;    # stand-ins for what is still on screen
+	$ui->cell_target->set_cell( $_, 2, 'Z', 0, 0 ) foreach 3 .. 5;    # stand-ins for what is still on screen
 	$ui->draw;
 	is glyphs_at( $ui, 2, 3, 6 ), 'ZZZ', 'nothing is painted again, not even the background below';
 
@@ -96,14 +96,14 @@ subtest 'a canvas is painted in full when it cannot keep its cells' => sub {
 	$ui->draw;
 	$ui->draw;
 
-	$ui->set_cell( 3, 2, 'Z', 0, 0 );
+	$ui->cell_target->set_cell( 3, 2, 'Z', 0, 0 );
 	$ui->invalidate_canvases;
 	$ui->draw;
 	is glyphs_at( $ui, 2, 3, 4 ), ' ', 'after invalidate_canvases';
 
 	$canvas->add_child( Term::Fabulous::Widget::Text->new( text => 'T' ) );
 	$ui->draw;
-	$ui->set_cell( 5, 2, 'Z', 0, 0 );
+	$ui->cell_target->set_cell( 5, 2, 'Z', 0, 0 );
 	$ui->draw;
 	is glyphs_at( $ui, 2, 3, 6 ), 'T  ', 'while a child is drawn over it';
 };

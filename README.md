@@ -82,7 +82,10 @@ alongside the user interface.
 This class is the application object: it owns the widget tree, opens the
 terminal, runs the event loop, draws a frame whenever something changed
 (checking 30 times per second) and dispatches input events. It is a
-subclass of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
+subclass of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI). It reaches the terminal through a _terminal_
+object ([Term::Fabulous::Role::Terminal](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ATerminal)): the real one by default, or
+[Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory) in tests, which ["step"](#step) drives
+without an event loop.
 
 # DOCUMENTATION
 
@@ -133,8 +136,8 @@ colors and a UTF-8 locale. See ["REQUIREMENTS" in Term::Fabulous::Manual](https:
 ```
 
 Creates the application object. The terminal is not touched until
-["run"](#run), so you can create the object, set the focus and add timers
-first. Unknown parameters die
+["run"](#run) (or ["step"](#step)), so you can create the object, set the focus and
+add timers first. Unknown parameters die
 (`Unrecognised parameters for Term::Fabulous constructor: 'colour'`).
 
 - `root`
@@ -150,14 +153,14 @@ first. Unknown parameters die
 - `width`
 
     Required. A positive number: the width of the layout in columns until
-    ["run"](#run) starts. `run` replaces it with the terminal's width, and keeps
-    it up to date when the terminal is resized.
+    the terminal is opened (["run"](#run) or ["step"](#step)). It is then replaced with
+    the terminal's width, and kept up to date when the terminal is resized.
 
 - `height`
 
     Required. A positive number: the height of the layout in rows until
-    ["run"](#run) starts, then the terminal's height (in inline mode, the rows of
-    the inline region).
+    the terminal is opened, then the terminal's height (in inline mode, the
+    rows of the inline region).
 
 - `inline`
 
@@ -193,6 +196,23 @@ first. Unknown parameters die
     when `run` starts, at most half a second for a terminal that does not
     answer at all. With 0, the terminal is not asked and the protocol stays
     off. ["kitty\_keyboard\_active"](#kitty_keyboard_active) tells whether `run` uses it.
+
+- `terminal`
+
+    Optional. The terminal to run on: an object composing
+    [Term::Fabulous::Role::Terminal](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ATerminal). Default: a new
+    [Term::Fabulous::Terminal::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox), the real terminal. Pass a
+    [Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory) to test a program without a
+    terminal (see ["step"](#step) and ["TESTING" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#TESTING)). Anything
+    else dies (`Term::Fabulous: terminal must consume Term::Fabulous::Role::Terminal`).
+
+- `clock`
+
+    Optional, for tests. A code reference that returns the current time in
+    seconds, default `Time::HiRes::time`. Frame pacing reads it: how long
+    a frame took and when it ended (see ["run"](#run)). A test gives it a clock it
+    controls to check the pacing with `step( paced => 1 )`. Anything
+    but a code reference dies.
 
 - `output_mode`
 
@@ -240,7 +260,9 @@ first. Unknown parameters die
 
 Opens the terminal in full-screen mode (or inline, see
 ["INLINE MODE"](#inline-mode)), runs the event loop until it is stopped, and
-restores the terminal. It returns nothing.
+restores the terminal. It returns nothing. A terminal that ["step"](#step)
+opened is used as it is, without a second `Start`, and closed when
+`run` returns.
 
 While it runs:
 
@@ -286,17 +308,65 @@ dies with `Term::Fabulous: the terminal was closed`.
 After `run` has returned or died, the object can be used again and
 `run` can be called again.
 
-`run` dies with a message starting with `Term::Fabulous:` when the
-terminal cannot be opened, for example when the process has no
-controlling terminal (`tb_init failed: No such device or address`,
-or `tf_init_inline failed: ...` in inline mode), or when the terminal
-reports a size of 0 columns or rows. In inline mode it also dies when
-the terminal does not report its cursor position within a second
-(`the terminal did not report its cursor position; ...`).
+`run` dies with the terminal's error when the terminal cannot be
+opened. For the real terminal, these start with
+`Term::Fabulous::Terminal::Termbox:`, for example when the process has
+no controlling terminal (`tb_init failed: No such device or address`,
+or `tf_init_inline failed: ...` in inline mode), when the terminal
+reports a size of 0 columns or rows, and in inline mode when the
+terminal does not report its cursor position within a second
+(`the terminal did not report its cursor position; ...`); see
+["open" in Term::Fabulous::Terminal::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox#open).
 
 When the locale's character set is not UTF-8, `run` warns (at every
 call): `Term::Fabulous: the locale's character set is not UTF-8; wide
 characters will be misaligned`.
+
+## step
+
+```perl
+     my $frames = $ui->step;
+     my $frames = $ui->step( paced => 1 );
+```
+
+One turn of ["run"](#run) without an event loop, for tests: usually with a
+[Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory) as the ["terminal"](#terminal), whose input
+methods queue keys, clicks and resizes. `step`
+
+1. opens the terminal if it is not open yet, sets ["width"](#width) and ["height"](#height)
+to its size and fires `Start`, as `run` does (but there is no loop:
+["loop"](#loop) is the one of the last `run`, or `undef`);
+2. reads every event that waits and dispatches it exactly as `run` does:
+keys to the focused widget, then Tab, Shift+Tab; mouse events to the
+widget under the pointer, focusing it on a press; wheel notches; see
+["EVENTS"](#events) and ["KEYBOARD AND FOCUS"](#keyboard-and-focus). `Ctrl+C` fires its `KeyPress`
+but has no loop to stop;
+3. applies a resize at once, firing the `Resize` pair, instead of waiting
+for the size to settle;
+4. draws frames as long as one is due: for a click, one frame for the
+press and one for the release, and another one when a frame changed
+widgets (hover and press events fire while a frame is drawn). Without
+`paced`, a frame that only shows pointer motion is drawn at once; with
+`paced => 1`, it waits like in `run` (see there), measured with
+the `clock` of ["new"](#new).
+
+Returns the number of frames it drew, 0 when nothing was due. The
+terminal stays open; `run` closes it, or close it with
+`$ui->terminal->close`. Unknown options die, and so does a call
+from inside `run`. When frames keep being due after 100 rounds,
+because a widget changes in every frame, `step` dies. When the
+terminal input has ended (["end\_input" in Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory#end_input)),
+`step` dies like `run`.
+
+## terminal
+
+```perl
+     my $terminal = $ui->terminal;
+     $ui->terminal->press_key('Enter');
+```
+
+Returns the terminal object given to ["new"](#new), or the
+[Term::Fabulous::Terminal::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox) created by default. Read only.
 
 ## loop
 
@@ -391,10 +461,11 @@ Returns the `kitty_keyboard` constructor parameter, or its default
      my $in_use = $ui->kitty_keyboard_active;
 ```
 
-Returns 1 while ["run"](#run) uses the kitty keyboard protocol: from the
-start of `run`, before `Start` fires, until `run` returns, when the
-terminal speaks the protocol and `kitty_keyboard` is 1. Returns 0
-otherwise, and always outside `run`. Read only.
+Returns 1 while the open terminal uses the kitty keyboard protocol:
+from the start of ["run"](#run) (or the first ["step"](#step)), before `Start`
+fires, until the terminal is closed, when the terminal speaks the
+protocol and `kitty_keyboard` is 1. Returns 0 otherwise, and always
+while the terminal is closed. Read only.
 
 ## output\_mode
 
@@ -474,16 +545,18 @@ While a resize is pending, no frames are drawn. Read only.
      $ui->draw;
 ```
 
-Lays out and draws one frame immediately. `run` calls it whenever a
-frame is due, so programs do not need it; see ["invalidate"](#invalidate) to ask for
-a frame instead. It only has a visible effect while the terminal is
-open. See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw).
+Lays out and draws one frame immediately, into the cell target of the
+["terminal"](#terminal). `run` calls it whenever a frame is due, so programs do
+not need it; see ["invalidate"](#invalidate) to ask for a frame instead. With the
+real terminal, it only has a visible effect while the terminal is open.
+See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw).
 
 ## Other inherited methods
 
 The class inherits further methods from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) (`render`,
 `widget_for`, `measure_text`) and from [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
-(`get_last_commands`, `get_last_clip_rects`, `last_frame`).
+(`last_frame`, the [Term::Fabulous::Render::Frame](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AFrame) of the last frame).
+`cell_target` returns the cell target of the ["terminal"](#terminal).
 Applications rarely need them; they are documented on those pages.
 
 # EVENTS
@@ -633,6 +706,11 @@ Every module has its own page. They are grouped here by purpose.
     Builds a widget tree from a KDL layout file and documents the layout
     file format.
 
+- [Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory)
+
+    A terminal in memory: test a whole program, keys, clicks and what the
+    screen shows, with ["step"](#step).
+
 ## Widgets
 
 - [Term::Fabulous::Widget::Box](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ABox)
@@ -716,6 +794,11 @@ Every module has its own page. They are grouped here by purpose.
 
     The text, cursor, selection, undo history and clipboard behind the text
     inputs, without any drawing.
+
+- [Term::Fabulous::TextView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATextView)
+
+    How the text inputs lay an editor's text out in rows: wrapping,
+    scrolling, the cell of the cursor and the text under a click.
 
 - [Term::Fabulous::Widget::Dropdown::List](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADropdown%3A%3AList)
 
@@ -802,12 +885,26 @@ from layout files, or your own application or output class.
 
     Makes a widget class usable in KDL layout files.
 
+- [Term::Fabulous::Check](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACheck)
+
+    Checks the values of widget properties, with one wording for each kind
+    of value.
+
 - [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
 
     The role that draws a laid-out widget tree; composed by Term::Fabulous
     and Term::Fabulous::Static.
 
-- [Term::Fabulous::Render::Target::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3ATermbox)
+- [Term::Fabulous::Role::Terminal](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ATerminal)
+
+    What the application object needs from a terminal; write your own
+    terminal with it.
+
+- [Term::Fabulous::Terminal::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox)
+
+    The real terminal, through termbox2: the default terminal.
+
+- [Term::Fabulous::Terminal::Termbox::Cells](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox%3A%3ACells)
 
     Sends the drawn cells to the terminal.
 
@@ -846,9 +943,11 @@ from layout files, or your own application or output class.
 
     Draws canvases, only their changed cells when possible.
 
-- [Term::Fabulous::Render::Clip](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AClip)
+- [Term::Fabulous::Render::Frame](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AFrame)
 
-    Restricts drawing to the visible part of scroll containers.
+    What one frame paints: the paint order, the clip rect of every command
+    (the visible part of scroll containers) and the cells every command
+    paints, for drawing and for finding the widget under the mouse.
 
 - [Term::Fabulous::Render::Attr](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AAttr)
 

@@ -18,6 +18,12 @@ class RectangleCanvas :does(Term::Fabulous::Render::Rectangle) {
 	field $width  :param :reader = 10;
 	field $height :param :reader = 5;
 
+	# Painted outside any scissor: commands may touch the whole viewport.
+	method clip_rect () { return [ 0, 0, $width, $height ] }
+
+	# The painter is its own cell target: it records what it is given.
+	method cell_target () { return $self }
+
 	method fill_row (@args) {
 		push @prints, [@args];
 		return;

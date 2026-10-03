@@ -11,21 +11,14 @@ use Object::Pad 0.825;
 
 use Clay::UI;
 use Term::Fabulous::Render;
-use Term::Fabulous::Render::Target::Termbox;
+use Term::Fabulous::Terminal::Termbox;
 
 class Term::Fabulous
 	:isa(Clay::UI)
 	:does(Term::Fabulous::Render)
-	:does(Term::Fabulous::Render::Target::Termbox)
 	:strict(params)
 {
 	use Clay::UI::Revision qw(current_revision);
-	use Clay::XS qw(
-		CLAY_RENDER_COMMAND_TYPE_BORDER
-		CLAY_RENDER_COMMAND_TYPE_CUSTOM
-		CLAY_RENDER_COMMAND_TYPE_RECTANGLE
-		CLAY_RENDER_COMMAND_TYPE_TEXT
-	);
 	use Feature::Compat::Try;
 	use IO::Async::Handle;
 	use IO::Async::Loop;
@@ -33,58 +26,39 @@ class Term::Fabulous
 	use IO::Async::Timer::Countdown;
 	use IO::Async::Timer::Periodic;
 	use List::Util qw(any);
-	use POSIX qw(EINTR EIO);
-	use Scalar::Util qw(refaddr);
+	use Scalar::Util qw(blessed refaddr);
 	use Time::HiRes ();
 	use Term::Fabulous::Termbox qw(
-		tb_init tf_init_inline tb_shutdown tb_width tb_height tb_hide_cursor tb_clear
-		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
-		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
-		tf_cursor_position tf_reset_attrs tf_kitty_keyboard_query
-		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
-		TB_INPUT_ESC TB_INPUT_MOUSE
 		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
 		TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_LEFT TF_KEY_MOUSE_WHEEL_RIGHT
 		TB_KEY_CTRL_C TB_KEY_TAB TB_KEY_BACK_TAB TB_MOD_MOTION
 	);
-	use Term::Fabulous::Termbox::Event;
 	use Term::Fabulous::Event::KeyPress;
 	use Term::Fabulous::Event::Mouse;
 	use Term::Fabulous::Event::MouseMove;
 	use Term::Fabulous::Event::Resize;
 	use Term::Fabulous::Event::Start;
-	use Term::Fabulous::Render::Geometry qw(cell_rect);
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
 
 	use constant WATCHED_SIGNALS     => qw(TERM INT HUP);
 	use constant WHEEL_NOTCH_ROWS    => 3;
 	use constant WHEEL_NOTCH_COLUMNS => 3;
 
-	# Mouse mode 1003 (any-event tracking) reports the pointer moving with
-	# no button held; termbox2 asks only for buttons, drags and the wheel.
-	use constant REPORT_MOUSE_MOTION      => "\x1b[?1003h";
-	use constant STOP_MOUSE_MOTION_REPORT => "\x1b[?1003l";
-
-	# The kitty keyboard protocol with its flags 1 (disambiguate escape
-	# codes) and 4 (report alternate keys), pushed onto the terminal's
-	# stack of flags and popped off again.
-	use constant PUSH_KITTY_KEYBOARD             => "\x1b[>5u";
-	use constant POP_KITTY_KEYBOARD              => "\x1b[<u";
-	use constant KITTY_KEYBOARD_QUERY_TIMEOUT_MS => 500;
-
-	use constant CURSOR_REPORT_TIMEOUT_MS => 1000;
-	use constant ERASE_BELOW              => "\x1b[J";
+	# step draws until no frame is due; a tree that changes again in every
+	# frame would never settle.
+	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
 	field $inline :param :reader = undef;    # the rows of the inline region, or undef for the full screen
 	field $mouse :param :reader  = undef;
 	field $kitty_keyboard :param :reader = 1;
-	field $kitty_keyboard_active :reader = 0;    # whether run asked the terminal for the protocol
+	field $terminal :param :reader //= Term::Fabulous::Terminal::Termbox->new;
+	field $clock :param = sub { Time::HiRes::time() };
 	field $loop :reader;
 	field $termbox_draw_interval :reader            = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
 
-	field $_terminal_is_open = 0;
+	field $_running = 0;    # whether run's loop is active
 	field @_notifiers;
 	field $_resize_timer;
 	field $_draw_timer;
@@ -98,7 +72,7 @@ class Term::Fabulous
 	field $_drawn_revision  = -1;   # the Clay::UI revision the last frame showed
 	field $_shown_down      = 0;    # the button state the last frame showed Clay
 	field $_frame_seconds   = 0;    # how long the last frame took to draw
-	field $_frame_ended_at  = 0;    # when it was drawn (Time::HiRes::time)
+	field $_frame_ended_at  = 0;    # when it was drawn, on the clock
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -116,6 +90,18 @@ class Term::Fabulous
 		die "Term::Fabulous: inline mode has no mouse support; leave out mouse or pass mouse => 0"
 			if defined $inline && $mouse;
 		$mouse //= defined $inline ? 0 : 1;
+		die "Term::Fabulous: terminal must consume Term::Fabulous::Role::Terminal, got " . ( ref $terminal || "'$terminal'" )
+			unless blessed $terminal && $terminal->DOES('Term::Fabulous::Role::Terminal');
+		die "Term::Fabulous: clock must be a code reference, got " . ( defined $clock ? "'$clock'" : 'undef' )
+			unless ref $clock eq 'CODE';
+	}
+
+	method cell_target () {
+		return $terminal->cell_target;
+	}
+
+	method kitty_keyboard_active () {
+		return $terminal->kitty_keyboard_active;
 	}
 
 	method pointer_state () {
@@ -138,16 +124,12 @@ class Term::Fabulous
 		warn "Term::Fabulous: the locale's character set is not UTF-8; wide characters will be misaligned\n"
 			unless terminal_is_utf8();
 
-		my ( $init, $rc ) = defined $inline ? ( 'tf_init_inline', tf_init_inline() ) : ( 'tb_init', tb_init() );
-		die "Term::Fabulous: $init failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
-		$_terminal_is_open = 1;
-		$self->invalidate_canvases;    # the fresh back buffer holds no canvas cells
-
+		my $opened = $self->_open_terminal;
 		try {
-			$self->_prepare_terminal;
 			$loop = IO::Async::Loop->new;
 			$self->_attach_notifiers;
-			$loop->later( sub { $self->_start } );
+			$_running = 1;
+			$loop->later( sub { $self->_start($opened) } );
 			$loop->run;
 
 			# The frame that stays on the screen shows the final state; frames
@@ -157,121 +139,52 @@ class Term::Fabulous
 		catch ($error) {
 			# Perl reports an uncaught exception before unwinding into
 			# finally; restore the terminal first so the message stays visible.
-			$self->_close_terminal;
+			$self->_end_run;
 			die $error;
 		}
 		finally {
-			$self->_close_terminal;    # also runs when an event handler calls exit()
+			$self->_end_run;    # also runs when an event handler calls exit()
 		}
 		return;
 	}
 
-	method _close_terminal () {
-		return unless $_terminal_is_open;
-		$_terminal_is_open = 0;
-		$self->_detach_notifiers;
-		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
-		tb_send(POP_KITTY_KEYBOARD) if $kitty_keyboard_active;    # before termbox2 leaves the alternate screen, which has a stack of its own
-		$kitty_keyboard_active = 0;
-		$self->_leave_inline_region if defined $self->termbox_inline_top;
-		tb_shutdown();
-		return;
-	}
+	method step (%options) {
+		my @unknown = grep { $_ ne 'paced' } sort keys %options;
+		die "Term::Fabulous: step does not accept @unknown (known options: paced)" if @unknown;
+		die "Term::Fabulous: step cannot be called while run is active; run reads the input and draws by itself" if $_running;
 
-	# The region starts on the cursor's row, or on the next one when text
-	# precedes the cursor there. When it would reach below the screen,
-	# the terminal scrolls up first. Its rows are erased, since termbox
-	# takes the rows it has not drawn yet for blank.
-	method _anchor_inline_region ($screen_height) {
-		my $rc = tf_cursor_position( CURSOR_REPORT_TIMEOUT_MS, \my $column, \my $row );
-		die "Term::Fabulous: the terminal did not report its cursor position; inline mode needs a terminal that answers ESC [ 6 n\n"
-			if $rc == TB_ERR_NO_EVENT;
-		_check_termbox( 'tf_cursor_position', $rc );
+		$self->_fire_start if $self->_open_terminal;
+		$self->_read_input;
+		$self->_apply_resize;
 
-		my $rows     = $inline < $screen_height ? $inline : $screen_height;
-		my $top      = $column == 0 ? $row : $row + 1;
-		my $overflow = $top + $rows - $screen_height;
-		_check_termbox( 'tf_reset_attrs', tf_reset_attrs() );    # scrolled-in and erased rows take the current background
-		if ( $overflow > 0 ) {
-			_check_termbox( 'tb_send', tb_send( _cursor_to_row( $screen_height - 1 ) . "\n" x $overflow ) );
-			$top -= $overflow;
+		my $frames = 0;
+		foreach my $batch ( 1 .. MAX_FRAME_BATCHES_PER_STEP ) {
+			return $frames unless $self->_frame_is_due( $options{paced} );
+			$frames += $self->_draw_pending;
 		}
-		_check_termbox( 'tb_send', tb_send( _cursor_to_row($top) . ERASE_BELOW ) );
-		_check_termbox( 'tb_clear', tb_clear() );    # cells of an earlier region must not come back at their old rows
-		$self->set_termbox_inline_top($top);
-		return $rows;
+		die "Term::Fabulous: step drew " . MAX_FRAME_BATCHES_PER_STEP . " rounds of frames and another frame is still due; a widget changes in every frame\n";
 	}
 
-	# The last frame stays where it is; the shell goes on below it.
-	method _leave_inline_region () {
-		my $last_row = $self->termbox_inline_top + $self->height - 1;
-		tf_reset_attrs();
-		tb_send( _cursor_to_row($last_row) . "\n" );
-		$self->set_termbox_inline_top(undef);
-		return;
-	}
-
-	sub _cursor_to_row ($row) {
-		return "\x1b[" . ( $row + 1 ) . ";1H";
-	}
-
-	sub _check_termbox ( $function, $rc ) {
-		die "Term::Fabulous: $function failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
-		return;
-	}
-
-	# Watching a duplicate lets the watcher close its handle without closing
-	# termbox's own descriptor before tb_shutdown().
-	sub _duplicate_for_reading ($fd) {
-		open my $handle, '<&', $fd or die "Term::Fabulous: cannot duplicate file descriptor $fd: $!\n";
-		return $handle;
-	}
-
-	# Rectangles, text and canvases paint their whole box, a border only its
-	# edges; nothing is painted outside the clip rect.
-	sub _command_paints_cell ( $command, $clip, $x, $y ) {
-		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @$clip;
-		return 0 unless $x >= $clip_x0 && $x < $clip_x1 && $y >= $clip_y0 && $y < $clip_y1;
-
-		my ( $x0, $y0, $x1, $y1 ) = cell_rect( $command->{boundingBox} );
-		return 0 unless $x >= $x0 && $x < $x1 && $y >= $y0 && $y < $y1;
-
-		my $type = $command->{commandType};
-		return 1 if $type == CLAY_RENDER_COMMAND_TYPE_RECTANGLE || $type == CLAY_RENDER_COMMAND_TYPE_TEXT || $type == CLAY_RENDER_COMMAND_TYPE_CUSTOM;
-		return 0 unless $type == CLAY_RENDER_COMMAND_TYPE_BORDER;
-
-		my $widths = $command->{renderData}{width} // {};
-		return $x < $x0 + ( $widths->{left} // 0 )
-			|| $x >= $x1 - ( $widths->{right} // 0 )
-			|| $y < $y0 + ( $widths->{top} // 0 )
-			|| $y >= $y1 - ( $widths->{bottom} // 0 );
-	}
-
-	method _prepare_terminal () {
-		_check_termbox( 'tb_set_output_mode', tb_set_output_mode( $self->output_mode ) );
-		_check_termbox( 'tb_set_input_mode',  tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
-		_check_termbox( 'tf_install_input_parser', tf_install_input_parser() );
-		_check_termbox( 'tb_send', tb_send(REPORT_MOUSE_MOTION) ) if $mouse;
-		$self->_use_kitty_keyboard if $kitty_keyboard;
-		_check_termbox( 'tb_hide_cursor', tb_hide_cursor() );
-
-		my ( $width, $height ) = ( tb_width(), tb_height() );
-		die "Term::Fabulous: the terminal reports an unusable size of ${width}x${height}\n"
-			if $width < 1 || $height < 1;
+	# Returns 1 when it opened the terminal, 0 when it was open already.
+	method _open_terminal () {
+		return 0 if $terminal->is_open;
+		$terminal->open( inline => $inline, mouse => $mouse, kitty_keyboard => $kitty_keyboard );
+		$self->invalidate_canvases;    # a fresh screen holds no canvas cells
+		my ( $width, $height ) = $terminal->size;
 		$self->width($width);
-		$self->height( defined $inline ? $self->_anchor_inline_region($height) : $height );
+		$self->height($height);
+		return 1;
+	}
+
+	method _end_run () {
+		$_running = 0;
+		$self->_detach_notifiers;
+		$terminal->close;
 		return;
 	}
 
-	# A terminal that does not answer the query does not speak the
-	# protocol; the input parser reads the legacy encodings as before.
-	method _use_kitty_keyboard () {
-		my $rc = tf_kitty_keyboard_query( KITTY_KEYBOARD_QUERY_TIMEOUT_MS, \my $supported );
-		return if $rc == TB_ERR_NO_EVENT;
-		_check_termbox( 'tf_kitty_keyboard_query', $rc );
-		return unless $supported;
-		_check_termbox( 'tb_send', tb_send(PUSH_KITTY_KEYBOARD) );
-		$kitty_keyboard_active = 1;
+	method _stop_run () {
+		$loop->stop if $_running;
 		return;
 	}
 
@@ -281,7 +194,7 @@ class Term::Fabulous
 
 		$_resize_timer = IO::Async::Timer::Countdown->new(
 			delay     => $termbox_resize_debounce_interval,
-			on_expire => sub { $self->_fire_resize },
+			on_expire => sub { $self->_apply_resize },
 		);
 		$_draw_timer = IO::Async::Timer::Periodic->new(
 			interval => $termbox_draw_interval,
@@ -305,55 +218,34 @@ class Term::Fabulous
 
 	# Start fires from inside the running loop, so its listeners can use
 	# $ui->loop (add notifiers, stop it); frames are drawn and input is
-	# read only after it.
-	method _start () {
-		$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
+	# read only after it. A terminal step opened has had its Start.
+	method _start ($opened) {
+		$self->_fire_start if $opened;
 		$_draw_timer->start;
 		$self->_watch_terminal_input;
-		$self->_drain_termbox_events if defined $inline || $kitty_keyboard;    # keys the terminal queries read ahead
+		$self->_read_input if defined $inline || $kitty_keyboard;    # keys the terminal queries read ahead
+		return;
+	}
+
+	method _fire_start () {
+		$self->root->fire_event( Term::Fabulous::Event::Start->new( width => $self->width, height => $self->height ) );
 		return;
 	}
 
 	method _watch_terminal_input () {
-		_check_termbox( 'tb_get_fds', tb_get_fds( \my $tty_fd, \my $resize_fd ) );
-		my $tty_handle = _duplicate_for_reading($tty_fd);
-		my @input_watchers = (
-			IO::Async::Handle->new(
-				read_handle   => $tty_handle,
-				on_read_ready => sub {
-					$self->_drain_termbox_events;
-					die "Term::Fabulous: the terminal was closed (end of input)\n" if _input_is_at_eof($tty_handle);
-				},
-			),
-			IO::Async::Handle->new(
-				read_handle   => _duplicate_for_reading($resize_fd),
-				on_read_ready => sub { $self->_drain_termbox_events },
-			),
-		);
+		my @input_watchers = map { IO::Async::Handle->new( read_handle => $_, on_read_ready => sub { $self->_read_input } ) } $terminal->read_handles;
 		$self->_add_notifiers(@input_watchers);
 
-		# IO::Async switches watched handles to non-blocking mode. A duplicate
-		# shares that flag with termbox's own descriptor, and termbox gives up
-		# on a partial write() of a frame, so switch them back. Readiness
-		# notification does not depend on the flag, and nothing here reads
-		# from these handles.
+		# IO::Async switches watched handles to non-blocking mode. A handle
+		# may share that flag with the terminal's own descriptor (termbox
+		# gives up on a partial write() of a frame), so switch them back.
+		# Readiness notification does not depend on the flag, and nothing
+		# here reads from these handles.
 		foreach my $watcher (@input_watchers) {
 			defined $watcher->read_handle->blocking(1)
 				or die "Term::Fabulous: cannot restore blocking mode on a terminal descriptor: $!\n";
 		}
 		return;
-	}
-
-	# After termbox has read all it could, a descriptor that still reports
-	# readable with no byte to read is at end of file: the terminal is gone.
-	# termbox reports that only as "no event", again and again. A terminal
-	# that hung up cannot even say how many bytes wait (EIO).
-	sub _input_is_at_eof ($handle) {
-		vec( my $readable = '', fileno $handle, 1 ) = 1;
-		return 0 unless select( $readable, undef, undef, 0 ) > 0;
-		my $waiting = tf_readable_bytes( fileno $handle );
-		return 1 if $waiting == 0;
-		return $waiting < 0 && $! == EIO ? 1 : 0;
 	}
 
 	method _detach_notifiers () {
@@ -384,31 +276,32 @@ class Term::Fabulous
 		return;
 	}
 
+	# One tick of the frame timer.
 	method _draw_frame () {
 		return if $_resize_timer->is_running;
-		return unless $self->_frame_is_due;
-		$self->_draw_pending;
+		$self->_draw_pending if $self->_frame_is_due(1);
 		return;
 	}
 
 	# A frame is due when something asked for one (invalidate, a key, a
 	# click, a resize), when wheel input or a button press or release waits
 	# to be shown to Clay, or when a widget changed since the last frame
-	# (the Clay::UI revision). Pointer motion alone gets at most every
-	# other slice of time: when frames are slow, moving the mouse must not
-	# keep the loop busy with nothing but redrawing.
-	method _frame_is_due ( $now = Time::HiRes::time() ) {
+	# (the Clay::UI revision). Paced, pointer motion alone gets at most
+	# every other slice of time: when frames are slow, moving the mouse
+	# must not keep the loop busy with nothing but redrawing.
+	method _frame_is_due ($paced) {
 		return 1 if $_frame_requested || $_wheel_rows || $_wheel_columns;
 		return 1 if current_revision() != $_drawn_revision;
 		return 0 unless @_pointer_queue;
-		return 1 if any { $_->{down} != $_shown_down } @_pointer_queue;
-		return $now - $_frame_ended_at >= $_frame_seconds ? 1 : 0;
+		return 1 if !$paced || any { $_->{down} != $_shown_down } @_pointer_queue;
+		return $clock->() - $_frame_ended_at >= $_frame_seconds ? 1 : 0;
 	}
 
 	# Clay takes one button state per frame, so every queued pointer state
 	# gets a frame of its own; the wheel movement goes with the first. The
 	# revision is read before drawing: a frame that changes widgets (hover
-	# and press events fire during it) leaves the next frame due.
+	# and press events fire during it) leaves the next frame due. Returns
+	# the number of frames drawn.
 	method _draw_pending () {
 		my @pointers = splice @_pointer_queue;
 		push @pointers, $_pointer unless @pointers;
@@ -417,41 +310,32 @@ class Term::Fabulous
 		$_drawn_revision  = current_revision();
 		$_frame_requested = 0;
 
-		my $started = Time::HiRes::time();
+		my $started = $clock->();
 		foreach my $pointer (@pointers) {
 			$_pointer    = $pointer;
 			$_shown_down = defined $pointer ? $pointer->{down} : 0;
 			$self->draw( scroll_cells => [ $columns, $rows ] );
 			( $columns, $rows ) = ( 0, 0 );
 		}
-		$_frame_ended_at = Time::HiRes::time();
+		$_frame_ended_at = $clock->();
 		$_frame_seconds  = $_frame_ended_at - $started;
+		return scalar @pointers;
+	}
+
+	method _read_input () {
+		while ( defined( my $event = $terminal->next_event ) ) {
+			$self->_dispatch_event($event);
+		}
+		die "Term::Fabulous: the terminal was closed (end of input)\n" if $terminal->input_ended;
 		return;
 	}
 
-	method _drain_termbox_events () {
-		while (1) {
-			my $event = Term::Fabulous::Termbox::Event->new;
-			my $rc    = tb_peek_event( $event, 0 );
-			if ( $rc == TB_OK ) {
-				$self->_dispatch_termbox_event($event);
-				next;
-			}
-
-			# Nothing buffered, or only the start of a key sequence whose
-			# remaining bytes make the descriptor readable again.
-			return if $rc == TB_ERR_NO_EVENT || $rc == TB_ERR || $rc == TB_ERR_NEED_MORE;
-			return if $rc == TB_ERR_POLL && tb_last_errno() == EINTR;
-			die "Term::Fabulous: reading terminal input failed: " . tb_strerror($rc) . "\n";
-		}
-	}
-
-	method _dispatch_termbox_event ($event) {
+	method _dispatch_event ($event) {
 		my $type = $event->type;
 		return $self->_on_key($event)    if $type == TB_EVENT_KEY;
 		return $self->_on_mouse($event)  if $type == TB_EVENT_MOUSE;
 		return $self->_on_resize($event) if $type == TB_EVENT_RESIZE;
-		die "Term::Fabulous: unknown termbox event type '$type'";
+		die "Term::Fabulous: unknown terminal event type '$type'";
 	}
 
 	method _on_key ($event) {
@@ -460,11 +344,12 @@ class Term::Fabulous
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 
 		my ( $key, $is_special_key ) = ( $event->key, $event->ch == 0 );
-		$loop->stop                        if $is_special_key && $key == TB_KEY_CTRL_C;
+		$self->_stop_run                   if $is_special_key && $key == TB_KEY_CTRL_C;
 		$self->interaction->focus_next     if $is_special_key && $key == TB_KEY_TAB;
 		$self->interaction->focus_previous if $is_special_key && $key == TB_KEY_BACK_TAB;
 		return;
 	}
+
 
 	# The pointer motion a MouseMove reports makes no frame due by itself
 	# (see _frame_is_due); listeners that change a widget make one due.
@@ -485,7 +370,7 @@ class Term::Fabulous
 		}
 
 		$_frame_requested = 1;    # listeners may change anything
-		$self->interaction->set_focused_widget( _focusable_at_or_above($target) )
+		$self->interaction->set_focused_widget( $self->_focusable_at_or_above($target) )
 			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
 		my $mouse_event = Term::Fabulous::Event::Mouse->of($event);
 		$target->fire_event($mouse_event);
@@ -519,9 +404,10 @@ class Term::Fabulous
 	}
 
 	# The widget a click focuses: the nearest one that can take focus now.
-	sub _focusable_at_or_above ($widget) {
+	method _focusable_at_or_above ($widget) {
+		my $interaction = $self->interaction;
 		for ( my $node = $widget; defined $node; $node = $node->parent ) {
-			return $node if $node->DOES('Clay::UI::Role::Interaction::Focusable') && $node->can_focus;
+			return $node if $interaction->can_take_focus($node);
 		}
 		return undef;
 	}
@@ -535,33 +421,31 @@ class Term::Fabulous
 		# even when the size ends up where it was.
 		$self->invalidate_canvases;
 		$_pending_resize = [ $width, $height ];
+		return unless defined $_resize_timer;    # step applies it at once
 		$_resize_timer->is_running ? $_resize_timer->reset : $_resize_timer->start;
 		return;
 	}
 
-	method _fire_resize () {
+	method _apply_resize () {
 		return unless defined $_pending_resize;
-		my ( $width, $height ) = @$_pending_resize;
+		my ( $width, $height ) = $terminal->apply_resize(@$_pending_resize);
 		$_pending_resize = undef;
-		$height = $self->_anchor_inline_region($height) if defined $inline;
 
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 0 ) );
 		$self->width($width);
 		$self->height($height);
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 1 ) );
 		$_frame_requested = 1;
-		$self->_drain_termbox_events if defined $inline;    # keys the cursor position query read ahead
+		$self->_read_input if defined $inline;    # keys the cursor position query read ahead
 		return;
 	}
 
 	# Topmost event emitter painted at the cell in the last frame that is
 	# still part of this UI: a listener may have removed it since.
 	method _emitter_at ( $x, $y ) {
-		my ( $commands, $clip_rects ) = $self->last_frame;
-		foreach my $index ( reverse 0 .. $#$clip_rects ) {
-			my $command = $commands->[$index];
-			next unless _command_paints_cell( $command, $clip_rects->[$index], $x, $y );
-			my $widget = $self->widget_for( $command->{userData} );
+		my $frame = $self->last_frame;
+		foreach my $index ( $frame->topmost_at( $x, $y ) ) {
+			my $widget = $self->widget_for( $frame->command($index)->{userData} );
 			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter') && $self->_owns($widget);
 		}
 		return undef;
@@ -685,7 +569,10 @@ alongside the user interface.
 This class is the application object: it owns the widget tree, opens the
 terminal, runs the event loop, draws a frame whenever something changed
 (checking 30 times per second) and dispatches input events. It is a
-subclass of L<Clay::UI>.
+subclass of L<Clay::UI>. It reaches the terminal through a I<terminal>
+object (L<Term::Fabulous::Role::Terminal>): the real one by default, or
+L<Term::Fabulous::Terminal::Memory> in tests, which L</step> drives
+without an event loop.
 
 =head1 DOCUMENTATION
 
@@ -738,8 +625,8 @@ colors and a UTF-8 locale. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 	);
 
 Creates the application object. The terminal is not touched until
-L</run>, so you can create the object, set the focus and add timers
-first. Unknown parameters die
+L</run> (or L</step>), so you can create the object, set the focus and
+add timers first. Unknown parameters die
 (C<Unrecognised parameters for Term::Fabulous constructor: 'colour'>).
 
 =over
@@ -757,14 +644,14 @@ that was ever attached to another widget cannot be the root.
 =item C<width>
 
 Required. A positive number: the width of the layout in columns until
-L</run> starts. C<run> replaces it with the terminal's width, and keeps
-it up to date when the terminal is resized.
+the terminal is opened (L</run> or L</step>). It is then replaced with
+the terminal's width, and kept up to date when the terminal is resized.
 
 =item C<height>
 
 Required. A positive number: the height of the layout in rows until
-L</run> starts, then the terminal's height (in inline mode, the rows of
-the inline region).
+the terminal is opened, then the terminal's height (in inline mode, the
+rows of the inline region).
 
 =item C<inline>
 
@@ -800,6 +687,23 @@ are read as before. The question costs one exchange with the terminal
 when C<run> starts, at most half a second for a terminal that does not
 answer at all. With 0, the terminal is not asked and the protocol stays
 off. L</kitty_keyboard_active> tells whether C<run> uses it.
+
+=item C<terminal>
+
+Optional. The terminal to run on: an object composing
+L<Term::Fabulous::Role::Terminal>. Default: a new
+L<Term::Fabulous::Terminal::Termbox>, the real terminal. Pass a
+L<Term::Fabulous::Terminal::Memory> to test a program without a
+terminal (see L</step> and L<Term::Fabulous::Manual/TESTING>). Anything
+else dies (C<Term::Fabulous: terminal must consume Term::Fabulous::Role::Terminal>).
+
+=item C<clock>
+
+Optional, for tests. A code reference that returns the current time in
+seconds, default C<Time::HiRes::time>. Frame pacing reads it: how long
+a frame took and when it ended (see L</run>). A test gives it a clock it
+controls to check the pacing with C<< step( paced => 1 ) >>. Anything
+but a code reference dies.
 
 =item C<output_mode>
 
@@ -847,7 +751,9 @@ dies.
 
 Opens the terminal in full-screen mode (or inline, see
 L</INLINE MODE>), runs the event loop until it is stopped, and
-restores the terminal. It returns nothing.
+restores the terminal. It returns nothing. A terminal that L</step>
+opened is used as it is, without a second C<Start>, and closed when
+C<run> returns.
 
 While it runs:
 
@@ -923,17 +829,76 @@ dies with C<Term::Fabulous: the terminal was closed>.
 After C<run> has returned or died, the object can be used again and
 C<run> can be called again.
 
-C<run> dies with a message starting with C<Term::Fabulous:> when the
-terminal cannot be opened, for example when the process has no
-controlling terminal (C<tb_init failed: No such device or address>,
-or C<tf_init_inline failed: ...> in inline mode), or when the terminal
-reports a size of 0 columns or rows. In inline mode it also dies when
-the terminal does not report its cursor position within a second
-(C<the terminal did not report its cursor position; ...>).
+C<run> dies with the terminal's error when the terminal cannot be
+opened. For the real terminal, these start with
+C<Term::Fabulous::Terminal::Termbox:>, for example when the process has
+no controlling terminal (C<tb_init failed: No such device or address>,
+or C<tf_init_inline failed: ...> in inline mode), when the terminal
+reports a size of 0 columns or rows, and in inline mode when the
+terminal does not report its cursor position within a second
+(C<the terminal did not report its cursor position; ...>); see
+L<Term::Fabulous::Terminal::Termbox/open>.
 
 When the locale's character set is not UTF-8, C<run> warns (at every
 call): C<Term::Fabulous: the locale's character set is not UTF-8; wide
 characters will be misaligned>.
+
+=head2 step
+
+	my $frames = $ui->step;
+	my $frames = $ui->step( paced => 1 );
+
+One turn of L</run> without an event loop, for tests: usually with a
+L<Term::Fabulous::Terminal::Memory> as the L</terminal>, whose input
+methods queue keys, clicks and resizes. C<step>
+
+=over
+
+=item 1.
+
+opens the terminal if it is not open yet, sets L</width> and L</height>
+to its size and fires C<Start>, as C<run> does (but there is no loop:
+L</loop> is the one of the last C<run>, or C<undef>);
+
+=item 2.
+
+reads every event that waits and dispatches it exactly as C<run> does:
+keys to the focused widget, then Tab, Shift+Tab; mouse events to the
+widget under the pointer, focusing it on a press; wheel notches; see
+L</EVENTS> and L</KEYBOARD AND FOCUS>. C<Ctrl+C> fires its C<KeyPress>
+but has no loop to stop;
+
+=item 3.
+
+applies a resize at once, firing the C<Resize> pair, instead of waiting
+for the size to settle;
+
+=item 4.
+
+draws frames as long as one is due: for a click, one frame for the
+press and one for the release, and another one when a frame changed
+widgets (hover and press events fire while a frame is drawn). Without
+C<paced>, a frame that only shows pointer motion is drawn at once; with
+C<< paced => 1 >>, it waits like in C<run> (see there), measured with
+the C<clock> of L</new>.
+
+=back
+
+Returns the number of frames it drew, 0 when nothing was due. The
+terminal stays open; C<run> closes it, or close it with
+C<< $ui->terminal->close >>. Unknown options die, and so does a call
+from inside C<run>. When frames keep being due after 100 rounds,
+because a widget changes in every frame, C<step> dies. When the
+terminal input has ended (L<Term::Fabulous::Terminal::Memory/end_input>),
+C<step> dies like C<run>.
+
+=head2 terminal
+
+	my $terminal = $ui->terminal;
+	$ui->terminal->press_key('Enter');
+
+Returns the terminal object given to L</new>, or the
+L<Term::Fabulous::Terminal::Termbox> created by default. Read only.
 
 =head2 loop
 
@@ -1010,10 +975,11 @@ Returns the C<kitty_keyboard> constructor parameter, or its default
 
 	my $in_use = $ui->kitty_keyboard_active;
 
-Returns 1 while L</run> uses the kitty keyboard protocol: from the
-start of C<run>, before C<Start> fires, until C<run> returns, when the
-terminal speaks the protocol and C<kitty_keyboard> is 1. Returns 0
-otherwise, and always outside C<run>. Read only.
+Returns 1 while the open terminal uses the kitty keyboard protocol:
+from the start of L</run> (or the first L</step>), before C<Start>
+fires, until the terminal is closed, when the terminal speaks the
+protocol and C<kitty_keyboard> is 1. Returns 0 otherwise, and always
+while the terminal is closed. Read only.
 
 =head2 output_mode
 
@@ -1079,16 +1045,18 @@ While a resize is pending, no frames are drawn. Read only.
 
 	$ui->draw;
 
-Lays out and draws one frame immediately. C<run> calls it whenever a
-frame is due, so programs do not need it; see L</invalidate> to ask for
-a frame instead. It only has a visible effect while the terminal is
-open. See L<Term::Fabulous::Render/draw>.
+Lays out and draws one frame immediately, into the cell target of the
+L</terminal>. C<run> calls it whenever a frame is due, so programs do
+not need it; see L</invalidate> to ask for a frame instead. With the
+real terminal, it only has a visible effect while the terminal is open.
+See L<Term::Fabulous::Render/draw>.
 
 =head2 Other inherited methods
 
 The class inherits further methods from L<Clay::UI> (C<render>,
 C<widget_for>, C<measure_text>) and from L<Term::Fabulous::Render>
-(C<get_last_commands>, C<get_last_clip_rects>, C<last_frame>).
+(C<last_frame>, the L<Term::Fabulous::Render::Frame> of the last frame).
+C<cell_target> returns the cell target of the L</terminal>.
 Applications rarely need them; they are documented on those pages.
 
 =head1 EVENTS
@@ -1264,6 +1232,11 @@ reports, command-line output and tests.
 Builds a widget tree from a KDL layout file and documents the layout
 file format.
 
+=item L<Term::Fabulous::Terminal::Memory>
+
+A terminal in memory: test a whole program, keys, clicks and what the
+screen shows, with L</step>.
+
 =back
 
 =head2 Widgets
@@ -1355,6 +1328,11 @@ selection.
 
 The text, cursor, selection, undo history and clipboard behind the text
 inputs, without any drawing.
+
+=item L<Term::Fabulous::TextView>
+
+How the text inputs lay an editor's text out in rows: wrapping,
+scrolling, the cell of the cursor and the text under a click.
 
 =item L<Term::Fabulous::Widget::Dropdown::List>
 
@@ -1453,12 +1431,26 @@ from layout files, or your own application or output class.
 
 Makes a widget class usable in KDL layout files.
 
+=item L<Term::Fabulous::Check>
+
+Checks the values of widget properties, with one wording for each kind
+of value.
+
 =item L<Term::Fabulous::Render>
 
 The role that draws a laid-out widget tree; composed by Term::Fabulous
 and Term::Fabulous::Static.
 
-=item L<Term::Fabulous::Render::Target::Termbox>
+=item L<Term::Fabulous::Role::Terminal>
+
+What the application object needs from a terminal; write your own
+terminal with it.
+
+=item L<Term::Fabulous::Terminal::Termbox>
+
+The real terminal, through termbox2: the default terminal.
+
+=item L<Term::Fabulous::Terminal::Termbox::Cells>
 
 Sends the drawn cells to the terminal.
 
@@ -1497,9 +1489,11 @@ Draws text.
 
 Draws canvases, only their changed cells when possible.
 
-=item L<Term::Fabulous::Render::Clip>
+=item L<Term::Fabulous::Render::Frame>
 
-Restricts drawing to the visible part of scroll containers.
+What one frame paints: the paint order, the clip rect of every command
+(the visible part of scroll containers) and the cells every command
+paints, for drawing and for finding the widget under the mouse.
 
 =item L<Term::Fabulous::Render::Attr>
 

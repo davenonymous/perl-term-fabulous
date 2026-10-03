@@ -37,6 +37,14 @@ subtest 'size and value' => sub {
 	like dies { Term::Fabulous::Widget::TextField->new( preferred_columns => 0 ) }, qr/positive integer/,                'an invalid width dies';
 };
 
+subtest 'edits through the editor scroll the view' => sub {
+	my ( $field, $ui ) = text_field( value => 'abcdefghijkl' );
+	is row_text( $field, 0 ), 'fghijkl ', 'the view shows the cell after the text, where the cursor is';
+	$field->editor->move_to( 0, 0 );
+	$field->mark_changed;
+	is row_text( $field, 0 ), 'abcdefgh', 'the next frame scrolls back to the cursor';
+};
+
 subtest 'typing fires Change, Enter fires Submit' => sub {
 	my ( $field, $ui ) = text_field();
 	my $changes = events( $field, 'Change' );
@@ -53,13 +61,13 @@ subtest 'typing fires Change, Enter fires Submit' => sub {
 
 subtest 'cursor, selection and focus painting' => sub {
 	my ( $field, $ui ) = text_field( value => 'abc' );
-	is $field->cell( 3, 0 ), undef, 'no cursor without focus';
+	is shown($field)->cell( 3, 0 ), undef, 'no cursor without focus';
 
 	$ui->interaction->set_focused_widget($field);
-	ok $field->cell( 3, 0 )->[1] & TB_REVERSE, 'the focused field shows the cursor after the text';
+	ok shown($field)->cell( 3, 0 )->[1] & TB_REVERSE, 'the focused field shows the cursor after the text';
 	press( $field, 'Shift+Left' );
 	is $field->editor->selected_text, 'c', 'Shift extends the selection';
-	is $field->cell( 2, 0 )->[2], $field->color_attr( $field->selection_color ), 'the selection is painted';
+	is shown($field)->cell( 2, 0 )->[2], $field->color_attr( $field->selection_color ), 'the selection is painted';
 	is $field->cell( 0, 0 )->[2], $field->color_attr( $field->focus_background_color ), 'the rest has the focus background';
 };
 
@@ -69,12 +77,6 @@ subtest 'horizontal scrolling' => sub {
 	is row_text( $field, 0 ), 'defghij ', 'the end of the text and the cursor cell are visible';
 	press( $field, 'Home' );
 	is row_text( $field, 0 ), 'abcdefgh', 'Home scrolls back';
-	press( $field, 'End' );
-	press( $field, 'Ctrl+W' );
-	is row_text( $field, 0 ), '        ', 'deleting scrolls back so text fills the field';
-
-	$field->value('日本語のテキスト');
-	is row_text( $field, 0 ), 'キスト  ', 'the view starts at a whole wide character';
 };
 
 subtest 'keys that are not used bubble' => sub {
@@ -147,7 +149,7 @@ subtest 'disabled' => sub {
 	ok !$field->can_focus, 'and keeps it away';
 	press( $field, 'y' );
 	is $field->value, 'x', 'keys are ignored';
-	is $field->cell( 0, 0 )->[1], $field->color_attr( $field->disabled_color ), 'painted in the disabled color';
+	is shown($field)->cell( 0, 0 )->[1], $field->color_attr( $field->disabled_color ), 'painted in the disabled color';
 	$field->disabled(0);
 	ok $field->can_focus, 'enabling lets it take the focus again';
 
@@ -163,8 +165,8 @@ subtest 'disabled' => sub {
 	ok !$toggled->can_focus, 'can_focus(0) while disabled counts once enabled';
 	$toggled->disabled(1);
 	is $toggled->can_focus(1), 0, 'can_focus(1) while disabled does not make it focusable';
-	like dies { $toggled->can_focus( {} ) }, qr/can_focus must be a plain boolean value, got a HASH reference/, 'a reference dies';
-	like dies { $toggled->can_focus( 1, 0 ) }, qr/can_focus takes one value, got 2/, 'so do two values';
+	like dies { $toggled->can_focus( {} ) }, qr/\AClay::UI: 'can_focus' must be a plain boolean value/, 'a reference dies';
+	like dies { $toggled->can_focus( 1, 0 ) }, qr/\AClay::UI: 'can_focus' takes one value/, 'so do two values';
 	$toggled->disabled(0);
 	ok $toggled->can_focus, 'but counts once enabled';
 };

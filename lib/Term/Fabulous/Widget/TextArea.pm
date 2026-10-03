@@ -15,7 +15,8 @@ class Term::Fabulous::Widget::TextArea
 	:isa(Term::Fabulous::Widget::TextInput)
 	:strict(params)
 {
-	use List::Util qw(max min sum0);
+	use List::Util qw(max);
+	use Term::Fabulous::Check qw(boolean positive_integer);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 
 	use constant WHEEL_ROWS      => 3;
@@ -39,73 +40,50 @@ class Term::Fabulous::Widget::TextArea
 	field $wrap              :param = 1;
 	field $scrollbar         :param = 1;
 
-	# The first visual row shown, and (without wrapping) the columns
-	# scrolled out on the left.
-	field $top    = 0;
-	field $scroll = 0;
-
-	# The column Up and Down aim for, kept while moving vertically.
-	field $goal_column;
-
-	# The visual rows of the text for one width, see _layout.
-	field $layout_cache;
-
-	# "width:wrap" => { line text => [ its parts ] }, for the widths the
-	# last layout used and the lines it showed: an edit wraps only the
-	# lines it changed.
-	field %parts_by_key;
-
 	ADJUST {
-		$preferred_columns = _checked_size( preferred_columns => $preferred_columns );
-		$preferred_rows    = _checked_size( preferred_rows    => $preferred_rows );
-		( $wrap, $scrollbar ) = ( $wrap ? 1 : 0, $scrollbar ? 1 : 0 );
+		$preferred_columns = positive_integer( $self, preferred_columns => $preferred_columns );
+		$preferred_rows    = positive_integer( $self, preferred_rows    => $preferred_rows );
+		$wrap              = boolean( $self, wrap      => $wrap );
+		$scrollbar         = boolean( $self, scrollbar => $scrollbar );
+		$self->view->set_wrap($wrap)->set_scrollbar($scrollbar);
 	}
 
 	method is_multi_line :common :override () {
 		return 1;
 	}
 
-	sub _checked_size ( $name, $value ) {
-		die "Term::Fabulous::Widget::TextArea: $name must be a positive integer, got " . ( defined $value ? "'$value'" : 'undef' )
-			unless defined $value && !ref $value && $value =~ /\A[0-9]+\z/ && $value > 0;
-		return $value + 0;
-	}
-
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		$preferred_columns = _checked_size( preferred_columns => $new[0] );
+		$preferred_columns = positive_integer( $self, preferred_columns => $new[0] );
 		$self->mark_changed;
 		return $preferred_columns;
 	}
 
 	method preferred_rows (@new) {
 		return $preferred_rows unless @new;
-		$preferred_rows = _checked_size( preferred_rows => $new[0] );
+		$preferred_rows = positive_integer( $self, preferred_rows => $new[0] );
 		$self->mark_changed;
 		return $preferred_rows;
 	}
 
 	method wrap (@new) {
 		return $wrap unless @new;
-		$wrap   = $new[0] ? 1 : 0;
-		$scroll = 0;
-		$self->cursor_moved;
+		$wrap = boolean( $self, wrap => $new[0] );
+		$self->view->set_wrap($wrap);
+		$self->mark_changed;
 		return $wrap;
 	}
 
 	method scrollbar (@new) {
 		return $scrollbar unless @new;
-		$scrollbar = $new[0] ? 1 : 0;
-		$self->cursor_moved;
+		$scrollbar = boolean( $self, scrollbar => $new[0] );
+		$self->view->set_scrollbar($scrollbar);
+		$self->mark_changed;
 		return $scrollbar;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(preferred_columns preferred_rows wrap scrollbar) );
-	}
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, qw(wrap scrollbar) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, preferred_columns => 'scalar', preferred_rows => 'scalar', wrap => 'boolean', scrollbar => 'boolean' );
 	}
 
 	method natural_size () {
@@ -113,164 +91,12 @@ class Term::Fabulous::Widget::TextArea
 	}
 
 	method top_row () {
-		return $top;
-	}
-
-	# ---------------------------------------------------------------------
-	# Visual rows: every line is cut into the parts shown on one row each.
-	# A row is [ $line, $from, $to, $is_last_part, $shown_from ]: the part
-	# [from, to) of the line, shown from $shown_from on (see _wrap_line).
-	# ---------------------------------------------------------------------
-
-	# The parts [from, to, shown_from] of a line for a text width.
-	# Wrapping breaks after the last blank that fits, or else before the
-	# cluster that does not fit. A blank that does not fit any more hangs
-	# at the break: it starts the next part, unseen (shown_from is after
-	# it), so no row starts with the blank that ended the row above. A
-	# line whose last part fills the width gets an empty part after it,
-	# where the cursor can stand at its end.
-	method _wrap_line ( $row, $width ) {
-		my $end = length $self->editor->line($row);
-		return [ 0, $end, 0 ] unless $wrap;
-
-		my @clusters = $self->clusters_between( $row, 0, $end );
-		my $offset_of = sub ($index) { $index < @clusters ? $clusters[$index][0] : $end };
-		my $part      = sub ( $start, $shown, $stop ) { [ map { $offset_of->($_) } $start, $stop, $shown ] };
-
-		my ( @parts, $break );
-		my ( $start, $shown, $used ) = ( 0, 0, 0 );
-		foreach my $index ( 0 .. $#clusters ) {
-			my ( undef, $display, $columns ) = @{ $clusters[$index] };
-			my $is_blank = $display =~ /\A\s\z/;
-			if ( $used + $columns > $width && $index > $shown ) {
-				if ($is_blank) {
-					push @parts, $part->( $start, $shown, $index );
-					( $start, $shown, $used ) = ( $index, $index + 1, 0 );
-					undef $break;
-					next;
-				}
-				my $cut = defined $break && $break > $shown ? $break : $index;
-				push @parts, $part->( $start, $shown, $cut );
-				( $start, $shown ) = ( $cut, $cut );
-				$used = sum0 map { $_->[2] } @clusters[ $cut .. $index - 1 ];
-				undef $break;
-
-				# The word carried over to the new row may leave no room for
-				# this cluster either.
-				if ( $used + $columns > $width && $index > $shown ) {
-					push @parts, $part->( $start, $shown, $index );
-					( $start, $shown, $used ) = ( $index, $index, 0 );
-				}
-			}
-			$used += $columns;
-			$break = $index + 1 if $is_blank;
-		}
-		push @parts, $part->( $start, $shown, scalar @clusters );
-		push @parts, [ $end, $end, $end ] if @clusters && $used >= $width;
-		return @parts;
-	}
-
-	# { width, scrollbar, rows => [ [ $row, $from, $to, $is_last, $shown_from ], ... ],
-	# first => [ the first visual row of each line ] } for the current size.
-	# The row count at the full width decides whether a scrollbar is needed.
-	method _layout () {
-		my ( $columns, $height ) = ( $self->columns, $self->rows );
-		my $key = join ':', $self->editor->revision, $columns, $height, $wrap, $scrollbar;
-		return $layout_cache if defined $layout_cache && $layout_cache->{key} eq $key;
-
-		my @lines = $self->editor->lines;
-		my %parts_now;
-		my ( $width, $has_scrollbar ) = ( max( $columns, 1 ), 0 );
-		my $parts = $self->_parts_of_lines( \@lines, $width, \%parts_now );
-		if ( $scrollbar && $columns > 1 && sum0( map { scalar @$_ } @$parts ) > $height ) {
-			( $width, $has_scrollbar ) = ( $columns - 1, 1 );
-			$parts = $self->_parts_of_lines( \@lines, $width, \%parts_now );
-		}
-		%parts_by_key = %parts_now;
-
-		my ( @rows, @first );
-		foreach my $row ( 0 .. $#$parts ) {
-			push @first, scalar @rows;
-			push @rows, map { [ $row, @$_ ] } @{ $parts->[$row] };
-		}
-		return $layout_cache = { key => $key, width => $width, scrollbar => $has_scrollbar, rows => \@rows, first => \@first };
-	}
-
-	# The parts of every line as [ $from, $to, $is_last, $shown_from ].
-	# Wrapping depends on the text of a line, the width and wrap only, so
-	# the parts of a line come from the last layout when it had the line.
-	method _parts_of_lines ( $lines, $width, $parts_now ) {
-		my $key    = "$width:$wrap";
-		my $before = $parts_by_key{$key} // {};
-		my $now    = $parts_now->{$key} //= {};
-		return [
-			map {
-				my $text = $lines->[$_];
-				$now->{$text} //= $before->{$text} // do {
-					my @parts = $self->_wrap_line( $_, $width );
-					[ map { [ @{ $parts[$_] }[ 0, 1 ], $_ == $#parts ? 1 : 0, $parts[$_][2] ] } 0 .. $#parts ];
-				};
-			} 0 .. $#$lines
-		];
-	}
-
-	# The visual row index showing an editor position.
-	method _visual_row_of ( $layout, $row, $offset ) {
-		my $index = $layout->{first}[$row];
-		$index++ while !$layout->{rows}[$index][3] && $offset >= $layout->{rows}[$index][2];
-		return $index;
-	}
-
-	method _max_top ($layout) {
-		return max( 0, scalar( @{ $layout->{rows} } ) - $self->rows );
-	}
-
-	# ---------------------------------------------------------------------
-	# Scrolling and positions
-	# ---------------------------------------------------------------------
-
-	method scroll_to_cursor () {
-		return if $self->columns < 1 || $self->rows < 1;
-		my $layout = $self->_layout;
-		my ( $row, $offset ) = $self->editor->cursor;
-		my $visual = $self->_visual_row_of( $layout, $row, $offset );
-
-		$top = $visual                   if $visual < $top;
-		$top = $visual - $self->rows + 1 if $visual >= $top + $self->rows;
-		$top = min( max( $top, 0 ), $self->_max_top($layout) );
-		return if $wrap;
-
-		my $width    = $layout->{width};
-		my $cursor_x = $self->columns_to( $row, 0, $offset );
-		my ($cursor) = $self->clusters_between( $row, $offset, length $self->editor->line($row) );
-		my $cursor_columns = defined $cursor ? $cursor->[2] : 1;
-		$scroll = $cursor_x                            if $cursor_x < $scroll;
-		$scroll = $cursor_x + $cursor_columns - $width if $cursor_x + $cursor_columns > $scroll + $width;
-		$scroll = 0                                    if $scroll < 0;
-		return;
+		return $self->view->top_row;
 	}
 
 	method scroll_rows ($rows) {
-		my $layout = $self->_layout;
-		$top = min( max( $top + $rows, 0 ), $self->_max_top($layout) );
-		$self->repaint;
-		return $self;
-	}
-
-	method position_at ( $column, $row ) {
-		my $layout = $self->_layout;
-		my $rows   = $layout->{rows};
-		my $index  = min( $top + $row, $#$rows );
-		my ( $line, undef, $to, $is_last, $shown ) = @{ $rows->[$index] };
-		my $offset = $self->offset_at_column( $line, $shown, $to, $column + ( $wrap ? 0 : $scroll ) );
-
-		# The end of a wrapped part is shown at the start of the next row;
-		# a click past it stays on its own row, before its last cluster.
-		if ( !$is_last && $offset == $to && $to > $shown ) {
-			my @clusters = $self->clusters_between( $line, $shown, $to );
-			$offset = $clusters[-1][0];
-		}
-		return ( $line, $offset );
+		$self->view->scroll_rows($rows);
+		return $self->mark_changed;
 	}
 
 	# ---------------------------------------------------------------------
@@ -281,62 +107,27 @@ class Term::Fabulous::Widget::TextArea
 		my $name = $event->main_key_name // '';
 		if ( my $vertical = $VERTICAL_BY_KEY{$name} ) {
 			my ( $direction, $unit, $extend ) = @$vertical;
-			$self->_move_vertically( $direction * ( $unit eq 'page' ? max( 1, $self->rows - 1 ) : 1 ), $extend );
-			return $self->cursor_moved;
+			$self->view->move_vertically( $direction * ( $unit eq 'page' ? max( 1, $self->rows - 1 ) : 1 ), $extend );
+			$self->mark_changed;
+			return 1;
 		}
-
-		undef $goal_column;
 		return $self->apply_edit( $self->editor->insert("\n") ) if $name eq 'Enter' && !$self->read_only;
 		return $self->SUPER::handle_key($event);
 	}
 
-	# Moves the cursor by visual rows, aiming for the column it had when
-	# vertical movement started. Beyond the first (last) row it goes to the
-	# start (end) of the text, which starts a new aim.
-	method _move_vertically ( $rows, $extend ) {
-		my $editor = $self->editor;
-		my $layout = $self->_layout;
-		my ( $row, $offset ) = $editor->cursor;
-		my $visual = $self->_visual_row_of( $layout, $row, $offset );
-		my $part   = $layout->{rows}[$visual];
-		$goal_column //= $self->columns_to( $row, $part->[4], $offset );
-
-		my $target = $visual + $rows;
-		if ( $target < 0 || $target > $#{ $layout->{rows} } ) {
-			$target < 0 ? $editor->move_document_start($extend) : $editor->move_document_end($extend);
-			undef $goal_column;
-			return;
-		}
-
-		my ( $line, undef, $to, $is_last, $shown ) = @{ $layout->{rows}[$target] };
-		my $target_offset = $self->offset_at_column( $line, $shown, $to, $goal_column );
-		if ( !$is_last && $target_offset == $to && $to > $shown ) {
-			my @clusters = $self->clusters_between( $line, $shown, $to );
-			$target_offset = $clusters[-1][0];
-		}
-		my $goal = $goal_column;
-		$editor->move_to( $line, $target_offset, $extend );
-		$goal_column = $goal;
-		return;
-	}
-
+	# At its end the notch is left to a scroll box around the area.
 	method handle_mouse :override ($event) {
 		my $key = $event->key;
-		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
-			my $before = $top;
-			$self->scroll_rows( $key == TB_KEY_MOUSE_WHEEL_UP ? -WHEEL_ROWS : WHEEL_ROWS );
-			return 0 if $top == $before;    # at its end: the notch is left to a scroll box
-			$event->use_wheel;
-			return 1;
-		}
-		undef $goal_column;
-		return $self->SUPER::handle_mouse($event);
+		return $self->SUPER::handle_mouse($event) unless $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		return 0 unless $self->view->scroll_rows( $key == TB_KEY_MOUSE_WHEEL_UP ? -WHEEL_ROWS : WHEEL_ROWS );
+		$self->mark_changed;
+		$event->use_wheel;
+		return 1;
 	}
 
 	method value :override (@new) {
 		return $self->SUPER::value unless @new;
-		( $top, $scroll ) = ( 0, 0 );
-		undef $goal_column;
+		$self->view->home;
 		return $self->SUPER::value(@new);
 	}
 
@@ -344,47 +135,19 @@ class Term::Fabulous::Widget::TextArea
 	# Painting
 	# ---------------------------------------------------------------------
 
-	method paint () {
-		$self->paint_focus_background;
-		my $layout = $self->_layout;
-		$top = min( $top, $self->_max_top($layout) );
-
-		if ( $self->shows_placeholder ) {
-			$self->paint_placeholder(0);
-		}
-		else {
-			my $rows = $layout->{rows};
-			foreach my $y ( 0 .. min( $self->rows, @$rows - $top ) - 1 ) {
-				my ( $line, $from, $to, $is_last, $shown ) = @{ $rows->[ $top + $y ] };
-				my $end_x = $self->paint_line_part( $y, $line, $shown, $to, $wrap ? 0 : $scroll, $is_last, $from );
-				$self->_paint_selected_line_break( $y, $line, $end_x, $layout->{width} ) if $is_last;
-			}
-		}
-		$self->_paint_scrollbar($layout) if $layout->{scrollbar};
+	method paint :override () {
+		$self->SUPER::paint;
+		$self->_paint_scrollbar if $self->view->has_scrollbar;
 		return;
 	}
 
-	# A selection reaching over the end of a line shows a selected cell
-	# after it.
-	method _paint_selected_line_break ( $y, $line, $x, $width ) {
-		my $editor = $self->editor;
-		return if $line == $editor->line_count - 1 || $x < 0 || $x >= $width;
-		my ( $row_0, $offset_0, $row_1 ) = $editor->selection;
-		return unless defined $row_0 && $line < $row_1;
-		return if $line < $row_0 || ( $line == $row_0 && $offset_0 > length $editor->line($line) );
-
-		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
-		return if $self->is_focused && $cursor_row == $line && $cursor_offset == length $editor->line($line);
-		$self->put_attrs( $x, $y, ' ', undef, $self->color_attr( $self->selection_color ) );
-		return;
-	}
-
-	method _paint_scrollbar ($layout) {
+	method _paint_scrollbar () {
+		my $view      = $self->view;
 		my ( $height, $x ) = ( $self->rows, $self->columns - 1 );
-		my $total     = scalar @{ $layout->{rows} };
+		my $total     = $view->visual_row_count;
 		my $thumb     = max( 1, int( $height * $height / $total + 0.5 ) );
-		my $max_top   = $self->_max_top($layout);
-		my $thumb_top = $max_top ? int( ( $height - $thumb ) * $top / $max_top + 0.5 ) : 0;
+		my $max_top   = $view->max_top;
+		my $thumb_top = $max_top ? int( ( $height - $thumb ) * $view->top_row / $max_top + 0.5 ) : 0;
 		my $track_fg  = $self->color_attr( $self->disabled_color );
 		my $thumb_fg  = $self->accent_attr;
 		my $bg        = $self->focus_background_attr;
@@ -484,7 +247,10 @@ full row breaks is not shown at the start of the next row; the cursor
 before it shows there, on the same cell as the cursor after it, so
 C<Right> over that space moves the cursor without visible change. A wide character that does not fit at the end of a
 row starts the next one. When false, every line takes exactly one row
-and the view scrolls sideways with the cursor.
+and the view scrolls sideways with the cursor, by the rule a text field
+follows (see L<Term::Fabulous::TextView/Scrolling>): it shows the
+cursor's cell, starts where a character of the cursor's line starts and
+scrolls no further than needed to fill the area with that line.
 
 =item C<scrollbar>
 
@@ -499,9 +265,9 @@ the position; it cannot be dragged.
 
 The methods of L<Term::Fabulous::Widget::TextInput/METHODS> (C<value>,
 C<max_length>, C<placeholder>, C<read_only>, C<placeholder_color>,
-C<selection_color>, C<editor>, C<cursor_moved>) and of
+C<selection_color>, C<editor>) and of
 L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>, C<is_enabled>,
-the color accessors, C<repaint>), plus:
+the color accessors, C<mark_changed>), plus:
 
 =head2 value
 
@@ -536,15 +302,15 @@ integer; the old value then stays.
 
 Accessor for the C<wrap> parameter. Returns 1 or 0, also for a value
 passed to C<new>. Writing re-wraps the text, scrolls to the cursor and
-repaints. Any value is accepted.
+marks the input changed. Any value is accepted.
 
 =head2 scrollbar
 
 	$area->scrollbar(0);
 
 Accessor for the C<scrollbar> parameter. Returns 1 or 0, also for a
-value passed to C<new>. Writing scrolls to the cursor and repaints. Any
-value is accepted.
+value passed to C<new>. Writing marks the input changed; the next frame
+scrolls to the cursor. Any value is accepted.
 
 =head2 scroll_rows
 
@@ -554,14 +320,17 @@ value is accepted.
 Scrolls the view by visual rows (wrapped rows count separately) without
 moving the cursor. Negative numbers scroll towards the top. The view
 stops at the first and last row of the text. Returns the area. The view
-jumps back to the cursor as soon as the cursor moves.
+jumps back to the cursor when a frame is drawn after the cursor, the
+text or the size changed.
 
 =head2 top_row
 
 	my $row = $area->top_row;
 
 The index of the first visual row shown, counted from 0. With wrapping,
-a long line spans several visual rows.
+a long line spans several visual rows. The view follows the cursor when
+a frame is drawn, so after an edit or a cursor movement this is the row
+the next frame shows at the top; the wheel scrolls it at once.
 
 =head1 KEYS
 
@@ -651,7 +420,7 @@ the string (C<value "first\nsecond">).
 		my $editor = $log->editor;
 		$editor->move_document_end;
 		$editor->insert( $editor->is_empty ? $line : "\n$line" );
-		$log->cursor_moved;    # scrolls to the new line and repaints
+		$log->mark_changed;    # the next frame scrolls to the new line
 		return;
 	}
 

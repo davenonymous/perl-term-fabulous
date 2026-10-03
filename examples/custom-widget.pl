@@ -31,24 +31,26 @@ class My::ToggleSwitch :isa(Term::Fabulous::Widget::Input) :strict(params) {
 	field $label :param = '';
 
 	# Accessor of the state. Like the built-in inputs, a write from the
-	# program repaints but fires no Change event.
+	# program marks the widget changed, so the next frame paints it, but
+	# fires no Change event.
 	method value (@new) {
 		return $on unless @new;
 		$on = $new[0] ? 1 : 0;
-		$self->repaint;
+		$self->mark_changed;
 		return $on;
 	}
 
 	method label (@new) {
 		return $label unless @new;
 		$label = $new[0];
-		$self->repaint;
+		$self->mark_changed;
 		return $label;
 	}
 
-	# The names a KDL layout may set, on top of those of every input.
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(value label) );
+	# The properties a KDL layout may set, on top of those of every input,
+	# and how each is read: value takes #true or #false.
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, value => 'boolean', label => 'scalar' );
 	}
 
 	# Columns and rows of content the widget needs when the layout does
@@ -58,8 +60,8 @@ class My::ToggleSwitch :isa(Term::Fabulous::Widget::Input) :strict(params) {
 		return ( string_columns(ON_MARK) + $label_columns, 1 );
 	}
 
-	# Draws into the cleared buffer; called whenever the state, the focus,
-	# the colors or the size change.
+	# Draws into the cleared buffer; called while a frame is drawn, when
+	# the state, the focus, the colors or the size changed.
 	method paint () {
 		my $bg   = $self->paint_focus_background;
 		my $mark = $on ? ON_MARK : OFF_MARK;
@@ -68,7 +70,7 @@ class My::ToggleSwitch :isa(Term::Fabulous::Widget::Input) :strict(params) {
 		return;
 	}
 
-	# The user changes the state: repaint and tell the listeners.
+	# The user changes the state: show it and tell the listeners.
 	method _switch ($new) {
 		return if $new == $on;
 		$self->value($new);

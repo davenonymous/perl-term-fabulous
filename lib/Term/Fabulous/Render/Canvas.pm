@@ -9,16 +9,9 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Render::Clip;
-
-role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
-	use Clay::XS qw(
-		CLAY_RENDER_COMMAND_TYPE_BORDER
-		CLAY_RENDER_COMMAND_TYPE_CUSTOM
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_START
-		CLAY_RENDER_COMMAND_TYPE_SCISSOR_END
-	);
-	use List::Util qw(any max min);
+role Term::Fabulous::Render::Canvas {
+	use Clay::XS qw(CLAY_RENDER_COMMAND_TYPE_CUSTOM);
+	use List::Util qw(max min);
 	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Color;
@@ -26,9 +19,9 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 	use Term::Fabulous::Render::Geometry qw(cell_rect intersect_cell_rects rects_overlap);
 
 	method widget_for;
-	method set_cell;
-	method extend_cell;
-	method release_rect;
+
+	# The cell target the frame is painted into (Term::Fabulous::Render).
+	method cell_target;
 
 	# By canvas refaddr: { canvas, origin => [x, y], visible => [x0, y0, x1, y1],
 	# background, covered, intact } for the frame being painted, and for the
@@ -36,24 +29,6 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 	field %_plan_by_canvas;
 	field %_painted_by_canvas;
 	field $_painted_viewport = '';
-
-	# The cells a command may paint: borders paint their edges only.
-	sub _painted_rects ( $command, $clip ) {
-		my $type = $command->{commandType};
-		return () if $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START || $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END;
-
-		my ( $x0, $y0, $x1, $y1 ) = cell_rect( $command->{boundingBox} );
-		return intersect_cell_rects( [ $x0, $y0, $x1, $y1 ], $clip ) unless $type == CLAY_RENDER_COMMAND_TYPE_BORDER;
-
-		my $widths = $command->{renderData}{width} // {};
-		my %edge   = (
-			top    => [ $x0,     $y0,     $x1,     $y0 + 1 ],
-			bottom => [ $x0,     $y1 - 1, $x1,     $y1 ],
-			left   => [ $x0,     $y0,     $x0 + 1, $y1 ],
-			right  => [ $x1 - 1, $y0,     $x1,     $y1 ],
-		);
-		return map { intersect_cell_rects( $edge{$_}, $clip ) } grep { ( $widths->{$_} // 0 ) > 0 } sort keys %edge;
-	}
 
 	# The background of the canvas, or of its nearest ancestor that has one.
 	sub _background_attr ($widget) {
@@ -69,20 +44,8 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 		return "@{ $before->{origin} } @{ $before->{visible} } $before->{background}" eq "@{ $now->{origin} } @{ $now->{visible} } $now->{background}";
 	}
 
-	method _clip_rects_of ($commands) {
-		$self->close_scissors;
-		my @clip_rects;
-		foreach my $command (@$commands) {
-			push @clip_rects, $self->clip_rect;
-			my $type = $command->{commandType};
-			$self->render_scissor_start( $command, undef, [] ) if $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
-			$self->render_scissor_end( $command, undef, [] )   if $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END;
-		}
-		$self->close_scissors;
-		return @clip_rects;
-	}
-
-	# Sizes the canvas to its content box; undef when nothing of it is visible.
+	# Sizes the canvas to its content box and lets it bring its cells up to
+	# date; undef when nothing of it is visible.
 	method _plan_canvas ( $command, $clip ) {
 		my $canvas = $self->widget_for( $command->{userData} );
 		die "Term::Fabulous::Render::Canvas: a custom render command needs a Term::Fabulous::Widget::Canvas, got " . ( ref $canvas || 'no widget' )
@@ -94,29 +57,26 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 		push @content, max( $content[0], $x1 - $right ), max( $content[1], $y1 - $bottom );
 		$canvas->set_content_origin( @content[ 0, 1 ] );
 		$canvas->fit_to( $content[2] - $content[0], $content[3] - $content[1] );
+		$canvas->refresh_for_frame;
 
 		my $visible = intersect_cell_rects( \@content, $clip );
 		return undef unless rects_overlap( $visible, $visible );
 		return { canvas => $canvas, origin => [ @content[ 0, 1 ] ], visible => $visible, background => _background_attr($canvas) };
 	}
 
-	method plan_canvases ($commands) {
-		my $viewport = join 'x', $self->width, $self->height;
+	method plan_canvases ($frame) {
+		my $viewport = join 'x', $frame->width, $frame->height;
 		my %painted  = $viewport eq $_painted_viewport ? %_painted_by_canvas : ();
 		%_painted_by_canvas = ();
 		%_plan_by_canvas    = ();
 		$_painted_viewport  = $viewport;
 
-		my @custom_indices = grep { $commands->[$_]{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM } 0 .. $#$commands;
-		return () unless @custom_indices;
-
-		my @clip_rects    = $self->_clip_rects_of($commands);
-		my @painted_rects = map { [ _painted_rects( $commands->[$_], $clip_rects[$_] ) ] } 0 .. $#$commands;
-		foreach my $index (@custom_indices) {
-			my $plan = $self->_plan_canvas( $commands->[$index], $clip_rects[$index] ) // next;
+		my @commands = $frame->commands;
+		foreach my $index ( grep { $commands[$_]{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM } 0 .. $#commands ) {
+			my $plan = $self->_plan_canvas( $commands[$index], $frame->clip_rect($index) ) // next;
 			my $before = $painted{ refaddr $plan->{canvas} };
 
-			$plan->{covered} = any { rects_overlap( $_, $plan->{visible} ) } map {@$_} @painted_rects[ $index + 1 .. $#$commands ];
+			$plan->{covered} = $frame->painted_after( $index, $plan->{visible} );
 			$plan->{intact}  = !$plan->{covered} && defined $before && !$before->{covered} && _same_place( $before, $plan );
 			$_plan_by_canvas{ refaddr $plan->{canvas} } = $plan;
 		}
@@ -137,7 +97,8 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 
 	method render_custom ( $command, $widget, $buffer ) {
 		my $plan = $_plan_by_canvas{ refaddr $widget } // return;
-		$self->release_rect( $plan->{visible} ) if $plan->{intact};
+		my $target = $self->cell_target;
+		$target->release_rect( $plan->{visible} ) if $plan->{intact};
 
 		my $changed_spans = $widget->take_changed_spans;
 		my ( $origin_x, $origin_y ) = @{ $plan->{origin} };
@@ -145,11 +106,11 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 		foreach my $y ( $y0 .. $y1 - 1 ) {
 			my ( $row, $from, $to ) = ( $y - $origin_y, $x0 - $origin_x, $x1 - $origin_x );
 			if ( $plan->{intact} ) {
-				$self->_shade_canvas_row( $plan, $row, $from, $to, $buffer );
+				_shade_canvas_row( $plan, $row, $from, $to, $buffer );
 				my $span = $changed_spans->[$row] // next;
 				( $from, $to ) = ( max( $from, $span->[0] ), min( $to, $span->[1] ) );
 			}
-			$self->_paint_canvas_row( $plan, $row, $from, $to, $buffer );
+			_paint_canvas_row( $target, $plan, $row, $from, $to, $buffer );
 		}
 		return;
 	}
@@ -158,7 +119,7 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 	# in the frame's background buffer without painting them: the cells of
 	# an intact canvas stay on screen, but what is drawn later over their
 	# neighbors (a border's outer half) still blends with them.
-	method _shade_canvas_row ( $plan, $row, $from, $to, $buffer ) {
+	sub _shade_canvas_row ( $plan, $row, $from, $to, $buffer ) {
 		my ( undef, undef, $bgs ) = $plan->{canvas}->cell_row($row);
 		my $origin_x = $plan->{origin}[0];
 		my $shade    = $buffer->[ $plan->{origin}[1] + $row ] //= [];
@@ -169,7 +130,7 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 	# Paints the canvas columns [from, to) of one row. A glyph that would
 	# cross the visible right edge is painted as spaces, like the covered
 	# cells of a wide glyph whose first cell is not painted here.
-	method _paint_canvas_row ( $plan, $row, $from, $to, $buffer ) {
+	sub _paint_canvas_row ( $target, $plan, $row, $from, $to, $buffer ) {
 		my ( $glyphs, $fgs, $bgs ) = $plan->{canvas}->cell_row($row);
 		my ( $origin_x, $origin_y ) = @{ $plan->{origin} };
 		my $y           = $origin_y + $row;
@@ -184,13 +145,13 @@ role Term::Fabulous::Render::Canvas :does(Term::Fabulous::Render::Clip) {
 
 			if ( ref $glyph && $column + $glyph->[1] <= $limit ) {
 				my ( undef, $width, $base, @extenders ) = @$glyph;
-				$self->set_cell( $x, $y, $base, $fgs->[$column] // TB_DEFAULT, $bg );
-				$self->extend_cell( $x, $y, $_ ) foreach @extenders;
+				$target->set_cell( $x, $y, $base, $fgs->[$column] // TB_DEFAULT, $bg );
+				$target->extend_cell( $x, $y, $_ ) foreach @extenders;
 				$drawn_until = $column + $width;
 				next;
 			}
 			next if $column < $drawn_until;
-			$self->set_cell( $x, $y, ' ', TB_DEFAULT, $bg );
+			$target->set_cell( $x, $y, ' ', TB_DEFAULT, $bg );
 		}
 		return;
 	}
@@ -208,7 +169,7 @@ changed cells when possible
 =head1 SYNOPSIS
 
 	# What Term::Fabulous::Render::draw does with canvases:
-	my @kept_rects = $ui->plan_canvases( \@commands );   # before begin_frame
+	my @kept_rects = $ui->plan_canvases($frame);         # before begin_frame
 	$ui->begin_frame(@kept_rects);
 	$ui->render_custom( $command, $canvas, $buffer );     # for each canvas command
 	$ui->end_frame;
@@ -261,10 +222,10 @@ all of its visible cells.
 
 =head2 plan_canvases
 
-	my @kept_rects = $ui->plan_canvases( \@commands );
+	my @kept_rects = $ui->plan_canvases($frame);
 
-Called before a frame is painted, with all of the frame's render
-commands. For every canvas command it:
+Called before a frame is painted, with the frame's
+L<Term::Fabulous::Render::Frame>. For every canvas command it:
 
 =over
 
@@ -274,6 +235,12 @@ records where the canvas's content box starts
 (L<Term::Fabulous::Widget::Canvas/content_origin>) and resizes the
 canvas buffer to the content box, which fires
 L<Term::Fabulous::Event::CanvasResize> when the size changed;
+
+=item *
+
+lets the canvas bring its cells up to date
+(L<Term::Fabulous::Widget::Canvas/refresh>): input widgets paint
+themselves here;
 
 =item *
 
@@ -324,11 +291,11 @@ empty back buffer.
 
 The consuming class provides C<widget_for> (from L<Clay::UI>),
 C<set_cell>, C<extend_cell> and C<release_rect> (from a cell target,
-see L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height>.
+see L<Term::Fabulous::Render/CELL TARGET>).
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Render>,
-L<Term::Fabulous::Render::Target::Mask>.
+L<Term::Fabulous::Render::Frame>, L<Term::Fabulous::Render::Target::Mask>.
 
 =cut

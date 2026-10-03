@@ -13,20 +13,13 @@ use InputTest;
 use Scalar::Util qw(refaddr weaken);
 use Term::Fabulous;
 use Term::Fabulous::Layout;
-use Term::Fabulous::Termbox qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT TB_KEY_TAB TB_KEY_BACK_TAB);
-use Term::Fabulous::Termbox::Event;
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT);
+use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
 use Term::Fabulous::Widget::Dropdown;
 use Term::Fabulous::Widget::TextField;
-
-{
-	no warnings 'redefine';
-	*Term::Fabulous::Render::Target::Termbox::tb_clear   = sub {return};
-	*Term::Fabulous::Render::Target::Termbox::tb_present = sub {return};
-	*Term::Fabulous::Render::Target::Termbox::tb_print   = sub {0};
-}
 
 sub button () {
 	return Term::Fabulous::Widget::Button->new( background_color => [ 2, 2, 2, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
@@ -35,7 +28,8 @@ sub button () {
 my $root   = Term::Fabulous::Widget::Box->new( background_color => [ 1, 1, 1, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 my $behind = button();
 $root->add_child($behind);
-my $ui = Term::Fabulous->new( width => 30, height => 9, root => $root );
+my $terminal = Term::Fabulous::Terminal::Memory->new( width => 30, height => 9 );
+my $ui       = Term::Fabulous->new( width => 30, height => 9, root => $root, terminal => $terminal );
 
 my $dialog = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width => sizing_fixed(12) } } );
 my @inside = ( button(), button() );
@@ -43,8 +37,9 @@ $dialog->add_child(@inside);
 my @closes;
 $dialog->on( Close => sub { push @closes, $_[0]->target; return } );
 
-sub dispatch (%fields) {
-	$ui->_dispatch_termbox_event( Term::Fabulous::Termbox::Event->new(%fields) );
+sub press_key ($name) {
+	$terminal->press_key($name);
+	$ui->step;
 	return;
 }
 
@@ -59,25 +54,26 @@ subtest 'open puts the dialog over the root and focuses inside' => sub {
 };
 
 subtest 'Tab stays inside the dialog' => sub {
-	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	press_key('Tab');
 	ref_is $ui->interaction->get_focused_widget, $inside[1], 'Tab moves to the next widget inside';
-	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	press_key('Tab');
 	ref_is $ui->interaction->get_focused_widget, $inside[0], 'and wraps around inside the dialog';
 };
 
 subtest 'the backdrop takes clicks outside the dialog' => sub {
-	$ui->draw;
+	$ui->step;
 	my @mouse_targets;
 	$root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
-	dispatch( type => TB_EVENT_MOUSE, key => TB_KEY_MOUSE_LEFT, x => 1, y => 0 );
+	$terminal->mouse( key => TB_KEY_MOUSE_LEFT, x => 1, y => 0 );
+	$ui->step;
 	ref_is $mouse_targets[0], $dialog->backdrop, 'the button behind the dialog does not get the click';
 	ref_is $ui->interaction->get_focused_widget, $dialog->backdrop, 'the backdrop takes the focus';
 	is $dialog->backdrop->layout->{sizing}, { width => sizing_grow(), height => sizing_grow() }, 'the backdrop fills the screen';
 
-	dispatch( type => TB_EVENT_KEY, key => TB_KEY_BACK_TAB );
+	press_key('BackTab');
 	ref_is $ui->interaction->get_focused_widget, $inside[-1], 'Shift+Tab from the backdrop goes to the last widget';
 	$ui->interaction->set_focused_widget( $dialog->backdrop );
-	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	press_key('Tab');
 	ref_is $ui->interaction->get_focused_widget, $inside[0], 'Tab to the first';
 };
 
@@ -123,7 +119,7 @@ subtest 'the focus stays inside when the focused widget loses it' => sub {
 
 	$field->disabled(1);
 	ref_is $ui->interaction->get_focused_widget, $editor->backdrop, 'disabling it hands the focus to the backdrop';
-	dispatch( type => TB_EVENT_KEY, key => TB_KEY_TAB );
+	press_key('Tab');
 	ref_is $ui->interaction->get_focused_widget, $other, 'Tab stays inside the dialog';
 
 	$editor->remove_children_with( sub ($child) { refaddr($child) == refaddr($other) } );
@@ -142,11 +138,12 @@ subtest 'a dropdown list opens over its dialog' => sub {
 	$picker->add_child($dropdown);
 	$picker->open($ui);
 	$dropdown->open;
-	$ui->draw;
+	$ui->step;
 	my ($list) = @{ $dropdown->children };
 	my ( $x, $y ) = $list->content_origin;
-	ref_is $ui->_emitter_at( $x, $y + 1 ), $list, 'the list takes the clicks on its rows, whatever the z_index of the dialog';
-	$dropdown->close;
+	$terminal->click( $x, $y + 1 );
+	$ui->step;
+	is [ $dropdown->value, $dropdown->is_open ], [ 'Green', 0 ], 'a click on a row of the list chooses it, whatever the z_index of the dialog';
 	$picker->close;
 };
 
@@ -185,7 +182,7 @@ subtest 'defaults and errors' => sub {
 	is [ $fresh->backdrop_color, $fresh->z_index, $fresh->close_on_escape ], [ [ 0, 0, 0, 128 ], 1000, 1 ], 'the dialog parameters';
 	like dies { $dialog->open('nope') }, qr/open needs the Term::Fabulous object/, 'open wants the UI';
 	like dies { Term::Fabulous::Widget::Dialog->new( z_index => 'top' ) }, qr/z_index must be an integer/, 'z_index is checked';
-	like dies { Term::Fabulous::Widget::Dialog->new( backdrop_color => 'nope' ) }, qr/backdrop_color is not a color/, 'backdrop_color is checked';
+	like dies { Term::Fabulous::Widget::Dialog->new( backdrop_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Dialog: backdrop_color must be a color, got 'nope'/, 'backdrop_color is checked';
 
 	my $child  = Term::Fabulous::Widget::Dialog->new;
 	my $holder = Term::Fabulous::Widget::Box->new;

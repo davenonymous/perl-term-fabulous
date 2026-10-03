@@ -16,22 +16,15 @@ use Term::Fabulous::Render::Target::Grid;
 class Term::Fabulous::Static
 	:isa(Clay::UI)
 	:does(Term::Fabulous::Render)
-	:does(Term::Fabulous::Render::Target::Grid)
 	:strict(params)
 {
 	use Encode qw(encode);
 	use Scalar::Util qw(openhandle);
-	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE TB_BOLD TB_UNDERLINE);
-	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant DEFAULT_MAX_HEIGHT => 4096;
-	use constant RESET              => "\e[0m";
-
-	# Term::Fabulous::Render::Attr packs the color into the low 24 bits and
-	# the flags above them.
-	use constant COLOR_MASK => 0xFFFFFF;
 
 	field $trim_trailing_whitespace :param :reader = 1;
+	field $cell_target :reader = Term::Fabulous::Render::Target::Grid->new;
 
 	# Clay::UI needs a height, and content is expected to end far before it.
 	sub BUILDARGS ( $class, %params ) {
@@ -51,11 +44,15 @@ class Term::Fabulous::Static
 		return undef;
 	}
 
+	method cell ( $x, $y ) {
+		return $cell_target->cell( $x, $y );
+	}
+
 	method render_lines ( %options ) {
 		_checked_options( render_lines => \%options, 'colors' );
-		my $colors = $options{colors} // 1;
+		my %format = ( columns => $self->width, colors => $options{colors} // 1, trim_trailing_whitespace => $trim_trailing_whitespace );
 		$self->draw;
-		return map { $self->_format_row( $_, $colors ) } 0 .. $self->grid_height - 1;
+		return map { $cell_target->row_text( $_, %format ) } 0 .. $cell_target->grid_height - 1;
 	}
 
 	method render_string ( %options ) {
@@ -70,61 +67,6 @@ class Term::Fabulous::Static
 		my $colors = $options{colors} // ( -t $fh ? 1 : 0 );
 		print {$fh} encode( 'UTF-8', $self->render_string( colors => $colors ) );
 		return;
-	}
-
-	method _format_row ( $y, $colors ) {
-		my $cells = $self->grid_row($y);
-		my $last  = $self->width - 1;
-		if ($trim_trailing_whitespace) {
-			$last = $#$cells if $#$cells < $last;
-			$last-- while $last >= 0 && _is_blank( $cells->[$last] );
-		}
-
-		my ( $line, $style ) = ( '', '' );
-		my $x = 0;
-		while ( $x <= $last ) {
-			my $cell = $cells->[$x];
-			my ( $glyph, $fg, $bg ) = defined $cell ? @$cell : ( ' ', TB_DEFAULT, TB_DEFAULT );
-			if ($colors) {
-				my $wanted = _sgr( $fg, $bg );
-				if ( $wanted ne $style ) {
-					$line .= RESET if length $style;
-					$line .= $wanted;
-					$style = $wanted;
-				}
-			}
-			$line .= $glyph;
-			$x += defined $cell ? string_columns($glyph) : 1;
-		}
-		$line .= RESET if length $style;
-		return $line;
-	}
-
-	# A cell that would print as a plain space: never painted, or a space in
-	# the terminal's default background.
-	sub _is_blank ($cell) {
-		return 1 unless defined $cell;
-		my ( $glyph, $fg, $bg ) = @$cell;
-		return $glyph eq ' ' && $bg == TB_DEFAULT && !( $fg & TB_REVERSE );
-	}
-
-	sub _sgr ( $fg, $bg ) {
-		my @codes;
-		push @codes, 1 if $fg & TB_BOLD;
-		push @codes, 4 if $fg & TB_UNDERLINE;
-		push @codes, 7 if ( $fg | $bg ) & TB_REVERSE;
-		push @codes, _color_codes( 38, $fg );
-		push @codes, _color_codes( 48, $bg );
-		return @codes ? "\e[" . join( ';', @codes ) . 'm' : '';
-	}
-
-	# The terminal default needs no code; opaque black carries its own flag
-	# because termbox2 reads 0x000000 as the default color.
-	sub _color_codes ( $base, $attr ) {
-		return () if $attr == TB_DEFAULT;
-		my $rgb = $attr & TB_HI_BLACK ? 0 : $attr & COLOR_MASK;
-		return () if !( $attr & TB_HI_BLACK ) && $rgb == 0;
-		return ( $base, 2, ( $rgb >> 16 ) & 0xFF, ( $rgb >> 8 ) & 0xFF, $rgb & 0xFF );
 	}
 }
 
@@ -194,9 +136,9 @@ terminal's default colors. Since there is no pointer, nothing is ever
 hovered or pressed.
 
 Term::Fabulous::Static is a L<Clay::UI> subclass composing
-L<Term::Fabulous::Render> and L<Term::Fabulous::Render::Target::Grid>,
-so their methods (C<draw>, C<cell>, C<grid_row>, C<interaction>, ...)
-are available too.
+L<Term::Fabulous::Render>, so their methods (C<draw>, C<interaction>,
+C<last_frame>, ...) are available too. It paints into a
+L<Term::Fabulous::Render::Target::Grid> (L</cell_target>).
 
 =head1 CONSTRUCTOR
 
@@ -287,6 +229,23 @@ contain only the characters.
 The strings are Perl character strings; encode them (for example with
 C<Encode::encode('UTF-8', ...)>) before writing them to a handle that
 has no encoding layer, or use L</print>.
+
+=head2 cell
+
+	my ( $glyph, $fg, $bg ) = @{ $page->cell( $x, $y ) // [] };
+
+What the last frame painted into one cell, as
+L<Term::Fabulous::Render::Target::Grid/cell> describes it, or C<undef>
+for a cell nothing painted. Call L<Term::Fabulous::Render/draw> or
+L</render_lines> first.
+
+=head2 cell_target
+
+	my $grid = $page->cell_target;
+
+The L<Term::Fabulous::Render::Target::Grid> the frames are painted into,
+for reading the cells and their colors directly. It is the same object
+for the lifetime of the page. See L<Term::Fabulous::Render/CELL TARGET>.
 
 =head2 render_string
 

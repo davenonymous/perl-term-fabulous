@@ -9,9 +9,7 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Render::Clip;
-
-role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
+role Term::Fabulous::Render::Text {
 	use List::Util qw(min);
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
@@ -32,8 +30,10 @@ role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 		return $clusters_by_text{$text} = [ map { [ $_, cluster_columns($_) ] } grapheme_clusters($text) ];
 	}
 
-	method set_cell;
-	method extend_cell;
+	# The cells the command being painted may touch (Term::Fabulous::Render).
+	method clip_rect;
+	# The cell target the frame is painted into (Term::Fabulous::Render).
+	method cell_target;
 
 	# Draws one line of text from the top-left cell of its bounding box.
 	# Clusters are sanitized (no control characters reach the terminal) and
@@ -49,6 +49,7 @@ role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 		my $data        = $command->{renderData};
 		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) );
 		my $row         = $buffer->[$y] //= [];
+		my $target      = $self->cell_target;
 
 		foreach my $cluster_with_columns ( @{ _clusters_with_columns( $data->{stringContents} ) } ) {
 			my ( $cluster, $columns ) = @$cluster_with_columns;
@@ -57,8 +58,8 @@ role Term::Fabulous::Render::Text :does(Term::Fabulous::Render::Clip) {
 			if ( $x >= $clip_x0 ) {
 				my $bg_attr = $row->[$x] // TB_DEFAULT;
 				my ( $base, @extenders ) = split //, $cluster;
-				$self->set_cell( $x, $y, $base, $fg_attr, $bg_attr );
-				$self->extend_cell( $x, $y, $_ ) foreach @extenders;
+				$target->set_cell( $x, $y, $base, $fg_attr, $bg_attr );
+				$target->extend_cell( $x, $y, $_ ) foreach @extenders;
 				$row->[$_] = $bg_attr foreach $x .. $x + $columns - 1;
 			}
 			$x += $columns;
@@ -133,8 +134,8 @@ lines are cached by their text (the cache is emptied when it reaches
 =head1 REQUIRED METHODS
 
 The consuming class provides C<set_cell> and C<extend_cell> (from a
-cell target, see L<Term::Fabulous::Render/CELL TARGET>) and C<width>
-and C<height> (for L<Term::Fabulous::Render::Clip>).
+cell target, see L<Term::Fabulous::Render/CELL TARGET>) and
+C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 

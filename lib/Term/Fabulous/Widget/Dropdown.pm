@@ -19,6 +19,7 @@ class Term::Fabulous::Widget::Dropdown
 	use Clay::XS qw(sizing_fixed CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_BOTTOM);
 	use List::Util qw(first max min);
 	use Scalar::Util qw(refaddr);
+	use Term::Fabulous::Check qw(cell_color positive_integer string);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Enum::BorderStyle;
@@ -52,26 +53,16 @@ class Term::Fabulous::Widget::Dropdown
 
 	ADJUST :params ( :$options = undef, :$value = undef, :$selected_index = undef ) {
 		die "Term::Fabulous::Widget::Dropdown: give 'value' or 'selected_index', not both" if defined $value && defined $selected_index;
-		$self->_checked_text( placeholder => $placeholder );
-		$self->_checked_count($max_visible_options);
-		$self->_checked_color( $_->[0] => $_->[1] )
-			foreach [ placeholder_color => $placeholder_color ], [ list_background_color => $list_background_color ], [ highlight_text_color => $highlight_text_color ];
+		$placeholder           = string( $self, placeholder => $placeholder );
+		$max_visible_options   = positive_integer( $self, max_visible_options => $max_visible_options );
+		$placeholder_color     = cell_color( $self, placeholder_color     => $placeholder_color );
+		$list_background_color = cell_color( $self, list_background_color => $list_background_color );
+		$highlight_text_color  = cell_color( $self, highlight_text_color  => $highlight_text_color );
 		$self->background_color( [ 36, 40, 48, 255 ] ) unless defined $self->background_color;
 
 		$self->options($options)               if defined $options;
 		$self->value($value)                   if defined $value;
 		$self->selected_index($selected_index) if defined $selected_index;
-	}
-
-	method _checked_text ( $name, $text ) {
-		die "Term::Fabulous::Widget::Dropdown: $name must be a string, got " . ( ref $text || 'undef' ) unless defined $text && !ref $text;
-		return $text;
-	}
-
-	method _checked_count ($count) {
-		die "Term::Fabulous::Widget::Dropdown: max_visible_options must be a positive integer, got " . ( defined $count ? "'$count'" : 'undef' )
-			unless defined $count && !ref $count && $count =~ /\A[0-9]+\z/ && $count > 0;
-		return $count + 0;
 	}
 
 	# An option is a label (its own value), [ label, value ] or
@@ -104,7 +95,7 @@ class Term::Fabulous::Widget::Dropdown
 		$self->close;
 		@options  = @parsed;
 		$selected = defined $kept_value ? $self->_index_of_value($kept_value) : undef;
-		$self->repaint;
+		$self->mark_changed;
 		return map { +{%$_} } @options;
 	}
 
@@ -136,20 +127,20 @@ class Term::Fabulous::Widget::Dropdown
 
 	method _select ($index) {
 		$selected = defined $index ? $index + 0 : undef;
-		$self->repaint;
+		$self->mark_changed;
 		return;
 	}
 
 	method placeholder (@new) {
 		return $placeholder unless @new;
-		$placeholder = $self->_checked_text( placeholder => $new[0] );
-		$self->repaint;
+		$placeholder = string( $self, placeholder => $new[0] );
+		$self->mark_changed;
 		return $placeholder;
 	}
 
 	method max_visible_options (@new) {
 		return $max_visible_options unless @new;
-		return $max_visible_options = $self->_checked_count( $new[0] );
+		return $max_visible_options = positive_integer( $self, max_visible_options => $new[0] );
 	}
 
 	method placeholder_color (@new) {
@@ -169,19 +160,32 @@ class Term::Fabulous::Widget::Dropdown
 		return $self->SUPER::disabled(@new);
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(value selected_index placeholder max_visible_options placeholder_color list_background_color highlight_text_color) );
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			value                 => 'scalar',
+			selected_index        => 'scalar',
+			placeholder           => 'scalar',
+			max_visible_options   => 'scalar',
+			placeholder_color     => 'color',
+			list_background_color => 'color',
+			highlight_text_color  => 'color',
+			options               => \&_parse_options,
+			option                => \&_parse_options,
+		);
 	}
 
-	method structured_layout_properties :override () {
-		return ( $self->SUPER::structured_layout_properties, qw(options option) );
+	# The options of a layout come first, so value and selected_index can
+	# name one wherever they stand.
+	method apply_layout_settings :override (@settings) {
+		my %is_option = ( options => 1, option => 1 );
+		return $self->SUPER::apply_layout_settings( ( grep { $is_option{ $_->[0] } } @settings ), ( grep { !$is_option{ $_->[0] } } @settings ) );
 	}
 
 	# The options come as 'options "Red" "Green"' or as one 'option "Red"
 	# value="r"' node per option.
-	method parse_property :override ($kid) {
+	method _parse_options ($kid) {
 		my $name = $kid->name;
-		return $self->SUPER::parse_property($kid) unless $name eq 'options' || $name eq 'option';
 		die "Term::Fabulous::Widget::Dropdown: layout property '$name' takes no children" if $kid->children->@*;
 
 		my @labels = map { $_->as_perl } $kid->args->@*;
@@ -236,8 +240,7 @@ class Term::Fabulous::Widget::Dropdown
 		);
 		$self->add_child($list);
 		$list->show_highlight;
-		$self->repaint;
-		return $self;
+		return $self->mark_changed;
 	}
 
 	method close () {
@@ -246,8 +249,7 @@ class Term::Fabulous::Widget::Dropdown
 		undef $list;
 		undef $highlighted;
 		$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($closing) } );
-		$self->repaint;
-		return $self;
+		return $self->mark_changed;
 	}
 
 	# The width of the whole widget in the last frame (its natural width
@@ -298,7 +300,6 @@ class Term::Fabulous::Widget::Dropdown
 
 	method focus_changed :override ($is_focused) {
 		$self->close unless $is_focused;
-		$self->repaint;
 		return;
 	}
 
@@ -565,7 +566,7 @@ the selected option in the list.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<is_enabled>,
-the color accessors, C<repaint>), plus:
+the color accessors, C<mark_changed>), plus:
 
 =head2 value
 
@@ -575,7 +576,7 @@ the color accessors, C<repaint>), plus:
 
 Accessor. Returns the value of the selected option, or C<undef> when
 none is selected. Writing selects the first option with that value
-(compared as strings), or clears the selection for C<undef>, repaints,
+(compared as strings), or clears the selection for C<undef>, marks the input changed,
 and returns the new value. Dies if no option has the value. Writing
 fires no C<Change> event.
 
@@ -613,7 +614,7 @@ options.
 	my $text = $dropdown->placeholder;
 	$dropdown->placeholder('Choose one');
 
-Accessor for the placeholder. Writing repaints and returns the new
+Accessor for the placeholder. Writing marks the input changed and returns the new
 placeholder. A value that is not a string dies and leaves the
 placeholder unchanged.
 
@@ -630,8 +631,8 @@ is not a positive integer dies and leaves the old value.
 
 	$dropdown->placeholder_color('#888888');
 
-Accessor for the C<placeholder_color> parameter. Writing repaints the
-dropdown and returns the new color (as given). An invalid color dies
+Accessor for the C<placeholder_color> parameter. Writing marks the
+dropdown changed and returns the new color as C<[r, g, b, a]>. An invalid color dies
 and leaves the old one.
 
 =head2 list_background_color
@@ -639,7 +640,7 @@ and leaves the old one.
 	$dropdown->list_background_color([ 20, 20, 30, 255 ]);
 
 Accessor for the C<list_background_color> parameter. Writing returns the
-new color (as given); it takes effect the next time the list opens. An
+new color as C<[r, g, b, a]>; it takes effect the next time the list opens. An
 invalid color dies and leaves the old one.
 
 =head2 highlight_text_color
@@ -647,8 +648,8 @@ invalid color dies and leaves the old one.
 	$dropdown->highlight_text_color('#000000');
 
 Accessor for the C<highlight_text_color> parameter. Writing returns the
-new color (as given). An open list shows the change the next time it
-repaints (when the highlight moves); a closed list shows it the next
+new color as C<[r, g, b, a]>. An open list shows the change the next time it
+marks the list changed (when the highlight moves); a closed list shows it the next
 time it opens. An invalid color dies and leaves the old one.
 
 =head2 disabled
@@ -882,12 +883,12 @@ The label of the option at an index.
 
 The number of options.
 
-=head2 parse_property
+=head2 layout_properties
 
-	method parse_property :override ($kid) { ... }
-
-KDL hook (see L<Term::Fabulous::Widget::Box/parse_property>); handles
-C<options> and C<option> nodes and passes all others on.
+The KDL table (see L<Term::Fabulous::Widget::Box/layout_properties>):
+the colors as colors, the other properties as scalars, and C<options>
+and C<option> as structured properties. The options of a layout are
+applied before C<value> and C<selected_index>, wherever they stand.
 
 =head1 CAVEATS
 

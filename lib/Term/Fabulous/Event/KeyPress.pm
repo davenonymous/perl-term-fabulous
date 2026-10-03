@@ -158,6 +158,21 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 		KeypadDelete    => 'Delete',
 	);
 
+	# The key codes by name; Backspace is the code terminals send for it.
+	my %KEY_BY_NAME = ( reverse(%NAME_BY_KEY), Backspace => TB_KEY_BACKSPACE2 );
+
+	# The modifiers in the order key_name writes them.
+	my @MODIFIER_NAMES = qw(Ctrl Alt Shift Super Hyper Meta);
+	my %MODIFIER_BY_NAME = (
+		Ctrl  => TB_MOD_CTRL,
+		Alt   => TB_MOD_ALT,
+		Shift => TB_MOD_SHIFT,
+		Super => TF_MOD_SUPER,
+		Hyper => TF_MOD_HYPER,
+		Meta  => TF_MOD_META,
+	);
+	my $MODIFIER_PREFIX = join '|', @MODIFIER_NAMES;
+
 	method event_name :common { 'KeyPress' }
 
 	method of :common ($ev) {
@@ -170,6 +185,42 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 
 	sub _is_control_byte ($code) {
 		return $code < 0x20 || $code == 0x7F;
+	}
+
+	method fields_for_name :common ($name) {
+		my ( $prefix, $base ) = ( $name // '' ) =~ /\A((?:(?:$MODIFIER_PREFIX)\+)*)(.+)\z/s;
+		my $modifiers = 0;
+		$modifiers |= $MODIFIER_BY_NAME{$_} foreach split /\+/, $prefix // '';
+		my %fields = defined $base ? _fields_of_base( $base, $modifiers ) : ();
+
+		# The tables decide: a name is valid when the event reads back as it.
+		my $event = %fields ? $class->new( key => $fields{key}, char => $fields{ch}, modifiers => $fields{mod} ) : undef;
+		die "Term::Fabulous::Event::KeyPress: no key is named " . ( defined $name ? "'$name'" : 'undef' ) . "; use the names key_name returns, such as 'Ctrl+Shift+Left' or 'a'\n"
+			unless defined $event && ( $event->key_name // '' ) eq $name;
+		return %fields;
+	}
+
+	# What termbox2 reports for a key: a named key by its code, Ctrl plus a
+	# letter or symbol by its control byte, any other character by itself.
+	# termbox2 sets the Ctrl bit on every control byte, and the kitty
+	# keyboard protocol puts a Ctrl combination the control range cannot
+	# carry (Ctrl+I, Ctrl+Enter) into the character.
+	sub _fields_of_base ( $base, $modifiers ) {
+		my $ctrl = $modifiers & TB_MOD_CTRL;
+		if ( $base eq 'Space' ) {
+			return ( key => 0, ch => $ctrl ? 0 : 0x20, mod => $modifiers );
+		}
+		if ( exists $KEY_BY_NAME{$base} ) {
+			my $code = $KEY_BY_NAME{$base};
+			return ( key => 0, ch => $code, mod => $modifiers ) if $ctrl && _is_control_byte($code);
+			return ( key => $code, ch => 0, mod => _is_control_byte($code) ? $modifiers | TB_MOD_CTRL : $modifiers );
+		}
+		return () unless length $base == 1;
+
+		my $control_byte = ord($base) - 0x40;
+		return ( key => $control_byte, ch => 0, mod => $modifiers )
+			if $ctrl && $control_byte > 0 && $control_byte < 0x20 && !exists $NAME_BY_KEY{$control_byte};
+		return ( key => 0, ch => ord( $ctrl ? lc $base : $base ), mod => $modifiers );
 	}
 
 	# The key without its modifiers, and whether it implies Ctrl: the
@@ -198,14 +249,8 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	# termbox2 sets TB_MOD_CTRL on every byte of the control range, Enter
 	# and Tab included; there the byte alone says whether Ctrl was held.
 	method _with_modifiers ( $base, $implies_ctrl ) {
-		my $ctrl = $char == 0 && _is_control_byte($key) ? $implies_ctrl : $modifiers & TB_MOD_CTRL;
-		my @names;
-		push @names, 'Ctrl'  if $ctrl;
-		push @names, 'Alt'   if $modifiers & TB_MOD_ALT;
-		push @names, 'Shift' if $modifiers & TB_MOD_SHIFT;
-		push @names, 'Super' if $modifiers & TF_MOD_SUPER;
-		push @names, 'Hyper' if $modifiers & TF_MOD_HYPER;
-		push @names, 'Meta'  if $modifiers & TF_MOD_META;
+		my $ctrl  = $char == 0 && _is_control_byte($key) ? $implies_ctrl : $modifiers & TB_MOD_CTRL;
+		my @names = grep { $_ eq 'Ctrl' ? $ctrl : $modifiers & $MODIFIER_BY_NAME{$_} } @MODIFIER_NAMES;
 		return join '+', @names, $base;
 	}
 
@@ -299,8 +344,10 @@ L</THE KITTY KEYBOARD PROTOCOL>.
 	$text_field->fire_event($typed_a);
 
 Programs rarely build key presses themselves; L<Term::Fabulous> does it
-for every key. Building one by hand is useful in tests, to simulate
-typing without a terminal (see L<Term::Fabulous::Manual/TESTING>). The
+for every key. Building one by hand is useful in tests of one widget,
+to simulate typing at it; a whole program is tested with the keys of
+L<Term::Fabulous::Terminal::Memory/press_key>, which go through the
+focus like real ones (see L<Term::Fabulous::Manual/TESTING>). The
 three parameters below are required, and unknown parameters die. The
 C<name> and C<bubble_mode> parameters of L<Clay::UI::Events::Event> are
 accepted as well.
@@ -345,6 +392,25 @@ Builds an event from a C<Term::Fabulous::Termbox::Event> as returned by termbox2
 C<tb_peek_event> or C<tb_poll_event>: C<key> from its C<key>, C<char>
 from its C<ch> and C<modifiers> from its C<mod>. Called by
 L<Term::Fabulous>; class method.
+
+=head2 fields_for_name
+
+	my %fields = Term::Fabulous::Event::KeyPress->fields_for_name('Ctrl+Shift+Left');
+	my $termbox_event = Term::Fabulous::Termbox::Event->new( type => TB_EVENT_KEY, %fields );
+
+The other way round from L</key_name>: the C<key>, C<ch> and C<mod>
+fields of the termbox2 event a terminal reports for the key with that
+name, the way termbox2 and its kitty keyboard protocol parser report
+it. C<Ctrl+W> is the control byte 0x17 with the Ctrl bit, C<Enter> the
+byte 0x0D (with the Ctrl bit termbox2 sets on every control byte),
+C<Ctrl+I> the character C<i> with the Ctrl bit, C<a> the character.
+L<Term::Fabulous::Terminal::Memory/press_key> uses it. Class method.
+
+The name must be one that L</key_name> returns, with its modifiers in
+the order C<Ctrl>, C<Alt>, C<Shift>, C<Super>, C<Hyper>, C<Meta> (see
+L</KEY NAMES>); a KeyPress built from the fields has exactly that
+C<key_name>. Any other name dies with
+C<Term::Fabulous::Event::KeyPress: no key is named 'ctrl+w'>.
 
 =head1 METHODS
 

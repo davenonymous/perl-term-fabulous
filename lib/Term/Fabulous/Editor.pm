@@ -34,8 +34,10 @@ class Term::Fabulous::Editor :strict(params) {
 	field @cursor = ( 0, 0 );
 	field @anchor;
 
-	# Counts text changes, so views can cache what they derive from the text.
-	field $revision :reader = 0;
+	# Count changes, so views can cache what they derive: of the text, and
+	# of the text, the cursor or the selection.
+	field $text_revision :reader = 0;
+	field $revision :reader      = 0;
 
 	# Undo steps, oldest first: { changes, cursor, anchor, cursor_after }.
 	# A change { row, offset, old, new } says that the text $old at
@@ -107,6 +109,7 @@ class Term::Fabulous::Editor :strict(params) {
 		@anchor = ();
 		@undo_stack = @redo_stack = ();
 		$typing_run = undef;
+		$text_revision++;
 		$revision++;
 		return $self;
 	}
@@ -210,6 +213,7 @@ class Term::Fabulous::Editor :strict(params) {
 		}
 		@cursor     = @target;
 		$typing_run = undef;
+		$revision++;
 		return $self;
 	}
 
@@ -217,6 +221,7 @@ class Term::Fabulous::Editor :strict(params) {
 		my @from = $self->_clamped_position( $anchor_row, $anchor_offset );
 		$self->move_to( $cursor_row, $cursor_offset );
 		@anchor = @from;
+		$revision++;
 		return $self;
 	}
 
@@ -226,6 +231,7 @@ class Term::Fabulous::Editor :strict(params) {
 
 	method clear_selection () {
 		@anchor = ();
+		$revision++;
 		return $self;
 	}
 
@@ -327,6 +333,7 @@ class Term::Fabulous::Editor :strict(params) {
 		@changes = ();
 		$code->();
 		my @made = grep { $_->{old} ne $_->{new} } splice @changes;
+		$revision++ if @made || "@{ $before[0] };@{ $before[1] }" ne "@cursor;@anchor";
 		if ( !@made ) {
 			$typing_run = undef;
 			return 0;
@@ -343,7 +350,7 @@ class Term::Fabulous::Editor :strict(params) {
 		shift @undo_stack while @undo_stack > UNDO_LIMIT;
 		@redo_stack = ();
 		$typing_run = $run;
-		$revision++;
+		$text_revision++;
 		return 1;
 	}
 
@@ -533,6 +540,7 @@ class Term::Fabulous::Editor :strict(params) {
 		@cursor     = @$cursor;
 		@anchor     = @$anchor;
 		$typing_run = undef;
+		$text_revision++;
 		$revision++;
 		return;
 	}
@@ -564,7 +572,7 @@ a text input
 	# Inside a text input widget:
 	my $field_editor = $text_field->editor;
 	$field_editor->select_all;
-	$text_field->cursor_moved;           # scroll and repaint
+	$text_field->mark_changed;           # the next frame scrolls and paints it
 
 =head1 DESCRIPTION
 
@@ -590,10 +598,11 @@ so the cursor never lands inside a character. Words, for word movement
 and word deletion, are runs of C<\w> characters (letters, digits and
 C<_>).
 
-Changes made through the editor of an input widget are not shown until
-the widget repaints, and they fire no C<Change> event. Call
-C<< $input->cursor_moved >> (see
-L<Term::Fabulous::Widget::TextInput/cursor_moved>) afterwards.
+Changes made through the editor of an input widget fire no C<Change>
+event. Call C<< $input->mark_changed >> afterwards so that a frame is
+drawn: the input notices the new L</revision> then, scrolls the cursor
+into view and paints the text (see
+L<Term::Fabulous::Widget::TextInput/editor>).
 
 =head1 CONSTRUCTOR
 
@@ -714,9 +723,20 @@ non-negative integer or C<undef>, or if the text is already longer.
 
 	my $revision = $editor->revision;
 
-A number that grows whenever the text changes (edits, C<set_text>, undo,
-redo). Compare it with an earlier value to know whether something you
-derived from the text is still up to date.
+A number that grows whenever the text, the cursor or the selection
+changes: edits, C<set_text>, undo, redo, every cursor movement and
+selection change, also one that ends where it started. Compare it with
+an earlier value to know whether a view of the editor is still up to
+date; L<Term::Fabulous::Widget::TextInput> repaints and scrolls to the
+cursor when it grew.
+
+=head2 text_revision
+
+	my $revision = $editor->text_revision;
+
+Like L</revision>, but grows only when the text changes (edits,
+C<set_text>, undo, redo), for what is derived from the text alone, such
+as the line wrapping of L<Term::Fabulous::Widget::TextArea>.
 
 =head2 multi_line
 
@@ -1002,14 +1022,14 @@ True when L</redo> would do something.
 
 	my $editor = $notes->editor;
 	if ( $editor->insert( strftime( '%Y-%m-%d %H:%M ', localtime ) ) ) {
-		$notes->cursor_moved;    # scroll to the cursor and repaint
+		$notes->mark_changed;    # the next frame scrolls to the cursor
 	}
 
 =head2 Select the second line of a text area
 
 	my $editor = $area->editor;
 	$editor->set_selection( 1, 0, 1, length $editor->line(1) );
-	$area->cursor_moved;
+	$area->mark_changed;
 
 =head2 Load the system clipboard on a key press
 

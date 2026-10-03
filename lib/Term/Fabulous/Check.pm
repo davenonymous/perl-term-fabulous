@@ -1,0 +1,185 @@
+package Term::Fabulous::Check;
+
+use v5.24;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+our $VERSION = '0.01';
+
+use Exporter 'import';
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color);
+
+use Carp qw(croak);
+use Feature::Compat::Try;
+use Scalar::Util qw(blessed looks_like_number);
+use Term::Fabulous::Color;
+use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
+
+use constant MAX_RGB => 0xFFFFFF;
+
+sub _owner_name ($owner) {
+	return ref $owner || $owner;
+}
+
+sub _describe ($value) {
+	return 'undef' unless defined $value;
+	return ( ref($value) =~ /\A[AEIOU]/ ? 'an ' : 'a ' ) . ref($value) . ' reference' if ref $value;
+	return "'$value'";
+}
+
+sub _fail ( $owner, $name, $expected, $value, $detail = undef ) {
+	croak _owner_name($owner) . ": $name must be $expected, got " . _describe($value) . ( defined $detail ? " ($detail)" : '' );
+}
+
+sub _is_plain ($value) {
+	return defined $value && !ref $value;
+}
+
+sub positive_integer ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a positive integer', $value ) unless _is_plain($value) && $value =~ /\A[0-9]+\z/ && $value > 0;
+	return $value + 0;
+}
+
+sub non_negative_integer ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a non-negative integer', $value ) unless _is_plain($value) && $value =~ /\A[0-9]+\z/;
+	return $value + 0;
+}
+
+sub integer ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'an integer', $value ) unless _is_plain($value) && $value =~ /\A-?[0-9]+\z/;
+	return $value + 0;
+}
+
+sub number ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a finite number', $value )
+		unless _is_plain($value) && looks_like_number($value) && $value == $value && $value - $value == 0;
+	return $value + 0;
+}
+
+sub string ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a string', $value ) unless _is_plain($value);
+	return $value;
+}
+
+sub boolean ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a plain boolean value', $value ) if ref $value;
+	return $value ? 1 : 0;
+}
+
+sub glyph ( $owner, $name, $value ) {
+	my @clusters = _is_plain($value) ? grapheme_clusters($value) : ();
+	_fail( $owner, $name, 'a single character one column wide', $value ) unless @clusters == 1 && cluster_columns( $clusters[0] ) == 1;
+	return $value;
+}
+
+sub color ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a color', $value ) unless defined $value;
+	try {
+		my $object = blessed $value && $value->isa('Term::Fabulous::Color') ? $value : Term::Fabulous::Color->new( color => $value );
+		return [ $object->to_rgba ];
+	}
+	catch ($error) {
+		$error =~ s/\ATerm::Fabulous::Color: //;
+		$error =~ s/ at \S+ line \d+\.?\n?\z//;
+		_fail( $owner, $name, 'a color', $value, $error );
+	}
+}
+
+# Canvas cells also take a packed 0xRRGGBB integer, which is opaque.
+sub cell_color ( $owner, $name, $value ) {
+	return color( $owner, $name, $value ) unless _is_plain($value) && $value =~ /\A[0-9]+\z/;
+	_fail( $owner, $name, 'a color', $value, 'a packed color is at most 0xFFFFFF' ) if $value > MAX_RGB;
+	return [ ( $value >> 16 ) & 0xFF, ( $value >> 8 ) & 0xFF, $value & 0xFF, 255 ];
+}
+
+1;
+
+__END__
+
+=head1 NAME
+
+Term::Fabulous::Check - Validate the values of widget properties
+
+=head1 SYNOPSIS
+
+	use Term::Fabulous::Check qw(positive_integer string color);
+
+	# In a widget class: each check returns the value to store, or dies.
+	$columns = positive_integer( $self, preferred_columns => $new[0] );
+	$label   = string( $self, label => $new[0] );
+	$color   = color( $self, accent_color => '#ff8800' );    # [ 255, 136, 0, 255 ]
+
+=head1 DESCRIPTION
+
+Most programs never use this module directly. The widgets of
+Term::Fabulous check the values of their constructor parameters and
+accessors with it, so every property of a kind is checked the same way
+and fails with the same wording. Use it in widget classes of your own
+for the same reason.
+
+Every function takes the I<owner> (the widget, or its class name), the
+property name and the value. It returns the value as the widget stores
+it (numbers as numbers, booleans as 1 or 0, colors as
+C<[r, g, b, a]>), or dies with a message in one wording:
+
+	My::Widget: preferred_columns must be a positive integer, got '0'
+	My::Widget: label must be a string, got a HASH reference
+	My::Widget: accent_color must be a color, got 'nope' (unrecognized color string 'nope')
+
+The message starts with the owner's class name and names the line that
+called the check. Nothing is exported by default.
+
+=head1 FUNCTIONS
+
+=head2 positive_integer
+
+An integer of at least 1, written with digits only (C<'12'>, C<12>).
+
+=head2 non_negative_integer
+
+An integer of at least 0, written with digits only.
+
+=head2 integer
+
+An integer, written with digits and an optional leading minus.
+
+=head2 number
+
+A finite number: no C<inf>, no C<nan>, no reference.
+
+=head2 string
+
+A defined value that is not a reference. Numbers count as strings.
+
+=head2 boolean
+
+Any plain value, stored as 1 (true in Perl) or 0. A reference dies, so
+that a mistaken C<[]> or C<{}> does not count as true.
+
+=head2 glyph
+
+A string of exactly one grapheme cluster that takes one terminal column
+(see L<Term::Fabulous::Unicode>): the marks and track pieces of the
+widgets.
+
+=head2 color
+
+Any color L<Term::Fabulous::Color> accepts: a color string such as
+C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'Tomato'>, an C<[r, g, b, a]>
+array, an C<{ r, g, b, a }> hash or a Term::Fabulous::Color object.
+Returns C<[r, g, b, a]>, the form Clay::UI takes. C<undef> dies; a
+property that can be switched off handles C<undef> before it checks.
+
+=head2 cell_color
+
+Like L</color>, and also a packed C<0xRRGGBB> integer, opaque, as the
+cells of a L<Term::Fabulous::Widget::Canvas> take it. Returns
+C<[r, g, b, a]>.
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Role::CanParseLayout>, L<Term::Fabulous::Color>,
+L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>.
+
+=cut

@@ -9,18 +9,16 @@ our $VERSION = '0.01';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Render::Clip;
-
-role Term::Fabulous::Render::Rectangle :does(Term::Fabulous::Render::Clip) {
+role Term::Fabulous::Render::Rectangle {
 	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_REVERSE);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color blended_bg_attr blended_fg_attr);
 	use Term::Fabulous::Render::Geometry qw(visible_cell_rect);
 	use Term::Fabulous::Unicode qw(cluster_columns);
 
-	method fill_row;
-	method set_cell;
-	method extend_cell;
-	method painted_cell;
+	# The cells the command being painted may touch (Term::Fabulous::Render).
+	method clip_rect;
+	# The cell target the frame is painted into (Term::Fabulous::Render).
+	method cell_target;
 
 	# Paints the visible (clipped) part of the box in the background color
 	# and records the resulting background of every cell in the shadow
@@ -33,9 +31,10 @@ role Term::Fabulous::Render::Rectangle :does(Term::Fabulous::Render::Clip) {
 
 		my $color     = clay_color( $command->{renderData}{backgroundColor} );
 		my $style     = _reverse_video($widget) ? TB_REVERSE : 0;
-		my $paint_row = !$color->is_translucent ? '_paint_opaque_row' : _glyphs_show_through($widget) ? '_paint_tinted_row' : '_paint_covered_row';
+		my $paint_row = !$color->is_translucent ? \&_paint_opaque_row : _glyphs_show_through($widget) ? \&_paint_tinted_row : \&_paint_covered_row;
+		my $target    = $self->cell_target;
 		foreach my $y ( $y0 .. $y1 - 1 ) {
-			$self->$paint_row( $color, $style, $buffer->[$y] //= [], $x0, $x1, $y );
+			$paint_row->( $target, $color, $style, $buffer->[$y] //= [], $x0, $x1, $y );
 		}
 		return;
 	}
@@ -51,24 +50,24 @@ role Term::Fabulous::Render::Rectangle :does(Term::Fabulous::Render::Clip) {
 		return defined $widget && $widget->isa('Term::Fabulous::Widget') && $widget->reverse_video;
 	}
 
-	method _paint_opaque_row ( $color, $style, $row, $x0, $x1, $y ) {
+	sub _paint_opaque_row ( $target, $color, $style, $row, $x0, $x1, $y ) {
 		my $bg_attr = color_attr($color) | $style;
 		my $columns = $x1 - $x0;
 		@{$row}[ $x0 .. $x1 - 1 ] = ($bg_attr) x $columns;
-		$self->fill_row( $x0, $y, $columns, $bg_attr );
+		$target->fill_row( $x0, $y, $columns, $bg_attr );
 		return;
 	}
 
 	# Covers the cells with spaces in the blended color, one fill per run
 	# of equal color.
-	method _paint_covered_row ( $color, $style, $row, $x0, $x1, $y ) {
+	sub _paint_covered_row ( $target, $color, $style, $row, $x0, $x1, $y ) {
 		my @blended = map { blended_bg_attr( $color, $row->[$_] // TB_DEFAULT ) | $style } $x0 .. $x1 - 1;
 		@{$row}[ $x0 .. $x1 - 1 ] = @blended;
 
 		my $run_start = 0;
 		foreach my $index ( 1 .. $#blended + 1 ) {
 			next if $index <= $#blended && $blended[$index] == $blended[$run_start];
-			$self->fill_row( $x0 + $run_start, $y, $index - $run_start, $blended[$run_start] );
+			$target->fill_row( $x0 + $run_start, $y, $index - $run_start, $blended[$run_start] );
 			$run_start = $index;
 		}
 		return;
@@ -77,20 +76,20 @@ role Term::Fabulous::Render::Rectangle :does(Term::Fabulous::Render::Clip) {
 	# Repaints every cell with the glyph the target holds there, its
 	# foreground tinted; a cell without a glyph becomes a space. The cells
 	# a wide glyph covers are skipped, like the target does for them.
-	method _paint_tinted_row ( $color, $style, $row, $x0, $x1, $y ) {
+	sub _paint_tinted_row ( $target, $color, $style, $row, $x0, $x1, $y ) {
 		my $covered_until = $x0;
 		foreach my $x ( $x0 .. $x1 - 1 ) {
 			my $bg_attr = $row->[$x] = blended_bg_attr( $color, $row->[$x] // TB_DEFAULT ) | $style;
 			next if $x < $covered_until;
 
-			my ( $glyph, $fg_attr ) = $self->painted_cell( $x, $y );
+			my ( $glyph, $fg_attr ) = $target->painted_cell( $x, $y );
 			if ( !defined $glyph || $glyph eq ' ' ) {
-				$self->set_cell( $x, $y, ' ', TB_DEFAULT, $bg_attr );
+				$target->set_cell( $x, $y, ' ', TB_DEFAULT, $bg_attr );
 				next;
 			}
 			my ( $base, @extenders ) = split //, $glyph;
-			$self->set_cell( $x, $y, $base, blended_fg_attr( $color, $fg_attr ), $bg_attr );
-			$self->extend_cell( $x, $y, $_ ) foreach @extenders;
+			$target->set_cell( $x, $y, $base, blended_fg_attr( $color, $fg_attr ), $bg_attr );
+			$target->extend_cell( $x, $y, $_ ) foreach @extenders;
 			$covered_until = $x + cluster_columns($glyph);
 		}
 		return;
@@ -124,7 +123,7 @@ commands Clay emits for widget backgrounds (C<background_color>).
 	$ui->render_rectangle( $command, $widget, $buffer );
 
 Paints the cells of the command's bounding box that lie inside the
-current clip area (see L<Term::Fabulous::Render::Clip/clip_rect>) in
+command's clip rect (see L<Term::Fabulous::Render/clip_rect>) in
 the command's background color. It also records the resulting
 background of every painted cell in C<$buffer>, an array reference of
 rows of attributes indexed C<< $buffer->[$y][$x] >>, so that text and
@@ -164,11 +163,11 @@ L<Clay::XS/RENDER COMMANDS>); C<$widget> is the widget it belongs to.
 
 The consuming class provides C<fill_row>, C<set_cell>, C<extend_cell>
 and C<painted_cell> (from a cell target, see
-L<Term::Fabulous::Render/CELL TARGET>) and C<width> and C<height> (for
-L<Term::Fabulous::Render::Clip>).
+L<Term::Fabulous::Render/CELL TARGET>) and
+C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Clip>.
+L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Frame>.
 
 =cut

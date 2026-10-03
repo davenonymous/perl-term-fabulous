@@ -17,9 +17,8 @@ class Term::Fabulous::Widget::Dialog
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
-	use Feature::Compat::Try;
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Color;
+	use Term::Fabulous::Check qw(boolean color integer);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Close;
 
@@ -52,51 +51,37 @@ class Term::Fabulous::Widget::Dialog
 	}
 
 	ADJUST {
-		$backdrop_color  = _rgba( backdrop_color => $backdrop_color );
-		$z_index         = _integer( z_index => $z_index );
-		$close_on_escape = $close_on_escape ? 1 : 0;
+		$backdrop_color  = color( $self, backdrop_color => $backdrop_color );
+		$z_index         = integer( $self, z_index => $z_index );
+		$close_on_escape = boolean( $self, close_on_escape => $close_on_escape );
 	}
 
-	sub _rgba ( $name, $value ) {
-		try {
-			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
-		}
-		catch ($error) {
-			die "Term::Fabulous::Widget::Dialog: $name is not a color: $error";
-		}
-	}
-
-	sub _integer ( $name, $value ) {
-		die "Term::Fabulous::Widget::Dialog: $name must be an integer, got " . ( $value // 'undef' )
-			unless defined $value && !ref $value && $value =~ /\A-?[0-9]+\z/;
-		return $value + 0;
-	}
-
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(backdrop_color z_index close_on_escape) );
-	}
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, 'close_on_escape' );
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			backdrop_color  => 'color',
+			z_index         => 'scalar',
+			close_on_escape => 'boolean',
+		);
 	}
 
 	method backdrop_color (@new) {
 		return $backdrop_color unless @new;
-		$backdrop_color = _rgba( backdrop_color => $new[0] );
+		$backdrop_color = color( $self, backdrop_color => $new[0] );
 		$_backdrop->background_color($backdrop_color) if defined $_backdrop;
 		return $backdrop_color;
 	}
 
 	method z_index (@new) {
 		return $z_index unless @new;
-		$z_index = _integer( z_index => $new[0] );
+		$z_index = integer( $self, z_index => $new[0] );
 		$_backdrop->floating( { %{ $_backdrop->floating }, z_index => $z_index } ) if defined $_backdrop;
 		return $z_index;
 	}
 
 	method close_on_escape (@new) {
 		return $close_on_escape unless @new;
-		return $close_on_escape = $new[0] ? 1 : 0;
+		return $close_on_escape = boolean( $self, close_on_escape => $new[0] );
 	}
 
 	method is_open () {
@@ -153,8 +138,7 @@ class Term::Fabulous::Widget::Dialog
 	method _restore_focus ($ui) {
 		my $previous = $_focus_before;
 		$_focus_before = undef;
-		return unless defined $previous && $previous->DOES('Clay::UI::Role::Interaction::Focusable') && $previous->can_focus;
-		return unless defined $previous->ui && refaddr( $previous->ui ) == refaddr($ui);
+		return unless defined $previous && $ui->interaction->can_take_focus($previous);
 		$ui->interaction->set_focused_widget($previous);
 		return;
 	}

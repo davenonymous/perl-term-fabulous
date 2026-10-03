@@ -17,6 +17,7 @@ class Term::Fabulous::Widget::RadioButton
 {
 	use List::Util qw(max);
 	use Scalar::Util qw(refaddr);
+	use Term::Fabulous::Check qw(string);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	field $label           :param = '';
@@ -25,19 +26,16 @@ class Term::Fabulous::Widget::RadioButton
 	field $unselected_mark :param = '( )';
 
 	ADJUST {
-		$self->_checked_string( $_->[0], $_->[1] ) foreach [ label => $label ], [ selected_mark => $selected_mark ], [ unselected_mark => $unselected_mark ];
-		die "Term::Fabulous::Widget::RadioButton: value must be a string or number, got " . ref $value if ref $value;
-	}
-
-	method _checked_string ( $name, $text ) {
-		die "Term::Fabulous::Widget::RadioButton: $name must be a string, got " . ( ref $text || 'undef' ) unless defined $text && !ref $text;
-		return $text;
+		$label           = string( $self, label           => $label );
+		$selected_mark   = string( $self, selected_mark   => $selected_mark );
+		$unselected_mark = string( $self, unselected_mark => $unselected_mark );
+		$value           = string( $self, value => $value ) if defined $value;
 	}
 
 	method _set_string ( $name, $field_ref, @new ) {
 		return $$field_ref unless @new;
-		$$field_ref = $self->_checked_string( $name => $new[0] );
-		$self->repaint;
+		$$field_ref = string( $self, $name => $new[0] );
+		$self->mark_changed;
 		return $$field_ref;
 	}
 
@@ -48,18 +46,17 @@ class Term::Fabulous::Widget::RadioButton
 	# The value defaults to the label.
 	method value (@new) {
 		return $value // $label unless @new;
-		die "Term::Fabulous::Widget::RadioButton: value must be a string or number, got " . ref $new[0] if ref $new[0];
-		$value = $new[0];
-		$self->repaint;
+		$value = defined $new[0] ? string( $self, value => $new[0] ) : undef;
+		$self->mark_changed;
 		return $value // $label;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(label value selected_mark unselected_mark) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, label => 'scalar', value => 'scalar', selected_mark => 'scalar', unselected_mark => 'scalar' );
 	}
 
 	# The group takes the focus for its buttons.
-	method accepts_focus () {
+	method accepts_focus :override () {
 		return 0;
 	}
 
@@ -78,6 +75,17 @@ class Term::Fabulous::Widget::RadioButton
 	method is_enabled :override () {
 		my $group = $self->group;
 		return $self->SUPER::is_enabled && ( !defined $group || $group->is_enabled );
+	}
+
+	# The group decides the look as well: which button is selected, which
+	# one shows the focus, and whether the buttons are enabled.
+	method paint_key :override () {
+		my $group = $self->group;
+		my $cursor = defined $group ? $group->cursor_button : undef;
+		return (
+			$self->SUPER::paint_key,
+			defined $group ? ( $group->value, $group->is_focused, defined $cursor ? refaddr($cursor) : 0 ) : (),
+		);
 	}
 
 	method focus_background_attr :override () {
@@ -204,7 +212,7 @@ painted in C<text_color>.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>,
-C<is_enabled>, the color accessors, C<repaint>), plus:
+C<is_enabled>, the color accessors, C<mark_changed>), plus:
 
 =head2 value
 
@@ -212,7 +220,7 @@ C<is_enabled>, the color accessors, C<repaint>), plus:
 	$button->value('xl');
 
 Accessor. Returns the button's value, or its label when no value was
-given or the value was set to C<undef>. Writing repaints and returns the
+given or the value was set to C<undef>. Writing marks the input changed and returns the
 value as the reader would (C<< $button->value(undef) >> returns the
 label). A reference dies and leaves the value unchanged. Changing the
 value of the selected button does not change the group's value, so the
@@ -223,14 +231,14 @@ button is no longer selected afterwards.
 	my $label = $button->label;
 	$button->label('Extra large');
 
-Accessor for the label. Writing repaints and returns the new label. A
+Accessor for the label. Writing marks the input changed and returns the new label. A
 value that is not a string dies and leaves the label unchanged.
 
 =head2 selected_mark
 
 	$button->selected_mark('[*]');
 
-Accessor for the C<selected_mark> parameter. Writing repaints and returns
+Accessor for the C<selected_mark> parameter. Writing marks the input changed and returns
 the new mark. A value that is not a string dies and leaves the mark
 unchanged.
 

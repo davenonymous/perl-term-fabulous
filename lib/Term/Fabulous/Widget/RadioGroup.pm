@@ -7,12 +7,16 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Widget::RadioGroup::Element;
+use Clay::UI::Role::Interaction::Disableable;
+use Clay::UI::Role::Interaction::Focusable;
+use Term::Fabulous::Widget::Box;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::RadioGroup
-	:isa(Term::Fabulous::Widget::RadioGroup::Element)
+	:isa(Term::Fabulous::Widget::Box)
+	:does(Clay::UI::Role::Interaction::Focusable)
+	:does(Clay::UI::Role::Interaction::Disableable)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -26,26 +30,16 @@ class Term::Fabulous::Widget::RadioGroup
 	# Arrow keys: key name => step through the enabled buttons.
 	my %STEP_BY_KEY = ( Up => -1, Left => -1, Down => 1, Right => 1 );
 
-	field $value    :param = undef;
-	field $disabled :param = 0;
-
-	# The can_focus last asked for (new, KDL or the accessor), whether or
-	# not the group is disabled; undef until something asks, which leaves
-	# the constructor's can_focus in force.
-	field $wants_focus;
+	field $value :param = undef;
 
 	ADJUST {
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } )
 			unless exists $layout->{layout_direction} || exists $layout->{layoutDirection};
-		$disabled = $disabled ? 1 : 0;
-		$self->_sync_focusability;
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		my $own      = sub ($event) { defined $weak_self && refaddr( $event->target ) == refaddr($weak_self) };
-		$self->on( OnFocus => sub ($event) { $weak_self->repaint_buttons if $own->($event); return $continue } );
-		$self->on( OnBlur  => sub ($event) { $weak_self->repaint_buttons if $own->($event); return $continue } );
 		$self->on(
 			KeyPress => sub ($event) {
 				return Clay::UI::Enum::Result->HANDLED if $weak_self->is_enabled && $weak_self->handle_key($event);
@@ -57,51 +51,12 @@ class Term::Fabulous::Widget::RadioGroup
 	method value (@new) {
 		return $value unless @new;
 		$value = $new[0];
-		$self->repaint_buttons;
+		$self->mark_changed;
 		return $value;
 	}
 
-	method disabled (@new) {
-		return $disabled unless @new;
-		my $disable = $new[0] ? 1 : 0;
-		return $disabled if $disable == $disabled;
-		$disabled = $disable;
-		$self->_sync_focusability;
-		$self->repaint_buttons;
-		return $disabled;
-	}
-
-	# Reads whether the group can take the focus now; a write records the
-	# wish, which counts while the group is enabled.
-	method can_focus :override (@new) {
-		return $self->SUPER::can_focus unless @new;
-		die ref($self) . ": can_focus takes one value, got " . scalar(@new) . "\n" unless @new == 1;
-		die ref($self) . ": can_focus must be a plain boolean value, got a " . ref( $new[0] ) . " reference\n" if ref $new[0];
-		$wants_focus = $new[0] ? 1 : 0;
-		$self->_sync_focusability;
-		return $self->SUPER::can_focus;
-	}
-
-	# A disabled group cannot take the focus and gives it up; an enabled
-	# one can when can_focus asked for it.
-	method _sync_focusability () {
-		$wants_focus //= $self->SUPER::can_focus ? 1 : 0;
-		$self->SUPER::can_focus( $wants_focus && !$disabled ? 1 : 0 );
-		my $ui = $self->ui;
-		$ui->interaction->set_focused_widget(undef) if $disabled && defined $ui && $self->is_focused;
-		return;
-	}
-
-	method is_enabled () {
-		return !$disabled;
-	}
-
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(value disabled can_focus) );
-	}
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, qw(disabled can_focus) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, value => 'scalar', disabled => 'boolean', can_focus => 'boolean' );
 	}
 
 	# The radio buttons of the group in tree order: its descendants, except
@@ -133,11 +88,6 @@ class Term::Fabulous::Widget::RadioGroup
 		my $selected = $self->selected_button;
 		return $selected if defined $selected && $selected->is_enabled;
 		return first { $_->is_enabled } $self->buttons;
-	}
-
-	method repaint_buttons () {
-		$_->repaint foreach $self->buttons;
-		return $self;
 	}
 
 	# Selects a button as the user does: fires Change when the value
@@ -277,18 +227,19 @@ C<remove_child>, C<children>, C<layout>, C<on>, ...), plus:
 
 Accessor. Returns the value of the selected button, or C<undef>. Writing
 selects the button(s) whose value equals the new value (compared as
-strings), or no button when none has it; it repaints the buttons and
-fires no C<Change> event. Returns the new value.
+strings), or no button when none has it; the next frame shows it on the
+buttons. Writing fires no C<Change> event. Returns the new value.
 
 =head2 disabled
 
 	my $is_disabled = $group->disabled;
 	$group->disabled(1);
 
-Accessor. Returns 1 or 0; writing returns the new value. Writing a true
-value disables the group: its buttons are painted disabled, keys and
-clicks are ignored, C<can_focus> reads 0 and the group gives up the
-focus if it had it. Writing a false value enables it again: it can take
+Accessor, from L<Clay::UI::Role::Interaction::Disableable>. Returns 1
+or 0; writing returns the new value. Writing a true value disables the
+group: its buttons are painted disabled, keys and clicks are ignored
+(Clay::UI presses none of its buttons), C<can_focus> reads 0 and the
+group gives up the focus at once if it had it. Writing a false value enables it again: it can take
 the focus when C<can_focus> was last set to a true value, through
 C<new>, a layout file or the accessor, also while the group was
 disabled. Writing the value the group already has changes nothing.
@@ -301,8 +252,10 @@ disabled. Writing the value the group already has changes nothing.
 Whether the group can take the focus now: 1 when the last value
 written (through C<new>, a layout file or this accessor) was true and
 the group is enabled, 0 otherwise. Writing records whether the group
-may take the focus and returns what reading returns now. The order of
-C<can_focus> and C<disabled> does not matter.
+may take the focus and returns what reading returns now; writing a
+false value to the focused group takes the focus away at once. The
+order of C<can_focus> and C<disabled> does not matter. From
+L<Clay::UI::Role::Interaction::Focusable>.
 
 =head2 is_enabled
 
@@ -347,13 +300,6 @@ Returns the group.
 
 True when the group's value is defined and equals the given value
 (compared as strings).
-
-=head2 repaint_buttons
-
-	$group->repaint_buttons;
-
-Repaints all buttons of the group. Called automatically when the value,
-the focus or C<disabled> changes. Returns the group.
 
 =head1 KEYS
 

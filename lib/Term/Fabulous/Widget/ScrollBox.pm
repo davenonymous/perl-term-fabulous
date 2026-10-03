@@ -23,12 +23,8 @@ class Term::Fabulous::Widget::ScrollBox
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(horizontal vertical) );
-	}
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, qw(horizontal vertical) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean' );
 	}
 }
 

@@ -15,8 +15,7 @@ class Term::Fabulous::Widget::Text
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
-	use Feature::Compat::Try;
-	use Term::Fabulous::Color;
+	use Term::Fabulous::Check qw(color);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
@@ -26,18 +25,8 @@ class Term::Fabulous::Widget::Text
 	# Clay::UI validates text_color before any ADJUST of this class runs,
 	# so it is converted while the arguments are still a plain list.
 	sub BUILDARGS ( $class, %params ) {
-		$params{text_color} = _rgba( $params{text_color} ) if defined $params{text_color};
+		$params{text_color} = color( $class, text_color => $params{text_color} ) if defined $params{text_color};
 		return %params;
-	}
-
-	# Any Term::Fabulous::Color input as the [r, g, b, a] array Clay::UI takes.
-	sub _rgba ($value) {
-		try {
-			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
-		}
-		catch ($error) {
-			die "Term::Fabulous::Widget::Text: text_color is not a color: $error";
-		}
 	}
 
 	# The value a name stands for in %$value_by_name; an unknown name dies
@@ -48,42 +37,48 @@ class Term::Fabulous::Widget::Text
 	}
 
 	method text_color :override (@new) {
-		return $self->SUPER::text_color( @new && defined $new[0] ? _rgba( $new[0] ) : @new );
+		return $self->SUPER::text_color( @new && defined $new[0] ? color( $self, text_color => $new[0] ) : @new );
 	}
 
-	method layout_properties () {
-		return qw(font_id font_size letter_spacing line_height);
-	}
-
-	method boolean_layout_properties () {
-		return ();
-	}
-
-	method structured_layout_properties () {
-		return qw(text text_color wrap_mode text_alignment);
-	}
-
-	method parse_node ($node) {
-		foreach my $kid ( $node->children->@* ) {
-			my $name = $kid->name;
-			if ( $name eq 'text' ) {
-				my $text = $self->kdl_argument($kid);
-				die "Term::Fabulous::Widget::Text: 'text' needs a string argument" unless $text->is_string;
-				$self->text( $text->value );
-			}
-			elsif ( $name eq 'text_color' ) {
-				$self->text_color( $self->kdl_argument($kid)->as_perl );
-			}
-			elsif ( $name eq 'wrap_mode' ) {
-				$self->wrap_mode( _named( wrap_mode => \%WRAP_MODE_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
-			}
-			elsif ( $name eq 'text_alignment' ) {
-				$self->text_alignment( _named( text_alignment => \%TEXT_ALIGNMENT_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
-			}
-			else {
-				$self->parse_generic($kid);
-			}
+	# Inside a disabled widget that grays its text (a Button), the text is
+	# drawn in that widget's color.
+	method text_config :override () {
+		my $config = $self->SUPER::text_config;
+		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
+			next unless $node->can('disabled_text_color');
+			my $color = $node->disabled_text_color // last;
+			return { %$config, text_color => $color };
 		}
+		return $config;
+	}
+
+	method layout_properties :common () {
+		return (
+			font_id        => 'scalar',
+			font_size      => 'scalar',
+			letter_spacing => 'scalar',
+			line_height    => 'scalar',
+			text_color     => 'color',
+			text           => \&_parse_text,
+			wrap_mode      => \&_parse_wrap_mode,
+			text_alignment => \&_parse_text_alignment,
+		);
+	}
+
+	method _parse_text ($kid) {
+		my $text = $self->kdl_argument($kid);
+		die "Term::Fabulous::Widget::Text: 'text' needs a string argument" unless $text->is_string;
+		$self->text( $text->value );
+		return;
+	}
+
+	method _parse_wrap_mode ($kid) {
+		$self->wrap_mode( _named( wrap_mode => \%WRAP_MODE_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
+		return;
+	}
+
+	method _parse_text_alignment ($kid) {
+		$self->text_alignment( _named( text_alignment => \%TEXT_ALIGNMENT_BY_NAME, $self->kdl_argument($kid)->as_perl ) );
 		return;
 	}
 }
@@ -378,35 +373,14 @@ them yourself.
 
 =head2 layout_properties
 
-	my @names = $text->layout_properties;
+	my %kind_of = Term::Fabulous::Widget::Text->layout_properties;
 
-The names of the properties a KDL layout may set with
-L<Term::Fabulous::Role::CanParseLayout/parse_generic>: C<font_id>,
-C<font_size>, C<letter_spacing> and C<line_height>. C<text>,
-C<text_color>, C<wrap_mode> and C<text_alignment> are handled by
-L</parse_node>; see L</KDL PROPERTIES>.
-
-=head2 boolean_layout_properties
-
-	my @names = $text->boolean_layout_properties;
-
-The names of the boolean properties among L</layout_properties>: none
-for a Text widget.
-
-=head2 structured_layout_properties
-
-	my @names = $text->structured_layout_properties;
-
-The names of the properties L</parse_node> handles itself: C<text>,
-C<text_color>, C<wrap_mode> and C<text_alignment>. They appear in the "known" list of the error for an
-unknown property.
-
-=head2 parse_node
-
-	$text->parse_node($node);
-
-Reads the properties of a KDL node; called during construction when
-the widget is built from a layout.
+The table of the properties a layout may set (see
+L<Term::Fabulous::Role::CanParseLayout/layout_properties>): C<font_id>,
+C<font_size>, C<letter_spacing> and C<line_height> are scalars,
+C<text_color> is a color, and C<text>, C<wrap_mode> and
+C<text_alignment> are structured properties the Text parses itself; see
+L</KDL PROPERTIES>.
 
 =head1 SEE ALSO
 

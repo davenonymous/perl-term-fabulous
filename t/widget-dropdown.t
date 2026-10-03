@@ -74,6 +74,10 @@ subtest 'the open list' => sub {
 
 	press( $dropdown, $_ ) foreach qw(Down Down Down);
 	is list_rows($dropdown)->[3], " Magenta \x{2503}", 'moving the highlight scrolls the list';
+
+	my ($list) = @{ $dropdown->children };
+	$dropdown->accent_color('#ff0000');
+	is shown($list)->cell( 1, 3 )->[2], $dropdown->color_attr('#ff0000'), 'a new accent color shows on the highlighted row of the open list';
 	press( $dropdown, 'Escape' );
 	is [ $dropdown->is_open, $dropdown->value, scalar @$changes ], [ 0, 'Green', 0 ], 'Escape closes without a change';
 

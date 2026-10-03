@@ -17,9 +17,9 @@ class Term::Fabulous::Widget::Slider
 {
 	use List::Util ();    # min and max are methods here
 	use POSIX qw(floor);
-	use Scalar::Util qw(looks_like_number);
+	use Term::Fabulous::Check qw(boolean cell_color glyph number positive_integer);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
-	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
+	use Term::Fabulous::Unicode qw(string_columns);
 
 	# Key name => steps (or pages, or the end) the value moves.
 	my %MOVE_BY_KEY = (
@@ -45,37 +45,33 @@ class Term::Fabulous::Widget::Slider
 	field $thumb_glyph       :param = "\x{25CF}";
 	field $track_color       :param = [ 90, 96, 110, 255 ];
 
-	# The current value; undef only until construction or a layout sets it.
 	field $current;
 
 	ADJUST :params ( :$value = undef ) {
-		$show_value = $show_value ? 1 : 0;
-		$self->_check_range( $min, $max, $step );
-		$self->_checked_page_step($page_step);
-		$self->_checked_format($value_format);
-		$self->_checked_columns($preferred_columns);
-		$self->_checked_glyph( $_->[0] => $_->[1] ) foreach [ fill_glyph => $fill_glyph ], [ track_glyph => $track_glyph ], [ thumb_glyph => $thumb_glyph ];
-		$self->_checked_color( track_color => $track_color );
-		$self->value( $value // $current // $min );
+		$show_value        = boolean( $self, show_value => $show_value );
+		$page_step         = $self->_checked_page_step($page_step);
+		$value_format      = $self->_checked_format($value_format);
+		$preferred_columns = positive_integer( $self, preferred_columns => $preferred_columns );
+		$fill_glyph        = glyph( $self, fill_glyph  => $fill_glyph );
+		$track_glyph       = glyph( $self, track_glyph => $track_glyph );
+		$thumb_glyph       = glyph( $self, thumb_glyph => $thumb_glyph );
+		$track_color       = cell_color( $self, track_color => $track_color );
+		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step );
+		$current = $min;
+		$self->value( $value // $min );
 	}
 
-	sub _number ( $name, $value ) {
-		die "Term::Fabulous::Widget::Slider: $name must be a finite number, got " . ( defined $value ? "'$value'" : 'undef' )
-			unless defined $value && !ref $value && looks_like_number($value) && $value == $value && $value - $value == 0;
-		return $value + 0;
-	}
-
-	method _check_range ( $low, $high, $increment ) {
-		( $low, $high, $increment ) = ( _number( min => $low ), _number( max => $high ), _number( step => $increment ) );
+	# The range with the given parts changed, checked as a whole.
+	method _checked_range (%range) {
+		my ( $low, $high, $increment ) = map { number( $self, $_ => $range{$_} ) } qw(min max step);
 		die "Term::Fabulous::Widget::Slider: min ($low) must be less than max ($high)" unless $low < $high;
 		die "Term::Fabulous::Widget::Slider: step must be positive, got $increment"    unless $increment > 0;
-		( $min, $max, $step ) = ( $low, $high, $increment );
-		return;
+		return ( $low, $high, $increment );
 	}
 
 	method _checked_page_step ($size) {
 		return undef unless defined $size;
-		$size = _number( page_step => $size );
+		$size = number( $self, page_step => $size );
 		die "Term::Fabulous::Widget::Slider: page_step must be positive, got $size" unless $size > 0;
 		return $size;
 	}
@@ -85,19 +81,6 @@ class Term::Fabulous::Widget::Slider
 		die "Term::Fabulous::Widget::Slider: value_format must be a sprintf format string or a code reference"
 			unless ref $format eq 'CODE' || !ref $format;
 		return $format;
-	}
-
-	method _checked_columns ($columns) {
-		die "Term::Fabulous::Widget::Slider: preferred_columns must be a positive integer, got " . ( defined $columns ? "'$columns'" : 'undef' )
-			unless defined $columns && !ref $columns && $columns =~ /\A[0-9]+\z/ && $columns > 0;
-		return $columns + 0;
-	}
-
-	method _checked_glyph ( $name, $glyph ) {
-		my @clusters = defined $glyph && !ref $glyph ? grapheme_clusters($glyph) : ();
-		die "Term::Fabulous::Widget::Slider: $name must be a single character one column wide, got " . ( defined $glyph ? ( ref $glyph || "'$glyph'" ) : 'undef' )
-			unless @clusters == 1 && cluster_columns( $clusters[0] ) == 1;
-		return $glyph;
 	}
 
 	# ---------------------------------------------------------------------
@@ -131,10 +114,10 @@ class Term::Fabulous::Widget::Slider
 
 	method value (@new) {
 		return $current unless @new;
-		my $number = _number( value => $new[0] );
+		my $number = number( $self, value => $new[0] );
 		die "Term::Fabulous::Widget::Slider: value must be in $min..$max, got $number" if $number < $min || $number > $max;
 		$current = $self->_snapped($number);
-		$self->repaint;
+		$self->mark_changed;
 		return $current;
 	}
 
@@ -144,25 +127,29 @@ class Term::Fabulous::Widget::Slider
 		return $self->_snapped($max);
 	}
 
-	method _set_range ( $low, $high, $increment ) {
-		$self->_check_range( $low, $high, $increment );
-		$current = $self->_snapped( List::Util::min( List::Util::max( $current // $min, $min ), $max ) );
-		$self->repaint;
-		return;
+	# Changes min, max and step together, so a new range can be set in one
+	# go whatever the old one was; the value moves into it.
+	method set_range (%range) {
+		my @unknown = grep { !/\A(?:min|max|step)\z/ } sort keys %range;
+		die "Term::Fabulous::Widget::Slider: set_range takes min, max and step, got @unknown" if @unknown;
+		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step, %range );
+		$current = $self->_snapped( List::Util::min( List::Util::max( $current, $min ), $max ) );
+		$self->mark_changed;
+		return $self;
 	}
 
 	method min (@new) {
-		$self->_set_range( $new[0], $max, $step ) if @new;
+		$self->set_range( min => $new[0] ) if @new;
 		return $min;
 	}
 
 	method max (@new) {
-		$self->_set_range( $min, $new[0], $step ) if @new;
+		$self->set_range( max => $new[0] ) if @new;
 		return $max;
 	}
 
 	method step (@new) {
-		$self->_set_range( $min, $max, $new[0] ) if @new;
+		$self->set_range( step => $new[0] ) if @new;
 		return $step;
 	}
 
@@ -174,21 +161,21 @@ class Term::Fabulous::Widget::Slider
 
 	method show_value (@new) {
 		return $show_value unless @new;
-		$show_value = $new[0] ? 1 : 0;
-		$self->repaint;
+		$show_value = boolean( $self, show_value => $new[0] );
+		$self->mark_changed;
 		return $show_value;
 	}
 
 	method value_format (@new) {
 		return $value_format unless @new;
 		$value_format = $self->_checked_format( $new[0] );
-		$self->repaint;
+		$self->mark_changed;
 		return $value_format;
 	}
 
 	method preferred_columns (@new) {
 		return $preferred_columns unless @new;
-		$preferred_columns = $self->_checked_columns( $new[0] );
+		$preferred_columns = positive_integer( $self, preferred_columns => $new[0] );
 		$self->mark_changed;
 		return $preferred_columns;
 	}
@@ -198,8 +185,8 @@ class Term::Fabulous::Widget::Slider
 	method thumb_glyph (@new) { return @new ? $self->_set_glyph( thumb_glyph => \$thumb_glyph, @new ) : $thumb_glyph }
 
 	method _set_glyph ( $name, $field_ref, $glyph ) {
-		$$field_ref = $self->_checked_glyph( $name => $glyph );
-		$self->repaint;
+		$$field_ref = glyph( $self, $name => $glyph );
+		$self->mark_changed;
 		return $$field_ref;
 	}
 
@@ -207,13 +194,22 @@ class Term::Fabulous::Widget::Slider
 		return @new ? $self->_set_color( track_color => \$track_color, @new ) : $track_color;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties,
-			qw(min max step page_step value show_value value_format preferred_columns fill_glyph track_glyph thumb_glyph track_color) );
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			( map { $_ => 'scalar' } qw(min max step page_step value value_format preferred_columns fill_glyph track_glyph thumb_glyph) ),
+			show_value  => 'boolean',
+			track_color => 'color',
+		);
 	}
 
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, 'show_value' );
+	# min, max and step of a layout are one range, so they apply in any
+	# order; the value comes after it.
+	method apply_layout_settings :override (@settings) {
+		my %is_range = map { $_ => 1 } qw(min max step);
+		my %range    = map { @$_ } grep { $is_range{ $_->[0] } } @settings;
+		$self->set_range(%range) if %range;
+		return $self->SUPER::apply_layout_settings( grep { !$is_range{ $_->[0] } } @settings );
 	}
 
 	method format_value ($number) {
@@ -222,13 +218,13 @@ class Term::Fabulous::Widget::Slider
 		return sprintf '%.*f', $self->_decimals, $number;
 	}
 
-	# The user moved the value: snap, repaint, and fire Change if it moved.
+	# The user moved the value: snap, and fire Change if it moved.
 	# Returns 1 when the value changed.
 	method _move_to ($number) {
 		my $snapped = $self->_snapped( List::Util::min( List::Util::max( $number, $min ), $max ) );
 		return 0 if $snapped == $current;
 		$current = $snapped;
-		$self->repaint;
+		$self->mark_changed;
 		$self->fire_change($current);
 		return 1;
 	}
@@ -275,7 +271,7 @@ class Term::Fabulous::Widget::Slider
 	# track keeps its length while the value changes.
 	method _label_columns () {
 		return 0 unless $show_value;
-		return List::Util::max map { string_columns( $self->format_value($_) ) } $min, $self->_top_value, $current // $min;
+		return List::Util::max map { string_columns( $self->format_value($_) ) } $min, $self->_top_value, $current;
 	}
 
 	method _track_columns () {
@@ -463,7 +459,7 @@ numbers in their range.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget::Input/METHODS> (C<disabled>,
-C<is_enabled>, the color accessors, C<repaint>), plus:
+C<is_enabled>, the color accessors, C<mark_changed>), plus:
 
 =head2 value
 
@@ -471,7 +467,7 @@ C<is_enabled>, the color accessors, C<repaint>), plus:
 	$slider->value(42);
 
 Accessor. Returns the current value, a number. Writing rounds the new
-value to the nearest grid value, repaints, and returns the stored value.
+value to the nearest grid value, marks the input changed, and returns the stored value.
 Dies if the new value is not a finite number or lies outside
 C<min>..C<max>. Writing fires no C<Change> event.
 
@@ -481,10 +477,10 @@ C<min>..C<max>. Writing fires no C<Change> event.
 	$slider->min(10);
 
 Accessor for the lower end of the range. Writing moves the value into
-the new range if needed (without a C<Change> event), repaints and
-returns the new C<min>. Dies if the new C<min> is not a finite number
-less than C<max>; the range then stays as it was. To move a range
-upwards, set C<max> first.
+the new range if needed (without a C<Change> event), marks the input
+changed and returns the new C<min>. Dies if the new C<min> is not a finite number
+less than C<max>; the range then stays as it was. To move a range past
+its other end, use L</set_range>.
 
 =head2 max
 
@@ -494,13 +490,27 @@ upwards, set C<max> first.
 Accessor for the upper end of the range; works like L</min>. Dies if the
 new C<max> is not a finite number greater than C<min>.
 
+=head2 set_range
+
+	$slider->set_range( min => 200, max => 300 );
+	$slider->set_range( step => 0.5 );
+
+Changes C<min>, C<max> and C<step> together: the parts not given keep
+their values, and the new range is checked as a whole, so a range can
+move anywhere in one call (with L</min> and L</max> one at a time,
+C<min 200> while C<max> is still 100 dies). Moves the value into the
+new range and onto its grid if needed (without a C<Change> event),
+marks the input changed and returns the slider. Dies, leaving the range as it was,
+when C<min> is not less than C<max>, the step is not positive, a part
+is not a finite number, or another name is given.
+
 =head2 step
 
 	my $step = $slider->step;
 	$slider->step(0.5);
 
 Accessor for the step. Writing moves the value onto the new grid,
-repaints and returns the new step. Dies unless the step is a positive
+marks the input changed and returns the new step. Dies unless the step is a positive
 finite number; the step then stays as it was.
 
 =head2 page_step
@@ -520,13 +530,13 @@ one.
 	$slider->show_value(0);
 
 Accessor for the C<show_value> parameter. Returns 1 or 0, also for a
-value passed to C<new>. Writing repaints. Any value is accepted.
+value passed to C<new>. Writing marks the input changed. Any value is accepted.
 
 =head2 value_format
 
 	$slider->value_format('%.2f');
 
-Accessor for the C<value_format> parameter. Writing repaints and returns
+Accessor for the C<value_format> parameter. Writing marks the input changed and returns
 the new format. Anything other than a string, a code reference or
 C<undef> dies and leaves the old format.
 
@@ -549,7 +559,7 @@ positive integer dies and leaves the old value.
 
 	$slider->fill_glyph('=');
 
-Accessor for the C<fill_glyph> parameter. Writing repaints and returns
+Accessor for the C<fill_glyph> parameter. Writing marks the input changed and returns
 the new glyph. A value that is not a single one-column character dies
 and leaves the old glyph.
 
@@ -569,8 +579,8 @@ Accessor for the C<thumb_glyph> parameter; works like L</fill_glyph>.
 
 	$slider->track_color('#444444');
 
-Accessor for the C<track_color> parameter. Writing repaints and returns
-the new color (as given). An invalid color dies and leaves the old one.
+Accessor for the C<track_color> parameter. Writing marks the input changed and returns
+the new color as C<[r, g, b, a]>. An invalid color dies and leaves the old one.
 
 =head1 KEYS
 
@@ -649,10 +659,9 @@ C<fill_glyph>, C<track_glyph>, C<thumb_glyph> and C<track_color>:
 		value_format "%.1f C"
 	}
 
-Properties are applied in order and each one is checked against the
-values set before it. Give C<min>, C<max> and C<step> before C<value>.
-To move the range upwards past the default C<max> of 100, give C<max>
-before C<min> (C<min 200> while C<max> is still 100 dies).
+C<min>, C<max> and C<step> are applied together, through L</set_range>,
+and before C<value>, so they may come in any order: C<min 200; max 300>
+works although the default C<max> is 100.
 
 =head1 EXAMPLES
 

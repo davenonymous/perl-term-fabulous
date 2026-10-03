@@ -17,6 +17,12 @@ class BorderCanvas :does(Term::Fabulous::Render::Border) {
 	field $width  :param :reader = 10;
 	field $height :param :reader = 6;
 
+	# Painted outside any scissor: commands may touch the whole viewport.
+	method clip_rect () { return [ 0, 0, $width, $height ] }
+
+	# The painter is its own cell target: it records what it is given.
+	method cell_target () { return $self }
+
 	method set_cell ( $x, $y, $glyph, $fg, $bg ) {
 		die "cell ($x, $y) painted twice\n" if exists $cells{"$x,$y"};
 		$cells{"$x,$y"} = [ $glyph, $fg, $bg ];

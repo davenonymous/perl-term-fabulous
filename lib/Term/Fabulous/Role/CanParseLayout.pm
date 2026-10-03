@@ -10,27 +10,13 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 role Term::Fabulous::Role::CanParseLayout {
-	use Term::Fabulous::Color;
+	use Term::Fabulous::Check qw(color);
 
-	field $kdl_node :param = undef;
+	my %IS_SIMPLE_KIND = map { $_ => 1 } qw(scalar boolean color);
 
-	ADJUST {
-		if ( defined $kdl_node ) {
-			$self->parse_node($kdl_node);
-			undef $kdl_node;
-		}
-	}
-
-	method parse_node ($node);
-
-	# Names of the accessors parse_generic may set from a layout.
+	# The class's KDL properties: name => 'scalar', 'boolean', 'color', or
+	# a code reference that parses the property node and applies it.
 	method layout_properties;
-
-	# The names among layout_properties that take #true or #false.
-	method boolean_layout_properties;
-
-	# Names of the properties parse_node handles itself (not parse_generic).
-	method structured_layout_properties;
 
 	# A node inside a widget's block is a child widget when its name starts
 	# with an uppercase letter; every other node is a property.
@@ -38,17 +24,43 @@ role Term::Fabulous::Role::CanParseLayout {
 		return $name =~ /\A[A-Z]/ ? 1 : 0;
 	}
 
-	method parse_generic ($kid) {
+	method apply_layout_node ($node) {
+		my %kind_of = $self->_checked_layout_properties;
+		my @settings = map { $self->_layout_setting( $_, \%kind_of ) } grep { !is_widget_node_name( $_->name ) } $node->children->@*;
+		$self->apply_layout_settings(@settings);
+		return $self;
+	}
+
+	method _checked_layout_properties () {
+		my %kind_of = ref($self)->layout_properties;
+		foreach my $name ( sort keys %kind_of ) {
+			my $kind = $kind_of{$name};
+			next if ref $kind eq 'CODE' || ( defined $kind && $IS_SIMPLE_KIND{$kind} );
+			die sprintf( "%s: layout property '%s' is declared as %s; use 'scalar', 'boolean', 'color' or a code reference",
+				ref $self, $name, defined $kind ? "'$kind'" : 'undef' );
+		}
+		return %kind_of;
+	}
+
+	# [ name, value ]: the value read from the node, or for a structured
+	# property the node itself, for its handler.
+	method _layout_setting ( $kid, $kind_of ) {
 		my $name = $kid->name;
-		return if is_widget_node_name($name);    # child widgets are built by Term::Fabulous::Layout
+		my $kind = $kind_of->{$name}
+			// die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort keys %$kind_of ) );
+		return [ $name, $kid ]                                            if ref $kind eq 'CODE';
+		return [ $name, $self->kdl_boolean($kid) ]                        if $kind eq 'boolean';
+		return [ $name, color( $self, $name, $self->kdl_value($kid) ) ] if $kind eq 'color';
+		return [ $name, $self->kdl_value($kid) ];
+	}
 
-		my @settable = $self->layout_properties;
-		die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort @settable, $self->structured_layout_properties ) )
-			unless grep { $_ eq $name } @settable;
-
-		my $value = ( grep { $_ eq $name } $self->boolean_layout_properties ) ? $self->kdl_boolean($kid) : $self->kdl_value($kid);
-		$value = [ Term::Fabulous::Color->new( color => $value )->to_rgba ] if $name =~ /_color\z/;
-		$self->$name($value);
+	method apply_layout_settings (@settings) {
+		my %kind_of = ref($self)->layout_properties;
+		foreach my $setting (@settings) {
+			my ( $name, $value ) = @$setting;
+			my $handler = $kind_of{$name};
+			ref $handler eq 'CODE' ? $self->$handler($value) : $self->$name($value);
+		}
 		return;
 	}
 
@@ -121,14 +133,18 @@ a KDL layout
 		field $title_color :param :accessor = [ 255, 255, 255, 255 ];
 		field @shortcuts;
 
-		# Simple "name value" properties: title "Settings", title_color "#ffcc00".
-		method layout_properties :override () {
-			return ( $self->SUPER::layout_properties, qw(title title_color) );
+		# The properties a layout may set, and how each is read:
+		# title "Settings", title_color "#ffcc00", shortcut key="F2" action="save".
+		method layout_properties :common () {
+			return (
+				$class->SUPER::layout_properties,
+				title       => 'scalar',
+				title_color => 'color',
+				shortcut    => \&_parse_shortcut,
+			);
 		}
 
-		# A structured property: shortcut key="F2" action="save".
-		method parse_property :override ($kid) {
-			return $self->SUPER::parse_property($kid) unless $kid->name eq 'shortcut';
+		method _parse_shortcut ($kid) {
 			my $props = $self->kdl_properties( $kid, qw(key action) );
 			push @shortcuts, [ $props->{key}, $props->{action} ];
 			return;
@@ -154,14 +170,19 @@ and in a layout:
 =head1 DESCRIPTION
 
 L<Term::Fabulous::Layout> builds a widget tree from a KDL document.
-For every widget node it calls the widget class's constructor with two
-extra parameters:
+For every widget node it constructs the widget with only its id, and
+then hands the node to the finished widget:
 
-	$class->new( id => $id, kdl_node => $node );
+	my $widget = $class->new( id => $id );
+	$widget->apply_layout_node($node);
 
-This role accepts the C<kdl_node> parameter. During construction it
-calls L</parse_node> with the node, so the widget can read its
-properties from it, and then forgets the node. A class can only be
+This role provides L</apply_layout_node>. It reads every property node
+of the widget's node as the class declares it in L</layout_properties>,
+and then applies them all through L</apply_layout_settings>. Since the
+widget is fully constructed by then, a layout sets its properties
+exactly like a program calling the accessors after C<new>: every check
+and default of the constructor has run, and nothing depends on the
+order in which roles and subclasses are built. A class can only be
 used in a layout when it composes this role; L<Term::Fabulous::Layout>
 checks that when the layout declares the class with C<use>.
 
@@ -177,105 +198,106 @@ your own.
 
 Inside a widget's block, a node whose name starts with an uppercase
 letter (C<Text>, C<Box>, ...) is a child widget; L<Term::Fabulous::Layout>
-builds it and adds it with C<add_child> after the widget itself has
-been constructed. Every other node (C<text>, C<_note>, C<1st>, ...) is
-a property of the widget and is handled by the widget's
-L</parse_node>. Both sides use the same rule, the function
+builds it and adds it with C<add_child> after the widget's properties
+were applied. Every other node (C<text>, C<_note>, C<1st>, ...) is a
+property of the widget. Both sides use the same rule, the function
 C<Term::Fabulous::Role::CanParseLayout::is_widget_node_name($name)>.
-Properties are processed in the order they appear in the layout.
-
-=head1 CONSTRUCTOR PARAMETERS
-
-=over
-
-=item C<kdl_node>
-
-A L<Text::KDL::XS::Node>, or C<undef> (the default). Passed by
-L<Term::Fabulous::Layout>; you do not pass it yourself.
-
-=back
 
 =head1 REQUIRED METHODS
 
-A class composing the role directly must provide these four methods.
-Subclasses of L<Term::Fabulous::Widget::Box> already have them and
-only override them.
-
-=head2 parse_node
-
-	method parse_node ($node) {
-		$self->parse_generic($_) foreach $node->children->@*;
-		return;
-	}
-
-Called once during construction with the widget's
-L<Text::KDL::XS::Node>. A typical implementation looks at every child
-node of C<$node>, handles the properties that need special treatment
-itself, and passes everything else to L</parse_generic> (which skips
-child widget nodes). Die with a clear message on anything invalid; the
-error is reported with the widget's name and id.
-
 =head2 layout_properties
 
-	method layout_properties () {
-		return qw(background_color border_width title);
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			title     => 'scalar',
+			collapsed => 'boolean',
+			accent    => 'color',
+			shortcut  => \&_parse_shortcut,
+		);
 	}
 
-Returns the names of the properties that L</parse_generic> may set.
-Each name is also the name of the accessor that sets it. This list is
-the only way a layout can set a value through C<parse_generic>: a
-property that is not in it dies (with the list of known names), so a
-layout file can neither call arbitrary methods nor silently ignore a
-misspelled property.
+A class method (C<:common>) returning the properties a layout may set,
+as pairs of a name and how its node is read:
 
-=head2 boolean_layout_properties
+=over
 
-	method boolean_layout_properties () {
-		return qw(collapsed);
-	}
+=item C<'scalar'>
 
-Returns the names among L</layout_properties> that take a boolean.
-L</parse_generic> reads them with L</kdl_boolean>, so a layout must
-write C<#true> or C<#false> (or C<1> and C<0>); a quoted C<"false">
-dies instead of counting as true. Return an empty list when there are
-none.
+The node's value, read with L</kdl_value>: its single argument
+(C<title "x">) or a hash reference of its C<key=value> pairs
+(C<border_width left=1 right=2>).
 
-=head2 structured_layout_properties
+=item C<'boolean'>
 
-	method structured_layout_properties () {
-		return qw(shortcut);
-	}
+The node's single argument, read with L</kdl_boolean>: a layout must
+write C<#true> or C<#false> (or C<1> and C<0>), so a quoted C<"false">
+dies instead of counting as true.
 
-Returns the names of the property nodes that L</parse_node> (or a
-C<parse_property> override) handles itself, without
-L</parse_generic>. They are only used for the error message of an
-unknown property, so that its list of known names is complete. Return
-an empty list when there are none.
+=item C<'color'>
+
+The node's value, read with L</kdl_value> and turned into
+C<[r, g, b, a]> with L<Term::Fabulous::Check/color>, so a layout can
+write any color string (C<"#ffcc00">, C<"rgb(255, 204, 0)">,
+C<"Tomato">).
+
+=item a code reference
+
+A I<structured> property: the code is called as a method with the
+property node, C<< $self->$code($kid) >>, and parses and applies the
+node itself, typically with the helpers below. Use it for nodes that do
+not fit the other kinds, such as an argument together with C<key=value>
+pairs.
+
+=back
+
+Each name of the first three kinds is also the name of the accessor
+that sets it: the value is applied as C<< $self->name($value) >>, so
+the accessor checks it, as for a program. This table is the only way a
+layout can set a value: a property that is not in it dies with the list
+of known names, so a layout file can neither call arbitrary methods nor
+silently ignore a misspelled property. A subclass returns its parent's
+table (C<< $class->SUPER::layout_properties >>) plus its own pairs; a
+later pair for a name replaces the parent's. Any other kind dies when a
+layout is applied.
 
 =head1 METHODS
 
-These helpers are for implementations of L</parse_node> and
-C<parse_property>. C<$kid> is always a property node (a child node of
-the widget's node).
+=head2 apply_layout_node
 
-=head2 parse_generic
+	$widget->apply_layout_node($node);
 
-	$self->parse_generic($kid);
+Applies the properties of a L<Text::KDL::XS::Node> to the widget and
+returns the widget. Called by L<Term::Fabulous::Layout> right after
+C<new>. It reads every property node in the order of the layout (child
+widget nodes are skipped) into a I<setting>, C<[ $name, $value ]>: the
+value read as L</layout_properties> declares it, or for a structured
+property the node itself. Then it calls L</apply_layout_settings> with
+all of them. Dies when a property is unknown (the message lists the
+known names), when a node's shape is wrong, or when an accessor rejects
+a value; L<Term::Fabulous::Layout> adds the widget's name and id to the
+message.
 
-Sets one simple property: for a node C<name value>, it calls
-C<< $self->name($value) >>. The value is read with L</kdl_value>, so it
-is either the node's single argument or a hash reference of its
-C<key=value> pairs; a name listed by L</boolean_layout_properties> is
-read with L</kdl_boolean> instead. For names ending in C<_color>, the
-value is parsed with L<Term::Fabulous::Color> first and passed as an
-C<[r, g, b, a]> array reference, so layouts can use color strings
-(C<"#ffcc00">, C<"rgb(255, 204, 0)">, ...).
+=head2 apply_layout_settings
 
-Nodes whose name starts with an uppercase letter (child widgets) are
-skipped. Dies when the name is not listed by L</layout_properties>
-(the message lists those names and L</structured_layout_properties>),
-when the node's shape is wrong (see L</kdl_value>) or when the accessor
-rejects the value.
+	method apply_layout_settings :override (@settings) {
+		my %range = map {@$_} grep { $_->[0] =~ /\A(?:min|max)\z/ } @settings;
+		$self->set_range(%range) if %range;
+		return $self->SUPER::apply_layout_settings( grep { $_->[0] !~ /\A(?:min|max)\z/ } @settings );
+	}
+
+Applies the settings in the order given: an accessor call for a simple
+property, the handler for a structured one. Override it to apply related
+values together, so that a layout may give them in any order:
+L<Term::Fabulous::Widget::Slider> sets C<min>, C<max> and C<step>
+through one range setter, and L<Term::Fabulous::Widget::Dropdown> sets
+its options before the value that picks one of them. Pass the other
+settings on to C<SUPER::apply_layout_settings>.
+
+=head1 HELPERS
+
+These are for the handlers of structured properties. C<$kid> is always
+a property node (a child node of the widget's node).
 
 =head2 kdl_boolean
 

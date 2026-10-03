@@ -8,6 +8,7 @@ no warnings 'experimental::signatures';
 use Object::Pad 0.825;
 
 use Term::Fabulous::Editor;
+use Term::Fabulous::TextView;
 use Term::Fabulous::Widget::Input;
 
 our $VERSION = '0.01';
@@ -17,9 +18,11 @@ class Term::Fabulous::Widget::TextInput
 	:abstract
 {
 	use Feature::Compat::Try;
+	use Scalar::Util qw(weaken);
+	use Term::Fabulous::Check qw(boolean cell_color string);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
 	use Time::HiRes qw(time);
-	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns);
+	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters);
 
 	use constant DOUBLE_CLICK_SECONDS => 0.4;
 	use constant DEFAULT_BACKGROUND   => [ 36, 40, 48, 255 ];
@@ -80,16 +83,23 @@ class Term::Fabulous::Widget::TextInput
 	field $placeholder_color :param = [ 120, 126, 138, 255 ];
 	field $selection_color   :param = [ 38,  79,  120, 255 ];
 
+	# How the text is laid out in the buffer: one row without wrapping
+	# unless a subclass says otherwise.
+	field $view :reader;
+
 	# Mouse: whether a press in the widget started a drag, and the time and
 	# position of the last press, for double clicks.
 	field $dragging = 0;
 	field @last_press;
 
 	ADJUST :params ( :$value = undef, :$max_length = undef ) {
-		$read_only = $read_only ? 1 : 0;
-		$self->_checked_placeholder($placeholder);
-		$self->_checked_color( placeholder_color => $placeholder_color );
-		$self->_checked_color( selection_color   => $selection_color );
+		weaken( my $weak_self = $self );
+		$view = Term::Fabulous::TextView->new( editor => $editor, display => sub ($cluster) { $weak_self->display_cluster($cluster) } );
+
+		$read_only         = boolean( $self, read_only => $read_only );
+		$placeholder       = string( $self, placeholder => $placeholder );
+		$placeholder_color = cell_color( $self, placeholder_color => $placeholder_color );
+		$selection_color   = cell_color( $self, selection_color   => $selection_color );
 		$self->background_color( [ @{ +DEFAULT_BACKGROUND } ] ) unless defined $self->background_color;
 		$self->max_length($max_length) if defined $max_length;
 		$self->value($value)           if defined $value;
@@ -116,12 +126,6 @@ class Term::Fabulous::Widget::TextInput
 		return 0;
 	}
 
-	# Keeps the cursor inside the visible part of the text.
-	method scroll_to_cursor;
-
-	# The editor position ($row, $offset) shown at a buffer cell.
-	method position_at;
-
 	# ---------------------------------------------------------------------
 	# Properties
 	# ---------------------------------------------------------------------
@@ -129,8 +133,7 @@ class Term::Fabulous::Widget::TextInput
 	method value (@new) {
 		return $editor->text unless @new;
 		$self->_in_editor( sub { $editor->set_text( $new[0] ) } );
-		$self->scroll_to_cursor;
-		$self->repaint;
+		$self->mark_changed;
 		return $editor->text;
 	}
 
@@ -140,21 +143,16 @@ class Term::Fabulous::Widget::TextInput
 		return $editor->max_length;
 	}
 
-	method _checked_placeholder ($text) {
-		die ref($self) . ": placeholder must be a string, got " . ( ref $text || 'undef' ) unless defined $text && !ref $text;
-		return $text;
-	}
-
 	method placeholder (@new) {
 		return $placeholder unless @new;
-		$placeholder = $self->_checked_placeholder( $new[0] );
-		$self->repaint;
+		$placeholder = string( $self, placeholder => $new[0] );
+		$self->mark_changed;
 		return $placeholder;
 	}
 
 	method read_only (@new) {
 		return $read_only unless @new;
-		$read_only = $new[0] ? 1 : 0;
+		$read_only = boolean( $self, read_only => $new[0] );
 		return $read_only;
 	}
 
@@ -166,12 +164,22 @@ class Term::Fabulous::Widget::TextInput
 		return @new ? $self->_set_color( selection_color => \$selection_color, @new ) : $selection_color;
 	}
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(value placeholder max_length read_only placeholder_color selection_color) );
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			value             => 'scalar',
+			placeholder       => 'scalar',
+			max_length        => 'scalar',
+			read_only         => 'boolean',
+			placeholder_color => 'color',
+			selection_color   => 'color',
+		);
 	}
 
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, 'read_only' );
+	# The max_length of a layout comes first, so it limits the value
+	# wherever it stands.
+	method apply_layout_settings :override (@settings) {
+		return $self->SUPER::apply_layout_settings( ( grep { $_->[0] eq 'max_length' } @settings ), ( grep { $_->[0] ne 'max_length' } @settings ) );
 	}
 
 	# ---------------------------------------------------------------------
@@ -190,7 +198,7 @@ class Term::Fabulous::Widget::TextInput
 		if ( my $movement = $MOVEMENT_BY_KEY{$name} ) {
 			my ( $method, $extend ) = @$movement;
 			$editor->$method($extend);
-			return $self->cursor_moved;
+			return $self->_view_changed;
 		}
 		if ( my $edit = $EDIT_BY_KEY{$name} ) {
 			return 0 if $read_only;
@@ -198,7 +206,7 @@ class Term::Fabulous::Widget::TextInput
 		}
 		if ( $name eq 'Ctrl+A' ) {
 			$editor->select_all;
-			return $self->cursor_moved;
+			return $self->_view_changed;
 		}
 		if ( $name eq 'Ctrl+Insert' ) {
 			$editor->copy;
@@ -207,16 +215,17 @@ class Term::Fabulous::Widget::TextInput
 		return 0;
 	}
 
-	method cursor_moved () {
-		$self->scroll_to_cursor;
-		$self->repaint;
+	# The editor changed the cursor, the selection or the text: the next
+	# frame shows it. Returns 1, for handlers that used their event.
+	method _view_changed () {
+		$self->mark_changed;
 		return 1;
 	}
 
-	# After an editor edit: shows the result and fires Change when the text
-	# changed. Returns 1, the key was used either way.
+	# After an editor edit: fires Change when the text changed. Returns 1,
+	# the key was used either way.
 	method apply_edit ($changed) {
-		$self->cursor_moved;
+		$self->_view_changed;
 		$self->fire_change( $editor->text ) if $changed;
 		return 1;
 	}
@@ -237,11 +246,11 @@ class Term::Fabulous::Widget::TextInput
 
 		my ( $column, $row ) = $self->cell_at($event);
 		return 1 unless defined $column;
-		my @position = $self->position_at( $column, $row );
+		my @position = $view->position_at( $column, $row );
 
 		if ( $event->modifiers & TB_MOD_MOTION ) {
 			$editor->move_to( @position, 1 ) if $dragging;
-			return $self->cursor_moved;
+			return $self->_view_changed;
 		}
 
 		my $now = time;
@@ -258,22 +267,27 @@ class Term::Fabulous::Widget::TextInput
 			@last_press = ( $now, @position );
 		}
 		$dragging = 1;
-		return $self->cursor_moved;
+		return $self->_view_changed;
 	}
 
 	# ---------------------------------------------------------------------
 	# Painting
 	# ---------------------------------------------------------------------
 
-	method size_changed :override () {
-		$self->scroll_to_cursor;
-		$self->repaint;
-		return;
+	# Edits made through the editor, also by the program, show when the
+	# frame is drawn: the view follows the cursor whenever the editor or
+	# the size changed.
+	method refresh :override () {
+		$view->set_size( $self->columns, $self->rows )->follow_cursor;
+		return $self->SUPER::refresh;
+	}
+
+	method paint_key :override () {
+		return ( $self->SUPER::paint_key, $editor->revision, $view->top_row, $view->left_column );
 	}
 
 	method focus_changed :override ($is_focused) {
 		$dragging = 0;
-		$self->repaint;
 		return;
 	}
 
@@ -282,33 +296,19 @@ class Term::Fabulous::Widget::TextInput
 		return sanitize_text($cluster);
 	}
 
-	# The clusters of a line between two boundaries, as
-	# [ $offset, $display_cluster, $columns ].
-	method clusters_between ( $row, $from, $to ) {
-		my $line       = $editor->line($row);
-		my @boundaries = grep { $_ >= $from && $_ <= $to } $editor->boundaries($row);
-		return map {
-			my $display = $self->display_cluster( substr( $line, $boundaries[$_], $boundaries[ $_ + 1 ] - $boundaries[$_] ) );
-			[ $boundaries[$_], $display, cluster_columns($display) ]
-		} 0 .. $#boundaries - 1;
-	}
+	method paint () {
+		$self->paint_focus_background;
+		return $self->_paint_placeholder if $editor->is_empty && length $placeholder;
 
-	# Columns from the start of a line part to an offset inside it.
-	method columns_to ( $row, $from, $offset ) {
-		my $columns = 0;
-		$columns += $_->[2] foreach $self->clusters_between( $row, $from, $offset );
-		return $columns;
-	}
-
-	# The boundary of the part [from, to) of a line shown at a column:
-	# the start of the cluster covering it, or $to past the end.
-	method offset_at_column ( $row, $from, $to, $column ) {
-		my $x = 0;
-		foreach my $cluster ( $self->clusters_between( $row, $from, $to ) ) {
-			return $cluster->[0] if $column < $x + $cluster->[2];
-			$x += $cluster->[2];
+		my $width = $view->text_columns;
+		my $y     = 0;
+		foreach my $row ( $view->visible_rows ) {
+			my ( $line, $from, $to, $is_last, $shown ) = @$row;
+			my $end_x = $self->_paint_part( $y, $line, $shown, $to, $is_last, $from, $width );
+			$self->_paint_selected_line_break( $y, $line, $end_x, $width ) if $is_last;
+			$y++;
 		}
-		return $to;
+		return;
 	}
 
 	sub _is_selected ( $selection, $row, $offset ) {
@@ -319,13 +319,12 @@ class Term::Fabulous::Widget::TextInput
 		return 1;
 	}
 
-	# Paints the part [from, to) of a line on buffer row $y, scrolled left
-	# by $scroll columns, with the selection and (when $cursor_at_end allows
-	# a cursor at $to) the cursor. Text in [hidden_from, from) belongs to
-	# the row unseen; a cursor on it is shown at $from. Returns the column
-	# after the text.
-	method paint_line_part ( $y, $row, $from, $to, $scroll, $cursor_at_end, $hidden_from = $from ) {
-		my $width      = $self->columns;
+	# Paints the part [from, to) of a line on buffer row $y, scrolled as
+	# the view is, with the selection and (when $cursor_at_end allows a
+	# cursor at $to) the cursor. Text in [hidden_from, from) belongs to the
+	# row unseen; a cursor on it is shown at $from. Returns the column after
+	# the text.
+	method _paint_part ( $y, $row, $from, $to, $cursor_at_end, $hidden_from, $width ) {
 		my @selection  = $editor->selection;
 		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
 		my $has_cursor = $self->is_focused && $cursor_row == $row;
@@ -334,8 +333,8 @@ class Term::Fabulous::Widget::TextInput
 		my $bg         = $self->focus_background_attr;
 		my $selected   = $self->color_attr($selection_color);
 
-		my $x = -$scroll;
-		foreach my $cluster ( $self->clusters_between( $row, $from, $to ) ) {
+		my $x = -$view->left_column;
+		foreach my $cluster ( $view->clusters( $row, $from, $to ) ) {
 			my ( $offset, $display, $columns ) = @$cluster;
 			my $cell_bg = _is_selected( \@selection, $row, $offset ) ? $selected : $bg;
 			my $cell_fg = $has_cursor && $offset == $cursor_offset ? $self->reverse_attr($fg) : $fg;
@@ -347,18 +346,28 @@ class Term::Fabulous::Widget::TextInput
 		return $x;
 	}
 
-	method paint_placeholder ($y) {
-		my $bg = $self->focus_background_attr;
-		$self->paint_text( 0, $y, $placeholder, $self->color_attr($placeholder_color), $bg );
-		return unless $self->is_focused;
+	# A selection reaching over the end of a line shows a selected cell
+	# after it.
+	method _paint_selected_line_break ( $y, $line, $x, $width ) {
+		return if $line == $editor->line_count - 1 || $x < 0 || $x >= $width;
+		my ( $row_0, $offset_0, $row_1 ) = $editor->selection;
+		return unless defined $row_0 && $line < $row_1;
+		return if $line < $row_0 || ( $line == $row_0 && $offset_0 > length $editor->line($line) );
 
-		my ($first) = grapheme_clusters($placeholder);
-		$self->put_attrs( 0, $y, $first // ' ', $self->reverse_attr( $self->foreground_attr ), $bg );
+		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
+		return if $self->is_focused && $cursor_row == $line && $cursor_offset == length $editor->line($line);
+		$self->put_attrs( $x, $y, ' ', undef, $self->color_attr($selection_color) );
 		return;
 	}
 
-	method shows_placeholder () {
-		return $editor->is_empty && length $placeholder;
+	method _paint_placeholder () {
+		my $bg = $self->focus_background_attr;
+		$self->paint_text( 0, 0, $placeholder, $self->color_attr($placeholder_color), $bg );
+		return unless $self->is_focused;
+
+		my ($first) = grapheme_clusters($placeholder);
+		$self->put_attrs( 0, 0, $first // ' ', $self->reverse_attr( $self->foreground_attr ), $bg );
+		return;
 	}
 }
 
@@ -484,7 +493,7 @@ its surroundings. Pass C<[0, 0, 0, 0]> for no background of its own.
 
 Accessor for the text, a character string. Writing replaces the whole
 text, puts the cursor at its end, clears the selection and the undo
-history, repaints, and returns the new text (after line-break
+history, marks the input changed, and returns the new text (after line-break
 conversion). It fires no C<Change> event. Dies if the new text is not a
 string or is longer than C<max_length>.
 
@@ -503,7 +512,7 @@ was.
 
 	$input->placeholder('Search');
 
-Accessor for the placeholder text. Writing repaints the input and
+Accessor for the placeholder text. Writing marks the input changed and
 returns the new placeholder; a value that is not a string dies and
 leaves the placeholder unchanged.
 
@@ -519,16 +528,16 @@ passed to C<new>. Any value is accepted.
 
 	$input->placeholder_color('#888888');
 
-Accessor for the placeholder color. Writing repaints and returns the
-new color (as given); an invalid color dies and leaves the color
+Accessor for the placeholder color. Writing marks the input changed and returns the
+new color as C<[r, g, b, a]>; an invalid color dies and leaves the color
 unchanged.
 
 =head2 selection_color
 
 	$input->selection_color([ 60, 60, 120 ]);
 
-Accessor for the selection background. Writing repaints and returns
-the new color (as given); an invalid color dies and leaves the color
+Accessor for the selection background. Writing marks the input changed and returns
+the new color as C<[r, g, b, a]>; an invalid color dies and leaves the color
 unchanged.
 
 =head2 editor
@@ -537,24 +546,18 @@ unchanged.
 
 The L<Term::Fabulous::Editor> that holds the text, the cursor, the
 selection and the undo history. Use it to move the cursor, select or
-edit text from your program. Afterwards call C<< $input->cursor_moved >>,
-which scrolls the cursor into view and repaints. Edits made through the
-editor fire no C<Change> event.
+edit text from your program. Afterwards call C<< $input->mark_changed >>
+so that a frame is drawn: the input notices the change of the editor
+(L<Term::Fabulous::Editor/revision>) when the frame is drawn, scrolls
+the cursor into view and paints the text. Edits made through the editor
+fire no C<Change> event.
 
 	$field->editor->select_all;
-	$field->cursor_moved;
+	$field->mark_changed;
 
 	$area->editor->move_document_start;
 	$area->editor->insert("Dear Sir or Madam,\n");
-	$area->cursor_moved;
-
-=head2 cursor_moved
-
-	$input->cursor_moved;
-
-Scrolls the view so the cursor is visible and repaints. Call it after
-changing the cursor, the selection or the text through L</editor>.
-Returns 1.
+	$area->mark_changed;
 
 =head1 KEYS
 
@@ -711,9 +714,9 @@ L<Term::Fabulous::Event::Submit> on C<Enter>.
 
 The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
 C<value>, C<placeholder>, C<max_length>, C<read_only> (C<#true> /
-C<#false>), C<placeholder_color> and C<selection_color>. Give
-C<max_length> before C<value>; in the opposite order a too long value is
-accepted first and the C<max_length> property then dies.
+C<#false>), C<placeholder_color> and C<selection_color>. C<max_length>
+is applied before C<value>, wherever it stands, so a too long value
+dies.
 
 	TextField "nick" {
 		max_length 12
@@ -724,8 +727,11 @@ accepted first and the C<max_length> property then dies.
 =head1 SUBCLASS INTERFACE
 
 L<Term::Fabulous::Widget::TextField> and
-L<Term::Fabulous::Widget::TextArea> implement these; a new kind of text
-input would too.
+L<Term::Fabulous::Widget::TextArea> build on these; a new kind of text
+input would too. A text input lays its text out with a
+L<Term::Fabulous::TextView> (L</view>), which does the wrapping, the
+scrolling and the mapping between cells and text positions; the text
+input keeps the keys, the mouse, the painting and the placeholder.
 
 =head2 is_multi_line
 
@@ -734,19 +740,18 @@ input would too.
 Class method. Whether the editor keeps line breaks (1) or turns them
 into spaces (0, the default).
 
-=head2 scroll_to_cursor
+=head2 view
 
-	method scroll_to_cursor () { ... }
+	$self->view->set_wrap(1);
 
-Required. Adjusts the input's scroll position so the cursor is visible.
-
-=head2 position_at
-
-	method position_at ( $column, $row ) { return ( $line, $offset ) }
-
-Required. The editor position (line index and character offset, see
-L<Term::Fabulous::Editor/POSITIONS>) shown at a cell of the buffer.
-Used for mouse clicks.
+The L<Term::Fabulous::TextView> of the input: one row without wrapping
+until a subclass changes its settings (L<Term::Fabulous::TextView/set_wrap>,
+L<Term::Fabulous::TextView/set_scrollbar>). The input gives it the size
+of its buffer and lets it follow the cursor every time a frame is drawn,
+and paints the rows it shows. Use it to move the cursor by rows
+(L<Term::Fabulous::TextView/move_vertically>) or to scroll
+(L<Term::Fabulous::TextView/scroll_rows>); call C<mark_changed> after
+changing what it shows.
 
 =head2 natural_size
 
@@ -756,9 +761,14 @@ Required; see L<Term::Fabulous::Widget::Input/natural_size>.
 
 =head2 paint
 
-	method paint () { ... }
+	method paint :override () {
+		$self->SUPER::paint;
+		...    # paint more, for example a scrollbar
+	}
 
-Required; see L<Term::Fabulous::Widget::Input/paint>.
+Paints the rows the view shows, with the selection and the cursor, or
+the placeholder while the text is empty; see
+L<Term::Fabulous::Widget::Input/paint>. Override it to paint more.
 
 =head2 hides_text
 
@@ -771,70 +781,28 @@ text (see L</KEYS>).
 
 =head2 display_cluster
 
-	method display_cluster ($cluster) { return $shown }
+	method display_cluster :override ($cluster) { return $shown }
 
-How one grapheme cluster of the text is shown. The default replaces
-control characters (see L<Term::Fabulous::Unicode/sanitize_text>); the
-text field returns its C<mask> instead when one is set.
-
-=head2 clusters_between
-
-	my @clusters = $self->clusters_between( $line, $from, $to );
-
-The grapheme clusters of a line between two character offsets, as
-C<[ $offset, $display_cluster, $columns ]> array references.
-
-=head2 columns_to
-
-	my $columns = $self->columns_to( $line, $from, $offset );
-
-The columns the text of a line takes from offset C<$from> to C<$offset>.
-
-=head2 offset_at_column
-
-	my $offset = $self->offset_at_column( $line, $from, $to, $column );
-
-The offset of the cluster shown at C<$column> when the part
-C<[$from, $to)> of a line is painted from column 0; C<$to> for a column
-past its end.
-
-=head2 paint_line_part
-
-	my $next_x = $self->paint_line_part( $y, $line, $from, $to, $scroll, $cursor_at_end, $hidden_from );
-
-Paints the part C<[$from, $to)> of a line on buffer row C<$y>, shifted
-left by C<$scroll> columns, with the selection and the cursor. The
-cursor is drawn after the last character only when C<$cursor_at_end> is
-true. The optional C<$hidden_from> (default C<$from>) says that the
-text C<[$hidden_from, $from)> belongs to the row without being shown,
-like the space at which a text area wraps; a cursor on it is drawn at
-C<$from>. Returns the column after the text.
-
-=head2 paint_placeholder
-
-	$self->paint_placeholder($y);
-
-Paints the placeholder on buffer row C<$y>, with the cursor on its first
-character while the input has the focus.
-
-=head2 shows_placeholder
-
-	return $self->paint_placeholder(0) if $self->shows_placeholder;
-
-True while the text is empty and there is a placeholder.
+How one grapheme cluster of the text is shown; the view lays the text
+out with what this returns. The default replaces control characters
+(see L<Term::Fabulous::Unicode/sanitize_text>); the text field returns
+its C<mask> instead when one is set. When what it returns changes, call
+L<Term::Fabulous::TextView/display_changed>.
 
 =head2 apply_edit
 
 	return $self->apply_edit( $self->editor->insert($text) );
 
-Call after an editor edit made on behalf of the user: scrolls to the
-cursor, repaints, and fires C<Change> when the argument is true (the
-editor's edit methods return whether the text changed). Returns 1, so it
-can be returned from C<handle_key> directly.
+Call after an editor edit made on behalf of the user: marks the input
+changed (the next frame scrolls to the cursor and paints the result),
+and fires C<Change> when the argument is true (the editor's edit
+methods return whether the text changed). Returns 1, so it can be
+returned from C<handle_key> directly.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
-L<Term::Fabulous::Editor>, L<Term::Fabulous::Widget::Input>.
+L<Term::Fabulous::Editor>, L<Term::Fabulous::TextView>,
+L<Term::Fabulous::Widget::Input>.
 
 =cut

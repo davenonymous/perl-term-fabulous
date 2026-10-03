@@ -13,8 +13,8 @@ subtest 'text and color' => sub {
 	is $text->text_color, [ 1, 2, 3, 255 ], 'also when set later';
 	$text->text('Hallo');
 	is $text->text, 'Hallo', 'the text can change';
-	like dies { Term::Fabulous::Widget::Text->new( text => 'x', text_color => 'nope' ) }, qr/text_color is not a color/, 'an invalid color dies';
-	like dies { $text->text_color('nope') }, qr/text_color is not a color/, 'also when set later';
+	like dies { Term::Fabulous::Widget::Text->new( text => 'x', text_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Text: text_color must be a color, got 'nope'/, 'an invalid color dies';
+	like dies { $text->text_color('nope') }, qr/\ATerm::Fabulous::Widget::Text: text_color must be a color, got 'nope'/, 'also when set later';
 	is $text->text_color, [ 1, 2, 3, 255 ], 'and leaves the color as it was';
 };
 

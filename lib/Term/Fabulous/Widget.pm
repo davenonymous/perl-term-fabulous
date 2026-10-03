@@ -14,8 +14,7 @@ class Term::Fabulous::Widget
 	:does(Term::Fabulous::Role::HasBorderStyle)
 	:abstract
 {
-	use Feature::Compat::Try;
-	use Term::Fabulous::Color;
+	use Term::Fabulous::Check qw(boolean color);
 
 	my @COLOR_PARAMS = qw(background_color border_color);
 
@@ -25,12 +24,12 @@ class Term::Fabulous::Widget
 	# Clay::UI validates the colors before any ADJUST of this class runs,
 	# so they are converted while the arguments are still a plain list.
 	sub BUILDARGS ( $class, %params ) {
-		$params{$_} = _rgba( $_ => $params{$_} ) foreach grep { defined $params{$_} } @COLOR_PARAMS;
+		$params{$_} = color( $class, $_ => $params{$_} ) foreach grep { defined $params{$_} } @COLOR_PARAMS;
 		return %params;
 	}
 
 	ADJUST {
-		$glyphs_show_through = _boolean( glyphs_show_through => $glyphs_show_through );
+		$glyphs_show_through = boolean( $self, glyphs_show_through => $glyphs_show_through );
 		$classes             = _class_names($classes);
 	}
 
@@ -45,27 +44,12 @@ class Term::Fabulous::Widget
 		return [@$names];
 	}
 
-	sub _boolean ( $name, $value ) {
-		die "Term::Fabulous::Widget: $name must be a boolean, got a " . ref($value) . " reference" if ref $value;
-		return $value ? 1 : 0;
-	}
-
-	# Any Term::Fabulous::Color input as the [r, g, b, a] array Clay::UI takes.
-	sub _rgba ( $name, $value ) {
-		try {
-			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
-		}
-		catch ($error) {
-			die "Term::Fabulous::Widget: $name is not a color: $error";
-		}
-	}
-
 	method background_color :override (@new) {
-		return $self->SUPER::background_color( @new && defined $new[0] ? _rgba( background_color => $new[0] ) : @new );
+		return $self->SUPER::background_color( @new && defined $new[0] ? color( $self, background_color => $new[0] ) : @new );
 	}
 
 	method border_color :override (@new) {
-		return $self->SUPER::border_color( @new && defined $new[0] ? _rgba( border_color => $new[0] ) : @new );
+		return $self->SUPER::border_color( @new && defined $new[0] ? color( $self, border_color => $new[0] ) : @new );
 	}
 
 	# The first node at or below $node, in depth-first pre-order, whose id
@@ -92,7 +76,7 @@ class Term::Fabulous::Widget
 
 	method glyphs_show_through (@new) {
 		return $glyphs_show_through unless @new;
-		$glyphs_show_through = _boolean( glyphs_show_through => $new[0] );
+		$glyphs_show_through = boolean( $self, glyphs_show_through => $new[0] );
 		$self->mark_changed;
 		return $glyphs_show_through;
 	}

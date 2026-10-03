@@ -30,9 +30,11 @@ class Term::Fabulous::Widget::Dropdown::List
 	# The first option shown.
 	field $top = 0;
 
+	# What the cells were last painted for.
+	field $_painted_key;
+
 	ADJUST {
 		weaken( my $weak_self = $self );
-		$self->on( CanvasResize => sub ($event) { $weak_self->repaint; return Clay::UI::Enum::Result->CONTINUE } );
 		$self->on(
 			Mouse => sub ($event) {
 				return $weak_self->_handle_mouse($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE;
@@ -52,18 +54,18 @@ class Term::Fabulous::Widget::Dropdown::List
 		return max( 0, $dropdown->option_count - $visible_rows );
 	}
 
-	# Scrolls the highlighted option into view and repaints.
+	# Scrolls the highlighted option into view.
 	method show_highlight () {
 		my $highlighted = $dropdown->highlighted_index // 0;
 		$top = $highlighted                     if $highlighted < $top;
 		$top = $highlighted - $visible_rows + 1 if $highlighted >= $top + $visible_rows;
 		$top = min( max( $top, 0 ), $self->_max_top );
-		return $self->repaint;
+		return $self->mark_changed;
 	}
 
 	method scroll ($rows) {
 		$top = min( max( $top + $rows, 0 ), $self->_max_top );
-		return $self->repaint;
+		return $self->mark_changed;
 	}
 
 	# The option shown at a buffer row, or undef.
@@ -98,20 +100,25 @@ class Term::Fabulous::Widget::Dropdown::List
 		return $self->columns - ( $self->_scrolls ? 1 : 0 );
 	}
 
-	method repaint () {
-		$self->mark_changed;
-		return $self unless $self->columns > 0 && $self->rows > 0 && defined $dropdown;
-		$self->clear;
+	# The options and colors the list shows come from the dropdown: paints
+	# again when what the rows would show changed.
+	method refresh :override () {
+		return unless $self->columns > 0 && $self->rows > 0 && defined $dropdown;
+		my @rows = map { [ $dropdown->option_label($_), $dropdown->option_attrs($_) ] } grep {defined} map { $self->option_at_row($_) } 0 .. $self->rows - 1;
+		my @scrollbar = $self->_scrolls ? ( $dropdown->option_count, $dropdown->color_attr( $dropdown->disabled_color ), $dropdown->accent_attr ) : ();
+		my $key = join "\x{1F}", map { $_ // "\x{0}" } $self->columns, $self->rows, $top, @scrollbar, map {@$_} @rows;
+		return if defined $_painted_key && $key eq $_painted_key;
+		$_painted_key = $key;
 
+		$self->clear;
 		my $width = $self->_text_columns;
-		foreach my $row ( 0 .. $self->rows - 1 ) {
-			my $index = $self->option_at_row($row) // last;
-			my ( $fg, $bg ) = $dropdown->option_attrs($index);
+		foreach my $row ( 0 .. $#rows ) {
+			my ( $label, $fg, $bg ) = @{ $rows[$row] };
 			$self->put_attrs( $_, $row, ' ', undef, $bg ) foreach 0 .. $width - 1;
-			$self->_paint_label( $row, $dropdown->option_label($index), $fg, $bg, $width - 1 );
+			$self->_paint_label( $row, $label, $fg, $bg, $width - 1 );
 		}
 		$self->_paint_scrollbar if $self->_scrolls;
-		return $self;
+		return;
 	}
 
 	# One space of margin on either side of the label.
@@ -216,8 +223,8 @@ The index of the first option shown (from 0).
 
 	$list->show_highlight;
 
-Scrolls the dropdown's highlighted option into view and repaints.
-Returns the list.
+Scrolls the dropdown's highlighted option into view and marks the list
+changed. Returns the list.
 
 =head2 scroll
 
@@ -233,13 +240,12 @@ within the options. Returns the list.
 The index of the option shown at a row of the list's content (from 0),
 or C<undef> for a row without an option.
 
-=head2 repaint
-
-	$list->repaint;
+=head2 refresh
 
 Paints the visible options and, when the list scrolls, the scrollbar,
-and marks the list changed (see
-L<Clay::UI::Role::Core::Element/mark_changed>). Returns the list.
+while a frame is drawn (see L<Term::Fabulous::Widget::Canvas/refresh>):
+again whenever what its rows show changed, also when the change came
+from the dropdown (its colors, its highlight, its options).
 
 =head1 MOUSE
 

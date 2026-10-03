@@ -48,7 +48,7 @@ subtest 'widget colors take every Term::Fabulous::Color format' => sub {
 	is [ $box->background_color, $box->border_color ], [ [ 255, 136, 0, 255 ], [ 1, 2, 3, 255 ] ], 'constructor strings and objects become [r, g, b, a]';
 	is $box->background_color('rgb(4, 5, 6)'), [ 4, 5, 6, 255 ], 'the writer converts too';
 	is $box->background_color(undef), undef, 'undef still clears the color';
-	like dies { Term::Fabulous::Widget::Box->new( border_color => 'nope' ) }, qr/border_color is not a color: Term::Fabulous::Color: unrecognized color string 'nope'/, 'an invalid color names the parameter';
+	like dies { Term::Fabulous::Widget::Box->new( border_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Box: border_color must be a color, got 'nope' \(unrecognized color string 'nope'\)/, 'an invalid color names the parameter';
 	is( Term::Fabulous::Widget::Text->new( text => 'x', text_color => '#ffffff' )->text_color, [ 255, 255, 255, 255 ], 'Text text_color' );
 	is( Term::Fabulous::Widget::ScrollBox->new( id => 's', vertical => '' )->vertical, 0, 'ScrollBox booleans are stored as 1 or 0' );
 };

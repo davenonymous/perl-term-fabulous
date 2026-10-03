@@ -25,6 +25,7 @@ class Term::Fabulous::Widget::Box
 		CLAY_POINTER_CAPTURE_MODE_CAPTURE CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 		CLAY_CLIP_TO_NONE CLAY_CLIP_TO_ATTACHED_PARENT
 	);
+	use Term::Fabulous::Check qw(integer non_negative_integer);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my %DIRECTION_BY_NAME = (
@@ -76,31 +77,19 @@ class Term::Fabulous::Widget::Box
 	# Clay_FloatingElementConfig hash (a key, or a key and a subkey), and
 	# how the KDL value is parsed.
 	my %FLOATING_KEY = (
-		attach_to       => [ ['attach_to'],                  sub ($value) { _named( 'floating attach_to', \%ATTACH_TO_BY_NAME, $value ) } ],
-		parent_id       => [ ['parent_id'],                  sub ($value) { _element_id( 'floating parent_id', $value ) } ],
-		element         => [ [ attach_points => 'element' ], sub ($value) { _named( 'floating element', \%ATTACH_POINT_BY_NAME, $value ) } ],
-		parent          => [ [ attach_points => 'parent' ],  sub ($value) { _named( 'floating parent', \%ATTACH_POINT_BY_NAME, $value ) } ],
-		offset_x        => [ [ offset => 'x' ],              sub ($value) { _integer( 'floating offset_x', $value ) } ],
-		offset_y        => [ [ offset => 'y' ],              sub ($value) { _integer( 'floating offset_y', $value ) } ],
-		z_index         => [ ['z_index'],                    sub ($value) { _integer( 'floating z_index', $value ) } ],
-		pointer_capture => [ ['pointer_capture_mode'],       sub ($value) { _named( 'floating pointer_capture', \%POINTER_CAPTURE_BY_NAME, $value ) } ],
-		clip_to         => [ ['clip_to'],                    sub ($value) { _named( 'floating clip_to', \%CLIP_TO_BY_NAME, $value ) } ],
+		attach_to       => [ ['attach_to'],                  sub ( $box, $value ) { _named( 'floating attach_to', \%ATTACH_TO_BY_NAME, $value ) } ],
+		parent_id       => [ ['parent_id'],                  sub ( $box, $value ) { _element_id( 'floating parent_id', $value ) } ],
+		element         => [ [ attach_points => 'element' ], sub ( $box, $value ) { _named( 'floating element', \%ATTACH_POINT_BY_NAME, $value ) } ],
+		parent          => [ [ attach_points => 'parent' ],  sub ( $box, $value ) { _named( 'floating parent', \%ATTACH_POINT_BY_NAME, $value ) } ],
+		offset_x        => [ [ offset => 'x' ],              sub ( $box, $value ) { integer( $box, 'floating offset_x', $value ) } ],
+		offset_y        => [ [ offset => 'y' ],              sub ( $box, $value ) { integer( $box, 'floating offset_y', $value ) } ],
+		z_index         => [ ['z_index'],                    sub ( $box, $value ) { integer( $box, 'floating z_index', $value ) } ],
+		pointer_capture => [ ['pointer_capture_mode'],       sub ( $box, $value ) { _named( 'floating pointer_capture', \%POINTER_CAPTURE_BY_NAME, $value ) } ],
+		clip_to         => [ ['clip_to'],                    sub ( $box, $value ) { _named( 'floating clip_to', \%CLIP_TO_BY_NAME, $value ) } ],
 	);
 
 	sub _describe ($value) {
 		return defined $value ? "'$value'" : 'null';
-	}
-
-	sub _non_negative_integer ( $what, $value ) {
-		die "Term::Fabulous::Widget::Box: $what must be a non-negative integer, got " . _describe($value)
-			unless defined $value && $value =~ /\A[0-9]+\z/;
-		return $value + 0;
-	}
-
-	sub _integer ( $what, $value ) {
-		die "Term::Fabulous::Widget::Box: $what must be an integer, got " . _describe($value)
-			unless defined $value && $value =~ /\A-?[0-9]+\z/;
-		return $value + 0;
 	}
 
 	# The value a name stands for in %$value_by_name; an unknown name dies
@@ -141,33 +130,21 @@ class Term::Fabulous::Widget::Box
 			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")";
 	}
 
-	method layout_properties () {
-		return qw(background_color glyphs_show_through border_color border_width width_group height_group);
-	}
-
-	method boolean_layout_properties () {
-		return qw(glyphs_show_through);
-	}
-
-	method structured_layout_properties () {
-		return qw(layout border sizing padding child_alignment floating);
-	}
-
-	method parse_node ($node) {
-		$self->parse_property($_) foreach $node->children->@*;
-		return;
-	}
-
-	method parse_property ($kid) {
-		my $name = $kid->name;
-		if    ( $name eq 'layout' )          { $self->_parse_layout($kid) }
-		elsif ( $name eq 'border' )          { $self->_parse_border($kid) }
-		elsif ( $name eq 'sizing' )          { $self->_parse_sizing($kid) }
-		elsif ( $name eq 'padding' )         { $self->_parse_padding($kid) }
-		elsif ( $name eq 'child_alignment' ) { $self->_parse_child_alignment($kid) }
-		elsif ( $name eq 'floating' )        { $self->_parse_floating($kid) }
-		else                                 { $self->parse_generic($kid) }
-		return;
+	method layout_properties :common () {
+		return (
+			background_color    => 'color',
+			glyphs_show_through => 'boolean',
+			border_color        => 'color',
+			border_width        => 'scalar',
+			width_group         => 'scalar',
+			height_group        => 'scalar',
+			layout              => \&_parse_layout,
+			border              => \&_parse_border,
+			sizing              => \&_parse_sizing,
+			padding             => \&_parse_padding,
+			child_alignment     => \&_parse_child_alignment,
+			floating            => \&_parse_floating,
+		);
 	}
 
 	method _parse_layout ($kid) {
@@ -182,9 +159,9 @@ class Term::Fabulous::Widget::Box
 				// die "Term::Fabulous::Widget::Box: invalid layout direction '$direction' (known: " . join( ', ', sort keys %DIRECTION_BY_NAME ) . ")";
 		}
 		foreach my $gap_name ( grep { exists $props->{$_} } qw(child_gap gap) ) {
-			$layout{child_gap} = _non_negative_integer( "layout $gap_name", $props->{$gap_name} );
+			$layout{child_gap} = non_negative_integer( $self, "layout $gap_name", $props->{$gap_name} );
 		}
-		$layout{line_gap}    = _non_negative_integer( 'layout line_gap', $props->{line_gap} ) if exists $props->{line_gap};
+		$layout{line_gap}    = non_negative_integer( $self, 'layout line_gap', $props->{line_gap} ) if exists $props->{line_gap};
 		$layout{line_sizing} = _named( 'layout line_sizing', \%LINE_SIZING_BY_NAME, $props->{line_sizing} ) if exists $props->{line_sizing};
 		$self->layout( \%layout );
 		return;
@@ -215,7 +192,7 @@ class Term::Fabulous::Widget::Box
 	method _parse_padding ($kid) {
 		my $props  = $self->kdl_properties( $kid, qw(left right top bottom) );
 		my %layout = %{ $self->layout };
-		$layout{padding} = { %{ $layout{padding} // {} }, map { $_ => _non_negative_integer( "padding $_", $props->{$_} ) } keys %$props };
+		$layout{padding} = { %{ $layout{padding} // {} }, map { $_ => non_negative_integer( $self, "padding $_", $props->{$_} ) } keys %$props };
 		$self->layout( \%layout );
 		return;
 	}
@@ -235,7 +212,7 @@ class Term::Fabulous::Widget::Box
 		foreach my $key ( sort keys %$props ) {
 			my ( $slot, $parse ) = $FLOATING_KEY{$key}->@*;
 			my ( $field, $subfield ) = @$slot;
-			my $value = $parse->( $props->{$key} );
+			my $value = $parse->( $self, $props->{$key} );
 			$floating{$field} = defined $subfield ? { %{ $floating{$field} // {} }, $subfield => $value } : $value;
 		}
 		$floating{attach_to} //= CLAY_ATTACH_TO_PARENT;    # a floating node means "float"
@@ -569,68 +546,24 @@ Sizing group numbers, see L<Term::Fabulous::Widget/width_group>.
 
 =head1 SUBCLASS INTERFACE
 
-These methods are for authors of widget classes that should be
-buildable from KDL layouts. See also
-L<Term::Fabulous::Role::CanParseLayout>.
-
-=head2 parse_property
-
-	method parse_property :override ($kid) {
-		return $self->_parse_options($kid) if $kid->name eq 'options';
-		return $self->SUPER::parse_property($kid);
-	}
-
-Called once for every child node of the widget's KDL node, in the order
-they appear, with the L<Text::KDL::XS::Node>. Box handles C<layout>,
-C<sizing>, C<padding>, C<border>, C<child_alignment> and C<floating>
-itself and passes every other node
-to L<Term::Fabulous::Role::CanParseLayout/parse_generic>, which sets
-the properties listed by L</layout_properties> and skips child widget
-nodes. Override it to parse structured properties of your own, and
-call C<SUPER::parse_property> for everything else.
-
-=head2 parse_node
-
-	$box->parse_node($node);
-
-Calls L</parse_property> for every child node of C<$node>. Called
-during construction when the widget is built from a layout; you
-normally do not call or override it.
+This method is for authors of widget classes that should be buildable
+from KDL layouts. See L<Term::Fabulous::Role::CanParseLayout>, which
+also provides C<apply_layout_node> and C<apply_layout_settings>.
 
 =head2 layout_properties
 
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, qw(title) );
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, title => 'scalar', collapsed => 'boolean', shortcut => \&_parse_shortcut );
 	}
 
-The names of the accessors a layout may set with a simple
-C<name value> property: C<background_color>, C<glyphs_show_through>,
-C<border_color>, C<border_width>, C<width_group> and C<height_group>
-for a Box. Subclasses extend the list as shown. See
-L<Term::Fabulous::Role::CanParseLayout/layout_properties>.
-
-=head2 boolean_layout_properties
-
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, qw(collapsed) );
-	}
-
-The names of the boolean properties among L</layout_properties>; a
-layout must write them as C<#true> or C<#false> (or C<0> and C<1>).
-C<glyphs_show_through> for a Box. Subclasses extend the list as shown.
-
-=head2 structured_layout_properties
-
-	method structured_layout_properties :override () {
-		return ( $self->SUPER::structured_layout_properties, qw(shortcut) );
-	}
-
-The names of the properties L</parse_property> handles itself:
-C<layout>, C<border>, C<sizing>, C<padding>, C<child_alignment> and
-C<floating> for a Box. They are
-listed as known names in the error for an unknown property. A subclass
-that handles more nodes in C<parse_property> extends the list as
-shown.
+The table of the properties a layout may set and how each is read (see
+L<Term::Fabulous::Role::CanParseLayout/layout_properties>). For a Box:
+C<background_color> and C<border_color> are colors,
+C<glyphs_show_through> is a boolean, C<border_width>, C<width_group>
+and C<height_group> are scalars, and C<layout>, C<border>, C<sizing>,
+C<padding>, C<child_alignment> and C<floating> are structured
+properties the Box parses itself (see L</KDL PROPERTIES>). Subclasses
+extend the table as shown.
 
 =head1 SEE ALSO
 

@@ -7,6 +7,10 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Clay::UI::Role::Interaction::Disableable;
+use Clay::UI::Role::Interaction::Focusable;
+use Clay::UI::Role::Interaction::Hoverable;
+use Clay::UI::Role::Interaction::Pressable;
 use Term::Fabulous::Widget::Box;
 
 our $VERSION = '0.01';
@@ -16,12 +20,12 @@ class Term::Fabulous::Widget::Button
 	:does(Clay::UI::Role::Interaction::Focusable)
 	:does(Clay::UI::Role::Interaction::Pressable)
 	:does(Clay::UI::Role::Interaction::Hoverable)
+	:does(Clay::UI::Role::Interaction::Disableable)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
-	use Feature::Compat::Try;
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Color;
+	use Term::Fabulous::Check qw(color);
 	use Term::Fabulous::Event::Activate;
 
 	use constant REVERSE_VIDEO => 'reverse';
@@ -33,80 +37,78 @@ class Term::Fabulous::Widget::Button
 	field $focus_border_color       :param = [ 97, 175, 239, 255 ];
 	field $pressed_background_color :param = REVERSE_VIDEO;
 
-	# Clay::UI stores can_focus as given; the constructor takes any truth value.
-	sub BUILDARGS ( $class, %params ) {
-		$params{can_focus} = $params{can_focus} ? 1 : 0 if exists $params{can_focus};
-		return $class->SUPER::BUILDARGS(%params);
-	}
+	# The border and the text of a disabled Button, the gray of a disabled
+	# input's text.
+	field $disabled_color :param = [ 108, 112, 120, 255 ];
 
 	ADJUST {
-		$focus_border_color       = _rgba( focus_border_color       => $focus_border_color );
-		$pressed_background_color = _pressed_look( pressed_background_color => $pressed_background_color );
+		$focus_border_color       = $self->_optional_color( focus_border_color => $focus_border_color );
+		$pressed_background_color = $self->_pressed_look($pressed_background_color);
+		$disabled_color           = color( $self, disabled_color => $disabled_color );
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$self->on(
 			OnRelease => sub ($event) {
-				$weak_self->activate if refaddr( $event->target ) == refaddr($weak_self);
+				$weak_self->activate if refaddr( $event->target ) == refaddr($weak_self) && $weak_self->is_enabled;
 				return $continue;
 			}
 		);
 		$self->on(
 			KeyPress => sub ($event) {
-				return $continue unless $ACTIVATES{ $event->main_key_name // '' };
+				return $continue unless $ACTIVATES{ $event->main_key_name // '' } && $weak_self->is_enabled;
 				$weak_self->activate;
 				return;
 			}
 		);
 	}
 
-	# Any Term::Fabulous::Color input as [r, g, b, a]; undef stays undef.
-	sub _rgba ( $name, $value ) {
-		return undef unless defined $value;
-		try {
-			return [ Term::Fabulous::Color->new( color => $value )->to_rgba ];
-		}
-		catch ($error) {
-			die "Term::Fabulous::Widget::Button: $name is not a color: $error";
-		}
+	# A look: [r, g, b, a], or undef for none.
+	method _optional_color ( $name, $value ) {
+		return defined $value ? color( $self, $name => $value ) : undef;
 	}
 
-	sub _pressed_look ( $name, $value ) {
+	method _pressed_look ($value) {
 		return REVERSE_VIDEO if defined $value && !ref $value && $value eq REVERSE_VIDEO;
-		return _rgba( $name, $value );
-	}
-
-	method layout_properties :override () {
-		return ( $self->SUPER::layout_properties, 'can_focus' );
-	}
-
-	method structured_layout_properties :override () {
-		return ( $self->SUPER::structured_layout_properties, qw(focus_border_color pressed_background_color) );
+		return $self->_optional_color( pressed_background_color => $value );
 	}
 
 	# The looks are not plain colors: #null switches a look off, and the
 	# pressed look may be 'reverse'. The accessors check the value.
-	method parse_property :override ($kid) {
-		my $name = $kid->name;
-		return $self->SUPER::parse_property($kid) unless $name eq 'focus_border_color' || $name eq 'pressed_background_color';
-		$self->$name( $self->kdl_argument($kid)->as_perl );
-		return;
+	method layout_properties :common () {
+		return (
+			$class->SUPER::layout_properties,
+			can_focus                => 'boolean',
+			disabled                 => 'boolean',
+			focus_border_color       => 'scalar',
+			pressed_background_color => 'scalar',
+			disabled_color           => 'color',
+		);
 	}
 
-	method boolean_layout_properties :override () {
-		return ( $self->SUPER::boolean_layout_properties, 'can_focus' );
+	method disabled_color (@new) {
+		return $disabled_color unless @new;
+		$disabled_color = color( $self, disabled_color => $new[0] );
+		$self->mark_changed;
+		return $disabled_color;
+	}
+
+	# The color the Text widgets inside a disabled Button are drawn in;
+	# undef while it is enabled (see Term::Fabulous::Widget::Text).
+	method disabled_text_color () {
+		return $self->is_enabled ? undef : $disabled_color;
 	}
 
 	method focus_border_color (@new) {
 		return $focus_border_color unless @new;
-		$focus_border_color = _rgba( focus_border_color => $new[0] );
+		$focus_border_color = $self->_optional_color( focus_border_color => $new[0] );
 		$self->mark_changed;
 		return $focus_border_color;
 	}
 
 	method pressed_background_color (@new) {
 		return $pressed_background_color unless @new;
-		$pressed_background_color = _pressed_look( pressed_background_color => $new[0] );
+		$pressed_background_color = $self->_pressed_look( $new[0] );
 		$self->mark_changed;
 		return $pressed_background_color;
 	}
@@ -120,8 +122,13 @@ class Term::Fabulous::Widget::Button
 	}
 
 	# Runs after contribute_background and contribute_border (Clay::UI calls
-	# the contributors in alphabetical order), so the state look wins.
+	# the contributors in alphabetical order), so the state look wins. A
+	# disabled Button is never focused or pressed.
 	method contribute_state_look ($config) {
+		if ( !$self->is_enabled ) {
+			$config->{border} = { %{ $config->{border} }, color => $disabled_color } if defined $config->{border};
+			return;
+		}
 		$config->{background_color} = $pressed_background_color
 			if ref $pressed_background_color && $self->is_pressed;
 
@@ -200,7 +207,12 @@ or change its background in an C<OnFocus> listener;
 
 =item * hovering changes nothing by default. C<is_hovered> and the
 C<OnHoverStart> and C<OnHoverStopped> events follow the pointer, so a
-hover look is one listener away.
+hover look is one listener away;
+
+=item * while it is disabled (L</disabled>), its border and the
+L<Term::Fabulous::Widget::Text> widgets inside it are drawn in
+C<disabled_color>, the gray a disabled input draws its text in, and it
+is never drawn focused or pressed.
 
 =back
 
@@ -228,6 +240,19 @@ Shift+Tab, a click does not focus it, and
 C<< $ui->interaction->set_focused_widget($button) >> dies. Mouse
 clicks still fire C<OnPress>, C<OnRelease> and C<Activate>.
 
+=item C<disabled>
+
+A boolean, stored as 1 or 0. Default: 0. A disabled Button ignores
+clicks, C<Enter> and C<Space> (no C<OnPress>, C<OnRelease> or
+C<Activate>), cannot take the focus and is drawn disabled; see
+L</disabled>.
+
+=item C<disabled_color>
+
+The color of the border and of the text of a disabled Button, in any
+format L<Term::Fabulous::Color> accepts. Default:
+C<[ 108, 112, 120, 255 ]>, the C<disabled_color> of the input widgets.
+
 =item C<focus_border_color>
 
 The color of the border while the Button has the focus, in any format
@@ -254,7 +279,8 @@ A Button has all methods of L<Term::Fabulous::Widget> plus these:
 
 Fires C<Activate> on the Button, as a click or C<Enter> would, and
 returns what C<fire_event> returns. Use it to trigger a button from
-code, for example from an application shortcut.
+code, for example from an application shortcut. It fires also while the
+Button is disabled: only the user's clicks and keys are ignored then.
 
 =head2 focus_border_color
 
@@ -283,14 +309,42 @@ string C<reverse>, the stored C<[r, g, b, a]>, or C<undef>.
 C<reverse>, 0 otherwise. The renderer calls it; see
 L<Term::Fabulous::Widget/reverse_video>.
 
+=head2 disabled
+
+	$button->disabled(1);
+	if ( $button->is_enabled ) { ... }
+
+Accessor from L<Clay::UI::Role::Interaction::Disableable>. Returns 1 or
+0; a write takes any plain boolean value and returns the new value.
+Disabling a Button takes the focus away from it if it has it, and ends
+a press that is in progress; C<is_enabled> is the opposite. The Button
+also has the derived state C<disabled>.
+
+=head2 disabled_color
+
+	$button->disabled_color('#555555');
+
+Accessor for the constructor parameter of the same name; returns the
+stored C<[r, g, b, a]>. An invalid color dies.
+
+=head2 disabled_text_color
+
+	my $color = $button->disabled_text_color;
+
+The color the Text widgets inside the Button are drawn in: its
+C<disabled_color> while it is disabled, C<undef> while it is enabled.
+L<Term::Fabulous::Widget::Text> asks its nearest ancestor that has this
+method.
+
 =head2 can_focus
 
 	$button->can_focus(0);
 
-Accessor. Without an argument it returns the stored flag (1 by
-default); with an argument it stores the value as given, treated as a
-boolean, and returns it.
-Turning it off does not take the focus away from a Button that has it.
+Accessor. Reads whether the Button can take the focus now: 1 when the
+last value written (through C<new>, a layout file or this accessor) was
+true and the Button is enabled. A write records the value and returns
+what reading returns now; turning it off takes the focus away from a
+Button that has it. From L<Clay::UI::Role::Interaction::Focusable>.
 
 =head2 is_focused
 
@@ -368,13 +422,16 @@ or a border there).
 
 =head1 KEYS
 
-C<Enter> and C<Space> activate the focused Button. Tab and Shift+Tab
-always move the focus away (see L<Term::Fabulous::Manual/FOCUS>).
+C<Enter> and C<Space> activate the focused Button, unless it is
+disabled (a disabled Button cannot have the focus, but keys fired at it
+from code bubble on as well). Tab and Shift+Tab always move the focus
+away (see L<Term::Fabulous::Manual/FOCUS>).
 
 =head1 MOUSE
 
 Pressing the left button on a cell the Button paints (its background
-or its border) focuses the Button, unless C<can_focus> is 0. A Button
+or its border) focuses the Button, unless C<can_focus> is 0. A disabled
+Button is neither focused nor pressed by the mouse. A Button
 without a background color paints only its border (or nothing), so the
 cells in between are transparent: there the C<Mouse> event and the
 focus go to the widget behind the Button. C<OnPress>, C<OnRelease> and
@@ -391,9 +448,10 @@ C<OnRelease> and C<Activate>.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<can_focus> (C<#true> or C<#false>), C<focus_border_color> (a color
-string, or C<#null> for no focus look) and C<pressed_background_color>
-(a color string, C<"reverse">, or C<#null> for no pressed look):
+C<can_focus> and C<disabled> (C<#true> or C<#false>),
+C<focus_border_color> (a color string, or C<#null> for no focus look),
+C<pressed_background_color> (a color string, C<"reverse">, or C<#null>
+for no pressed look) and C<disabled_color> (a color string):
 
 	use Term::Fabulous::Widget::Button as Button
 	use Term::Fabulous::Widget::Text as Text

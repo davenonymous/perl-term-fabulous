@@ -63,7 +63,7 @@ subtest 'scrolling follows the cursor' => sub {
 	my ( $area, $ui ) = text_area( value => join "\n", 1 .. 10 );
 	is $area->top_row, 7, 'the end of a long text is in view';
 	press( $area, 'Ctrl+Home' );
-	is $area->top_row, 0, 'moving to the start scrolls up';
+	is shown($area)->top_row, 0, 'moving to the start scrolls up when the frame shows it';
 	press( $area, 'PageDown' );
 	is [ $area->editor->cursor ], [ 2, 0 ], 'Page Down moves by the height less one row';
 
@@ -86,8 +86,8 @@ subtest 'wrapping wide characters and blanks' => sub {
 
 	$ui->interaction->set_focused_widget($area);
 	$area->editor->move_to( 0, 10 );
-	$area->cursor_moved;
-	is [ map { $area->cell( 0, 1 )->[$_] } 0, 1 ], [ 'b', $area->reverse_attr( $area->foreground_attr ) ], 'a cursor on the hanging blank shows at the start of the next row';
+	$area->mark_changed;    # edits through the editor make no frame due by themselves
+	is [ map { shown($area)->cell( 0, 1 )->[$_] } 0, 1 ], [ 'b', $area->reverse_attr( $area->foreground_attr ) ], 'a cursor on the hanging blank shows at the start of the next row';
 	press( $area, 'Right' );
 	is [ $area->editor->cursor ], [ 0, 11 ], 'and Right moves on past it';
 	click( $area, 0, 1 );
@@ -112,7 +112,7 @@ subtest 'selection across lines' => sub {
 	$ui->interaction->set_focused_widget($area);
 	press( $area, 'Ctrl+A' );
 	my $selected = $area->color_attr( $area->selection_color );
-	is [ map { $area->cell( $_, 0 )->[2] } 0 .. 2 ], [ ($selected) x 3 ], 'a selected line break shows as a selected cell';
+	is [ map { shown($area)->cell( $_, 0 )->[2] } 0 .. 2 ], [ ($selected) x 3 ], 'a selected line break shows as a selected cell';
 	press( $area, 'Delete' );
 	is $area->value, '', 'the selection is deleted';
 };

@@ -116,7 +116,7 @@ rectangle (C<x1 == x0> or C<y1 == y0>).
 	my ( $x0, $y0, $x1, $y1 ) = visible_cell_rect( $bbox, $clip );
 
 L</cell_rect> of C<$bbox>, intersected with the rectangle C<$clip>
-(usually L<Term::Fabulous::Render::Clip/clip_rect>), as a list. Returns
+(usually L<Term::Fabulous::Render/clip_rect>), as a list. Returns
 the empty list when nothing of the box is visible.
 
 =head2 rects_overlap
@@ -150,6 +150,6 @@ names the value in the message:
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Clip>.
+L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Frame>.
 
 =cut

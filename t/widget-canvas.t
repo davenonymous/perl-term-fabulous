@@ -86,7 +86,14 @@ subtest 'changed spans' => sub {
 	is $canvas->take_changed_spans, [ undef, undef, [ 4, 6 ] ], 'breaking a wide glyph includes its other cell';
 
 	$canvas->clear;
-	is $canvas->take_changed_spans, [ ( [ 0, 8 ] ) x 3 ], 'clear changes everything';
+	is $canvas->take_changed_spans, [ [ 2, 6 ], undef, [ 4, 6 ] ], 'clear changes the cells that were set';
+
+	$canvas->put( 1, 1, 'x', 0xFF0000 );
+	$canvas->take_changed_spans;
+	$canvas->clear->put( 1, 1, 'x', 0xFF0000 );
+	is $canvas->take_changed_spans, [], 'a clear that paints the same cells again changes nothing';
+	$canvas->put( 1, 1, 'x', 0x00FF00 );
+	is $canvas->take_changed_spans, [ undef, [ 1, 2 ] ], 'a new color is a change';
 };
 
 subtest 'fit_to' => sub {

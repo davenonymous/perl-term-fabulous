@@ -15,6 +15,7 @@ class Term::Fabulous::Widget::Canvas
 	:isa(Term::Fabulous::Widget::Box)
 	:strict(params)
 {
+	use Feature::Compat::Try;
 	use List::Util qw(max min);
 	use POSIX qw(ceil);
 	use Term::Fabulous::Event::CanvasResize;
@@ -44,9 +45,17 @@ class Term::Fabulous::Widget::Canvas
 	field @fg_rows;
 	field @bg_rows;
 
-	# Per row, the [from, to) columns changed since take_changed_spans.
-	field @changed_spans;
+	# The cells as take_changed_spans last handed them out, by [y][x], and
+	# per row the [from, to) columns written since: only those can differ.
+	field @taken_glyph_rows;
+	field @taken_fg_rows;
+	field @taken_bg_rows;
+	field @written_spans;
 	field $everything_changed = 1;
+
+	# Set while the renderer runs refresh: those writes belong to the frame
+	# being drawn and make no further frame due.
+	field $_refreshing = 0;
 
 	sub _describe ($value) {
 		return defined $value ? "'$value'" : 'undef';
@@ -77,6 +86,16 @@ class Term::Fabulous::Widget::Canvas
 		return _glyph_of_cluster( $clusters[0] );
 	}
 
+	sub _same_glyph ( $glyph, $other ) {
+		return !defined $other unless defined $glyph;
+		return 0 unless defined $other;
+		return ref $glyph ? ref $other && $glyph->[0] eq $other->[0] : !ref $other;
+	}
+
+	sub _same_attr ( $attr, $other ) {
+		return defined $attr ? defined $other && $attr == $other : !defined $other;
+	}
+
 	method contribute_custom ($config) {
 		$config->{custom} = { custom_data => 1 };
 		return;
@@ -84,7 +103,7 @@ class Term::Fabulous::Widget::Canvas
 
 	method put ( $x, $y, $glyph, $fg = undef, $bg = undef ) {
 		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), _glyph($glyph), cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
-		return $self->mark_changed;
+		return $self->_cells_changed;
 	}
 
 	method put_text ( $x, $y, $text, $fg = undef, $bg = undef ) {
@@ -98,7 +117,7 @@ class Term::Fabulous::Widget::Canvas
 			$self->_store( $column, $row, $glyph, $fg_attr, $bg_attr );
 			$column += $glyph->[1];
 		}
-		return $self->mark_changed;
+		return $self->_cells_changed;
 	}
 
 	method fill ( $x, $y, $width, $height, $glyph, $fg = undef, $bg = undef ) {
@@ -115,23 +134,49 @@ class Term::Fabulous::Widget::Canvas
 				$self->_store( $column, $row, $record, $fg_attr, $bg_attr );
 			}
 		}
-		return $self->mark_changed;
+		return $self->_cells_changed;
 	}
 
 	method put_attrs ( $x, $y, $glyph, $fg_attr, $bg_attr ) {
 		$self->_store( $x, $y, defined $glyph ? _glyph($glyph) : undef, $fg_attr, $bg_attr );
-		return $self->mark_changed;
+		return $self->_cells_changed;
 	}
 
 	method erase ( $x, $y ) {
 		$self->_store( cell_coordinate( x => $x ), cell_coordinate( y => $y ), undef, undef, undef );
+		return $self->_cells_changed;
+	}
+
+	# Every cell may differ now; take_changed_spans finds the ones that do.
+	method clear () {
+		@$_ = () foreach @glyph_rows, @fg_rows, @bg_rows;
+		@written_spans = map { [ 0, $columns ] } 1 .. $rows;
+		return $self->_cells_changed;
+	}
+
+	method _cells_changed () {
+		return $self if $_refreshing;
 		return $self->mark_changed;
 	}
 
-	method clear () {
-		@$_ = () foreach @glyph_rows, @fg_rows, @bg_rows;
-		$everything_changed = 1;
-		return $self->mark_changed;
+	# What the cells show, from the widget's own state; called by the
+	# renderer before it paints them. A plain canvas is drawn into by its
+	# users and has nothing to do.
+	method refresh () {
+		return;
+	}
+
+	method refresh_for_frame () {
+		$_refreshing = 1;
+		try {
+			$self->refresh;
+		}
+		catch ($error) {
+			$_refreshing = 0;
+			die $error;
+		}
+		$_refreshing = 0;
+		return;
 	}
 
 	method cell ( $x, $y ) {
@@ -167,10 +212,47 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	method take_changed_spans () {
-		my @spans = $everything_changed ? map { [ 0, $columns ] } 1 .. $rows : @changed_spans;
-		@changed_spans      = ();
+		my @spans;
+		if ($everything_changed) {
+			@spans = map { [ 0, $columns ] } 1 .. $rows;
+		}
+		else {
+			foreach my $y ( 0 .. $#written_spans ) {
+				my $span = $self->_changed_span_of($y) // next;
+				$spans[$y] = $span;
+			}
+		}
+		$self->_remember_taken( $everything_changed ? map { [ 0, $columns ] } 1 .. $rows : @written_spans );
+		@written_spans      = ();
 		$everything_changed = 0;
 		return \@spans;
+	}
+
+	# The written columns of a row that differ from what was taken, as one
+	# [from, to) span, or undef. A write never splits a wide glyph without
+	# changing its first cell, so a span never starts in an unchanged one.
+	method _changed_span_of ($y) {
+		my $written = $written_spans[$y] // return undef;
+		my ( $glyphs, $fgs, $bgs ) = ( $glyph_rows[$y], $fg_rows[$y], $bg_rows[$y] );
+		my ( $taken_glyphs, $taken_fgs, $taken_bgs ) = ( $taken_glyph_rows[$y] // [], $taken_fg_rows[$y] // [], $taken_bg_rows[$y] // [] );
+		my ( $first, $last );
+		foreach my $x ( $written->[0] .. $written->[1] - 1 ) {
+			next if _same_glyph( $glyphs->[$x], $taken_glyphs->[$x] ) && _same_attr( $fgs->[$x], $taken_fgs->[$x] ) && _same_attr( $bgs->[$x], $taken_bgs->[$x] );
+			$first //= $x;
+			$last = $x;
+		}
+		return defined $first ? [ $first, $last + 1 ] : undef;
+	}
+
+	method _remember_taken (@spans) {
+		foreach my $y ( 0 .. $#spans ) {
+			my $span = $spans[$y] // next;
+			my @columns = $span->[0] .. $span->[1] - 1;
+			@{ $taken_glyph_rows[$y] //= [] }[@columns] = @{ $glyph_rows[$y] }[@columns];
+			@{ $taken_fg_rows[$y]    //= [] }[@columns] = @{ $fg_rows[$y] }[@columns];
+			@{ $taken_bg_rows[$y]    //= [] }[@columns] = @{ $bg_rows[$y] }[@columns];
+		}
+		return;
 	}
 
 	method content_insets () {
@@ -193,7 +275,8 @@ class Term::Fabulous::Widget::Canvas
 		_unset_cut_glyph( $_, $new_columns ) foreach @glyph_rows;
 
 		( $columns, $rows ) = ( $new_columns + 0, $new_rows + 0 );
-		@changed_spans      = ();
+		@written_spans      = ();
+		@$_                 = () foreach \@taken_glyph_rows, \@taken_fg_rows, \@taken_bg_rows;
 		$everything_changed = 1;
 		$self->mark_changed;
 		$self->fire_event( Term::Fabulous::Event::CanvasResize->new( columns => $columns, rows => $rows ) );
@@ -236,9 +319,9 @@ class Term::Fabulous::Widget::Canvas
 		}
 
 		return if $everything_changed;
-		my $span = $changed_spans[$y];
+		my $span = $written_spans[$y];
 		if ( !defined $span ) {
-			$changed_spans[$y] = [ $from, $to ];
+			$written_spans[$y] = [ $from, $to ];
 			return;
 		}
 		$span->[0] = $from if $from < $span->[0];
@@ -368,10 +451,12 @@ are not numbers, C<NaN> and infinities die.
 
 =head2 Efficient updates
 
-The canvas remembers which cells changed since it was last drawn.
-Under L<Term::Fabulous>, a canvas that is in the same place as in the
-previous frame and that nothing else is drawn over sends only its
-changed cells to the terminal. You can therefore redraw a few cells
+The canvas remembers which cells changed since it was last drawn:
+cells that hold something else now, not cells that were only written
+again with what they held. Under L<Term::Fabulous>, a canvas that is in
+the same place as in the previous frame and that nothing else is drawn
+over sends only its changed cells to the terminal; so clearing a canvas
+and drawing the same content again costs nothing on the terminal. You can therefore redraw a few cells
 many times per second (an animation, a live chart) cheaply. A canvas
 is drawn in full in the first frame, after it moved or changed size,
 while it is scrolled, and while other widgets (including its own
@@ -596,14 +681,35 @@ L</cell_at> and L</content_origin>.
 Resizes the buffer and fires C<CanvasResize>, unless it already has
 that size. Dies unless both are non-negative integers.
 
+=head2 refresh
+
+	method refresh :override () { ... }
+
+A hook for subclasses that paint from state of their own. The renderer
+calls it for every canvas of a frame, after L</fit_to> and before it
+paints the cells, through C<refresh_for_frame>. A plain canvas does
+nothing here: its users draw into it themselves.
+L<Term::Fabulous::Widget::Input> paints itself here. Cell writes made
+while it runs belong to the frame being drawn, so they do not mark the
+canvas changed and make no further frame due.
+
+=head2 refresh_for_frame
+
+	$canvas->refresh_for_frame;
+
+Calls L</refresh> as the renderer does
+(L<Term::Fabulous::Render::Canvas/plan_canvases>); you do not call it
+yourself.
+
 =head2 take_changed_spans
 
 	my $spans = $canvas->take_changed_spans;
 
 An array reference indexed by row: C<[ $from, $to ]> (C<$to>
-exclusive) covering the columns changed since the last call, or
-C<undef> for an unchanged row. After a resize or C<clear>, every row
-is reported in full. The changes are forgotten.
+exclusive) covering the columns whose cells differ from what the last
+call handed out, or C<undef> for an unchanged row; a cell written again
+with the same glyph and colors does not count. After a resize, every
+row is reported in full. The changes are forgotten.
 
 =head2 cell_row
 

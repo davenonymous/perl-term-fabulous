@@ -13,8 +13,8 @@ class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
 
 	field $title_widget = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 255, 200, 80, 255 ] );
 
-	# Runs after the layout properties were applied: fill in what the
-	# layout left out.
+	# Defaults; a layout's properties are applied after construction and
+	# override them.
 	ADJUST {
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } ) unless exists $layout->{layout_direction};
@@ -33,11 +33,13 @@ class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
 	}
 
 	# A structured property: 'title "Settings" color="#ffcc00"' has an
-	# argument and a key=value property, which parse_generic does not
-	# accept, so it is parsed here.
-	method parse_property :override ($kid) {
-		return $self->SUPER::parse_property($kid) unless $kid->name eq 'title';
+	# argument and a key=value property, so a handler of its own parses
+	# the node.
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, title => \&_parse_title );
+	}
 
+	method _parse_title ($kid) {
 		my @args  = $kid->args->@*;
 		my %props = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
 		die "My::Panel: 'title' takes one string and an optional color=..."
