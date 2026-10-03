@@ -72,6 +72,11 @@ boxes; radio buttons; dropdowns; sliders.
 filtering (also by the user, in a filter row), groups and trees that
 open and close, pages, single and multiple selection, any widget as a
 cell, and lines and colors per column, row and cell.
+- Chart widgets that draw themselves from data: line, area, bar and
+scatter charts with category, numeric, logarithmic and time axes,
+stacking, curves, transforms and live data; histograms; sparklines;
+pie, donut, polar area and radar charts; a legend, hover with a
+`SeriesHover` event, and palettes for dark and light backgrounds.
 - Keyboard focus with Tab and mouse clicks, readable key names for key
 bindings (`Ctrl+S`, `Shift+Left`), mouse wheel scrolling.
 - Canvases for free drawing, including a half-block pixel canvas with
@@ -841,6 +846,68 @@ Every module has its own page. They are grouped here by purpose.
 - [Term::Fabulous::Widget::Table::Model](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AModel)
 
     The rows of a table and the lines it shows, without widgets.
+
+## Charts
+
+- [Term::Fabulous::Widget::Chart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AChart)
+
+    What all charts share: title, legend, palettes and themes, colors,
+    hover and the `SeriesHover` event.
+
+- [Term::Fabulous::Widget::XYChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AXYChart)
+
+    The reference for charts with an x and a y axis: series and their data
+    forms, axes, stacking, curves, rendering styles, transforms, live data.
+
+- [Term::Fabulous::Widget::LineChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ALineChart), [Term::Fabulous::Widget::AreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AAreaChart),
+[Term::Fabulous::Widget::BarChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ABarChart), [Term::Fabulous::Widget::ScatterPlot](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScatterPlot)
+
+    The XY charts, each with its default series type.
+
+- [Term::Fabulous::Widget::Histogram](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AHistogram)
+
+    How values are distributed: counts in bins.
+
+- [Term::Fabulous::Widget::Sparkline](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ASparkline)
+
+    A chart without axes, one row high.
+
+- [Term::Fabulous::Widget::PieChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APieChart), [Term::Fabulous::Widget::DonutChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADonutChart),
+[Term::Fabulous::Widget::PolarAreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APolarAreaChart)
+
+    Parts of a whole as slices.
+
+- [Term::Fabulous::Widget::RadarChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ARadarChart)
+
+    Several values per series on axes around a center.
+
+- [Term::Fabulous::Role::HasSeries](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3AHasSeries)
+
+    Adding, changing and removing the series of a chart and their data.
+
+- [Term::Fabulous::Event::SeriesHover](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASeriesHover)
+
+    The event a chart fires when the pointer moves onto another series,
+    point or slice.
+
+- [Term::Fabulous::Chart::Transform](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ATransform), [Term::Fabulous::Chart::Curve](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ACurve),
+[Term::Fabulous::Chart::Easing](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AEasing)
+
+    Steps that prepare the data of a series; the curves between points.
+
+- [Term::Fabulous::Chart::Palette](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3APalette), [Term::Fabulous::Chart::Format](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AFormat),
+[Term::Fabulous::Chart::Marker](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AMarker)
+
+    Palettes and ink colors; number and date labels; the character sets
+    charts draw with.
+
+- [Term::Fabulous::Chart::Scale](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale), [Term::Fabulous::Chart::Raster](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARaster),
+[Term::Fabulous::Chart::Surface](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASurface), [Term::Fabulous::Chart::Radial](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARadial),
+[Term::Fabulous::Chart::Series](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASeries)
+
+    The machinery behind the charts: axes, subpixel drawing, the cell
+    compositor, circle geometry and the series object; for charts of your
+    own.
 
 - [Term::Fabulous::Widget::Table::Style](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AStyle), [Term::Fabulous::Widget::Table::Borders](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ABorders)
 

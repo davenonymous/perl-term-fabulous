@@ -318,6 +318,16 @@ circles.
 Rows and columns of data: sorting, filtering, grouping, trees, pages,
 selection, any widget as a cell. See L</TABLES>.
 
+=item The chart widgets
+
+L<Term::Fabulous::Widget::LineChart>, L<Term::Fabulous::Widget::AreaChart>,
+L<Term::Fabulous::Widget::BarChart>, L<Term::Fabulous::Widget::ScatterPlot>,
+L<Term::Fabulous::Widget::Histogram>, L<Term::Fabulous::Widget::Sparkline>,
+L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
+L<Term::Fabulous::Widget::PolarAreaChart> and
+L<Term::Fabulous::Widget::RadarChart>: canvases that draw themselves
+from data. See L</CHARTS>.
+
 =item The input widgets
 
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
@@ -1815,6 +1825,92 @@ as it stays in the same place and nothing is drawn over it, each frame
 sends only its changed cells to the terminal. This makes animations on
 large canvases cheap; you do not have to do anything to get it.
 
+=head1 CHARTS
+
+The chart widgets are canvases that draw themselves: give them data, and
+they lay out a title, a legend, axes and the plot in whatever room the
+layout gives them, and draw again whenever the data, an option or their
+size changes. This chapter explains the ideas; the widget pages have
+every parameter, and L<Term::Fabulous::Cookbook/CHARTS> a complete
+program for each feature.
+
+	use Term::Fabulous::Widget::LineChart;
+
+	my $chart = Term::Fabulous::Widget::LineChart->new(
+		title  => 'Requests per second',
+		labels => [qw(Mon Tue Wed Thu Fri)],
+		curve  => 'monotone',
+		y_axis => { title => 'req/s', min => 0 },
+		series => [
+			{ name => 'api', data => [ 120, 135, 160, 158, 171 ] },
+			{ name => 'web', data => [ 80, 82, 95, 110, 104 ], line_style => 'dashed' },
+		],
+	);
+	$chart->append( undef, { api => 180, web => 99 } );    # the next point of both series
+	$chart->on( SeriesHover => sub ($event) { $status->text( $event->series // '' ); return } );
+
+=head2 The chart widgets
+
+Charts with an x and a y axis are L<Term::Fabulous::Widget::LineChart>,
+L<Term::Fabulous::Widget::AreaChart>, L<Term::Fabulous::Widget::BarChart>
+and L<Term::Fabulous::Widget::ScatterPlot>; they are one widget,
+L<Term::Fabulous::Widget::XYChart>, with a different default I<series
+type>, and a chart may mix the types (bars with a target line).
+L<Term::Fabulous::Widget::Histogram> counts values into bins first, and
+L<Term::Fabulous::Widget::Sparkline> is an XY chart one row high without
+axes, for a trend next to a number. The round charts are
+L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>
+and L<Term::Fabulous::Widget::PolarAreaChart> for parts of a whole, and
+L<Term::Fabulous::Widget::RadarChart> for profiles over several axes.
+What all of them share (title, legend, palettes, hover) is on
+L<Term::Fabulous::Widget::Chart>.
+
+=head2 Series and data
+
+A I<series> is a named list of data points in one color. Its data are
+plain y values (the x is the point's position or the label there),
+C<[ x, y ]> pairs, or hashes; x values may be numbers, labels or dates,
+and the chart reads from them what kind of x axis it has: category,
+linear, logarithmic or time (L<Term::Fabulous::Widget::XYChart/AXES>).
+C<undef> is a gap. The data is kept as given and may be replaced, extended
+or appended to at any time (L<Term::Fabulous::Role::HasSeries>); every
+change shows in the next frame, and only the cells that changed go to the
+terminal, so a chart can take many updates per second. A series'
+C<transform> prepares the data before it is drawn: smoothing, running
+totals, rates, indexing, resampling (L<Term::Fabulous::Chart::Transform>).
+
+=head2 How a chart is drawn
+
+A chart draws into I<subpixels>, several per cell, and turns each cell
+into one character with two colors: Braille dots for lines and points (2
+x 4 per cell), eighth blocks for bars and areas, quadrants or sextants
+for round charts; the C<marker> of a series chooses
+(L<Term::Fabulous::Widget::XYChart/Rendering styles>). The value axis
+picks round ticks that land exactly on rows, so a grid line always lies
+beside its label; rows the ticks leave over become a margin below the
+axis. Colors that are not data (title, labels, axis and grid lines) are
+mixed from the background, so a chart suits a dark or a light panel; the
+palettes keep their colors apart for readers with color vision
+deficiencies (L<Term::Fabulous::Chart::Palette>).
+
+=head2 Hover and events
+
+Charts have no tooltips. While the pointer is on a series (or a slice),
+the chart emphasizes it and fades the others, and fires a C<SeriesHover>
+event with the series, the nearest point, its label and its value
+(L<Term::Fabulous::Event::SeriesHover>); a program shows the details its
+own way, for example in a status line. C<highlight> emphasizes a series
+from the program; C<< hover =E<gt> 0 >> turns it all off.
+
+=head2 Charts in layouts and reports
+
+Without a size, a chart grows to the room its parent leaves; a sparkline
+is one row high. Every chart has KDL properties, with its series and data
+in the layout file or added from Perl afterwards (L</KDL LAYOUT FILES>).
+Charts render through L<Term::Fabulous::Static> like every widget, so a
+report can print a bar chart or a sparkline as text
+(L</RENDERING WITHOUT A TERMINAL>).
+
 =head1 FORMS AND INPUT WIDGETS
 
 =head2 The input widgets
@@ -2597,6 +2693,12 @@ widget tree.
 The name of a row of a L<Term::Fabulous::Widget::Table>, used by every
 method and event. See L<Term::Fabulous::Widget::Table/Row ids>.
 
+=item series (chart)
+
+A named list of data points a chart draws in one color: a line, an area,
+a group of bars or a set of points. Pie charts have slices instead. See
+L<Term::Fabulous::Widget::XYChart/SERIES>.
+
 =item sizing group
 
 Widgets with the same C<width_group> (or C<height_group>) number get the
@@ -2726,6 +2828,29 @@ L<Term::Fabulous::Widget::Table/PAGES>.
 =item Format dates, numbers and sizes in table cells
 
 L<Term::Fabulous::Widget::Table::Mutator>.
+
+=item Charts: lines, areas, bars, points over an x and a y axis
+
+L</CHARTS>, L<Term::Fabulous::Widget::XYChart>,
+L<Term::Fabulous::Cookbook/CHARTS>.
+
+=item Pie, donut, polar area and radar charts
+
+L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
+L<Term::Fabulous::Widget::PolarAreaChart>, L<Term::Fabulous::Widget::RadarChart>.
+
+=item Histograms, sparklines
+
+L<Term::Fabulous::Widget::Histogram>, L<Term::Fabulous::Widget::Sparkline>.
+
+=item Live charts, smoothing and other transforms of chart data
+
+L<Term::Fabulous::Widget::XYChart/DATA>, L<Term::Fabulous::Chart::Transform>.
+
+=item Show what the pointer is on in a chart (hover)
+
+L<Term::Fabulous::Widget::Chart/Hover and emphasis>,
+L<Term::Fabulous::Event::SeriesHover>.
 
 =item Describe the screen in a file
 

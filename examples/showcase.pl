@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
 # A tour of Term::Fabulous on one screen: a form with every input widget,
-# buttons, a live chart on a pixel canvas, a log that grows from a timer
-# in a scroll box, a translucent notification and text in several
-# scripts. The screenshot at the top of the documentation shows it.
+# buttons, a live area chart, a log that grows from a timer in a scroll
+# box, a translucent notification and text in several scripts. The
+# screenshot at the top of the documentation shows it.
 #
 #     perl examples/showcase.pl
 #
@@ -26,11 +26,11 @@ use IO::Async::Timer::Periodic;
 use POSIX qw(strftime);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Widget::AreaChart;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Checkbox;
 use Term::Fabulous::Widget::Dropdown;
-use Term::Fabulous::Widget::PixelCanvas;
 use Term::Fabulous::Widget::RadioButton;
 use Term::Fabulous::Widget::RadioGroup;
 use Term::Fabulous::Widget::ScrollBox;
@@ -126,40 +126,32 @@ my $form = panel(
 
 # --- The chart -----------------------------------------------------------
 
-my $chart = Term::Fabulous::Widget::PixelCanvas->new(
-	background_color => $color{panel},
-	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+# Two series of requests per second as filled areas; the chart keeps the
+# newest 60 points, the newest at the right edge.
+my $chart = Term::Fabulous::Widget::AreaChart->new(
+	curve        => 'monotone',
+	fill_opacity => 0.85,
+	x_axis       => { visible => 0, nice => 0 },
+	y_axis       => { min => 0, grid => 'dotted' },
+	max_points   => 60,
+	series       => [ { name => 'api', color => '#61afef' }, { name => 'workers', color => '#c678dd' } ],
 );
 my $tick = 0;
 
-# Two series of requests per second, drawn as filled areas with a line on
-# top; the newest value is at the right edge.
-sub requests ( $series, $x ) {
-	my $t = ( $x + $tick ) / 6;
-	return $series == 0
+sub requests ( $series, $sample ) {
+	my $t = $sample / 6;
+	return $series eq 'api'
 		? 0.55 + 0.25 * sin($t) + 0.12 * sin( $t * 2.7 + 1 )
 		: 0.30 + 0.15 * sin( $t * 1.3 + 2 ) + 0.08 * sin( $t * 3.1 );
 }
 
-sub draw_chart () {
-	my ( $width, $height ) = ( $chart->pixel_width, $chart->pixel_height );
-	return if $width < 2 || $height < 2;
-	$chart->clear;
-	foreach my $series ( [ 0, 0x2E5A88, 0x61AFEF ], [ 1, 0x5C3B6B, 0xC678DD ] ) {
-		my ( $index, $fill, $line ) = @$series;
-		my $previous;
-		foreach my $x ( 0 .. $width - 1 ) {
-			my $y = int( ( 1 - requests( $index, $x ) ) * ( $height - 1 ) );
-			$chart->draw_line( $x, $y + 1, $x, $height - 1, $fill );
-			$chart->draw_line( @$previous, $x, $y, $line ) if $previous;
-			$previous = [ $x, $y ];
-		}
-	}
-	$chart->put_text( 0, 0, ' api ', '#61afef' );
-	$chart->put_text( 5, 0, ' workers ', '#c678dd' );
+# Adds the next point of both series, in requests per second.
+sub sample_requests () {
+	$tick++;
+	$chart->append( $tick, { map { $_ => int( 1000 * requests( $_, $tick ) ) } qw(api workers) } );
 	return;
 }
-$chart->on( CanvasResize => sub ($event) { draw_chart(); return } );
+sample_requests() foreach 1 .. 60;    # a full chart from the first frame
 
 my $chart_panel = panel( 'Requests per second', { width => sizing_grow(), height => sizing_grow() }, $chart );
 
@@ -307,7 +299,7 @@ $loop->add(
 		on_tick        => sub { $clock->text( strftime( '%H:%M:%S', localtime ) ); log_event(); return },
 	)->start
 );
-$loop->add( IO::Async::Timer::Periodic->new( interval => 0.25,  on_tick => sub { $tick++; draw_chart(); return } )->start );
+$loop->add( IO::Async::Timer::Periodic->new( interval => 0.25,  on_tick => sub { sample_requests(); return } )->start );
 $loop->add( IO::Async::Timer::Periodic->new( interval => 1 / 30, on_tick => sub { follow_log(); return } )->start );
 
 $ui->interaction->set_focused_widget($name);

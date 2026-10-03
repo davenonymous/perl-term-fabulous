@@ -239,7 +239,8 @@ dies instead of counting as true.
 The node's value, read with L</kdl_value> and turned into
 C<[r, g, b, a]> with L<Term::Fabulous::Check/color>, so a layout can
 write any color string (C<"#ffcc00">, C<"rgb(255, 204, 0)">,
-C<"Tomato">).
+C<"hsl(48, 100%, 50%)">). Color names are not color strings; see
+L<Term::Fabulous::Enum::WebColor> for their values.
 
 =item a code reference
 

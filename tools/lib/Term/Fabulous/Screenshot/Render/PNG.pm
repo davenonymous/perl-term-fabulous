@@ -38,9 +38,15 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 		$self->_draw_window( $image, $scene );
 		$image->box( filled => 1, color => _color( $_->{color} ), _box_bounds($_) ) foreach $scene->backgrounds;
 		foreach my $shape ( $scene->shapes ) {
-			$shape->{type} eq 'rect'
-				? $image->box( filled => 1, color => _color( $shape->{color} ), _box_bounds($shape) )
-				: _draw_polyline( $image, $shape );
+			if ( $shape->{type} eq 'rect' ) {
+				$image->box( filled => 1, color => _color( $shape->{color} ), _box_bounds($shape) );
+			}
+			elsif ( $shape->{type} eq 'circle' ) {
+				$image->circle( x => $shape->{cx}, y => $shape->{cy}, r => $shape->{r}, color => _color( $shape->{color} ), aa => 1, filled => 1 );
+			}
+			else {
+				_draw_polyline( $image, $shape );
+			}
 		}
 		$self->_draw_text( $image, $scene, $_ ) foreach $scene->texts;
 		$image->box( filled => 1, color => _color( $_->{color} ), _box_bounds($_) ) foreach $scene->lines;

@@ -439,6 +439,121 @@ shows it after Space, Down, Down and Space selected two rows.
 
 =end html
 
+=head2 examples/widgets/line-chart.pl
+
+L<Term::Fabulous::Widget::LineChart>: three series of monthly figures
+with smooth C<monotone> curves and a title on the y axis. Moving the
+mouse over a line or a legend entry emphasizes its series.
+
+=begin html
+
+<p><img src="/screenshots/widget-line-chart.svg" alt="A line chart of monthly active users on web, iOS and Android with smooth curves, a legend at the top and the y axis titled thousands"></p>
+
+=end html
+
+=head2 examples/widgets/area-chart.pl
+
+L<Term::Fabulous::Widget::AreaChart>: the visits of a website by
+source, stacked, with C<monotone> curves.
+
+=begin html
+
+<p><img src="/screenshots/widget-area-chart.svg" alt="Stacked areas of visits from search, social and direct over twelve months, with smooth edges and a legend at the top"></p>
+
+=end html
+
+=head2 examples/widgets/bar-chart.pl
+
+L<Term::Fabulous::Widget::BarChart>: the revenue per quarter of two
+years as grouped bars, each with its value above it.
+
+=begin html
+
+<p><img src="/screenshots/widget-bar-chart.svg" alt="Grouped bars of the revenue per quarter in 2025 and 2026 with the value above each bar"></p>
+
+=end html
+
+=head2 examples/widgets/scatter-plot.pl
+
+L<Term::Fabulous::Widget::ScatterPlot>: the engine power and fuel use
+of two kinds of cars, each kind with its trend line.
+
+=begin html
+
+<p><img src="/screenshots/widget-scatter-plot.svg" alt="Points of petrol and hybrid cars by engine power and fuel use, each kind with a dashed trend line"></p>
+
+=end html
+
+=head2 examples/widgets/histogram.pl
+
+L<Term::Fabulous::Widget::Histogram>: how long 2000 requests to two
+servers took, binned automatically. The two histograms are drawn over
+each other, translucent.
+
+=begin html
+
+<p><img src="/screenshots/widget-histogram.svg" alt="Two overlapping, translucent histograms of the response times of the eu-west and us-east servers"></p>
+
+=end html
+
+=head2 examples/widgets/sparkline.pl
+
+L<Term::Fabulous::Widget::Sparkline>: a list of servers, each with its
+load of the last minute as a line, an area and bars, which move on
+every second. The picture shows it after three seconds.
+
+=begin html
+
+<p><img src="/screenshots/widget-sparkline.svg" alt="Four servers, each with its current load and three sparklines of the last minute: a line, an orange area and green bars"></p>
+
+=end html
+
+=head2 examples/widgets/pie-chart.pl
+
+L<Term::Fabulous::Widget::PieChart>: the browsers of a website's
+visitors, largest first, with the small ones folded into Other.
+
+=begin html
+
+<p><img src="/screenshots/widget-pie-chart.svg" alt="A pie chart of visitors by browser, largest first, with Opera, Vivaldi and Lynx folded into Other, and percentages on the slices and in the legend"></p>
+
+=end html
+
+=head2 examples/widgets/donut-chart.pl
+
+L<Term::Fabulous::Widget::DonutChart>: a monthly budget with the total
+in the middle and the amounts and shares in the legend. While the mouse
+pointer is on a slice, the middle shows its share.
+
+=begin html
+
+<p><img src="/screenshots/widget-donut-chart.svg" alt="A donut chart of a monthly budget with the total in the middle and amounts and percentages in the legend"></p>
+
+=end html
+
+=head2 examples/widgets/polar-area-chart.pl
+
+L<Term::Fabulous::Widget::PolarAreaChart>: commits per weekday as
+slices of equal angle that reach as far out as their value, with rings
+for the scale.
+
+=begin html
+
+<p><img src="/screenshots/widget-polar-area-chart.svg" alt="Seven slices of equal angle for the weekdays, reaching as far out as their number of commits, over rings with their values"></p>
+
+=end html
+
+=head2 examples/widgets/radar-chart.pl
+
+L<Term::Fabulous::Widget::RadarChart>: the ratings of two laptops in
+six categories, as filled shapes on a web of axes.
+
+=begin html
+
+<p><img src="/screenshots/widget-radar-chart.svg" alt="Two translucent shapes on a web of six axes: the ratings of two laptops for speed, battery, screen, keyboard, weight and price, with a dot on every value"></p>
+
+=end html
+
 =head1 THE COOKBOOK PROGRAMS
 
 The programs in F<examples-cookbook> are the complete programs of
@@ -813,6 +928,195 @@ L<Term::Fabulous::Cookbook/Print a table as a report (Static)>.
 =begin html
 
 <p><img src="/screenshots/cookbook-table-report.svg" alt="The printed sales report: products sorted by revenue, units and amounts formatted, shares in percent and a bold totals row under a double line"></p>
+
+=end html
+
+=back
+
+=head2 Charts
+
+=over
+
+=item F<chart-line.pl>
+
+L<Term::Fabulous::Cookbook/Draw a line chart with labels and points (LineChart)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-line.svg" alt="A line chart of the average monthly temperatures of Lisbon, Berlin and Oslo, with a dot on every month, a legend at the top and degree labels on the y axis"></p>
+
+=end html
+
+=item F<chart-bars.pl>
+
+L<Term::Fabulous::Cookbook/Grouped, stacked and horizontal bars (BarChart)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-bars.svg" alt="Three bar charts: orders of the shop and the app as grouped bars with their values, support tickets as stacked bars, and the views of four pages as horizontal bars with their values"></p>
+
+=end html
+
+=item F<chart-pie.pl>
+
+L<Term::Fabulous::Cookbook/Show shares as a pie or donut (PieChart, DonutChart)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-pie.svg" alt="A pie chart of disk usage with percentages on the slices and the legend below it, and a donut chart of sales by region with the small regions folded into Rest of world, amounts in the legend and 1150k orders in the middle"></p>
+
+=end html
+
+=item F<chart-scatter.pl>
+
+L<Term::Fabulous::Cookbook/A scatter plot with trend lines (ScatterPlot)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-scatter.svg" alt="A scatter plot of petal length and width of three species in three clusters, with dashed trend lines through two of them, diamonds for one species and dotted vertical grid lines"></p>
+
+=end html
+
+=item F<chart-stacked-areas.pl>
+
+L<Term::Fabulous::Cookbook/Stacked areas and shares of 100% (AreaChart)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-stacked-areas.svg" alt="Two stacked area charts of electricity from coal, gas, wind and solar from 2016 to 2026: the amounts on the left, each source's share of 100 percent on the right"></p>
+
+=end html
+
+=item F<chart-histogram.pl>
+
+L<Term::Fabulous::Cookbook/How values are distributed (Histogram)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-histogram.svg" alt="Two histograms of exam scores: counts in automatic bins on the left, and the cumulative share in bins of 10 points from 0 to 100 on the right, rising to 100 percent"></p>
+
+=end html
+
+=item F<chart-radar.pl>
+
+L<Term::Fabulous::Cookbook/Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-radar.svg" alt="A radar chart comparing a striker, a defender and a dashed gray average over six skills on circular rings, and a polar area chart of rain per season with Spring at the top"></p>
+
+=end html
+
+=item F<chart-time-series.pl>
+
+L<Term::Fabulous::Cookbook/Plot values over time (time axis, from and to, a dashed forecast)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-time-series.svg" alt="Hourly temperatures over four days on a time axis: a solid measured line, a dashed forecast from noon of June 3rd on, and a red shaded area under the measurements from June 2nd to that noon"></p>
+
+=end html
+
+=item F<chart-live.pl>
+
+L<Term::Fabulous::Cookbook/A live chart that follows new data (append, max_points, span)>;
+the picture shows it after 30 seconds.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-live.svg" alt="A live chart of network traffic over the last minute: received traffic as a filled area with a line on top, sent traffic as a line, time labels below and a status line with the newest values"></p>
+
+=end html
+
+=item F<chart-log-scale.pl>
+
+L<Term::Fabulous::Cookbook/Show values of very different sizes (logarithmic axis)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-log-scale.svg" alt="The same two series twice: on a linear axis the issues and the early downloads lie flat on the bottom, on a logarithmic axis both rise as nearly straight lines"></p>
+
+=end html
+
+=item F<chart-transform.pl>
+
+L<Term::Fabulous::Cookbook/Smooth noisy data and index it to 100 (transforms)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-transform.svg" alt="Daily visits as a dim raw line with a 7-day moving average and a dashed exponentially smoothed line over it, and below it share and bond prices both indexed to 100 at day 1"></p>
+
+=end html
+
+=item F<chart-curves.pl>
+
+L<Term::Fabulous::Cookbook/Connect points with curves and easings (curve)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-curves.svg" alt="Six small charts of the same seven points connected linear, step, monotone, catmull-rom, ease-in-out-sine and ease-out-bounce"></p>
+
+=end html
+
+=item F<chart-styles.pl>
+
+L<Term::Fabulous::Cookbook/Draw with Braille, blocks or box lines (marker)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-styles.svg" alt="Nine small charts of one wave: lines in Braille, half blocks, quadrants, sextants and box drawing lines, an area in eighth blocks, and bars in quadrants, blocks and Braille"></p>
+
+=end html
+
+=item F<chart-colors.pl>
+
+L<Term::Fabulous::Cookbook/Light backgrounds, palettes and colors of your own>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-colors.svg" alt="A line chart on a light background with dark text, dotted grid lines and the legend below, next to a bar chart with a rounded frame, colors of its own and a dashed red target line"></p>
+
+=end html
+
+=item F<chart-hover.pl>
+
+L<Term::Fabulous::Cookbook/Show details of the point under the pointer (SeriesHover, highlight)>;
+the picture shows it with the mouse pointer over the chart.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-hover.svg" alt="A stacked area chart of closed issues per team with the area under the mouse pointer emphasized, the others faded, and a status line that names the team, the week and the number of issues"></p>
+
+=end html
+
+=item F<chart-kdl.pl>
+
+L<Term::Fabulous::Cookbook/Describe charts in a KDL layout (series, slices, transforms)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-kdl.svg" alt="A bar chart of sold and returned units per quarter with value labels and a dashed trend line, built from KDL, next to a donut chart of sales by channel that includes the Web slice added from Perl"></p>
+
+=end html
+
+=item F<chart-report.pl>
+
+L<Term::Fabulous::Cookbook/Print charts in a report (Static)>; prints
+the report and ends.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-report.svg" alt="The printed report: horizontal bars of the disk usage of four file systems with their percentages, and a line with the load of the last 18 hours as a bar sparkline"></p>
+
+=end html
+
+=item F<chart-sparklines.pl>
+
+L<Term::Fabulous::Cookbook/Show sparklines in table cells (Sparkline)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-sparklines.svg" alt="A table of four stocks with symbol, name, last price and change, and a column of area sparklines of the month's prices, green for rising and red for falling stocks"></p>
 
 =end html
 

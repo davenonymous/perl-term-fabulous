@@ -14,13 +14,15 @@ our @EXPORT_OK = qw(is_drawn_glyph glyph_shapes);
 # Terminals draw the box drawing (U+2500-U+257F) and block element
 # (U+2580-U+259F) characters themselves instead of taking them from the
 # font, so lines meet across cells without gaps and half blocks split a
-# cell exactly. These shapes do the same for the screenshot renderers.
+# cell exactly; many draw the Braille patterns (U+2800-U+28FF) and the
+# sextants (U+1FB00-U+1FB3B) too. These shapes do the same for the
+# screenshot renderers.
 #
 # Shapes are in the coordinates of one cell, (0, 0) at its top-left
 # corner, in whole units of the renderer (pixels for PNG, user units for
 # SVG): rectangles, filled with the cell's foreground color mixed over its
-# background (coverage 1 is the foreground itself), and polylines stroked
-# in the foreground color.
+# background (coverage 1 is the foreground itself), polylines stroked in
+# the foreground color, and circles (Braille dots) filled with it.
 
 use constant { NONE => 0, LIGHT => 1, HEAVY => 2, DOUBLE => 3 };
 
@@ -98,10 +100,45 @@ my %BLOCKS_BY_CODEPOINT = (
 
 use constant ARC_SEGMENTS => 12;
 
+use constant {
+	BRAILLE_FIRST => 0x2800,
+	BRAILLE_LAST  => 0x28FF,
+	SEXTANT_FIRST => 0x1FB00,
+	SEXTANT_LAST  => 0x1FB3B,
+};
+
+# Braille dot bits by [ column, row ].
+my @BRAILLE_DOTS = ( [ 0, 0, 0x01 ], [ 0, 1, 0x02 ], [ 0, 2, 0x04 ], [ 1, 0, 0x08 ], [ 1, 1, 0x10 ], [ 1, 2, 0x20 ], [ 0, 3, 0x40 ], [ 1, 3, 0x80 ] );
+
 sub is_drawn_glyph ($glyph) {
 	return 0 unless length($glyph) == 1;
 	my $codepoint = ord $glyph;
-	return $codepoint >= 0x2500 && $codepoint <= 0x259F ? 1 : 0;
+	return 1 if $codepoint >= 0x2500 && $codepoint <= 0x259F;
+	return 1 if $codepoint >= BRAILLE_FIRST && $codepoint <= BRAILLE_LAST;
+	return 1 if $codepoint >= SEXTANT_FIRST && $codepoint <= SEXTANT_LAST;
+	return 0;
+}
+
+# The dots of a Braille pattern: circles at the centers of a 2 x 4 grid,
+# as terminals that draw them themselves show them.
+sub _braille_shapes ( $codepoint, $cell ) {
+	my ( $width, $height ) = @$cell{qw(width height)};
+	my $bits   = $codepoint - BRAILLE_FIRST;
+	my $radius = min( $width / 2, $height / 4 ) * 0.4;
+	return map { { type => 'circle', cx => $width * ( 1 + 2 * $_->[0] ) / 4, cy => $height * ( 1 + 2 * $_->[1] ) / 8, r => $radius } }
+		grep { $bits & $_->[2] } @BRAILLE_DOTS;
+}
+
+# Sextants: two columns and three rows of blocks. The code points count
+# the masks 1 to 62 without the left (21) and right (42) halves.
+sub _sextant_shapes ( $codepoint, $cell ) {
+	my ( $width, $height ) = @$cell{qw(width height)};
+	my $mask = $codepoint - SEXTANT_FIRST + 1;
+	$mask++ if $mask >= 21;
+	$mask++ if $mask >= 42;
+	my @x = ( 0, int( $width / 2 + 0.5 ), $width );
+	my @y = ( 0, int( $height / 3 + 0.5 ), int( 2 * $height / 3 + 0.5 ), $height );
+	return map { _rect( $x[ $_ % 2 ], $y[ int( $_ / 2 ) ], $x[ $_ % 2 + 1 ], $y[ int( $_ / 2 ) + 1 ] ) } grep { $mask & ( 1 << $_ ) } 0 .. 5;
 }
 
 # The shapes of $glyph in a cell $width x $height with light lines
@@ -114,6 +151,8 @@ sub glyph_shapes ( $glyph, $width, $height, $thickness ) {
 
 	my $codepoint = ord $glyph;
 	my $cell      = _cell_metrics( $width, $height, $thickness );
+	return _braille_shapes( $codepoint, $cell ) if $codepoint >= BRAILLE_FIRST && $codepoint <= BRAILLE_LAST;
+	return _sextant_shapes( $codepoint, $cell ) if $codepoint >= SEXTANT_FIRST;
 	return _block_shapes( $BLOCKS_BY_CODEPOINT{$codepoint}, $cell ) if exists $BLOCKS_BY_CODEPOINT{$codepoint};
 	return _line_shapes( $ARMS_BY_CODEPOINT{$codepoint}, $cell ) if exists $ARMS_BY_CODEPOINT{$codepoint};
 	return _dash_shapes( @{ $DASHES_BY_CODEPOINT{$codepoint} }, $cell ) if exists $DASHES_BY_CODEPOINT{$codepoint};
@@ -309,6 +348,7 @@ characters as shapes
 		foreach my $shape ( glyph_shapes( $glyph, 9, 18, 1 ) ) {
 			...    # { type => 'rect', x, y, width, height, coverage }
 			       # { type => 'polyline', points => [ x1, y1, x2, y2, ... ], width }
+			       # { type => 'circle', cx, cy, r }
 		}
 	}
 
@@ -317,19 +357,25 @@ characters as shapes
 Maintainer tool, not installed. Terminal emulators draw the box drawing
 characters (U+2500 to U+257F) and the block elements (U+2580 to U+259F)
 themselves rather than with the font, so that lines meet across cells
-and half blocks split a cell exactly. The screenshot renderers do the
-same with the shapes this module computes, which makes borders seamless
-and canvas pixels square in every viewer, whatever font it has.
+and half blocks split a cell exactly; many also draw the Braille
+patterns (U+2800 to U+28FF) and the sextants of the "Symbols for Legacy
+Computing" (U+1FB00 to U+1FB3B), which the chart widgets use. The
+screenshot renderers do the same with the shapes this module computes,
+which makes borders seamless, canvas pixels square and chart lines
+crisp in every viewer, whatever font it has.
 
-All 160 characters are covered: light, heavy and double lines and all
-their junctions, dashed lines, rounded corners, diagonals, the eighth
-and half blocks, the quadrants and the three shades.
+All 160 box drawing and block element characters are covered: light,
+heavy and double lines and all their junctions, dashed lines, rounded
+corners, diagonals, the eighth and half blocks, the quadrants and the
+three shades; and all 256 Braille patterns (dots as circles on a 2 x 4
+grid) and all 60 sextants.
 
 =head1 FUNCTIONS
 
 =head2 is_drawn_glyph
 
-True for a single character from U+2500 to U+259F.
+True for a single character from U+2500 to U+259F, U+2800 to U+28FF or
+U+1FB00 to U+1FB3B.
 
 =head2 glyph_shapes
 
@@ -355,6 +401,11 @@ shades.
 A line through the points (an array of x, y, x, y, ...) stroked
 C<width> thick in the foreground color: the rounded corners and the
 diagonals.
+
+=item C<< { type =E<gt> 'circle', cx, cy, r } >>
+
+A circle filled with the foreground color: a Braille dot. Its center and
+radius may be fractions.
 
 =back
 

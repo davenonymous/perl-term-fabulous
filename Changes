@@ -1,6 +1,30 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Chart widgets on top of Canvas: LineChart, AreaChart, BarChart
+          and ScatterPlot (Widget::XYChart) with named series in several
+          data forms, category, linear, logarithmic and time x axes with
+          round ticks that land on rows, grid lines, axis titles and
+          formats; grouped, stacked and percent-stacked bars and areas,
+          stack groups, horizontal bars, value labels; curves (step,
+          monotone, splines, easings), dashed and dotted lines, points,
+          trend lines; Braille, block, half, quadrant, sextant and box
+          rendering; transforms (normalize, index, cumulative, rate,
+          moving average, exponential, median, gaussian, resample,
+          downsample, regression, ...); from/to, span, max_points and
+          append for live data. Histogram (automatic or given bins,
+          count, percent, density, cumulative), Sparkline (one row, line,
+          area or bar), PieChart, DonutChart (center text), PolarAreaChart
+          and RadarChart. All charts (Widget::Chart) have a title, a
+          legend at any side (with "+N more" when entries do not fit),
+          palettes for dark and light backgrounds with chrome colors
+          mixed from the background, and hover: the series under the
+          pointer is emphasized and the new SeriesHover event tells the
+          program what the pointer is on; KDL properties throughout.
+          Supporting modules under Term::Fabulous::Chart. Documented in
+          the widget PODs, a CHARTS chapter in the Manual and the
+          Cookbook, ten gallery programs and eighteen cookbook programs;
+          examples/showcase.pl draws its live chart with an AreaChart
         - Term::Fabulous::Widget::Table shows rows of Perl hashes in
           columns: widths that fit, grow, are fixed or a percentage,
           with limits; wrapping and rows as high as their tallest cell;

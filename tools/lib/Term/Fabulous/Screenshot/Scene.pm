@@ -33,7 +33,7 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 	field $layout      :reader;
 	field $shown_title :reader;    # the title as it fits between the window buttons
 	field @backgrounds :reader;    # { x, y, width, height, color }
-	field @shapes      :reader;    # { type => 'rect', x, y, width, height, color } or { type => 'polyline', points, width, color }
+	field @shapes      :reader;    # { type => 'rect', x, y, width, height, color }, { type => 'polyline', points, width, color } or { type => 'circle', cx, cy, r, color }
 	field @texts       :reader;    # { x, y, width, glyphs => [ [ x, glyph ] ], text, color, bold, italic, anchor }
 	field @lines       :reader;    # decorations (underline, strikeout, overline): { x, y, width, height, color }
 
@@ -119,6 +119,9 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 				height => $shape->{height},
 				color  => mix_colors( $cell->{bg}, $cell->{fg}, $shape->{coverage} ),
 			};
+		}
+		if ( $shape->{type} eq 'circle' ) {
+			return { type => 'circle', cx => $left + $shape->{cx}, cy => $top + $shape->{cy}, r => $shape->{r}, color => $cell->{fg} };
 		}
 		my @points = @{ $shape->{points} };
 		$points[$_] += $_ % 2 ? $top : $left foreach 0 .. $#points;
@@ -279,7 +282,8 @@ where the terminal's default background shows;
 
 =item *
 
-box drawing and block element characters as rectangles and polylines
+box drawing and block element characters as rectangles and polylines,
+Braille patterns as circles and sextants as rectangles
 (L<Term::Fabulous::Screenshot::BoxDrawing>);
 
 =item *
@@ -337,8 +341,9 @@ scaled.
 
 The parts of the picture, back to front. Colors are C<0xRRGGBB>.
 Backgrounds and lines are C<{ x, y, width, height, color }>. Shapes are
-rectangles like those, with C<type =E<gt> 'rect'>, or C<{ type =E<gt>
-'polyline', points, width, color }>. Texts are C<{ x, y, width, text,
+rectangles like those, with C<type =E<gt> 'rect'>, C<{ type =E<gt>
+'polyline', points, width, color }> or C<{ type =E<gt> 'circle', cx, cy,
+r, color }>. Texts are C<{ x, y, width, text,
 glyphs, color, bold, italic, anchor }>: C<y> is the baseline, C<width>
 the width of the cells the text covers, C<glyphs> the left edge of each
 character's cell with the character, and C<anchor> C<start> for a run

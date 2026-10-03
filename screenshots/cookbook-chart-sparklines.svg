@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="870" height="309" viewBox="0 0 870 309" role="img" aria-label="perl examples-cookbook/chart-sparklines.pl">
+<title>perl examples-cookbook/chart-sparklines.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="838" height="274" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="838" height="274" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="838" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="435" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples-cookbook/chart-sparklines.pl</text>
+<rect x="16.5" y="16.5" width="837" height="273" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="48" y="78" width="666" height="36" fill="#242832"/>
+<rect x="453" y="114" width="9" height="18" fill="#187357"/>
+<rect x="471" y="114" width="9" height="18" fill="#187357"/>
+<rect x="489" y="114" width="9" height="18" fill="#187357"/>
+<rect x="507" y="114" width="180" height="18" fill="#187357"/>
+<rect x="48" y="132" width="405" height="18" fill="#1c2029"/>
+<rect x="453" y="132" width="126" height="18" fill="#954b4e"/>
+<rect x="579" y="132" width="135" height="18" fill="#1c2029"/>
+<rect x="525" y="150" width="162" height="18" fill="#187357"/>
+<rect x="48" y="168" width="612" height="18" fill="#1c2029"/>
+<rect x="660" y="168" width="27" height="18" fill="#1b765a"/>
+<rect x="687" y="168" width="27" height="18" fill="#1c2029"/>
+<rect x="48" y="186" width="666" height="18" fill="#1c2029"/>
+<rect x="48" y="78" width="666" height="9" fill="#586070"/>
+<rect x="48" y="87" width="5" height="108" fill="#586070"/>
+<rect x="710" y="87" width="4" height="108" fill="#586070"/>
+<rect x="462" y="116" width="9" height="16" fill="#187357"/>
+<rect x="480" y="116" width="9" height="16" fill="#187357"/>
+<rect x="498" y="116" width="9" height="16" fill="#187357"/>
+<rect x="579" y="134" width="108" height="16" fill="#954b4e"/>
+<rect x="453" y="152" width="72" height="16" fill="#187357"/>
+<rect x="453" y="170" width="207" height="16" fill="#1b765a"/>
+<rect x="48" y="195" width="666" height="9" fill="#586070"/>
+</g>
+<g class="terminal">
+<text x="66" y="110" textLength="432" class="b" fill="#ebeef3">Symbol  Name                Last  30 days  Trend</text>
+<text x="66" y="128" textLength="369" fill="#dcdfe4">ACME    Acme Corp.        111.84    +1.4%</text>
+<text x="66" y="146" textLength="369" fill="#dcdfe4">GLBX    Globex             41.66   -14.2%</text>
+<text x="66" y="164" textLength="369" fill="#dcdfe4">INIT    Initech           257.09   +13.2%</text>
+<text x="66" y="182" textLength="369" fill="#dcdfe4">UMBR    Umbrella Holding   87.71   +14.2%</text>
+</g>
+<g shape-rendering="crispEdges">
+</g>
+</svg>

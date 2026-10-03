@@ -202,7 +202,7 @@ widgets.
 =head2 color
 
 Any color L<Term::Fabulous::Color> accepts: a color string such as
-C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'Tomato'>, an C<[r, g, b, a]>
+C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'hsl(32, 100%, 50%)'>, an C<[r, g, b, a]>
 array, an C<{ r, g, b, a }> hash or a Term::Fabulous::Color object.
 Returns C<[r, g, b, a]>, the form Clay::UI takes. C<undef> dies; a
 property that can be switched off handles C<undef> before it checks.

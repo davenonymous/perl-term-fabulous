@@ -410,6 +410,102 @@ screenshot "cookbook-table-colors" {
 	}
 }
 
+screenshot "cookbook-chart-line" {
+	script "examples-cookbook/chart-line.pl"
+	size 80 24
+}
+
+screenshot "cookbook-chart-bars" {
+	script "examples-cookbook/chart-bars.pl"
+	size 100 34
+}
+
+screenshot "cookbook-chart-pie" {
+	script "examples-cookbook/chart-pie.pl"
+	size 100 26
+}
+
+screenshot "cookbook-chart-scatter" {
+	script "examples-cookbook/chart-scatter.pl"
+	size 80 24
+}
+
+screenshot "cookbook-chart-stacked-areas" {
+	script "examples-cookbook/chart-stacked-areas.pl"
+	size 100 22
+}
+
+screenshot "cookbook-chart-histogram" {
+	script "examples-cookbook/chart-histogram.pl"
+	size 100 20
+}
+
+screenshot "cookbook-chart-radar" {
+	script "examples-cookbook/chart-radar.pl"
+	size 100 26
+}
+
+screenshot "cookbook-chart-time-series" {
+	script "examples-cookbook/chart-time-series.pl"
+	size 90 24
+}
+
+screenshot "cookbook-chart-live" {
+	script "examples-cookbook/chart-live.pl"
+	size 80 22
+	steps {
+		wait 30
+	}
+}
+
+screenshot "cookbook-chart-log-scale" {
+	script "examples-cookbook/chart-log-scale.pl"
+	size 100 20
+}
+
+screenshot "cookbook-chart-transform" {
+	script "examples-cookbook/chart-transform.pl"
+	size 90 30
+}
+
+screenshot "cookbook-chart-curves" {
+	script "examples-cookbook/chart-curves.pl"
+	size 100 26
+}
+
+screenshot "cookbook-chart-styles" {
+	script "examples-cookbook/chart-styles.pl"
+	size 100 32
+}
+
+screenshot "cookbook-chart-colors" {
+	script "examples-cookbook/chart-colors.pl"
+	size 100 20
+}
+
+screenshot "cookbook-chart-hover" {
+	script "examples-cookbook/chart-hover.pl"
+	size 80 24
+	steps {
+		move 50 12
+	}
+}
+
+screenshot "cookbook-chart-kdl" {
+	script "examples-cookbook/chart-kdl.pl"
+	size 100 22
+}
+
+screenshot "cookbook-chart-report" {
+	script "examples-cookbook/chart-report.pl"
+	size 64 16
+}
+
+screenshot "cookbook-chart-sparklines" {
+	script "examples-cookbook/chart-sparklines.pl"
+	size 90 12
+}
+
 // --- examples/widgets/: the previews of the widget pages ------------------
 
 screenshot "widget-box" {
@@ -477,4 +573,57 @@ screenshot "widget-table" {
 	steps {
 		key "Space" "Down" "Down" "Space"
 	}
+}
+
+screenshot "widget-line-chart" {
+	script "examples/widgets/line-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-area-chart" {
+	script "examples/widgets/area-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-bar-chart" {
+	script "examples/widgets/bar-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-scatter-plot" {
+	script "examples/widgets/scatter-plot.pl"
+	size 76 22
+}
+
+screenshot "widget-histogram" {
+	script "examples/widgets/histogram.pl"
+	size 76 22
+}
+
+screenshot "widget-sparkline" {
+	script "examples/widgets/sparkline.pl"
+	size 76 12
+	steps {
+		wait 3
+	}
+}
+
+screenshot "widget-pie-chart" {
+	script "examples/widgets/pie-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-donut-chart" {
+	script "examples/widgets/donut-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-polar-area-chart" {
+	script "examples/widgets/polar-area-chart.pl"
+	size 76 22
+}
+
+screenshot "widget-radar-chart" {
+	script "examples/widgets/radar-chart.pl"
+	size 76 22
 }

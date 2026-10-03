@@ -31,6 +31,7 @@ sub render_svg ($scene) {
 		( map { _rect( $_, $_->{color} ) } grep { $_->{type} eq 'rect' } $scene->shapes ),
 		'</g>',
 		( map { _polyline($_) } grep { $_->{type} eq 'polyline' } $scene->shapes ),
+		( map { _circle($_) } grep { $_->{type} eq 'circle' } $scene->shapes ),
 		'<g class="terminal">',
 		( map { _text( $_, $scene ) } $scene->texts ),
 		'</g>',
@@ -111,6 +112,10 @@ sub _rect ( $rect, $color ) {
 sub _polyline ($line) {
 	return sprintf '<polyline points="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linejoin="round"/>', join( ' ', map { _n($_) } @{ $line->{points} } ),
 		_color( $line->{color} ), _n( $line->{width} );
+}
+
+sub _circle ($circle) {
+	return sprintf '<circle cx="%s" cy="%s" r="%s" fill="%s"/>', ( map { _n($_) } @$circle{qw(cx cy r)} ), _color( $circle->{color} );
 }
 
 # A run is stretched to exactly the width of its cells (textLength), so

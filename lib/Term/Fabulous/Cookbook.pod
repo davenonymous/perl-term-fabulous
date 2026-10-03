@@ -110,6 +110,27 @@ L</A table with colored rows and titles (block frame, no grid lines)>,
 L</Describe a table in a KDL layout (columns, lines, sort, groups)>,
 L</Print a table as a report (Static)>
 
+=item Charts
+
+L</Draw a line chart with labels and points (LineChart)>,
+L</Grouped, stacked and horizontal bars (BarChart)>,
+L</Show shares as a pie or donut (PieChart, DonutChart)>,
+L</A scatter plot with trend lines (ScatterPlot)>,
+L</Stacked areas and shares of 100% (AreaChart)>,
+L</How values are distributed (Histogram)>,
+L</Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)>,
+L</Plot values over time (time axis, from and to, a dashed forecast)>,
+L</A live chart that follows new data (append, max_points, span)>,
+L</Show values of very different sizes (logarithmic axis)>,
+L</Smooth noisy data and index it to 100 (transforms)>,
+L</Connect points with curves and easings (curve)>,
+L</Draw with Braille, blocks or box lines (marker)>,
+L</Light backgrounds, palettes and colors of your own>,
+L</Show details of the point under the pointer (SeriesHover, highlight)>,
+L</Describe charts in a KDL layout (series, slices, transforms)>,
+L</Print charts in a report (Static)>,
+L</Show sparklines in table cells (Sparkline)>
+
 =item Canvases
 
 L</Plot data with PixelCanvas>
@@ -5332,6 +5353,2029 @@ C<< header_line => 'none' >> and the C<stripe_color> give the table the
 look of L</A table with colored rows and titles (block frame, no grid
 lines)>. Leave them out for the default look: a rounded frame with thin
 lines between the columns and below the titles.
+
+=back
+
+=head1 CHARTS
+
+The recipes of this chapter use the chart widgets.
+L<Term::Fabulous::Widget::Chart> describes what all of them have in
+common: the title, the legend, the colors and what happens under the
+mouse pointer. L<Term::Fabulous::Widget::XYChart> is the base of the
+charts with an x and a y axis, and every chart type has a page of its
+own.
+
+A chart draws itself: give it data, and it lays out its title, legend,
+axes and plot in the room the layout gives it, and draws them again
+whenever the data, an option or its size changes. Without a C<sizing>
+in its C<layout>, a chart grows to the room its parent leaves, in both
+directions. To draw a chart of your own, pixel by pixel, see
+L</Plot data with PixelCanvas>.
+
+=head2 Draw a line chart with labels and points (LineChart)
+
+Goal: draw several series of numbers as lines over named categories,
+here the average temperature of three cities in each month, with a dot
+on every data point and a unit on the y axis.
+
+This program is shipped as F<examples-cookbook/chart-line.pl>.
+
+=for code-from examples-cookbook/chart-line.pl
+
+	use v5.24;
+	use warnings;
+	use utf8;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing  => { width => sizing_grow(), height => sizing_grow() },
+			padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+
+	# One label per category, one value per label in each series.
+	my $chart = Term::Fabulous::Widget::LineChart->new(
+		title  => 'Average temperature',
+		labels => [qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)],
+		points => 1,
+		y_axis => { title => '°C', format => '%d°' },
+		series => [
+			{ name => 'Lisbon', data => [ 11.6, 12.6, 14.9, 16.2, 18.6, 21.9, 23.8, 24.2, 22.6, 19.4, 15.2, 12.6 ] },
+			{ name => 'Berlin', data => [ 0.6,  2.3,  5.1,  10.2, 14.8, 17.9, 20.3, 19.7, 15.3, 10.5, 5.2,  1.8 ] },
+			{ name => 'Oslo',   data => [ -2.9, -2.6, 1.0,  5.6,  11.0, 15.0, 17.6, 16.2, 11.6, 6.1,  1.4,  -2.3 ] },
+		],
+	);
+	$root->add_child($chart);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-line.svg" alt="A line chart of the average monthly temperatures of Lisbon, Berlin and Oslo, with a dot on every month, a legend at the top and degree labels on the y axis"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<labels> names the categories along the x axis. Each series' C<data>
+is then a plain list of numbers, and the first number belongs to the
+first label, the second to the second, and so on. Without C<labels>, a
+line chart numbers the points 0, 1, 2 and so on, on a numeric x axis.
+
+=item *
+
+Every series is a hash with a C<name> and its C<data>. The name is shown
+in the legend and reported by hover events, so it must be unique within
+the chart. The series take the colors of the palette in order (blue,
+orange, aqua, ...); give a series a C<color> to choose one yourself. See
+L<Term::Fabulous::Widget::Chart/Colors and themes>.
+
+=item *
+
+C<< points => 1 >> draws a dot on every data point. Given to the chart,
+it applies to every series that does not set it itself. The same holds
+for the other series options a chart takes, such as C<curve>,
+C<line_style> and C<marker>.
+
+=item *
+
+The C<y_axis> hash describes the y axis. Its C<title> is written above
+the values. Its C<format> writes the tick labels: anything with a C<%>
+is a C<sprintf> format, and C<si>, C<integer> and C<percent> are named
+formats; see L<Term::Fabulous::Chart::Format>. The C<x_axis> hash takes
+the same keys.
+
+=item *
+
+A line chart's y axis spans the data, here from below 0 (Oslo in
+January) to the warmest month; it does not have to include 0. Give the
+C<y_axis> a C<min> and a C<max>, or C<< zero => 1 >>, to choose the range
+yourself.
+
+=item *
+
+The legend appears at the top because the chart has more than one
+series: with C<< legend => 'auto' >>, the default, a single series is
+named by the title. Moving the mouse over a line or its legend entry
+emphasizes the series and fades the others.
+
+=item *
+
+The program says C<use utf8> because its source contains the degree
+sign. Without it, Perl reads the sign as two bytes, and the labels come
+out wrong. See
+L</Show non-ASCII text (umlauts, CJK, combining accents)>.
+
+=back
+
+=head2 Grouped, stacked and horizontal bars (BarChart)
+
+Goal: compare values per category in the three common forms of bar
+charts: bars side by side, bars stacked to a total, and horizontal bars
+for long category names.
+
+This program is shipped as F<examples-cookbook/chart-bars.pl>.
+
+=for code-from examples-cookbook/chart-bars.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::BarChart;
+	use Term::Fabulous::Widget::Box;
+	use Clay::XS qw(sizing_grow sizing_percent CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $top = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_percent(0.6) }, child_gap => 4 } );
+	$root->add_child($top);
+
+	my @weekdays = qw(Mon Tue Wed Thu Fri);
+
+	# Several series side by side in each category, with their values.
+	$top->add_child(
+		Term::Fabulous::Widget::BarChart->new(
+			title        => 'Orders',
+			labels       => \@weekdays,
+			value_labels => 1,
+			series       => [ { name => 'Shop', data => [ 18, 24, 21, 30, 34 ] }, { name => 'App', data => [ 12, 15, 19, 17, 26 ] } ],
+		)
+	);
+
+	# The same kind of data on top of each other: the total and its parts.
+	$top->add_child(
+		Term::Fabulous::Widget::BarChart->new(
+			title   => 'Support tickets',
+			labels  => \@weekdays,
+			stacked => 1,
+			series  => [
+				{ name => 'Closed',  data => [ 9, 11, 10, 12, 14 ] },
+				{ name => 'Pending', data => [ 3, 2,  4,  3,  5 ] },
+				{ name => 'Open',    data => [ 5, 7,  3,  8,  6 ] },
+			],
+		)
+	);
+
+	# Horizontal bars leave room for long category names.
+	$root->add_child(
+		Term::Fabulous::Widget::BarChart->new(
+			title        => 'Top pages (views)',
+			horizontal   => 1,
+			value_labels => 1,
+			labels       => [ '/pricing', '/docs/getting-started', '/blog/release-2-0', '/contact' ],
+			series       => [ { name => 'Views', data => [ 8240, 6120, 4975, 1310 ], color => '#9085e9' } ],
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 34 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-bars.svg" alt="Three bar charts: orders of the shop and the app as grouped bars with their values, support tickets as stacked bars, and the views of four pages as horizontal bars with their values"></p>
+
+=end html
+
+=over
+
+=item *
+
+A bar chart draws one bar per value in the slot of its category. With
+several series, the bars of a category stand side by side, in the order
+of the series. Together they take C<bar_width> of the slot (0.7 by
+default), so a gap separates the categories.
+
+=item *
+
+C<< value_labels => 1 >> writes the value of every bar above it, or to
+its right in a horizontal chart. The chart keeps a row free above the
+highest bar for them. A label that would touch one drawn before it is
+left out, so narrow bars may lose some of theirs.
+
+=item *
+
+C<< stacked => 1 >> puts the bars of a category on top of each other,
+the first series at the bottom: the stack is the total, its parts are
+the series. Stack only parts of one whole; with C<value_labels>, a
+stack shows its total. To show shares instead of amounts, use
+C<< stacked => 'percent' >>; see
+L</Stacked areas and shares of 100% (AreaChart)>.
+
+=item *
+
+Bars grow from 0, so the y axis of a bar chart includes 0 by default:
+bars that start above 0 make small differences look large. Give the
+C<y_axis> C<< zero => 0 >> only if you really want that.
+
+=item *
+
+C<< horizontal => 1 >> turns the bars on their side: the categories go
+down the left, the values along the bottom. The C<y_axis> hash still
+describes the values and the C<x_axis> hash the categories, wherever
+they are drawn. The category labels take at most a third of the
+chart's width; longer ones are cut. A horizontal chart shows only bar
+series.
+
+=item *
+
+The horizontal chart has a single series, so it shows no legend (the
+title names it), and its C<color> replaces the palette's first color.
+
+=item *
+
+The box at the top takes 60% of the height (C<sizing_percent(0.6)>)
+and its two charts share its width; the horizontal chart takes the rest
+of the height. The charts themselves need no C<sizing>: they grow.
+
+=back
+
+=head2 Show shares as a pie or donut (PieChart, DonutChart)
+
+Goal: show how a whole splits into parts: a pie chart of disk usage,
+and a donut chart of sales by region, with the small regions folded
+together and the number of orders in the middle.
+
+This program is shipped as F<examples-cookbook/chart-pie.pl>.
+
+=for code-from examples-cookbook/chart-pie.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::DonutChart;
+	use Term::Fabulous::Widget::PieChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 4,
+		},
+	);
+
+	# Values with labels from a separate array; the largest slice first.
+	my $pie = Term::Fabulous::Widget::PieChart->new(
+		title  => 'Disk usage',
+		labels => [qw(Photos Music Documents System Other)],
+		data   => [ 182, 64, 21, 48, 9 ],
+		sort   => 'desc',
+		legend => 'bottom',
+	);
+
+	# [ label, value ] pairs; slices below 5 % are folded into "Other",
+	# the legend shows amounts, and the middle says what the total is.
+	my $donut = Term::Fabulous::Widget::DonutChart->new(
+		title         => 'Sales by region',
+		data          => [ [ Europe => 412 ], [ 'North America' => 365 ], [ Asia => 290 ], [ 'South America' => 44 ], [ Africa => 21 ], [ Oceania => 18 ] ],
+		other         => 0.05,
+		other_label   => 'Rest of world',
+		legend_values => 'value',
+		format        => '%dk',
+		center_text   => "1150k\norders",
+		legend        => 'bottom',
+	);
+	$root->add_child( $pie, $donut );
+
+	Term::Fabulous->new( root => $root, width => 100, height => 26 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-pie.svg" alt="A pie chart of disk usage with percentages on the slices and the legend below it, and a donut chart of sales by region with the small regions folded into Rest of world, amounts in the legend and 1150k orders in the middle"></p>
+
+=end html
+
+=over
+
+=item *
+
+The C<data> of a pie takes three forms: plain numbers named by a
+separate C<labels> array (the pie), C<[ label, value ]> pairs (the
+donut), or hashes with C<label>, C<value> and C<color>. Every label must
+be unique, and values must be 0 or more.
+
+=item *
+
+The first slice starts at 12 o'clock and the slices follow clockwise.
+C<< sort => 'desc' >> puts the largest slice first, which makes a pie
+much easier to read; without C<sort>, the slices keep the order of the
+data. C<start_angle> turns the whole pie by a number of degrees.
+
+=item *
+
+A pie writes the percentage on every slice that has room for it
+(C<slice_labels>), and the legend lists the percentages as well
+(C<legend_values>). Round charts put the legend on the right by
+default; C<< legend => 'bottom' >> takes rows instead of columns from
+the circle, which suits two charts side by side.
+
+=item *
+
+C<< other => 0.05 >> folds all slices below 5% of the total into one
+slice, drawn in a neutral gray and labeled with C<other_label>
+(C<Other> by default). It folds only when at least two slices are that
+small: here South America, Africa and Oceania become "Rest of world".
+The data itself keeps all six regions.
+
+=item *
+
+C<< legend_values => 'value' >> shows the amounts in the legend instead
+of the percentages; C<both> shows both, C<none> neither. C<format>
+writes the amounts, here with C<sprintf> and the suffix C<k>.
+
+=item *
+
+A L<Term::Fabulous::Widget::DonutChart> is a pie with a C<hole> of 0.6
+of the radius. The hole shows the total and the word C<Total>, and,
+while the mouse pointer is on a slice, that slice's share and label.
+C<center_text> replaces both with text of your own; C<\n> separates its
+lines, and the first line is bold. The text stays as it is: when the
+data changes, set it again with C<< $donut->center_text(...) >>.
+
+=back
+
+=head2 A scatter plot with trend lines (ScatterPlot)
+
+Goal: show how two measurements relate, here the length and width of
+the petals of three species of flowers, with a trend line through two
+of the groups.
+
+This program is shipped as F<examples-cookbook/chart-scatter.pl>.
+
+=for code-from examples-cookbook/chart-scatter.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::ScatterPlot;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing  => { width => sizing_grow(), height => sizing_grow() },
+			padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+
+	# Measurements of three species: [ x, y ] pairs, both numbers.
+	srand 11;
+	sub flowers ( $count, $length, $width, $slope ) {
+		return map {
+			my $petal = $length + ( rand() - 0.5 ) * 1.6;
+			[ $petal, $width + $slope * ( $petal - $length ) + ( rand() - 0.5 ) * 0.5 ];
+		} 1 .. $count;
+	}
+
+	my $plot = Term::Fabulous::Widget::ScatterPlot->new(
+		title  => 'Petal size',
+		x_axis => { title => 'length (cm)', grid => 'dotted' },
+		y_axis => { title => 'width (cm)' },
+		series => [
+			{ name => 'Setosa',     data => [ flowers( 30, 1.5, 0.3, 0.2 ) ] },
+			{ name => 'Versicolor', data => [ flowers( 30, 4.3, 1.3, 0.4 ) ], trend => 1 },
+			{ name => 'Virginica',  data => [ flowers( 30, 5.6, 2.0, 0.3 ) ], trend => 1, point => "\x{25C6}" },
+		],
+	);
+	$root->add_child($plot);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-scatter.svg" alt="A scatter plot of petal length and width of three species in three clusters, with dashed trend lines through two of them, diamonds for one species and dotted vertical grid lines"></p>
+
+=end html
+
+=over
+
+=item *
+
+Every data point is an C<[ x, y ]> pair of numbers, and the x axis is a
+numeric axis. A scatter plot draws the points only, without lines
+between them, so their order does not matter.
+
+=item *
+
+By default a point is a small square of Braille dots. C<point> takes a
+character instead, here a diamond, written as C<"\x{25C6}"> so the
+source stays ASCII; the legend shows it too. A character fills a whole
+cell, so it is placed less precisely than dots. C<< point => 'dot' >>
+draws a single Braille dot, for many points.
+
+=item *
+
+C<< trend => 1 >> draws the least-squares straight line through the
+series' points, dashed, from its smallest to its largest x. It shows
+the direction of a relation, not whether the relation is really a
+straight line.
+
+=item *
+
+C<< grid => 'dotted' >> in the C<x_axis> adds dotted vertical lines at
+the x ticks. The y axis has solid horizontal grid lines by default; a
+C<grid> takes C<0>, C<1> (solid), C<solid>, C<dashed> or C<dotted>. The
+C<title> of the x axis is centered below it, that of the y axis is
+written above the values.
+
+=item *
+
+C<srand 11> makes the made-up measurements the same on every run, so
+the picture stays the same. Real programs leave it out.
+
+=back
+
+=head2 Stacked areas and shares of 100% (AreaChart)
+
+Goal: show how parts make up a total over the years: once as amounts
+that add up to the total, once as each part's share of it.
+
+This program is shipped as F<examples-cookbook/chart-stacked-areas.pl>.
+
+=for code-from examples-cookbook/chart-stacked-areas.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::AreaChart;
+	use Term::Fabulous::Widget::Box;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 4,
+		},
+	);
+
+	my @years  = 2016 .. 2026;
+	my @series = (
+		{ name => 'Coal',  data => [ 41, 40, 38, 37, 35, 36, 35, 33, 31, 29, 27 ] },
+		{ name => 'Gas',   data => [ 22, 23, 23, 24, 24, 23, 22, 22, 22, 21, 21 ] },
+		{ name => 'Wind',  data => [ 7,  8,  9,  10, 12, 12, 14, 16, 17, 19, 21 ] },
+		{ name => 'Solar', data => [ 1,  2,  2,  3,  4,  5,  6,  8,  10, 12, 14 ] },
+	);
+
+	# The parts add up to the total...
+	$root->add_child(
+		Term::Fabulous::Widget::AreaChart->new(
+			title   => 'Electricity (TWh)',
+			labels  => \@years,
+			stacked => 1,
+			curve   => 'monotone',
+			series  => \@series,
+		)
+	);
+
+	# ... or to 100 %: each part's share of the total, year by year.
+	$root->add_child(
+		Term::Fabulous::Widget::AreaChart->new(
+			title   => 'Share of the mix',
+			labels  => \@years,
+			stacked => 'percent',
+			curve   => 'monotone',
+			legend  => 'none',
+			series  => \@series,
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 22 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-stacked-areas.svg" alt="Two stacked area charts of electricity from coal, gas, wind and solar from 2016 to 2026: the amounts on the left, each source's share of 100 percent on the right"></p>
+
+=end html
+
+=over
+
+=item *
+
+An area chart fills the room between each series and the baseline.
+With C<< stacked => 1 >>, every series lies on the one before it, the
+first at the bottom, and the top edge of the last series is the total.
+The order matters: put the steadiest series at the bottom, because the
+shapes of the others are read against a moving floor.
+
+=item *
+
+C<< stacked => 'percent' >> divides every value by the total of its
+year, so the stack always reaches 100%. It shows how the shares
+change, and hides how the total changes; show both, as here, when both
+matter. The y axis writes its labels as percentages unless it has a
+C<format> of its own.
+
+=item *
+
+Areas that are not stacked overlap, so they are translucent; stacked
+areas do not, so they are filled more densely. C<fill_opacity> (0 to
+1) sets it yourself, for a series or the whole chart.
+
+=item *
+
+C<< curve => 'monotone' >> draws smooth edges that never overshoot the
+data, so a stack shows no bump that is not in the numbers. See
+L</Connect points with curves and easings (curve)>.
+
+=item *
+
+The years are C<labels>, so they are categories, evenly spaced. As
+C<[ x, y ]> points with the years as x values, they would be numbers on
+a numeric axis instead.
+
+=item *
+
+The second chart has the same series in the same order, so its colors
+match the first chart's legend; C<< legend => 'none' >> saves its rows.
+C<map { {%$_} } @series> gives each chart copies of the series hashes.
+The charts copy what they are given, so both could also take the same
+hashes; the copies only make clear that the charts share nothing.
+
+=back
+
+=head2 How values are distributed (Histogram)
+
+Goal: show how 600 exam scores are distributed: how many fall into
+each range of points, and what share of the students scored below the
+end of each range.
+
+This program is shipped as F<examples-cookbook/chart-histogram.pl>.
+
+=for code-from examples-cookbook/chart-histogram.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Histogram;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 4,
+		},
+	);
+
+	# 600 exam scores from 0 to 100, most of them around 62 points.
+	srand 5;
+	my @scores = map { int( 62 + 14 * ( rand() + rand() + rand() - 1.5 ) * 1.4 ) } 1 .. 600;
+
+	# Bins chosen from the data...
+	$root->add_child(
+		Term::Fabulous::Widget::Histogram->new(
+			title  => 'Exam scores',
+			x_axis => { title => 'points' },
+			series => [ { name => 'Students', data => \@scores } ],
+		)
+	);
+
+	# ... or fixed, 10 points wide from 0 to 100, counted up as percentages.
+	$root->add_child(
+		Term::Fabulous::Widget::Histogram->new(
+			title      => 'Share below ... points',
+			bin_width  => 10,
+			range      => [ 0, 100 ],
+			measure    => 'percent',
+			cumulative => 1,
+			x_axis     => { title => 'points' },
+			series     => [ { name => 'Students', data => \@scores, color => '#199e70' } ],
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 20 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-histogram.svg" alt="Two histograms of exam scores: counts in automatic bins on the left, and the cumulative share in bins of 10 points from 0 to 100 on the right, rising to 100 percent"></p>
+
+=end html
+
+=over
+
+=item *
+
+A histogram takes the observations themselves, plain numbers, not
+counts: it sorts them into bins and draws one bar per bin, edge to edge
+on a numeric x axis. C<[ x, y ]> points are an error here.
+
+=item *
+
+Without C<bins> or C<bin_width>, the bins are chosen from the data:
+their width follows the spread of the values (the Freedman-Diaconis
+rule), rounded to 1, 2, 2.5 or 5 times a power of ten, with at most
+about 50 bins. C<< bins => 20 >> asks for 20 equal bins between the
+smallest and the largest value; C<bin_width> fixes the width.
+
+=item *
+
+C<< range => [ 0, 100 ] >> fixes where the bins start and end, so the
+chart covers all possible scores, also those nobody reached. Values
+outside the range are not counted.
+
+=item *
+
+C<measure> decides what a bar shows: C<count> (the default),
+C<percent> (the share of the series' observations; the y axis writes
+percentages) or C<density> (the share per unit of x, which keeps bins
+of different widths comparable).
+
+=item *
+
+C<< cumulative => 1 >> adds up: every bar shows its bin and all bins
+before it, so the last bar reaches 100%. A bin includes its lower edge
+and excludes its upper one (the last bin includes both), so the bar of
+the bin from 60 to 70 shows the share of the scores below 70.
+
+=item *
+
+Several series in one histogram are drawn over each other, translucent,
+so both distributions stay visible; see the gallery program
+F<examples/widgets/histogram.pl> in L<Term::Fabulous::Examples>.
+
+=back
+
+=head2 Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)
+
+Goal: compare the strengths of several profiles over the same
+categories at a glance, and show one value per category as slices
+whose length is the value.
+
+This program is shipped as F<examples-cookbook/chart-radar.pl>.
+
+=for code-from examples-cookbook/chart-radar.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::PolarAreaChart;
+	use Term::Fabulous::Widget::RadarChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 2,
+		},
+	);
+
+	# One axis per label; each series has a value per axis. A 'line' series
+	# is not filled.
+	$root->add_child(
+		Term::Fabulous::Widget::RadarChart->new(
+			title  => 'Player stats',
+			labels => [qw(Pace Shooting Passing Dribbling Defense Physical)],
+			min    => 0,
+			max    => 100,
+			grid   => 'circle',
+			series => [
+				{ name => 'Striker',  data => [ 89, 91, 72, 86, 38, 77 ] },
+				{ name => 'Defender', data => [ 71, 45, 68, 62, 90, 86 ] },
+				{ name => 'Average',  data => [ 70, 60, 65, 66, 60, 70 ], type => 'line', line_style => 'dashed', color => '#898781' },
+			],
+		)
+	);
+
+	# Slices of equal angle; their length shows the value.
+	$root->add_child(
+		Term::Fabulous::Widget::PolarAreaChart->new(
+			title => 'Rain per season (mm)',
+			data  => [ [ Spring => 170 ], [ Summer => 210 ], [ Autumn => 260 ], [ Winter => 190 ] ],
+			start_angle => -45,
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 26 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-radar.svg" alt="A radar chart comparing a striker, a defender and a dashed gray average over six skills on circular rings, and a polar area chart of rain per season with Spring at the top"></p>
+
+=end html
+
+=over
+
+=item *
+
+A L<Term::Fabulous::Widget::RadarChart> has one axis per label, from
+the center outwards, and needs at least three. Each series has one
+value per label, in the order of the labels.
+
+=item *
+
+C<< min => 0 >> and C<< max => 100 >> fix the scale, so the shapes are
+measured against the whole range of the ratings, not only against the
+values that occur. Without them, the scale starts at 0 and fits the
+data.
+
+=item *
+
+The series of a radar chart are filled shapes by default, translucent
+so the others show through. C<< type => 'line' >> draws only the
+outline: here a dashed gray average as a reference. More than two or
+three filled shapes cover each other; moving the mouse over one
+emphasizes it.
+
+=item *
+
+C<< grid => 'circle' >> draws the rings of the scale as circles; the
+default C<polygon> connects the spokes with straight lines, and
+C<none> draws no rings.
+
+=item *
+
+A L<Term::Fabulous::Widget::PolarAreaChart> takes its data like a pie,
+but every slice has the same angle, and its length shows its value.
+Rings mark the scale, with their values along the line to 12 o'clock,
+and the legend lists the values.
+
+=item *
+
+C<start_angle> turns the slices clockwise by a number of degrees. With
+four slices of 90 degrees, C<-45> centers the first slice (Spring) on
+12 o'clock, so the seasons point up, right, down and left.
+
+=item *
+
+The length of a slice is its value, so its area grows with the square
+of the value: a slice of twice the value looks four times as large.
+Use a bar chart when the reader has to compare values exactly.
+
+=back
+
+=head2 Plot values over time (time axis, from and to, a dashed forecast)
+
+Goal: plot hourly measurements over four days on a time axis, continue
+them with a dashed forecast, and shade a stretch of time.
+
+This program is shipped as F<examples-cookbook/chart-time-series.pl>.
+
+=for code-from examples-cookbook/chart-time-series.pl
+
+	use v5.24;
+	use warnings;
+	use utf8;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use POSIX qw(strftime);
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing  => { width => sizing_grow(), height => sizing_grow() },
+			padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+
+	# Hourly temperatures: measured until noon on June 3rd, forecast from
+	# then on. The x values are date strings (local time; a trailing Z means
+	# UTC); epoch seconds or DateTime objects work as well.
+	my $now = '2026-06-03 12:00Z';
+	my ( @measured, @forecast );
+	foreach my $hour ( 0 .. 4 * 24 ) {
+		my $time  = strftime( '%Y-%m-%d %H:%MZ', gmtime( 1780272000 + 3600 * $hour ) );
+		my $value = 17 + 6 * sin( ( $hour - 9 ) * 3.14159 / 12 ) + 2 * sin( $hour / 17 );
+		push @measured, [ $time, $value ] if $hour <= 2 * 24 + 12;
+		push @forecast, [ $time, $value + 1.5 * ( $hour - 2 * 24 - 12 ) / 36 ] if $hour >= 2 * 24 + 12;    # drifts away from the measurements
+	}
+
+	my $chart = Term::Fabulous::Widget::LineChart->new(
+		title  => 'Temperature in Lisbon',
+		curve  => 'monotone',
+		x_axis => { type => 'time', utc => 1, min => '2026-06-01 00:00Z', max => '2026-06-05 00:00Z' },
+		y_axis => { title => '°C', format => '%d°' },
+		series => [
+			{ name => 'Measured', data => \@measured },
+			{ name => 'Forecast', data => \@forecast, line_style => 'dashed' },
+
+			# The same data, drawn only from the start of the 2nd to noon of the 3rd.
+			{ name => 'Heat warning', data => \@measured, type => 'area', from => '2026-06-02 00:00Z', to => $now, fill_opacity => 0.25, color => '#e66767' },
+		],
+	);
+	$root->add_child($chart);
+
+	Term::Fabulous->new( root => $root, width => 90, height => 24 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-time-series.svg" alt="Hourly temperatures over four days on a time axis: a solid measured line, a dashed forecast from noon of June 3rd on, and a red shaded area under the measurements from June 2nd to that noon"></p>
+
+=end html
+
+=over
+
+=item *
+
+With C<[ x, y ]> points whose x values are dates, the x axis is a time
+axis. C<< type => 'time' >> says so; the default C<auto> would also
+recognize the date strings. An x value can be a number of epoch
+seconds, a date string or an object with an C<epoch> method, such as a
+L<DateTime>. A date string without a zone is local time; a trailing
+C<Z> means UTC.
+
+=item *
+
+C<< utc => 1 >> writes the tick labels in UTC instead of local time, so
+the chart looks the same everywhere. C<min> and C<max> fix the ends of
+the axis, here midnight to midnight over four days, whatever the data
+covers. The chart chooses ticks that suit the span; a C<format> in the
+C<x_axis> writes them with your own C<strftime> format.
+
+=item *
+
+The forecast is a series of its own, with
+C<< line_style => 'dashed' >>, starting at the hour the measurements
+end. C<dotted> is the third line style.
+
+=item *
+
+C<from> and C<to> limit where a series is drawn, in x values. The
+"Heat warning" series uses the measured data again, as a red C<area>
+with a light C<fill_opacity>, drawn only from the start of June 2nd to
+noon of June 3rd: a way to shade a stretch of time. Points outside
+C<from> and C<to> are kept, but not drawn, and they do not count for
+the axes.
+
+=item *
+
+A line chart's series are lines unless they say otherwise: any series
+can be a C<line>, C<area>, C<bar> or C<scatter> series. Areas are drawn
+below lines, so the shading stays under the measured line.
+
+=item *
+
+C<< curve => 'monotone' >> smooths the lines of all series; see
+L</Connect points with curves and easings (curve)>. As in
+L</Draw a line chart with labels and points (LineChart)>, the program
+needs C<use utf8> for the degree sign.
+
+=back
+
+=head2 A live chart that follows new data (append, max_points, span)
+
+Goal: a chart of the last minute of network traffic that moves on as
+new measurements arrive, four times a second.
+
+This program is shipped as F<examples-cookbook/chart-live.pl>.
+
+=for code-from examples-cookbook/chart-live.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+	use Time::HiRes ();
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	# The last minute: the x axis always spans 60 seconds up to the newest
+	# point, and each series keeps at most 240 points.
+	my $chart = Term::Fabulous::Widget::LineChart->new(
+		title      => 'Network traffic',
+		x_axis     => { type => 'time', span => 60, format => '%H:%M:%S' },
+		y_axis     => { min => 0, title => 'Mbit/s' },
+		max_points => 240,
+		series     => [ { name => 'Received', type => 'area', line => 1 }, { name => 'Sent' } ],
+	);
+	my $status = Term::Fabulous::Widget::Text->new( text => 'Waiting for data', text_color => [ 150, 160, 180, 255 ] );
+	$root->add_child( $chart, $status );
+
+	# Made-up measurements, four per second.
+	my $tick = 0;
+	sub measure () {
+		$tick++;
+		return ( 40 + 25 * sin( $tick / 23 ) + 12 * sin( $tick / 3.1 ) + 6 * sin( $tick * 1.7 ), 12 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ) );
+	}
+
+	my $timer = IO::Async::Timer::Periodic->new(
+		interval => 0.25,
+		on_tick  => sub {
+			my ( $received, $sent ) = measure();
+
+			# One point for each series, both at this moment.
+			$chart->append( Time::HiRes::time(), { Received => $received, Sent => $sent } );
+			$status->text( sprintf 'Now: %.1f Mbit/s in, %.1f Mbit/s out', $received, $sent );
+			return;
+		},
+	);
+	$timer->start;
+	IO::Async::Loop->new->add($timer);
+
+	Term::Fabulous->new( root => $root, width => 80, height => 22 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-live.svg" alt="A live chart of network traffic over the last minute: received traffic as a filled area with a line on top, sent traffic as a line, time labels below and a status line with the newest values"></p>
+
+=end html
+
+The picture shows the program after it ran for 30 seconds.
+
+=over
+
+=item *
+
+The series start without data: a name and a type are enough. Received
+is an area with C<< line => 1 >>, which draws a line along its top; an
+area has none unless asked to. Sent is a line, the default type of a
+line chart.
+
+=item *
+
+C<< $chart->append( $x, { name => $value, ... } ) >> adds one point to
+each series named in the hash, all at the same x: the way to feed
+several series from one measurement. Here the x value is C<time>, the
+current epoch seconds. C<add_points> adds points to one series.
+
+=item *
+
+C<< span => 60 >> makes the time axis show the 60 seconds up to the
+newest point, so the chart moves on with every new point. C<format>
+writes the tick labels with C<strftime>.
+
+=item *
+
+C<< max_points => 240 >> keeps the newest 240 points of each series and
+drops older ones; without it, the data grows as long as the program
+runs. Make it about the span times the rate (60 seconds times 4 per
+second): points older than the span are not drawn, but they still
+count for the range of the y axis.
+
+=item *
+
+C<< min => 0 >> on the y axis keeps the axis steady. Without it, the
+axis follows the range of the values and jumps whenever a peak comes
+or goes.
+
+=item *
+
+The timer only changes the data: the chart is drawn again in the next
+frame, and only the cells that changed are sent to the terminal. The
+timer is set up as in L</Update the screen from a timer (a clock)>.
+
+=back
+
+=head2 Show values of very different sizes (logarithmic axis)
+
+Goal: show series that grow from a few to tens of thousands so that the
+early years and the smaller series stay readable.
+
+This program is shipped as F<examples-cookbook/chart-log-scale.pl>.
+
+=for code-from examples-cookbook/chart-log-scale.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 4,
+		},
+	);
+
+	# Values from a few to many thousands: on a linear axis the small ones
+	# lie flat on the floor...
+	my @series = (
+		{ name => 'Downloads', data => [ 12, 40, 150, 610, 2400, 9800, 31000, 88000 ] },
+		{ name => 'Issues',    data => [ 2,  5,  14,  30,  71,   160,  390,   900 ] },
+	);
+	my @years = 2019 .. 2026;
+	$root->add_child( Term::Fabulous::Widget::LineChart->new( title => 'Linear axis', labels => \@years, points => 1, series => \@series ) );
+
+	# ... on a logarithmic one every factor of ten takes the same room, and
+	# steady growth is a straight line.
+	$root->add_child(
+		Term::Fabulous::Widget::LineChart->new(
+			title  => 'Logarithmic axis',
+			labels => \@years,
+			points => 1,
+			y_axis => { type => 'log' },
+			series => \@series,
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 20 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-log-scale.svg" alt="The same two series twice: on a linear axis the issues and the early downloads lie flat on the bottom, on a logarithmic axis both rise as nearly straight lines"></p>
+
+=end html
+
+=over
+
+=item *
+
+On the linear axis at the left, the largest value sets the scale: all
+values below a few thousand lie on the floor, and the issues cannot be
+told from 0.
+
+=item *
+
+C<< type => 'log' >> in the C<y_axis> makes every power of ten take the
+same height. Growth by the same factor every year becomes a straight
+line, and series of very different sizes are both readable. The ticks
+are at the powers of ten, written with SI prefixes from a thousand on
+(C<1k>, C<10k>); C<< base => 2 >> puts them at the powers of 2 instead.
+
+=item *
+
+A logarithmic axis cannot show 0 or negative values. Keep them out of
+the data of such a chart, or give a missing value as C<undef>, which
+leaves a gap in the line.
+
+=item *
+
+Readers take a logarithmic axis for a linear one unless they are told:
+say so in the title or the axis title, as here.
+
+=item *
+
+The x axis can be logarithmic too, for numeric x values:
+C<< x_axis => { type => 'log' } >>.
+
+=back
+
+=head2 Smooth noisy data and index it to 100 (transforms)
+
+Goal: show the trend in noisy daily figures, and compare the growth of
+two prices of very different size on one axis.
+
+This program is shipped as F<examples-cookbook/chart-transform.pl>.
+
+=for code-from examples-cookbook/chart-transform.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	# Noisy daily visits for 120 days, with a weekly rhythm.
+	srand 3;
+	my @visits = map { 300 + 2 * $_ + 60 * sin( $_ * 6.283 / 7 ) + ( rand() - 0.5 ) * 160 } 0 .. 119;
+
+	# The same data three times: as it is, and smoothed two ways. The data
+	# given stays as it is; only what is drawn is prepared.
+	$root->add_child(
+		Term::Fabulous::Widget::LineChart->new(
+			title  => 'Daily visits',
+			series => [
+				{ name => 'Raw',            data => \@visits, color => '#3a4152' },
+				{ name => '7-day average',  data => \@visits, transform => [ [ 'moving_average', 7 ] ] },
+				{ name => 'Smoothed (0.1)', data => \@visits, transform => [ [ 'exponential', 0.1 ] ], line_style => 'dashed' },
+			],
+		)
+	);
+
+	# Two prices of very different size, both indexed to 100 at the start,
+	# so their growth compares on one axis.
+	my @shares = map { 1200 + 4 * $_ + 80 * sin( $_ / 9 ) } 0 .. 119;
+	my @bonds  = map { 96 + 0.05 * $_ + 2 * sin( $_ / 15 ) } 0 .. 119;
+	$root->add_child(
+		Term::Fabulous::Widget::LineChart->new(
+			title     => 'Growth since day 1 (day 1 = 100)',
+			transform => [ [ 'index', 100 ] ],
+			curve     => 'monotone',
+			series    => [ { name => 'Shares', data => \@shares }, { name => 'Bonds', data => \@bonds } ],
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 90, height => 30 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-transform.svg" alt="Daily visits as a dim raw line with a 7-day moving average and a dashed exponentially smoothed line over it, and below it share and bond prices both indexed to 100 at day 1"></p>
+
+=end html
+
+=over
+
+=item *
+
+The C<transform> of a series lists steps that run on its points before
+they are drawn. The data you give stays as it is, and the steps run
+again whenever it changes, so live data stays prepared the same way.
+Write the steps as a list, also a single step with arguments:
+C<< [ [ 'moving_average', 7 ] ] >>. See
+L<Term::Fabulous::Chart::Transform/Steps> for all steps.
+
+=item *
+
+The three series of the first chart share C<@visits>. The raw data is
+drawn in a dim color close to the background, as context; the
+smoothed lines stand out over it.
+
+=item *
+
+C<< [ 'moving_average', 7 ] >> is the mean of the last 7 days: it
+removes the weekly rhythm, but it lags about three days behind the
+data. C<< [ 'moving_average', 7, 'center' ] >> averages the days around
+each point instead and does not lag.
+
+=item *
+
+C<< [ 'exponential', 0.1 ] >> moves each value a tenth of the way from
+the smoothed value before it. Smaller values smooth more and lag more.
+The dashed C<line_style> tells it apart from the moving average.
+
+=item *
+
+A C<transform> given to the chart applies to every series without one
+of its own. C<< [ 'index', 100 ] >> makes each value relative to the
+first, which becomes 100: the shares start at 1200 and the bonds at 96,
+and both start at 100 in the chart, so 110 means 10% above day 1. This
+is how to compare series of very different sizes on one axis; a chart
+has no second y axis.
+
+=item *
+
+Other steps sum up (C<cumulative>), turn counters into rates (C<rate>),
+group points into intervals (C<resample>), scale to 0 to 1
+(C<normalize>) or remove spikes (C<median>); a code reference is a step
+of your own.
+
+=back
+
+=head2 Connect points with curves and easings (curve)
+
+Goal: see how the C<curve> option connects the same seven points in six
+ways, to choose one that suits the data.
+
+This program is shipped as F<examples-cookbook/chart-curves.pl>.
+
+=for code-from examples-cookbook/chart-curves.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT_WRAP);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 3,
+			line_gap         => 1,
+		},
+	);
+
+	# The same points, connected six ways.
+	my @data = ( 2, 6, 3, 9, 8, 4, 5 );
+	foreach my $curve (qw(linear step monotone catmull-rom ease-in-out-sine ease-out-bounce)) {
+		$root->add_child(
+			Term::Fabulous::Widget::LineChart->new(
+				title  => $curve,
+				curve  => $curve,
+				points => 1,
+				x_axis => { visible => 0 },
+				y_axis => { visible => 0, min => 0, max => 10 },
+				series => [ { name => $curve, data => \@data } ],
+				layout => { sizing => { width => sizing_percent(0.31), height => sizing_percent(0.47) } },
+			)
+		);
+	}
+
+	Term::Fabulous->new( root => $root, width => 100, height => 26 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-curves.svg" alt="Six small charts of the same seven points connected linear, step, monotone, catmull-rom, ease-in-out-sine and ease-out-bounce"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<curve> decides how a line or the edge of an area runs from one point
+to the next; every curve passes through all points. Given to the chart,
+it applies to all its series; a series can have its own. See
+L<Term::Fabulous::Chart::Curve>.
+
+=item *
+
+C<linear>, the default, draws straight lines: it adds nothing to the
+data. C<step> holds a value until the next point, right for counters
+and states that change at a moment; C<step-before> and C<step-middle>
+jump at the start of an interval or halfway.
+
+=item *
+
+C<monotone> is the smooth curve for data: between two points it stays
+between their values, and it is flat at highs and lows, so it never
+shows a peak that is not in the data. C<catmull-rom> and C<natural> are
+smooth too, but may overshoot; C<tension> (0 to 1) tightens
+C<catmull-rom>.
+
+=item *
+
+An easing name, such as C<ease-in-out-sine> or C<ease-out-bounce>,
+shapes every segment like an animation (see
+L<Term::Fabulous::Chart::Easing>), and a code reference is an easing of
+your own. They are for looks: C<ease-out-bounce> draws wiggles that are
+not in the data.
+
+=item *
+
+C<CLAY_LEFT_TO_RIGHT_WRAP> places the six charts in rows that wrap, and
+C<line_gap> keeps the rows apart; each chart takes 31% of the width and
+47% of the height. C<< visible => 0 >> hides both axes, and the same
+C<min> and C<max> give all six charts one scale. Each chart has one
+series, so it shows no legend; the title names it.
+
+=back
+
+=head2 Draw with Braille, blocks or box lines (marker)
+
+Goal: compare the characters a chart can draw its series with: Braille
+dots, block elements and box drawing lines.
+
+This program is shipped as F<examples-cookbook/chart-styles.pl>.
+
+=for code-from examples-cookbook/chart-styles.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::AreaChart;
+	use Term::Fabulous::Widget::BarChart;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT_WRAP);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 3,
+			line_gap         => 1,
+		},
+	);
+
+	my @wave  = map { 5 + 3 * sin( $_ / 3 ) + 1.2 * sin( $_ * 1.3 ) } 0 .. 30;
+	my %small = (
+		x_axis => { visible => 0 },
+		y_axis => { visible => 0, min => 0, max => 10 },
+		layout => { sizing => { width => sizing_percent(0.31), height => sizing_percent(0.31) } },
+	);
+
+	# Lines in each style a line can take...
+	foreach my $marker (qw(braille half quadrant sextant box)) {
+		$root->add_child( Term::Fabulous::Widget::LineChart->new( %small, title => "line: $marker", marker => $marker, series => [ { name => $marker, data => \@wave } ] ) );
+	}
+
+	# ... an area in eighth blocks, and bars in quadrants and in blocks.
+	$root->add_child( Term::Fabulous::Widget::AreaChart->new( %small, title => 'area: block', series => [ { name => 'block', data => \@wave, color => '#d95926' } ] ) );
+	my @bars = map { $wave[ 3 * $_ ] } 0 .. 10;
+	$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: quadrant', marker => 'quadrant', series => [ { name => 'quadrant', data => \@bars, color => '#199e70' } ] ) );
+	$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: block', series => [ { name => 'block', data => \@bars, color => '#199e70' } ] ) );
+	$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: braille', marker => 'braille', series => [ { name => 'braille', data => \@bars, color => '#199e70' } ] ) );
+
+	Term::Fabulous->new( root => $root, width => 100, height => 32 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-styles.svg" alt="Nine small charts of one wave: lines in Braille, half blocks, quadrants, sextants and box drawing lines, an area in eighth blocks, and bars in quadrants, blocks and Braille"></p>
+
+=end html
+
+=over
+
+=item *
+
+A terminal cell holds one character, but a chart draws on a finer grid
+of I<subpixels> by choosing the character that shows the subpixels of
+a cell. The C<marker> chooses the set of characters. See
+L<Term::Fabulous::Chart::Marker>.
+
+=item *
+
+C<braille> has 2 x 4 dots per cell, the finest grid, but only one color
+per cell: where lines cross, a cell takes the color of most of its
+dots. C<half> (1 x 2, about square), C<quadrant> (2 x 2) and C<sextant>
+(2 x 3) are block elements, which show two colors per cell. C<block>
+uses the eighth blocks, which place the top of a bar or an area to an
+eighth of a cell. C<box> draws a line with box drawing characters, one
+row per column.
+
+=item *
+
+Without a C<marker>, lines and points are drawn in Braille, areas and
+bars in blocks. Not every marker suits every series type: lines take
+C<braille>, C<half>, C<quadrant>, C<sextant> and C<box>; areas and bars
+take C<block>, C<braille>, C<half>, C<quadrant> and C<sextant>. A
+C<marker> given to the chart applies only to the series that can draw
+with it. Horizontal bars use the matching horizontal blocks.
+
+=item *
+
+The sextant characters come from the "Symbols for Legacy Computing",
+which not every font has. Terminals that draw block characters
+themselves (kitty, WezTerm, foot, Ghostty and others) show them
+everywhere; elsewhere, test them before you rely on them.
+
+=item *
+
+C<%small> holds the parameters all nine charts share: no axes, the
+same y range, and a third of the width and the height each, so the
+charts fill three rows of three.
+
+=back
+
+=head2 Light backgrounds, palettes and colors of your own
+
+Goal: a chart on a light background, and a chart whose colors are all
+chosen by the program, including a reference line over its bars.
+
+This program is shipped as F<examples-cookbook/chart-colors.pl>.
+
+=for code-from examples-cookbook/chart-colors.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Widget::BarChart;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::LineChart;
+	use Clay::XS qw(sizing_grow);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			sizing    => { width => sizing_grow(), height => sizing_grow() },
+			padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap => 2,
+		},
+	);
+
+	my @months = qw(Jan Feb Mar Apr May Jun);
+
+	# A chart with a light background of its own: the theme follows it, so
+	# the text turns dark and the palette takes its steps for light ones.
+	$root->add_child(
+		Term::Fabulous::Widget::LineChart->new(
+			title            => 'Light background',
+			title_align      => 'center',
+			background_color => '#fcfcfb',
+			layout           => { padding => { left => 1, right => 1, top => 1 } },
+			labels           => \@months,
+			legend           => 'bottom',
+			x_axis           => { grid => 'dotted' },
+			y_axis           => { grid => 'dotted' },
+			series           => [ { name => 'North', data => [ 3, 5, 4, 7, 8, 9 ] }, { name => 'South', data => [ 4, 4, 6, 5, 7, 6 ] } ],
+		)
+	);
+
+	# Colors of your own: a palette, one series' color, and the chrome.
+	$root->add_child(
+		Term::Fabulous::Widget::BarChart->new(
+			title        => 'Colors of your own',
+			border_width => 1,
+			border_style => Term::Fabulous::Enum::BorderStyle->Round,
+			border_color => '#3a4152',
+			layout       => { padding => { left => 1, right => 1 } },
+			labels       => \@months,
+			palette      => [ '#61afef', '#c678dd', '#98c379' ],
+			title_color  => '#e5c07b',
+			label_color  => '#7f848e',
+			grid_color   => '#2c313a',
+			axis_color   => '#5c6370',
+			series       => [
+				{ name => 'Plan',   data => [ 5, 5, 6, 6, 7, 7 ] },
+				{ name => 'Actual', data => [ 4, 6, 6, 5, 8, 9 ] },
+				{ name => 'Target', data => [ 6, 6, 6, 6, 6, 6 ], type => 'line', color => '#e06c75', line_style => 'dashed' },
+			],
+		)
+	);
+
+	Term::Fabulous->new( root => $root, width => 100, height => 20 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-colors.svg" alt="A line chart on a light background with dark text, dotted grid lines and the legend below, next to a bar chart with a rounded frame, colors of its own and a dashed red target line"></p>
+
+=end html
+
+=over
+
+=item *
+
+A chart has no background of its own by default: it is drawn on the
+background of its parent. C<background_color> gives it one, here
+almost white, and the C<padding> in its C<layout> keeps the plot off
+the edges of it. A chart has every parameter of a
+L<Term::Fabulous::Widget::Box>, also the C<border_*> parameters of the
+second chart.
+
+=item *
+
+C<< theme => 'auto' >>, the default, looks at the background and
+chooses dark text and the palette's colors for light backgrounds on a
+light one. Set C<theme> to C<dark> or C<light> to choose yourself. The
+title, legend, tick labels, axis and grid lines are drawn in colors
+mixed from the background, so they suit any background. See
+L<Term::Fabulous::Widget::Chart/Colors and themes>.
+
+=item *
+
+C<palette> takes the name of a palette (C<default>, C<classic>,
+C<pastel> or C<vivid>; see L<Term::Fabulous::Chart::Palette/Palettes>)
+or a list of colors of your own, which the series take in order and
+which are used as they are on any background. A series' own C<color>
+wins: the third series is red, not the palette's third color.
+
+=item *
+
+C<title_color>, C<text_color> (the legend), C<label_color> (tick labels
+and axis titles), C<axis_color> (axis lines and the baseline) and
+C<grid_color> replace the mixed colors of the chrome.
+
+=item *
+
+The C<Target> series is a dashed line in a bar chart: a series can
+have a C<type> of its own, so a bar chart can also draw lines, areas
+and points, for example a reference line over its bars.
+
+=item *
+
+There is no second y axis, on purpose: two scales in one chart invite
+the reader to compare heights that mean nothing, and the crossing
+points of the lines depend only on how the two scales were chosen. To
+compare series of very different sizes, index them to a common start
+with the C<index> transform (see
+L</Smooth noisy data and index it to 100 (transforms)>), or draw two
+charts, side by side or one above the other.
+
+=item *
+
+Only the C<default> palette was checked for readers with color vision
+deficiencies. With colors of your own, help them with the legend,
+value labels or different line styles.
+
+=back
+
+=head2 Show details of the point under the pointer (SeriesHover, highlight)
+
+Goal: show the values under the mouse pointer in a status line, and
+emphasize a series from the keyboard.
+
+This program is shipped as F<examples-cookbook/chart-hover.pl>.
+
+=for code-from examples-cookbook/chart-hover.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::AreaChart;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+
+	my @teams = qw(Backend Frontend Mobile);
+	my $chart = Term::Fabulous::Widget::AreaChart->new(
+		title   => 'Closed issues per week',
+		labels  => [ map {"W$_"} 1 .. 12 ],
+		stacked => 1,
+		series  => [
+			{ name => 'Backend',  data => [ 12, 15, 11, 18, 21, 17, 16, 22, 25, 19, 23, 27 ] },
+			{ name => 'Frontend', data => [ 8,  9,  12, 10, 13, 15, 14, 12, 16, 18, 17, 20 ] },
+			{ name => 'Mobile',   data => [ 5,  4,  6,  9,  7,  8,  11, 10, 9,  12, 14, 13 ] },
+		],
+	);
+	my $status = Term::Fabulous::Widget::Text->new( text => 'Point at the chart, or press 1, 2 or 3 to emphasize a team (0: none, q: quit).', text_color => [ 150, 160, 180, 255 ] );
+	$root->add_child( $chart, $status );
+
+	# What the pointer is on: a point of a series, a legend entry, or nothing.
+	$chart->on(
+		SeriesHover => sub ($event) {
+			my $series = $event->series;
+			$status->text(
+				  !defined $series        ? 'Point at the chart, or press 1, 2 or 3 to emphasize a team (0: none, q: quit).'
+				: !defined $event->index ? "$series: " . join( ', ', map { $_ // 0 } $chart->series($series)->{data}->@* )
+				:                          sprintf( '%s closed %d issues in week %s', $series, $event->value, $event->label )
+			);
+			return;
+		}
+	);
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	# Emphasis from the program, as if the pointer were on the series.
+	$root->on(
+		KeyPress => sub ($event) {
+			my $key = $event->key_name // return;
+			$ui->loop->stop if $key eq 'q';
+			$chart->highlight( $key eq '0' ? undef : $teams[ $key - 1 ] ) if $key =~ /\A[0-3]\z/;
+			return;
+		}
+	);
+
+	$ui->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-hover.svg" alt="A stacked area chart of closed issues per team with the area under the mouse pointer emphasized, the others faded, and a status line that names the team, the week and the number of issues"></p>
+
+=end html
+
+The picture shows the program with the mouse pointer over the chart.
+
+=over
+
+=item *
+
+Charts have no tooltips. Instead, a chart fires a C<SeriesHover> event
+(L<Term::Fabulous::Event::SeriesHover>) whenever the pointer moves onto
+another data point, series, slice or legend entry, or off them. That
+event is how a program shows details: in a status line, as here, in a
+panel beside the chart, or in a table.
+
+=item *
+
+C<< $event->series >> is the name of the series, C<undef> when the
+pointer left everything. C<< $event->index >> is the position of the
+data point in the series, C<undef> on a legend entry. C<label> is the
+category (or the x value as text), C<value> the point's own value, not
+the top of its stack, and C<x> the x value. The listener tells the
+three cases apart.
+
+=item *
+
+C<< $chart->series($name) >> returns a description of a series with
+its C<data> as it was given, here to list all values of a series whose
+legend entry is under the pointer. Data may hold C<undef> for gaps,
+hence the C<// 0>.
+
+=item *
+
+While the pointer is on a series, the chart emphasizes it: the series
+keeps its color, the others fade towards the background (by
+C<hover_fade>, 0.7 by default), and its legend entry turns bold. In a
+stacked area, the pointer finds the point nearest to it in the area it
+is on.
+
+=item *
+
+C<< $chart->highlight($name) >> emphasizes a series from the program
+the same way, for example the one selected in a list; C<undef> ends the
+emphasis. The pointer wins while it is on a series.
+C<< hover => 0 >> turns the hover effects and the events off. See
+L<Term::Fabulous::Widget::Chart/Hover and emphasis>.
+
+=back
+
+=head2 Describe charts in a KDL layout (series, slices, transforms)
+
+Goal: describe a bar chart and a donut chart in a KDL layout, with
+their data, and add data to them from Perl.
+
+This program is shipped as F<examples-cookbook/chart-kdl.pl>.
+
+=for code-from examples-cookbook/chart-kdl.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Layout;
+
+	my $layout = Term::Fabulous::Layout->new( string => <<'KDL' );
+	use Term::Fabulous::Widget::Box as Box
+	use Term::Fabulous::Widget::BarChart as BarChart
+	use Term::Fabulous::Widget::DonutChart as DonutChart
+
+	Box "root" {
+		layout gap=4
+		sizing width=grow height=grow
+		padding left=2 right=2 top=1 bottom=1
+		background_color "#141923"
+
+		BarChart "sales" {
+			sizing width="percent(60)" height=grow
+			title "Sales and returns"
+			labels "Q1" "Q2" "Q3" "Q4"
+			value_labels #true
+			y_axis title="units" grid="dotted"
+			series "Sold" color="#3987e5" { data 120 145 132 170; }
+			series "Returned" color="#e66767" { data 14 11 17 12; }
+			series "Trend" type="line" line_style="dashed" color="#c98500" {
+				data 120 145 132 170
+				transform "moving_average" 2
+			}
+		}
+
+		DonutChart "channels" {
+			title "Sold by channel"
+			legend "bottom"
+			slice "Shop" 312
+			slice "Partners" 158
+			slice "Phone" 97
+		}
+	}
+	KDL
+
+	my $root = $layout->build;
+
+	# Data from the program goes to the widgets the layout named.
+	$root->find_by_id('channels')->set_value( Web => 431 );
+
+	Term::Fabulous->new( root => $root, width => 100, height => 22 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-kdl.svg" alt="A bar chart of sold and returned units per quarter with value labels and a dashed trend line, built from KDL, next to a donut chart of sales by channel that includes the Web slice added from Perl"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<use Term::Fabulous::Widget::BarChart as BarChart> makes the chart
+available in the layout. The parameters of a chart are nodes in its
+block: C<title "...">, C<legend "bottom">, C<value_labels #true>.
+C<labels> takes the labels as arguments, and C<x_axis> and C<y_axis>
+take the keys of the axis hash as properties.
+
+=item *
+
+A C<series> node takes the series' name as its argument and its
+options as properties (C<color>, C<type>, C<line_style>, ...). Inside
+its block, C<data> holds the values, C<point> an C<[ x, y ]> pair, and
+every C<transform> node adds one step with its arguments. A C<;> ends a
+node, so a short block fits on one line.
+
+=item *
+
+The C<Trend> series is a dashed line over the bars: the moving average
+of each quarter and the one before it, computed from the same numbers
+as C<Sold>. C<value_labels> applies only to the bars.
+
+=item *
+
+A C<DonutChart> (and any pie) takes its data as C<slice> nodes: a label
+and a value, and an optional C<color> property.
+
+=item *
+
+Within a chart node, the labels and the axes are applied before the
+series, wherever they stand, so the series' values are read the way the
+axes say.
+
+=item *
+
+From Perl, C<find_by_id> finds a chart by the name the layout gave it.
+C<set_value> changes the value of a slice, or adds a slice when the
+label is new, as C<Web> here. Charts with axes take new data with
+C<set_data>, C<add_points> and C<append>.
+
+=item *
+
+The bar chart takes 60% of the width (C<sizing width="percent(60)">),
+and the donut grows to the rest. For a table in KDL, see
+L</Describe a table in a KDL layout (columns, lines, sort, groups)>;
+the layout language is described in L<Term::Fabulous::Layout>.
+
+=back
+
+=head2 Print charts in a report (Static)
+
+Goal: print a bar chart and a sparkline as part of a report, without
+an event loop, to the terminal, a pipe or a file.
+
+This program is shipped as F<examples-cookbook/chart-report.pl>.
+
+=for code-from examples-cookbook/chart-report.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::BarChart;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Sparkline;
+	use Term::Fabulous::Widget::Text;
+	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
+
+	my %disk = ( '/' => 71, '/home' => 88, '/var' => 46, '/srv' => 23 );
+	my @load = ( 0.4, 0.6, 0.5, 0.9, 1.4, 2.1, 1.8, 1.2, 0.9, 1.1, 1.6, 1.3, 0.8, 0.7, 0.6, 0.9, 1.0, 0.8 );
+
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() }, child_gap => 1 } );
+
+	# A chart in a report needs a fixed height: there is no screen to fill.
+	$root->add_child(
+		Term::Fabulous::Widget::BarChart->new(
+			title        => 'Disk usage (%)',
+			horizontal   => 1,
+			value_labels => 1,
+			labels       => [ sort keys %disk ],
+			y_axis       => { min => 0, max => 100 },
+			series       => [ { name => 'used', data => [ map { $disk{$_} } sort keys %disk ] } ],
+			layout       => { sizing => { width => sizing_grow(), height => sizing_fixed(9) } },
+		)
+	);
+
+	my $line = Term::Fabulous::Widget::Box->new( layout => { child_gap => 1 } );
+	$line->add_child(
+		Term::Fabulous::Widget::Text->new( text => 'Load, last 18 hours:' ),
+		Term::Fabulous::Widget::Sparkline->new( type => 'bar', values => \@load, layout => { sizing => { width => sizing_fixed(18) } } ),
+		Term::Fabulous::Widget::Text->new( text => sprintf( 'now %.1f', $load[-1] ) ),
+	);
+	$root->add_child($line);
+
+	# Colors on a terminal, plain characters in a pipe or file.
+	Term::Fabulous::Static->new( root => $root, width => 60 )->print;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-report.svg" alt="The printed report: horizontal bars of the disk usage of four file systems with their percentages, and a line with the load of the last 18 hours as a bar sparkline"></p>
+
+=end html
+
+=over
+
+=item *
+
+L<Term::Fabulous::Static> lays out and draws the widget tree once and
+prints it; the program ends right after. On a terminal the output has
+colors; in a pipe or a file it is plain text. See
+L</Render a report to a file or pipe (Static)>.
+
+=item *
+
+A chart grows to the room it gets, but a report has no screen height
+to fill: give the chart a fixed height, here C<sizing_fixed(9)>. The
+root box has no height of its own, so the report is as high as what it
+holds.
+
+=item *
+
+In a horizontal bar chart, the C<y_axis> still describes the values,
+although it is drawn along the bottom: C<min> and C<max> fix it to 0
+to 100 percent, so a full disk would fill its row.
+
+=item *
+
+The labels and the values come from the same hash, both in the order
+of C<sort keys %disk>; Perl's hash order is random, so sort once and
+use that order for both.
+
+=item *
+
+A L<Term::Fabulous::Widget::Sparkline> is a chart one row high,
+without axes, legend or title. Its width is fixed to 18 columns, one
+per value: a bar takes at least one cell, and with more values than
+columns, the bars show the newest values that fit.
+
+=back
+
+=head2 Show sparklines in table cells (Sparkline)
+
+Goal: a table of stocks with a small chart of the month's prices in
+every row, green when the price rose and red when it fell.
+
+This program is shipped as F<examples-cookbook/chart-sparklines.pl>.
+
+=for code-from examples-cookbook/chart-sparklines.pl
+
+	use v5.24;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Sparkline;
+	use Term::Fabulous::Widget::Table;
+	use Term::Fabulous::Widget::Table::Mutator qw(sprintf_format);
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+	# Daily closing prices of four stocks over 30 days.
+	srand 9;
+	sub prices ( $start, $drift ) {
+		my $price = $start;
+		return [ map { $price *= 1 + $drift + ( rand() - 0.5 ) * 0.04 } 1 .. 30 ];
+	}
+	my @stocks = (
+		{ symbol => 'ACME', name => 'Acme Corp.',       prices => prices( 112, 0.004 ) },
+		{ symbol => 'GLBX', name => 'Globex',           prices => prices( 48,  -0.003 ) },
+		{ symbol => 'INIT', name => 'Initech',          prices => prices( 230, 0.001 ) },
+		{ symbol => 'UMBR', name => 'Umbrella Holding', prices => prices( 75,  0.006 ) },
+	);
+	$_->{last} = $_->{prices}[-1] foreach @stocks;
+	$_->{change} = ( $_->{prices}[-1] / $_->{prices}[0] - 1 ) * 100 foreach @stocks;
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 20, 25, 35, 255 ],
+		layout           => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		},
+	);
+
+	# A column whose cells are sparklines of the row's prices, green or red
+	# by the change over the month.
+	my $table = Term::Fabulous::Widget::Table->new(
+		id           => 'stocks',
+		row_id       => 'symbol',
+		border       => 'Outer',
+		column_lines => 'none',
+		header_line  => 'none',
+		stripe_color => '#1c2029',
+		rows         => \@stocks,
+		columns      => [
+			{ key => 'symbol', title => 'Symbol' },
+			{ key => 'name',   title => 'Name' },
+			{ key => 'last',   title => 'Last',   type => 'number', mutator => sprintf_format('%.2f') },
+			{ key => 'change', title => '30 days', type => 'number', mutator => sprintf_format('%+.1f%%') },
+			{
+				key        => 'prices',
+				title      => 'Trend',
+				width      => 'fixed(30)',
+				sortable   => 0,
+				filterable => 0,
+				cell       => sub ($cell) {
+					my $row = $cell->{row};
+					return Term::Fabulous::Widget::Sparkline->new( type => 'area', values => $row->{prices}, color => $row->{change} >= 0 ? '#1baf7a' : '#e66767' );
+				},
+			},
+		],
+	);
+	$root->add_child($table);
+
+	Term::Fabulous->new( root => $root, width => 90, height => 12 )->run;
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-sparklines.svg" alt="A table of four stocks with symbol, name, last price and change, and a column of area sparklines of the month's prices, green for rising and red for falling stocks"></p>
+
+=end html
+
+=over
+
+=item *
+
+The C<cell> code of the C<prices> column returns a widget for every
+row: a sparkline of the row's prices. The table puts it into the cell,
+which gives it the cell's background. See
+L<Term::Fabulous::Widget::Table/CELL WIDGETS>.
+
+=item *
+
+A sparkline is one row high and as wide as its parent lets it be, here
+the 30 columns of C<< width => 'fixed(30)' >>. C<type> is C<line> (the
+default), C<area> or C<bar>; C<values> takes the numbers and C<color>
+the color, here chosen per row from the change over the month.
+
+=item *
+
+The column's values are array references, which cannot be sorted or
+filtered as text: C<< sortable => 0 >> and C<< filterable => 0 >> turn
+that off for the column. The other columns sort and filter as usual.
+
+=item *
+
+Every sparkline fits its scale to its own values, so it shows the
+movement of its stock, not how the prices of the rows compare. Give
+the sparklines the same C<min> and C<max> to compare the rows.
+
+=item *
+
+An C<area> or C<bar> sparkline grows from 0, a C<line> sparkline spans
+its values. For values far from 0, such as these prices, the changes
+then take only a small part of the row; a C<line>, or a C<min> near the
+lowest value, shows them larger.
+
+=item *
+
+To show a sparkline outside a table, add it to a box like any widget;
+C<< $sparkline->add_values(@new) >> appends values, and with
+C<max_points> the oldest go. See the gallery program
+F<examples/widgets/sparkline.pl> in L<Term::Fabulous::Examples>.
 
 =back
 

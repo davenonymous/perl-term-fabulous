@@ -549,6 +549,14 @@ cell, and lines and colors per column, row and cell.
 
 =item *
 
+Chart widgets that draw themselves from data: line, area, bar and
+scatter charts with category, numeric, logarithmic and time axes,
+stacking, curves, transforms and live data; histograms; sparklines;
+pie, donut, polar area and radar charts; a legend, hover with a
+C<SeriesHover> event, and palettes for dark and light backgrounds.
+
+=item *
+
 Keyboard focus with Tab and mouse clicks, readable key names for key
 bindings (C<Ctrl+S>, C<Shift+Left>), mouse wheel scrolling.
 
@@ -1383,6 +1391,72 @@ How tables read numbers and dates; natural sorting.
 =item L<Term::Fabulous::Widget::Table::Model>
 
 The rows of a table and the lines it shows, without widgets.
+
+=back
+
+=head2 Charts
+
+=over
+
+=item L<Term::Fabulous::Widget::Chart>
+
+What all charts share: title, legend, palettes and themes, colors,
+hover and the C<SeriesHover> event.
+
+=item L<Term::Fabulous::Widget::XYChart>
+
+The reference for charts with an x and a y axis: series and their data
+forms, axes, stacking, curves, rendering styles, transforms, live data.
+
+=item L<Term::Fabulous::Widget::LineChart>, L<Term::Fabulous::Widget::AreaChart>,
+L<Term::Fabulous::Widget::BarChart>, L<Term::Fabulous::Widget::ScatterPlot>
+
+The XY charts, each with its default series type.
+
+=item L<Term::Fabulous::Widget::Histogram>
+
+How values are distributed: counts in bins.
+
+=item L<Term::Fabulous::Widget::Sparkline>
+
+A chart without axes, one row high.
+
+=item L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
+L<Term::Fabulous::Widget::PolarAreaChart>
+
+Parts of a whole as slices.
+
+=item L<Term::Fabulous::Widget::RadarChart>
+
+Several values per series on axes around a center.
+
+=item L<Term::Fabulous::Role::HasSeries>
+
+Adding, changing and removing the series of a chart and their data.
+
+=item L<Term::Fabulous::Event::SeriesHover>
+
+The event a chart fires when the pointer moves onto another series,
+point or slice.
+
+=item L<Term::Fabulous::Chart::Transform>, L<Term::Fabulous::Chart::Curve>,
+L<Term::Fabulous::Chart::Easing>
+
+Steps that prepare the data of a series; the curves between points.
+
+=item L<Term::Fabulous::Chart::Palette>, L<Term::Fabulous::Chart::Format>,
+L<Term::Fabulous::Chart::Marker>
+
+Palettes and ink colors; number and date labels; the character sets
+charts draw with.
+
+=item L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Chart::Raster>,
+L<Term::Fabulous::Chart::Surface>, L<Term::Fabulous::Chart::Radial>,
+L<Term::Fabulous::Chart::Series>
+
+The machinery behind the charts: axes, subpixel drawing, the cell
+compositor, circle geometry and the series object; for charts of your
+own.
 
 =item L<Term::Fabulous::Widget::Table::Style>, L<Term::Fabulous::Widget::Table::Borders>
 
