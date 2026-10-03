@@ -50,8 +50,9 @@ L<Term::Fabulous::Widget::TextArea>, toggling a
 L<Term::Fabulous::Widget::Checkbox>, selecting a radio button of a
 L<Term::Fabulous::Widget::RadioGroup>, choosing an option of a
 L<Term::Fabulous::Widget::Dropdown>, moving a
-L<Term::Fabulous::Widget::Slider> or choosing the stars of a
-L<Term::Fabulous::Widget::StarRating>.
+L<Term::Fabulous::Widget::Slider>, choosing the stars of a
+L<Term::Fabulous::Widget::StarRating> or a segment of a
+L<Term::Fabulous::Widget::SegmentedControl>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<Change>; listen for
 it with C<< $widget->on( Change => sub ($event) { ... } ) >>.
@@ -143,6 +144,11 @@ L<Term::Fabulous::Widget::Slider>: the new number.
 =item *
 
 L<Term::Fabulous::Widget::StarRating>: the new number of stars.
+
+=item *
+
+L<Term::Fabulous::Widget::SegmentedControl>: the C<value> of the
+selected option.
 
 =back
 

@@ -118,8 +118,9 @@ the mouse, hover and press, and scrolling.
 =item L<Term::Fabulous::Manual::Forms>
 
 The input widgets (text fields, text areas, check boxes, radio
-buttons, dropdowns, sliders, star ratings), what they have in common,
-editing text, the clipboard, undo, and complete forms.
+buttons, dropdowns, sliders, star ratings, segmented controls), what
+they have in common, editing text, the clipboard, undo, and complete
+forms.
 
 =item L<Term::Fabulous::Manual::Charts>
 
@@ -679,11 +680,11 @@ L<Term::Fabulous::Manual::Forms/Text areas>,
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
 L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>.
 
-=item Check boxes, radio buttons, dropdowns, sliders, star ratings
+=item Check boxes, radio buttons, dropdowns, sliders, star ratings, segmented controls
 
 L<Term::Fabulous::Manual::Forms/THE INPUT WIDGETS ONE BY ONE>,
 L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>,
-L<Term::Fabulous::Widget::StarRating>.
+L<Term::Fabulous::Widget::StarRating>, L<Term::Fabulous::Widget::SegmentedControl>.
 
 =item Read the values of a form; react to changes and to Enter
 

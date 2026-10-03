@@ -688,6 +688,11 @@ screenshot "widget-star-rating" {
 	size 60 7
 }
 
+screenshot "widget-segmented-control" {
+	script "examples/widgets/segmented-control.pl"
+	size 64 10
+}
+
 screenshot "widget-text-field" {
 	script "examples/widgets/text-field.pl"
 	size 64 9

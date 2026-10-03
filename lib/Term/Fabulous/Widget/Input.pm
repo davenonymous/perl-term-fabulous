@@ -261,6 +261,11 @@ L<Term::Fabulous::Widget::Slider> - a number from a range
 
 L<Term::Fabulous::Widget::StarRating> - a number of stars
 
+=item *
+
+L<Term::Fabulous::Widget::SegmentedControl> - one choice of a few,
+side by side
+
 =back
 
 You do not create an C<Input> directly (the class is abstract and

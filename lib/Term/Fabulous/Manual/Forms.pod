@@ -95,6 +95,11 @@ A number from a range. See L</Sliders>.
 A number of stars, whole or half, editable or read-only. See
 L</Star ratings>.
 
+=item L<Term::Fabulous::Widget::SegmentedControl>
+
+One choice of a few, shown side by side as one bar. See
+L</Segmented controls>.
+
 =back
 
 F<examples/form.pl> uses all of them in one form. The picture shows it
@@ -640,6 +645,42 @@ In KDL:
 		show_value #true
 	}
 
+=head2 Segmented controls
+
+A L<Term::Fabulous::Widget::SegmentedControl> shows a few options side
+by side as one bar and highlights the selected one: what a radio group
+does, in one row and without marks. The options are given like a
+dropdown's (a label, C<[ label, value ]> or a hash, which may also
+disable the option). The arrow keys, C<Home>, C<End> and the digits
+choose, so does a click, and the selection changes at once. A
+C<vertical> control stacks the segments, and a control whose C<layout>
+makes it wider than its labels shares the space among the segments.
+
+	use Term::Fabulous::Widget::SegmentedControl;
+
+	my $period = Term::Fabulous::Widget::SegmentedControl->new(
+		id      => 'period',
+		options => [ [ Day => 'd' ], [ Week => 'w' ], [ Month => 'm' ] ],
+		value   => 'w',
+	);
+
+The picture shows a focused control, one stretched to the full width,
+one with a disabled segment, a vertical one and a disabled one
+(F<examples/widgets/segmented-control.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
+
+=end html
+
+In KDL:
+
+	SegmentedControl "period" {
+		options "Day" "Week" "Month"
+		value "Week"
+	}
+
 =head1 EDITING TEXT
 
 The text field and the text area are edited the same way. What follows is a summary; the reference is the
@@ -761,6 +802,8 @@ KEYS section.
 	              page_step; Home, End: lowest, highest value
 	StarRating    Left/Down, Right/Up: one star (or half); Home, End: no
 	              stars, all stars; 0-9: that many stars
+	Segmented-    Left/Up, Right/Down: previous/next segment (wraps
+	Control       around); Home, End: first/last segment; 1-9: that segment
 
 The class pages: L<Term::Fabulous::Widget::TextInput/KEYS>,
 L<Term::Fabulous::Widget::TextField/KEYS>,
@@ -769,7 +812,8 @@ L<Term::Fabulous::Widget::Checkbox/KEYS>,
 L<Term::Fabulous::Widget::RadioGroup/KEYS>,
 L<Term::Fabulous::Widget::Dropdown/KEYS>,
 L<Term::Fabulous::Widget::Slider/KEYS>,
-L<Term::Fabulous::Widget::StarRating/KEYS>.
+L<Term::Fabulous::Widget::StarRating/KEYS>,
+L<Term::Fabulous::Widget::SegmentedControl/KEYS>.
 
 =head1 COMPLETE FORMS
 
@@ -925,6 +969,7 @@ L<Term::Fabulous::Widget::TextArea>, L<Term::Fabulous::Widget::Checkbox>,
 L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::RadioButton>,
 L<Term::Fabulous::Widget::Dropdown>, L<Term::Fabulous::Widget::Slider>,
 L<Term::Fabulous::Widget::StarRating>,
+L<Term::Fabulous::Widget::SegmentedControl>,
 L<Term::Fabulous::Editor>, L<Term::Fabulous::Event::Change>,
 L<Term::Fabulous::Event::Submit>.
 

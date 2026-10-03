@@ -1,6 +1,10 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::SegmentedControl: one choice of a few
+          options shown side by side as one bar, with disabled segments,
+          a vertical form, stretching to the layout's width, a hover
+          look and KDL properties
         - Term::Fabulous::Widget::StarRating: a rating of whole or half
           stars, chosen with the keys, a click or the wheel, with a hover
           preview, a value label, a read-only form and KDL properties

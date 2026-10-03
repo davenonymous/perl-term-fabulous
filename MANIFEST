@@ -212,6 +212,7 @@ lib/Term/Fabulous/Widget/RadioButton.pm
 lib/Term/Fabulous/Widget/RadioGroup.pm
 lib/Term/Fabulous/Widget/ScatterPlot.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
+lib/Term/Fabulous/Widget/SegmentedControl.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Sparkline.pm
 lib/Term/Fabulous/Widget/StarRating.pm
@@ -294,6 +295,7 @@ t/widget-radar-chart.t
 t/widget-radio.t
 t/widget-revision.t
 t/widget-scroll-box.t
+t/widget-segmented-control.t
 t/widget-slider.t
 t/widget-sparkline.t
 t/widget-star-rating.t
@@ -325,6 +327,7 @@ examples/widgets/polar-area-chart.pl
 examples/widgets/radar-chart.pl
 examples/widgets/radio.pl                
 examples/widgets/scatter-plot.pl
+examples/widgets/segmented-control.pl
 examples/widgets/slider.pl               
 examples/widgets/sparkline.pl
 examples/widgets/star-rating.pl
@@ -445,6 +448,7 @@ screenshots/widget-polar-area-chart.svg
 screenshots/widget-radar-chart.svg
 screenshots/widget-radio.svg             
 screenshots/widget-scatter-plot.svg
+screenshots/widget-segmented-control.svg
 screenshots/widget-slider.svg            
 screenshots/widget-sparkline.svg
 screenshots/widget-star-rating.svg

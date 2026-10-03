@@ -652,6 +652,19 @@ change the value; so does a click on a star.
 
 =end html
 
+=head3 examples/widgets/segmented-control.pl
+
+L<Term::Fabulous::Widget::SegmentedControl>: a focused control, one
+stretched to the full width, one with a disabled segment, a vertical
+one and a disabled one. Left and Right, the digits, Home and End choose
+a segment; so does a click.
+
+=begin html
+
+<p><img src="/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
+
+=end html
+
 =head3 examples/widgets/text-field.pl
 
 L<Term::Fabulous::Widget::TextField>: a focused field to type in, an
