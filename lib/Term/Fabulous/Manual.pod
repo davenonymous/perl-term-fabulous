@@ -102,7 +102,7 @@ the L</FEATURE INDEX>.
 The widgets and the widget tree, widget ids, and how the layout engine
 sizes and places widgets: direction, sizing, padding, gaps, alignment,
 flow and stack layouts, floating widgets and equal sizes across the
-tree.
+tree. Dividers between widgets.
 
 =item L<Term::Fabulous::Manual::Looks>
 
@@ -545,6 +545,10 @@ L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at
 
 L<Term::Fabulous::Widget/add_state>,
 L<Term::Fabulous::Cookbook::Layout/Mark widgets with states and classes>.
+
+=item Draw a line between widgets, with a heading on it
+
+L<Term::Fabulous::Manual::Layout/DIVIDERS>, L<Term::Fabulous::Widget::Divider>.
 
 =back
 

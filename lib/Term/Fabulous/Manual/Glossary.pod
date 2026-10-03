@@ -44,7 +44,8 @@ target's ancestors. See L<Term::Fabulous::Manual::Events/Return values and bubbl
 
 A widget you draw into yourself: a L<Term::Fabulous::Widget::Canvas>
 cell by cell, a L<Term::Fabulous::Widget::PixelCanvas> pixel by pixel.
-See L<Term::Fabulous::Manual::Charts/CANVASES>.
+See L<Term::Fabulous::Manual::Charts/CANVASES>. A canvas that paints
+itself from its own state is a L<Term::Fabulous::Widget::Display>.
 
 =item cell
 

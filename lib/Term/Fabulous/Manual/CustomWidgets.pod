@@ -12,7 +12,7 @@ This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous:
 
 This page explains how to write widget classes of your own: a container
 with a fixed structure (derived from Box), a widget that draws itself
-(derived from Canvas), an input widget (derived from Input) and a box
+(derived from Display), an input widget (derived from Input) and a box
 that takes the focus and reacts to the mouse (a Box with the Clay::UI
 interaction roles). It lists the methods each base class lets you
 override, explains how a widget tells Term::Fabulous that it must be
@@ -38,10 +38,12 @@ for a container with a fixed structure or a fixed look, for example a
 "card" with a title and a body. Build the children in C<ADJUST>. See
 L</A container widget>.
 
-=item L<Term::Fabulous::Widget::Canvas>
+=item L<Term::Fabulous::Widget::Display>
 
-for a widget that draws itself cell by cell, such as a progress bar, a
-gauge or a game board. See L</A widget that draws itself>.
+for a widget that draws itself cell by cell from its own state, such as
+a gauge, a meter or a game board; the built-in
+L<Term::Fabulous::Widget::Divider> is one. See
+L</A widget that draws itself>.
 
 =item L<Term::Fabulous::Widget::Input>
 
@@ -147,53 +149,58 @@ L</Telling Term::Fabulous that something changed>.
 
 =head2 A widget that draws itself
 
-Derive from L<Term::Fabulous::Widget::Canvas> for a widget that draws
-cells. The layout decides the size of the canvas; its buffer has 0 x 0
-cells until the first frame lays it out (see
+Derive from L<Term::Fabulous::Widget::Display> for a widget that draws
+cells from its own state. The layout decides the size of the widget;
+its buffer has 0 x 0 cells until the first frame lays it out (see
 L<Term::Fabulous::Widget::Canvas/Buffer size>). So do not draw in the
-constructor or in the setters. Override
-L<refresh|Term::Fabulous::Widget::Canvas/refresh> instead: the renderer
-calls it for every canvas in every frame, after the buffer got its size
-and before the cells are painted. Keep it cheap by drawing only when
-something it draws from changed:
+constructor or in the setters: the setters record the new state and
+call C<mark_changed>, and the base class calls your C<paint> while the
+frame is drawn, after the buffer got its size, and only when something
+C<paint> depends on changed (the size, the state marked changed, and
+whatever L<C<paint_key>|Term::Fabulous::Widget::Display/paint_key>
+adds). C<natural_size> says how big the widget wants to be when the
+layout does not size it:
 
 	use Object::Pad 0.825;
 
-	class My::ProgressBar :isa(Term::Fabulous::Widget::Canvas) :strict(params) {
+	class My::Gauge :isa(Term::Fabulous::Widget::Display) :strict(params) {
 		field $fraction :param = 0;
-		field $_painted_for = '';    # what the cells show
 
 		method fraction (@new) {
 			return $fraction unless @new;
 			$fraction = $new[0];
-			$self->mark_changed;    # a frame is due
+			$self->mark_changed;    # a frame is due, and it paints
 			return $fraction;
 		}
 
-		method refresh :override () {
-			my $key = join ',', $self->columns, $self->rows, $fraction;
-			return if $key eq $_painted_for;
-			$_painted_for = $key;
+		method natural_size () { return ( 20, 1 ) }    # columns, rows
+
+		method paint () {
 			my $filled = int( $self->columns * $fraction + 0.5 );
-			$self->clear;
-			$self->fill( 0,       0, $filled,                  $self->rows, "\x{2588}", 0x61AFEF );
-			$self->fill( $filled, 0, $self->columns - $filled, $self->rows, "\x{2591}", 0x3A3F4B );
+			$self->fill_attrs( 0,       0, $filled,                  "\x{2588}", $self->color_attr(0x61AFEF), undef );
+			$self->fill_attrs( $filled, 0, $self->columns - $filled, "\x{2591}", $self->color_attr(0x3A3F4B), undef );
 			return;
 		}
 	}
 
-	use Clay::XS qw(sizing_fixed);
+	my $gauge = My::Gauge->new( fraction => 0.25 );
+	$gauge->fraction(0.5);    # from a timer, a listener, ...
 
-	my $bar = My::ProgressBar->new( fraction => 0.25, layout => { sizing => { width => sizing_fixed(20), height => sizing_fixed(1) } } );
-	$bar->fraction(0.5);    # from a timer, a listener, ...
+Paint with C<put_attrs> (L<Term::Fabulous::Widget::Canvas/put_attrs>)
+and the helpers C<paint_text>, C<fill_attrs> and C<color_attr> of
+L<Term::Fabulous::Widget::Display/SUBCLASS INTERFACE>, which take
+termbox2 attributes instead of colors and skip the color conversions.
+Cells written in C<paint> belong to the frame being drawn and make no
+further frame due. The widget receives C<Mouse> events for all its
+cells; the method L<C<cell_at>|Term::Fabulous::Widget::Canvas/cell_at>
+turns their position into a cell of the buffer.
 
-Draw with the canvas methods (C<put>, C<put_text>, C<fill>, C<clear>;
-see L<Term::Fabulous::Widget::Canvas/METHODS>). L<C<put_attrs>|Term::Fabulous::Widget::Canvas/put_attrs> skips the color
-conversions, for widgets that draw many cells. Cells written in
-C<refresh> belong to the frame being drawn and make no further frame
-due. A canvas receives C<Mouse> events for all its cells; its method
-L<C<cell_at>|Term::Fabulous::Widget::Canvas/cell_at> turns their
-position into a cell of the buffer.
+A widget that draws with the plain canvas methods (C<put>, C<put_text>,
+C<fill>, C<clear>; see L<Term::Fabulous::Widget::Canvas/METHODS>) can
+derive from L<Term::Fabulous::Widget::Canvas> directly and override
+L<refresh|Term::Fabulous::Widget::Canvas/refresh>, which the renderer
+calls for every canvas in every frame; it must then decide itself
+whether anything changed since it last drew.
 
 A canvas that is drawn from outside instead, by a listener for its
 C<CanvasResize> event (L<Term::Fabulous::Event::CanvasResize>), needs
@@ -407,9 +414,9 @@ it, except while C<refresh> runs.
 
 =item *
 
-An Input does not paint in its setters: they call C<mark_changed>, and
-the frame that it makes due calls C<paint> (see
-L<Term::Fabulous::Widget::Input/Painting>).
+A Display (and so an Input) does not paint in its setters: they call
+C<mark_changed>, and the frame that it makes due calls C<paint> (see
+L<Term::Fabulous::Widget::Display/Painting>).
 
 =back
 
@@ -488,7 +495,8 @@ L<Test a widget without a terminal|Term::Fabulous::Cookbook::Output/Test a widge
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Programs>. Next page: L<Term::Fabulous::Manual::Troubleshooting>.
 
 L<Term::Fabulous::Cookbook::Extending>, L<Term::Fabulous::Widget::Box>,
-L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::Input>,
+L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::Display>,
+L<Term::Fabulous::Widget::Input>,
 L<Term::Fabulous::Widget::Button>, L<Term::Fabulous::Role::CanParseLayout>,
 L<Term::Fabulous::Manual::Events>.
 

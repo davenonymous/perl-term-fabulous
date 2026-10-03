@@ -85,6 +85,8 @@ pie, donut, polar area and radar charts; a legend, hover with a
 bindings (`Ctrl+S`, `Shift+Left`), the kitty keyboard protocol for
 keys older terminals cannot tell apart, mouse wheel scrolling.
 - Dialogs that open over the screen and keep the keyboard focus inside.
+- Dividers between widgets, horizontal or vertical, with a text on the
+line.
 - Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 - Correct handling of Unicode: wide CJK characters, emoji, combining
@@ -830,6 +832,11 @@ Term::Fabulous, and programs do not use them directly.
     A box whose content can be larger than the box and scrolls with the
     mouse wheel.
 
+- [Term::Fabulous::Widget::Divider](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADivider)
+
+    A horizontal or vertical line between widgets, with an optional text at
+    its start, center or end.
+
 - [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas)
 
     A box with a grid of character cells that you draw into.
@@ -843,6 +850,12 @@ Term::Fabulous, and programs do not use them directly.
 
     The abstract base class of all widgets except Text. Its page describes
     the constructor parameters and methods they all share.
+
+- [Term::Fabulous::Widget::Display](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADisplay)
+
+    The abstract base class of the widgets that paint themselves from their
+    own state (the divider, the input widgets); derive from it to write
+    your own.
 
 - [Term::Fabulous::Widget::Element](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AElement), [Term::Fabulous::Widget::TextNode](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextNode)
 

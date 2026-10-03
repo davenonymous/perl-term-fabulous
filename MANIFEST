@@ -195,6 +195,8 @@ lib/Term/Fabulous/Widget/Chart.pm
 lib/Term/Fabulous/Widget/Checkbox.pm
 lib/Term/Fabulous/Widget/Dialog.pm
 lib/Term/Fabulous/Widget/Dialog/Backdrop.pm
+lib/Term/Fabulous/Widget/Display.pm
+lib/Term/Fabulous/Widget/Divider.pm
 lib/Term/Fabulous/Widget/DonutChart.pm
 lib/Term/Fabulous/Widget/Dropdown.pm
 lib/Term/Fabulous/Widget/Element.pm
@@ -281,6 +283,7 @@ t/widget-canvas.t
 t/widget-chart-hover.t
 t/widget-checkbox.t
 t/widget-dialog.t
+t/widget-divider.t
 t/widget-dropdown.t
 t/widget-histogram.t
 t/widget-inset.t
@@ -307,6 +310,7 @@ examples/widgets/button.pl
 examples/widgets/chart.pl
 examples/widgets/checkbox.pl             
 examples/widgets/dialog.pl               
+examples/widgets/divider.pl
 examples/widgets/donut-chart.pl
 examples/widgets/donut-chart-centers.pl
 examples/widgets/dropdown.pl             
@@ -425,6 +429,7 @@ screenshots/widget-button.svg
 screenshots/widget-chart.svg
 screenshots/widget-checkbox.svg          
 screenshots/widget-dialog.svg            
+screenshots/widget-divider.svg
 screenshots/widget-donut-chart.svg
 screenshots/widget-donut-chart-centers.svg
 screenshots/widget-dropdown.svg          

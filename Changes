@@ -1,6 +1,14 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Divider: a horizontal or vertical line
+          between widgets, with an optional text at its start, center or
+          end, in any border style or glyph and color; a vertical divider
+          writes its text downwards. Term::Fabulous::Widget::Display, the
+          new abstract base class of the widgets that paint themselves
+          from their own state, holds the painting machinery the input
+          widgets used to have; Term::Fabulous::Widget::Input derives
+          from it
         - Documentation reviewed against the code and reorganized: the
           Manual is an index page with thirteen topic pages
           (Term::Fabulous::Manual::Layout, ::Looks, ::Events, ::Forms,

@@ -702,6 +702,11 @@ screenshot "widget-dialog" {
 	size 72 14
 }
 
+screenshot "widget-divider" {
+	script "examples/widgets/divider.pl"
+	size 64 18
+}
+
 screenshot "widget-table" {
 	script "examples/widgets/table.pl"
 	size 90 24

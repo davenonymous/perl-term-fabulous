@@ -571,6 +571,11 @@ Dialogs that open over the screen and keep the keyboard focus inside.
 
 =item *
 
+Dividers between widgets, horizontal or vertical, with a text on the
+line.
+
+=item *
+
 Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 
@@ -1374,6 +1379,11 @@ itself and closes on Escape.
 A box whose content can be larger than the box and scrolls with the
 mouse wheel.
 
+=item L<Term::Fabulous::Widget::Divider>
+
+A horizontal or vertical line between widgets, with an optional text at
+its start, center or end.
+
 =item L<Term::Fabulous::Widget::Canvas>
 
 A box with a grid of character cells that you draw into.
@@ -1387,6 +1397,12 @@ circles.
 
 The abstract base class of all widgets except Text. Its page describes
 the constructor parameters and methods they all share.
+
+=item L<Term::Fabulous::Widget::Display>
+
+The abstract base class of the widgets that paint themselves from their
+own state (the divider, the input widgets); derive from it to write
+your own.
 
 =item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
 

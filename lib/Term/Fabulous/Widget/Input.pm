@@ -11,12 +11,12 @@ use Clay::UI::Role::Interaction::Disableable;
 use Clay::UI::Role::Interaction::Focusable;
 use Clay::UI::Role::Interaction::Hoverable;
 use Clay::UI::Role::Interaction::Pressable;
-use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Input
-	:isa(Term::Fabulous::Widget::Canvas)
+	:isa(Term::Fabulous::Widget::Display)
 	:does(Clay::UI::Role::Interaction::Focusable)
 	:does(Clay::UI::Role::Interaction::Hoverable)
 	:does(Clay::UI::Role::Interaction::Pressable)
@@ -24,32 +24,18 @@ class Term::Fabulous::Widget::Input
 	:abstract
 {
 	use Clay::UI::Enum::Result;
-	use Clay::XS qw(sizing_fixed);
 	use Scalar::Util qw(refaddr weaken);
 	use Term::Fabulous::Termbox qw(TB_REVERSE);
 	use Term::Fabulous::Check qw(cell_color);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::Change;
-	use Term::Fabulous::Render::Attr qw(cell_color_attr);
-	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	my @COLOR_NAMES = qw(text_color disabled_color accent_color focus_background_color);
-
-	# Counts mark_changed calls, the changes of the widget's own state; with
-	# the rest of the paint key, what the cells were last painted for.
-	field $_change_count = 0;
-	field $_painted_key;
 
 	field $text_color             :param = [ 220, 223, 228, 255 ];
 	field $disabled_color         :param = [ 108, 112, 120, 255 ];
 	field $accent_color           :param = [ 97,  175, 239, 255 ];
 	field $focus_background_color :param = [ 52,  58,  72,  255 ];
-
-	# The content size a subclass asks for when the layout gives none.
-	method natural_size;
-
-	# Draws the widget into the cleared buffer.
-	method paint;
 
 	ADJUST {
 		$text_color             = cell_color( $self, text_color             => $text_color );
@@ -100,11 +86,6 @@ class Term::Fabulous::Widget::Input
 		return @new ? $self->_set_color( focus_background_color => \$focus_background_color, @new ) : $focus_background_color;
 	}
 
-	# The termbox2 attribute of a color, undef for none.
-	method color_attr ($color) {
-		return cell_color_attr( color => $color );
-	}
-
 	# The attribute for normal text: the text color, or the disabled color.
 	method foreground_attr () {
 		return $self->color_attr( $self->is_enabled ? $text_color : $disabled_color );
@@ -129,50 +110,13 @@ class Term::Fabulous::Widget::Input
 	# Painting
 	# ---------------------------------------------------------------------
 
-	method mark_changed :override () {
-		$_change_count++;
-		return $self->SUPER::mark_changed;
-	}
-
-	# Paints the cells again when anything paint reads changed since they
-	# were last painted.
-	method refresh :override () {
-		return unless $self->columns > 0 && $self->rows > 0;
-		my $key = join "\x{1F}", map { $_ // "\x{0}" } $self->paint_key;
-		return if defined $_painted_key && $key eq $_painted_key;
-		$_painted_key = $key;
-		$self->clear;
-		$self->paint;
-		return;
-	}
-
-	# What paint reads: the size, the widget's own state (every setter
-	# calls mark_changed) and what other objects decide, the focus and
-	# whether the widget is enabled. A subclass that paints from the state
-	# of other widgets adds it.
-	method paint_key () {
-		return ( $self->columns, $self->rows, $_change_count, $self->is_focused, $self->is_enabled );
+	# What paint reads, besides the size and the widget's own state: what
+	# other objects decide, the focus and whether the widget is enabled.
+	method paint_key :override () {
+		return ( $self->SUPER::paint_key, $self->is_focused, $self->is_enabled );
 	}
 
 	method focus_changed ($is_focused) {
-		return;
-	}
-
-	# Paints a character string from ($x, $y) with termbox2 attributes,
-	# stopping before a cluster that would cross column $limit; returns the
-	# column after the last painted cluster.
-	method paint_text ( $x, $y, $text, $fg, $bg, $limit = $self->columns ) {
-		foreach my $cluster ( grapheme_clusters($text) ) {
-			my $columns = cluster_columns($cluster);
-			last if $x + $columns > $limit;
-			$self->put_attrs( $x, $y, $cluster, $fg, $bg );
-			$x += $columns;
-		}
-		return $x;
-	}
-
-	method fill_attrs ( $x, $y, $width, $glyph, $fg, $bg ) {
-		$self->put_attrs( $_, $y, $glyph, $fg, $bg ) foreach $x .. $x + $width - 1;
 		return;
 	}
 
@@ -188,29 +132,6 @@ class Term::Fabulous::Widget::Input
 		my $bg = $self->focus_background_attr // return undef;
 		$self->fill_attrs( 0, $_, $self->columns, ' ', undef, $bg ) foreach 0 .. $self->rows - 1;
 		return $bg;
-	}
-
-	# ---------------------------------------------------------------------
-	# Natural size: fills the sizing axes the layout leaves open. Clay::UI
-	# runs the contributors in alphabetical order, so this one runs after
-	# contribute_layout and contribute_layout_inset and sees the final
-	# padding, border included.
-	# ---------------------------------------------------------------------
-
-	method contribute_layout_size ($config) {
-		my $layout = $config->{layout} // {};
-		my $sizing = $layout->{sizing} // {};
-		my @open   = grep { !defined $sizing->{$_} } qw(width height);
-		return unless @open;
-
-		my $padding = $layout->{padding} // {};
-		my ( $columns, $rows ) = $self->natural_size;
-		my %total = (
-			width  => $columns + ( $padding->{left} // 0 ) + ( $padding->{right}  // 0 ),
-			height => $rows +    ( $padding->{top}  // 0 ) + ( $padding->{bottom} // 0 ),
-		);
-		$config->{layout} = { %$layout, sizing => { %$sizing, map { $_ => sizing_fixed( $total{$_} ) } @open } };
-		return;
 	}
 
 	# ---------------------------------------------------------------------
@@ -399,12 +320,12 @@ It can be built from a KDL layout file (see L</KDL PROPERTIES>).
 
 =back
 
-Technically, an input is a L<Term::Fabulous::Widget::Canvas> that paints
-itself when a frame is drawn (see L</Painting>): setters only record the
-new state, and the frame paints whatever changed since the last one, so
-only cells that really changed are sent to the terminal. Anything you
-draw into an input with the canvas methods (C<put>, C<put_text>, ...)
-is lost the next time it paints.
+Technically, an input is a L<Term::Fabulous::Widget::Display>, a
+canvas that paints itself when a frame is drawn (see L</Painting>):
+setters only record the new state, and the frame paints whatever
+changed since the last one, so only cells that really changed are sent
+to the terminal. Anything you draw into an input with the canvas
+methods (C<put>, C<put_text>, ...) is lost the next time it paints.
 
 =head2 Painting
 
@@ -421,7 +342,8 @@ clear the buffer and call L</paint>. So the cells always show the state
 of the frame they are drawn in, also when the state was changed by
 another widget, and a frame that changes nothing about an input paints
 nothing of it. The cells read with C<cell> show the state of the last
-frame.
+frame. This is how every L<Term::Fabulous::Widget::Display> paints; see
+L<Term::Fabulous::Widget::Display/Painting>.
 
 =head1 CONSTRUCTOR
 
@@ -639,7 +561,8 @@ Every input has a natural content size: for example one row and as many
 columns as its label needs (a checkbox), or C<preferred_columns> by one
 row (a text field). When the C<layout> gives no C<sizing> for an axis,
 the input is given a fixed size on that axis: its natural size plus its
-padding and border width. A C<sizing> in the C<layout> always wins:
+padding and border width (see L<Term::Fabulous::Widget::Display/Size>).
+A C<sizing> in the C<layout> always wins:
 
 	# 20 columns wide (the default preferred_columns), one row high:
 	Term::Fabulous::Widget::TextField->new;
@@ -747,9 +670,11 @@ To write an input widget of your own, subclass
 C<Term::Fabulous::Widget::Input> with L<Object::Pad> (see the
 L</SYNOPSIS>). You must implement C<natural_size> and C<paint>; override
 the other methods as needed. Paint with C<put_attrs>
-(L<Term::Fabulous::Widget::Canvas/put_attrs>) and the helpers below,
-which take termbox2 attributes (the integers returned by
-C<foreground_attr>, C<color_attr> and friends) instead of colors.
+(L<Term::Fabulous::Widget::Canvas/put_attrs>) and the helpers below and
+those of L<Term::Fabulous::Widget::Display/SUBCLASS INTERFACE>
+(C<color_attr>, C<paint_text>, C<fill_attrs>), which take termbox2
+attributes (the integers returned by C<foreground_attr>, C<color_attr>
+and friends) instead of colors.
 
 Term::Fabulous draws a frame only when something changed, and the frame
 paints the input (see L</Painting>). Whenever your widget changes state
@@ -763,8 +688,10 @@ when something else makes the input paint.
 
 	method natural_size () { return ( $columns, $rows ) }
 
-Required. The content size, in cells, the input wants when the layout
-does not size it (see L</SIZE>). Called for every frame.
+Required. The content size the input wants when the layout does not
+size it (see L</SIZE>): a number of cells per axis, or a sizing hash of
+L<Clay::XS>, as described in
+L<Term::Fabulous::Widget::Display/natural_size>. Called for every frame.
 
 =head2 paint
 
@@ -784,14 +711,15 @@ no further frame due.
 	}
 
 The list of values L</paint> depends on; the input paints again when
-any of them changed since it last painted. The default holds the size of
-the buffer, a count of the input's C<mark_changed> calls, whether it has
-the focus and whether it is enabled. Extend it with what C<paint> reads
-from other objects, which do not mark this input changed:
-L<Term::Fabulous::Widget::RadioButton> adds its group's value, focus and
-cursor button, L<Term::Fabulous::Widget::TextInput> its editor's
-revision. The values are compared as strings; keep them cheap to
-compute, since the key is computed for every frame.
+any of them changed since it last painted. The default holds what
+L<Term::Fabulous::Widget::Display/paint_key> holds (the size of the
+buffer and a count of the input's C<mark_changed> calls), whether the
+input has the focus and whether it is enabled. Extend it with what
+C<paint> reads from other objects, which do not mark this input
+changed: L<Term::Fabulous::Widget::RadioButton> adds its group's value,
+focus and cursor button, L<Term::Fabulous::Widget::TextInput> its
+editor's revision. The values are compared as strings; keep them cheap
+to compute, since the key is computed for every frame.
 
 =head2 handle_key
 
@@ -880,13 +808,6 @@ the input is disabled.
 The termbox2 attribute of C<accent_color>, or of C<disabled_color>
 while the input is disabled.
 
-=head2 color_attr
-
-	my $attr = $self->color_attr('#ff0000');
-
-The termbox2 attribute of any color the canvas accepts, C<undef> for
-C<undef> or a color with alpha 0 (no color of its own).
-
 =head2 reverse_attr
 
 	my $cursor_fg = $self->reverse_attr($fg);
@@ -901,22 +822,6 @@ used for the text cursor. C<undef> counts as the terminal default.
 Any color the canvas accepts, as the C<[r, g, b, a]> array reference
 that C<background_color> and C<border_color> take. A packed integer is
 opaque.
-
-=head2 paint_text
-
-	my $next_x = $self->paint_text( $x, $y, $text, $fg, $bg, $limit );
-
-Paints a character string from cell (C<$x>, C<$y>) with the attributes
-C<$fg> and C<$bg> (either may be C<undef>). C<$limit> defaults to
-C<< $self->columns >>; a grapheme cluster that would reach past it ends
-the text. Returns the column after the last cluster painted.
-
-=head2 fill_attrs
-
-	$self->fill_attrs( $x, $y, $width, $glyph, $fg, $bg );
-
-Puts a one-column glyph into C<$width> cells of row C<$y>, starting at
-C<$x>.
 
 =head2 focus_background_attr
 
@@ -951,7 +856,7 @@ dropdown list that cannot move any further.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual::Forms/FORMS AND INPUT WIDGETS>,
-L<Term::Fabulous::Event::Change>, L<Term::Fabulous::Widget::Canvas>,
-L<Term::Fabulous::Widget::TextInput>.
+L<Term::Fabulous::Event::Change>, L<Term::Fabulous::Widget::Display>,
+L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::TextInput>.
 
 =cut

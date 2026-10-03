@@ -14,7 +14,9 @@ This page explains how a screen is put together: the widgets, the tree
 they form, the ids that name them, and the C<layout> options that decide
 where each widget goes and how big it is. Every layout option is shown
 with a picture, with the Perl code and with the form it takes in a
-L<KDL layout file|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>.
+L<KDL layout file|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>. The
+last sections cover the widgets that structure a screen:
+L<dividers|/DIVIDERS>.
 
 The reference pages for this topic are L<Term::Fabulous::Widget> (the
 parameters and methods all container widgets share),
@@ -58,6 +60,11 @@ backdrop; Tab stays inside it and Escape closes it.
 
 A box whose content can be larger than the box itself and is scrolled
 with the mouse wheel (see L</Scrolling content>).
+
+=item L<Term::Fabulous::Widget::Divider>
+
+A horizontal or vertical line between widgets, with an optional text
+(see L</DIVIDERS>).
 
 =item L<Term::Fabulous::Widget::Canvas>
 
@@ -793,10 +800,50 @@ L<Change the layout with the terminal size|Term::Fabulous::Cookbook::Layout/Chan
 switches a layout between a row and a column when the terminal is
 resized.
 
+=head1 DIVIDERS
+
+A L<Term::Fabulous::Widget::Divider> draws a line between the widgets
+above and below it, or, vertical, between the widgets left and right of
+it. It can carry a text at the start, in the center or at the end of
+the line, which makes it a section heading that takes one row:
+
+	use Term::Fabulous::Widget::Divider;
+
+	$panel->add_child(
+		Term::Fabulous::Widget::Divider->new( text => 'Network', text_position => 'start', bold => 1 ),
+		$hostname_row,
+		$port_row,
+		Term::Fabulous::Widget::Divider->new,    # a plain line
+		$buttons,
+	);
+
+A divider grows along its line to the space its parent gives it and is
+one cell thick, so it needs no C<layout> in a column or a row that has
+a width or height; inside a box that fits its content, give it a fixed
+length. The line is drawn with the glyph of a
+L<border style|Term::Fabulous::Manual::Looks/Border styles> (C<Solid>
+by default; C<Double>, C<Heavy>, C<Dashed>, C<Ascii>, ...) or with a
+glyph of your own, in a color of its own, and the text has its own
+color and can be bold. A vertical divider writes its text downwards,
+one character per row. The picture shows the forms
+(F<examples/widgets/divider.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-divider.svg" alt="Dividers: a plain line, texts at the start, the center and the end, double and heavy lines in colors, and a vertical divider with a text between two columns"></p>
+
+=end html
+
+In KDL:
+
+	Divider { text "Network"; text_position "start"; bold #true; }
+	Divider { vertical #true; }
+
 =head1 SEE ALSO
 
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual>. Next page: L<Term::Fabulous::Manual::Looks>.
 
+L<Term::Fabulous::Widget::Divider>,
 L<Term::Fabulous::Widget> (the parameters and methods of all container
 widgets), L<Term::Fabulous::Widget::Box>,
 L<Term::Fabulous::Widget::ScrollBox>,
