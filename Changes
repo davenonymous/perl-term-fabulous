@@ -1,6 +1,13 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Toast: a notification of a kind (info,
+          success, warning, danger) with an icon, a title, a message and a
+          close mark that show($ui) floats into a corner of the screen,
+          stacked below the toasts there, and that goes away after a
+          timeout, with the close mark or hide, firing Close; important
+          toasts are filled with their color, and a toast added to the
+          layout is an alert box
         - Term::Fabulous::Widget::Accordion and ::Accordion::Item: sections
           that open and close under their headers, one at a time or
           several, with the keyboard (Enter, Space, Up, Down, Home, End)

@@ -720,6 +720,14 @@ screenshot "widget-progress-bar" {
 	}
 }
 
+screenshot "widget-toast" {
+	script "examples/widgets/toast.pl"
+	size 90 22
+	steps {
+		key "1" "2" "3" "i"
+	}
+}
+
 screenshot "widget-spinner" {
 	script "examples/widgets/spinner.pl"
 	size 60 18

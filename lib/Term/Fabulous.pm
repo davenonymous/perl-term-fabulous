@@ -595,7 +595,8 @@ line; accordions whose sections open and close under their headers.
 
 Progress bars in several styles, with labels, stripes, stacked
 segments and an indeterminate runner, and spinners in twelve styles,
-animated on the application's clock without timers.
+animated on the application's clock without timers; toasts that
+appear in a corner and go away by themselves.
 
 =item *
 
@@ -656,8 +657,8 @@ L<Term::Fabulous::Manual::Layout> (widgets, the widget tree and
 layout), L<Term::Fabulous::Manual::Looks> (text, colors, borders),
 L<Term::Fabulous::Manual::Events> (events, keyboard, focus, mouse,
 scrolling), L<Term::Fabulous::Manual::Forms> (input widgets),
-L<Term::Fabulous::Manual::Feedback> (progress bars, spinners and other
-feedback widgets), L<Term::Fabulous::Manual::Charts> (canvases and charts),
+L<Term::Fabulous::Manual::Feedback> (progress bars, spinners and
+toasts), L<Term::Fabulous::Manual::Charts> (canvases and charts),
 L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>
 and L<Term::Fabulous::Manual::TableStyles> (the table widget),
 L<Term::Fabulous::Manual::KDL> (layout files),
@@ -1553,6 +1554,16 @@ stripes, segments, or a runner for a task of unknown extent.
 That something is going on: frames cycling next to a label, in twelve
 styles of one cell to three rows, or frames of your own.
 
+=item L<Term::Fabulous::Widget::Toast>
+
+A notification of a kind (info, success, warning, danger) that appears
+in a corner, stacks with the others there and goes away by itself; in
+the layout, an alert box.
+
+=item L<Term::Fabulous::Widget::Toast::Stack>
+
+The column of toasts in one corner. Used internally by the toast.
+
 =back
 
 =head2 Tables
@@ -1706,7 +1717,7 @@ The user activated a button, by click or key.
 
 =item L<Term::Fabulous::Event::Close>
 
-A dialog was closed.
+A dialog was closed, or a toast went away.
 
 =item L<Term::Fabulous::Event::Select>
 

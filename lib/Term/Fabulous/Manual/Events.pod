@@ -177,7 +177,7 @@ the sections below it describe each event.
 	Change           the input (radio: its group)      yes
 	Submit           the text field                    yes
 	Activate         the Button                        yes
-	Close            the Dialog                        (no parent then)
+	Close            the Dialog or the Toast           (no parent then)
 	Select           the Accordion                     yes
 	SeriesHover      the chart                         yes
 	OnFocus, OnBlur  the widget                        yes
@@ -303,8 +303,9 @@ C<< $button->activate >>. Fired on the button. No fields.
 =item C<Close> (L<Term::Fabulous::Event::Close>)
 
 A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
-code. Fired on the dialog, after it has left the screen, so only
-listeners on the dialog itself see it. No fields.
+code, or a L<Term::Fabulous::Widget::Toast> went away, by its timeout,
+its close mark or from code. Fired on the dialog or the toast, after
+it has left the screen, so only listeners on it see it. No fields.
 
 =item C<Select> (L<Term::Fabulous::Event::Select>)
 

@@ -126,8 +126,8 @@ forms.
 =item L<Term::Fabulous::Manual::Feedback>
 
 The widgets that show what the program is doing: progress bars, with
-and without a known extent, spinners, and how widgets animate without
-timers.
+and without a known extent, spinners, toasts that appear in a corner
+and go away by themselves, and how widgets animate without timers.
 
 =item L<Term::Fabulous::Manual::Charts>
 
@@ -736,6 +736,11 @@ L<Term::Fabulous::Widget::ProgressBar>.
 
 L<Term::Fabulous::Manual::Feedback/SPINNERS>,
 L<Term::Fabulous::Widget::Spinner>.
+
+=item Show a notification that goes away by itself (a toast); an alert box
+
+L<Term::Fabulous::Manual::Feedback/TOASTS AND ALERTS>,
+L<Term::Fabulous::Widget::Toast>.
 
 =item Animate a widget without a timer
 

@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Term::Fabulous::Manual::Feedback - Progress bars and other feedback widgets
+Term::Fabulous::Manual::Feedback - Progress bars, spinners and toasts
 
 =head1 DESCRIPTION
 
@@ -12,16 +12,18 @@ This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous:
 
 This page covers the widgets that tell the user what the program is
 doing: a L<progress bar|/PROGRESS BARS> for a task whose extent is
-known, or not, and a L<spinner|/SPINNERS> for one that just takes a
-while. They take no input; the program sets their state, from
-a timer, a process or a listener, and they draw themselves. The ones
-that move do so on the application's clock, without a timer of their
-own (see L</ANIMATION>).
+known, or not, a L<spinner|/SPINNERS> for one that just takes a
+while, and L<toasts|/TOASTS AND ALERTS> for messages that must not
+interrupt the user. They take no input; the program sets their state,
+from a timer, a process or a listener, and they draw themselves. The
+ones that move do so on the application's clock, without a timer of
+their own (see L</ANIMATION>).
 
-The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>
-and L<Term::Fabulous::Widget::Spinner>. The class they share, L<Term::Fabulous::Widget::Display>, is the base of
-every widget that paints itself from its own state, and the one to
-derive from for a feedback widget of your own
+The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>,
+L<Term::Fabulous::Widget::Spinner> and L<Term::Fabulous::Widget::Toast>.
+The class the first two share, L<Term::Fabulous::Widget::Display>, is
+the base of every widget that paints itself from its own state, and
+the one to derive from for a feedback widget of your own
 (L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>).
 
 =head1 PROGRESS BARS
@@ -135,6 +137,49 @@ In KDL:
 		label "Loading"
 	}
 
+=head1 TOASTS AND ALERTS
+
+A L<Term::Fabulous::Widget::Toast> is a short message in a corner of
+the screen that goes away by itself: a box with an icon, a title, a
+message and a close mark, in the color of its kind (C<info>,
+C<success>, C<warning> or C<danger>). C<show> floats it over
+everything else, where it lines up below the toasts shown there
+before, and takes it away after C<timeout> seconds; a click on the
+close mark or C<hide> takes it away at once. Toasts take no focus and
+no keys:
+
+	use Term::Fabulous::Widget::Toast;
+
+	$save->on( Activate => sub ($event) {
+		save();
+		Term::Fabulous::Widget::Toast->new( kind => 'success', title => 'Saved', message => 'Written to disk.' )->show($ui);
+		return;
+	} );
+
+An C<important> toast is filled with its color, for messages that must
+not be missed; C<< timeout => undef >> keeps a toast until it is
+closed; C<position> chooses the corner (or the top or bottom center),
+and every corner stacks its own toasts. The same widget is an I<alert>
+when it is added to the layout as a child instead of being shown: it
+then stays where it is put, with or without a close mark. The picture
+shows toasts of every kind, an important one and an alert box
+(F<examples/widgets/toast.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
+
+=end html
+
+A toast fires C<Close> (L<Term::Fabulous::Event::Close>) when it goes,
+whichever way. In KDL a toast is an alert box inside its parent:
+
+	Toast "unsaved" {
+		kind "warning"
+		message "You have unsaved changes."
+		closable #false
+	}
+
 =head1 ANIMATION
 
 Spinners, and progress bars that are C<indeterminate> or C<animated>,
@@ -153,7 +198,8 @@ L<Term::Fabulous::Widget::Display/ANIMATION>.
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
 
 The class pages: L<Term::Fabulous::Widget::ProgressBar>,
-L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Display>.
+L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Toast>,
+L<Term::Fabulous::Widget::Display>.
 L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>
 for the timers that drive a bar, and
 L<Term::Fabulous::Cookbook::LiveData> for complete programs that update

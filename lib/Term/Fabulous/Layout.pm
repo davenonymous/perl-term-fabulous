@@ -488,6 +488,7 @@ the L</Box properties>.
 	Item             Term::Fabulous::Widget::Accordion::Item  Box + title, open, disabled
 	ProgressBar      Term::Fabulous::Widget::ProgressBar      Box + range, value, style, ...
 	Spinner          Term::Fabulous::Widget::Spinner          Box + style, frames, label
+	Toast            Term::Fabulous::Widget::Toast            Box + kind, title, message, ...
 	Table            Term::Fabulous::Widget::Table            Box + columns, lines, sort, ...
 	LineChart        Term::Fabulous::Widget::LineChart        chart + series, axes, ...
 	AreaChart        Term::Fabulous::Widget::AreaChart        chart + series, axes, ...
@@ -543,6 +544,8 @@ The properties of each class:
 =item * L<ProgressBar|Term::Fabulous::Widget::ProgressBar/KDL PROPERTIES>
 
 =item * L<Spinner|Term::Fabulous::Widget::Spinner/KDL PROPERTIES>
+
+=item * L<Toast|Term::Fabulous::Widget::Toast/KDL PROPERTIES>
 
 =item * L<Table|Term::Fabulous::Widget::Table/KDL PROPERTIES>
 

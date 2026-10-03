@@ -90,7 +90,8 @@ keys older terminals cannot tell apart, mouse wheel scrolling.
 line; accordions whose sections open and close under their headers.
 - Progress bars in several styles, with labels, stripes, stacked
 segments and an indeterminate runner, and spinners in twelve styles,
-animated on the application's clock without timers.
+animated on the application's clock without timers; toasts that
+appear in a corner and go away by themselves.
 - Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 - Correct handling of Unicode: wide CJK characters, emoji, combining
@@ -129,8 +130,8 @@ start with the manual's first page and its first program.
     layout), [Term::Fabulous::Manual::Looks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ALooks) (text, colors, borders),
     [Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents) (events, keyboard, focus, mouse,
     scrolling), [Term::Fabulous::Manual::Forms](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AForms) (input widgets),
-    [Term::Fabulous::Manual::Feedback](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AFeedback) (progress bars, spinners and other
-    feedback widgets), [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
+    [Term::Fabulous::Manual::Feedback](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AFeedback) (progress bars, spinners and
+    toasts), [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
     [Term::Fabulous::Manual::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATables), [Term::Fabulous::Manual::TableRows](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableRows)
     and [Term::Fabulous::Manual::TableStyles](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableStyles) (the table widget),
     [Term::Fabulous::Manual::KDL](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AKDL) (layout files),
@@ -983,6 +984,16 @@ Term::Fabulous, and programs do not use them directly.
     That something is going on: frames cycling next to a label, in twelve
     styles of one cell to three rows, or frames of your own.
 
+- [Term::Fabulous::Widget::Toast](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AToast)
+
+    A notification of a kind (info, success, warning, danger) that appears
+    in a corner, stacks with the others there and goes away by itself; in
+    the layout, an alert box.
+
+- [Term::Fabulous::Widget::Toast::Stack](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AToast%3A%3AStack)
+
+    The column of toasts in one corner. Used internally by the toast.
+
 ## Tables
 
 - [Term::Fabulous::Widget::Table](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable)
@@ -1124,7 +1135,7 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Event::Close](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AClose)
 
-    A dialog was closed.
+    A dialog was closed, or a toast went away.
 
 - [Term::Fabulous::Event::Select](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASelect)
 

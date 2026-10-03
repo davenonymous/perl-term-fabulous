@@ -240,6 +240,8 @@ lib/Term/Fabulous/Widget/Table/Value.pm
 lib/Term/Fabulous/Widget/Text.pm
 lib/Term/Fabulous/Widget/TextArea.pm
 lib/Term/Fabulous/Widget/TextNode.pm
+lib/Term/Fabulous/Widget/Toast.pm
+lib/Term/Fabulous/Widget/Toast/Stack.pm
 lib/Term/Fabulous/Widget/TextField.pm
 lib/Term/Fabulous/Widget/TextInput.pm
 Makefile.PL
@@ -312,6 +314,7 @@ t/widget-table.t
 t/widget-text-area.t
 t/widget-text-field.t
 t/widget-text.t
+t/widget-toast.t
 t/widget-xy-chart.t
 t/widget.t
 typemap
@@ -347,6 +350,7 @@ examples/widgets/table.pl
 examples/widgets/text-area.pl            
 examples/widgets/text-field.pl           
 examples/widgets/text.pl                 
+examples/widgets/toast.pl
 lib/Term/Fabulous/Examples.pod           
 lib/Term/Fabulous/Widget/XYChart.pm
 screenshots/cookbook-border-sides.svg    
@@ -471,6 +475,7 @@ screenshots/widget-table.svg
 screenshots/widget-text-area.svg         
 screenshots/widget-text-field.svg        
 screenshots/widget-text.svg              
+screenshots/widget-toast.svg
 tools/lib/Term/Fabulous/Screenshot/BoxDrawing.pm 
 tools/lib/Term/Fabulous/Screenshot/Clock.pm 
 tools/lib/Term/Fabulous/Screenshot/Harness.pm 

@@ -734,6 +734,20 @@ ASCII bar. The bars fill up from a timer.
 
 =end html
 
+=head3 examples/widgets/toast.pl
+
+L<Term::Fabulous::Widget::Toast>: toasts of every kind stacked in the
+top right corner, a filled (important) one that stays in the bottom
+right corner, and one used as an alert box inside a form. The keys 1
+to 4 show a toast of each kind, i an important one; the picture shows
+it after 1, 2, 3 and i.
+
+=begin html
+
+<p><img src="/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
+
+=end html
+
 =head3 examples/widgets/spinner.pl
 
 L<Term::Fabulous::Widget::Spinner>: every ready-made style with its
