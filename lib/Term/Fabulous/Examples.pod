@@ -240,6 +240,41 @@ box and two on the right one.
 
 =end html
 
+=head2 examples/table-directory.pl
+
+A staff directory in a L<Term::Fabulous::Widget::Table>: a search box
+above the table, rows grouped by team under headers with a payroll sum,
+multiple selection, formatted dates and numbers, salaries over 100,000
+in yellow, people on leave in gray italics, pages, a details panel that
+follows the cursor, and a column chooser on F2. F3 switches the
+grouping off and on.
+
+The picture shows it after two rows were selected with Space and the
+cursor moved on.
+
+=begin html
+
+<p><img src="/screenshots/example-table-directory.svg" alt="A staff table grouped by team with two selected rows, a pager, and a details panel for the person under the cursor"></p>
+
+=end html
+
+=head2 examples/table-files.pl
+
+A file browser in a L<Term::Fabulous::Widget::Table> with nested rows
+(a tree): folders with sizes summed from their contents, dates and
+kinds, sorted folders first, a filter row that keeps the folders of
+every match, single selection, and a folder whose contents are loaded
+only when it is opened for the first time.
+
+The picture shows it after the cursor moved to the F<vendor> folder
+and Right opened it, which loaded its two files.
+
+=begin html
+
+<p><img src="/screenshots/example-table-files.svg" alt="A file tree in a table: open and closed folders in blue, indented files with sizes, dates and kinds, and the vendor folder just loaded"></p>
+
+=end html
+
 =head2 examples/web-colors.pl
 
 All colors of L<Term::Fabulous::Enum::WebColor> in a grid that adapts
@@ -388,6 +423,19 @@ it again.
 =begin html
 
 <p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files"></p>
+
+=end html
+
+=head2 examples/widgets/table.pl
+
+L<Term::Fabulous::Widget::Table>: a list of staff with a filter row,
+multiple selection with check boxes, rows sorted by the start date,
+formatted dates and numbers, striped rows and a pager. The picture
+shows it after Space, Down, Down and Space selected two rows.
+
+=begin html
+
+<p><img src="/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
 
 =end html
 
@@ -619,6 +667,152 @@ L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>.
 =begin html
 
 <p><img src="/screenshots/cookbook-resize-aware-layout.svg" alt="The Inbox and Message panes side by side on a wide terminal"></p>
+
+=end html
+
+=back
+
+=head2 Tables
+
+=over
+
+=item F<table-basics.pl>
+
+L<Term::Fabulous::Cookbook/Show a list of hashes in a table (sort, select, open a row)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-basics.svg" alt="A table of user accounts sorted by name, two rows selected with check boxes, and two status lines below: the selected logins and the account opened with Enter"></p>
+
+=end html
+
+=item F<table-format.pl>
+
+L<Term::Fabulous::Cookbook/Format cells: dates, numbers, sizes and flags (mutators)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-format.svg" alt="A table of backup jobs with formatted times, durations, sizes, file counts, percentages, transfer rates and check marks, sorted by size, and a line that shows the raw value and the display text of one size"></p>
+
+=end html
+
+=item F<table-sort.pl>
+
+L<Term::Fabulous::Cookbook/Sort rows, also with your own comparison>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-sort.svg" alt="A table of tickets sorted by version in natural order and then by priority, with numbered sort markers in the column titles and a line that names the sort"></p>
+
+=end html
+
+=item F<table-filter.pl>
+
+L<Term::Fabulous::Cookbook/Let the user filter rows (filter row and search box)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-filter.svg" alt="A table of staff with a search field above it and a filter row under the column titles holding the expressions >=2019 and >=80000, four matching rows and the line 4 of 12 rows"></p>
+
+=end html
+
+=item F<table-filter-perl.pl>
+
+L<Term::Fabulous::Cookbook/Filter rows from Perl (numbers, dates, text, raw or shown values)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
+
+=end html
+
+=item F<table-groups.pl>
+
+L<Term::Fabulous::Cookbook/Group rows by a column (collapsible group headers)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-groups.svg" alt="A table of staff grouped by team: group headers with the team name and the number of rows, one group closed"></p>
+
+=end html
+
+=item F<table-tree.pl>
+
+L<Term::Fabulous::Cookbook/Show nested data as a tree (expand and collapse rows)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-tree.svg" alt="A file tree in a table: folders with open and closed markers, indented files, sizes and dates"></p>
+
+=end html
+
+=item F<table-pages.pl>
+
+L<Term::Fabulous::Cookbook/Split many rows into pages (pager and page sizes)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
+
+=end html
+
+=item F<table-edit.pl>
+
+L<Term::Fabulous::Cookbook/Edit the data of a table (widget cells, add and remove rows and columns)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-edit.svg" alt="A to-do table with check boxes, delete buttons and a note column, two tasks selected, a new task added and the status line below"></p>
+
+=end html
+
+=item F<table-columns.pl>
+
+L<Term::Fabulous::Cookbook/Let the user choose the visible columns (column chooser)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-columns.svg" alt="A staff table with the column chooser open over its top right corner: City unchecked, E-mail checked, and the status line with the columns to save"></p>
+
+=end html
+
+=item F<table-lines.pl>
+
+L<Term::Fabulous::Cookbook/Lines and colors per row, column and cell (conditional formatting)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-lines.svg" alt="A budget table: a heavy line and dashed lines in the Left column, negative amounts in red, a cancelled row in gray italics and a bold totals row under a double line"></p>
+
+=end html
+
+=item F<table-colors.pl>
+
+L<Term::Fabulous::Cookbook/A table with colored rows and titles (block frame, no grid lines)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-colors.svg" alt="A table of planets with an Outer block frame, no inner lines, colored column titles, striped rows and the cursor row highlighted up to the frame"></p>
+
+=end html
+
+=item F<table-kdl.pl>
+
+L<Term::Fabulous::Cookbook/Describe a table in a KDL layout (columns, lines, sort, groups)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-kdl.svg" alt="A stock table built from KDL: grouped by category, sorted by quantity, two rows selected and the Displays group closed"></p>
+
+=end html
+
+=item F<table-report.pl>
+
+L<Term::Fabulous::Cookbook/Print a table as a report (Static)>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-report.svg" alt="The printed sales report: products sorted by revenue, units and amounts formatted, shares in percent and a bold totals row under a double line"></p>
 
 =end html
 

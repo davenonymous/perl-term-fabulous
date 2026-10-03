@@ -130,6 +130,21 @@ subtest 'stack layout' => sub {
 		'the stack fits its largest child, a growing child fills it and later children are drawn on top';
 };
 
+subtest 'after_draw' => sub {
+	my $root = Term::Fabulous::Widget::Box->new;
+	my $ui   = Term::Fabulous::Static->new( root => $root, width => 4, height => 1 );
+	my @ran;
+	$ui->after_draw( sub { push @ran, 'first'; $ui->after_draw( sub { push @ran, 'next frame' } ) } );
+	is \@ran, [], 'nothing runs before a frame';
+	$ui->draw;
+	is \@ran, ['first'], 'runs once, after the frame';
+	$ui->draw;
+	is \@ran, [ 'first', 'next frame' ], 'one it queued runs after the following frame';
+	$ui->draw;
+	is scalar @ran, 2, 'and only once';
+	like dies { $ui->after_draw('later') }, qr/after_draw needs a code reference, got 'later'/, 'anything else dies';
+};
+
 subtest 'print' => sub {
 	my $output = '';
 	open my $fh, '>', \$output or die $!;

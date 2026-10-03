@@ -4,6 +4,7 @@ use utf8;
 
 use Test2::V0;
 
+use Clay::XS ();
 use Term::Fabulous::Check;
 
 # Called by their full names: Test2::V0 exports a number and a string.
@@ -58,6 +59,17 @@ foreach my $case (@rejected) {
 	my ( $name, $value, $expected ) = @$case;
 	like dies { $check{$name}->( 'My::Widget', property => $value ) }, qr/\AMy::Widget: property must be \Q$expected\E at /, "$name rejects " . ( defined $value ? "'$value'" : 'undef' );
 }
+
+subtest 'sizing' => sub {
+	my $sizing = \&Term::Fabulous::Check::sizing;
+	is $sizing->( 'My::Widget', width => 'fit(4, 30)' ), Clay::XS::sizing_fit( 4, 30 ), 'a spec string';
+	is $sizing->( 'My::Widget', width => 'percent(25)' ), Clay::XS::sizing_percent(0.25), 'a percentage';
+	is $sizing->( 'My::Widget', width => Clay::XS::sizing_grow() ), Clay::XS::sizing_grow(), 'a hash from Clay::XS is copied';
+	like dies { $sizing->( 'My::Widget', width => 'wide' ) },        qr/\AMy::Widget: invalid width 'wide' \(expected grow, fit/, 'an unknown spec dies';
+	like dies { $sizing->( 'My::Widget', width => 'fit(5, 2)' ) },   qr/width minimum 5 is greater than maximum 2/,           'a minimum above the maximum dies';
+	like dies { $sizing->( 'My::Widget', width => 'percent(101)' ) }, qr/width percentage must be in 0\.\.100/,               'a percentage above 100 dies';
+	like dies { $sizing->( 'My::Widget', width => { kind => 1 } ) }, qr/\AMy::Widget: invalid width: /,                       'an invalid hash dies';
+};
 
 my $owner = bless {}, 'My::Widget';
 like dies { $check{string}->( $owner, label => undef ) }, qr/\AMy::Widget: label must be a string/, 'an object owner is named by its class';

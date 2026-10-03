@@ -15,7 +15,7 @@ class Term::Fabulous::Widget::Box
 	:strict(params)
 {
 	use Clay::XS qw(
-		Clay_GetElementId sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
+		Clay_GetElementId CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
 		CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
 		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_TO_ROOT CLAY_ATTACH_TO_ELEMENT_WITH_ID
@@ -25,7 +25,7 @@ class Term::Fabulous::Widget::Box
 		CLAY_POINTER_CAPTURE_MODE_CAPTURE CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 		CLAY_CLIP_TO_NONE CLAY_CLIP_TO_ATTACHED_PARENT
 	);
-	use Term::Fabulous::Check qw(integer non_negative_integer);
+	use Term::Fabulous::Check qw(integer non_negative_integer sizing);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my %DIRECTION_BY_NAME = (
@@ -44,10 +44,6 @@ class Term::Fabulous::Widget::Box
 	);
 
 	my %LINE_SIZING_BY_NAME = ( grow => CLAY_LINE_SIZING_GROW, fit => CLAY_LINE_SIZING_FIT );
-
-	my $DECIMAL = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
-
-	my %SIZING_WITH_LIMITS = ( grow => \&sizing_grow, fit => \&sizing_fit );
 
 	my %ALIGN_X_BY_NAME = ( left => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, right  => CLAY_ALIGN_X_RIGHT );
 	my %ALIGN_Y_BY_NAME = ( top  => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, bottom => CLAY_ALIGN_Y_BOTTOM );
@@ -107,21 +103,7 @@ class Term::Fabulous::Widget::Box
 	}
 
 	sub _sizing ( $axis, $spec ) {
-		$spec //= '';
-		return sizing_grow() if $spec eq 'grow';
-		return sizing_fit()  if $spec eq 'fit';
-		if ( my ( $kind, $min, $max ) = $spec =~ /\A(grow|fit)\(\s*([0-9]+)\s*(?:,\s*([0-9]+)\s*)?\)\z/ ) {
-			die "Term::Fabulous::Widget::Box: sizing $axis minimum $min is greater than maximum $max in '$spec'" if defined $max && $min > $max;
-			return $SIZING_WITH_LIMITS{$kind}->( $min + 0, defined $max ? $max + 0 : undef );
-		}
-		if ( my ($percent) = $spec =~ /\Apercent\(\s*($DECIMAL)\s*\)\z/ ) {
-			die "Term::Fabulous::Widget::Box: sizing $axis percentage must be in 0..100, got '$spec'" if $percent > 100;
-			return sizing_percent( $percent / 100 );
-		}
-		if ( my ($cells) = $spec =~ /\Afixed\(\s*([0-9]+)\s*\)\z/ ) {
-			return sizing_fixed( $cells + 0 );
-		}
-		die "Term::Fabulous::Widget::Box: invalid sizing $axis '$spec' (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100) or fixed(N))";
+		return sizing( 'Term::Fabulous::Widget::Box', "sizing $axis", $spec // '' );
 	}
 
 	sub _border_style ($name) {

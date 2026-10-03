@@ -218,8 +218,9 @@ C<colors> is a boolean, default 1. When true, every run of cells with
 the same colors and attributes is preceded by one SGR escape sequence
 that combines C<38;2;r;g;b> for the foreground, C<48;2;r;g;b> for the
 background, C<7> for reverse video (used by some border styles and the
-text cursor), and C<1> (bold) and C<4> (underline) when a cell carries
-those termbox2 flags (only canvas cells written with C<put_attrs> can).
+text cursor), and C<1> (bold), C<3> (italic) and C<4> (underline) when
+a cell carries those termbox2 flags (Text widgets with C<bold>,
+C<italic> or C<underline>, and canvas cells written with C<put_attrs>).
 Terminal default colors produce no code. Where the style changes in the
 middle of a row, C<ESC [ 0 m> resets the previous style first, so a run
 in default colors is preceded by just C<ESC [ 0 m>. Every row that

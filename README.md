@@ -54,7 +54,7 @@ widgets, keyboard and mouse
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
 describe the screen as a tree of widgets (boxes, text, buttons, input
-fields, scrollable areas and canvases), in Perl code or in a layout file
+fields, tables, scrollable areas and canvases), in Perl code or in a layout file
 written in KDL, a small configuration language ([https://kdl.dev](https://kdl.dev)).
 Term::Fabulous sizes and positions the widgets with the Clay layout
 engine, draws them with 24-bit colors through the termbox2 library, and
@@ -68,6 +68,10 @@ percentage sizes, padding, gaps, alignment, borders in 20 styles.
 - Input widgets for forms: single- and multi-line text with selection,
 undo and a clipboard shared by all text fields of the program; check
 boxes; radio buttons; dropdowns; sliders.
+- A table widget for rows of data: sorting by one or several columns,
+filtering (also by the user, in a filter row), groups and trees that
+open and close, pages, single and multiple selection, any widget as a
+cell, and lines and colors per column, row and cell.
 - Keyboard focus with Tab and mouse clicks, readable key names for key
 bindings (`Ctrl+S`, `Shift+Left`), mouse wheel scrolling.
 - Canvases for free drawing, including a half-block pixel canvas with
@@ -92,7 +96,7 @@ without an event loop.
 - [Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual)
 
     The user guide. Start here: it explains layout, text, colors, events,
-    the keyboard and the mouse, focus, forms, KDL layout files, the event
+    the keyboard and the mouse, focus, forms, tables, KDL layout files, the event
     loop and writing your own widgets, with examples throughout. Its
     [FEATURE INDEX](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FEATURE-INDEX) maps tasks to the
     documentation.
@@ -808,6 +812,45 @@ Every module has its own page. They are grouped here by purpose.
 
     The layer behind an open dialog. Used internally by the dialog.
 
+## Tables
+
+- [Term::Fabulous::Widget::Table](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable)
+
+    Rows and columns of data, with sorting, filtering, grouping, trees,
+    pages, selection and widgets as cells. Its page starts with a feature
+    index.
+
+- [Term::Fabulous::Widget::Table::Column](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumn)
+
+    What a table column shows and how: its parameters in full.
+
+- [Term::Fabulous::Widget::Table::Mutator](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AMutator)
+
+    Ready-made mutators that format cell values: dates, numbers, sizes,
+    durations, flags, lookups.
+
+- [Term::Fabulous::Widget::Table::Filter](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AFilter)
+
+    Filter conditions on numbers, dates and text, their combinations, and
+    the notation of the filter row.
+
+- [Term::Fabulous::Widget::Table::Value](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AValue)
+
+    How tables read numbers and dates; natural sorting.
+
+- [Term::Fabulous::Widget::Table::Model](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AModel)
+
+    The rows of a table and the lines it shows, without widgets.
+
+- [Term::Fabulous::Widget::Table::Style](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AStyle), [Term::Fabulous::Widget::Table::Borders](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ABorders)
+
+    How a table checks its style hashes and works out its grid lines. Used
+    internally by the table.
+
+- [Term::Fabulous::Widget::Table::Cell](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ACell), [Term::Fabulous::Widget::Table::Toggle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AToggle), [Term::Fabulous::Widget::Table::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AGrid), [Term::Fabulous::Widget::Table::HeaderView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AHeaderView), [Term::Fabulous::Widget::Table::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AScrollbar), [Term::Fabulous::Widget::Table::Pager](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3APager), [Term::Fabulous::Widget::Table::ColumnChooser](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumnChooser)
+
+    The widgets a table is built of. Used internally by the table.
+
 ## Events
 
 - [Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress)
@@ -850,6 +893,38 @@ Every module has its own page. They are grouped here by purpose.
 - [Term::Fabulous::Event::Close](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AClose)
 
     A dialog was closed.
+
+- [Term::Fabulous::Event::CursorMove](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ACursorMove)
+
+    The user moved the cursor of a table.
+
+- [Term::Fabulous::Event::SelectionChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASelectionChange)
+
+    The user changed which rows of a table are selected.
+
+- [Term::Fabulous::Event::RowActivate](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ARowActivate)
+
+    The user pressed Enter on a table row or double-clicked it.
+
+- [Term::Fabulous::Event::SortChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASortChange)
+
+    The user sorted a table by a column.
+
+- [Term::Fabulous::Event::FilterChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AFilterChange)
+
+    The user typed into a filter field of a table.
+
+- [Term::Fabulous::Event::PageChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3APageChange)
+
+    The user turned the page of a table or chose another page size.
+
+- [Term::Fabulous::Event::Expand](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AExpand), [Term::Fabulous::Event::Collapse](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ACollapse)
+
+    The user opened or closed a tree row or a group of a table.
+
+- [Term::Fabulous::Event::ColumnsChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AColumnsChange)
+
+    The user showed or hid a table column in the column chooser.
 
 ## Colors, borders and text
 

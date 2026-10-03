@@ -58,6 +58,9 @@ role Term::Fabulous::Render
 	# commands.
 	field $_painting_index;
 
+	# Code references to call once the next frame has been drawn.
+	field @_after_draw;
+
 	# Provided by Clay::UI.
 	method render;
 	method widget_for;
@@ -145,7 +148,17 @@ role Term::Fabulous::Render
 		$self->_paint_commands($_last_frame);
 		$target->end_frame;
 		$self->finish_canvases;
+
+		# A callback may queue another one for the frame after this one.
+		$_->() foreach splice @_after_draw;
 		return;
+	}
+
+	method after_draw ($callback) {
+		die "Term::Fabulous::Render: after_draw needs a code reference, got " . ( ref $callback || ( defined $callback ? "'$callback'" : 'undef' ) )
+			unless ref $callback eq 'CODE';
+		push @_after_draw, $callback;
+		return $self;
 	}
 }
 
@@ -275,6 +288,12 @@ remembers this completely painted frame for the comparison in step 3 of
 the next frame. If painting died, this step is skipped and the next
 frame paints every canvas in full.
 
+=item 6.
+
+Calls the code references queued with L</after_draw>, in the order
+they were queued. If painting died, they stay queued for the next
+frame.
+
 =back
 
 C<scroll_cells> scrolls the scroll container under the pointer (see
@@ -292,6 +311,24 @@ L<Term::Fabulous::Render::Frame/new>); Term::Fabulous widgets produce
 only these. With the termbox2 cell target, the terminal must have been
 opened (L<Term::Fabulous/run> and L<Term::Fabulous/step> do that);
 otherwise termbox2 ignores the drawing.
+
+=head2 after_draw
+
+	$ui->after_draw( sub {
+		my $box = $ui->bounding_box($row) // return;
+		...;    # the geometry of the frame just drawn
+	} );
+
+Queues a code reference that L</draw> calls once, with no arguments,
+after the next frame has been painted completely. Use it for work that
+needs the layout of a frame that has not been drawn yet, for example to
+scroll a row into view that was only just added: Clay::UI's
+C<bounding_box> and C<scroll_state> then answer for that frame. A
+change the callback makes (a scroll position, a widget property) shows
+in the frame after it, which is due at once. A callback may queue
+another one; it runs after the following frame. Anything but a code
+reference dies. Returns the UI object. An exception from a callback
+leaves C<draw> with it; the callbacks queued after it are dropped.
 
 =head2 last_frame
 

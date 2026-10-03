@@ -12,7 +12,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 
 class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::Mask) :strict(params) {
-	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE TB_BOLD TB_UNDERLINE);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE TB_BOLD TB_ITALIC TB_UNDERLINE);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant RESET => "\e[0m";
@@ -122,6 +122,7 @@ class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target:
 	sub _sgr ( $fg, $bg ) {
 		my @codes;
 		push @codes, 1 if $fg & TB_BOLD;
+		push @codes, 3 if $fg & TB_ITALIC;
 		push @codes, 4 if $fg & TB_UNDERLINE;
 		push @codes, 7 if ( $fg | $bg ) & TB_REVERSE;
 		push @codes, _color_codes( 38, $fg );
@@ -234,7 +235,7 @@ A boolean, default 0. When true, every run of cells with the same
 colors is preceded by an ANSI SGR sequence with 24-bit colors
 (C<ESC [ 38;2;R;G;B m> for the foreground, C<48;2;...> for the
 background), C<7> (reverse video) for cells in reverse video, and C<1>
-(bold) and C<4> (underline) for those termbox2 flags; the line ends
+(bold), C<3> (italic) and C<4> (underline) for those termbox2 flags; the line ends
 with C<ESC [ 0 m> when it set any. The terminal's default colors get no
 sequence.
 

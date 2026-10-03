@@ -23,7 +23,7 @@ form.
 =item L<Term::Fabulous::Cookbook>
 
 Complete programs for common tasks: forms, buttons, key bindings, timers,
-canvases, reports, tests.
+tables, canvases, reports, tests.
 
 =item L<Term::Fabulous::Examples>
 
@@ -312,6 +312,11 @@ maps, game boards.
 
 A canvas that draws pixels, two per cell, with lines, rectangles and
 circles.
+
+=item L<Term::Fabulous::Widget::Table>
+
+Rows and columns of data: sorting, filtering, grouping, trees, pages,
+selection, any widget as a cell. See L</TABLES>.
 
 =item The input widgets
 
@@ -976,11 +981,10 @@ L</Color formats>.
 	);
 	$panel->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );    # then change the top
 
-Pass either C<border_style> or the side parameters to C<new>, not both:
-when both are given, C<border_style> wins and the side parameters are
-ignored. To combine them, set the sides afterwards with their accessors,
-as above. (In KDL layout files, the side keys do win; see
-L<Term::Fabulous::Layout>.)
+A side parameter wins over C<border_style> for its side, also when both
+are given to C<new>; C<border_style> fills the sides that have no style
+of their own. The side accessors change one side afterwards, as above.
+(KDL layout files work the same way; see L<Term::Fabulous::Layout>.)
 
 	my $by_name = Term::Fabulous::Enum::BorderStyle->from_name('Double');
 
@@ -995,6 +999,39 @@ styles.
 <p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
 
 =end html
+
+Two more parameters let a border join the lines around it (see
+L<Term::Fabulous::Role::HasBorderStyle>):
+
+=over
+
+=item C<border_corners>
+
+Replaces the glyph of any corner, for example C<├> instead of C<┌>
+where a line comes in from above. The class method
+L<Term::Fabulous::Enum::BorderStyle/junction> returns the glyph where
+lines of given styles meet: a line, a corner, a T or a cross, also
+where lines of different styles meet (a light line into a heavy one).
+
+=item C<outer_border_sides>
+
+Draws some sides on the background just outside the widget instead of
+the widget's own, so the border looks like part of its surroundings and
+a colored widget starts inside it.
+
+=back
+
+	my $solid = Term::Fabulous::Enum::BorderStyle->Solid;
+	my $lower = Term::Fabulous::Widget::Box->new(    # sits below a box with a left side
+		border_width       => { left => 1, top => 1 },
+		border_style       => $solid,
+		border_corners     => {
+			top_left => Term::Fabulous::Enum::BorderStyle->junction( up => $solid, right => $solid, down => $solid ),    # ├
+		},
+		outer_border_sides => ['left'],
+	);
+
+L<Term::Fabulous::Widget::Table> draws its grid lines this way.
 
 =head1 EVENTS
 
@@ -1218,6 +1255,52 @@ with the next frame.
 A L<Term::Fabulous::Widget::ScrollBox> scrolled. Fired on the scroll box.
 Fields: C<delta_x>, C<delta_y>, how far the content moved, in cells
 (C<delta_y> is -3 for one wheel notch down, 3 for one notch up).
+
+=back
+
+A L<Term::Fabulous::Widget::Table> fires these events on itself when the
+user acts on it; changes from your program fire none (see L</TABLES>):
+
+=over
+
+=item C<CursorMove> (L<Term::Fabulous::Event::CursorMove>)
+
+The user moved the table's cursor. Fields: C<row_id> (C<undef> on a
+group header), C<group_path>.
+
+=item C<SelectionChange> (L<Term::Fabulous::Event::SelectionChange>)
+
+The user changed which rows are selected. Fields: C<selected_ids>,
+C<added_ids>, C<removed_ids>.
+
+=item C<RowActivate> (L<Term::Fabulous::Event::RowActivate>)
+
+The user pressed C<Enter> on a row or double-clicked it. Fields:
+C<row_id>, C<row> (a copy of the row's data).
+
+=item C<SortChange> (L<Term::Fabulous::Event::SortChange>)
+
+The user sorted by a column. Field: C<sort>, the new sort.
+
+=item C<FilterChange> (L<Term::Fabulous::Event::FilterChange>)
+
+The user typed into a field of the table's filter row. Fields:
+C<column>, C<text>, C<error>.
+
+=item C<PageChange> (L<Term::Fabulous::Event::PageChange>)
+
+The user turned the page or chose another page size. Fields: C<page>,
+C<page_size>.
+
+=item C<Expand>, C<Collapse> (L<Term::Fabulous::Event::Expand>, L<Term::Fabulous::Event::Collapse>)
+
+The user opened or closed a tree row or a group. Fields: C<row_id> for
+a row, C<group_path> for a group.
+
+=item C<ColumnsChange> (L<Term::Fabulous::Event::ColumnsChange>)
+
+The user showed or hid a column in the column chooser. Field:
+C<visible>, the keys of the visible columns.
 
 =back
 
@@ -1884,6 +1967,95 @@ The Cookbook has complete form programs, including reading all values at
 once and building the form from a KDL file
 (L<Term::Fabulous::Cookbook/A login form (centered dialog, masked password)>).
 
+=head1 TABLES
+
+L<Term::Fabulous::Widget::Table> shows a list of Perl hashes as rows and
+columns, and handles everything the user does with them: moving through
+the rows with the keyboard and the mouse, sorting by a click on a
+column title, filtering, opening and closing groups and tree rows,
+turning pages and selecting rows. This chapter explains the ideas; the
+table's own page describes every feature, parameter, method, key and
+event, and starts with a feature index.
+
+	use Term::Fabulous::Widget::Table;
+	use Term::Fabulous::Widget::Table::Mutator qw(date number);
+
+	my $table = Term::Fabulous::Widget::Table->new(
+		id        => 'staff',
+		row_id    => 'id',
+		selection => 'multiple',
+		columns   => [
+			{ key => 'name',    title => 'Name' },
+			{ key => 'started', title => 'Started', type => 'date',   mutator => date('%d %b %Y') },
+			{ key => 'salary',  title => 'Salary',  type => 'number', mutator => number( decimals => 0 ) },
+		],
+		rows => [
+			{ id => 1, name => 'Ada',   started => '2019-03-04', salary => 81000 },
+			{ id => 2, name => 'Grace', started => '2021-11-15', salary => 76500 },
+		],
+	);
+	$table->on( RowActivate => sub ($event) { say 'open ', $event->row->{name}; return } );
+
+=head2 Rows, columns, values
+
+Every row is a hash reference, copied when the table gets it, and has a
+I<row id> that names it in every method and event: an entry of the row
+(C<< row_id => 'id' >>), what a code reference returns, or a number the
+table counts up. A column reads one I<raw value> from each row and turns
+it into the I<display text> the cell shows, with I<mutators> such as
+C<date> and C<number> or code of your own. Sorting and filtering use the
+raw value, so a date shown as C<04 Mar 2019> still sorts as a date. See
+L<Term::Fabulous::Widget::Table/ROWS>,
+L<Term::Fabulous::Widget::Table/COLUMNS> and
+L<Term::Fabulous::Widget::Table/DISPLAY TEXT AND MUTATORS>.
+
+=head2 What the table shows
+
+The table computes the lines it shows from its rows: it leaves out the
+rows that do not match the filters, puts the rest into groups (with
+C<group_by>), sorts them, hides what is inside closed groups and closed
+tree rows, and cuts the lines into pages (with C<page_size>). Each step
+has its own chapter on the table's page:
+L<Term::Fabulous::Widget::Table/FILTERING>,
+L<Term::Fabulous::Widget::Table/GROUPING>,
+L<Term::Fabulous::Widget::Table/SORTING>,
+L<Term::Fabulous::Widget::Table/TREES> and
+L<Term::Fabulous::Widget::Table/PAGES>.
+
+=head2 Cursor, selection and events
+
+The I<cursor> is the line the keyboard works on; the table draws it
+while it has the focus. The I<selection> is a separate set of rows
+(C<< selection => 'single' >> or C<'multiple'>). What the user does
+fires events on the table: C<CursorMove>, C<SelectionChange>,
+C<RowActivate> (Enter or a double click), C<SortChange>, C<FilterChange>,
+C<PageChange>, C<Expand>, C<Collapse> and C<ColumnsChange> (see
+L</Event reference>). Changes your program makes through the table's
+methods fire none. See
+L<Term::Fabulous::Widget::Table/SELECTION AND CURSOR>,
+L<Term::Fabulous::Widget::Table/KEYS> and
+L<Term::Fabulous::Widget::Table/MOUSE>.
+
+=head2 Looks and lines
+
+The table draws its own lines, joined into one grid: a frame, lines
+between the columns, optional lines between the rows, and a line below
+the column titles. Colors, lines and text styles can be set for the
+whole table, a column, a row or a single cell, also depending on the
+data (red negative numbers, gray rows of finished tasks). See
+L<Term::Fabulous::Widget::Table/STYLES AND BORDERS>.
+
+=head2 Large tables
+
+Each shown cell is about two widgets, and every widget costs time in
+every frame. Use C<page_size> for more than a few hundred rows; see
+L<Term::Fabulous::Widget::Table/PERFORMANCE>.
+
+The table recipes in L<Term::Fabulous::Cookbook/TABLES> are complete
+programs for every feature, and F<examples/table-directory.pl> and
+F<examples/table-files.pl> (see L<Term::Fabulous::Examples>) are larger
+demos.
+
 =head1 KDL LAYOUT FILES
 
 Instead of building the widget tree in Perl, you can describe it in a
@@ -2250,6 +2422,14 @@ C<< Term::Fabulous->new >>, or show fewer widgets at a time, for example
 by building only the visible part of a long list, or by drawing many
 small items on a canvas instead. See L<Term::Fabulous/new>.
 
+=head2 A table shows no cursor
+
+The cursor of a L<Term::Fabulous::Widget::Table> is drawn only while the
+table, or a widget in one of its cells, has the keyboard focus. Give it
+the focus with C<Tab>, a click, or
+C<< $ui->interaction->set_focused_widget($table) >>. See
+L<Term::Fabulous::Widget::Table/The cursor>.
+
 =head2 Garbled characters in a Text widget, input, canvas or KDL layout
 
 All of these take character strings. If your source code contains
@@ -2342,10 +2522,21 @@ top-left corner.
 The area of a widget inside its border and padding, where its children
 (or a canvas's cells) are placed.
 
+=item cursor (table)
+
+The line of a L<Term::Fabulous::Widget::Table> the keyboard works on,
+highlighted while the table has the focus. Not the same as the
+selection. See L<Term::Fabulous::Widget::Table/The cursor>.
+
 =item debounced
 
 Delayed until the input has stopped changing for a short time; used for
 terminal resizes, see L</Event reference>.
+
+=item display text (table)
+
+The text a table cell shows: its raw value after the column's mutators.
+See L<Term::Fabulous::Widget::Table/DISPLAY TEXT AND MUTATORS>.
 
 =item focus
 
@@ -2379,15 +2570,32 @@ be written. See L</KDL LAYOUT FILES>.
 
 A code reference registered with C<< $widget->on( $event_name => $code ) >>.
 
+=item mutator
+
+A code reference that turns a table cell's raw value into its display
+text, for example epoch seconds into a date; see
+L<Term::Fabulous::Widget::Table::Mutator>.
+
 =item notifier
 
 L<IO::Async>'s word for anything that runs in its event loop: timers,
 sockets, child processes, signal handlers.
 
+=item raw value (table)
+
+The value a table column reads from a row (or computes from it). Tables
+sort by it and filter by it unless told otherwise. See
+L<Term::Fabulous::Widget::Table/How a table works>.
+
 =item root widget
 
 The widget passed as C<root> to C<< Term::Fabulous->new >>; the top of the
 widget tree.
+
+=item row id (table)
+
+The name of a row of a L<Term::Fabulous::Widget::Table>, used by every
+method and event. See L<Term::Fabulous::Widget::Table/Row ids>.
 
 =item sizing group
 
@@ -2503,6 +2711,21 @@ L</FORMS AND INPUT WIDGETS> and the widget pages.
 
 L</FORMS AND INPUT WIDGETS>, L<Term::Fabulous::Event::Change>,
 L<Term::Fabulous::Cookbook/Read all values of a form>.
+
+=item Tables: rows and columns of data, sorting, filtering, selection
+
+L</TABLES>, L<Term::Fabulous::Widget::Table> (its L<FEATURE INDEX|Term::Fabulous::Widget::Table/FEATURE INDEX>
+lists every table feature), L<Term::Fabulous::Cookbook/TABLES>.
+
+=item Group rows, trees of nested rows, pages
+
+L<Term::Fabulous::Widget::Table/GROUPING>,
+L<Term::Fabulous::Widget::Table/TREES>,
+L<Term::Fabulous::Widget::Table/PAGES>.
+
+=item Format dates, numbers and sizes in table cells
+
+L<Term::Fabulous::Widget::Table::Mutator>.
 
 =item Describe the screen in a file
 

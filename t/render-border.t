@@ -92,6 +92,40 @@ subtest 'Hidden sides' => sub {
 		'one column wide: the right side is drawn';
 };
 
+subtest 'corner glyphs of the widget' => sub {
+	my $box = Term::Fabulous::Widget::Box->new(
+		border_width   => 1,
+		border_style   => Term::Fabulous::Enum::BorderStyle->Solid,
+		border_corners => { top_left => "\x{251C}", bottom_right => "\x{253C}" },
+	);
+	my $cells = draw_border( widget => $box );
+	is [ @{$cells}{ '1,1', '4,1', '1,3', '4,3' } ], [ "\x{251C}", "\x{2510}", "\x{2514}", "\x{253C}" ], 'named corners take the glyph, the others keep the style';
+	is $box->border_corners, { top_left => "\x{251C}", bottom_right => "\x{253C}" }, 'the reader returns them';
+	$box->border_corners(undef);
+	is draw_border( widget => $box )->{'1,1'}, "\x{250C}", 'undef brings the style back';
+	like dies { $box->border_corners( { middle => '+' } ) },      qr/border_corners does not know middle/,          'an unknown corner dies';
+	like dies { $box->border_corners( { top_left => '++' } ) },    qr/border_corners top_left must be a single character/, 'a glyph must be one character';
+	like dies { Term::Fabulous::Widget::Box->new( border_corners => 'x' ) }, qr/border_corners must be undef or a hash reference/, 'so must the parameter';
+};
+
+subtest 'sides on the outer background' => sub {
+	my $buffer = [];
+	$buffer->[$_] = [ (0x0A0B0C) x 6 ] for 0 .. 4;    # the widget's background ...
+	$buffer->[$_][0] = 0x010101 for 0 .. 4;           # ... and the parent's, left of the box
+	$buffer->[0] = [ (0x020202) x 6 ];                # and above it
+	my $box = Term::Fabulous::Widget::Box->new( border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, outer_border_sides => ['left'] );
+	draw_border( widget => $box, buffer => $buffer );
+	is $cells{'1,2'}[2], 0x010101, 'an outer side is drawn on the background beside the box';
+	is $cells{'1,1'}[2], 0x010101, 'and so is a corner on it';
+	is $cells{'2,1'}[2], 0x0A0B0C, 'other sides keep the widget background';
+	$box->outer_border_sides( [ 'top', 'left', 'top' ] );
+	is $box->outer_border_sides, [ 'left', 'top' ], 'the sides are kept once, in order';
+	draw_border( widget => $box, buffer => $buffer );
+	is $cells{'2,1'}[2], 0x020202, 'the top side on the background above';
+	ok $box->is_outer_border_side('top'), 'is_outer_border_side';
+	like dies { $box->outer_border_sides( ['middle'] ) }, qr/outer_border_sides knows only the sides left right top bottom, got 'middle'/, 'an unknown side dies';
+};
+
 subtest 'location colors' => sub {
 	my $buffer = [];
 	$buffer->[$_] = [ (0x0A0B0C) x 6 ] for 1 .. 3;    # widget background inside the box

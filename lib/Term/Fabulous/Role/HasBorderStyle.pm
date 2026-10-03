@@ -13,6 +13,7 @@ use Data::Checks qw(Isa Maybe);
 
 role Term::Fabulous::Role::HasBorderStyle {
 	use Scalar::Util qw(blessed refaddr);
+	use Term::Fabulous::Check qw(glyph);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my @SIDES = qw(left right top bottom);
@@ -21,6 +22,39 @@ role Term::Fabulous::Role::HasBorderStyle {
 	field $border_style_right  :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
 	field $border_style_bottom :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
 	field $border_style_left   :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
+	field $border_corners      :param = undef;
+	field $outer_border_sides  :param = [];
+
+	my @CORNERS = qw(top_left top_right bottom_left bottom_right);
+
+	ADJUST {
+		$border_corners     = _corner_glyphs( $self, $border_corners );
+		$outer_border_sides = _side_names( $self, $outer_border_sides );
+	}
+
+	# A copy of a list of side names, each at most once, in @SIDES order.
+	sub _side_names ( $owner, $sides ) {
+		die ref($owner) . ": outer_border_sides must be an array reference of side names, got " . ( defined $sides ? ( ref $sides ? ref($sides) . ' reference' : "'$sides'" ) : 'undef' )
+			unless ref $sides eq 'ARRAY';
+		my %is_side = map { $_ => 1 } @SIDES;
+		my @unknown = grep { !defined || ref || !$is_side{$_} } @$sides;
+		die ref($owner) . ": outer_border_sides knows only the sides @SIDES, got " . join( ', ', map { defined $_ ? "'$_'" : 'undef' } @unknown ) if @unknown;
+		my %wanted = map { $_ => 1 } @$sides;
+		return [ grep { $wanted{$_} } @SIDES ];
+	}
+
+	method outer_border_sides (@new) {
+		return [@$outer_border_sides] unless @new;
+		$outer_border_sides = _side_names( $self, $new[0] );
+		$self->mark_changed;
+		return [@$outer_border_sides];
+	}
+
+	# Whether a side is drawn on the background outside the widget. Read by
+	# Term::Fabulous::Render::Border.
+	method is_outer_border_side ($side) {
+		return ( grep { $_ eq $side } @$outer_border_sides ) ? 1 : 0;
+	}
 
 	# border_style fills the sides that have no style of their own.
 	ADJUST :params ( :$border_style = undef ) {
@@ -51,6 +85,31 @@ role Term::Fabulous::Role::HasBorderStyle {
 		$$field_ref = $style;
 		$self->mark_changed;
 		return $$field_ref;
+	}
+
+	# A copy of a corner glyph hash: undef, or a hash of single glyphs one
+	# column wide under the names in @CORNERS.
+	sub _corner_glyphs ( $owner, $corners ) {
+		return undef unless defined $corners;
+		die ref($owner) . ": border_corners must be undef or a hash reference of corner glyphs, got " . ( ref $corners ? ref($corners) . ' reference' : "'$corners'" )
+			unless ref $corners eq 'HASH';
+		my %is_corner = map { $_ => 1 } @CORNERS;
+		my @unknown   = grep { !$is_corner{$_} } sort keys %$corners;
+		die ref($owner) . ": border_corners does not know @unknown (known: @CORNERS)" if @unknown;
+		return { map { $_ => glyph( $owner, "border_corners $_", $corners->{$_} ) } grep { defined $corners->{$_} } sort keys %$corners };
+	}
+
+	method border_corners (@new) {
+		return defined $border_corners ? { %$border_corners } : undef unless @new;
+		$border_corners = _corner_glyphs( $self, $new[0] );
+		$self->mark_changed;
+		return defined $border_corners ? { %$border_corners } : undef;
+	}
+
+	# The glyph drawn at a corner instead of the style's corner glyph, or
+	# undef. Read by Term::Fabulous::Render::Border.
+	method border_corner_glyph ($corner) {
+		return defined $border_corners ? $border_corners->{$corner} : undef;
 	}
 
 	# The sides whose style is Hidden; they take no space and draw nothing.
@@ -195,6 +254,14 @@ the top or bottom side. The left and right sides fill the rows between.
 =item * A side that has a width but no style is drawn with the C<Blank>
 style, that is with spaces.
 
+=item * C<border_corners> replaces the glyph of any corner, for example
+to join the box to lines around it (C<\x{251C}> instead of
+C<\x{250C}> where a line comes in from above). The corner keeps the
+colors its style gives it.
+
+=item * C<outer_border_sides> draws some sides on the background
+outside the widget instead of its own (see below).
+
 =item * The glyphs have the C<border_color> (the terminal's default
 foreground color when none is set). Their background is usually the
 widget's background; some styles, such as C<Block>, C<Inner>, C<Panel>
@@ -268,6 +335,37 @@ Default: C<undef>. A side parameter wins over C<border_style>:
 gives a thick left side and solid other sides, like
 C<border style=Solid style-left=Thick> in a KDL layout.
 
+=item C<border_corners>
+
+C<undef> (the default) or a hash reference with any of the keys
+C<top_left>, C<top_right>, C<bottom_left> and C<bottom_right>, each a
+single character one column wide. A corner named here is drawn with
+that glyph instead of the corner glyph of its style; the others keep
+theirs. Only corners that are drawn at all are affected (a corner is
+drawn where a drawn top or bottom side meets a drawn left or right
+side). The colors stay those of the style's corner. Unknown keys and
+other glyphs die. L<Term::Fabulous::Widget::Table> uses it to join the
+lines of its cells, with the glyphs from
+L<Term::Fabulous::Enum::BorderStyle/junction>.
+
+	border_style   => Term::Fabulous::Enum::BorderStyle->Solid,
+	border_corners => { top_left => "\x{251C}", bottom_left => "\x{251C}" },
+
+=item C<outer_border_sides>
+
+An array reference of side names (C<top>, C<right>, C<bottom>,
+C<left>). Default: C<[]>. The glyphs of these sides are drawn on the
+background just outside the widget (what is painted there, usually the
+parent's background) instead of the widget's own: the border looks like
+part of its surroundings, and a colored widget starts inside it. The
+glyphs of a style that already uses the outer background (see
+L<Term::Fabulous::Enum::BorderStyle/locations>) are not affected; those
+in reverse video use the outer background as well. A corner is drawn
+like the side next to it when that side is listed, otherwise like its
+top or bottom side. Unknown side names die.
+L<Term::Fabulous::Widget::Table> draws its outer frame this way, so a
+highlighted row ends at the frame.
+
 =back
 
 =head1 METHODS
@@ -301,6 +399,42 @@ Accessor for the style of the bottom side, as L</border_style_top>.
 	$box->border_style_left( Term::Fabulous::Enum::BorderStyle->Heavy );
 
 Accessor for the style of the left side, as L</border_style_top>.
+
+=head2 border_corners
+
+	my $corners = $box->border_corners;    # a copy, or undef
+	$box->border_corners( { top_left => "\x{253C}" } );
+	$box->border_corners(undef);           # the style's corners again
+
+Accessor for the C<border_corners> parameter. The reader returns a new
+hash (or C<undef>); the writer takes what the parameter takes, replaces
+all corners at once and returns the new value. The change shows in the
+next frame.
+
+=head2 outer_border_sides
+
+	my $sides = $box->outer_border_sides;          # a copy, e.g. [ 'left', 'top' ]
+	$box->outer_border_sides( [ 'left', 'right' ] );
+
+Accessor for the C<outer_border_sides> parameter. The reader returns a
+new array reference of the sides in the order C<left>, C<right>,
+C<top>, C<bottom>; the writer takes what the parameter takes and
+returns the new value. The change shows in the next frame.
+
+=head2 is_outer_border_side
+
+	my $outer = $box->is_outer_border_side('left');    # 1 or 0
+
+Whether a side is listed in C<outer_border_sides>. Used by
+L<Term::Fabulous::Render::Border>.
+
+=head2 border_corner_glyph
+
+	my $glyph = $box->border_corner_glyph('top_left');    # or undef
+
+The glyph drawn at one corner instead of the style's corner glyph, or
+C<undef> when the style's glyph is drawn. Used by
+L<Term::Fabulous::Render::Border>.
 
 =head2 contribute_border_hidden
 

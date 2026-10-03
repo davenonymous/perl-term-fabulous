@@ -47,7 +47,7 @@ role Term::Fabulous::Render::Text {
 
 		my $right_limit = min( $x1, $clip_x1 );
 		my $data        = $command->{renderData};
-		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) );
+		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) ) | ( defined $widget && $widget->can('style_attrs') ? $widget->style_attrs : 0 );
 		my $row         = $buffer->[$y] //= [];
 		my $target      = $self->cell_target;
 
@@ -97,7 +97,9 @@ line.
 	$ui->render_text( $command, $widget, $buffer );
 
 Paints one line of text, starting at the top-left cell of the command's
-bounding box, in the command's text color:
+bounding box, in the command's text color with the style bits of the
+widget (bold, italic, underline; see
+L<Term::Fabulous::Widget::Text/style_attrs>), when the widget has any:
 
 =over
 

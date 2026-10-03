@@ -1,6 +1,48 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Table shows rows of Perl hashes in
+          columns: widths that fit, grow, are fixed or a percentage,
+          with limits; wrapping and rows as high as their tallest cell;
+          mutators for the display text (Table::Mutator: dates, numbers,
+          percentages, sizes, durations, flags, lookups); any widget as
+          a cell, kept across data changes with update_cell; sorting by
+          one or several columns by the user or from Perl, with string,
+          natural, number, date or custom comparisons; filtering with a
+          filter row whose expressions read text, numbers and date spans
+          (">=100", "2024-05", "10..20"), named Table::Filter objects
+          with all/any/not, on the raw value or the display text, and a
+          search over the visible columns; groups by one or more
+          columns with labels of your own; trees of nested rows; pages
+          with a pager; a cursor and none, single or multiple selection
+          with a selection column; a column chooser; colors, stripes and
+          lines per table, column, row and cell, joined into one grid,
+          and frames in the block styles Outer, Inner and Thick, which
+          enclose colored cells cleanly;
+          full keyboard and mouse use; KDL properties. User actions
+          fire the new events CursorMove, SelectionChange, RowActivate,
+          SortChange, FilterChange, PageChange, Expand, Collapse and
+          ColumnsChange; changes from Perl fire none. The data and the
+          view live in Table::Model, which has no widgets. Documented
+          by feature with a feature index, a TABLES chapter in the
+          Manual and the Cookbook, examples/widgets/table.pl,
+          examples/table-directory.pl and examples/table-files.pl
+        - Enum::BorderStyle junction gives the glyph where lines of any
+          styles meet; Role::HasBorderStyle gains border_corners (corner
+          glyphs of your own) and outer_border_sides (sides drawn on the
+          background outside the widget), used by Render::Border
+        - Text gains bold, italic and underline (also in KDL); the
+          terminal grid emits italic
+        - Render gains after_draw, a one-shot callback after the next
+          frame. A change now costs one frame: the drawn revision is the
+          one the layout started from, which removes a second frame
+          after every interaction
+        - Check gains sizing, which reads sizing strings such as
+          'fit(0, 30)' or 'percent(25)'; KDL sizing and table column
+          widths use it
+        - Needs the matching Clay::UI (Grid spanning rows and shared
+          columns, Preparable, laid_out_revision, scroll_state,
+          scroll_to, bounding_box), List::Util 1.33 and Time::Local 1.30
         - Term::Fabulous::TextView lays out the text of the text
           inputs: visual rows with wrapping, the cursor's cell, the
           scroll position, the text position under a cell and moves by

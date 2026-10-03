@@ -390,6 +390,21 @@ The style of one side, a L<Term::Fabulous::Enum::BorderStyle> item. It
 wins over C<border_style> for that side; see
 L<Term::Fabulous::Role::HasBorderStyle>.
 
+=item C<border_corners>
+
+C<undef> (the default) or a hash reference with any of the keys
+C<top_left>, C<top_right>, C<bottom_left> and C<bottom_right>, each a
+glyph drawn at that corner instead of the style's corner glyph, for
+example to join the box to lines around it. See
+L<Term::Fabulous::Role::HasBorderStyle/border_corners>.
+
+=item C<outer_border_sides>
+
+An array reference of side names (C<top>, C<right>, C<bottom>,
+C<left>) whose glyphs are drawn on the background outside the widget
+instead of the widget's own. Default: C<[]>. See
+L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>.
+
 =item C<width_group>
 
 =item C<height_group>
@@ -659,6 +674,21 @@ or a L<Term::Fabulous::Enum::BorderStyle> item; the writer returns the
 new value and anything else dies. The change shows in the next frame.
 There is no C<border_style> accessor; set the sides one by one. See
 L<Term::Fabulous::Role::HasBorderStyle>.
+
+=head2 border_corners
+
+	$box->border_corners( { top_left => "\x{251C}" } );
+
+Accessor for the corner glyphs; the reader returns a new hash reference
+or C<undef>. See L<Term::Fabulous::Role::HasBorderStyle/border_corners>.
+
+=head2 outer_border_sides
+
+	$box->outer_border_sides( [ 'left', 'right' ] );
+
+Accessor for the sides drawn outside the widget; the reader returns a
+new array reference. See
+L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>.
 
 =head2 width_group
 

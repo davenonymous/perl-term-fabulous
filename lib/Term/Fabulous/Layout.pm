@@ -697,6 +697,49 @@ order does not matter, also when the range moves beyond the defaults
 		value_format "%d dB"
 	}
 
+=head2 Table properties
+
+L<Term::Fabulous::Widget::Table>: the L</Box properties> (the Box
+C<border> is a border around the whole table; the table's own frame is
+C<lines frame=...>) plus:
+
+	Property node                       Value
+	----------------------------------  ----------------------------------------
+	column "key" title=... type=...     adds a column; also width, align,
+	                                    header_align, wrap, sortable, filterable,
+	                                    filter_on, compare, visible; optional
+	                                    style and header_style child nodes
+	sort "key" "desc"                   adds a column to the sort (asc or desc)
+	group_by "key" ...                  the group columns, outermost first
+	lines frame=... columns=... ...     the lines: frame, top, right, bottom,
+	                                    left, columns, rows, header, color
+	cell_padding N                      or cell_padding left=N right=N top=N bottom=N
+	page_sizes N N ...                  the page sizes the pager offers
+	selection ...                       none, single or multiple
+	selection_column, pager,            booleans
+	filter_row, header, scrollbar,
+	hover, tree_expanded
+	page_size N                         lines per page, 0 for no pages
+	row_id, children_key, tree_column   column keys
+	empty_text, no_match_text           strings
+	text_color, ..., stripe_color       color strings
+
+The rows, and everything that is a code reference (mutators, cell
+widgets, callbacks), come from Perl. A table takes no child widget
+nodes. L<Term::Fabulous::Widget::Table/KDL PROPERTIES> describes every
+property.
+
+	Table "inventory" {
+		selection multiple
+		row_id "sku"
+		lines frame=Double header=Heavy
+		column "sku" title="SKU"
+		column "qty" title="Qty" type=number {
+			style text_color="#e5c07b"
+		}
+		sort "qty" "desc"
+	}
+
 =head1 EXAMPLES
 
 =head2 A form, built from a layout

@@ -26,6 +26,13 @@ role Term::Fabulous::Render::Border {
 	# 1 = border color on the parent's background, 2 and 3 are 1 and 0 in
 	# reverse video. Reverse video swaps terminal-default colors correctly,
 	# which an explicit fg/bg swap of TB_DEFAULT would not.
+	# The location code a glyph gets on a side drawn on the outer
+	# background: the codes that use the widget's background use the
+	# parent's instead.
+	sub _on_outer ($location) {
+		return $location == 0 ? 1 : $location == 3 ? 2 : $location;
+	}
+
 	sub _location_attrs ( $location, $border, $inner, $outer ) {
 		return ( $border, $inner ) if $location == 0;
 		return ( $border, $outer ) if $location == 1;
@@ -70,16 +77,30 @@ role Term::Fabulous::Render::Border {
 			my ( $fg, $bg ) = _location_attrs( $location, $border_attr, $shade_at->( $x, $y ), $shade_at->( $outer_x, $outer_y ) );
 			$target->set_cell( $x, $y, $glyph, $fg, $bg );
 		};
-		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations ) {
+		my %outer = map { $_ => $widget->is_outer_border_side($_) } qw(top right bottom left);
+
+		# A corner lies on the side next to it as much as on its edge: when
+		# that side is drawn on the outer background, so is the corner, on the
+		# background beside the box.
+		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations, $edge ) {
+			my @corners = map { $widget->border_corner_glyph("${edge}_$_") } qw(left right);
 			foreach my $x ( max( $x0, $clip_x0 ) .. min( $last_x, $clip_x1 - 1 ) ) {
-				my $slot = $x == $x0 && $left ? 0 : $x == $last_x && $right ? 2 : 1;
-				$paint->( $x, $y, $glyphs->[$slot], $locations->[$slot], $x, $outer_y );
+				my $slot     = $x == $x0 && $left ? 0 : $x == $last_x && $right ? 2 : 1;
+				my $glyph    = $slot == 1 ? $glyphs->[1] : $corners[ $slot / 2 ] // $glyphs->[$slot];
+				my $side     = $slot == 0 ? 'left' : $slot == 2 ? 'right' : undef;
+				my $location = $locations->[$slot];
+				if ( defined $side && $outer{$side} ) {
+					$paint->( $x, $y, $glyph, _on_outer($location), $slot == 0 ? $x - 1 : $x + 1, $y );
+					next;
+				}
+				$paint->( $x, $y, $glyph, $outer{$edge} ? _on_outer($location) : $location, $x, $outer_y );
 			}
 		};
-		my $paint_column = sub ( $x, $outer_x, $glyph, $location ) {
+		my $paint_column = sub ( $x, $outer_x, $glyph, $location, $side ) {
 			return if $x < $clip_x0 || $x >= $clip_x1;
 			my $from = $top    ? $y0 + 1     : $y0;
 			my $to   = $bottom ? $last_y - 1 : $last_y;
+			$location = _on_outer($location) if $outer{$side};
 			foreach my $y ( max( $from, $clip_y0 ) .. min( $to, $clip_y1 - 1 ) ) {
 				$paint->( $x, $y, $glyph, $location, $outer_x, $y );
 			}
@@ -87,19 +108,19 @@ role Term::Fabulous::Render::Border {
 
 		if ($top) {
 			my $style = $widget->border_style_top // $blank;
-			$paint_row->( $y0, $y0 - 1, [ $style->get_top_glyphs ], [ $style->get_top_locations ] );
+			$paint_row->( $y0, $y0 - 1, [ $style->get_top_glyphs ], [ $style->get_top_locations ], 'top' );
 		}
 		if ($bottom) {
 			my $style = $widget->border_style_bottom // $blank;
-			$paint_row->( $last_y, $last_y + 1, [ $style->get_bottom_glyphs ], [ $style->get_bottom_locations ] );
+			$paint_row->( $last_y, $last_y + 1, [ $style->get_bottom_glyphs ], [ $style->get_bottom_locations ], 'bottom' );
 		}
 		if ($left) {
 			my $style = $widget->border_style_left // $blank;
-			$paint_column->( $x0, $x0 - 1, $style->get_left_glyphs, $style->get_left_locations );
+			$paint_column->( $x0, $x0 - 1, $style->get_left_glyphs, $style->get_left_locations, 'left' );
 		}
 		if ($right) {
 			my $style = $widget->border_style_right // $blank;
-			$paint_column->( $last_x, $last_x + 1, $style->get_right_glyphs, $style->get_right_locations );
+			$paint_column->( $last_x, $last_x + 1, $style->get_right_glyphs, $style->get_right_locations, 'right' );
 		}
 		return;
 	}
@@ -160,7 +181,10 @@ width.
 =item *
 
 Each side uses the style of that side (C<border_style_top>, ...). A
-side without a style is drawn with the C<Blank> style: spaces.
+side without a style is drawn with the C<Blank> style: spaces. A corner
+the widget names in C<border_corners> is drawn with that glyph instead
+(see L<Term::Fabulous::Role::HasBorderStyle/border_corners>), in the
+colors of the style's corner.
 
 =item *
 
@@ -170,6 +194,16 @@ front of either the widget's own background (the background already
 painted in that cell, read from C<$buffer>) or the parent's background
 (the background of the cell just outside the box, also read from
 C<$buffer>), possibly in reverse video.
+
+=item *
+
+A side the widget lists in C<outer_border_sides> (see
+L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>) is drawn on
+the parent's background: its glyphs with location code 0 are drawn as
+code 1, those with code 3 as code 2, and codes 1 and 2 stay. A corner is
+drawn this way, with the background of the cell beside the box, when
+the left or right side next to it is listed; otherwise it follows its
+top or bottom side.
 
 =item *
 

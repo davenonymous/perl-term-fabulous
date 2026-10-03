@@ -249,6 +249,54 @@ enum Term::Fabulous::Enum::BorderStyle {
 		return $horizontal_style->get_mixed_joint( $vertical_style );
 	}
 
+	# Styles that draw their joints with the joints of another style (see
+	# joints) belong to that style's family for mixed joints.
+	my %JOINT_FAMILY = ( Round => 'Solid', Dashed => 'Heavy' );
+
+	sub _family_name ($style) {
+		return $JOINT_FAMILY{ $style->name } // $style->name;
+	}
+
+	# Which glyph a set of arms needs: [ joints index, mixed index ] for the
+	# T shapes and the cross; corners and straight lines are handled apart.
+	my %JOINT_OF_ARMS = (
+		'up right down left' => [ 2, 0 ],
+		'right down left'    => [ 3, 1 ],
+		'up right left'      => [ 4, 2 ],
+		'up right down'      => [ 5, 3 ],
+		'up down left'       => [ 6, 4 ],
+	);
+	my %CORNER_OF_ARMS = ( 'right down' => 0, 'down left' => 2, 'up right' => 5, 'up left' => 7 );
+
+	# The glyph where lines of grid styles meet: arms maps up, right, down
+	# and left to the style of the line leaving the cell that way, or undef.
+	method junction :common (%arms) {
+		my @unknown = grep { !/\A(?:up|right|down|left)\z/ } sort keys %arms;
+		die "Term::Fabulous::Enum::BorderStyle: junction takes the arms up, right, down and left, got @unknown" if @unknown;
+		_check_style( "$_ arm", $arms{$_} ) foreach grep { defined $arms{$_} } sort keys %arms;
+
+		my @directions = grep { defined $arms{$_} && $arms{$_}->joints } qw(up right down left);
+		return undef unless @directions;
+		my $horizontal = $arms{right} // $arms{left};
+		my $vertical   = $arms{down}  // $arms{up};
+		$horizontal = undef if defined $horizontal && !$horizontal->joints;
+		$vertical   = undef if defined $vertical   && !$vertical->joints;
+
+		my $shape = join ' ', @directions;
+		return $horizontal->glyphs->[1] unless defined $vertical;
+		return $vertical->glyphs->[3]   unless defined $horizontal;
+		if ( exists $CORNER_OF_ARMS{$shape} ) {
+			my $owner = _family_name($horizontal) eq _family_name($vertical) ? $vertical : $horizontal;
+			return $owner->glyphs->[ $CORNER_OF_ARMS{$shape} ];
+		}
+
+		my ( $joint_index, $mixed_index ) = @{ $JOINT_OF_ARMS{$shape} };
+		return $horizontal->joints->[$joint_index] if _family_name($horizontal) eq _family_name($vertical);
+		my $family = Term::Fabulous::Enum::BorderStyle->from_name( _family_name($horizontal) );
+		my $mixed  = $family->get_mixed_joint( Term::Fabulous::Enum::BorderStyle->from_name( _family_name($vertical) ) );
+		return defined $mixed ? $mixed->[$mixed_index] : $horizontal->joints->[$joint_index];
+	}
+
 	method get_top_glyphs () {
 		return @{$glyphs}[0, 1, 2];
 	}
@@ -551,8 +599,8 @@ The location code of L</get_right_glyphs>.
 =head1 GRID JOINTS
 
 Some styles also carry the glyphs needed where lines of a grid meet.
-No Term::Fabulous widget draws grid lines yet; these methods are for
-your own widgets.
+L<Term::Fabulous::Widget::Table> draws its grid lines with them (through
+L</junction>); the methods are also there for your own widgets.
 
 =head2 joints
 
@@ -564,6 +612,48 @@ grid joints: horizontal line, vertical line, cross, T pointing down
 right and T pointing left. L</Ascii>, L</Dashed>, L</Double>,
 L</Heavy>, L</Round> and L</Solid> have joints; L</Dashed> uses the
 joints of L</Heavy>, and L</Round> those of L</Solid>.
+
+=head2 junction
+
+	my $glyph = Term::Fabulous::Enum::BorderStyle->junction(
+		up    => Term::Fabulous::Enum::BorderStyle->Solid,
+		down  => Term::Fabulous::Enum::BorderStyle->Solid,
+		right => Term::Fabulous::Enum::BorderStyle->Heavy,
+	);    # "\x{251D}", a light vertical line with a heavy line to the right
+
+Class method. The glyph for a cell where lines meet: each of the arms
+C<up>, C<right>, C<down> and C<left> names the style of the line that
+leaves the cell in that direction (C<undef> or missing: no line). Only
+styles with L</joints> take part; an arm in another style counts as no
+line. Returns C<undef> when no arm is left.
+
+=over
+
+=item *
+
+One arm, or two opposite arms: the style's own edge glyph (the top
+edge for a horizontal line, the left edge for a vertical one), so a
+L</Dashed> line stays dashed.
+
+=item *
+
+Two arms at a right angle: a corner glyph from the style's L</glyphs>,
+so L</Round> lines get round corners.
+
+=item *
+
+Three arms (a T) or four (a cross): the glyph from L</joints>, or from
+L</get_mixed_joint> when the horizontal and the vertical lines belong to
+different families (L</Round> counts as L</Solid>, L</Dashed> as
+L</Heavy>). Without a mixed table, the horizontal line's joints are
+used.
+
+=back
+
+The horizontal style is the one of the C<right> arm, or of the C<left>
+arm when there is no right one; the vertical style is the one of the
+C<down> arm, or of the C<up> arm. Unknown arm names and arms that are
+not style objects die.
 
 =head2 get_grid_styles
 

@@ -15,12 +15,39 @@ class Term::Fabulous::Widget::Text
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
-	use Term::Fabulous::Check qw(color);
+	use Clay::UI::Revision qw(bump_revision);
+	use Term::Fabulous::Check qw(boolean color);
+	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
 
-	field $id :param :reader = undef;
+	field $id        :param :reader = undef;
+	field $bold      :param = 0;
+	field $italic    :param = 0;
+	field $underline :param = 0;
+
+	ADJUST {
+		$bold      = boolean( $self, bold      => $bold );
+		$italic    = boolean( $self, italic    => $italic );
+		$underline = boolean( $self, underline => $underline );
+	}
+
+	method _set_style ( $name, $field_ref, @new ) {
+		return $$field_ref unless @new;
+		$$field_ref = boolean( $self, $name => $new[0] );
+		bump_revision();
+		return $$field_ref;
+	}
+
+	method bold (@new)      { return $self->_set_style( bold      => \$bold,      @new ) }
+	method italic (@new)    { return $self->_set_style( italic    => \$italic,    @new ) }
+	method underline (@new) { return $self->_set_style( underline => \$underline, @new ) }
+
+	# The termbox2 style bits the renderer adds to the text color.
+	method style_attrs () {
+		return ( $bold ? TB_BOLD : 0 ) | ( $italic ? TB_ITALIC : 0 ) | ( $underline ? TB_UNDERLINE : 0 );
+	}
 
 	# Clay::UI validates text_color before any ADJUST of this class runs,
 	# so it is converted while the arguments are still a plain list.
@@ -59,6 +86,9 @@ class Term::Fabulous::Widget::Text
 			letter_spacing => 'scalar',
 			line_height    => 'scalar',
 			text_color     => 'color',
+			bold           => 'boolean',
+			italic         => 'boolean',
+			underline      => 'boolean',
 			text           => \&_parse_text,
 			wrap_mode      => \&_parse_wrap_mode,
 			text_alignment => \&_parse_text_alignment,
@@ -169,6 +199,17 @@ background; you will almost always want to set it. Pass
 C<[0, 0, 0, 0]> (alpha 0) for the terminal's default foreground color.
 See L<Term::Fabulous::Manual/COLORS>.
 
+=item C<bold>
+
+=item C<italic>
+
+=item C<underline>
+
+Booleans, default 0: draw the characters bold, italic or underlined.
+Any true or false value; references die. Terminals show these styles
+with the font they have, so a font without an italic face may show
+italic text upright. They take no space and do not change the layout.
+
 =item C<id>
 
 A string naming the widget, for your own use (for example to find a
@@ -252,6 +293,32 @@ constructor parameter accepts, and returns the stored C<[r, g, b, a]>.
 An invalid value dies like the constructor parameter. The change shows
 in the next frame.
 
+=head2 bold
+
+	$label->bold(1);
+
+=head2 italic
+
+	$label->italic(1);
+
+=head2 underline
+
+	$label->underline(1);
+
+Accessors for the constructor parameters of the same names (0 or 1).
+Without an argument they return the current value; with an argument
+they set it and return the new value. The change shows in the next
+frame.
+
+=head2 style_attrs
+
+	my $bits = $label->style_attrs;
+
+The termbox2 style bits (C<TB_BOLD>, C<TB_ITALIC>, C<TB_UNDERLINE>, see
+L<Term::Fabulous::Termbox>) of the current C<bold>, C<italic> and
+C<underline> values, combined; 0 for plain text. The renderer adds them
+to the text color.
+
 =head2 id
 
 	my $id = $label->id;
@@ -319,6 +386,7 @@ spacing is drawn.
 	Text "greeting" {
 		text "Gr\u{fc}\u{df}e, world"
 		text_color "#e6e6e6"
+		bold #true
 		line_height 2
 		wrap_mode newlines
 		text_alignment center
@@ -338,6 +406,14 @@ Exactly one string. It is used as is, so write any characters directly
 Exactly one argument: any color string L<Term::Fabulous::Color>
 understands, such as C<"#ffffff">, C<"rgb(255, 255, 255)"> or
 C<"hsl(0, 0%, 100%)">.
+
+=item C<bold #true>
+
+=item C<italic #true>
+
+=item C<underline #true>
+
+Exactly one boolean each: C<#true>, C<#false>, C<1> or C<0>.
 
 =item C<wrap_mode words>
 
@@ -378,7 +454,8 @@ them yourself.
 The table of the properties a layout may set (see
 L<Term::Fabulous::Role::CanParseLayout/layout_properties>): C<font_id>,
 C<font_size>, C<letter_spacing> and C<line_height> are scalars,
-C<text_color> is a color, and C<text>, C<wrap_mode> and
+C<text_color> is a color, C<bold>, C<italic> and C<underline> are
+booleans, and C<text>, C<wrap_mode> and
 C<text_alignment> are structured properties the Text parses itself; see
 L</KDL PROPERTIES>.
 

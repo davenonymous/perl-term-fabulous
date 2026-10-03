@@ -101,6 +101,9 @@
 # Local scratch scripts
 ^bin/
 
+# Local HTML rendering of the documentation
+^docs\.html$
+
 # Tooling state
 ^\.claude/
 ^lsp\.log$

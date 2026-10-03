@@ -24,6 +24,25 @@ subtest 'mixed joints' => sub {
 	ref_is $Style->Dashed->joints, $Style->Heavy->joints, 'Dashed uses the heavy joints';
 };
 
+subtest 'junction' => sub {
+	my ( $S, $H, $D, $R, $A ) = map { $Style->$_ } qw(Solid Heavy Double Round Ascii);
+	is $Style->junction( left => $S, right => $S ),                            "\x{2500}", 'two opposite arms: the edge glyph';
+	is $Style->junction( right => $Style->Dashed ),                            "\x{254D}", 'one arm: the edge glyph, a dashed line stays dashed';
+	is $Style->junction( up => $S, down => $S ),                               "\x{2502}", 'vertical arms: the left edge glyph';
+	is $Style->junction( right => $R, down => $R ),                            "\x{256D}", 'a corner of a round style is round';
+	is $Style->junction( up => $S, left => $H ),                               "\x{251B}", 'a corner of mixed styles takes the horizontal one';
+	is $Style->junction( up => $S, right => $S, down => $S, left => $S ),      "\x{253C}", 'four arms: the cross';
+	is $Style->junction( left => $D, right => $D, down => $S ),                "\x{2564}", 'mixed families use the mixed joints';
+	is $Style->junction( up => $S, down => $S, right => $H ),                  "\x{251D}", 'heavy to the right of a light line';
+	is $Style->junction( up => $R, down => $R, left => $S, right => $S ),      "\x{253C}", 'Round counts as Solid';
+	is $Style->junction( up => $H, down => $H, left => $D, right => $D ),      "\x{256C}", 'without a mixed table, the horizontal joints';
+	is $Style->junction( right => $A, down => $A, left => $A ),                '+',         'Ascii joints';
+	is $Style->junction( right => $Style->Blank, down => $Style->Thick ),      undef,       'styles without joints are no arms';
+	is $Style->junction(),                                                     undef,       'no arms';
+	like dies { $Style->junction( middle => $S ) }, qr/junction takes the arms up, right, down and left, got middle/, 'an unknown arm dies';
+	like dies { $Style->junction( up => 'Solid' ) }, qr/the up arm style must be a Term::Fabulous::Enum::BorderStyle/, 'a style name dies';
+};
+
 subtest 'style list' => sub {
 	is $Style->from_name('Tab'), undef, 'Tab is gone';
 	isa_ok $Style->from_name('Hidden'), [$Style], 'Hidden exists';

@@ -298,16 +298,16 @@ class Term::Fabulous
 	}
 
 	# Clay takes one button state per frame, so every queued pointer state
-	# gets a frame of its own; the wheel movement goes with the first. The
-	# revision is read before drawing: a frame that changes widgets (hover
-	# and press events fire during it) leaves the next frame due. Returns
+	# gets a frame of its own; the wheel movement goes with the first. A
+	# frame shows the revision its layout pass started at (changes the
+	# frame's own events and preparations made included); a change after
+	# it (an after_draw callback, say) leaves the next frame due. Returns
 	# the number of frames drawn.
 	method _draw_pending () {
 		my @pointers = splice @_pointer_queue;
 		push @pointers, $_pointer unless @pointers;
 		my ( $columns, $rows ) = ( $_wheel_columns, $_wheel_rows );
 		( $_wheel_columns, $_wheel_rows ) = ( 0, 0 );
-		$_drawn_revision  = current_revision();
 		$_frame_requested = 0;
 
 		my $started = $clock->();
@@ -315,6 +315,7 @@ class Term::Fabulous
 			$_pointer    = $pointer;
 			$_shown_down = defined $pointer ? $pointer->{down} : 0;
 			$self->draw( scroll_cells => [ $columns, $rows ] );
+			$_drawn_revision = $self->laid_out_revision;
 			( $columns, $rows ) = ( 0, 0 );
 		}
 		$_frame_ended_at = $clock->();
@@ -517,7 +518,7 @@ widgets, keyboard and mouse
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
 describe the screen as a tree of widgets (boxes, text, buttons, input
-fields, scrollable areas and canvases), in Perl code or in a layout file
+fields, tables, scrollable areas and canvases), in Perl code or in a layout file
 written in KDL, a small configuration language (L<https://kdl.dev>).
 Term::Fabulous sizes and positions the widgets with the Clay layout
 engine, draws them with 24-bit colors through the termbox2 library, and
@@ -538,6 +539,13 @@ percentage sizes, padding, gaps, alignment, borders in 20 styles.
 Input widgets for forms: single- and multi-line text with selection,
 undo and a clipboard shared by all text fields of the program; check
 boxes; radio buttons; dropdowns; sliders.
+
+=item *
+
+A table widget for rows of data: sorting by one or several columns,
+filtering (also by the user, in a filter row), groups and trees that
+open and close, pages, single and multiple selection, any widget as a
+cell, and lines and colors per column, row and cell.
 
 =item *
 
@@ -581,7 +589,7 @@ without an event loop.
 =item L<Term::Fabulous::Manual>
 
 The user guide. Start here: it explains layout, text, colors, events,
-the keyboard and the mouse, focus, forms, KDL layout files, the event
+the keyboard and the mouse, focus, forms, tables, KDL layout files, the event
 loop and writing your own widgets, with examples throughout. Its
 L<FEATURE INDEX|Term::Fabulous::Manual/FEATURE INDEX> maps tasks to the
 documentation.
@@ -1344,6 +1352,49 @@ The layer behind an open dialog. Used internally by the dialog.
 
 =back
 
+=head2 Tables
+
+=over
+
+=item L<Term::Fabulous::Widget::Table>
+
+Rows and columns of data, with sorting, filtering, grouping, trees,
+pages, selection and widgets as cells. Its page starts with a feature
+index.
+
+=item L<Term::Fabulous::Widget::Table::Column>
+
+What a table column shows and how: its parameters in full.
+
+=item L<Term::Fabulous::Widget::Table::Mutator>
+
+Ready-made mutators that format cell values: dates, numbers, sizes,
+durations, flags, lookups.
+
+=item L<Term::Fabulous::Widget::Table::Filter>
+
+Filter conditions on numbers, dates and text, their combinations, and
+the notation of the filter row.
+
+=item L<Term::Fabulous::Widget::Table::Value>
+
+How tables read numbers and dates; natural sorting.
+
+=item L<Term::Fabulous::Widget::Table::Model>
+
+The rows of a table and the lines it shows, without widgets.
+
+=item L<Term::Fabulous::Widget::Table::Style>, L<Term::Fabulous::Widget::Table::Borders>
+
+How a table checks its style hashes and works out its grid lines. Used
+internally by the table.
+
+=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Scrollbar>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
+
+The widgets a table is built of. Used internally by the table.
+
+=back
+
 =head2 Events
 
 =over
@@ -1388,6 +1439,38 @@ The user activated a button, by click or key.
 =item L<Term::Fabulous::Event::Close>
 
 A dialog was closed.
+
+=item L<Term::Fabulous::Event::CursorMove>
+
+The user moved the cursor of a table.
+
+=item L<Term::Fabulous::Event::SelectionChange>
+
+The user changed which rows of a table are selected.
+
+=item L<Term::Fabulous::Event::RowActivate>
+
+The user pressed Enter on a table row or double-clicked it.
+
+=item L<Term::Fabulous::Event::SortChange>
+
+The user sorted a table by a column.
+
+=item L<Term::Fabulous::Event::FilterChange>
+
+The user typed into a filter field of a table.
+
+=item L<Term::Fabulous::Event::PageChange>
+
+The user turned the page of a table or chose another page size.
+
+=item L<Term::Fabulous::Event::Expand>, L<Term::Fabulous::Event::Collapse>
+
+The user opened or closed a tree row or a group of a table.
+
+=item L<Term::Fabulous::Event::ColumnsChange>
+
+The user showed or hid a table column in the column chooser.
 
 =back
 

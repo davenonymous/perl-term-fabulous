@@ -123,6 +123,22 @@ screenshot "example-static-report" {
 	size 62 24
 }
 
+screenshot "example-table-directory" {
+	script "examples/table-directory.pl"
+	size 120 30
+	steps {
+		key "Down" "Down" "Space" "Down" "Space" "Down"
+	}
+}
+
+screenshot "example-table-files" {
+	script "examples/table-files.pl"
+	size 90 24
+	steps {
+		key "Down" "Down" "Down" "Down" "Down" "Down" "Right"
+	}
+}
+
 screenshot "example-text-sizing" {
 	script "examples/text-sizing.pl"
 	size 100 13
@@ -283,6 +299,117 @@ screenshot "cookbook-kdl-panel" {
 	size 52 8
 }
 
+screenshot "cookbook-table-basics" {
+	script "examples-cookbook/table-basics.pl"
+	size 76 19
+	steps {
+		key "Down" "Space" "Down" "Down" "Space" "Down" "Enter"
+	}
+}
+
+screenshot "cookbook-table-format" {
+	script "examples-cookbook/table-format.pl"
+	size 100 15
+	steps {
+		key "Down"
+	}
+}
+
+screenshot "cookbook-table-sort" {
+	script "examples-cookbook/table-sort.pl"
+	size 96 17
+	steps {
+		key "Up" "Right" "Right" "Right" "Enter" "Left" "Space"
+	}
+}
+
+screenshot "cookbook-table-filter" {
+	script "examples-cookbook/table-filter.pl"
+	size 80 19
+	steps {
+		key "Tab" "Tab" "Tab" "Tab" "Tab"
+		type ">=80000"
+		key "BackTab"
+		type ">=2019"
+	}
+}
+
+screenshot "cookbook-table-filter-perl" {
+	script "examples-cookbook/table-filter-perl.pl"
+	size 80 16
+	steps {
+		type "4"
+	}
+}
+
+screenshot "cookbook-table-groups" {
+	script "examples-cookbook/table-groups.pl"
+	size 84 22
+	steps {
+		key "Down" "Down" "Down" "Down" "Down" "Left"
+	}
+}
+
+screenshot "cookbook-table-tree" {
+	script "examples-cookbook/table-tree.pl"
+	size 72 21
+	steps {
+		key "Down" "Down" "Down" "Down" "Down" "Right"
+	}
+}
+
+screenshot "cookbook-table-edit" {
+	script "examples-cookbook/table-edit.pl"
+	size 92 16
+	steps {
+		key "n" "Space" "Down" "Down" "Space" "a"
+		click 11 5
+		key "h"
+	}
+}
+
+screenshot "cookbook-table-pages" {
+	script "examples-cookbook/table-pages.pl"
+	size 80 19
+	steps {
+		key "Ctrl+PageDown" "Ctrl+PageDown" "Down" "Down"
+	}
+}
+
+screenshot "cookbook-table-lines" {
+	script "examples-cookbook/table-lines.pl"
+	size 48 21
+}
+
+screenshot "cookbook-table-columns" {
+	script "examples-cookbook/table-columns.pl"
+	size 92 16
+	steps {
+		key "F2" "Tab" "Tab" "Tab" "Space" "Tab" "Space"
+	}
+}
+
+screenshot "cookbook-table-kdl" {
+	script "examples-cookbook/table-kdl.pl"
+	size 80 19
+	steps {
+		key "Down" "Space" "Down" "Space" "Down" "Down" "Enter"
+	}
+}
+
+screenshot "cookbook-table-report" {
+	script "examples-cookbook/table-report.pl"
+	size 56 14
+}
+
+screenshot "cookbook-table-colors" {
+	script "examples-cookbook/table-colors.pl"
+	size 64 14
+	steps {
+		key "Down" "Down"
+	}
+}
+
 // --- examples/widgets/: the previews of the widget pages ------------------
 
 screenshot "widget-box" {
@@ -342,4 +469,12 @@ screenshot "widget-text-area" {
 screenshot "widget-dialog" {
 	script "examples/widgets/dialog.pl"
 	size 72 12
+}
+
+screenshot "widget-table" {
+	script "examples/widgets/table.pl"
+	size 90 24
+	steps {
+		key "Space" "Down" "Down" "Space"
+	}
 }

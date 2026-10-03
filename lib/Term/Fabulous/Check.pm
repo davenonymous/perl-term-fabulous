@@ -8,9 +8,10 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color);
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing);
 
 use Carp qw(croak);
+use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
 use Feature::Compat::Try;
 use Scalar::Util qw(blessed looks_like_number);
 use Term::Fabulous::Color;
@@ -84,6 +85,41 @@ sub color ( $owner, $name, $value ) {
 		$error =~ s/ at \S+ line \d+\.?\n?\z//;
 		_fail( $owner, $name, 'a color', $value, $error );
 	}
+}
+
+my $DECIMAL = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
+my %SIZING_WITH_LIMITS = ( grow => \&sizing_grow, fit => \&sizing_fit );
+
+# One axis of a Clay sizing: a spec string (grow, fit, grow(MIN, MAX),
+# fit(MIN, MAX), percent(0..100), fixed(N)) or a hash a sizing_* function
+# of Clay::XS returned.
+sub sizing ( $owner, $name, $value ) {
+	if ( ref $value eq 'HASH' ) {
+		try {
+			check_struct( 'Clay_SizingAxis', $value, $name );
+		}
+		catch ($error) {
+			croak _owner_name($owner) . ": invalid $name: $error";
+		}
+		return {%$value};
+	}
+	my $spec = $value // '';
+	croak _owner_name($owner) . ": invalid $name " . _describe($value) . " (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)"
+		if ref $spec;
+	return sizing_grow() if $spec eq 'grow';
+	return sizing_fit()  if $spec eq 'fit';
+	if ( my ( $kind, $min, $max ) = $spec =~ /\A(grow|fit)\(\s*([0-9]+)\s*(?:,\s*([0-9]+)\s*)?\)\z/ ) {
+		croak _owner_name($owner) . ": $name minimum $min is greater than maximum $max in '$spec'" if defined $max && $min > $max;
+		return $SIZING_WITH_LIMITS{$kind}->( $min + 0, defined $max ? $max + 0 : undef );
+	}
+	if ( my ($percent) = $spec =~ /\Apercent\(\s*($DECIMAL)\s*\)\z/ ) {
+		croak _owner_name($owner) . ": $name percentage must be in 0..100, got '$spec'" if $percent > 100;
+		return sizing_percent( $percent / 100 );
+	}
+	if ( my ($cells) = $spec =~ /\Afixed\(\s*([0-9]+)\s*\)\z/ ) {
+		return sizing_fixed( $cells + 0 );
+	}
+	croak _owner_name($owner) . ": invalid $name '$spec' (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)";
 }
 
 # Canvas cells also take a packed 0xRRGGBB integer, which is opaque.
@@ -170,6 +206,20 @@ C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'Tomato'>, an C<[r, g, b, a]>
 array, an C<{ r, g, b, a }> hash or a Term::Fabulous::Color object.
 Returns C<[r, g, b, a]>, the form Clay::UI takes. C<undef> dies; a
 property that can be switched off handles C<undef> before it checks.
+
+=head2 sizing
+
+	my $width = sizing( $self, 'width', 'fit(4, 30)' );    # the hash sizing_fit(4, 30) returns
+
+One axis of a Clay sizing, as the C<sizing> of a
+L<Term::Fabulous::Widget/new> layout takes it: a hash returned by
+C<sizing_fit>, C<sizing_grow>, C<sizing_fixed> or C<sizing_percent> of
+L<Clay::XS> (copied), or a string in the notation of KDL layouts:
+C<fit>, C<grow>, C<fit(MIN)>, C<fit(MIN, MAX)>, C<grow(MIN)>,
+C<grow(MIN, MAX)>, C<fixed(N)> or C<percent(P)> with C<P> from 0 to 100.
+Its messages differ from the others: C<invalid NAME 'SPEC' (expected
+...)>, C<NAME minimum MIN is greater than maximum MAX in 'SPEC'> and
+C<NAME percentage must be in 0..100, got 'SPEC'>.
 
 =head2 cell_color
 
