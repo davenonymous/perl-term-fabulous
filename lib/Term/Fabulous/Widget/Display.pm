@@ -200,6 +200,10 @@ optional text
 
 L<Term::Fabulous::Widget::ProgressBar> - how much of a task is done
 
+=item *
+
+L<Term::Fabulous::Widget::Spinner> - that something is going on
+
 =back
 
 You do not create a C<Display> directly (the class is abstract and
@@ -249,8 +253,9 @@ natural size as the minimum to line it up with others.
 
 =head1 ANIMATION
 
-A widget that moves by itself, such as an indeterminate
-L<Term::Fabulous::Widget::ProgressBar>, needs no timer: it reads the time from the application's clock (L</now>) and
+A widget that moves by itself, such as a L<Term::Fabulous::Widget::Spinner>
+or an indeterminate L<Term::Fabulous::Widget::ProgressBar>, needs no
+timer: it reads the time from the application's clock (L</now>) and
 asks for a frame when its next frame is due
 (L</request_frame_at>). L<Term::Fabulous> draws that frame at the first
 tick of its frame timer at or after the time, the widget's C<paint_key>

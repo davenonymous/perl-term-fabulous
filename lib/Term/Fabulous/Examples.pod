@@ -720,6 +720,20 @@ ASCII bar. The bars fill up from a timer.
 
 =end html
 
+=head3 examples/widgets/spinner.pl
+
+L<Term::Fabulous::Widget::Spinner>: every ready-made style with its
+name as the label, one-cell styles in the first column and wider and
+taller ones in the second, then a stopped spinner and one with frames
+of its own. The picture shows the frames of one moment; the program
+animates them.
+
+=begin html
+
+<p><img src="/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
+
+=end html
+
 =head2 Tables
 
 =head3 examples/widgets/table.pl

@@ -720,6 +720,14 @@ screenshot "widget-progress-bar" {
 	}
 }
 
+screenshot "widget-spinner" {
+	script "examples/widgets/spinner.pl"
+	size 60 18
+	steps {
+		wait 1
+	}
+}
+
 screenshot "widget-divider" {
 	script "examples/widgets/divider.pl"
 	size 64 18

@@ -217,6 +217,7 @@ lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/SegmentedControl.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Sparkline.pm
+lib/Term/Fabulous/Widget/Spinner.pm
 lib/Term/Fabulous/Widget/StarRating.pm
 lib/Term/Fabulous/Widget/Table.pm
 lib/Term/Fabulous/Widget/Table/Borders.pm
@@ -301,6 +302,7 @@ t/widget-scroll-box.t
 t/widget-segmented-control.t
 t/widget-slider.t
 t/widget-sparkline.t
+t/widget-spinner.t
 t/widget-star-rating.t
 t/widget-table.t
 t/widget-text-area.t
@@ -334,6 +336,7 @@ examples/widgets/scatter-plot.pl
 examples/widgets/segmented-control.pl
 examples/widgets/slider.pl               
 examples/widgets/sparkline.pl
+examples/widgets/spinner.pl
 examples/widgets/star-rating.pl
 examples/widgets/table.pl
 examples/widgets/text-area.pl            
@@ -456,6 +459,7 @@ screenshots/widget-scatter-plot.svg
 screenshots/widget-segmented-control.svg
 screenshots/widget-slider.svg            
 screenshots/widget-sparkline.svg
+screenshots/widget-spinner.svg
 screenshots/widget-star-rating.svg
 screenshots/widget-table.svg
 screenshots/widget-text-area.svg         

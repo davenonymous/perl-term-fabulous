@@ -12,13 +12,14 @@ This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous:
 
 This page covers the widgets that tell the user what the program is
 doing: a L<progress bar|/PROGRESS BARS> for a task whose extent is
-known, or not. They take no input; the program sets their state, from
+known, or not, and a L<spinner|/SPINNERS> for one that just takes a
+while. They take no input; the program sets their state, from
 a timer, a process or a listener, and they draw themselves. The ones
 that move do so on the application's clock, without a timer of their
 own (see L</ANIMATION>).
 
-The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>.
-The class they share, L<Term::Fabulous::Widget::Display>, is the base of
+The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>
+and L<Term::Fabulous::Widget::Spinner>. The class they share, L<Term::Fabulous::Widget::Display>, is the base of
 every widget that paints itself from its own state, and the one to
 derive from for a feedback widget of your own
 (L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>).
@@ -99,10 +100,45 @@ threshold. In KDL:
 		sizing width=grow
 	}
 
+=head1 SPINNERS
+
+A L<Term::Fabulous::Widget::Spinner> shows that the program is busy
+with something it cannot measure: connecting, waiting, loading. It
+cycles through the frames of its style next to a label:
+
+	use Term::Fabulous::Widget::Spinner;
+
+	my $spinner = Term::Fabulous::Widget::Spinner->new( label => 'Connecting' );
+	$status_row->add_child($spinner);
+	# later:
+	$spinner->stop;
+	$status_row->remove_children_with( sub { $_ == $spinner } );
+
+The styles come in three sizes: one cell (C<dots>, the default, made
+of Braille patterns; C<line>, C<arc>, C<circle>, C<arrow>, C<box>,
+C<pulse>, C<bar>), a few cells (C<dots3>, C<bounce>, C<wave>) and
+three rows (C<ring>). C<frames> of your own, of one or several rows,
+replace the style's, and C<interval> sets the pace. C<stop> freezes
+the spinner at its first frame; a stopped spinner costs nothing. The
+picture shows every style (F<examples/widgets/spinner.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
+
+=end html
+
+In KDL:
+
+	Spinner "busy" {
+		style "arc"
+		label "Loading"
+	}
+
 =head1 ANIMATION
 
-Progress bars that are C<indeterminate> or C<animated> move by
-themselves. They need no timer: a moving widget reads the application's
+Spinners, and progress bars that are C<indeterminate> or C<animated>,
+move by themselves. They need no timer: a moving widget reads the application's
 clock (L<Term::Fabulous/now>) and asks for a frame at the moment its
 next frame is due (L<Term::Fabulous/request_frame_at>); Term::Fabulous
 draws it at the next tick of its frame timer, and nothing is drawn in
@@ -117,7 +153,7 @@ L<Term::Fabulous::Widget::Display/ANIMATION>.
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
 
 The class pages: L<Term::Fabulous::Widget::ProgressBar>,
-L<Term::Fabulous::Widget::Display>.
+L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Display>.
 L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>
 for the timers that drive a bar, and
 L<Term::Fabulous::Cookbook::LiveData> for complete programs that update

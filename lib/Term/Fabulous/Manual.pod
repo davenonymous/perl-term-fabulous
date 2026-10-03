@@ -125,7 +125,8 @@ forms.
 =item L<Term::Fabulous::Manual::Feedback>
 
 The widgets that show what the program is doing: progress bars, with
-and without a known extent, and how widgets animate without timers.
+and without a known extent, spinners, and how widgets animate without
+timers.
 
 =item L<Term::Fabulous::Manual::Charts>
 
@@ -724,6 +725,11 @@ L<Term::Fabulous::Manual::Forms/Checking input>.
 
 L<Term::Fabulous::Manual::Feedback/PROGRESS BARS>,
 L<Term::Fabulous::Widget::ProgressBar>.
+
+=item Show that the program is busy (a spinner)
+
+L<Term::Fabulous::Manual::Feedback/SPINNERS>,
+L<Term::Fabulous::Widget::Spinner>.
 
 =item Animate a widget without a timer
 

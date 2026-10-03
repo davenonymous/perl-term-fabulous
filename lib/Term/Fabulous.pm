@@ -594,8 +594,8 @@ line.
 =item *
 
 Progress bars in several styles, with labels, stripes, stacked
-segments and an indeterminate runner, animated on the application's
-clock without timers.
+segments and an indeterminate runner, and spinners in twelve styles,
+animated on the application's clock without timers.
 
 =item *
 
@@ -656,8 +656,8 @@ L<Term::Fabulous::Manual::Layout> (widgets, the widget tree and
 layout), L<Term::Fabulous::Manual::Looks> (text, colors, borders),
 L<Term::Fabulous::Manual::Events> (events, keyboard, focus, mouse,
 scrolling), L<Term::Fabulous::Manual::Forms> (input widgets),
-L<Term::Fabulous::Manual::Feedback> (progress bars and other feedback
-widgets), L<Term::Fabulous::Manual::Charts> (canvases and charts),
+L<Term::Fabulous::Manual::Feedback> (progress bars, spinners and other
+feedback widgets), L<Term::Fabulous::Manual::Charts> (canvases and charts),
 L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>
 and L<Term::Fabulous::Manual::TableStyles> (the table widget),
 L<Term::Fabulous::Manual::KDL> (layout files),
@@ -1130,7 +1130,8 @@ has come. Several requests keep the earliest time. Every frame forgets
 the request, so something that animates asks again from the frame it
 is drawn in. Returns the object. Dies unless the argument is a number.
 
-This is how the widgets that move by themselves (an indeterminate
+This is how the widgets that move by themselves (a
+L<Term::Fabulous::Widget::Spinner>, an indeterminate
 L<Term::Fabulous::Widget::ProgressBar>) are drawn without timers of
 their own; see L<Term::Fabulous::Widget::Display/ANIMATION> to write
 one.
@@ -1541,6 +1542,11 @@ The list an open dropdown shows. Used internally by the dropdown.
 
 How much of a task is done: a bar in several styles, with a label,
 stripes, segments, or a runner for a task of unknown extent.
+
+=item L<Term::Fabulous::Widget::Spinner>
+
+That something is going on: frames cycling next to a label, in twelve
+styles of one cell to three rows, or frames of your own.
 
 =back
 

@@ -89,8 +89,8 @@ keys older terminals cannot tell apart, mouse wheel scrolling.
 - Dividers between widgets, horizontal or vertical, with a text on the
 line.
 - Progress bars in several styles, with labels, stripes, stacked
-segments and an indeterminate runner, animated on the application's
-clock without timers.
+segments and an indeterminate runner, and spinners in twelve styles,
+animated on the application's clock without timers.
 - Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 - Correct handling of Unicode: wide CJK characters, emoji, combining
@@ -129,8 +129,8 @@ start with the manual's first page and its first program.
     layout), [Term::Fabulous::Manual::Looks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ALooks) (text, colors, borders),
     [Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents) (events, keyboard, focus, mouse,
     scrolling), [Term::Fabulous::Manual::Forms](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AForms) (input widgets),
-    [Term::Fabulous::Manual::Feedback](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AFeedback) (progress bars and other feedback
-    widgets), [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
+    [Term::Fabulous::Manual::Feedback](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AFeedback) (progress bars, spinners and other
+    feedback widgets), [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
     [Term::Fabulous::Manual::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATables), [Term::Fabulous::Manual::TableRows](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableRows)
     and [Term::Fabulous::Manual::TableStyles](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableStyles) (the table widget),
     [Term::Fabulous::Manual::KDL](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AKDL) (layout files),
@@ -588,7 +588,8 @@ has come. Several requests keep the earliest time. Every frame forgets
 the request, so something that animates asks again from the frame it
 is drawn in. Returns the object. Dies unless the argument is a number.
 
-This is how the widgets that move by themselves (an indeterminate
+This is how the widgets that move by themselves (a
+[Term::Fabulous::Widget::Spinner](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ASpinner), an indeterminate
 [Term::Fabulous::Widget::ProgressBar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AProgressBar)) are drawn without timers of
 their own; see ["ANIMATION" in Term::Fabulous::Widget::Display](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADisplay#ANIMATION) to write
 one.
@@ -971,6 +972,11 @@ Term::Fabulous, and programs do not use them directly.
 
     How much of a task is done: a bar in several styles, with a label,
     stripes, segments, or a runner for a task of unknown extent.
+
+- [Term::Fabulous::Widget::Spinner](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ASpinner)
+
+    That something is going on: frames cycling next to a label, in twelve
+    styles of one cell to three rows, or frames of your own.
 
 ## Tables
 

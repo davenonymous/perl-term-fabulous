@@ -1,6 +1,10 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Spinner: shows that something is going
+          on, in twelve ready-made styles of one cell to three rows or
+          with frames of your own, with a label, start and stop, and KDL
+          properties; it runs on the application's clock
         - Term::Fabulous::Widget::ProgressBar: how much of a task is done,
           in block, line and ASCII styles with eighth-cell precision, a
           label left, right or inside the bar, stripes that can move,
