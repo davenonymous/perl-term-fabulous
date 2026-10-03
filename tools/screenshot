@@ -5,9 +5,9 @@
 #     perl -Mblib tools/screenshot --output form.svg examples/form.pl
 #     perl -Mblib tools/screenshot --size 100x30 --scale 2 --output demo.png examples/showcase.pl
 #     perl -Mblib tools/screenshot --steps 'key "Tab"; type "Ada"' --output login.svg \
-#         examples-cookbook/login-form.pl
+#         examples/cookbook/login-form.pl
 #     perl -Mblib tools/screenshot --size 80x8 --shell '$ perl inline-prompt.pl' \
-#         --output prompt.png examples-cookbook/inline-prompt.pl
+#         --output prompt.png examples/cookbook/inline-prompt.pl
 #
 # See tools/README.md.
 

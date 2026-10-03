@@ -16,7 +16,7 @@ in and open rows from, format raw values for display, edit the rows and
 columns while the program runs, let the user choose the visible
 columns, describe a table in a KDL layout, and print a table as a
 report without an event loop. Each recipe is a complete program,
-shipped in F<examples-cookbook/>, with a screenshot and notes on every
+shipped in F<examples/cookbook/>, with a screenshot and notes on every
 feature it uses. Besides the table, the recipes use
 L<Term::Fabulous::Widget::Table::Mutator> (number and date formats),
 L<Term::Fabulous::Layout> (KDL) and L<Term::Fabulous::Static>
@@ -82,9 +82,9 @@ Goal: show a list of Perl hashes as a table that the user can sort,
 select rows in and open a row from, with a status line that follows
 what the user does.
 
-This program is shipped as F<examples-cookbook/table-basics.pl>.
+This program is shipped as F<examples/cookbook/table-basics.pl>.
 
-=for code-from examples-cookbook/table-basics.pl
+=for code-from examples/cookbook/table-basics.pl
 
 	use v5.24;
 	use warnings;
@@ -262,9 +262,9 @@ Goal: show raw data, such as epoch seconds, byte counts and state
 codes, as readable text, while sorting and filtering keep using the
 raw values.
 
-This program is shipped as F<examples-cookbook/table-format.pl>.
+This program is shipped as F<examples/cookbook/table-format.pl>.
 
-=for code-from examples-cookbook/table-format.pl
+=for code-from examples/cookbook/table-format.pl
 
 	use v5.24;
 	use warnings;
@@ -448,9 +448,9 @@ Goal: a to-do list in a table, with a check box and a delete button in
 every row, and keys that add a task, remove the selected tasks, change a
 value and show or hide a column.
 
-This program is shipped as F<examples-cookbook/table-edit.pl>.
+This program is shipped as F<examples/cookbook/table-edit.pl>.
 
-=for code-from examples-cookbook/table-edit.pl
+=for code-from examples/cookbook/table-edit.pl
 
 	use v5.24;
 	use warnings;
@@ -690,9 +690,9 @@ Goal: a table with more columns than the screen needs, where the user
 picks the columns in a list and the program learns the choice, to store
 it for the next start.
 
-This program is shipped as F<examples-cookbook/table-columns.pl>.
+This program is shipped as F<examples/cookbook/table-columns.pl>.
 
-=for code-from examples-cookbook/table-columns.pl
+=for code-from examples/cookbook/table-columns.pl
 
 	use v5.24;
 	use warnings;
@@ -848,9 +848,9 @@ Goal: describe the table in a KDL layout, with its columns, lines,
 sort, groups and selection, and give it the rows and the display
 formats from Perl.
 
-This program is shipped as F<examples-cookbook/table-kdl.pl>.
+This program is shipped as F<examples/cookbook/table-kdl.pl>.
 
-=for code-from examples-cookbook/table-kdl.pl
+=for code-from examples/cookbook/table-kdl.pl
 
 	use v5.24;
 	use warnings;
@@ -998,9 +998,9 @@ L<Term::Fabulous::Cookbook::Forms/Build a form from a KDL file (text fields, rad
 Goal: print a sorted sales table with formatted numbers and a totals
 row, without an event loop, to the terminal, a pipe or a file.
 
-This program is shipped as F<examples-cookbook/table-report.pl>.
+This program is shipped as F<examples/cookbook/table-report.pl>.
 
-=for code-from examples-cookbook/table-report.pl
+=for code-from examples/cookbook/table-report.pl
 
 	use v5.24;
 	use warnings;
@@ -1085,7 +1085,7 @@ This program is shipped as F<examples-cookbook/table-report.pl>.
 
 L<Term::Fabulous::Static> lays out and draws the widget tree once and
 prints it; the program ends right after. Run it as
-C<perl examples-cookbook/table-report.pl E<gt> report.txt> to get plain text without
+C<perl examples/cookbook/table-report.pl E<gt> report.txt> to get plain text without
 colors. See L<Term::Fabulous::Cookbook::Output/Render a report to a file or pipe (Static)> and
 L<Term::Fabulous::Manual::TableStyles/PRINTING A TABLE>.
 

@@ -52,9 +52,9 @@ L</Change the layout with the terminal size (Start and Resize events)>
 Goal: line up the values of a list of label/value rows, whatever the
 length of each label.
 
-This program is shipped as F<examples-cookbook/width-group.pl>.
+This program is shipped as F<examples/cookbook/width-group.pl>.
 
-=for code-from examples-cookbook/width-group.pl
+=for code-from examples/cookbook/width-group.pl
 
 	use v5.24;
 	use warnings;
@@ -118,9 +118,9 @@ take part; C<fixed> and C<percent> sizes are kept.
 Goal: different border styles on different sides of a box, or a border
 on some sides only.
 
-This program is shipped as F<examples-cookbook/border-sides.pl>.
+This program is shipped as F<examples/cookbook/border-sides.pl>.
 
-=for code-from examples-cookbook/border-sides.pl
+=for code-from examples/cookbook/border-sides.pl
 
 	use v5.24;
 	use warnings;
@@ -222,9 +222,9 @@ F<examples/border-showcase.pl> shows all of them.
 Goal: derive a set of colors from one base color, and switch between a
 dark and a light theme with a key.
 
-This program is shipped as F<examples-cookbook/theme-switch.pl>.
+This program is shipped as F<examples/cookbook/theme-switch.pl>.
 
-=for code-from examples-cookbook/theme-switch.pl
+=for code-from examples/cookbook/theme-switch.pl
 
 	use v5.24;
 	use warnings;
@@ -340,9 +340,9 @@ the change.
 Goal: mark widgets with names, such as "selected" or "danger", and
 style them from those marks in one place.
 
-This program is shipped as F<examples-cookbook/states-and-classes.pl>.
+This program is shipped as F<examples/cookbook/states-and-classes.pl>.
 
-=for code-from examples-cookbook/states-and-classes.pl
+=for code-from examples/cookbook/states-and-classes.pl
 
 	use v5.24;
 	use warnings;
@@ -453,9 +453,9 @@ states (C<OnFocus>, C<OnBlur>, C<OnPress>, C<OnRelease>).
 Goal: arrange two panes side by side on a wide terminal and above each
 other on a narrow one.
 
-This program is shipped as F<examples-cookbook/resize-aware-layout.pl>.
+This program is shipped as F<examples/cookbook/resize-aware-layout.pl>.
 
-=for code-from examples-cookbook/resize-aware-layout.pl
+=for code-from examples/cookbook/resize-aware-layout.pl
 
 	use v5.24;
 	use warnings;

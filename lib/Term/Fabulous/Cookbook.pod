@@ -43,7 +43,7 @@ L<Term::Fabulous> object of that program.
 
 You need not copy the programs: every complete program is shipped as a
 file in the distribution, and each recipe names its file. Most are in
-the F<examples-cookbook> directory and start with this header:
+the F<examples/cookbook> directory and start with this header:
 
 	use v5.24;
 	use warnings;
@@ -65,7 +65,7 @@ after installing Term::Fabulous. In an unpacked copy of the
 distribution that is built but not installed (C<perl Makefile.PL &&
 make>), add C<-Mblib>:
 
-	perl -Mblib examples-cookbook/minimal-program.pl
+	perl -Mblib examples/cookbook/minimal-program.pl
 
 Interactive programs take over the terminal (all of it, or a few
 rows below the shell's output in inline mode); Ctrl+C ends every one of

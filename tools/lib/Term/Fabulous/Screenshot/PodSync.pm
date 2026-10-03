@@ -13,7 +13,7 @@ our @EXPORT_OK = qw(sync_code_blocks referenced_screenshots read_text write_text
 
 # A code block in POD that shows a file of the distribution is marked
 #
-#     =for code-from examples-cookbook/login-form.pl
+#     =for code-from examples/cookbook/login-form.pl
 #
 # and followed by the verbatim paragraphs that show the file. The file
 # is the original: sync_code_blocks replaces the paragraphs after every
@@ -95,11 +95,11 @@ the files they show
 =head1 DESCRIPTION
 
 Maintainer tool, not installed. The documentation shows the programs
-of the F<examples> and F<examples-cookbook> directories. To keep the
+of the F<examples> and F<examples/cookbook> directories. To keep the
 POD and the programs from drifting apart, the files are the originals
 and the POD copies them. A copy is marked with a paragraph
 
-	=for code-from examples-cookbook/login-form.pl
+	=for code-from examples/cookbook/login-form.pl
 
 that POD formatters ignore. The verbatim paragraphs that follow it are
 the copy: the file without its C<#!> line, each line indented by a tab.

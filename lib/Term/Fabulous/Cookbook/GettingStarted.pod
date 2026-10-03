@@ -53,9 +53,9 @@ Goal: a full-screen program that shows a line of text and ends when the
 user presses q, Escape or Ctrl+C. The interactive programs of the
 other recipes are built the same way.
 
-This program is shipped as F<examples-cookbook/minimal-program.pl>.
+This program is shipped as F<examples/cookbook/minimal-program.pl>.
 
-=for code-from examples-cookbook/minimal-program.pl
+=for code-from examples/cookbook/minimal-program.pl
 
 	use v5.24;
 	use warnings;
@@ -191,9 +191,9 @@ The listener is registered after C<$ui> exists, because it uses C<$ui>.
 Goal: show text with umlauts, CJK characters or combining accents in
 L<Term::Fabulous::Widget::Text> widgets.
 
-This program is shipped as F<examples-cookbook/non-ascii-text.pl>.
+This program is shipped as F<examples/cookbook/non-ascii-text.pl>.
 
-=for code-from examples-cookbook/non-ascii-text.pl
+=for code-from examples/cookbook/non-ascii-text.pl
 
 	use v5.24;
 	use warnings;
@@ -267,9 +267,9 @@ L<Term::Fabulous::Manual::Looks/Wide characters and emoji>.
 Goal: control how a L<Term::Fabulous::Widget::Text> breaks its lines,
 how it aligns them and how much room each line gets.
 
-This program is shipped as F<examples-cookbook/wrap-and-align-text.pl>.
+This program is shipped as F<examples/cookbook/wrap-and-align-text.pl>.
 
-=for code-from examples-cookbook/wrap-and-align-text.pl
+=for code-from examples/cookbook/wrap-and-align-text.pl
 
 	use v5.24;
 	use warnings;

@@ -80,7 +80,7 @@ perl -Mblib tools/screenshot --output form.svg examples/form.pl
 perl -Mblib tools/screenshot --size 100x30 --steps 'type "Ada"; key "Tab"' \
     --output form.png examples/form.pl
 perl -Mblib tools/screenshot --size 80x7 --shell '$ perl inline-prompt.pl' \
-    --output prompt.png examples-cookbook/inline-prompt.pl
+    --output prompt.png examples/cookbook/inline-prompt.pl
 perl -Mblib tools/screenshot --help
 ```
 

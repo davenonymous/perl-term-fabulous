@@ -115,7 +115,7 @@ WriteMakefile(
 		# The example programs and the documentation tools contain
 		# packages (My::Panel, Term::Fabulous::Screenshot::*) that are
 		# not part of the installed distribution.
-		no_index => { directory => [qw(examples examples-cookbook tools screenshots)] },
+		no_index => { directory => [qw(examples tools screenshots)] },
 	},
 	test  => { TESTS => 't/*.t' },
 	clean => { FILES => 'Term-Fabulous-* lib/Term/Fabulous/Termbox.c lib/Term/Fabulous/Termbox.o lib/Term/Fabulous/Termbox.bs src/*.o' },

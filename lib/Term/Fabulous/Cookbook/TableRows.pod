@@ -15,7 +15,7 @@ L<Term::Fabulous::Widget::Table> shows and in which order: they sort
 the rows, let the user filter them, filter them from Perl, put them into
 groups the user can open and close, show nested rows as a tree, and split
 many rows into pages. Each recipe is a complete program, shipped in
-F<examples-cookbook/>, with a screenshot and notes on every feature it
+F<examples/cookbook/>, with a screenshot and notes on every feature it
 uses. Besides the table, the recipes use
 L<Term::Fabulous::Widget::Table::Filter> (conditions on rows) and
 L<Term::Fabulous::Widget::Table::Mutator> (number and date formats).
@@ -71,9 +71,9 @@ Goal: sort a table by two columns at the start, sort version numbers
 and ticket names in natural order, order priorities with a function of
 your own, and report every sort the user chooses.
 
-This program is shipped as F<examples-cookbook/table-sort.pl>.
+This program is shipped as F<examples/cookbook/table-sort.pl>.
 
-=for code-from examples-cookbook/table-sort.pl
+=for code-from examples/cookbook/table-sort.pl
 
 	use v5.24;
 	use warnings;
@@ -229,9 +229,9 @@ C<< >=80000 >> or C<2019..2021> under the column titles, search all
 columns from a text field above the table, and show how many rows
 pass.
 
-This program is shipped as F<examples-cookbook/table-filter.pl>.
+This program is shipped as F<examples/cookbook/table-filter.pl>.
 
-=for code-from examples-cookbook/table-filter.pl
+=for code-from examples/cookbook/table-filter.pl
 
 	use v5.24;
 	use warnings;
@@ -416,9 +416,9 @@ Goal: give the user a choice of ready-made filters, such as "placed in
 May" or "not paid", built from conditions on numbers, dates and text,
 combined with and, or and not.
 
-This program is shipped as F<examples-cookbook/table-filter-perl.pl>.
+This program is shipped as F<examples/cookbook/table-filter-perl.pl>.
 
-=for code-from examples-cookbook/table-filter-perl.pl
+=for code-from examples/cookbook/table-filter-perl.pl
 
 	use v5.24;
 	use warnings;
@@ -614,9 +614,9 @@ Goal: show the rows of a table in groups, one per value of a column,
 under headers that show a sum for the group and that the user can open
 and close.
 
-This program is shipped as F<examples-cookbook/table-groups.pl>.
+This program is shipped as F<examples/cookbook/table-groups.pl>.
 
-=for code-from examples-cookbook/table-groups.pl
+=for code-from examples/cookbook/table-groups.pl
 
 	use v5.24;
 	use warnings;
@@ -789,9 +789,9 @@ Goal: show a folder tree in a table, with sizes and dates, folders that
 open and close, and one folder whose entries are read only when the
 user opens it.
 
-This program is shipped as F<examples-cookbook/table-tree.pl>.
+This program is shipped as F<examples/cookbook/table-tree.pl>.
 
-=for code-from examples-cookbook/table-tree.pl
+=for code-from examples/cookbook/table-tree.pl
 
 	use v5.24;
 	use warnings;
@@ -975,9 +975,9 @@ C<bytes> mutator shows a blank value as nothing.
 Goal: show 300 orders ten at a time, with a pager below the table, a
 choice of page sizes, and a status line that follows the page.
 
-This program is shipped as F<examples-cookbook/table-pages.pl>.
+This program is shipped as F<examples/cookbook/table-pages.pl>.
 
-=for code-from examples-cookbook/table-pages.pl
+=for code-from examples/cookbook/table-pages.pl
 
 	use v5.24;
 	use warnings;

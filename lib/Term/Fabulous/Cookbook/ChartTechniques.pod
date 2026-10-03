@@ -65,9 +65,9 @@ L</Print charts in a report (Static)>
 Goal: plot hourly measurements over four days on a time axis, continue
 them with a dashed forecast, and shade a stretch of time.
 
-This program is shipped as F<examples-cookbook/chart-time-series.pl>.
+This program is shipped as F<examples/cookbook/chart-time-series.pl>.
 
-=for code-from examples-cookbook/chart-time-series.pl
+=for code-from examples/cookbook/chart-time-series.pl
 
 	use v5.24;
 	use warnings;
@@ -183,9 +183,9 @@ the program needs C<use utf8> for the degree sign.
 Goal: a chart of the last minute of network traffic that moves on as
 new measurements arrive, four times a second.
 
-This program is shipped as F<examples-cookbook/chart-live.pl>.
+This program is shipped as F<examples/cookbook/chart-live.pl>.
 
-=for code-from examples-cookbook/chart-live.pl
+=for code-from examples/cookbook/chart-live.pl
 
 	use v5.24;
 	use warnings;
@@ -306,9 +306,9 @@ timer is set up as in L<the clock recipe|Term::Fabulous::Cookbook::LiveData/Upda
 Goal: show series that grow from a few to tens of thousands so that the
 early years and the smaller series stay readable.
 
-This program is shipped as F<examples-cookbook/chart-log-scale.pl>.
+This program is shipped as F<examples/cookbook/chart-log-scale.pl>.
 
-=for code-from examples-cookbook/chart-log-scale.pl
+=for code-from examples/cookbook/chart-log-scale.pl
 
 	use v5.24;
 	use warnings;
@@ -397,9 +397,9 @@ C<< x_axis => { type => 'log' } >>.
 Goal: show the trend in noisy daily figures, and compare the growth of
 two prices of very different size on one axis.
 
-This program is shipped as F<examples-cookbook/chart-transform.pl>.
+This program is shipped as F<examples/cookbook/chart-transform.pl>.
 
-=for code-from examples-cookbook/chart-transform.pl
+=for code-from examples/cookbook/chart-transform.pl
 
 	use v5.24;
 	use warnings;
@@ -515,9 +515,9 @@ where transforms run.
 Goal: describe a bar chart and a donut chart in a KDL layout, with
 their data, and add data to them from Perl.
 
-This program is shipped as F<examples-cookbook/chart-kdl.pl>.
+This program is shipped as F<examples/cookbook/chart-kdl.pl>.
 
-=for code-from examples-cookbook/chart-kdl.pl
+=for code-from examples/cookbook/chart-kdl.pl
 
 	use v5.24;
 	use warnings;
@@ -632,9 +632,9 @@ the layout language is described in L<Term::Fabulous::Layout>.
 Goal: print a bar chart and a sparkline as part of a report, without
 an event loop, to the terminal, a pipe or a file.
 
-This program is shipped as F<examples-cookbook/chart-report.pl>.
+This program is shipped as F<examples/cookbook/chart-report.pl>.
 
-=for code-from examples-cookbook/chart-report.pl
+=for code-from examples/cookbook/chart-report.pl
 
 	use v5.24;
 	use warnings;

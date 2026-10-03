@@ -244,7 +244,7 @@ Revision history for Term::Fabulous
           examples/widgets; the Cookbook, the Manual and the pages of
           WebColor, BorderStyle and Static show the matching programs
         - The complete programs of Term::Fabulous::Cookbook are shipped
-          in examples-cookbook, one file per recipe; the Cookbook's code
+          in examples/cookbook, one file per recipe; the Cookbook's code
           blocks are copies of the shipped files
         - Maintainer tools in tools/ (shipped, not installed): make docs
           copies the example programs into the POD and takes the

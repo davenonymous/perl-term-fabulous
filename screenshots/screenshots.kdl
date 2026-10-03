@@ -231,30 +231,30 @@ screenshot "example-web-colors" {
 	size 100 30
 }
 
-// --- examples-cookbook/: the programs of Term::Fabulous::Cookbook --------
+// --- examples/cookbook/: the programs of Term::Fabulous::Cookbook --------
 
 screenshot "cookbook-minimal-program" {
-	script "examples-cookbook/minimal-program.pl"
+	script "examples/cookbook/minimal-program.pl"
 	size 72 5
 }
 
 screenshot "cookbook-first-program" {
-	script "examples-cookbook/first-program.pl"
+	script "examples/cookbook/first-program.pl"
 	size 60 9
 }
 
 screenshot "cookbook-non-ascii-text" {
-	script "examples-cookbook/non-ascii-text.pl"
+	script "examples/cookbook/non-ascii-text.pl"
 	size 52 4
 }
 
 screenshot "cookbook-wrap-and-align-text" {
-	script "examples-cookbook/wrap-and-align-text.pl"
+	script "examples/cookbook/wrap-and-align-text.pl"
 	size 80 17
 }
 
 screenshot "cookbook-key-bindings" {
-	script "examples-cookbook/key-bindings.pl"
+	script "examples/cookbook/key-bindings.pl"
 	size 72 4
 	steps {
 		key "Ctrl+R"
@@ -262,7 +262,7 @@ screenshot "cookbook-key-bindings" {
 }
 
 screenshot "cookbook-paint-with-the-mouse" {
-	script "examples-cookbook/paint-with-the-mouse.pl"
+	script "examples/cookbook/paint-with-the-mouse.pl"
 	size 72 14
 	steps {
 		drag 4 7 5 8 6 8 7 9 8 9 9 10 10 10 11 10 12 10 13 10 14 10 15 9 16 9 17 9 18 8 19 7 20 7 21 6 22 6 23 5 24 5 25 4 26 4 27 4 28 4 29 4 30 4 31 5 32 5 33 6 34 6 35 7 36 7 37 8 38 8 39 9 40 9 41 10 42 10 43 10 44 10 45 10 46 10 47 9 48 9 49 8 50 8 51 7 52 6 53 6 54 5 55 5 56 5 57 4 58 4 59 4 60 4 61 4 62 5 63 5 64 5 65 6
@@ -273,7 +273,7 @@ screenshot "cookbook-paint-with-the-mouse" {
 }
 
 screenshot "cookbook-clock" {
-	script "examples-cookbook/clock.pl"
+	script "examples/cookbook/clock.pl"
 	size 48 7
 	steps {
 		wait 5
@@ -281,7 +281,7 @@ screenshot "cookbook-clock" {
 }
 
 screenshot "cookbook-scrolling-log" {
-	script "examples-cookbook/scrolling-log.pl"
+	script "examples/cookbook/scrolling-log.pl"
 	size 72 12
 	steps {
 		wait 6
@@ -289,7 +289,7 @@ screenshot "cookbook-scrolling-log" {
 }
 
 screenshot "cookbook-follow-log" {
-	script "examples-cookbook/follow-log.pl"
+	script "examples/cookbook/follow-log.pl"
 	size 80 14
 	steps {
 		wait 8
@@ -297,7 +297,7 @@ screenshot "cookbook-follow-log" {
 }
 
 screenshot "cookbook-show-output" {
-	script "examples-cookbook/show-output.pl"
+	script "examples/cookbook/show-output.pl"
 	args "seq" "-f" "Line %g" "1" "40"
 	size 72 14
 	steps {
@@ -306,7 +306,7 @@ screenshot "cookbook-show-output" {
 }
 
 screenshot "cookbook-login-form" {
-	script "examples-cookbook/login-form.pl"
+	script "examples/cookbook/login-form.pl"
 	size 64 15
 	steps {
 		type "ada"
@@ -317,16 +317,16 @@ screenshot "cookbook-login-form" {
 }
 
 screenshot "cookbook-inline-prompt" {
-	script "examples-cookbook/inline-prompt.pl"
+	script "examples/cookbook/inline-prompt.pl"
 	size 80 7
-	shell "$ ls" "notes.txt  report.csv  todo.md" "$ perl examples-cookbook/inline-prompt.pl"
+	shell "$ ls" "notes.txt  report.csv  todo.md" "$ perl examples/cookbook/inline-prompt.pl"
 	steps {
 		type "Ada Lovelace"
 	}
 }
 
 screenshot "cookbook-confirm-dialog" {
-	script "examples-cookbook/confirm-dialog.pl"
+	script "examples/cookbook/confirm-dialog.pl"
 	size 72 14
 	steps {
 		type "Buy milk and a new punch card reader."
@@ -335,7 +335,7 @@ screenshot "cookbook-confirm-dialog" {
 }
 
 screenshot "cookbook-choose-options" {
-	script "examples-cookbook/choose-options.pl"
+	script "examples/cookbook/choose-options.pl"
 	size 72 9
 	steps {
 		key "Tab" "Right" "Tab" "Right" "Right"
@@ -343,12 +343,12 @@ screenshot "cookbook-choose-options" {
 }
 
 screenshot "cookbook-disable-inputs" {
-	script "examples-cookbook/disable-inputs.pl"
+	script "examples/cookbook/disable-inputs.pl"
 	size 60 5
 }
 
 screenshot "cookbook-focus-help-line" {
-	script "examples-cookbook/focus-help-line.pl"
+	script "examples/cookbook/focus-help-line.pl"
 	size 72 14
 	steps {
 		key "Tab"
@@ -359,7 +359,7 @@ screenshot "cookbook-focus-help-line" {
 }
 
 screenshot "cookbook-tab-order" {
-	script "examples-cookbook/tab-order.pl"
+	script "examples/cookbook/tab-order.pl"
 	size 48 3
 	steps {
 		key "Tab"
@@ -370,17 +370,17 @@ screenshot "cookbook-tab-order" {
 }
 
 screenshot "cookbook-width-group" {
-	script "examples-cookbook/width-group.pl"
+	script "examples/cookbook/width-group.pl"
 	size 48 4
 }
 
 screenshot "cookbook-border-sides" {
-	script "examples-cookbook/border-sides.pl"
+	script "examples/cookbook/border-sides.pl"
 	size 52 10
 }
 
 screenshot "cookbook-theme-switch" {
-	script "examples-cookbook/theme-switch.pl"
+	script "examples/cookbook/theme-switch.pl"
 	size 72 8
 	steps {
 		type "Light and readable"
@@ -389,37 +389,37 @@ screenshot "cookbook-theme-switch" {
 }
 
 screenshot "cookbook-states-and-classes" {
-	script "examples-cookbook/states-and-classes.pl"
+	script "examples/cookbook/states-and-classes.pl"
 	size 72 9
 }
 
 screenshot "cookbook-resize-aware-layout" {
-	script "examples-cookbook/resize-aware-layout.pl"
+	script "examples/cookbook/resize-aware-layout.pl"
 	size 80 8
 }
 
 screenshot "cookbook-resize-aware-layout-narrow" {
-	script "examples-cookbook/resize-aware-layout.pl"
+	script "examples/cookbook/resize-aware-layout.pl"
 	size 60 10
 }
 
 screenshot "cookbook-pixel-canvas-plot" {
-	script "examples-cookbook/pixel-canvas-plot.pl"
+	script "examples/cookbook/pixel-canvas-plot.pl"
 	size 80 16
 }
 
 screenshot "cookbook-report-to-file" {
-	script "examples-cookbook/report-to-file.pl"
+	script "examples/cookbook/report-to-file.pl"
 	size 52 8
 }
 
 screenshot "cookbook-kdl-panel" {
-	script "examples-cookbook/kdl-panel.pl"
+	script "examples/cookbook/kdl-panel.pl"
 	size 52 8
 }
 
 screenshot "cookbook-table-basics" {
-	script "examples-cookbook/table-basics.pl"
+	script "examples/cookbook/table-basics.pl"
 	size 76 19
 	steps {
 		key "Down" "Space" "Down" "Down" "Space" "Down" "Enter"
@@ -427,7 +427,7 @@ screenshot "cookbook-table-basics" {
 }
 
 screenshot "cookbook-table-format" {
-	script "examples-cookbook/table-format.pl"
+	script "examples/cookbook/table-format.pl"
 	size 100 15
 	steps {
 		key "Down"
@@ -435,7 +435,7 @@ screenshot "cookbook-table-format" {
 }
 
 screenshot "cookbook-table-sort" {
-	script "examples-cookbook/table-sort.pl"
+	script "examples/cookbook/table-sort.pl"
 	size 96 17
 	steps {
 		key "Up" "Right" "Right" "Right" "Enter" "Left" "Space"
@@ -443,7 +443,7 @@ screenshot "cookbook-table-sort" {
 }
 
 screenshot "cookbook-table-filter" {
-	script "examples-cookbook/table-filter.pl"
+	script "examples/cookbook/table-filter.pl"
 	size 80 19
 	steps {
 		key "Tab" "Tab" "Tab" "Tab" "Tab"
@@ -454,7 +454,7 @@ screenshot "cookbook-table-filter" {
 }
 
 screenshot "cookbook-table-filter-perl" {
-	script "examples-cookbook/table-filter-perl.pl"
+	script "examples/cookbook/table-filter-perl.pl"
 	size 80 16
 	steps {
 		type "4"
@@ -462,7 +462,7 @@ screenshot "cookbook-table-filter-perl" {
 }
 
 screenshot "cookbook-table-groups" {
-	script "examples-cookbook/table-groups.pl"
+	script "examples/cookbook/table-groups.pl"
 	size 84 22
 	steps {
 		key "Down" "Down" "Down" "Down" "Down" "Left"
@@ -470,7 +470,7 @@ screenshot "cookbook-table-groups" {
 }
 
 screenshot "cookbook-table-tree" {
-	script "examples-cookbook/table-tree.pl"
+	script "examples/cookbook/table-tree.pl"
 	size 72 21
 	steps {
 		key "Down" "Down" "Down" "Down" "Down" "Right"
@@ -478,7 +478,7 @@ screenshot "cookbook-table-tree" {
 }
 
 screenshot "cookbook-table-edit" {
-	script "examples-cookbook/table-edit.pl"
+	script "examples/cookbook/table-edit.pl"
 	size 80 16
 	steps {
 		key "n" "Space" "Down" "Down" "Space" "a"
@@ -488,7 +488,7 @@ screenshot "cookbook-table-edit" {
 }
 
 screenshot "cookbook-table-pages" {
-	script "examples-cookbook/table-pages.pl"
+	script "examples/cookbook/table-pages.pl"
 	size 80 19
 	steps {
 		key "Ctrl+PageDown" "Ctrl+PageDown" "Down" "Down"
@@ -496,12 +496,12 @@ screenshot "cookbook-table-pages" {
 }
 
 screenshot "cookbook-table-lines" {
-	script "examples-cookbook/table-lines.pl"
+	script "examples/cookbook/table-lines.pl"
 	size 48 21
 }
 
 screenshot "cookbook-table-columns" {
-	script "examples-cookbook/table-columns.pl"
+	script "examples/cookbook/table-columns.pl"
 	size 92 16
 	steps {
 		key "F2" "Tab" "Tab" "Tab" "Space" "Tab" "Space"
@@ -509,7 +509,7 @@ screenshot "cookbook-table-columns" {
 }
 
 screenshot "cookbook-table-kdl" {
-	script "examples-cookbook/table-kdl.pl"
+	script "examples/cookbook/table-kdl.pl"
 	size 80 19
 	steps {
 		key "Down" "Space" "Down" "Space" "Down" "Down" "Enter"
@@ -517,12 +517,12 @@ screenshot "cookbook-table-kdl" {
 }
 
 screenshot "cookbook-table-report" {
-	script "examples-cookbook/table-report.pl"
+	script "examples/cookbook/table-report.pl"
 	size 56 14
 }
 
 screenshot "cookbook-table-colors" {
-	script "examples-cookbook/table-colors.pl"
+	script "examples/cookbook/table-colors.pl"
 	size 64 14
 	steps {
 		key "Down" "Down"
@@ -530,57 +530,57 @@ screenshot "cookbook-table-colors" {
 }
 
 screenshot "cookbook-table-widths" {
-	script "examples-cookbook/table-widths.pl"
+	script "examples/cookbook/table-widths.pl"
 	size 110 17
 }
 
 screenshot "cookbook-table-line-styles" {
-	script "examples-cookbook/table-line-styles.pl"
+	script "examples/cookbook/table-line-styles.pl"
 	size 76 29
 }
 
 screenshot "cookbook-chart-line" {
-	script "examples-cookbook/chart-line.pl"
+	script "examples/cookbook/chart-line.pl"
 	size 80 24
 }
 
 screenshot "cookbook-chart-bars" {
-	script "examples-cookbook/chart-bars.pl"
+	script "examples/cookbook/chart-bars.pl"
 	size 100 34
 }
 
 screenshot "cookbook-chart-pie" {
-	script "examples-cookbook/chart-pie.pl"
+	script "examples/cookbook/chart-pie.pl"
 	size 100 26
 }
 
 screenshot "cookbook-chart-scatter" {
-	script "examples-cookbook/chart-scatter.pl"
+	script "examples/cookbook/chart-scatter.pl"
 	size 80 24
 }
 
 screenshot "cookbook-chart-stacked-areas" {
-	script "examples-cookbook/chart-stacked-areas.pl"
+	script "examples/cookbook/chart-stacked-areas.pl"
 	size 100 22
 }
 
 screenshot "cookbook-chart-histogram" {
-	script "examples-cookbook/chart-histogram.pl"
+	script "examples/cookbook/chart-histogram.pl"
 	size 100 20
 }
 
 screenshot "cookbook-chart-radar" {
-	script "examples-cookbook/chart-radar.pl"
+	script "examples/cookbook/chart-radar.pl"
 	size 100 26
 }
 
 screenshot "cookbook-chart-time-series" {
-	script "examples-cookbook/chart-time-series.pl"
+	script "examples/cookbook/chart-time-series.pl"
 	size 90 24
 }
 
 screenshot "cookbook-chart-live" {
-	script "examples-cookbook/chart-live.pl"
+	script "examples/cookbook/chart-live.pl"
 	size 80 22
 	steps {
 		wait 30
@@ -588,37 +588,37 @@ screenshot "cookbook-chart-live" {
 }
 
 screenshot "cookbook-chart-log-scale" {
-	script "examples-cookbook/chart-log-scale.pl"
+	script "examples/cookbook/chart-log-scale.pl"
 	size 100 20
 }
 
 screenshot "cookbook-chart-transform" {
-	script "examples-cookbook/chart-transform.pl"
+	script "examples/cookbook/chart-transform.pl"
 	size 90 30
 }
 
 screenshot "cookbook-chart-curves" {
-	script "examples-cookbook/chart-curves.pl"
+	script "examples/cookbook/chart-curves.pl"
 	size 100 26
 }
 
 screenshot "cookbook-chart-styles" {
-	script "examples-cookbook/chart-styles.pl"
+	script "examples/cookbook/chart-styles.pl"
 	size 100 32
 }
 
 screenshot "cookbook-chart-options" {
-	script "examples-cookbook/chart-options.pl"
+	script "examples/cookbook/chart-options.pl"
 	size 100 30
 }
 
 screenshot "cookbook-chart-colors" {
-	script "examples-cookbook/chart-colors.pl"
+	script "examples/cookbook/chart-colors.pl"
 	size 100 22
 }
 
 screenshot "cookbook-chart-hover" {
-	script "examples-cookbook/chart-hover.pl"
+	script "examples/cookbook/chart-hover.pl"
 	size 80 24
 	steps {
 		move 50 12
@@ -626,17 +626,17 @@ screenshot "cookbook-chart-hover" {
 }
 
 screenshot "cookbook-chart-kdl" {
-	script "examples-cookbook/chart-kdl.pl"
+	script "examples/cookbook/chart-kdl.pl"
 	size 100 22
 }
 
 screenshot "cookbook-chart-report" {
-	script "examples-cookbook/chart-report.pl"
+	script "examples/cookbook/chart-report.pl"
 	size 64 16
 }
 
 screenshot "cookbook-chart-sparklines" {
-	script "examples-cookbook/chart-sparklines.pl"
+	script "examples/cookbook/chart-sparklines.pl"
 	size 90 12
 }
 

@@ -15,7 +15,7 @@ L<Term::Fabulous::Widget::Table>: the widths, alignment and wrapping of
 the columns, the lines of the grid, a frame, colors and text styles for
 the whole table, for columns, rows and single cells, and styles that
 follow the data (conditional formatting). Each recipe is a complete
-program, shipped in F<examples-cookbook/>, with a screenshot and notes
+program, shipped in F<examples/cookbook/>, with a screenshot and notes
 on every feature it uses. Most recipes on
 L<Term::Fabulous::Cookbook::Tables> and
 L<Term::Fabulous::Cookbook::TableRows> use the look of
@@ -57,9 +57,9 @@ content, a share of the table, or what is left over; place the content
 left, centered or right; let long text wrap into rows of several lines;
 and use a widget as a column title.
 
-This program is shipped as F<examples-cookbook/table-widths.pl>.
+This program is shipped as F<examples/cookbook/table-widths.pl>.
 
-=for code-from examples-cookbook/table-widths.pl
+=for code-from examples/cookbook/table-widths.pl
 
 	use v5.24;
 	use warnings;
@@ -202,9 +202,9 @@ Goal: a budget table with a heavy line before one column, dashed lines
 between its cells, red and green amounts, a grayed-out row and a totals
 row under a double line.
 
-This program is shipped as F<examples-cookbook/table-lines.pl>.
+This program is shipped as F<examples/cookbook/table-lines.pl>.
 
-=for code-from examples-cookbook/table-lines.pl
+=for code-from examples/cookbook/table-lines.pl
 
 	use v5.24;
 	use warnings;
@@ -376,9 +376,9 @@ in with the others, so all columns get C<< sortable => 0 >>.
 Goal: a table whose column titles and rows are told apart by their
 colors, not by lines, with a frame that encloses the colors cleanly.
 
-This program is shipped as F<examples-cookbook/table-colors.pl>.
+This program is shipped as F<examples/cookbook/table-colors.pl>.
 
-=for code-from examples-cookbook/table-colors.pl
+=for code-from examples/cookbook/table-colors.pl
 
 	use v5.24;
 	use warnings;
@@ -484,10 +484,10 @@ of these colors.
 Goal: see the line options of a table side by side, to choose the
 frame and the grid lines for your own table.
 
-This program is shipped as F<examples-cookbook/table-line-styles.pl>.
+This program is shipped as F<examples/cookbook/table-line-styles.pl>.
 It shows the same small table nine times, each with other lines.
 
-=for code-from examples-cookbook/table-line-styles.pl
+=for code-from examples/cookbook/table-line-styles.pl
 
 	use v5.24;
 	use warnings;

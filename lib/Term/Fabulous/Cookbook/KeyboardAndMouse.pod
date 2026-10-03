@@ -37,9 +37,9 @@ L</Add buttons for the mouse and the keyboard (Button)>
 Goal: run code when the user presses a key or a key combination, and
 show what the terminal reports for every key.
 
-This program is shipped as F<examples-cookbook/key-bindings.pl>.
+This program is shipped as F<examples/cookbook/key-bindings.pl>.
 
-=for code-from examples-cookbook/key-bindings.pl
+=for code-from examples/cookbook/key-bindings.pl
 
 	use v5.24;
 	use warnings;

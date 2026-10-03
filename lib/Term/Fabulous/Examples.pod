@@ -33,7 +33,7 @@ typical states. The widget's class page shows the same picture.
 
 =item L</THE COOKBOOK PROGRAMS>
 
-F<examples-cookbook>: the complete programs of the recipes in
+F<examples/cookbook>: the complete programs of the recipes in
 L<Term::Fabulous::Cookbook>, grouped like the cookbook pages, and the
 first program of L<Term::Fabulous::Manual>.
 
@@ -858,7 +858,7 @@ six categories, as filled shapes on a web of axes.
 
 =head1 THE COOKBOOK PROGRAMS
 
-The programs in F<examples-cookbook> are the complete programs of the
+The programs in F<examples/cookbook> are the complete programs of the
 recipes in L<Term::Fabulous::Cookbook>, where each is explained line by
 line. They are grouped below like the cookbook pages, in the order of
 the recipes on each page. Three recipes use a program of F<examples>;

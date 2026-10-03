@@ -89,9 +89,9 @@ Goal: draw several series of numbers as lines over named categories,
 here the average temperature of three cities in each month, with a dot
 on every data point and a unit on the y axis.
 
-This program is shipped as F<examples-cookbook/chart-line.pl>.
+This program is shipped as F<examples/cookbook/chart-line.pl>.
 
-=for code-from examples-cookbook/chart-line.pl
+=for code-from examples/cookbook/chart-line.pl
 
 	use v5.24;
 	use warnings;
@@ -197,9 +197,9 @@ Goal: compare values per category in the three common forms of bar
 charts: bars side by side, bars stacked to a total, and horizontal bars
 for long category names.
 
-This program is shipped as F<examples-cookbook/chart-bars.pl>.
+This program is shipped as F<examples/cookbook/chart-bars.pl>.
 
-=for code-from examples-cookbook/chart-bars.pl
+=for code-from examples/cookbook/chart-bars.pl
 
 	use v5.24;
 	use warnings;
@@ -331,9 +331,9 @@ Goal: show how a whole splits into parts: a pie chart of disk usage,
 and a donut chart of sales by region, with the small regions folded
 together and the number of orders in the middle.
 
-This program is shipped as F<examples-cookbook/chart-pie.pl>.
+This program is shipped as F<examples/cookbook/chart-pie.pl>.
 
-=for code-from examples-cookbook/chart-pie.pl
+=for code-from examples/cookbook/chart-pie.pl
 
 	use v5.24;
 	use warnings;
@@ -443,9 +443,9 @@ Goal: show how two measurements relate, here the length and width of
 the petals of three species of flowers, with a trend line through two
 of the species.
 
-This program is shipped as F<examples-cookbook/chart-scatter.pl>.
+This program is shipped as F<examples/cookbook/chart-scatter.pl>.
 
-=for code-from examples-cookbook/chart-scatter.pl
+=for code-from examples/cookbook/chart-scatter.pl
 
 	use v5.24;
 	use warnings;
@@ -546,9 +546,9 @@ values.
 Goal: show how parts make up a total over the years: once as amounts
 that add up to the total, once as each part's share of it.
 
-This program is shipped as F<examples-cookbook/chart-stacked-areas.pl>.
+This program is shipped as F<examples/cookbook/chart-stacked-areas.pl>.
 
-=for code-from examples-cookbook/chart-stacked-areas.pl
+=for code-from examples/cookbook/chart-stacked-areas.pl
 
 	use v5.24;
 	use warnings;
@@ -660,9 +660,9 @@ Goal: show how 600 exam scores are distributed: how many fall into
 each range of points, and what share of the students scored below the
 end of each range.
 
-This program is shipped as F<examples-cookbook/chart-histogram.pl>.
+This program is shipped as F<examples/cookbook/chart-histogram.pl>.
 
-=for code-from examples-cookbook/chart-histogram.pl
+=for code-from examples/cookbook/chart-histogram.pl
 
 	use v5.24;
 	use warnings;
@@ -771,9 +771,9 @@ Goal: compare the strengths of several profiles over the same
 categories at a glance, and show one value per category as slices
 whose length is the value.
 
-This program is shipped as F<examples-cookbook/chart-radar.pl>.
+This program is shipped as F<examples/cookbook/chart-radar.pl>.
 
-=for code-from examples-cookbook/chart-radar.pl
+=for code-from examples/cookbook/chart-radar.pl
 
 	use v5.24;
 	use warnings;
@@ -885,9 +885,9 @@ Use a bar chart when the reader has to compare values exactly.
 Goal: a table of stocks with a small chart of the month's prices in
 every row, green when the price rose and red when it fell.
 
-This program is shipped as F<examples-cookbook/chart-sparklines.pl>.
+This program is shipped as F<examples/cookbook/chart-sparklines.pl>.
 
-=for code-from examples-cookbook/chart-sparklines.pl
+=for code-from examples/cookbook/chart-sparklines.pl
 
 	use v5.24;
 	use warnings;

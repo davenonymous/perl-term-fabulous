@@ -15,7 +15,7 @@ its data: the curves that connect the points, the characters a chart
 draws with (markers), light backgrounds, palettes and colors of your
 own, line styles, gaps, bar widths, stack groups and grid lines, and the
 details of the point under the mouse pointer. Each recipe is a complete
-program, shipped in F<examples-cookbook/>, with a picture and notes on
+program, shipped in F<examples/cookbook/>, with a picture and notes on
 every feature it uses. L<Term::Fabulous::Cookbook::Charts> introduces
 each chart type with a recipe of its own, and
 L<Term::Fabulous::Cookbook::ChartTechniques> shows time axes, live
@@ -64,9 +64,9 @@ L</Show details of the point under the pointer (SeriesHover, highlight)>
 Goal: see how the C<curve> option connects the same seven points in six
 ways, to choose one that suits the data.
 
-This program is shipped as F<examples-cookbook/chart-curves.pl>.
+This program is shipped as F<examples/cookbook/chart-curves.pl>.
 
-=for code-from examples-cookbook/chart-curves.pl
+=for code-from examples/cookbook/chart-curves.pl
 
 	use v5.24;
 	use warnings;
@@ -160,9 +160,9 @@ series, so it shows no legend; the title names it.
 Goal: compare the characters a chart can draw its series with: Braille
 dots, block elements and box drawing lines.
 
-This program is shipped as F<examples-cookbook/chart-styles.pl>.
+This program is shipped as F<examples/cookbook/chart-styles.pl>.
 
-=for code-from examples-cookbook/chart-styles.pl
+=for code-from examples/cookbook/chart-styles.pl
 
 	use v5.24;
 	use warnings;
@@ -264,9 +264,9 @@ charts fill three rows of three.
 Goal: a chart on a light background, and a chart whose colors are all
 chosen by the program, including a reference line over its bars.
 
-This program is shipped as F<examples-cookbook/chart-colors.pl>.
+This program is shipped as F<examples/cookbook/chart-colors.pl>.
 
-=for code-from examples-cookbook/chart-colors.pl
+=for code-from examples/cookbook/chart-colors.pl
 
 	use v5.24;
 	use warnings;
@@ -401,9 +401,9 @@ Goal: compare the smaller options of XY charts side by side: dashed and
 dotted lines, gaps in the data, an area with a line and points, narrow
 bars, bars in two stack groups, and grid lines along both axes.
 
-This program is shipped as F<examples-cookbook/chart-options.pl>.
+This program is shipped as F<examples/cookbook/chart-options.pl>.
 
-=for code-from examples-cookbook/chart-options.pl
+=for code-from examples/cookbook/chart-options.pl
 
 	use v5.24;
 	use warnings;
@@ -563,9 +563,9 @@ and L<the axis keys of XYChart|Term::Fabulous::Widget::XYChart/Axis keys>.
 Goal: show the values under the mouse pointer in a status line, and
 emphasize a series from the keyboard.
 
-This program is shipped as F<examples-cookbook/chart-hover.pl>.
+This program is shipped as F<examples/cookbook/chart-hover.pl>.
 
-=for code-from examples-cookbook/chart-hover.pl
+=for code-from examples/cookbook/chart-hover.pl
 
 	use v5.24;
 	use warnings;

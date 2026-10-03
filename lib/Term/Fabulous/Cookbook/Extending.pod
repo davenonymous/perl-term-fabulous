@@ -238,13 +238,13 @@ L</Make a widget usable from KDL>.
 Goal: a reusable container widget in its own module that KDL layouts
 can use, with a property that takes more than a single value.
 
-Both files are shipped in the F<examples-cookbook> directory:
-F<examples-cookbook/lib/My/Panel.pm> and
-F<examples-cookbook/kdl-panel.pl>.
+Both files are shipped in the F<examples/cookbook> directory:
+F<examples/cookbook/lib/My/Panel.pm> and
+F<examples/cookbook/kdl-panel.pl>.
 
 The widget, saved as F<lib/My/Panel.pm>:
 
-=for code-from examples-cookbook/lib/My/Panel.pm
+=for code-from examples/cookbook/lib/My/Panel.pm
 
 	package My::Panel;
 
@@ -304,7 +304,7 @@ The widget, saved as F<lib/My/Panel.pm>:
 A program that uses it from a layout, saved next to the F<lib>
 directory:
 
-=for code-from examples-cookbook/kdl-panel.pl
+=for code-from examples/cookbook/kdl-panel.pl
 
 	use v5.24;
 	use warnings;
@@ -406,9 +406,9 @@ Goal: let one part of the program announce that something happened,
 and let any ancestor widget react, with the same C<on> listeners as for
 the built-in events.
 
-This program is shipped as F<examples-cookbook/custom-events.pl>.
+This program is shipped as F<examples/cookbook/custom-events.pl>.
 
-=for code-from examples-cookbook/custom-events.pl
+=for code-from examples/cookbook/custom-events.pl
 
 	use v5.24;
 	use warnings;

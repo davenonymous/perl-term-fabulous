@@ -37,9 +37,9 @@ L</Plot data on a pixel canvas (PixelCanvas)>
 
 Goal: let the user draw on a canvas by clicking and dragging.
 
-This program is shipped as F<examples-cookbook/paint-with-the-mouse.pl>.
+This program is shipped as F<examples/cookbook/paint-with-the-mouse.pl>.
 
-=for code-from examples-cookbook/paint-with-the-mouse.pl
+=for code-from examples/cookbook/paint-with-the-mouse.pl
 
 	use v5.24;
 	use warnings;
@@ -139,9 +139,9 @@ program with a color palette.
 Goal: draw a line chart of a series of numbers, filling whatever room
 the terminal gives.
 
-This program is shipped as F<examples-cookbook/pixel-canvas-plot.pl>.
+This program is shipped as F<examples/cookbook/pixel-canvas-plot.pl>.
 
-=for code-from examples-cookbook/pixel-canvas-plot.pl
+=for code-from examples/cookbook/pixel-canvas-plot.pl
 
 	use v5.24;
 	use warnings;

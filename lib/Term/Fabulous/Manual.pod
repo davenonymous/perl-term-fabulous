@@ -314,11 +314,11 @@ see L<Term::Fabulous::Manual::Events/MOUSE> for what is reported.
 
 This program shows a dark blue screen with a framed greeting in the
 middle and ends when you press C<q>, C<Escape> or C<Ctrl+C>. It is
-shipped as F<examples-cookbook/first-program.pl>; run it with
-C<perl examples-cookbook/first-program.pl> (see
+shipped as F<examples/cookbook/first-program.pl>; run it with
+C<perl examples/cookbook/first-program.pl> (see
 L<Term::Fabulous::Examples/RUNNING THE EXAMPLES>).
 
-=for code-from examples-cookbook/first-program.pl
+=for code-from examples/cookbook/first-program.pl
 
 	use v5.24;
 	use warnings;

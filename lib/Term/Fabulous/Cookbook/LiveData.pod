@@ -49,9 +49,9 @@ L</Show the output of a running command>
 Goal: change what the screen shows at regular intervals, here a clock
 in the middle of the terminal.
 
-This program is shipped as F<examples-cookbook/clock.pl>.
+This program is shipped as F<examples/cookbook/clock.pl>.
 
-=for code-from examples-cookbook/clock.pl
+=for code-from examples/cookbook/clock.pl
 
 	use v5.24;
 	use warnings;
@@ -125,9 +125,9 @@ L<Term::Fabulous::Manual::Layout/Aligning and centering children>.
 Goal: a box that receives a new line every half second, can be
 scrolled with the mouse wheel, and never holds more than 500 lines.
 
-This program is shipped as F<examples-cookbook/scrolling-log.pl>.
+This program is shipped as F<examples/cookbook/scrolling-log.pl>.
 
-=for code-from examples-cookbook/scrolling-log.pl
+=for code-from examples/cookbook/scrolling-log.pl
 
 	use v5.24;
 	use warnings;
@@ -233,9 +233,9 @@ L<Term::Fabulous::Manual::Layout/Changing the tree>.
 Goal: a log that always shows its newest line, until the user scrolls
 up to read older lines; keys that scroll the log up, down and sideways.
 
-This program is shipped as F<examples-cookbook/follow-log.pl>.
+This program is shipped as F<examples/cookbook/follow-log.pl>.
 
-=for code-from examples-cookbook/follow-log.pl
+=for code-from examples/cookbook/follow-log.pl
 
 	use v5.24;
 	use warnings;
@@ -419,9 +419,9 @@ L<Term::Fabulous::Manual::Events/SCROLLING>.
 Goal: run a command, show its output and its errors line by line while
 it runs, and its exit status when it ends.
 
-This program is shipped as F<examples-cookbook/show-output.pl>.
+This program is shipped as F<examples/cookbook/show-output.pl>.
 
-=for code-from examples-cookbook/show-output.pl
+=for code-from examples/cookbook/show-output.pl
 
 	use v5.24;
 	use warnings;
@@ -531,7 +531,7 @@ This program is shipped as F<examples-cookbook/show-output.pl>.
 =end html
 
 Run it with a command and its arguments, for example
-C<perl examples-cookbook/show-output.pl ping -c 5 localhost>; without
+C<perl examples/cookbook/show-output.pl ping -c 5 localhost>; without
 arguments it runs C<ls -l />. The picture shows it running
 C<seq -f 'Line %g' 1 40>.
 

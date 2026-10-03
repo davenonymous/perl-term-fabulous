@@ -275,7 +275,7 @@ before any program runs.
 	}
 
 	screenshot "login-form" {
-		script "examples-cookbook/login-form.pl"
+		script "examples/cookbook/login-form.pl"
 		size 60 14
 		steps {
 			type "ada"

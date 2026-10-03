@@ -40,9 +40,9 @@ L</Test a widget without a terminal>
 Goal: lay out a widget tree once and print it as text, with colors on a
 terminal and plain in a pipe or a file.
 
-This program is shipped as F<examples-cookbook/report-to-file.pl>.
+This program is shipped as F<examples/cookbook/report-to-file.pl>.
 
-=for code-from examples-cookbook/report-to-file.pl
+=for code-from examples/cookbook/report-to-file.pl
 
 	use v5.24;
 	use warnings;
@@ -144,9 +144,9 @@ Goal: test the behavior of a screen in an automated test: type into it,
 press keys, click it, and check the values and what the screen shows,
 exactly as a user at a real terminal would see it.
 
-This program is shipped as F<examples-cookbook/test-a-widget.pl>.
+This program is shipped as F<examples/cookbook/test-a-widget.pl>.
 
-=for code-from examples-cookbook/test-a-widget.pl
+=for code-from examples/cookbook/test-a-widget.pl
 
 	use v5.24;
 	use warnings;

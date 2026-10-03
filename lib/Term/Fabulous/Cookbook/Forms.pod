@@ -14,7 +14,7 @@ The recipes on this page build forms: they read text, choices and
 numbers from the user, check and collect the values, open a dialog over
 the screen, ask a question below the shell's output, and control the
 keyboard focus. Most recipes are complete programs, shipped in
-F<examples-cookbook/> (one in F<examples/>), with a screenshot and
+F<examples/cookbook/> (one in F<examples/>), with a screenshot and
 notes on every feature they use; the others are short snippets for one
 of these programs.
 
@@ -89,9 +89,9 @@ L</Copy and paste through the clipboard>
 Goal: a centered dialog with a user name, a masked password and a
 check box, which validates the input when the user presses Enter.
 
-This program is shipped as F<examples-cookbook/login-form.pl>.
+This program is shipped as F<examples/cookbook/login-form.pl>.
 
-=for code-from examples-cookbook/login-form.pl
+=for code-from examples/cookbook/login-form.pl
 
 	use v5.24;
 	use warnings;
@@ -203,9 +203,9 @@ Goal: a "Really quit?" dialog that opens over the screen when the user
 presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
-This program is shipped as F<examples-cookbook/confirm-dialog.pl>.
+This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 
-=for code-from examples-cookbook/confirm-dialog.pl
+=for code-from examples/cookbook/confirm-dialog.pl
 
 	use v5.24;
 	use warnings;
@@ -328,9 +328,9 @@ Goal: a prompt that asks for a name in three rows below what the shell
 showed before, instead of taking the whole screen, and leaves its
 answer there when the program goes on.
 
-This program is shipped as F<examples-cookbook/inline-prompt.pl>.
+This program is shipped as F<examples/cookbook/inline-prompt.pl>.
 
-=for code-from examples-cookbook/inline-prompt.pl
+=for code-from examples/cookbook/inline-prompt.pl
 
 	use v5.24;
 	use warnings;
@@ -416,9 +416,9 @@ for selecting and copying text, as with C<< mouse => 0 >>.
 Goal: let the user pick one of several options, from a list that opens
 and from radio buttons, and a number from a range, all built in Perl.
 
-This program is shipped as F<examples-cookbook/choose-options.pl>.
+This program is shipped as F<examples/cookbook/choose-options.pl>.
 
-=for code-from examples-cookbook/choose-options.pl
+=for code-from examples/cookbook/choose-options.pl
 
 	use v5.24;
 	use warnings;
@@ -815,9 +815,9 @@ after the terminal has been restored.
 
 Goal: a text field that can only be used while a check box is checked.
 
-This program is shipped as F<examples-cookbook/disable-inputs.pl>.
+This program is shipped as F<examples/cookbook/disable-inputs.pl>.
 
-=for code-from examples-cookbook/disable-inputs.pl
+=for code-from examples/cookbook/disable-inputs.pl
 
 	use v5.24;
 	use warnings;
@@ -892,9 +892,9 @@ on an ancestor still sees the change.
 
 Goal: show a help text for the input that currently has the focus.
 
-This program is shipped as F<examples-cookbook/focus-help-line.pl>.
+This program is shipped as F<examples/cookbook/focus-help-line.pl>.
 
-=for code-from examples-cookbook/focus-help-line.pl
+=for code-from examples/cookbook/focus-help-line.pl
 
 	use v5.24;
 	use warnings;
@@ -971,9 +971,9 @@ C<Submit>.
 Goal: make Tab visit the inputs in an order that differs from their
 order on the screen.
 
-This program is shipped as F<examples-cookbook/tab-order.pl>.
+This program is shipped as F<examples/cookbook/tab-order.pl>.
 
-=for code-from examples-cookbook/tab-order.pl
+=for code-from examples/cookbook/tab-order.pl
 
 	use v5.24;
 	use warnings;

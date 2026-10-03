@@ -444,7 +444,7 @@ pie slices. The C<marker> of a series (or of a pie chart) chooses other
 characters: half blocks, quadrants, sextants, box-drawing lines
 (L<Term::Fabulous::Widget::XYChart/Rendering styles>). Translucent fills
 are mixed with the background below them, so overlapping areas and
-histograms stay visible. F<examples-cookbook/chart-styles.pl> compares
+histograms stay visible. F<examples/cookbook/chart-styles.pl> compares
 the markers:
 
 =begin html
@@ -479,7 +479,7 @@ When the pointer leaves the series, the chart fires one more event,
 without a series. C<< $chart->highlight($name) >> emphasizes a series
 from the program, for example the one selected in a list;
 C<< hover =E<gt> 0 >> turns the hover effects and events off.
-F<examples-cookbook/chart-hover.pl> shows the hovered point below the
+F<examples/cookbook/chart-hover.pl> shows the hovered point below the
 chart:
 
 =begin html
@@ -557,7 +557,7 @@ report has no screen to fill, so give a chart a fixed height:
 	);
 	Term::Fabulous::Static->new( root => $chart, width => 60 )->print;
 
-F<examples-cookbook/chart-report.pl> (the recipe
+F<examples/cookbook/chart-report.pl> (the recipe
 L<Print charts in a report|Term::Fabulous::Cookbook::ChartTechniques/Print charts in a report (Static)>)
 prints a bar chart and a sparkline:
 
