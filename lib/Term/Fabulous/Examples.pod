@@ -574,6 +574,20 @@ colors, and a vertical divider with a text between two columns.
 
 =end html
 
+=head3 examples/widgets/accordion.pl
+
+L<Term::Fabulous::Widget::Accordion>: a settings accordion with one
+section open at a time and a disabled section, and a bordered one
+with the toggles at the end of the headers and several sections open
+at once. Up and Down move between the headers, Enter or Space opens
+and closes the focused section.
+
+=begin html
+
+<p><img src="/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
+
+=end html
+
 =head2 Buttons, inputs and dialogs
 
 =head3 examples/widgets/button.pl

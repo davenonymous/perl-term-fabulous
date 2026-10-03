@@ -589,7 +589,7 @@ Dialogs that open over the screen and keep the keyboard focus inside.
 =item *
 
 Dividers between widgets, horizontal or vertical, with a text on the
-line.
+line; accordions whose sections open and close under their headers.
 
 =item *
 
@@ -1436,6 +1436,11 @@ mouse wheel.
 A horizontal or vertical line between widgets, with an optional text at
 its start, center or end.
 
+=item L<Term::Fabulous::Widget::Accordion>, L<Term::Fabulous::Widget::Accordion::Item>
+
+Sections with headers that open and close, one at a time or several,
+with the keyboard and the mouse.
+
 =item L<Term::Fabulous::Widget::Canvas>
 
 A box with a grid of character cells that you draw into.
@@ -1702,6 +1707,10 @@ The user activated a button, by click or key.
 =item L<Term::Fabulous::Event::Close>
 
 A dialog was closed.
+
+=item L<Term::Fabulous::Event::Select>
+
+The user opened or closed an item of an accordion.
 
 =item L<Term::Fabulous::Event::SeriesHover>
 

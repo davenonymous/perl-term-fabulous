@@ -16,7 +16,7 @@ where each widget goes and how big it is. Every layout option is shown
 with a picture, with the Perl code and with the form it takes in a
 L<KDL layout file|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>. The
 last sections cover the widgets that structure a screen:
-L<dividers|/DIVIDERS>.
+L<dividers|/DIVIDERS> and L<accordions|/ACCORDIONS>.
 
 The reference pages for this topic are L<Term::Fabulous::Widget> (the
 parameters and methods all container widgets share),
@@ -65,6 +65,11 @@ with the mouse wheel (see L</Scrolling content>).
 
 A horizontal or vertical line between widgets, with an optional text
 (see L</DIVIDERS>).
+
+=item L<Term::Fabulous::Widget::Accordion>
+
+Sections with headers that open and close, one at a time or several
+(see L</ACCORDIONS>).
 
 =item L<Term::Fabulous::Widget::Canvas>
 
@@ -839,11 +844,55 @@ In KDL:
 	Divider { text "Network"; text_position "start"; bold #true; }
 	Divider { vertical #true; }
 
+=head1 ACCORDIONS
+
+A L<Term::Fabulous::Widget::Accordion> stacks sections that open and
+close under their headers, so that a long form or a settings page
+shows one part at a time. Each section is a
+L<Term::Fabulous::Widget::Accordion::Item> with a title and a body of
+any widgets; the body is part of the tree only while the item is open,
+so a closed section takes one row:
+
+	use Term::Fabulous::Widget::Accordion;
+	use Term::Fabulous::Widget::Accordion::Item;
+
+	my $settings = Term::Fabulous::Widget::Accordion->new;
+	foreach my $section ( [ General => \@general_rows ], [ Network => \@network_rows ] ) {
+		my $item = Term::Fabulous::Widget::Accordion::Item->new( title => $section->[0] );
+		$item->add_child( $section->[1]->@* );
+		$settings->add_child($item);
+	}
+	$settings->open(0);
+
+The user opens a section with a click on its header or with C<Enter>
+or C<Space> while the header has the focus; C<Up> and C<Down> move
+between the headers. Opening a section closes the open one unless the
+accordion has C<< multiple => 1 >>. The accordion fires
+L<Term::Fabulous::Event::Select> for every change the user makes, and
+C<open>, C<close>, C<open_all> and C<close_all> change it from the
+program. The toggle glyph sits before the title, as in a tree, or at
+the end of the header (C<toggle_position>), the items can have
+borders (C<bordered>), and an item can be disabled. The picture shows
+both looks (F<examples/widgets/accordion.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
+
+=end html
+
+In KDL, the items are C<Item> nodes inside the accordion:
+
+	Accordion "settings" {
+		Item "general" { title "General"; open #true; Text { text "..."; } }
+		Item "network" { title "Network"; Text { text "..."; } }
+	}
+
 =head1 SEE ALSO
 
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual>. Next page: L<Term::Fabulous::Manual::Looks>.
 
-L<Term::Fabulous::Widget::Divider>,
+L<Term::Fabulous::Widget::Divider>, L<Term::Fabulous::Widget::Accordion>,
 L<Term::Fabulous::Widget> (the parameters and methods of all container
 widgets), L<Term::Fabulous::Widget::Box>,
 L<Term::Fabulous::Widget::ScrollBox>,

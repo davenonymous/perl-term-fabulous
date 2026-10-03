@@ -1,6 +1,13 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Accordion and ::Accordion::Item: sections
+          that open and close under their headers, one at a time or
+          several, with the keyboard (Enter, Space, Up, Down, Home, End)
+          and the mouse, disabled items, borders, the toggle at the start
+          or the end, and KDL properties; the new
+          Term::Fabulous::Event::Select reports what the user opened or
+          closed
         - Term::Fabulous::Widget::Spinner: shows that something is going
           on, in twelve ready-made styles of one cell to three rows or
           with frames of your own, with a label, start and stop, and KDL

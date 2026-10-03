@@ -142,6 +142,7 @@ lib/Term/Fabulous/Event/MouseMove.pm
 lib/Term/Fabulous/Event/PageChange.pm
 lib/Term/Fabulous/Event/Resize.pm
 lib/Term/Fabulous/Event/RowActivate.pm
+lib/Term/Fabulous/Event/Select.pm
 lib/Term/Fabulous/Event/SelectionChange.pm
 lib/Term/Fabulous/Event/SeriesHover.pm
 lib/Term/Fabulous/Event/SortChange.pm
@@ -188,6 +189,8 @@ lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
+lib/Term/Fabulous/Widget/Accordion.pm
+lib/Term/Fabulous/Widget/Accordion/Item.pm
 lib/Term/Fabulous/Widget/BarChart.pm
 lib/Term/Fabulous/Widget/Box.pm
 lib/Term/Fabulous/Widget/Button.pm
@@ -283,6 +286,7 @@ t/terminal-termbox.t
 t/text-view.t
 t/unicode.t
 t/web-color.t
+t/widget-accordion.t
 t/widget-button.t
 t/widget-canvas.t
 t/widget-chart-hover.t
@@ -313,6 +317,7 @@ t/widget.t
 typemap
 examples/showcase.pl                     
 examples/widgets/area-chart.pl
+examples/widgets/accordion.pl
 examples/widgets/bar-chart.pl
 examples/widgets/box.pl                  
 examples/widgets/button.pl               
@@ -435,6 +440,7 @@ screenshots/example-translucency.svg
 screenshots/example-web-colors.svg       
 screenshots/overview.svg                 
 screenshots/screenshots.kdl              
+screenshots/widget-accordion.svg
 screenshots/widget-area-chart.svg
 screenshots/widget-bar-chart.svg
 screenshots/widget-box.svg               

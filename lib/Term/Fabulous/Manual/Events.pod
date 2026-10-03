@@ -178,6 +178,7 @@ the sections below it describe each event.
 	Submit           the text field                    yes
 	Activate         the Button                        yes
 	Close            the Dialog                        (no parent then)
+	Select           the Accordion                     yes
 	SeriesHover      the chart                         yes
 	OnFocus, OnBlur  the widget                        yes
 	OnPress          innermost pressable widget        yes
@@ -304,6 +305,13 @@ C<< $button->activate >>. Fired on the button. No fields.
 A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
 code. Fired on the dialog, after it has left the screen, so only
 listeners on the dialog itself see it. No fields.
+
+=item C<Select> (L<Term::Fabulous::Event::Select>)
+
+The user opened or closed an item of a
+L<Term::Fabulous::Widget::Accordion>: clicked its header, or pressed
+C<Enter> or C<Space> on it. Also fired by C<< $accordion->choose >>.
+Fired on the accordion. Fields: C<item>, C<index>, C<open>.
 
 =item C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>)
 

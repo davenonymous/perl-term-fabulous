@@ -87,7 +87,7 @@ bindings (`Ctrl+S`, `Shift+Left`), the kitty keyboard protocol for
 keys older terminals cannot tell apart, mouse wheel scrolling.
 - Dialogs that open over the screen and keep the keyboard focus inside.
 - Dividers between widgets, horizontal or vertical, with a text on the
-line.
+line; accordions whose sections open and close under their headers.
 - Progress bars in several styles, with labels, stripes, stacked
 segments and an indeterminate runner, and spinners in twelve styles,
 animated on the application's clock without timers.
@@ -874,6 +874,11 @@ Term::Fabulous, and programs do not use them directly.
     A horizontal or vertical line between widgets, with an optional text at
     its start, center or end.
 
+- [Term::Fabulous::Widget::Accordion](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AAccordion), [Term::Fabulous::Widget::Accordion::Item](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AAccordion%3A%3AItem)
+
+    Sections with headers that open and close, one at a time or several,
+    with the keyboard and the mouse.
+
 - [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas)
 
     A box with a grid of character cells that you draw into.
@@ -1120,6 +1125,10 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Event::Close](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AClose)
 
     A dialog was closed.
+
+- [Term::Fabulous::Event::Select](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASelect)
+
+    The user opened or closed an item of an accordion.
 
 - [Term::Fabulous::Event::SeriesHover](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASeriesHover)
 

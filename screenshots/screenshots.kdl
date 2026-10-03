@@ -733,6 +733,11 @@ screenshot "widget-divider" {
 	size 64 18
 }
 
+screenshot "widget-accordion" {
+	script "examples/widgets/accordion.pl"
+	size 84 16
+}
+
 screenshot "widget-table" {
 	script "examples/widgets/table.pl"
 	size 90 24
