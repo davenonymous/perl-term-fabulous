@@ -8,7 +8,7 @@ Term::Fabulous::Manual::Charts - Canvases and charts
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Tables>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Feedback>. Next page: L<Term::Fabulous::Manual::Tables>.
 
 This page covers the two ways to draw graphics in the terminal. A
 I<canvas> (L</CANVASES>) is a widget you draw into yourself, cell by
@@ -578,7 +578,7 @@ line styles and hover.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Tables>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Feedback>. Next page: L<Term::Fabulous::Manual::Tables>.
 
 The class pages: L<Term::Fabulous::Widget::Canvas>,
 L<Term::Fabulous::Widget::PixelCanvas>, L<Term::Fabulous::Widget::Chart>,

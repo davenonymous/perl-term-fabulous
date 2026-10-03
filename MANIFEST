@@ -152,6 +152,7 @@ lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Manual/Charts.pod
 lib/Term/Fabulous/Manual/CustomWidgets.pod
 lib/Term/Fabulous/Manual/Events.pod
+lib/Term/Fabulous/Manual/Feedback.pod
 lib/Term/Fabulous/Manual/Forms.pod
 lib/Term/Fabulous/Manual/Glossary.pod
 lib/Term/Fabulous/Manual/KDL.pod
@@ -207,6 +208,7 @@ lib/Term/Fabulous/Widget/LineChart.pm
 lib/Term/Fabulous/Widget/PieChart.pm
 lib/Term/Fabulous/Widget/PixelCanvas.pm
 lib/Term/Fabulous/Widget/PolarAreaChart.pm
+lib/Term/Fabulous/Widget/ProgressBar.pm
 lib/Term/Fabulous/Widget/RadarChart.pm
 lib/Term/Fabulous/Widget/RadioButton.pm
 lib/Term/Fabulous/Widget/RadioGroup.pm
@@ -291,6 +293,7 @@ t/widget-histogram.t
 t/widget-inset.t
 t/widget-pie-chart.t
 t/widget-pixel-canvas.t
+t/widget-progress-bar.t
 t/widget-radar-chart.t
 t/widget-radio.t
 t/widget-revision.t
@@ -324,6 +327,7 @@ examples/widgets/line-chart.pl
 examples/widgets/pie-chart.pl
 examples/widgets/pie-chart-styles.pl
 examples/widgets/polar-area-chart.pl
+examples/widgets/progress-bar.pl
 examples/widgets/radar-chart.pl
 examples/widgets/radio.pl                
 examples/widgets/scatter-plot.pl
@@ -445,6 +449,7 @@ screenshots/widget-line-chart.svg
 screenshots/widget-pie-chart.svg
 screenshots/widget-pie-chart-styles.svg
 screenshots/widget-polar-area-chart.svg
+screenshots/widget-progress-bar.svg
 screenshots/widget-radar-chart.svg
 screenshots/widget-radio.svg             
 screenshots/widget-scatter-plot.svg

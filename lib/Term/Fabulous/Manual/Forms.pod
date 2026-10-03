@@ -8,7 +8,7 @@ Term::Fabulous::Manual::Forms - Forms and input widgets
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Events>. Next page: L<Term::Fabulous::Manual::Charts>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Events>. Next page: L<Term::Fabulous::Manual::Feedback>.
 
 This page is the guide to the input widgets: text fields, text areas,
 checkboxes, radio buttons, dropdowns and sliders. It first describes
@@ -961,7 +961,7 @@ L<Term::Fabulous::Manual::CustomWidgets>.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Events>. Next page: L<Term::Fabulous::Manual::Charts>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Events>. Next page: L<Term::Fabulous::Manual::Feedback>.
 
 The class pages: L<Term::Fabulous::Widget::Input>,
 L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextField>,

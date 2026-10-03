@@ -122,6 +122,11 @@ buttons, dropdowns, sliders, star ratings, segmented controls), what
 they have in common, editing text, the clipboard, undo, and complete
 forms.
 
+=item L<Term::Fabulous::Manual::Feedback>
+
+The widgets that show what the program is doing: progress bars, with
+and without a known extent, and how widgets animate without timers.
+
 =item L<Term::Fabulous::Manual::Charts>
 
 Canvases you draw on yourself, and the chart widgets that draw
@@ -708,6 +713,23 @@ L<Term::Fabulous::Cookbook::Forms/Copy and paste through the clipboard>.
 =item Check what the user typed
 
 L<Term::Fabulous::Manual::Forms/Checking input>.
+
+=back
+
+=head2 Progress and feedback
+
+=over
+
+=item Show how much of a task is done; a bar for a task of unknown extent
+
+L<Term::Fabulous::Manual::Feedback/PROGRESS BARS>,
+L<Term::Fabulous::Widget::ProgressBar>.
+
+=item Animate a widget without a timer
+
+L<Term::Fabulous::Manual::Feedback/ANIMATION>,
+L<Term::Fabulous::Widget::Display/ANIMATION>,
+L<Term::Fabulous/request_frame_at>.
 
 =back
 

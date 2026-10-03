@@ -88,6 +88,9 @@ keys older terminals cannot tell apart, mouse wheel scrolling.
 - Dialogs that open over the screen and keep the keyboard focus inside.
 - Dividers between widgets, horizontal or vertical, with a text on the
 line.
+- Progress bars in several styles, with labels, stripes, stacked
+segments and an indeterminate runner, animated on the application's
+clock without timers.
 - Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 - Correct handling of Unicode: wide CJK characters, emoji, combining
@@ -126,7 +129,8 @@ start with the manual's first page and its first program.
     layout), [Term::Fabulous::Manual::Looks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ALooks) (text, colors, borders),
     [Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents) (events, keyboard, focus, mouse,
     scrolling), [Term::Fabulous::Manual::Forms](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AForms) (input widgets),
-    [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
+    [Term::Fabulous::Manual::Feedback](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AFeedback) (progress bars and other feedback
+    widgets), [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
     [Term::Fabulous::Manual::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATables), [Term::Fabulous::Manual::TableRows](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableRows)
     and [Term::Fabulous::Manual::TableStyles](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableStyles) (the table widget),
     [Term::Fabulous::Manual::KDL](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AKDL) (layout files),
@@ -259,9 +263,10 @@ add timers first. Unknown parameters die
 
     Optional, for tests. A code reference that returns the current time in
     seconds, default `Time::HiRes::time`. Frame pacing reads it: how long
-    a frame took and when it ended (see ["run"](#run)). A test gives it a clock it
-    controls to check the pacing with `step( paced => 1 )`. Anything
-    but a code reference dies.
+    a frame took and when it ended (see ["run"](#run)), and so do ["now"](#now) and
+    the widgets that animate (see ["request\_frame\_at"](#request_frame_at)). A test gives it a
+    clock it controls to check the pacing with `step( paced => 1 )`
+    or to move an animation on. Anything but a code reference dies.
 
 - `output_mode`
 
@@ -323,8 +328,9 @@ frame and before any input is read, so a `Start` listener can use
 - every 1/30 second (see ["termbox\_draw\_interval"](#termbox_draw_interval)) the screen is laid
 out and drawn again, using the real terminal size, if anything changed
 since the last frame: a widget was changed, input arrived, the terminal
-was resized or ["invalidate"](#invalidate) was called. Nothing is drawn while
-nothing happens. A pointer that only moved gets a frame of its own at
+was resized, ["invalidate"](#invalidate) was called, or the time a widget asked for
+a frame at has come (["request\_frame\_at"](#request_frame_at), how spinners and progress
+bars animate). Nothing is drawn while nothing happens. A pointer that only moved gets a frame of its own at
 most every other check when frames take long to draw (longer than the
 time since the last one ended), so moving the mouse cannot keep the
 loop busy with nothing but redrawing; clicks, keys and changed widgets
@@ -557,6 +563,35 @@ so most programs never need this; call it when something the frame
 depends on changed behind Term::Fabulous's back, for example state a
 custom widget reads while it draws without calling `mark_changed`
 (see [telling Term::Fabulous that something changed](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACustomWidgets#Telling-Term::Fabulous-that-something-changed)).
+
+## now
+
+```perl
+     my $seconds = $ui->now;
+```
+
+The current time in seconds on the application's clock: the `clock`
+of ["new"](#new), by default `Time::HiRes::time`. Widgets that animate read
+it instead of the system clock, so a test or the screenshot harness
+can move it; see ["request\_frame\_at"](#request_frame_at).
+
+## request\_frame\_at
+
+```perl
+     $ui->request_frame_at( $ui->now + 0.1 );
+```
+
+Asks for a frame at a time on the clock (see ["now"](#now)): at the first
+tick of the frame timer at or after it, a frame is drawn as if
+["invalidate"](#invalidate) had been called, and `step` draws one when the time
+has come. Several requests keep the earliest time. Every frame forgets
+the request, so something that animates asks again from the frame it
+is drawn in. Returns the object. Dies unless the argument is a number.
+
+This is how the widgets that move by themselves (an indeterminate
+[Term::Fabulous::Widget::ProgressBar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AProgressBar)) are drawn without timers of
+their own; see ["ANIMATION" in Term::Fabulous::Widget::Display](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADisplay#ANIMATION) to write
+one.
 
 ## find\_by\_id
 
@@ -855,8 +890,8 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::Display](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADisplay)
 
     The abstract base class of the widgets that paint themselves from their
-    own state (the divider, the input widgets); derive from it to write
-    your own.
+    own state (the divider, the progress bar, the input widgets), with the
+    animation helpers; derive from it to write your own.
 
 - [Term::Fabulous::Widget::Element](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AElement), [Term::Fabulous::Widget::TextNode](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextNode)
 
@@ -929,6 +964,13 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::Dropdown::List](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADropdown%3A%3AList)
 
     The list an open dropdown shows. Used internally by the dropdown.
+
+## Feedback widgets
+
+- [Term::Fabulous::Widget::ProgressBar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AProgressBar)
+
+    How much of a task is done: a bar in several styles, with a label,
+    stripes, segments, or a runner for a task of unknown extent.
 
 ## Tables
 

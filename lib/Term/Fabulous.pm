@@ -26,7 +26,7 @@ class Term::Fabulous
 	use IO::Async::Timer::Countdown;
 	use IO::Async::Timer::Periodic;
 	use List::Util qw(any);
-	use Scalar::Util qw(blessed refaddr);
+	use Scalar::Util qw(blessed looks_like_number refaddr);
 	use Time::HiRes ();
 	use Term::Fabulous::Termbox qw(
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
@@ -69,6 +69,7 @@ class Term::Fabulous
 	field $_wheel_rows    = 0;   # wheel scrolling since the last frame
 	field $_wheel_columns = 0;
 	field $_frame_requested = 1;    # invalidate() or input since the last frame
+	field $_frame_due_at;           # the earliest time a widget asked for a frame at, on the clock
 	field $_drawn_revision  = -1;   # the Clay::UI revision the last frame showed
 	field $_shown_down      = 0;    # the button state the last frame showed Clay
 	field $_frame_seconds   = 0;    # how long the last frame took to draw
@@ -111,6 +112,19 @@ class Term::Fabulous
 
 	method invalidate () {
 		$_frame_requested = 1;
+		return $self;
+	}
+
+	method now () {
+		return $clock->();
+	}
+
+	# A frame is due at the earliest of the times asked for; the request is
+	# forgotten when a frame is drawn, so an animation asks again from it.
+	method request_frame_at ($time) {
+		die "Term::Fabulous: request_frame_at needs a time in seconds, got " . ( defined $time ? "'$time'" : 'undef' )
+			unless defined $time && !ref $time && looks_like_number($time);
+		$_frame_due_at = $time if !defined $_frame_due_at || $time < $_frame_due_at;
 		return $self;
 	}
 
@@ -292,6 +306,7 @@ class Term::Fabulous
 	method _frame_is_due ($paced) {
 		return 1 if $_frame_requested || $_wheel_rows || $_wheel_columns;
 		return 1 if current_revision() != $_drawn_revision;
+		return 1 if defined $_frame_due_at && $clock->() >= $_frame_due_at;
 		return 0 unless @_pointer_queue;
 		return 1 if !$paced || any { $_->{down} != $_shown_down } @_pointer_queue;
 		return $clock->() - $_frame_ended_at >= $_frame_seconds ? 1 : 0;
@@ -309,6 +324,7 @@ class Term::Fabulous
 		my ( $columns, $rows ) = ( $_wheel_columns, $_wheel_rows );
 		( $_wheel_columns, $_wheel_rows ) = ( 0, 0 );
 		$_frame_requested = 0;
+		$_frame_due_at    = undef;
 
 		my $started = $clock->();
 		foreach my $pointer (@pointers) {
@@ -577,6 +593,12 @@ line.
 
 =item *
 
+Progress bars in several styles, with labels, stripes, stacked
+segments and an indeterminate runner, animated on the application's
+clock without timers.
+
+=item *
+
 Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 
@@ -634,7 +656,8 @@ L<Term::Fabulous::Manual::Layout> (widgets, the widget tree and
 layout), L<Term::Fabulous::Manual::Looks> (text, colors, borders),
 L<Term::Fabulous::Manual::Events> (events, keyboard, focus, mouse,
 scrolling), L<Term::Fabulous::Manual::Forms> (input widgets),
-L<Term::Fabulous::Manual::Charts> (canvases and charts),
+L<Term::Fabulous::Manual::Feedback> (progress bars and other feedback
+widgets), L<Term::Fabulous::Manual::Charts> (canvases and charts),
 L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>
 and L<Term::Fabulous::Manual::TableStyles> (the table widget),
 L<Term::Fabulous::Manual::KDL> (layout files),
@@ -769,9 +792,10 @@ else dies (C<Term::Fabulous: terminal must consume Term::Fabulous::Role::Termina
 
 Optional, for tests. A code reference that returns the current time in
 seconds, default C<Time::HiRes::time>. Frame pacing reads it: how long
-a frame took and when it ended (see L</run>). A test gives it a clock it
-controls to check the pacing with C<< step( paced => 1 ) >>. Anything
-but a code reference dies.
+a frame took and when it ended (see L</run>), and so do L</now> and
+the widgets that animate (see L</request_frame_at>). A test gives it a
+clock it controls to check the pacing with C<< step( paced => 1 ) >>
+or to move an animation on. Anything but a code reference dies.
 
 =item C<output_mode>
 
@@ -840,8 +864,9 @@ C<run> may run before it;
 every 1/30 second (see L</termbox_draw_interval>) the screen is laid
 out and drawn again, using the real terminal size, if anything changed
 since the last frame: a widget was changed, input arrived, the terminal
-was resized or L</invalidate> was called. Nothing is drawn while
-nothing happens. A pointer that only moved gets a frame of its own at
+was resized, L</invalidate> was called, or the time a widget asked for
+a frame at has come (L</request_frame_at>, how spinners and progress
+bars animate). Nothing is drawn while nothing happens. A pointer that only moved gets a frame of its own at
 most every other check when frames take long to draw (longer than the
 time since the last one ended), so moving the mouse cannot keep the
 loop busy with nothing but redrawing; clicks, keys and changed widgets
@@ -1084,6 +1109,31 @@ so most programs never need this; call it when something the frame
 depends on changed behind Term::Fabulous's back, for example state a
 custom widget reads while it draws without calling C<mark_changed>
 (see L<telling Term::Fabulous that something changed|Term::Fabulous::Manual::CustomWidgets/Telling Term::Fabulous that something changed>).
+
+=head2 now
+
+	my $seconds = $ui->now;
+
+The current time in seconds on the application's clock: the C<clock>
+of L</new>, by default C<Time::HiRes::time>. Widgets that animate read
+it instead of the system clock, so a test or the screenshot harness
+can move it; see L</request_frame_at>.
+
+=head2 request_frame_at
+
+	$ui->request_frame_at( $ui->now + 0.1 );
+
+Asks for a frame at a time on the clock (see L</now>): at the first
+tick of the frame timer at or after it, a frame is drawn as if
+L</invalidate> had been called, and C<step> draws one when the time
+has come. Several requests keep the earliest time. Every frame forgets
+the request, so something that animates asks again from the frame it
+is drawn in. Returns the object. Dies unless the argument is a number.
+
+This is how the widgets that move by themselves (an indeterminate
+L<Term::Fabulous::Widget::ProgressBar>) are drawn without timers of
+their own; see L<Term::Fabulous::Widget::Display/ANIMATION> to write
+one.
 
 =head2 find_by_id
 
@@ -1402,8 +1452,8 @@ the constructor parameters and methods they all share.
 =item L<Term::Fabulous::Widget::Display>
 
 The abstract base class of the widgets that paint themselves from their
-own state (the divider, the input widgets); derive from it to write
-your own.
+own state (the divider, the progress bar, the input widgets), with the
+animation helpers; derive from it to write your own.
 
 =item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
 
@@ -1480,6 +1530,17 @@ scrolling, the cell of the cursor and the text under a click.
 =item L<Term::Fabulous::Widget::Dropdown::List>
 
 The list an open dropdown shows. Used internally by the dropdown.
+
+=back
+
+=head2 Feedback widgets
+
+=over
+
+=item L<Term::Fabulous::Widget::ProgressBar>
+
+How much of a task is done: a bar in several styles, with a label,
+stripes, segments, or a runner for a task of unknown extent.
 
 =back
 

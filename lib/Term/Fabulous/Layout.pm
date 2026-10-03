@@ -484,6 +484,7 @@ the L</Box properties>.
 	StarRating       Term::Fabulous::Widget::StarRating       input widget + max, value, half
 	SegmentedControl Term::Fabulous::Widget::SegmentedControl input widget + options, value
 	Divider          Term::Fabulous::Widget::Divider          Box + text, line_style, ...
+	ProgressBar      Term::Fabulous::Widget::ProgressBar      Box + range, value, style, ...
 	Table            Term::Fabulous::Widget::Table            Box + columns, lines, sort, ...
 	LineChart        Term::Fabulous::Widget::LineChart        chart + series, axes, ...
 	AreaChart        Term::Fabulous::Widget::AreaChart        chart + series, axes, ...
@@ -533,6 +534,8 @@ The properties of each class:
 =item * L<SegmentedControl|Term::Fabulous::Widget::SegmentedControl/KDL PROPERTIES>
 
 =item * L<Divider|Term::Fabulous::Widget::Divider/KDL PROPERTIES>
+
+=item * L<ProgressBar|Term::Fabulous::Widget::ProgressBar/KDL PROPERTIES>
 
 =item * L<Table|Term::Fabulous::Widget::Table/KDL PROPERTIES>
 

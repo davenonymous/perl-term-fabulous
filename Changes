@@ -1,6 +1,14 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::ProgressBar: how much of a task is done,
+          in block, line and ASCII styles with eighth-cell precision, a
+          label left, right or inside the bar, stripes that can move,
+          stacked segments in their own colors, and an indeterminate
+          runner; Term::Fabulous gets now and request_frame_at, with
+          which widgets animate on the application's clock instead of
+          timers of their own (Widget::Display/ANIMATION); a new manual
+          page Term::Fabulous::Manual::Feedback
         - Term::Fabulous::Widget::SegmentedControl: one choice of a few
           options shown side by side as one bar, with disabled segments,
           a vertical form, stretching to the layout's width, a hover

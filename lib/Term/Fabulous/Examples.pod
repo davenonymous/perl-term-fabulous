@@ -704,6 +704,22 @@ again.
 
 =end html
 
+=head2 Progress and feedback
+
+=head3 examples/widgets/progress-bar.pl
+
+L<Term::Fabulous::Widget::ProgressBar>: a block bar with its
+percentage, one with the percentage inside, a thin line bar with a
+label of its own, a striped bar whose stripes move, a bar of three
+colored segments, an indeterminate bar with its runner, and a two-row
+ASCII bar. The bars fill up from a timer.
+
+=begin html
+
+<p><img src="/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
+
+=end html
+
 =head2 Tables
 
 =head3 examples/widgets/table.pl

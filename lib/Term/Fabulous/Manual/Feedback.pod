@@ -1,0 +1,126 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+Term::Fabulous::Manual::Feedback - Progress bars and other feedback widgets
+
+=head1 DESCRIPTION
+
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
+
+This page covers the widgets that tell the user what the program is
+doing: a L<progress bar|/PROGRESS BARS> for a task whose extent is
+known, or not. They take no input; the program sets their state, from
+a timer, a process or a listener, and they draw themselves. The ones
+that move do so on the application's clock, without a timer of their
+own (see L</ANIMATION>).
+
+The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>.
+The class they share, L<Term::Fabulous::Widget::Display>, is the base of
+every widget that paints itself from its own state, and the one to
+derive from for a feedback widget of your own
+(L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>).
+
+=head1 PROGRESS BARS
+
+A L<Term::Fabulous::Widget::ProgressBar> shows a value between C<min>
+and C<max> as a bar filled from the left, with the percentage (or a
+label of your own) next to it. The program sets the value as the work
+goes on:
+
+	use Term::Fabulous::Widget::ProgressBar;
+
+	my $progress = Term::Fabulous::Widget::ProgressBar->new(
+		max    => $total_bytes,
+		layout => { sizing => { width => sizing_grow() } },
+	);
+	$progress->value($bytes_so_far);    # from a timer or a process
+
+The picture shows the forms a bar can take
+(F<examples/widgets/progress-bar.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
+
+=end html
+
+=over
+
+=item *
+
+B<Styles.> C<block> (the default) fills cells with blocks and moves in
+eighths of a cell; C<line> draws a thin line like a slider's track;
+C<ascii> uses C<#> and C<->. C<fill_glyph>, C<track_glyph> and
+C<stripe_glyph> replace the glyphs of a style. A layout that makes the
+bar more than one row high gives a thicker bar.
+
+=item *
+
+B<The label.> The percentage by default, right of the bar;
+C<< value_position => 'left' >> or C<'inside'> move it, and
+C<value_format> formats it as a C<sprintf> string of the percentage or
+with code that gets the value, for C<12 of 50 MB>. C<show_value =E<gt> 0>
+hides it.
+
+=item *
+
+B<Stripes.> C<striped> alternates two glyphs along the filled part,
+and C<animated> moves them: the bar then shows that the task is still
+running even while its value does not change.
+
+=item *
+
+B<Indeterminate.> A task whose extent is not known yet gets
+C<< indeterminate => 1 >>: a runner bounces from end to end and the
+label is hidden. Switch it off, set C<max> and the value once the
+extent is known.
+
+=item *
+
+B<Segments.> C<segments> stack several values in one bar, each in its
+own color: the used, reserved and free parts of a disk, the passed,
+failed and skipped tests. C<separated> leaves a cell of track between
+them, and the bar's C<value> is their sum.
+
+=back
+
+The colors are C<color> (the filled part), C<track_color>,
+C<text_color> and, for a label inside the bar, C<inside_text_color>;
+the program changes C<color> to show a state, for example red below a
+threshold. In KDL:
+
+	ProgressBar "download" {
+		max 2048
+		value 860
+		style "line"
+		sizing width=grow
+	}
+
+=head1 ANIMATION
+
+Progress bars that are C<indeterminate> or C<animated> move by
+themselves. They need no timer: a moving widget reads the application's
+clock (L<Term::Fabulous/now>) and asks for a frame at the moment its
+next frame is due (L<Term::Fabulous/request_frame_at>); Term::Fabulous
+draws it at the next tick of its frame timer, and nothing is drawn in
+between. In a test, the C<clock> parameter of L<Term::Fabulous/new>
+moves the animation on, and the screenshot tools of
+L<Term::Fabulous::Examples> run it on a virtual clock. A widget of your
+own animates the same way; see
+L<Term::Fabulous::Widget::Display/ANIMATION>.
+
+=head1 SEE ALSO
+
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
+
+The class pages: L<Term::Fabulous::Widget::ProgressBar>,
+L<Term::Fabulous::Widget::Display>.
+L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>
+for the timers that drive a bar, and
+L<Term::Fabulous::Cookbook::LiveData> for complete programs that update
+the screen while they work.
+
+=cut

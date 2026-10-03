@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Display
 	:abstract
 {
 	use Clay::XS qw(sizing_fixed);
+	use Time::HiRes ();
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
@@ -79,6 +80,34 @@ class Term::Fabulous::Widget::Display
 	method fill_attrs ( $x, $y, $width, $glyph, $fg, $bg ) {
 		$self->put_attrs( $_, $y, $glyph, $fg, $bg ) foreach $x .. $x + $width - 1;
 		return;
+	}
+
+	# ---------------------------------------------------------------------
+	# Animation: frames from the application's clock, which a test or the
+	# screenshot harness can move; the system clock outside a UI.
+	# ---------------------------------------------------------------------
+
+	method now () {
+		my $ui = $self->ui;
+		return $ui->now if defined $ui && $ui->can('now');
+		return Time::HiRes::time();
+	}
+
+	# Asks the UI for a frame at a time on the clock; a static page draws
+	# once and ignores it.
+	method request_frame_at ($time) {
+		my $ui = $self->ui;
+		$ui->request_frame_at($time) if defined $ui && $ui->can('request_frame_at');
+		return $self;
+	}
+
+	# The frame of an animation that shows $count frames, $interval seconds
+	# each, at the current time, and asks for a frame when the next one is
+	# due. Called from paint_key, it keeps the animation going.
+	method animation_frame ( $interval, $count ) {
+		my $tick = int( $self->now / $interval );
+		$self->request_frame_at( ( $tick + 1 ) * $interval );
+		return $tick % $count;
 	}
 
 	# ---------------------------------------------------------------------
@@ -171,10 +200,6 @@ optional text
 
 L<Term::Fabulous::Widget::ProgressBar> - how much of a task is done
 
-=item *
-
-L<Term::Fabulous::Widget::Spinner> - that something is going on
-
 =back
 
 You do not create a C<Display> directly (the class is abstract and
@@ -221,6 +246,34 @@ A fixed natural size takes no part in a C<width_group> or
 C<height_group> (L<Term::Fabulous::Widget/new>), which line up C<fit>
 and C<grow> sizings only; give the widget a C<fit> sizing with its
 natural size as the minimum to line it up with others.
+
+=head1 ANIMATION
+
+A widget that moves by itself, such as an indeterminate
+L<Term::Fabulous::Widget::ProgressBar>, needs no timer: it reads the time from the application's clock (L</now>) and
+asks for a frame when its next frame is due
+(L</request_frame_at>). L<Term::Fabulous> draws that frame at the first
+tick of its frame timer at or after the time, the widget's C<paint_key>
+then differs, and it paints the next frame and asks again. Nothing is
+drawn in between, and the widget stops asking as soon as it stops
+animating.
+
+Because the time comes from the clock of L<Term::Fabulous/new>, a test
+can move an animation on with a clock of its own, and the screenshot
+tools run it on a virtual clock. In a L<Term::Fabulous::Static> page the
+widget shows the frame of the moment it is rendered.
+
+The helper L</animation_frame> does the arithmetic:
+
+	method paint_key :override () {
+		return ( $self->SUPER::paint_key, $running ? $self->animation_frame( 0.1, scalar @frames ) : -1 );
+	}
+
+	method paint () {
+		my $frame = $running ? $self->animation_frame( 0.1, scalar @frames ) : 0;
+		$self->paint_text( 0, 0, $frames[$frame], $self->color_attr($color), undef );
+		return;
+	}
 
 =head1 METHODS
 
@@ -312,6 +365,32 @@ the text. Returns the column after the last cluster painted.
 
 Puts a one-column glyph into C<$width> cells of row C<$y>, starting at
 C<$x>.
+
+=head2 now
+
+	my $seconds = $self->now;
+
+The current time in seconds: L<Term::Fabulous/now> when the widget is
+part of a L<Term::Fabulous>, otherwise C<Time::HiRes::time>.
+
+=head2 request_frame_at
+
+	$self->request_frame_at( $self->now + 0.25 );
+
+Asks the widget's L<Term::Fabulous> for a frame at a time on the clock
+(see L<Term::Fabulous/request_frame_at>); does nothing when the widget
+is not part of one, or part of a L<Term::Fabulous::Static>. Returns
+the widget.
+
+=head2 animation_frame
+
+	my $index = $self->animation_frame( $interval, $count );
+
+The frame, from 0 to C<$count - 1>, of an animation whose frames last
+C<$interval> seconds each, at the current time, counted from the
+start of the clock so that every widget with the same interval moves
+in step. Also asks for a frame when the next one is due, so call it
+from L</paint_key> only while the widget animates (see L</ANIMATION>).
 
 =head1 SEE ALSO
 

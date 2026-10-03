@@ -712,6 +712,14 @@ screenshot "widget-dialog" {
 	size 72 14
 }
 
+screenshot "widget-progress-bar" {
+	script "examples/widgets/progress-bar.pl"
+	size 72 10
+	steps {
+		wait 2
+	}
+}
+
 screenshot "widget-divider" {
 	script "examples/widgets/divider.pl"
 	size 64 18

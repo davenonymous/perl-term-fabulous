@@ -57,6 +57,12 @@ no blocking network calls): while your code runs, no frame is drawn and
 no input is read. Use IO::Async's non-blocking facilities instead, such
 as L<IO::Async::Process> or L<Future>-returning methods.
 
+The widgets that move by themselves, such as an indeterminate
+L<Term::Fabulous::Widget::ProgressBar>, need no timer: they read the
+application's clock and ask for a frame when their next one is due
+(L<Term::Fabulous/request_frame_at>). A widget of your own can do the
+same; see L<Term::Fabulous::Widget::Display/ANIMATION>.
+
 The cookbook has complete programs: the recipes
 L<Update the screen from a timer|Term::Fabulous::Cookbook::LiveData/Update the screen from a timer (a clock)>
 and L<Show the output of a running command|Term::Fabulous::Cookbook::LiveData/Show the output of a running command>.
