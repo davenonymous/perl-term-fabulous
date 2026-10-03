@@ -361,7 +361,7 @@ example letters in a text field) stop there; keys it does not use (for
 example C<Escape>, C<Tab> or C<F1>) bubble on to its ancestors, so
 application shortcuts on an outer box keep working while the user types.
 Each widget's KEYS section lists the keys it uses. See
-L<Term::Fabulous::Manual/KEYBOARD>.
+L<Term::Fabulous::Manual::Events/KEYBOARD>.
 
 =item *
 
@@ -386,6 +386,12 @@ L</SIZE>).
 =item *
 
 It can be disabled (see L</disabled>).
+
+=item *
+
+It has the derived states C<focused>, C<hovered>, C<pressed> and
+C<disabled>, which C<< $input->has_state('focused') >> and
+C<< $input->states >> report (see L<Term::Fabulous::Widget/has_state>).
 
 =item *
 
@@ -441,13 +447,13 @@ widget tree.
 
 A hash reference of layout options, as for every widget: C<sizing>,
 C<padding>, C<child_gap>, C<child_alignment>, C<layout_direction>. See
-L<Term::Fabulous::Manual/LAYOUT>. A C<sizing> you give here overrides
+L<Term::Fabulous::Manual::Layout/LAYOUT>. A C<sizing> you give here overrides
 the natural size of the input on that axis (see L</SIZE>).
 
 =item C<background_color>
 
 The widget's background, in any format L<Term::Fabulous::Color> accepts
-(see L<Term::Fabulous::Manual/Color formats>); it is stored as an
+(see L<Term::Fabulous::Manual::Looks/Color formats>); it is stored as an
 C<[r, g, b, a]> array reference. Text inputs and the dropdown
 default to a dark gray (C<[36, 40, 48, 255]>); the other inputs have no
 background of their own and show the background of their parent.
@@ -459,16 +465,16 @@ background of their own and show the background of their parent.
 =item C<border_style>
 
 A border around the input, exactly as for
-L<Term::Fabulous::Widget::Box>; see L<Term::Fabulous::Manual/BORDERS>.
+L<Term::Fabulous::Widget::Box>; see L<Term::Fabulous::Manual::Looks/BORDERS>.
 The border takes cells inside the widget's box; the natural size is
 grown accordingly.
 
 =item C<disabled>
 
 A boolean, stored as 1 or 0. Default: 0. A disabled input is painted in
-C<disabled_color>, ignores keys, clicks and the mouse wheel, never
-fires C<Change> (or C<Submit>) and cannot take the focus. See
-L</disabled>.
+C<disabled_color>, ignores keys, clicks and the mouse wheel, and cannot
+take the focus; since the user cannot change it, it fires no C<Change>
+or C<Submit> of its own accord. See L</disabled>.
 
 =item C<can_focus>
 
@@ -512,6 +518,13 @@ L<Term::Fabulous::Widget::Canvas/Colors>). C<undef> and invalid colors
 die. A color with alpha 0 means "no color": the terminal's default color
 is used.
 
+An input is a L<Term::Fabulous::Widget::Box>, so it also takes the
+other parameters of a Box, described in L<Term::Fabulous::Widget/new>:
+C<floating>, C<width_group> and C<height_group> (to line up the inputs
+of a form), C<classes>, C<glyphs_show_through>, the per-side border
+styles (C<border_style_top> and so on), C<border_corners> and
+C<outer_border_sides>.
+
 =head1 METHODS
 
 =head2 disabled
@@ -526,9 +539,9 @@ C<new>; a reference dies (C<Clay::UI: 'disabled' must be a plain boolean
 value>).
 
 Writing a true value disables the input: it is painted in
-C<disabled_color>, ignores keys, clicks and the mouse wheel, never fires
-C<Change> or C<Submit>, cannot take the focus (C<can_focus> reads 0) and, if it has the
-focus, gives the focus up at once (no widget is focused afterwards,
+C<disabled_color>, ignores keys, clicks and the mouse wheel (so the user
+causes no C<Change> or C<Submit>), cannot take the focus (C<can_focus>
+reads 0) and, if it has the focus, gives the focus up at once (no widget is focused afterwards,
 unless the input is inside an open L<Term::Fabulous::Widget::Dialog>,
 whose backdrop takes it). Clay::UI never presses a disabled widget: a
 click on it fires no C<OnPress> or C<OnRelease>. C<KeyPress> and
@@ -662,7 +675,7 @@ Clay::UI when the input gains or loses the focus.
 
 =item C<OnHoverStart>, C<OnHoverStopped>, C<OnPress>, C<OnRelease>
 
-The pointer events of L<Clay::UI>; see L<Term::Fabulous::Manual/MOUSE>.
+The pointer events of L<Clay::UI>; see L<Term::Fabulous::Manual::Events/MOUSE>.
 A completed click (C<OnRelease> after a press on the same input) is what
 toggles a checkbox or selects a radio button.
 
@@ -685,7 +698,9 @@ bubbles further.
 In a layout file (see L<Term::Fabulous::Layout>), every input accepts
 the properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>
 (C<layout>, C<sizing>, C<padding>, C<border>, C<background_color>,
-C<border_color>, C<border_width>, C<width_group>, C<height_group>) and:
+C<border_color>, C<border_width>, C<width_group>, C<height_group>) and
+the following ones. The string after the widget name is its C<id>
+(C<TextField "name"> is the C<id> C<name>).
 
 =over
 
@@ -935,7 +950,7 @@ dropdown list that cannot move any further.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>,
+L<Term::Fabulous::Manual::Forms/FORMS AND INPUT WIDGETS>,
 L<Term::Fabulous::Event::Change>, L<Term::Fabulous::Widget::Canvas>,
 L<Term::Fabulous::Widget::TextInput>.
 

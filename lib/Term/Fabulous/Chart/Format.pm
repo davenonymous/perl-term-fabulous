@@ -187,16 +187,27 @@ C<'%Y-%m-%d'>, or a code reference called with the epoch seconds.
 
 	my $format = number_formatter( $format, $step, $largest );
 
-A function writing the labels of ticks C<$step> apart whose largest
-magnitude is C<$largest>.
+A function that writes the label of one tick, for ticks C<$step> apart
+whose largest magnitude is C<$largest>. C<$format> is one of the formats
+above (C<undef> is C<auto>); the decimals follow C<$step>, so all labels
+of an axis get the same number of decimals. A code reference is
+returned as it is.
 
 =head2 format_value
 
 	my $text = format_value( $value, $format );
 
-A single value: up to two decimals (three significant digits below 1),
-trailing zeros removed, SI prefixes from a million on. With a C<$format>
-as above, that format.
+A single value, as a bar's value label or a hover label shows it. Without
+C<$format>: one decimal from 100 on, two from 1 to 100, three
+significant digits below 1 (at most six decimals), trailing zeros
+removed, and SI prefixes from a million on (C<2.5M>). With a
+C<$format> as above, that format; C<si> uses prefixes from a thousand
+on, C<percent> writes one decimal below 10%. C<undef> gives the empty
+string.
+
+	say format_value(0.012345);            # 0.0123
+	say format_value(2_500_000);           # 2.5M
+	say format_value( 0.05, 'percent' );    # 5.0%
 
 =head2 format_values
 
@@ -210,6 +221,11 @@ C<$format> is given or a value has an SI prefix.
 =head2 time_formatter
 
 	my $format = time_formatter( $strftime_format, $utc );
+	say $format->($epoch);
+
+A function that writes epoch seconds with a L<POSIX/strftime> format,
+in local time, or in UTC when C<$utc> is true. A code reference is
+returned as it is.
 
 =head2 decimals_of
 
@@ -220,10 +236,15 @@ C<20>, 2 for C<0.25>, 6 for C<1/3>; at most 10.
 
 	check_number_format( $owner, $name, $format );
 
-Die unless C<$format> is a valid number (or time) format; return it.
+Die unless C<$format> is a valid number (or time) format, with C<$owner>
+and C<$name> at the start of the message; return it. C<undef> and code
+references are always valid.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Widget::XYChart>.
+L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Widget::XYChart>,
+L<Term::Fabulous::Widget::XYChart/Axis keys>,
+L<Term::Fabulous::Cookbook::Charts/Draw a line chart with labels and points (LineChart)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Plot values over time (time axis, from and to, a dashed forecast)>.
 
 =cut

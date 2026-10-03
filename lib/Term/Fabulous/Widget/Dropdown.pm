@@ -452,6 +452,12 @@ list that opens
 
 =head1 DESCRIPTION
 
+The picture shows three dropdowns: one without a selection, showing its
+placeholder; one with France selected; and a focused one whose list is
+open, with the selected option Green in the C<accent_color> and the
+highlighted option Blue on the C<accent_color>. The program is
+F<examples/widgets/dropdown.pl>.
+
 A dropdown shows the label of the selected option (or a placeholder)
 and a small arrow. When the user opens it, the options appear in a list
 that floats over all other widgets, also over a
@@ -486,7 +492,8 @@ placeholder, if that is longer) plus two columns for the arrow.
 Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
 (C<id>, C<layout>, the border parameters, C<disabled>, C<can_focus>,
 C<text_color>, C<disabled_color>, C<accent_color>,
-C<focus_background_color>) and the ones below. Unknown parameters die.
+C<focus_background_color>, the other Box parameters) and the ones below.
+Unknown parameters die.
 
 =over
 
@@ -647,10 +654,10 @@ invalid color dies and leaves the old one.
 
 	$dropdown->highlight_text_color('#000000');
 
-Accessor for the C<highlight_text_color> parameter. Writing returns the
-new color as C<[r, g, b, a]>. An open list shows the change the next time it
-marks the list changed (when the highlight moves); a closed list shows it the next
-time it opens. An invalid color dies and leaves the old one.
+Accessor for the C<highlight_text_color> parameter. Writing marks the
+dropdown changed and returns the new color as C<[r, g, b, a]>; an open
+list shows it in the next frame. An invalid color dies and leaves the
+old one.
 
 =head2 disabled
 
@@ -753,14 +760,20 @@ Close the list without changing the selection.
 
 =back
 
-In both states, typing a printable character (without C<Ctrl> or
-C<Alt>) jumps to the next option whose label starts with it, ignoring
-case: it selects that option while the list is closed (firing C<Change>)
-and highlights it while the list is open. The search starts after the
-current option and wraps around from the last option to the first.
-Characters typed at most one second apart form one search string, so
-typing C<d>, C<a> quickly finds "Dark green" rather than the next option
-starting with C<a>.
+In both states, typing a printable character other than the space
+(without C<Ctrl> or C<Alt>) jumps to the next option whose label starts
+with it, ignoring case: it selects that option while the list is closed
+(firing C<Change>) and highlights it while the list is open. The
+current option is the selected one while the list is closed and the
+highlighted one while it is open. Characters typed at most one second
+apart form one search string, so typing C<d>, C<a> quickly finds "Dark
+green" rather than the next option starting with C<a>. A search for a
+single character starts after the current option, so pressing C<d>
+again moves on to the next label starting with C<d>; a longer search
+string starts at the current option, so it stays there while the label
+still matches. Both wrap around from the last option to the first. The
+space is not part of a search: it opens the list, or chooses the
+highlighted option.
 
 The keys above are used and do not bubble, and so is every printable
 character, even one that matches no label. Only a dropdown without any
@@ -832,8 +845,10 @@ One option; C<value=> is optional and defaults to the label.
 		value "navy"
 	}
 
-Give C<value> (or C<selected_index>) after the options it refers to;
-before them, building the layout dies with "no option has the value".
+The options of a layout are added before its C<value> and
+C<selected_index> are set, wherever they stand in the block, so
+C<value "navy"> may also come first. A C<value> that no option has
+dies.
 
 =head1 EXAMPLES
 
@@ -901,6 +916,7 @@ and its list.
 
 L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Widget::Dropdown::List>,
 L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the dropdown section of the forms guide|Term::Fabulous::Manual::Forms/Dropdowns>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
 =cut

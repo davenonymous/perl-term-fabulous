@@ -241,6 +241,6 @@ in single quotes otherwise (C<'nope'>).
 =head1 SEE ALSO
 
 L<Term::Fabulous::Role::CanParseLayout>, L<Term::Fabulous::Color>,
-L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>.
+L<Term::Fabulous::Manual::CustomWidgets/WRITING YOUR OWN WIDGETS>.
 
 =cut

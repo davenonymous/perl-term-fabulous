@@ -252,6 +252,22 @@ L<Term::Fabulous::Chart::Easing> (C<ease-in-out-sine>, C<ease-out-bounce>,
 
 =back
 
+A chart takes the curve as the C<curve> option of a series or of the
+whole chart (see L<Term::Fabulous::Widget::XYChart/Curves>):
+
+	curve  => 'monotone',
+	series => [ { name => 'load', data => \@load, curve => 'step' } ],
+	series => [ { name => 'eased', data => \@data, curve => sub ($t) { $t**2 } } ],
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-curves.svg" alt="Six small charts of the same seven points connected linear, step, monotone, catmull-rom, ease-in-out-sine and ease-out-bounce"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Connect points with curves and easings (curve)>.
+
 =head1 FUNCTIONS
 
 =head2 curve_points
@@ -259,25 +275,32 @@ L<Term::Fabulous::Chart::Easing> (C<ease-in-out-sine>, C<ease-out-bounce>,
 	my $polyline = curve_points( \@points, $curve, step => $step, tension => $tension );
 
 The vertices of a polyline drawing the curve through the points (array
-references C<[x, y]>, x ascending, in any units). Smooth curves get a
-vertex every C<$step> along x (default 1), so the chart passes the
-distance of one subpixel.
+references C<[x, y]>, x ascending, in any units), as an array reference
+of C<[x, y]>. Straight lines return the points, steps the corners of
+the steps. Smooth curves and easings get a vertex every C<$step> along x
+(default 1, a positive number) besides the points; the chart passes the
+width of one subpixel. C<tension> (0 to 1, default 0) is used by
+C<catmull-rom>. Dies for an unknown curve.
 
 =head2 y_at
 
 	my $y = y_at( $polyline, $x );
 
-The height of a polyline at C<$x>, C<undef> outside it.
+The height of a polyline at C<$x>, interpolated between the vertices
+around it; C<undef> outside the polyline. Where the polyline runs
+straight up or down (a step), the y where that run ends.
 
 =head2 curve_names
 
-All curve names, the easing names included.
+All curve names: the shapes, sorted, then the easing names, sorted.
 
 =head2 is_curve, check_curve
 
 	check_curve( $owner, $name, $curve );
 
-True for (or die unless) a curve name or code reference.
+C<is_curve> returns 1 for a curve name or a code reference, else 0.
+C<check_curve> returns the curve, or dies with C<$owner> and C<$name> at
+the start of the message.
 
 =head1 SEE ALSO
 

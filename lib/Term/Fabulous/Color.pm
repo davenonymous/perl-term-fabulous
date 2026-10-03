@@ -365,7 +365,17 @@ input widgets and the cell colors of a
 L<canvas|Term::Fabulous::Widget::Canvas>, and every widget color
 (C<background_color>, C<border_color>, the C<text_color> of a Text
 widget, the input widget colors) takes a Color object or any input
-L</new> accepts. See L<Term::Fabulous::Manual/COLORS>.
+L</new> accepts. See L<Term::Fabulous::Manual::Looks/COLORS>.
+
+F<examples/colors.pl> shows one color written in six formats, colors
+derived with L</darken>, L</lighten> and L</blend>, and backgrounds with
+less and less alpha:
+
+=begin html
+
+<p><img src="/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
+
+=end html
 
 =head2 Alpha
 
@@ -375,7 +385,7 @@ color with alpha 0 uses the terminal default color. An alpha from 1 to 254
 (see L</is_translucent>) makes a widget background translucent: it is
 blended with the colors below it when it is painted. Text and border
 colors with such an alpha are drawn opaque. See
-L<Term::Fabulous::Manual/Alpha and the terminal default color>.
+L<Term::Fabulous::Manual::Looks/Alpha and the terminal default color>.
 
 =head2 Channel rules
 
@@ -674,7 +684,8 @@ an integer. Dies if a channel is outside 0..255.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/COLORS>, L<Term::Fabulous::Render::Attr>,
-L<Term::Fabulous::Widget::Canvas/Colors>.
+L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Render::Attr>,
+L<Term::Fabulous::Widget::Canvas/Colors>, L<Term::Fabulous::Enum::WebColor>,
+L<Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>.
 
 =cut

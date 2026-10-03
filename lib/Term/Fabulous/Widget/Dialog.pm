@@ -178,9 +178,11 @@ and keeps the focus
 
 =begin html
 
-<p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files"></p>
+<p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files; Delete has the focus and a blue border"></p>
 
 =end html
+
+The program is F<examples/widgets/dialog.pl>.
 
 =head1 DESCRIPTION
 
@@ -198,9 +200,12 @@ Tab and Shift+Tab cycle through the widgets inside the dialog only;
 
 =item *
 
-mouse clicks outside the dialog reach nothing behind it; they only
-move the focus onto the backdrop, from where Tab goes to the first
-widget of the dialog and Shift+Tab to the last;
+mouse clicks outside the dialog reach nothing behind it, whatever the
+C<backdrop_color>: they move the focus onto the backdrop, from where
+Tab goes to the first widget of the dialog and Shift+Tab to the last,
+and their C<Mouse> events are fired on the backdrop, from where they
+bubble to the root widget (the backdrop's parent), not to the widgets
+behind the dialog;
 
 =item *
 
@@ -225,7 +230,8 @@ are neither hovered nor pressed.
 =back
 
 L</close> takes the dialog off the screen, puts the focus back on the
-widget that had it before, and fires C<Close>
+widget that had it before (if that widget can still take the focus),
+and fires C<Close>
 (L<Term::Fabulous::Event::Close>) on the dialog. A closed dialog can be
 opened again, as often as needed, and keeps its children and their
 state in between.
@@ -259,7 +265,7 @@ hides it; alpha 0 leaves it as it is.
 
 =item C<z_index>
 
-An integer. Dialogs and other floating widgets with a higher value are
+An integer from -32768 to 32767; other values die. Dialogs and other floating widgets with a higher value are
 drawn over those with a lower one. Default: 1000. The open list of a
 L<Term::Fabulous::Widget::Dropdown> floats over every z_index, so it is
 drawn over the dialog it is in.
@@ -325,7 +331,7 @@ open dialog with the next frame.
 
 =head1 EVENTS
 
-Besides the events of every Box (L<Term::Fabulous::Widget/EVENTS>),
+Besides the events of every Box (L<Term::Fabulous::Widget::Box/EVENTS>),
 a Dialog fires:
 
 =over
@@ -344,10 +350,15 @@ usual, so one listener on the dialog can handle them all.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<backdrop_color> (a color string), C<z_index> (an integer) and
-C<close_on_escape> (C<#true> or C<#false>). A dialog built from a
-layout file is not open; find it with C<find_by_id> and open it from
-Perl:
+C<backdrop_color> (a color string), C<z_index> (an integer from -32768
+to 32767) and
+C<close_on_escape> (C<#true> or C<#false>).
+
+A Dialog is added to the widget tree only when it opens, and a Dialog
+that is a child of another widget cannot open. A layout file has only
+one top-level widget, so a Dialog must be the root widget of a layout
+file of its own. C<build> returns the dialog, which is not open yet.
+With this in F<about.kdl>:
 
 	use Term::Fabulous::Widget::Dialog as Dialog
 	use Term::Fabulous::Widget::Text as Text
@@ -358,14 +369,17 @@ Perl:
 		Text { text "Term::Fabulous"; text_color "#ffffff"; }
 	}
 
-Since a Dialog is only added to the tree when it opens, put it at the
-top level of the layout file, not inside another widget; a Dialog that
-is a child of another widget cannot open.
+open the dialog from Perl:
+
+	my $about = Term::Fabulous::Layout->new( file => 'about.kdl' )->build;
+	$about->open($ui);
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Box>, L<Term::Fabulous::Event::Close>,
 L<Term::Fabulous::Widget::Dialog::Backdrop>,
-L<Term::Fabulous::Manual/FOCUS>, L<Term::Fabulous::Widget/floating>.
+L<Term::Fabulous::Manual::Events/FOCUS>, L<Term::Fabulous::Widget/floating>,
+L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>,
+L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>.
 
 =cut

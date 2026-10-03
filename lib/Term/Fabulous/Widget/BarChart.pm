@@ -41,15 +41,18 @@ horizontal
 		],
 	);
 
-	$chart->stacked(1);                      # 2026 on top of 2025
-	$chart->horizontal(1);                   # categories down the left
-	$chart->add_series( name => 'Target', type => 'line', data => [ 50, 55, 60, 65 ] );
+	$chart->add_series( name => 'Target', type => 'line', data => [ 50, 55, 60, 65 ] );    # a line over the bars
+	$chart->remove_series('Target');
+	$chart->stacked(1);       # 2026 on top of 2025
+	$chart->horizontal(1);    # categories down the left; only bar series
 
 =begin html
 
 <p><img src="/screenshots/widget-bar-chart.svg" alt="Pairs of bars for 2025 and 2026 in four quarters, each bar with its value written above it"></p>
 
 =end html
+
+The program is F<examples/widgets/bar-chart.pl>.
 
 =head1 DESCRIPTION
 
@@ -58,7 +61,7 @@ on the x axis; the bars of several series stand side by side in it
 (grouped), or on each other with C<stacked>. Bars grow from zero (or
 from the baseline, downwards for negative values), in block characters
 placed to an eighth of a cell, and are opaque. On a numeric or time x
-axis, bars are centered on their x and as wide as the smallest distance
+axis, bars are centered on their x, in slots as wide as the smallest distance
 between two bars.
 
 Options for bars: C<value_labels> writes each bar's value above it (a
@@ -69,7 +72,8 @@ named stack group; C<marker> changes the character set. Everything else,
 including the axes and live data, is described on
 L<Term::Fabulous::Widget::XYChart>; a BarChart is an XYChart whose series
 are C<bar> series unless they say otherwise. A horizontal chart shows
-bar series only.
+bar series only. The options are described with pictures in
+L<Term::Fabulous::Widget::XYChart/LOOKS>.
 
 For the distribution of values, use L<Term::Fabulous::Widget::Histogram>,
 which counts them into bins first.
@@ -107,6 +111,7 @@ See L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::Histogram>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Grouped, stacked and horizontal bars (BarChart)>.
 
 =cut

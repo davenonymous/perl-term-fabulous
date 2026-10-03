@@ -2,8 +2,9 @@
 
 # Term::Fabulous::Widget::Dialog: a dialog that opens over the screen,
 # centered, behind a translucent backdrop that dims everything else, and
-# keeps the focus inside itself. It is open when the program starts; d
-# opens it again after Escape or a button closed it. Ctrl+C quits.
+# keeps the focus inside itself: Tab moves between its two buttons (the
+# focused one has a blue border), Escape or a button closes it. It is
+# open when the program starts; d opens it again. Ctrl+C quits.
 #
 #     perl examples/widgets/dialog.pl
 
@@ -17,6 +18,7 @@ use FindBin;
 use lib "$FindBin::Bin/../../lib/";
 
 use Term::Fabulous;
+use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
@@ -46,7 +48,13 @@ my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 my $dialog = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width => sizing_fixed(44) } } );
 
 sub button ( $caption, $background, $action ) {
-	my $button = Term::Fabulous::Widget::Button->new( background_color => $background, layout => { padding => { left => 1, right => 1 } } );
+	my $button = Term::Fabulous::Widget::Button->new(
+		background_color => $background,
+		border_width     => 1,
+		border_color     => [ 90, 110, 140, 255 ],
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
+		layout           => { padding => { left => 1, right => 1 } },
+	);
 	$button->add_child( text( $caption, [ 255, 255, 255, 255 ] ) );
 	$button->on( Activate => sub ($event) { $action->(); return } );
 	return $button;

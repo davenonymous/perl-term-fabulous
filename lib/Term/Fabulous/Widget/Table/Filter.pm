@@ -344,9 +344,20 @@ Term::Fabulous::Widget::Table::Filter - Conditions that decide which rows a tabl
 
 A filter is a condition on a row. L<Term::Fabulous::Widget::Table>
 shows the rows that match all of its filters (see
-L<Term::Fabulous::Widget::Table/FILTERING>). Filters are immutable
+L<Term::Fabulous::Manual::TableRows/FILTERING>). Filters are immutable
 objects; build one with L</new> or L</parse> and combine them with
-L</all>, L</any> and L</not>.
+L</all>, L</any> and L</not>. Give them to the table with
+L<Term::Fabulous::Widget::Table/filter>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
+
+=end html
+
+The picture shows a table filtered by a combination of conditions; the
+program is in
+L<Term::Fabulous::Cookbook::TableRows/Filter rows from Perl (numbers, dates, text, raw or shown values)>.
 
 =head2 What a condition compares
 
@@ -507,8 +518,11 @@ L<Term::Fabulous::Widget::Table/filter_row>). Returns C<undef> for an
 empty expression (no filter) and dies for one it cannot read, with a
 message that shows the notation. Options: C<column> (required),
 C<type> (C<'string'>, the default, C<'number'> or C<'date'>), C<on> and
-C<case_sensitive> (as for L</new>). Spaces around the expression are
-ignored. The notation:
+C<case_sensitive> (as for L</new>). Spaces around the expression, and
+between an operator and its value, are ignored. Dates are read in local
+time; a C<T> may stand for the space before the time, and a C<Z> after
+the time reads it as UTC. Epoch seconds are not a date expression. The
+notation:
 
 	Text columns
 	  ann          contains "ann"
@@ -557,7 +571,8 @@ Dies when the filter compares a column C<$source> does not have
 (C<< $source->has_column($key) >>) or has an operand that cannot be
 read as the type of its column (C<< $source->type_of($key) >>), for
 example C<< op => '>', value => 'abc' >> on a number column. Returns
-the filter. L<Term::Fabulous::Widget::Table/filter> calls it for every
+the filter. The table method
+L<filter|Term::Fabulous::Widget::Table/filter> calls it for every
 filter it is given, so a bad filter dies there and not while the table
 is drawn.
 
@@ -611,6 +626,8 @@ compares, as a list.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Value>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Value>,
+L<Term::Fabulous::Manual::TableRows/FILTERING>,
+L<Term::Fabulous::Cookbook::TableRows/Let the user filter rows (filter row and search box)>.
 
 =cut

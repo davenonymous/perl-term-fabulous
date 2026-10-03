@@ -196,6 +196,12 @@ Term::Fabulous::Widget::TextArea - Multi-line text input
 
 =head1 DESCRIPTION
 
+The picture shows a focused text area of six rows with the cursor at the
+end of the text. The long line about the party wraps at a space, and
+the scrollbar on the right shows that the text has more rows than the
+area: the first line is scrolled out at the top. The program is
+F<examples/widgets/text-area.pl>.
+
 A text area holds text of several lines that the user can type, edit,
 select and copy. By default, lines longer than the area are wrapped at
 word boundaries; with C<< wrap => 0 >> every line takes one row and the
@@ -218,13 +224,14 @@ sizing are described in L<Term::Fabulous::Widget::Input>.
 
 	my $area = Term::Fabulous::Widget::TextArea->new(%parameters);
 
-Accepts the parameters of L<Term::Fabulous::Widget::TextInput/CONSTRUCTOR>
-(C<value>, C<placeholder>, C<max_length>, C<read_only>,
-C<placeholder_color>, C<selection_color>, C<background_color>) and of
+Accepts the parameters of
+L<Term::Fabulous::Widget::TextInput/CONSTRUCTOR> (C<value>,
+C<placeholder>, C<max_length>, C<read_only>, C<placeholder_color>,
+C<selection_color>, C<background_color>) and of
 L<Term::Fabulous::Widget::Input/CONSTRUCTOR> (C<id>, C<layout>,
 C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
-C<accent_color>, C<focus_background_color>, the border parameters), plus
-the ones below. Unknown parameters die.
+C<accent_color>, C<focus_background_color>, the border parameters, the
+other Box parameters), plus the ones below. Unknown parameters die.
 
 =over
 
@@ -240,7 +247,7 @@ C<layout> gives the area no height. Dies if not a positive integer.
 
 =item C<wrap>
 
-A boolean, stored as 1 or 0. Default: 1. When true, a line longer than
+A boolean, stored as 1 or 0; a reference dies. Default: 1. When true, a line longer than
 the area continues on the next row, broken after the last space that
 fits, or inside a word that is wider than the area. A space at which a
 full row breaks is not shown at the start of the next row; the cursor
@@ -254,7 +261,7 @@ scrolls no further than needed to fill the area with that line.
 
 =item C<scrollbar>
 
-A boolean, stored as 1 or 0. Default: 1. When true, a scrollbar is
+A boolean, stored as 1 or 0; a reference dies. Default: 1. When true, a scrollbar is
 shown in the rightmost column while the text has more rows than the
 area; it then takes one column from the text. The scrollbar only shows
 the position; it cannot be dragged.
@@ -301,16 +308,20 @@ integer; the old value then stays.
 	$area->wrap(0);
 
 Accessor for the C<wrap> parameter. Returns 1 or 0, also for a value
-passed to C<new>. Writing re-wraps the text, scrolls to the cursor and
-marks the input changed. Any value is accepted.
+passed to C<new>. Writing re-wraps the text, marks the input changed
+and returns the new value; the next frame scrolls to the cursor. Any
+plain value is accepted as a boolean; a reference dies and leaves the
+setting unchanged.
 
 =head2 scrollbar
 
 	$area->scrollbar(0);
 
 Accessor for the C<scrollbar> parameter. Returns 1 or 0, also for a
-value passed to C<new>. Writing marks the input changed; the next frame
-scrolls to the cursor. Any value is accepted.
+value passed to C<new>. Writing marks the input changed and returns the
+new value; the next frame scrolls to the cursor. Any plain value is
+accepted as a boolean; a reference dies and leaves the setting
+unchanged.
 
 =head2 scroll_rows
 
@@ -444,6 +455,7 @@ wheel over the text area scrolls the text area; once it shows its first
 
 L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextField>,
 L<Term::Fabulous::Editor>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the text area section of the forms guide|Term::Fabulous::Manual::Forms/Text areas>,
+L<Term::Fabulous::Cookbook::Forms/Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>.
 
 =cut

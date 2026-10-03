@@ -41,7 +41,7 @@ Term::Fabulous::Widget::LineChart - A chart of lines through data points
 		],
 	);
 
-	$chart->append( undef, { Web => 190, iOS => 241, Android => 150 } );
+	$chart->append( 'Jan 27', { Web => 190, iOS => 241, Android => 150 } );    # a 13th month
 	$chart->set_series( iOS => ( line_style => 'dashed', points => 1 ) );
 
 =begin html
@@ -49,6 +49,8 @@ Term::Fabulous::Widget::LineChart - A chart of lines through data points
 <p><img src="/screenshots/widget-line-chart.svg" alt="Three smooth lines for Web, iOS and Android over the months of a year, with a legend at the top and a y axis in thousands"></p>
 
 =end html
+
+The program is F<examples/widgets/line-chart.pl>.
 
 =head1 DESCRIPTION
 
@@ -99,6 +101,7 @@ See L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::AreaChart>,
-L<Term::Fabulous::Widget::Sparkline>, L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Sparkline>, L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Draw a line chart with labels and points (LineChart)>.
 
 =cut

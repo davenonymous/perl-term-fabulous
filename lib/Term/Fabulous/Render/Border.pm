@@ -142,8 +142,10 @@ Term::Fabulous::Render::Border - Paint widget borders in their border styles
 
 =head1 DESCRIPTION
 
-Most programs never use this module directly. It is one of the roles
-L<Term::Fabulous::Render> is made of, and it paints the border render
+Most programs never use this module directly, and neither do widgets
+of your own: a widget gets its border from the parameters described in
+L<Term::Fabulous::Manual::Looks/BORDERS>. This module is one of the
+roles L<Term::Fabulous::Render> is made of, and it paints the border render
 commands Clay emits for widgets with a C<border_width>, using the
 widget's border styles (see L<Term::Fabulous::Role::HasBorderStyle> and
 L<Term::Fabulous::Enum::BorderStyle>).
@@ -219,13 +221,14 @@ during the frame.
 
 =head1 REQUIRED METHODS
 
-The consuming class provides C<set_cell> (from a cell target, see
-L<Term::Fabulous::Render/CELL TARGET>) and
-C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
+The consuming class provides C<cell_target>, which returns the cell
+target the border is painted into (its C<set_cell> is called; see
+L<Term::Fabulous::Render/CELL TARGET>), and C<clip_rect> (from
+L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Render>, L<Term::Fabulous::Enum::BorderStyle>,
-L<Term::Fabulous::Role::HasBorderStyle>, L<Term::Fabulous::Manual/BORDERS>.
+L<Term::Fabulous::Role::HasBorderStyle>, L<Term::Fabulous::Manual::Looks/BORDERS>.
 
 =cut

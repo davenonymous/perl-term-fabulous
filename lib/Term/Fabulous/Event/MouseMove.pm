@@ -49,13 +49,14 @@ button held
 L<Term::Fabulous> fires a C<MouseMove> event every time the terminal
 reports that the pointer moved while no mouse button was held, while
 L<Term::Fabulous/run> is active and mouse input is enabled (the
-C<mouse> parameter of L<Term::Fabulous/new>, on by default). Moves
+C<mouse> parameter of L<Term::Fabulous/new>, on by default except in
+inline mode). Moves
 with a button held are drags and fire C<Mouse>
 (L<Term::Fabulous::Event::Mouse>) instead.
 
 Like C<Mouse>, the event is fired on the topmost widget that painted
 the cell under the pointer in the last frame (see
-L<Term::Fabulous::Manual/MOUSE>), or on the root widget when there is
+L<Term::Fabulous::Manual::Events/MOUSE>), or on the root widget when there is
 none, and then bubbles up to the ancestors. Term::Fabulous also records
 the new pointer position before it fires the event, so the hover state
 of the widgets (C<OnHoverStart>, C<OnHoverStopped>, C<is_hovered>)
@@ -134,7 +135,7 @@ event L<Term::Fabulous> fires, since the pointer moved.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/MOUSE>, L<Term::Fabulous::Event::Mouse>,
+L<Term::Fabulous::Manual::Events/MOUSE>, L<Term::Fabulous::Event::Mouse>,
 L<Term::Fabulous>, L<Clay::UI::Events::Event>.
 
 =cut

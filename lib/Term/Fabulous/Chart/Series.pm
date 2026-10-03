@@ -300,7 +300,7 @@ C<scatter>) and C<slot> (the palette slot) are required. C<data>
 (default: none) and C<color> (default: C<undef>, the palette's) are
 checked as L</set_data, add_points, clear> and
 L</color, color_opacity, set_color> check them, and every option of
-L<Term::Fabulous::Widget::XYChart/SERIES> may be given. Two more
+L<Term::Fabulous::Widget::XYChart/SERIES> may be given. Unknown parameters die. Two more
 parameters serve the charts:
 
 =over
@@ -329,18 +329,28 @@ data stays as it was. Default: none.
 The series' name, its type (C<line>, C<area>, C<bar> or C<scatter>) and
 its palette slot (the color it has when it has no C<color> of its own).
 
+=head2 set_type
+
+	$series->set_type('area');
+
+Changes the type. Drops the series' own C<marker> when the new type
+cannot draw with it. Dies for an unknown type.
+
 =head2 color, color_opacity, set_color
 
 The color as a packed C<0xRRGGBB> integer (C<undef>: the palette's), and
-its alpha as an opacity from 0 to 1.
+its alpha as an opacity from 0 to 1. C<set_color> takes every color form
+of L<Term::Fabulous::Color> or a packed integer; C<undef> returns to the
+palette's color.
 
 =head2 option, set_option
 
 	my $curve = $series->option('curve');
 	$series->set_option( curve => 'monotone' );
 
-Reads and sets one option (see L<Term::Fabulous::Widget::XYChart/SERIES>);
-C<undef> means the chart's setting.
+Reads and sets one option (see L<Term::Fabulous::Widget::XYChart/Series keys>);
+C<undef> means the chart's setting. Both die for an unknown option name;
+C<set_option> also dies for an invalid value.
 
 =head2 set_data, add_points, clear
 
@@ -355,7 +365,15 @@ changes nothing.
 The points as C<[ $x_or_undef, $y_or_undef ]> (read only) and their
 number.
 
+=head2 keep_last
+
+	$series->keep_last(100);
+
+Drops all but the newest points, as C<max_points> does.
+
 =head2 is_visible
+
+False when the series' C<visible> option is false. Default: true.
 
 =head2 revision
 

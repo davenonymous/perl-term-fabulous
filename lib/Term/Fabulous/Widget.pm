@@ -232,8 +232,8 @@ The number of empty cells between two neighboring children.
 
 C<CLAY_LEFT_TO_RIGHT> (the default), C<CLAY_TOP_TO_BOTTOM>,
 C<CLAY_LEFT_TO_RIGHT_WRAP> (left to right, wrapping onto new lines; see
-L<Term::Fabulous::Manual/Flow layout>) or C<CLAY_BACK_TO_FRONT> (on top
-of each other; see L<Term::Fabulous::Manual/Stack layout>), constants
+L<Term::Fabulous::Manual::Layout/Flow layout>) or C<CLAY_BACK_TO_FRONT> (on top
+of each other; see L<Term::Fabulous::Manual::Layout/Stack layout>), constants
 exported by L<Clay::XS>.
 
 =item C<line_gap>
@@ -257,7 +257,7 @@ C<CLAY_ALIGN_Y_CENTER> or C<CLAY_ALIGN_Y_BOTTOM>. Default: left and top.
 =back
 
 Any other key, or a value of the wrong shape, dies. See
-L<Term::Fabulous::Manual/LAYOUT> for how these work together.
+L<Term::Fabulous::Manual::Layout/LAYOUT> for how these work together.
 
 =item C<floating>
 
@@ -336,7 +336,7 @@ object. The value is stored as C<[r, g, b, a]>, which is what the
 reader returns. Default: none, so the widget's area shows what is
 behind it. An alpha of 0 means no color, 255 is opaque, and 1 to 254 is
 translucent: the color is blended with whatever is below the widget
-(see C<glyphs_show_through>). See L<Term::Fabulous::Manual/COLORS>.
+(see C<glyphs_show_through>). See L<Term::Fabulous::Manual::Looks/COLORS>.
 
 A widget with neither a background color nor a border paints nothing,
 so it is also invisible to the mouse: clicks on it go to the widget
@@ -353,7 +353,7 @@ the widget paints its own content over them. Where the color below is
 the terminal default, which cannot be blended, the background is drawn
 opaque and a glyph's default foreground stays as it is. Any true or
 false value; references die. See
-L<Term::Fabulous::Manual/Alpha and the terminal default color>.
+L<Term::Fabulous::Manual::Looks/Alpha and the terminal default color>.
 
 =item C<border_width>
 
@@ -431,11 +431,11 @@ events (C<on>, C<fire_event>, C<handlers_for>), layout and style
 accessors (C<layout> to C<height_group>) and states (C<add_state> to
 C<get_classes>).
 
-States: every widget has a set of state names. C<hovered>, C<pressed>
-and C<focused> are maintained automatically for widgets that can be
-hovered, pressed or focused (for example
-L<Term::Fabulous::Widget::Button>) and cannot be set by hand; you may
-add names of your own, for example C<selected>. See
+States: every widget has a set of state names. C<hovered>, C<pressed>,
+C<focused> and C<disabled> are I<derived> states: they follow the
+widget's interaction (for example on a L<Term::Fabulous::Widget::Button>)
+or its C<disabled> flag and cannot be set by hand. You may add names of
+your own, for example C<selected>. See
 L<Clay::UI::Role::Style::HasStates>.
 
 =head2 add_child
@@ -543,12 +543,15 @@ listeners, for example C<< $widget->ui->interaction->set_focused_widget(...) >>.
 Registers a listener: a code reference called with the event object
 whenever an event of that name is fired on this widget or bubbles up
 to it from a descendant. Several listeners per name are allowed; they
-run in the order they were added. Returns the widget.
+run in the order they were added. Returns the widget. Dies when the
+name is empty or the listener is not a code reference.
 
 What the listener returns decides whether the event continues to the
 parent: only C<< Clay::UI::Enum::Result->CONTINUE >> lets it go on, any
 other value (including a plain C<return;>) stops it after this widget.
-See L<Term::Fabulous::Manual/EVENTS> for the event names and the rules.
+The other listeners on the same widget still run. A few event types
+never bubble, whatever the listeners return.
+See L<Term::Fabulous::Manual::Events/EVENTS> for the event names and the rules.
 
 =head2 fire_event
 
@@ -575,8 +578,9 @@ Mostly useful in tests.
 	$box->layout( { %{ $box->layout }, child_gap => 2 } );
 
 Accessor for the C<layout> hash (see L</new>). Without an argument it
-returns the stored hash reference; with an argument it replaces the
-whole hash and returns the new one. An invalid hash dies like the
+returns a copy of the stored hash; with an argument it replaces the
+whole hash and returns a copy of the new one. Changing the returned hash
+does not change the widget; write it back. An invalid hash dies like the
 constructor parameter. The change shows in the next frame. Copy the old
 hash as above to change a single key.
 
@@ -586,8 +590,8 @@ hash as above to change a single key.
 	$popup->floating( { %{ $popup->floating // {} }, offset => { x => 4, y => 2 } } );
 
 Accessor for the C<floating> hash (see L</new>). Without an argument it
-returns the stored hash reference (C<undef> when none is set); with an
-argument it replaces the whole hash and returns the new one. C<undef>
+returns a copy of the stored hash (C<undef> when none is set); with an
+argument it replaces the whole hash and returns a copy of the new one. C<undef>
 makes the widget part of its parent's layout again. An invalid hash
 dies like the constructor parameter. The change shows in the next
 frame.
@@ -709,36 +713,37 @@ Accessor for the height group, used like L</width_group>.
 
 	$row->add_state('selected');
 
-Adds a state name of your own. Returns the widget. Dies for
-C<hovered>, C<pressed> and C<focused>.
+Adds a state name of your own. Returns the widget. Dies for the
+derived states C<hovered>, C<pressed>, C<focused> and C<disabled>.
 
 =head2 remove_state
 
 	$row->remove_state('selected');
 
-Removes a state name of your own. Returns the widget. Dies for
-C<hovered>, C<pressed> and C<focused>.
+Removes a state name of your own. Returns the widget. Dies for the
+derived states C<hovered>, C<pressed>, C<focused> and C<disabled>.
 
 =head2 toggle_state
 
 	$row->toggle_state('selected');
 
 Adds the name when it is missing, removes it otherwise. Returns the
-widget. Dies for C<hovered>, C<pressed> and C<focused>.
+widget. Dies for the derived states C<hovered>, C<pressed>, C<focused>
+and C<disabled>.
 
 =head2 clear_states
 
 	$row->clear_states;
 
-Removes all state names of your own. The automatic states
-(C<hovered>, C<pressed>, C<focused>) are not affected. Returns the
+Removes all state names of your own. The derived states
+(C<hovered>, C<pressed>, C<focused>, C<disabled>) are not affected. Returns the
 widget.
 
 =head2 has_state
 
 	if ( $row->has_state('selected') ) { ... }
 
-True when the state is active, including the automatic ones.
+True when the state is active, including the derived ones.
 
 =head2 states
 
@@ -753,9 +758,62 @@ The active state names, in no particular order.
 The names from the C<classes> parameter, followed by C<state_NAME> for
 every active state (C<state_hovered>, C<state_selected>, ...).
 
+=head2 mark_changed
+
+	$widget->mark_changed;
+
+For widget authors: tells Term::Fabulous that the widget has changed in
+a way its accessors do not know about (state of your own that the
+widget draws), so that the next frame is drawn. The built-in accessors
+call it themselves. Returns the widget. See
+L<Clay::UI::Role::Core::Element/mark_changed> and
+L<Term::Fabulous::Manual::CustomWidgets>.
+
+=head2 reverse_video
+
+	my $swapped = $widget->reverse_video;    # 0
+
+For widget authors: whether the renderer swaps the foreground and
+background colors of every cell the widget and its children paint.
+Always 0 here; L<Term::Fabulous::Widget::Button> returns 1 while it is
+pressed with C<< pressed_background_color => 'reverse' >>. Override it in
+a widget class of your own for the same effect.
+
+=head1 EVENTS
+
+The class fires no events of its own. Every widget receives the events
+fired on its descendants, because events bubble up the tree (see
+L</on>), and L<Term::Fabulous> fires these on any widget:
+
+=over
+
+=item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
+
+On the topmost widget painted under the pointer, for clicks and wheel
+notches. A widget paints its whole area when it has a background color
+and only its border cells when it has a border but no background; a
+widget with neither is transparent to the mouse.
+
+=item C<KeyPress> (L<Term::Fabulous::Event::KeyPress>)
+
+On the root widget when no widget has the focus.
+
+=back
+
+Subclasses add their own events, such as C<Activate> on a
+L<Term::Fabulous::Widget::Button> and C<OnScroll> on a
+L<Term::Fabulous::Widget::ScrollBox>.
+L<The event reference of the events guide|Term::Fabulous::Manual::Events/Event reference>
+lists them all.
+
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Box>, L<Term::Fabulous::Manual>,
-L<Term::Fabulous::Role::HasBorderStyle>, L<Clay::UI>.
+L<Term::Fabulous::Widget::Box>,
+L<Term::Fabulous::Manual::Layout/LAYOUT> (the layout options with
+pictures), L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Role::HasBorderStyle>, L<Clay::UI>,
+L<Term::Fabulous::Cookbook::Layout/Line up labels with equal widths (width_group)>,
+L<Term::Fabulous::Cookbook::Layout/Use a different border style on each side>,
+L<Term::Fabulous::Cookbook::Layout/Mark widgets with states and classes>.
 
 =cut

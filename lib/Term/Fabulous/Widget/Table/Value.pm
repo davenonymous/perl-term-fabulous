@@ -180,7 +180,9 @@ The epoch seconds of a date value, or C<undef>:
 
 =item *
 
-a number is taken as epoch seconds;
+a number is taken as epoch seconds, also a string of digits: C<'2024'>
+is 2024 seconds after the epoch, not the year (write C<'2024-01-01'>
+for the year);
 
 =item *
 
@@ -213,6 +215,9 @@ case-insensitively. Returns -1, 0 or 1.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Filter>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Filter>,
+L<Term::Fabulous::Manual::Tables/Dates and numbers>,
+L<Term::Fabulous::Manual::TableRows/How values are compared>,
+L<Term::Fabulous::Cookbook::TableRows/Filter rows from Perl (numbers, dates, text, raw or shown values)>.
 
 =cut

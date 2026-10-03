@@ -1,6 +1,21 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Documentation reviewed against the code and reorganized: the
+          Manual is an index page with thirteen topic pages
+          (Term::Fabulous::Manual::Layout, ::Looks, ::Events, ::Forms,
+          ::Charts, ::Tables, ::TableRows, ::TableStyles, ::KDL,
+          ::Programs, ::CustomWidgets, ::Troubleshooting, ::Glossary),
+          the Cookbook an index of every recipe with fourteen topic
+          pages, and the table guide moved from the Table class page to
+          the three table pages of the Manual. Every page links to the
+          previous and the next one; the Manual's feature index links
+          every recipe. New example programs and screenshots for layout,
+          text, colors, borders, events, KDL layout files, charts and
+          tables; every screenshot is listed in Term::Fabulous::Examples
+        - tools/screenshot and screenshots.kdl capture inline mode: the
+          harness answers the cursor position query, and a scenario's
+          shell lines are shown above the inline region
         - Chart widgets on top of Canvas: LineChart, AreaChart, BarChart
           and ScatterPlot (Widget::XYChart) with named series in several
           data forms, category, linear, logarithmic and time x axes with

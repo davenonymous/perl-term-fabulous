@@ -121,6 +121,8 @@ The ticks in order, as hashes with the value, its label and its position.
 
 =head2 tick_count
 
+The number of ticks.
+
 =head2 cells, used
 
 The number of cells the scale was fitted to, and the number of cells its

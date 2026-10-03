@@ -21,7 +21,9 @@ BEGIN {
 
 use IO::Async::Loop;
 use Term::Fabulous::Screenshot::VirtualLoop;
-use Term::Fabulous::Termbox qw(tb_width tb_height tb_get_cell tb_cluster_width TB_OK);
+use Term::Fabulous::Termbox qw(tb_width tb_height tb_get_cell tb_cluster_width TB_DEFAULT TB_OK);
+use Term::Fabulous::Terminal::Termbox::Cells;
+use Term::Fabulous::Unicode qw(grapheme_clusters);
 
 # Virtual seconds the program gets after each input before the next step,
 # enough for several frames at Term::Fabulous's 30 frames per second.
@@ -42,6 +44,11 @@ die "Term::Fabulous::Screenshot::Harness: IO::Async::Loop->new does not return t
 
 my $input = _open_input( $config->{input_fd} );
 
+# The terminal row an inline region starts on, or undef: the shell's
+# lines are shown above it. Recorded as Term::Fabulous places it.
+my $region_top;
+_watch_inline_region() if @{ $config->{shell} // [] };
+
 # The steps start when the program's event loop does, which for a
 # Term::Fabulous program is after the terminal has been opened.
 $loop->watch_time(
@@ -57,6 +64,16 @@ $loop->watch_time(
 sub _mark_started () {
 	open my $marker, '>', "$config->{capture_file}.started" or die "Term::Fabulous::Screenshot::Harness: cannot write $config->{capture_file}.started: $!\n";
 	close $marker;
+	return;
+}
+
+sub _watch_inline_region () {
+	my $place_region = \&Term::Fabulous::Terminal::Termbox::Cells::place_region;
+	no warnings 'redefine';
+	*Term::Fabulous::Terminal::Termbox::Cells::place_region = sub ( $cells, $top, $rows ) {
+		$region_top = $top if defined $top;
+		return $cells->$place_region( $top, $rows );
+	};
 	return;
 }
 
@@ -120,6 +137,7 @@ sub _capture_screen () {
 		unless $columns > 0 && $rows > 0;
 
 	my @screen = map { _capture_row( $_, $columns ) } 0 .. $rows - 1;
+	_show_shell_lines( \@screen, $columns ) if @{ $config->{shell} // [] };
 	my $capture = { columns => $columns, rows => $rows, cells => \@screen };
 
 	open my $file, '>', $config->{capture_file} or die "Term::Fabulous::Screenshot::Harness: cannot write $config->{capture_file}: $!\n";
@@ -128,6 +146,35 @@ sub _capture_screen () {
 
 	$loop->stop;
 	return;
+}
+
+# The shell's lines go on the rows directly above the inline region, as
+# far as they reach; the rest scrolled out of the terminal.
+sub _show_shell_lines ( $screen, $columns ) {
+	die "Term::Fabulous::Screenshot::Harness: the scenario has shell lines, but the program did not draw into an inline region\n"
+		unless defined $region_top;
+	my @lines = @{ $config->{shell} };
+	splice @lines, 0, @lines - $region_top if @lines > $region_top;
+	my $y = $region_top - @lines;
+	foreach my $line (@lines) {
+		$screen->[ $y++ ] = _text_row( $line, $columns );
+	}
+	return;
+}
+
+# A line of text in the terminal's default colors, as captured cells.
+sub _text_row ( $line, $columns ) {
+	my @cells = map { [ $_, _glyph_width($_), TB_DEFAULT, TB_DEFAULT ] } grapheme_clusters($line);
+	my $width = 0;
+	$width += $_->[1] foreach @cells;
+	die "Term::Fabulous::Screenshot::Harness: the shell line '$line' is $width columns wide, the terminal only $columns\n" if $width > $columns;
+	push @cells, [ ' ', 1, TB_DEFAULT, TB_DEFAULT ] foreach $width + 1 .. $columns;
+	return \@cells;
+}
+
+sub _glyph_width ($glyph) {
+	my $width = tb_cluster_width($glyph);
+	return $width < 1 ? 1 : $width;
 }
 
 # One row as [ glyph, columns, fg, bg ] per visible character. termbox2
@@ -140,8 +187,7 @@ sub _capture_row ( $y, $columns ) {
 		die "Term::Fabulous::Screenshot::Harness: tb_get_cell($x, $y) failed with status $status\n" unless $status == TB_OK;
 		$glyph = ' ' unless length $glyph;
 
-		my $width = tb_cluster_width($glyph);
-		$width = 1 if $width < 1;
+		my $width = _glyph_width($glyph);
 		if ( $x + $width > $columns ) {
 			push @cells, [ ' ', 1, $fg, $bg ] foreach $x .. $columns - 1;
 			last;
@@ -194,6 +240,12 @@ gives the program 0.1 virtual seconds before the next step.
 
 =back
 
+When the scenario has C<shell> lines, the harness also records where
+the program places its inline region (by wrapping
+C<Term::Fabulous::Terminal::Termbox::Cells::place_region>): termbox2's
+buffer holds only what the program drew, so the lines the shell printed
+before are added to the capture, on the rows directly above the region.
+
 After the last step it reads every cell of termbox2's front buffer
 (what the terminal shows), writes them as JSON to the capture file and
 stops the event loop, so the program ends as if the user had quit.
@@ -216,6 +268,12 @@ The start time of the virtual clock, in epoch seconds.
 
 An array of C<{ "action": "wait", "seconds": N }> and
 C<{ "action": "send", "bytes": HEX }> objects.
+
+=item C<shell>
+
+An array of lines a shell printed before the program started, shown
+above the program's inline region. Optional; a program that does not
+draw into an inline region dies when there are any.
 
 =item C<input_fd>
 

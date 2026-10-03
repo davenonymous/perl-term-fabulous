@@ -33,10 +33,9 @@ my $rules = panel(
 	border_style_bottom => $Style->Solid,
 );
 
-# A box with a heavy top edge. border_style sets all four sides; set the
-# side that differs afterwards.
-my $header = panel( 'Heavy top edge', border_width => 1, border_style => $Style->Solid );
-$header->border_style_top( $Style->Heavy );
+# A box with a heavy top edge. border_style sets the sides that have no
+# style of their own.
+my $header = panel( 'Heavy top edge', border_width => 1, border_style => $Style->Solid, border_style_top => $Style->Heavy );
 
 # A tab-like look: thick left edge only.
 my $marker = panel( 'Thick left edge', border_width => { left => 1 }, border_style_left => $Style->Thick );

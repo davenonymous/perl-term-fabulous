@@ -11,6 +11,8 @@ use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::TextArea;
+use Term::Fabulous::Enum::BorderStyle;
+use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
 sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
@@ -38,6 +40,9 @@ my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { s
 sub button ( $caption, $action ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		background_color => [ 43, 58, 85, 255 ],
+		border_width     => 1,
+		border_color     => [ 28, 33, 45, 255 ],    # the dialog background: only the focus shows
+		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },
 	);
 	$button->add_child( text($caption) );

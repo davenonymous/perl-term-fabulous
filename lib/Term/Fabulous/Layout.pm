@@ -198,6 +198,7 @@ Term::Fabulous::Layout - Build a widget tree from a KDL layout description
 	KDL
 
 	my $root = $layout->build;
+	$root->find_by_id('greeting')->text('Hello, KDL!');
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
 
 	# Or read the layout from a file:
@@ -206,18 +207,30 @@ Term::Fabulous::Layout - Build a widget tree from a KDL layout description
 =head1 DESCRIPTION
 
 Instead of building a widget tree in Perl, you can describe it in a
-layout file written in KDL, a small document language similar to
-nested function calls (see L<https://kdl.dev>). Term::Fabulous::Layout
-parses such a description with L<Text::KDL::XS>, loads the widget
-classes it names and builds the widget tree. You then hand the root
-widget to L<Term::Fabulous> or L<Term::Fabulous::Static> as usual, and
-attach event listeners in Perl.
+layout file written in KDL, a small document language of nested nodes
+(see L<https://kdl.dev>). Term::Fabulous::Layout parses such a
+description with L<Text::KDL::XS>, loads the widget classes it names and
+builds the widget tree. You then hand the root widget to
+L<Term::Fabulous> or L<Term::Fabulous::Static> as usual, and attach
+event listeners in Perl.
 
 A layout file describes the static part of a user interface: which
 widgets there are, how they are nested, sized, colored and bordered,
 and the initial values of input widgets. Behavior (listeners, timers)
 stays in Perl. Everything a layout can do, Perl can do as well; a few
 options are available only in Perl (see L</LIMITATIONS>).
+
+This page is the reference. The guide is
+L<the KDL chapter of the manual|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>,
+with complete programs and their screenshots. This is
+F<examples/kdl-layout.pl>, which builds its screen from the layout file
+F<examples/kdl-layout.kdl>:
+
+=begin html
+
+<p><img src="/screenshots/example-kdl-layout.svg" alt="A title bar, a sidebar with the buttons web, db and mail with db focused, and a main panel showing the details of the db server"></p>
+
+=end html
 
 =head1 CONSTRUCTOR
 
@@ -268,6 +281,9 @@ the accessors after C<new>, and the order of the properties of related
 values does not matter (a Slider's C<min> and C<max>, a Dropdown's
 C<options> and C<value>). Invalid properties die here, not in L</new>.
 
+To get at the other widgets of the tree, call
+L<Term::Fabulous::Widget/find_by_id> on the root (see L</EXAMPLES>).
+
 =head2 root_widget
 
 	my $root = $layout->root_widget;
@@ -286,8 +302,9 @@ its Perl module.
 
 	my $document = $layout->raw;
 
-The parsed L<Text::KDL::XS::Document>, for programs that want to read
-custom data from the layout file.
+The parsed L<Text::KDL::XS::Document>, for programs that want to
+inspect the layout's nodes themselves, for example a tool that lists the
+ids of a layout file.
 
 =head2 walk_nodes
 
@@ -298,7 +315,8 @@ custom data from the layout file.
 Calls the code reference once for every node of the document
 (L<Text::KDL::XS::Node> objects), including C<use> instructions and
 property nodes, breadth first: all top-level nodes, then their
-children, and so on.
+children, and so on. Nodes commented out with C</-> are not part of the
+document. Returns nothing.
 
 =head1 THE KDL FORMAT
 
@@ -328,9 +346,11 @@ Values are written like this:
 
 Strings that contain spaces, parentheses, C<#>, C<=> or other special
 characters must be quoted: C<"#141937">, C<"fixed(10)">,
-C<"rgb(1, 2, 3)">. Boolean properties must be written C<#true> and
-C<#false> (C<1> and C<0> are accepted too); any other value, such as
-C<"no"> or C<"false"> in quotes, dies.
+C<"rgb(1, 2, 3)">. Inside quotes, C<\n> is a line break, C<\"> a quote
+and C<\\> a backslash; a raw string, C<#"C:\path"#>, takes backslashes
+as they are. Boolean properties must be written C<#true> and C<#false>
+(C<1> and C<0> are accepted too); any other value, such as C<"no"> or
+C<"false"> in quotes, dies, and a bare C<true> is a syntax error.
 
 Comments are C<// to the end of the line>, C</* blocks */>, and C</->
 in front of a node, which comments out the whole node with its
@@ -356,11 +376,12 @@ name (letters, digits, C<_> and C<::>). C<Alias> must start with an
 uppercase letter and contain only letters, digits and C<_>. Each alias
 can be declared only once. The module is loaded with C<require> and
 must compose L<Term::Fabulous::Role::CanParseLayout>, which all
-Term::Fabulous widgets do; your own widgets can too (see
-L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>).
+Term::Fabulous widgets do (see L</NODE TYPES>); your own widgets can
+too (see L<using your widget in KDL|Term::Fabulous::Manual::CustomWidgets/Using your widget in KDL>).
 
 The short form C<use Module::Name> uses the full module name as the
-widget node name:
+widget node name, so the module name must start with an uppercase
+letter:
 
 	use Term::Fabulous::Widget::Box
 
@@ -384,15 +405,16 @@ C<key=value> properties. Inside its braces:
 =item *
 
 Nodes whose names start with an B<uppercase> letter are child widgets.
-Their names must be declared aliases, and only containers (widgets with
-an C<add_child> method, such as Box, ScrollBox and RadioGroup) accept
-children.
+Their names must be declared aliases. Every widget except
+L<Term::Fabulous::Widget::Text> and L<Term::Fabulous::Widget::Table>
+accepts children.
 
 =item *
 
 Every other node is a property of the widget, such as C<sizing> or
-C<text>. They are listed per widget in L</PROPERTIES>; an unknown one
-dies.
+C<text>. Each widget class documents its properties in the KDL
+PROPERTIES section of its page (see L</NODE TYPES>); an unknown one
+dies with the list of the known names.
 
 =back
 
@@ -422,31 +444,139 @@ One argument: C<text "Hello">, C<border_width 1>, C<checked #true>.
 
 =item *
 
-Only C<key=value> properties: C<padding left=1 right=1>,
+Only key=value pairs: C<padding left=1 right=1>,
 C<border_width left=1 right=2>.
 
 =back
 
-A property node never has children. A property whose name ends in
+A property node never has children; the only exceptions are the
+structured properties of a few widgets that say so, such as a table's
+C<column> with its C<style> nodes. A property whose name ends in
 C<_color> takes any color string L<Term::Fabulous::Color> understands
-(C<"#61afef">, C<"rgb(97, 175, 239)">, C<"hsl(207, 82%, 66%)">, ...).
+(C<"#61afef">, C<"#61afef80">, C<"rgb(97, 175, 239)">,
+C<"rgba(97, 175, 239, 0.5)">, C<"hsl(207, 82%, 66%)">, ...; see
+L<Term::Fabulous::Manual::Looks/Color formats>). Color names such as
+C<"red"> are not color strings.
+
+=head1 NODE TYPES
+
+Every widget class of Term::Fabulous can be declared in a layout. The
+table lists them with the alias the examples use; each link leads to the
+list of properties the class accepts. All of them except Text accept
+the L</Box properties>.
+
+	Alias            Class                                    Properties
+	---------------  ---------------------------------------  ---------------------------
+	Box              Term::Fabulous::Widget::Box              Box properties
+	Text             Term::Fabulous::Widget::Text             text, text_color, wrap_mode, ...
+	Button           Term::Fabulous::Widget::Button           Box + focus and press looks
+	Dialog           Term::Fabulous::Widget::Dialog           Box + backdrop, z_index
+	ScrollBox        Term::Fabulous::Widget::ScrollBox        Box + horizontal, vertical
+	Canvas           Term::Fabulous::Widget::Canvas           Box
+	PixelCanvas      Term::Fabulous::Widget::PixelCanvas      Box
+	TextField        Term::Fabulous::Widget::TextField        input widget + text options
+	TextArea         Term::Fabulous::Widget::TextArea         input widget + text options
+	Checkbox         Term::Fabulous::Widget::Checkbox         input widget + label, checked
+	RadioGroup       Term::Fabulous::Widget::RadioGroup       Box + value, disabled
+	RadioButton      Term::Fabulous::Widget::RadioButton      input widget + label, value
+	Dropdown         Term::Fabulous::Widget::Dropdown         input widget + options, value
+	Slider           Term::Fabulous::Widget::Slider           input widget + range, value
+	Table            Term::Fabulous::Widget::Table            Box + columns, lines, sort, ...
+	LineChart        Term::Fabulous::Widget::LineChart        chart + series, axes, ...
+	AreaChart        Term::Fabulous::Widget::AreaChart        chart + series, axes, ...
+	BarChart         Term::Fabulous::Widget::BarChart         chart + series, axes, ...
+	ScatterPlot      Term::Fabulous::Widget::ScatterPlot      chart + series, axes, ...
+	Histogram        Term::Fabulous::Widget::Histogram        chart + series, bins, ...
+	Sparkline        Term::Fabulous::Widget::Sparkline        chart + values, type, ...
+	PieChart         Term::Fabulous::Widget::PieChart         chart + slice, sort, ...
+	DonutChart       Term::Fabulous::Widget::DonutChart       pie chart properties
+	PolarAreaChart   Term::Fabulous::Widget::PolarAreaChart   pie chart + max, ticks
+	RadarChart       Term::Fabulous::Widget::RadarChart       chart + series, labels, ticks
+
+The properties of each class:
+
+=over
+
+=item * L<Box|Term::Fabulous::Widget::Box/KDL PROPERTIES> (summarized in L</Box properties>)
+
+=item * L<Text|Term::Fabulous::Widget::Text/KDL PROPERTIES>
+
+=item * L<Button|Term::Fabulous::Widget::Button/KDL PROPERTIES>
+
+=item * L<Dialog|Term::Fabulous::Widget::Dialog/KDL PROPERTIES>
+
+=item * L<ScrollBox|Term::Fabulous::Widget::ScrollBox/KDL PROPERTIES>
+
+=item * L<Canvas|Term::Fabulous::Widget::Canvas/KDL PROPERTIES>
+
+=item * L<PixelCanvas|Term::Fabulous::Widget::PixelCanvas/KDL PROPERTIES>
+
+=item * L<TextField|Term::Fabulous::Widget::TextField/KDL PROPERTIES>
+
+=item * L<TextArea|Term::Fabulous::Widget::TextArea/KDL PROPERTIES>
+
+=item * L<Checkbox|Term::Fabulous::Widget::Checkbox/KDL PROPERTIES>
+
+=item * L<RadioGroup|Term::Fabulous::Widget::RadioGroup/KDL PROPERTIES>
+
+=item * L<RadioButton|Term::Fabulous::Widget::RadioButton/KDL PROPERTIES>
+
+=item * L<Dropdown|Term::Fabulous::Widget::Dropdown/KDL PROPERTIES>
+
+=item * L<Slider|Term::Fabulous::Widget::Slider/KDL PROPERTIES>
+
+=item * L<Table|Term::Fabulous::Widget::Table/KDL PROPERTIES>
+
+=item * L<LineChart|Term::Fabulous::Widget::LineChart/KDL PROPERTIES>
+
+=item * L<AreaChart|Term::Fabulous::Widget::AreaChart/KDL PROPERTIES>
+
+=item * L<BarChart|Term::Fabulous::Widget::BarChart/KDL PROPERTIES>
+
+=item * L<ScatterPlot|Term::Fabulous::Widget::ScatterPlot/KDL PROPERTIES>
+
+=item * L<Histogram|Term::Fabulous::Widget::Histogram/KDL PROPERTIES>
+
+=item * L<Sparkline|Term::Fabulous::Widget::Sparkline/KDL PROPERTIES>
+
+=item * L<PieChart|Term::Fabulous::Widget::PieChart/KDL PROPERTIES>
+
+=item * L<DonutChart|Term::Fabulous::Widget::DonutChart/KDL PROPERTIES>
+
+=item * L<PolarAreaChart|Term::Fabulous::Widget::PolarAreaChart/KDL PROPERTIES>
+
+=item * L<RadarChart|Term::Fabulous::Widget::RadarChart/KDL PROPERTIES>
+
+=back
+
+The properties shared by several classes are described once, on the
+page of their base class: those of all input widgets in
+L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, those of TextField and
+TextArea in L<Term::Fabulous::Widget::TextInput/KDL PROPERTIES>, those
+of all charts in L<Term::Fabulous::Widget::Chart/KDL PROPERTIES> and
+those of the charts with axes in
+L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>. These four base
+classes are abstract and cannot be used as nodes themselves. The parts
+other widgets build for themselves (such as
+C<Term::Fabulous::Widget::Dialog::Backdrop>, C<Term::Fabulous::Widget::Dropdown::List>
+and the C<Term::Fabulous::Widget::Table::*> parts) cannot be built from
+a layout either.
+
+A Dialog is not drawn until it is opened from Perl, and it is opened
+on its own, not as a child of another widget: describe it as the root of
+a layout of its own, build it, and call C<< $dialog->open($ui) >> (see
+L<Term::Fabulous::Widget::Dialog>).
 
 =head1 PROPERTIES
 
-The property nodes each widget accepts, with the value they take. A
-name in the form C<name> without further explanation sets the Perl
-accessor of the same name; follow the link to the widget's
-documentation for the meaning. An unknown property name dies with the
-list of the names the widget knows.
-
 =head2 Box properties
 
-Accepted by L<Term::Fabulous::Widget::Box> and every widget built on it:
-L<Button|Term::Fabulous::Widget::Button>,
-L<ScrollBox|Term::Fabulous::Widget::ScrollBox>,
-L<Canvas|Term::Fabulous::Widget::Canvas>,
-L<PixelCanvas|Term::Fabulous::Widget::PixelCanvas>,
-L<RadioGroup|Term::Fabulous::Widget::RadioGroup> and all input widgets.
+L<Term::Fabulous::Widget::Box> and every widget built on it (all widgets
+except Text) accept these property nodes. The
+L<KDL PROPERTIES section of the Box page|Term::Fabulous::Widget::Box/KDL PROPERTIES>
+describes each one with an example, and
+L<the layout chapter of the manual|Term::Fabulous::Manual::Layout/LAYOUT>
+shows what they do, with pictures.
 
 	Property node                              Value
 	-----------------------------------------  -----------------------------------------
@@ -498,10 +628,11 @@ is only drawn on sides with a positive C<border_width>.
 
 C<width_group> and C<height_group> give widgets in different parts of
 the tree the same width or height; see
-L<Term::Fabulous::Manual/Equal sizes across the tree>.
+L<Term::Fabulous::Manual::Layout/Equal sizes across the tree>.
 
 C<floating> sets the widget's C<floating> hash (see
-L<Term::Fabulous::Widget/floating>); its keys are:
+L<Term::Fabulous::Widget/floating> and
+L<Term::Fabulous::Manual::Layout/Floating widgets>); its keys are:
 
 	Key              Value
 	---------------  -------------------------------------------------------
@@ -540,204 +671,6 @@ only the keys it names and keeps the others.
 		border style=Round style-top=Heavy color="#61afef"
 		border_width 1
 		background_color "rgb(28, 33, 45)"
-	}
-
-=head2 Text properties
-
-L<Term::Fabulous::Widget::Text>:
-
-	Property node        Value
-	-------------------  -----------------------------------------------
-	text "..."           the text, exactly one string argument
-	text_color "..."     a color string
-	wrap_mode ...        words (the default), newlines or none
-	text_alignment ...   left (the default), center or right
-	line_height N        rows per line of text (0 means 1)
-	font_id N            no visible effect in a terminal
-	font_size N          no visible effect in a terminal
-	letter_spacing N     do not use; see Term::Fabulous::Widget::Text
-
-Text in a layout is a character string like everything else in the
-layout; it is passed to the Text widget as is.
-
-=head2 Button properties
-
-L<Term::Fabulous::Widget::Button>: the L</Box properties> plus
-C<can_focus #true> or C<can_focus #false>.
-
-=head2 ScrollBox properties
-
-L<Term::Fabulous::Widget::ScrollBox>: the L</Box properties> plus
-C<horizontal> and C<vertical> (booleans; defaults C<#false> and
-C<#true>). A ScrollBox node needs an id:
-
-	ScrollBox "log" {
-		sizing width=grow height="fixed(10)"
-		vertical #true
-	}
-
-=head2 Canvas and PixelCanvas properties
-
-L<Term::Fabulous::Widget::Canvas> and
-L<Term::Fabulous::Widget::PixelCanvas>: the L</Box properties>. What is
-drawn on a canvas is drawn from Perl.
-
-=head2 Properties of all input widgets
-
-L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
-L<Term::Fabulous::Widget::Checkbox>, L<Term::Fabulous::Widget::RadioButton>,
-L<Term::Fabulous::Widget::Dropdown> and L<Term::Fabulous::Widget::Slider>
-accept the L</Box properties> plus:
-
-	Property node                    Value
-	-------------------------------  ----------------------------------
-	disabled #true                   boolean
-	can_focus #false                 boolean
-	text_color "..."                 color string
-	disabled_color "..."             color string
-	accent_color "..."               color string
-	focus_background_color "..."     color string
-
-See L<Term::Fabulous::Widget::Input> for their meaning.
-
-=head2 TextField properties
-
-L<Term::Fabulous::Widget::TextField>: the input widget properties plus
-C<value>, C<placeholder> and C<mask> (strings), C<max_length> (an
-integer, or C<#null> for no limit), C<read_only> (boolean),
-C<preferred_columns> (a positive integer), C<placeholder_color> and
-C<selection_color> (color strings).
-
-	TextField "email" {
-		placeholder "name@example.com"
-		preferred_columns 30
-		max_length 80
-	}
-
-=head2 TextArea properties
-
-L<Term::Fabulous::Widget::TextArea>: the input widget properties plus
-C<value>, C<placeholder> (strings), C<max_length>, C<read_only>,
-C<placeholder_color>, C<selection_color> as for TextField, and
-C<preferred_columns>, C<preferred_rows> (positive integers), C<wrap> and
-C<scrollbar> (booleans).
-
-=head2 Checkbox properties
-
-L<Term::Fabulous::Widget::Checkbox>: the input widget properties plus
-C<label>, C<checked_mark>, C<unchecked_mark>, C<indeterminate_mark>
-(strings), C<checked> and C<indeterminate> (booleans).
-
-	Checkbox "newsletter" {
-		label "Send me the newsletter"
-		checked #true
-	}
-
-=head2 RadioGroup and RadioButton properties
-
-L<Term::Fabulous::Widget::RadioGroup>: the L</Box properties> plus
-C<value> (the value of the selected button), C<disabled> and
-C<can_focus> (booleans). Without a
-C<layout direction=...>, its children are stacked from top to bottom.
-
-L<Term::Fabulous::Widget::RadioButton>: the input widget properties plus
-C<label>, C<value>, C<selected_mark> and C<unselected_mark> (strings).
-
-	RadioGroup "size" {
-		layout direction=right gap=2
-		value "m"
-		RadioButton { label "Small"; value "s"; }
-		RadioButton { label "Medium"; value "m"; }
-		RadioButton { label "Large"; value "l"; }
-	}
-
-=head2 Dropdown properties
-
-L<Term::Fabulous::Widget::Dropdown>: the input widget properties plus:
-
-	Property node                  Value
-	-----------------------------  --------------------------------------------
-	options "A" "B" ...            adds options whose labels are their values
-	option "Label" value="v"       adds one option with its own value;
-	                               without value= the label is the value
-	value "v"                      selects the option with this value
-	selected_index N               selects the option at this index (from 0)
-	placeholder "..."              string
-	max_visible_options N          positive integer
-	placeholder_color "..."        color string
-	list_background_color "..."    color string
-	highlight_text_color "..."     color string
-
-C<options> and C<option> may be repeated; each adds to the end of the
-list. They are applied before C<value> and C<selected_index>, wherever
-those stand.
-
-	Dropdown "color" {
-		placeholder "Pick a color"
-		options "Red" "Green"
-		option "Dark blue" value="navy"
-		value "navy"
-	}
-
-=head2 Slider properties
-
-L<Term::Fabulous::Widget::Slider>: the input widget properties plus
-C<min>, C<max>, C<step>, C<page_step>, C<value> (numbers),
-C<show_value> (boolean), C<value_format> (a C<sprintf> format string;
-a code reference is possible only from Perl), C<preferred_columns> (a
-positive integer), C<fill_glyph>, C<track_glyph>, C<thumb_glyph> (single
-characters) and C<track_color> (a color string). C<min>, C<max> and
-C<step> are applied together as one range, before C<value>, so their
-order does not matter, also when the range moves beyond the defaults
-(0 and 100).
-
-	Slider "volume" {
-		max 11
-		value 5
-		value_format "%d dB"
-	}
-
-=head2 Table properties
-
-L<Term::Fabulous::Widget::Table>: the L</Box properties> (the Box
-C<border> is a border around the whole table; the table's own frame is
-C<lines frame=...>) plus:
-
-	Property node                       Value
-	----------------------------------  ----------------------------------------
-	column "key" title=... type=...     adds a column; also width, align,
-	                                    header_align, wrap, sortable, filterable,
-	                                    filter_on, compare, visible; optional
-	                                    style and header_style child nodes
-	sort "key" "desc"                   adds a column to the sort (asc or desc)
-	group_by "key" ...                  the group columns, outermost first
-	lines frame=... columns=... ...     the lines: frame, top, right, bottom,
-	                                    left, columns, rows, header, color
-	cell_padding N                      or cell_padding left=N right=N top=N bottom=N
-	page_sizes N N ...                  the page sizes the pager offers
-	selection ...                       none, single or multiple
-	selection_column, pager,            booleans
-	filter_row, header, scrollbar,
-	hover, tree_expanded
-	page_size N                         lines per page, 0 for no pages
-	row_id, children_key, tree_column   column keys
-	empty_text, no_match_text           strings
-	text_color, ..., stripe_color       color strings
-
-The rows, and everything that is a code reference (mutators, cell
-widgets, callbacks), come from Perl. A table takes no child widget
-nodes. L<Term::Fabulous::Widget::Table/KDL PROPERTIES> describes every
-property.
-
-	Table "inventory" {
-		selection multiple
-		row_id "sku"
-		lines frame=Double header=Heavy
-		column "sku" title="SKU"
-		column "qty" title="Qty" type=number {
-			style text_color="#e5c07b"
-		}
-		sort "qty" "desc"
 	}
 
 =head1 EXAMPLES
@@ -805,16 +738,20 @@ property.
 	}
 	KDL
 
-	my $root = $layout->build;
+	my $root  = $layout->build;
+	my $title = $root->find_by_id('title');
 
 	# Every Change event bubbles up to the form box.
 	$root->on( Change => sub ($event) {
-		my $status = $root->children->[0];    # the Text "title"
-		$status->text( 'Changed: ' . $event->target->id );
+		$title->text( 'Changed: ' . $event->target->id );
 		return;
 	} );
 
 	Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+
+F<examples/kdl-form.pl> is a longer form of the same kind, and
+F<examples/kdl-layout.pl> loads its layout from a file; both are shown
+with screenshots in L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>.
 
 =head2 Finding widgets by id
 
@@ -822,7 +759,7 @@ L</build> returns only the root widget. To get at the other widgets,
 call L<Term::Fabulous::Widget/find_by_id> on the root: it returns the
 first widget (in depth-first order) whose id is the argument, Text
 widgets included, or C<undef> when there is none. See also
-L<Term::Fabulous::Cookbook/Find widgets by id>.
+L<Term::Fabulous::Cookbook::Forms/Find widgets by id>.
 
 	my $country = $root->find_by_id('country');
 	say $country->value;    # CH
@@ -831,9 +768,9 @@ L<Term::Fabulous::Cookbook/Find widgets by id>.
 
 Build first, then set the remaining options in Perl:
 
-	my $volume = $root->find_by_id('volume');
-	$volume->value_format( sub ($value) { $value == 0 ? 'muted' : "$value%" } );
-	$volume->on( Change => sub ($event) { ...; return } );
+	my $age = $root->find_by_id('age');
+	$age->value_format( sub ($value) { $value < 21 ? "$value (young)" : "$value years" } );
+	$age->on( Change => sub ($event) { ...; return } );
 
 =head1 LIMITATIONS
 
@@ -843,11 +780,16 @@ These options exist in Perl but cannot be written in a layout:
 
 =item *
 
-the C<classes> of a widget, and event listeners;
+event listeners, and the C<classes> of a widget;
 
 =item *
 
-a code reference for a Slider's C<value_format>;
+C<border_corners> and C<outer_border_sides> (see
+L<Term::Fabulous::Role::HasBorderStyle>);
+
+=item *
+
+the C<expand> key of a widget's C<floating> hash;
 
 =item *
 
@@ -855,9 +797,14 @@ the C<child_offset> of a ScrollBox;
 
 =item *
 
-the C<expand> key of a widget's C<floating> hash.
+code references, such as a Slider's C<value_format> as code, and the
+other widget-specific options their KDL PROPERTIES sections name as
+Perl-only (for example a table's rows and a chart's data callbacks).
 
 =back
+
+Set them in Perl after L</build>, as shown in
+L</Adding what a layout cannot express>.
 
 =head1 ERRORS
 
@@ -874,7 +821,7 @@ L</new> dies for:
 
 =item * neither or both of C<string> and C<file>, or a file that cannot be opened;
 
-=item * KDL syntax errors (C<failed to parse KDL: ...>; the parser does not report a line number);
+=item * KDL syntax errors (C<failed to parse KDL: KDL parse error>; the parser does not report a line number);
 
 =item * a malformed C<use>, an invalid module name or alias, or an alias declared twice;
 
@@ -893,6 +840,8 @@ L</build> dies for:
 =item * a widget node with C<key=value> properties, more than one argument, or a non-string id;
 
 =item * child widgets inside a widget that cannot hold children;
+
+=item * a widget the class cannot construct with only an id: an abstract base class, or a ScrollBox without an id;
 
 =item * unknown property names, property nodes of the wrong shape, unknown keys, and invalid values.
 
@@ -914,8 +863,14 @@ layout cannot call arbitrary methods.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/KDL LAYOUT FILES>,
-L<Term::Fabulous::Role::CanParseLayout>, L<Term::Fabulous::Widget::Box>,
+L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES> (the guide),
+L<Term::Fabulous::Role::CanParseLayout> (widget classes in layouts),
+L<Term::Fabulous::Widget::Box/KDL PROPERTIES>,
+L<Term::Fabulous::Manual::Layout/LAYOUT>,
+L<Term::Fabulous::Cookbook::Forms/Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>,
+L<Term::Fabulous::Cookbook::Tables/Describe a table in a KDL layout (columns, lines, sort, groups)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Describe charts in a KDL layout (series, slices, transforms)>,
+L<Term::Fabulous::Cookbook::Extending/Make a widget usable from KDL>,
 L<Text::KDL::XS>, L<https://kdl.dev>.
 
 =cut

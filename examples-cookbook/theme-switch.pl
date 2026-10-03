@@ -50,8 +50,7 @@ my $field = Term::Fabulous::Widget::TextField->new( placeholder => 'Type here' )
 $panel->add_child( $label, $field );
 $root->add_child($panel);
 
-# Clay-side colors (background_color, border_color, text_color of Box and
-# Text) take [r, g, b, a]; the input widgets take Color objects directly.
+# Every color accessor takes a Color object as it is.
 sub apply_theme ($theme) {
 	$root->background_color( $theme->{background} );
 	$panel->background_color( $theme->{panel} );

@@ -1,10 +1,16 @@
 #!/usr/bin/env perl
 
-use v5.22;
+# A screen described in a KDL layout file, examples/kdl-layout.kdl: a
+# title bar, a sidebar of buttons, a main panel and a status line. The
+# program loads the file, finds widgets by their ids and attaches the
+# behavior: a click on a server button (or Enter on it) shows that
+# server in the main panel. Ctrl+C quits.
+#
+#     perl examples/kdl-layout.pl
+
+use v5.24;
 use warnings;
-use strict;
-use utf8;
-use experimental 'signatures';
+use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
@@ -13,37 +19,27 @@ use lib "$FindBin::Bin/../lib/";
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 
-my $layout = Term::Fabulous::Layout->new(string => <<'END');
-use Term::Fabulous::Widget::Box as Box
-use Term::Fabulous::Widget::Text as Text
-
-Box "root" {
-	layout direction=down gap=4
-	sizing width=grow height="fixed(30)"
-	padding left=1 right=1 top=1 bottom=1
-
-	border style=Round style-bottom=Thick style-top=Thick color="rgba(20, 140, 56, 255)"
-	background_color "rgba(20, 25, 55, 255)"
-	border_width 1
-
-	Text "message" {
-		text "Hello, KDL layout!"
-		text_color "rgba(220, 34, 220, 255)"
-	}
-
-	Text "message2" {
-		text "Hello, KDL layout!"
-		text_color "rgba(33, 34, 220, 255)"
-	}
-}
-END
-
-my $root = $layout->build;
-
-my $ui = Term::Fabulous->new(
-	width  => 100,
-	height => 32,
-	root   => $root,
+my %SERVERS = (
+	web  => 'nginx 1.26, 14 days up, 210 requests per second',
+	db   => 'PostgreSQL 16, 41 days up, 38 connections',
+	mail => 'Postfix 3.8, 3 days up, 12 messages queued',
 );
 
-$ui->run();
+my $layout = Term::Fabulous::Layout->new( file => "$FindBin::Bin/kdl-layout.kdl" );
+my $root   = $layout->build;
+
+my $title = $root->find_by_id('details-title');
+my $text  = $root->find_by_id('details-text');
+
+# Activate bubbles from the button up to the sidebar, so one listener
+# serves all buttons; the event's target is the button.
+$root->find_by_id('sidebar')->on(
+	Activate => sub ($event) {
+		my $server = $event->target->id;
+		$title->text("Server: $server");
+		$text->text( $SERVERS{$server} );
+		return;
+	}
+);
+
+Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

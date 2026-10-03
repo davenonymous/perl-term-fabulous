@@ -338,6 +338,11 @@ Term::Fabulous::Widget::Slider - Choose a number from a range by moving a thumb
 
 =head1 DESCRIPTION
 
+The picture shows three sliders: a focused one at 65 percent (the thumb
+is in the C<text_color> while the slider has the focus), one that
+formats its value with a code reference, and a disabled one. The
+program is F<examples/widgets/slider.pl>.
+
 A slider lets the user choose a number from a range. It shows a
 horizontal track with a thumb at the current value and, by default, the
 value itself right of the track:
@@ -375,8 +380,8 @@ value label plus one column wide.
 Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
 (C<id>, C<layout>, C<background_color>, the border parameters,
 C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
-C<accent_color>, C<focus_background_color>) and the ones below. Unknown
-parameters die.
+C<accent_color>, C<focus_background_color>, the other Box parameters)
+and the ones below. Unknown parameters die.
 
 =over
 
@@ -410,14 +415,15 @@ value.
 =item C<show_value>
 
 A boolean, stored as 1 or 0. Default: 1. Whether the value is shown
-right of the track.
+right of the track. A reference dies.
 
 =item C<value_format>
 
 How the value is shown: a C<sprintf> format string such as C<'%d%%'> or
 C<'%.1f C'>, or a code reference that gets the value and returns the
 text. Default: C<undef>, which shows the value with as many decimal
-places as the C<step> has. The label is as wide as the widest of the
+places as the C<step> or C<min> has, whichever has more. Anything other
+than a string, a code reference or C<undef> dies. The label is as wide as the widest of the
 lowest value, the highest reachable value and the current value, so the
 track keeps its length while the value changes.
 
@@ -530,7 +536,9 @@ one.
 	$slider->show_value(0);
 
 Accessor for the C<show_value> parameter. Returns 1 or 0, also for a
-value passed to C<new>. Writing marks the input changed. Any value is accepted.
+value passed to C<new>. Writing marks the input changed and returns the
+new value. Any plain value is accepted as a boolean; a reference dies
+and leaves the setting unchanged.
 
 =head2 value_format
 
@@ -624,7 +632,9 @@ do nothing.
 =item Wheel
 
 Each notch moves the value by one C<step>: up increases, down
-decreases.
+decreases. A notch that cannot move the value (down at C<min>, up at
+the highest reachable value) is not used: inside a
+L<Term::Fabulous::Widget::ScrollBox> it scrolls the scroll box instead.
 
 =back
 
@@ -688,6 +698,7 @@ works although the default C<max> is 100.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the slider section of the forms guide|Term::Fabulous::Manual::Forms/Sliders>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
 =cut

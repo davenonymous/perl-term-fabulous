@@ -15,11 +15,11 @@ use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my @tasks = (
-	{ id => 1, done => 1, task => 'Order new monitors',      due => '2026-06-02', hours => 1, note => 'Two 27 inch' },
-	{ id => 2, done => 0, task => 'Review the pull request', due => '2026-06-03', hours => 2, note => '' },
-	{ id => 3, done => 0, task => 'Write the release notes', due => '2026-06-05', hours => 3, note => 'Ask Grace' },
-	{ id => 4, done => 1, task => 'Book the meeting room',   due => '2026-06-01', hours => 1, note => '' },
-	{ id => 5, done => 0, task => 'Update the test server',  due => '2026-06-08', hours => 4, note => 'After 18:00' },
+	{ id => 1, done => 1, task => 'Order new monitors',  due => '2026-06-02', hours => 1, note => 'Two 27 inch' },
+	{ id => 2, done => 0, task => 'Review pull request', due => '2026-06-03', hours => 2, note => '' },
+	{ id => 3, done => 0, task => 'Write release notes', due => '2026-06-05', hours => 3, note => 'Ask Grace' },
+	{ id => 4, done => 1, task => 'Book meeting room',   due => '2026-06-01', hours => 1, note => '' },
+	{ id => 5, done => 0, task => 'Update test server',  due => '2026-06-08', hours => 4, note => 'After 18:00' },
 );
 my $next_id = @tasks + 1;
 
@@ -93,7 +93,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );
 my $help   = Term::Fabulous::Widget::Text->new(
-	text       => 'a: add a task   Delete: remove the selected tasks   h: one more hour   n: notes',
+	text       => 'a: add a task   Delete: remove selected tasks   h: one more hour   n: notes',
 	text_color => [ 110, 120, 140, 255 ],
 );
 $root->add_child( $table, $status, $help );

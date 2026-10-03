@@ -52,9 +52,11 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		$pty->slave->set_winsize( $job{rows}, $job{columns} ) or croak "Term::Fabulous::Screenshot::Runner: cannot set the terminal size: $!";
 		pipe( my $error_reader, my $error_writer ) or croak "Term::Fabulous::Screenshot::Runner: pipe failed: $!";
 
+		my $shell  = $job{shell} // [];
 		my $config = {
 			epoch        => $job{epoch},
 			steps        => $job{steps},
+			shell        => $shell,
 			input_fd     => fileno($pty),
 			capture_file => $capture_file,
 		};
@@ -78,7 +80,8 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		local $SIG{INT}  = $stop_program;
 		local $SIG{TERM} = $stop_program;
 		local $SIG{HUP}  = $stop_program;
-		my ( $status, $output, $errors ) = $self->_wait_for( $pid, $pty, $error_reader, $job{script} );
+		my @cursor = ( @$shell < $job{rows} ? scalar @$shell : $job{rows} - 1, 0 );    # below the shell's lines
+		my ( $status, $output, $errors ) = $self->_wait_for( $pid, $pty, $error_reader, $job{script}, \@cursor );
 
 		my $command_line = join ' ', 'perl', $job{script}, @{ $job{arguments} // [] };
 		croak "Term::Fabulous::Screenshot::Runner: '$command_line' wrote to STDERR:\n$errors" if length $errors;
@@ -128,15 +131,19 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 	}
 
 	# Reads the terminal's output and the program's STDERR until the
-	# program ends, so the program never blocks writing to either.
-	method _wait_for ( $pid, $pty, $error_reader, $name ) {
+	# program ends, so the program never blocks writing to either, and
+	# answers the cursor position queries in the output. $cursor is the
+	# [ row, column ] the cursor starts at.
+	method _wait_for ( $pid, $pty, $error_reader, $name, $cursor ) {
 		my %buffer_of = ( $pty => '', $error_reader => '' );
 		my $select    = IO::Select->new( $pty, $error_reader );
 		my $deadline  = Time::HiRes::time() + $timeout;
+		my $scanned   = 0;    # the output before this offset holds no unanswered query
 		my $status;
 
 		while (1) {
 			_read_ready( $select, \%buffer_of, POLL_SECONDS );
+			_answer_cursor_queries( $pty, \$buffer_of{$pty}, \$scanned, $cursor );
 			my $reaped = waitpid( $pid, WNOHANG );
 			if ( $reaped == $pid ) {
 				$status = $?;
@@ -151,6 +158,25 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		# Whatever is left in the pipes was written before the program ended.
 		1 while $select->count && _read_ready( $select, \%buffer_of, 0 );
 		return ( $status, $buffer_of{$pty}, $buffer_of{$error_reader} );
+	}
+
+	# Answers each cursor position query (ESC [ 6 n, which inline mode
+	# sends) with where the cursor is, as a terminal does. The cursor is
+	# followed through absolute moves (ESC [ row ; column H) only, which is
+	# how termbox2 and inline mode place it; a sequence the output has not
+	# completed yet is found on a later call.
+	sub _answer_cursor_queries ( $pty, $output, $scanned, $cursor ) {
+		pos($$output) = $$scanned;
+		while ( $$output =~ /\e\[(?:(6n)|([0-9]*)(?:;([0-9]*))?H)/g ) {
+			$$scanned = pos $$output;
+			if ( !defined $1 ) {
+				@$cursor = map { ( $_ || 1 ) - 1 } $2, $3;
+				next;
+			}
+			my $answer = sprintf "\e[%d;%dR", $cursor->[0] + 1, $cursor->[1] + 1;
+			defined syswrite( $pty, $answer ) or croak "Term::Fabulous::Screenshot::Runner: cannot answer the cursor position query: $!";
+		}
+		return;
 	}
 
 	# Kills the program and every process it started (its session is a
@@ -233,6 +259,14 @@ would show it.
 
 =back
 
+The runner also plays the part of the terminal where a program asks it
+something: it answers the cursor position query C<ESC [ 6 n> that
+L<Term::Fabulous/INLINE MODE> sends, so inline programs can be captured.
+The cursor starts on the row below the C<shell> lines (see L</capture>)
+and follows the absolute cursor moves (C<ESC [ row ; column H>) in the
+program's output. Other questions (such as the kitty keyboard protocol
+query) get no answer, as from a terminal that does not know them.
+
 The capture dies when the program writes anything to STDERR (warnings
 included), ends with a non-zero exit status, ends before the screenshot
 was taken, runs longer than the timeout, or prints output that is not
@@ -281,6 +315,14 @@ The size of the terminal.
 =item C<epoch>
 
 The start time of the virtual clock, in epoch seconds.
+
+=item C<shell>
+
+An array reference of lines a shell printed before the program started.
+Optional. The cursor starts at the beginning of the row below them (on
+the last row when they fill the terminal), and the harness shows them
+above the program's inline region; see
+L<Term::Fabulous::Screenshot::Scenario/Settings>.
 
 =item C<steps>
 

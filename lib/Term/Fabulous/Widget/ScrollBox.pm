@@ -136,6 +136,13 @@ so the content may jump when you set it back to C<undef>.
 
 =head1 METHODS
 
+To read or set the scroll position of a ScrollBox from your program, for
+example to keep a log at its newest line, call the methods
+L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
+of the application object with the box. The recipe
+L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/"Scroll a ScrollBox from code (keep a log at the newest line)">
+shows them in a complete program.
+
 A ScrollBox has all methods of L<Term::Fabulous::Widget> plus these
 accessors (from L<Clay::UI::Role::Layout::HasScroll>):
 
@@ -143,8 +150,9 @@ accessors (from L<Clay::UI::Role::Layout::HasScroll>):
 
 	$box->vertical(0);
 
-Accessor. Without an argument it returns the stored value; with an
-argument it stores it (unchecked, treated as a boolean) and returns it.
+Accessor. Without an argument it returns the stored value, 1 or 0;
+with an argument it stores any true or false value as 1 or 0 and
+returns it. References die.
 The change shows in the next frame.
 
 =head2 horizontal
@@ -180,7 +188,7 @@ content does not move.
 =item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
 
 Fired for wheel notches and clicks over the box, like on any Box (see
-L<Term::Fabulous::Manual/MOUSE>). The scrolling does not depend on what
+L<Term::Fabulous::Manual::Events/MOUSE>). The scrolling does not depend on what
 your listeners return: a listener that stops the event from bubbling
 does not stop the scrolling. Only a call to
 L<Term::Fabulous::Event::Mouse/use_wheel> keeps a notch from scrolling
@@ -213,8 +221,8 @@ scrolls past a text area as soon as the text area shows its last rows.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/SCROLLING>,
-L<Term::Fabulous::Cookbook/Scroll a ScrollBox from code (keep a log at the newest line)>,
+L<Term::Fabulous::Manual::Events/SCROLLING>,
+L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
 L<Term::Fabulous::Widget::Box>, L<Clay::UI::Role::Layout::HasScroll>,
 the example program F<examples/scroll-box.pl>.
 

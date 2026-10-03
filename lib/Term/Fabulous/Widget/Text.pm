@@ -149,6 +149,8 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 
 =end html
 
+The program is F<examples/widgets/text.pl>.
+
 =head1 DESCRIPTION
 
 A Text widget shows text inside its parent widget, usually a
@@ -162,7 +164,17 @@ border, padding or background. To give text a background, a border or
 a fixed size, put it in a Box. Text widgets do not receive mouse or key
 events: a click on text is delivered to the box behind it.
 
-The class is built on L<Clay::UI::Text>.
+F<examples/text-features.pl> shows the wrap modes, line height, bold,
+italic and underlined text, wide characters and control characters:
+
+=begin html
+
+<p><img src="/screenshots/example-text-features.svg" alt="Text wrapped at spaces in a narrow panel and text broken only at newlines; a two-line text with line height 2; plain, bold, italic, underlined and combined styles; Latin, Japanese, emoji and combining accents ending in the same column; a tab shown as a space and control characters shown as replacement characters"></p>
+
+=end html
+
+L<The text section of the looks guide|Term::Fabulous::Manual::Looks/TEXT>
+explains all of this with examples. The class is built on L<Clay::UI::Text>.
 
 =head1 CONSTRUCTOR
 
@@ -182,22 +194,30 @@ A character string, like all text in Term::Fabulous. Default: C<''>.
 Bytes read from a file, a command or a socket must be decoded first
 with C<Encode::decode('UTF-8', $bytes)>; otherwise each byte is shown
 as one Latin-1 character. Text read from a KDL layout is used as is.
-See L<Term::Fabulous::Manual/Text is character strings>.
+See L<Term::Fabulous::Manual::Looks/Text is character strings>.
 
 Control characters are never sent to the terminal: a TAB is shown as
-one space and every other control character as U+FFFD. Wide characters
-(most CJK characters and emoji) take two cells.
+one space and every other control character, a carriage return
+included, as U+FFFD (see L<Term::Fabulous::Manual::Looks/Control characters>).
+Wide characters (most CJK characters and emoji) take two cells (see
+L<Term::Fabulous::Manual::Looks/Wide characters and emoji>). C<undef>
+and references die.
 
 =item C<text_color>
 
 The color of the characters, in any format L<Term::Fabulous::Color>
 accepts: C<[r, g, b, a]> (or C<[r, g, b]>), C<{ r, g, b, a }>, a string
-such as C<'#ffffff'> or C<'rgb(255, 255, 255)'>, or a
-Term::Fabulous::Color object; it is stored as C<[r, g, b, a]>. Default:
+such as C<'#ffffff'> or C<'rgb(255, 255, 255)'>, a packed C<0xRRGGBB>
+integer, or a Term::Fabulous::Color object such as an item of
+L<Term::Fabulous::Enum::WebColor>; it is stored as C<[r, g, b, a]>. An
+alpha from 1 to 254 is drawn opaque. Default:
 C<[0, 0, 0, 255]>, opaque black, which is invisible on a dark
 background; you will almost always want to set it. Pass
 C<[0, 0, 0, 0]> (alpha 0) for the terminal's default foreground color.
-See L<Term::Fabulous::Manual/COLORS>.
+See L<Term::Fabulous::Manual::Looks/COLORS>.
+
+Inside a disabled L<Term::Fabulous::Widget::Button>, the text is drawn
+in the button's C<disabled_color> instead, whatever its C<text_color>.
 
 =item C<bold>
 
@@ -209,6 +229,8 @@ Booleans, default 0: draw the characters bold, italic or underlined.
 Any true or false value; references die. Terminals show these styles
 with the font they have, so a font without an italic face may show
 italic text upright. They take no space and do not change the layout.
+These three are the only text styles. See
+L<Term::Fabulous::Manual::Looks/Bold, italic and underline>.
 
 =item C<id>
 
@@ -217,23 +239,24 @@ Text in a tree built from a layout). Default: none. Unlike a Box's id,
 it is not passed to Clay and does not need to be unique, and
 L<Term::Fabulous::Widget/remove_child> does not remove Text widgets by
 id. Read it with C<< $text->id >>; there is no writer.
-L<Term::Fabulous::Widget/find_by_id> finds Text widgets by this id.
+L<C<find_by_id>|Term::Fabulous::Widget/find_by_id> finds Text widgets by this id.
 
 =item C<wrap_mode>
 
 How lines are broken, one of the L<Clay::XS> constants:
 C<CLAY_TEXT_WRAP_WORDS> (the default: break at C<"\n"> and, where the
 text does not fit, at spaces), C<CLAY_TEXT_WRAP_NEWLINES> (break only
-at C<"\n">) and C<CLAY_TEXT_WRAP_NONE> (in this version the same as
-C<CLAY_TEXT_WRAP_NEWLINES>). A line
+at C<"\n">) and C<CLAY_TEXT_WRAP_NONE> (the same as C<CLAY_TEXT_WRAP_NEWLINES>, because
+Clay lays out both alike). A line
 that is not broken may be wider than the parent; it is cut off at the
 right edge of the terminal.
 
-With every mode, a single word that is wider than the space available
-is never broken: it runs past the right edge of its parent and is cut
+With every mode, only spaces are break points: a single word that is
+wider than the space available, or text without spaces such as a
+Japanese sentence, is never broken: it runs past the right edge of its parent and is cut
 off only at the edge of the terminal or of an enclosing
 L<Term::Fabulous::Widget::ScrollBox>. See
-L<Term::Fabulous::Manual/Wrapping>.
+L<Term::Fabulous::Manual::Looks/Wrapping>.
 
 =item C<text_alignment>
 
@@ -247,8 +270,10 @@ L<Term::Fabulous::Widget/new>).
 =item C<line_height>
 
 The number of rows each line takes, an integer from 0 to 65535; other
-values (such as C<1.5>) die. Default: 0, which means one row. With
-C<2>, an empty row follows every line.
+values (such as C<1.5>) die. Default: 0, which means one row, like 1.
+A line is drawn in the middle row of its rows (the upper middle row
+when the number is even), so with C<2> an empty row follows every line.
+See L<Term::Fabulous::Manual::Looks/Line height>.
 
 =item C<font_id>
 
@@ -256,11 +281,10 @@ C<2>, an empty row follows every line.
 
 =item C<letter_spacing>
 
-Accepted because Clay::UI supports them, but meaningless in a terminal:
-every character is drawn in the terminal's font. C<font_id> and
-C<font_size> have no effect. Do not set C<letter_spacing>: Clay uses it
-when it decides where to wrap lines, but no spacing is drawn, so lines
-wrap too early.
+Accepted because Clay::UI supports them, but without effect in a
+terminal: every character is drawn in the terminal's font, one
+character per cell. Each is an integer from 0 to 65535; other values
+die. Defaults: C<font_id> 0, C<font_size> 16, C<letter_spacing> 0.
 
 =back
 
@@ -359,8 +383,7 @@ like the constructor parameter. The change shows in the next frame.
 
 Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
-like the constructor parameter. The change shows in the next frame. It
-has no visible effect in a terminal.
+like the constructor parameter. It has no effect in a terminal.
 
 =head2 font_size
 
@@ -368,8 +391,8 @@ has no visible effect in a terminal.
 
 Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
-like the constructor parameter. The change shows in the next frame. It
-has no visible effect in a terminal; the default is 16.
+like the constructor parameter. It has no effect in a terminal; the
+default is 16.
 
 =head2 letter_spacing
 
@@ -377,9 +400,7 @@ has no visible effect in a terminal; the default is 16.
 
 Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
-like the constructor parameter. The change shows in the next frame. Do
-not set it to anything but 0: it makes Clay wrap lines too early, and no
-spacing is drawn.
+like the constructor parameter. It has no effect in a terminal.
 
 =head1 KDL PROPERTIES
 
@@ -435,7 +456,8 @@ the C<text_alignment> parameter of L</new>.
 
 =item C<letter_spacing N>
 
-One number each; see L</new> for their (lack of) meaning.
+One integer each; see L</new>. C<font_id>, C<font_size> and
+C<letter_spacing> have no effect in a terminal.
 
 =back
 
@@ -461,7 +483,9 @@ L</KDL PROPERTIES>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/TEXT>, L<Term::Fabulous::Widget::Box>,
-L<Term::Fabulous::Unicode>, L<Clay::UI::Text>.
+L<Term::Fabulous::Manual::Looks/TEXT>, L<Term::Fabulous::Widget::Box>,
+L<Term::Fabulous::Unicode>, L<Clay::UI::Text>,
+L<Term::Fabulous::Cookbook::GettingStarted/Wrap, align and space text>,
+L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, combining accents)>.
 
 =cut

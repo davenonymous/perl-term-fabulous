@@ -264,7 +264,7 @@ my $ui = Term::Fabulous->new( width => 100, height => 30, root => $root );
 my $loop = IO::Async::Loop->new;
 
 # Keeps the newest line in view (see "Scroll a ScrollBox from code" in
-# Term::Fabulous::Cookbook): the content height is known only after the
+# Term::Fabulous::Cookbook::LiveData): the content height is known only after the
 # frame that lays out a new line.
 my $log_id = Clay::XS::Clay_GetElementId('log');
 

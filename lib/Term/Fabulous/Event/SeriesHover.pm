@@ -58,8 +58,17 @@ Charts have no tooltips; this event tells your program what the pointer
 is on, so it can show the details its own way, for example in a status
 line next to the chart.
 
-Moving within the same point fires nothing. A chart with
+Moving within the same point fires nothing. When the pointer moves off
+the series, leaves the chart, or the program turns hover off with
+C<< $chart->hover(0) >> while the pointer is on a series, the chart
+fires one event without a series. A chart with
 C<< hover =E<gt> 0 >> fires no C<SeriesHover> events.
+C<< $chart->hovered >> returns the defined values of the last event as
+a hash reference (C<undef> before the first event).
+
+The recipe
+L<Term::Fabulous::Cookbook::ChartStyles/Show details of the point under the pointer (SeriesHover, highlight)>
+shows the details in a status line.
 
 It is a L<Clay::UI::Events::Event> whose name is C<SeriesHover>; it
 bubbles to the chart's ancestors, and C<< $event->target >> is the chart.
@@ -85,30 +94,34 @@ chart's series (the event then has no other values either).
 
 The number of the data point under the pointer (from 0, in the order of
 the series' data after its C<transform>), the category of a bar, the
-number of a slice, or the number of the axis in a radar chart. On a line
-or an area it is the point (or the axis) nearest to the pointer. C<undef>
-on a legend entry.
+number of a histogram bin, the position of a slice among the slices as
+drawn (after sorting and folding into C<Other>), or the number of the
+axis in a radar chart. On a line or an area it is the point (or the
+axis) nearest to the pointer. C<undef> on a legend entry.
 
 =head2 label
 
 What the point is called: its category label, its x value as the axis
-writes it, the radar axis label or the slice label. On a legend entry,
+writes it, the range of a histogram bin, the radar axis label or the
+slice label. On a legend entry,
 the entry's text: the series name or the slice label.
 
 =head2 value
 
-The value of the point: its y value (not the stacked total), or the
-slice's value. On a legend entry C<undef>, except for a slice's legend
+The value of the point: its y value (not the stacked total), the height
+of a histogram bar in the chart's measure, or the slice's value. On a legend entry C<undef>, except for a slice's legend
 entry, which carries the slice's value.
 
 =head2 x
 
 The x value of the point as a number: the category number, the number on
-a numeric axis, epoch seconds on a time axis. C<undef> for slices, radar
+a numeric axis, epoch seconds on a time axis, the middle of a histogram
+bin. C<undef> for slices, radar
 charts and legend entries.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Chart/Hover and emphasis>,
+L<Term::Fabulous::Manual::Charts/CHARTS>, L<Term::Fabulous::Manual::Events/EVENTS>.
 
 =cut

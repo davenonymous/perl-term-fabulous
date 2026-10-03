@@ -34,8 +34,9 @@ Term::Fabulous::Event::Activate - The user activated a button
 
 A L<Term::Fabulous::Widget::Button> fires C<Activate> on itself when
 the user activates it, whichever way: a click (the left mouse button
-pressed and released over the button) or C<Enter> or C<Space> while
-the button has the keyboard focus. Listen for it instead of
+pressed and released over the button), or C<Enter> (also the keypad's
+Enter) or C<Space> without modifiers while the button has the keyboard
+focus. C<< $button->activate >> fires it from code. Listen for it instead of
 C<OnRelease> and C<KeyPress> when the action is the same for the mouse
 and the keyboard, which it nearly always is.
 
@@ -54,7 +55,8 @@ L<Clay::UI::Events::Event> are accepted.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Button>, L<Term::Fabulous::Manual/Clicks, hover and press>,
-L<Clay::UI::Events::Event>.
+L<Term::Fabulous::Widget::Button>, L<Term::Fabulous::Manual::Events/Clicks, hover and press>,
+L<Clay::UI::Events::Event>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Add buttons for the mouse and the keyboard (Button)>.
 
 =cut

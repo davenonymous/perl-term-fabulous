@@ -37,6 +37,11 @@ screenshot "overview" {
 
 // --- examples/ -------------------------------------------------------------
 
+screenshot "example-border-options" {
+	script "examples/border-options.pl"
+	size 80 16
+}
+
 screenshot "example-border-showcase" {
 	script "examples/border-showcase.pl"
 	size 100 32
@@ -60,11 +65,33 @@ screenshot "example-canvas" {
 	}
 }
 
+screenshot "example-chart-gallery" {
+	script "examples/chart-gallery.pl"
+	size 120 40
+}
+
+screenshot "example-colors" {
+	script "examples/colors.pl"
+	size 80 13
+}
+
 screenshot "example-custom-widget" {
 	script "examples/custom-widget.pl"
 	size 80 11
 	steps {
 		key "Tab" "Space"
+	}
+}
+
+screenshot "example-event-monitor" {
+	script "examples/event-monitor.pl"
+	size 92 25
+	steps {
+		key "Tab"
+		type "Ada"
+		key "Enter" "F5" "Tab"
+		click 4 9
+		move 40 23
 	}
 }
 
@@ -93,6 +120,39 @@ screenshot "example-kdl-form" {
 		type "cobol"
 		key "Tab" "Right" "Tab" "Tab" "Right" "Right" "Tab" "Space" "F2"
 	}
+}
+
+screenshot "example-kdl-layout" {
+	script "examples/kdl-layout.pl"
+	size 72 14
+	steps {
+		key "Tab" "Tab" "Enter"
+	}
+}
+
+screenshot "example-layout-alignment" {
+	script "examples/layout-alignment.pl"
+	size 80 19
+}
+
+screenshot "example-layout-direction" {
+	script "examples/layout-direction.pl"
+	size 72 18
+}
+
+screenshot "example-layout-floating" {
+	script "examples/layout-floating.pl"
+	size 60 14
+}
+
+screenshot "example-layout-padding" {
+	script "examples/layout-padding.pl"
+	size 80 11
+}
+
+screenshot "example-layout-sizing" {
+	script "examples/layout-sizing.pl"
+	size 76 17
 }
 
 screenshot "example-pixel-paint" {
@@ -139,6 +199,20 @@ screenshot "example-table-files" {
 	}
 }
 
+screenshot "example-table-files-scrolling" {
+	script "examples/table-files.pl"
+	size 90 20
+	steps {
+		key "e"
+		key "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down" "Down"
+	}
+}
+
+screenshot "example-text-features" {
+	script "examples/text-features.pl"
+	size 80 21
+}
+
 screenshot "example-text-sizing" {
 	script "examples/text-sizing.pl"
 	size 100 13
@@ -164,9 +238,19 @@ screenshot "cookbook-minimal-program" {
 	size 72 5
 }
 
+screenshot "cookbook-first-program" {
+	script "examples-cookbook/first-program.pl"
+	size 60 9
+}
+
 screenshot "cookbook-non-ascii-text" {
 	script "examples-cookbook/non-ascii-text.pl"
 	size 52 4
+}
+
+screenshot "cookbook-wrap-and-align-text" {
+	script "examples-cookbook/wrap-and-align-text.pl"
+	size 80 17
 }
 
 screenshot "cookbook-key-bindings" {
@@ -232,6 +316,15 @@ screenshot "cookbook-login-form" {
 	}
 }
 
+screenshot "cookbook-inline-prompt" {
+	script "examples-cookbook/inline-prompt.pl"
+	size 80 7
+	shell "$ ls" "notes.txt  report.csv  todo.md" "$ perl examples-cookbook/inline-prompt.pl"
+	steps {
+		type "Ada Lovelace"
+	}
+}
+
 screenshot "cookbook-confirm-dialog" {
 	script "examples-cookbook/confirm-dialog.pl"
 	size 72 14
@@ -265,6 +358,22 @@ screenshot "cookbook-focus-help-line" {
 	}
 }
 
+screenshot "cookbook-tab-order" {
+	script "examples-cookbook/tab-order.pl"
+	size 48 3
+	steps {
+		key "Tab"
+		type "1 Main St"
+		key "Tab"
+		type "12345"
+	}
+}
+
+screenshot "cookbook-width-group" {
+	script "examples-cookbook/width-group.pl"
+	size 48 4
+}
+
 screenshot "cookbook-border-sides" {
 	script "examples-cookbook/border-sides.pl"
 	size 52 10
@@ -279,9 +388,19 @@ screenshot "cookbook-theme-switch" {
 	}
 }
 
+screenshot "cookbook-states-and-classes" {
+	script "examples-cookbook/states-and-classes.pl"
+	size 72 9
+}
+
 screenshot "cookbook-resize-aware-layout" {
 	script "examples-cookbook/resize-aware-layout.pl"
 	size 80 8
+}
+
+screenshot "cookbook-resize-aware-layout-narrow" {
+	script "examples-cookbook/resize-aware-layout.pl"
+	size 60 10
 }
 
 screenshot "cookbook-pixel-canvas-plot" {
@@ -360,7 +479,7 @@ screenshot "cookbook-table-tree" {
 
 screenshot "cookbook-table-edit" {
 	script "examples-cookbook/table-edit.pl"
-	size 92 16
+	size 80 16
 	steps {
 		key "n" "Space" "Down" "Down" "Space" "a"
 		click 11 5
@@ -408,6 +527,16 @@ screenshot "cookbook-table-colors" {
 	steps {
 		key "Down" "Down"
 	}
+}
+
+screenshot "cookbook-table-widths" {
+	script "examples-cookbook/table-widths.pl"
+	size 110 17
+}
+
+screenshot "cookbook-table-line-styles" {
+	script "examples-cookbook/table-line-styles.pl"
+	size 76 29
 }
 
 screenshot "cookbook-chart-line" {
@@ -478,9 +607,14 @@ screenshot "cookbook-chart-styles" {
 	size 100 32
 }
 
+screenshot "cookbook-chart-options" {
+	script "examples-cookbook/chart-options.pl"
+	size 100 30
+}
+
 screenshot "cookbook-chart-colors" {
 	script "examples-cookbook/chart-colors.pl"
-	size 100 20
+	size 100 22
 }
 
 screenshot "cookbook-chart-hover" {
@@ -554,6 +688,7 @@ screenshot "widget-text-field" {
 	size 64 9
 	steps {
 		type "Ada Lovelace"
+		key "Ctrl+Shift+Left"
 	}
 }
 
@@ -564,7 +699,7 @@ screenshot "widget-text-area" {
 
 screenshot "widget-dialog" {
 	script "examples/widgets/dialog.pl"
-	size 72 12
+	size 72 14
 }
 
 screenshot "widget-table" {
@@ -626,4 +761,24 @@ screenshot "widget-polar-area-chart" {
 screenshot "widget-radar-chart" {
 	script "examples/widgets/radar-chart.pl"
 	size 76 22
+}
+
+screenshot "widget-chart" {
+	script "examples/widgets/chart.pl"
+	size 100 32
+}
+
+screenshot "widget-pie-chart-styles" {
+	script "examples/widgets/pie-chart-styles.pl"
+	size 90 32
+}
+
+screenshot "widget-donut-chart-centers" {
+	script "examples/widgets/donut-chart-centers.pl"
+	size 100 22
+}
+
+screenshot "widget-histogram-measures" {
+	script "examples/widgets/histogram-measures.pl"
+	size 100 30
 }

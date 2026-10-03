@@ -365,14 +365,19 @@ Term::Fabulous::Widget::Canvas - A widget you draw on cell by cell
 
 =end html
 
+F<examples/canvas.pl> animates three waves on a canvas and redraws only
+the cells that change.
+
 =head1 DESCRIPTION
 
 A Canvas is a L<Term::Fabulous::Widget::Box> that holds a grid of
 cells you fill yourself: any character (more exactly, any grapheme
 cluster) in any foreground and background color at any cell. Use it for
-charts, plots, games, images made of half blocks (see
+plots, maps, games, images made of half blocks (see
 L<Term::Fabulous::Widget::PixelCanvas>) and anything else that is not
-made of boxes and text.
+made of boxes and text. For charts of data, the chart widgets
+(L<Term::Fabulous::Widget::Chart> and its subclasses) are canvases that
+draw themselves.
 
 The cells are drawn inside the canvas's content box, that is the
 canvas without its border and padding. A Canvas has every parameter of
@@ -595,15 +600,22 @@ listener; anything drawn in it appears in the same frame.
 
 =item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
 
-Fired for mouse input over the canvas, including over its unset cells.
-Use L</cell_at> to find the cell.
+Fired for mouse buttons and the wheel over the canvas, including over its
+unset cells. Use L</cell_at> to find the cell.
+
+=item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
+
+Fired when the pointer moves over the canvas with no button held. It
+has C<x> and C<y> like a C<Mouse> event, so L</cell_at> takes it too.
 
 =back
 
 =head1 MOUSE
 
 A Canvas does nothing with the mouse by itself; listen for C<Mouse>
-events and use L</cell_at>.
+(and C<MouseMove>) events and use L</cell_at>. The recipe
+L<Term::Fabulous::Cookbook::Canvases/Paint with the mouse (Canvas, clicks and drags)>
+paints with clicks and drags.
 
 =head1 KDL PROPERTIES
 
@@ -640,6 +652,11 @@ A bar chart that is redrawn whenever the canvas changes size:
 		return;
 	}
 	$chart->on( CanvasResize => sub ($event) { draw_chart(); return } );
+
+Call C<draw_chart()> again whenever C<@values> changes; the next frame
+shows the new bars. Complete programs are in
+L<Term::Fabulous::Cookbook::Canvases>; for real charts, see
+L<Term::Fabulous::Widget::BarChart>.
 
 =head1 SUBCLASS INTERFACE
 
@@ -721,8 +738,10 @@ C<[ $cluster, $columns, $base_character, @combining_characters ]>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::PixelCanvas>, L<Term::Fabulous::Manual/CANVASES>,
+L<Term::Fabulous::Manual::Charts/CANVASES> (the guide),
+L<Term::Fabulous::Widget::PixelCanvas>,
 L<Term::Fabulous::Event::CanvasResize>, L<Term::Fabulous::Render::Canvas>,
-the example program F<examples/canvas.pl>.
+L<Term::Fabulous::Cookbook::Canvases>, the example program
+F<examples/canvas.pl>.
 
 =cut

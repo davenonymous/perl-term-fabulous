@@ -104,7 +104,61 @@ hides the column at once. C<Tab> and C<Shift+Tab> move between the
 check boxes. C<Escape> closes it, and so does moving the focus out of
 it (C<Tab> past the last check box, a click elsewhere). The table opens it (see
 L<Term::Fabulous::Widget::Table/open_column_chooser>) and focuses its
-first check box.
+first check box. The user opens it with C<c> on the column titles or a
+right click on a title.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-columns.svg" alt="A staff table with the column chooser open over its top right corner: City unchecked, E-mail checked, and the status line with the columns to save"></p>
+
+=end html
+
+It shows the title C<Columns>, one check box per column (labeled with
+the column's title, or its key when the title is empty) and the hint
+C<Esc closes>. The table draws it on its C<group_background_color> with
+a round frame in its C<text_color>, and fires
+L<Term::Fabulous::Event::ColumnsChange> for every column the user shows
+or hides. See
+L<Term::Fabulous::Manual::Tables/Choosing the visible columns> and the
+recipe
+L<Term::Fabulous::Cookbook::Tables/Let the user choose the visible columns (column chooser)>.
+
+=head1 CONSTRUCTOR
+
+	my $chooser = Term::Fabulous::Widget::Table::ColumnChooser->new(
+		columns   => [ [ name => 'Name', 1 ], [ email => 'E-mail', 0 ] ],
+		on_toggle => sub ( $key, $visible ) { ... },
+		on_close  => sub () { ... },
+	);
+
+The table makes the chooser itself. It is a
+L<Term::Fabulous::Widget::Box> that floats over the top right corner of
+its parent; the parameters of a Box (colors, border) work too. Unknown
+parameters die.
+
+=over
+
+=item C<columns>
+
+Required. An array reference with one C<[ $key, $title, $visible ]>
+entry per column, in order.
+
+=item C<on_toggle>
+
+Required. A code reference, called with the column key and the new
+state (1 shown, 0 hidden) when the user checks or unchecks a box.
+
+=item C<on_close>
+
+Required. A code reference, called when the user presses C<Escape> or
+the focus leaves the chooser. It must remove the chooser.
+
+=item C<text_color>
+
+The color of the title and the check boxes. Default:
+C<[220, 223, 228, 255]>.
+
+=back
 
 =head1 METHODS
 
@@ -118,6 +172,6 @@ Gives the focus to the first check box.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table/In the column chooser>.
 
 =cut

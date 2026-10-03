@@ -190,7 +190,7 @@ that the labels do not touch.
 
 =item C<cells>
 
-The cells the axis has; required.
+The cells the axis has, a positive integer; required.
 
 =item C<extent>
 
@@ -199,7 +199,8 @@ axis then shows 0 to 1).
 
 =item C<min>, C<max>
 
-Fixed ends of the domain. A fixed end is not rounded.
+Fixed ends of the domain. A fixed end is not rounded. C<min> must be
+less than C<max>, or C<fit> dies.
 
 =item C<zero>
 
@@ -228,7 +229,9 @@ The number of ticks wanted; the closest fitting choice wins.
 
 =item C<integer>
 
-True when all values are whole numbers: no ticks between them.
+True when all values are whole numbers: no ticks less than 1 apart
+(and no steps of 2.5 below 25), so no tick lies between two whole
+numbers.
 
 =item C<nice>
 

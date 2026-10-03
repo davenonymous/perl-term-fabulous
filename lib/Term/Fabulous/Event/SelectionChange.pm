@@ -69,13 +69,14 @@ It fires only when the selection changed, after the
 L<Term::Fabulous::Event::CursorMove> the same action causes. Changes
 your program makes (C<select>, C<deselect>, C<set_selection>, ...) fire
 nothing, and neither do rows leaving the selection because they were
-removed.
+removed. Selection modes are explained in
+L<Term::Fabulous::Manual::TableRows/Selection>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<SelectionChange>;
 listen for it with
 C<< $table->on( SelectionChange => sub ($event) { ... } ) >>. It
 bubbles to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -85,8 +86,9 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::SelectionChange->new( selected_ids => ..., added_ids => ..., removed_ids => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a C<selected_ids>,
+C<added_ids> or C<removed_ids> that is missing or not an array
+reference; they are copied.
 
 =over
 
@@ -121,6 +123,7 @@ The ids that were deselected by this change (a new array reference).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Tables/Show a list of hashes in a table (sort, select, open a row)>.
 
 =cut

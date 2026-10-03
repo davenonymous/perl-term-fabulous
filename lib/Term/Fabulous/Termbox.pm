@@ -259,6 +259,12 @@ a full redraw on the next C<tb_present>.
 
 =head3 tb_set_cursor, tb_hide_cursor
 
+	tb_set_cursor( $x, $y );
+	tb_hide_cursor();
+
+Show the terminal cursor at cell (C<$x>, C<$y>), or hide it. Both return
+C<TB_OK> or an error code; the change shows with the next C<tb_present>.
+
 =head3 tb_set_cell
 
 	tb_set_cell( $x, $y, $character, $fg, $bg );

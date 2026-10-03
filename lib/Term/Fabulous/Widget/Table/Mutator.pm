@@ -176,6 +176,7 @@ Term::Fabulous::Widget::Table::Mutator - Ready-made mutators for table columns
 
 =head1 SYNOPSIS
 
+	use Term::Fabulous::Widget::Table;
 	use Term::Fabulous::Widget::Table::Mutator qw(datetime number bytes boolean lookup truncate);
 
 	my $table = Term::Fabulous::Widget::Table->new(
@@ -259,7 +260,8 @@ L</number>).
 
 A size in bytes with a unit: B, KiB, MiB, GiB, ... (steps of 1024), or
 with C<< binary => 0 >> B, kB, MB, GB, ... (steps of 1000). Option
-C<decimals>, default 1; sizes below one step are shown as whole bytes.
+C<decimals>, default 1; sizes below one step are shown as they are,
+with the unit B (C<512 B>).
 
 =head2 duration
 
@@ -329,6 +331,8 @@ changes, and once per cell otherwise: the table keeps the results.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Column>,
-L<Term::Fabulous::Widget::Table::Value>.
+L<Term::Fabulous::Widget::Table::Value>,
+L<Term::Fabulous::Manual::Tables/DISPLAY TEXT AND MUTATORS>,
+L<Term::Fabulous::Cookbook::Tables/Format cells: dates, numbers, sizes and flags (mutators)>.
 
 =cut

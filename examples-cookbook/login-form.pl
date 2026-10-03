@@ -39,7 +39,7 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
 	return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 }
 
-my $user    = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
+my $user     = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
 my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password',  layout => { sizing => { width => sizing_grow() } }, mask => '*' );
 my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
 my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );

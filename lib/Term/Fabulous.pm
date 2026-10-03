@@ -508,6 +508,9 @@ widgets, keyboard and mouse
 	$ui->interaction->set_focused_widget($name);
 	$ui->run;    # returns after Ctrl+C, SIGINT, SIGTERM or SIGHUP
 
+The picture shows F<examples/showcase.pl>, a demo program of the
+distribution (see L<Term::Fabulous::Examples>):
+
 =begin html
 
 <p><img src="/screenshots/overview.svg" alt="A Term::Fabulous program: a sign-up form with text fields, radio buttons, a dropdown, a slider, a check box and buttons, a chart of requests per second with a translucent notification, an event log and text in several scripts"></p>
@@ -518,8 +521,9 @@ widgets, keyboard and mouse
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
 describe the screen as a tree of widgets (boxes, text, buttons, input
-fields, tables, scrollable areas and canvases), in Perl code or in a layout file
-written in KDL, a small configuration language (L<https://kdl.dev>).
+fields, tables, charts, scrollable areas and canvases), in Perl code or
+in a layout file written in KDL, a small configuration language
+(L<https://kdl.dev>).
 Term::Fabulous sizes and positions the widgets with the Clay layout
 engine, draws them with 24-bit colors through the termbox2 library, and
 turns key presses, mouse clicks and terminal resizes into events your
@@ -558,7 +562,12 @@ C<SeriesHover> event, and palettes for dark and light backgrounds.
 =item *
 
 Keyboard focus with Tab and mouse clicks, readable key names for key
-bindings (C<Ctrl+S>, C<Shift+Left>), mouse wheel scrolling.
+bindings (C<Ctrl+S>, C<Shift+Left>), the kitty keyboard protocol for
+keys older terminals cannot tell apart, mouse wheel scrolling.
+
+=item *
+
+Dialogs that open over the screen and keep the keyboard focus inside.
 
 =item *
 
@@ -572,8 +581,19 @@ characters.
 
 =item *
 
+A prompt of a few rows below the shell's output instead of the whole
+screen (L</INLINE MODE>).
+
+=item *
+
 The same widget tree can be printed once as text (with or without
 colors) for reports and tests, through L<Term::Fabulous::Static>.
+
+=item *
+
+Whole programs can be tested without a terminal: a terminal in memory
+(L<Term::Fabulous::Terminal::Memory>) takes keys, clicks and resizes,
+and L</step> handles them as L</run> would.
 
 =item *
 
@@ -592,34 +612,52 @@ without an event loop.
 
 =head1 DOCUMENTATION
 
+The documentation has four parts. If you are new to Term::Fabulous,
+start with the manual's first page and its first program.
+
 =over
 
-=item L<Term::Fabulous::Manual>
+=item The manual: L<Term::Fabulous::Manual>
 
-The user guide. Start here: it explains layout, text, colors, events,
-the keyboard and the mouse, focus, forms, tables, KDL layout files, the event
-loop and writing your own widgets, with examples throughout. Its
-L<FEATURE INDEX|Term::Fabulous::Manual/FEATURE INDEX> maps tasks to the
-documentation.
+The user guide. Its first page introduces the library, shows a first
+program, lists the topic pages and ends with a
+L<FEATURE INDEX|Term::Fabulous::Manual/FEATURE INDEX> that maps tasks
+to the sections, recipes and class pages that describe them. The topic
+pages explain the concepts, with examples throughout:
+L<Term::Fabulous::Manual::Layout> (widgets, the widget tree and
+layout), L<Term::Fabulous::Manual::Looks> (text, colors, borders),
+L<Term::Fabulous::Manual::Events> (events, keyboard, focus, mouse,
+scrolling), L<Term::Fabulous::Manual::Forms> (input widgets),
+L<Term::Fabulous::Manual::Charts> (canvases and charts),
+L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>
+and L<Term::Fabulous::Manual::TableStyles> (the table widget),
+L<Term::Fabulous::Manual::KDL> (layout files),
+L<Term::Fabulous::Manual::Programs> (event loop, output without a
+terminal, testing), L<Term::Fabulous::Manual::CustomWidgets>,
+L<Term::Fabulous::Manual::Troubleshooting> and
+L<Term::Fabulous::Manual::Glossary>.
 
-=item L<Term::Fabulous::Cookbook>
+=item The cookbook: L<Term::Fabulous::Cookbook>
 
-Complete programs for common tasks.
+Recipes: complete, runnable programs for common tasks, each with a
+picture and notes on the lines that matter. Its first page lists every
+recipe; the recipes are on topic pages such as
+L<Term::Fabulous::Cookbook::GettingStarted>,
+L<Term::Fabulous::Cookbook::Forms>, L<Term::Fabulous::Cookbook::Tables>
+and L<Term::Fabulous::Cookbook::Charts>.
 
-=item This page
-
-The reference for C<new>, C<run> and the other methods of the
-application object.
-
-=item The module pages
-
-One page per class, listed under L</MODULES>.
-
-=item L<Term::Fabulous::Examples>
+=item The examples: L<Term::Fabulous::Examples>
 
 The example programs of the distribution, with a picture of each: demo
-programs, a gallery of the widgets and the complete programs of the
-cookbook. The picture above is F<examples/showcase.pl>.
+programs, a gallery with one program per widget, and the complete
+programs of the cookbook.
+
+=item The class pages
+
+One reference page per class, listed by purpose under L</MODULES>.
+This page is the reference of the application object: L</new>,
+L</run>, L</step> and the other methods, the events it fires, the keys
+it handles itself, inline mode and wheel scrolling.
 
 =back
 
@@ -652,10 +690,18 @@ add timers first. Unknown parameters die
 Required. The root widget, the top of the widget tree, usually a
 L<Term::Fabulous::Widget::Box>. It receives every event that no other
 widget receives: key presses while nothing has the focus, mouse events
-where no widget is drawn, and every C<Resize>. It must therefore be able
-to fire events (compose L<Clay::UI::Role::Events::Emitter>, as all
-Term::Fabulous widgets except Text do); otherwise C<new> dies. A widget
-that was ever attached to another widget cannot be the root.
+where no widget is drawn, and every C<Start> and C<Resize>. It must
+therefore be able to fire events (compose
+L<Clay::UI::Role::Events::Emitter>, as all Term::Fabulous widgets
+except Text do); otherwise C<new> dies
+(C<Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got ...>).
+The root must not have a parent (C<new> dies with
+C<Clay::UI: 'root' must not have a parent; ...>); a widget that was
+removed from its parent can be a root. A widget tree belongs to one
+application object (or L<Term::Fabulous::Static>) at a time: a second
+object with the same root dies with
+C<Clay::UI: 'root' is already the root of another Clay::UI>, as long as
+the first one exists.
 
 =item C<width>
 
@@ -682,7 +728,7 @@ Anything else dies
 
 A boolean. Default: 1, or 0 in inline mode. With 1, the terminal
 reports mouse clicks, drags, movement and the wheel to the program (see
-L<Term::Fabulous::Manual/MOUSE>). With 0, the terminal keeps the mouse
+L<Term::Fabulous::Manual::Events/MOUSE>). With 0, the terminal keeps the mouse
 for itself, so the user can select and copy text as usual, and no
 C<Mouse> or C<MouseMove> events are fired. Inline mode has no mouse
 support: C<mouse> with a true value and C<inline> together die.
@@ -710,7 +756,7 @@ Optional. The terminal to run on: an object composing
 L<Term::Fabulous::Role::Terminal>. Default: a new
 L<Term::Fabulous::Terminal::Termbox>, the real terminal. Pass a
 L<Term::Fabulous::Terminal::Memory> to test a program without a
-terminal (see L</step> and L<Term::Fabulous::Manual/TESTING>). Anything
+terminal (see L</step> and L<Term::Fabulous::Manual::Programs/TESTING>). Anything
 else dies (C<Term::Fabulous: terminal must consume Term::Fabulous::Role::Terminal>).
 
 =item C<clock>
@@ -738,9 +784,9 @@ number of widgets; C<max_element_count> does.
 =item C<max_element_count>
 
 Optional. The number of Clay elements a frame may hold: a positive
-integer, default 8192. Every widget is one element and Term::Fabulous
-uses two more, so the default allows 8190 widgets on the screen at
-once; a larger tree dies with
+integer, default 8192. Every widget is one element and Clay keeps two
+elements for itself, so the default allows 8190 widgets on the screen
+at once; a larger tree dies with
 C<Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...>.
 Raise it for very large trees; the memory Clay reserves grows with it.
 See L<Clay::UI/new>.
@@ -879,10 +925,11 @@ L</loop> is the one of the last C<run>, or C<undef>);
 =item 2.
 
 reads every event that waits and dispatches it exactly as C<run> does:
-keys to the focused widget, then Tab, Shift+Tab; mouse events to the
-widget under the pointer, focusing it on a press; wheel notches; see
-L</EVENTS> and L</KEYBOARD AND FOCUS>. C<Ctrl+C> fires its C<KeyPress>
-but has no loop to stop;
+a key to the focused widget (after which Tab and Shift+Tab also move
+the focus), a mouse event to the widget under the pointer (a press
+focuses it first), a wheel notch to the scroll box under the pointer;
+see L</EVENTS> and L</KEYBOARD AND FOCUS>. C<Ctrl+C> fires its
+C<KeyPress> but has no loop to stop;
 
 =item 3.
 
@@ -937,7 +984,7 @@ Returns the L<Clay::UI::Interaction> object of this UI. It holds the
 keyboard focus and the hover and press state of the widgets. Use it to
 move the focus from code (C<set_focused_widget>, C<focus_next>,
 C<focus_previous>) and to ask which widget has it
-(C<get_focused_widget>). See L<Term::Fabulous::Manual/FOCUS>. Inherited
+(C<get_focused_widget>). See L<Term::Fabulous::Manual::Events/FOCUS>. Inherited
 from L<Clay::UI>.
 
 =head2 root
@@ -1030,7 +1077,7 @@ changed through its methods, input arrived or the terminal was resized,
 so most programs never need this; call it when something the frame
 depends on changed behind Term::Fabulous's back, for example state a
 custom widget reads while it draws without calling C<mark_changed>
-(see L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>).
+(see L<telling Term::Fabulous that something changed|Term::Fabulous::Manual::CustomWidgets/Telling Term::Fabulous that something changed>).
 
 =head2 find_by_id
 
@@ -1067,19 +1114,44 @@ not need it; see L</invalidate> to ask for a frame instead. With the
 real terminal, it only has a visible effect while the terminal is open.
 See L<Term::Fabulous::Render/draw>.
 
+=head2 bounding_box, scroll_state, scroll_to
+
+	my $box   = $ui->bounding_box($widget);       # { x, y, width, height } in cells, or undef
+	my $state = $ui->scroll_state($scroll_box);   # { position, viewport, content }
+	$ui->scroll_to( $scroll_box, { y => -10 } );  # ten rows down from the top
+
+C<bounding_box> returns where the last frame placed a widget.
+C<scroll_state> and C<scroll_to> read and set the scroll position of a
+scroll container such as a L<Term::Fabulous::Widget::ScrollBox>, in
+cells: 0 at the top and left, negative when scrolled down or right.
+Inherited from L<Clay::UI>; see L<Clay::UI/bounding_box>,
+L<Clay::UI/scroll_state> and L<Clay::UI/scroll_to>, and the recipe
+L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
+
+=head2 after_draw
+
+	$ui->after_draw( sub { ... } );
+
+Queues a code reference to call once after the next frame has been
+drawn, for work that needs the layout of that frame. See
+L<Term::Fabulous::Render/after_draw>.
+
 =head2 Other inherited methods
 
 The class inherits further methods from L<Clay::UI> (C<render>,
-C<widget_for>, C<measure_text>) and from L<Term::Fabulous::Render>
-(C<last_frame>, the L<Term::Fabulous::Render::Frame> of the last frame).
-C<cell_target> returns the cell target of the L</terminal>.
-Applications rarely need them; they are documented on those pages.
+C<widget_for>, C<measure_text>, C<max_element_count>,
+C<laid_out_revision>), from L<Term::Fabulous::Render> (C<last_frame>,
+the L<Term::Fabulous::Render::Frame> of the last frame, and
+C<clip_rect>) and from L<Term::Fabulous::Render::Canvas>
+(C<invalidate_canvases>). C<cell_target> returns the cell target of the
+L</terminal>. Applications rarely need them; they are documented on
+those pages.
 
 =head1 EVENTS
 
-C<run> fires these events. Each one bubbles from the widget it is fired
-on to the root, as described in
-L<Term::Fabulous::Manual/Return values and bubbling>.
+L</run> and L</step> fire these events. Each one bubbles from the
+widget it is fired on to the root, as described in
+L<Term::Fabulous::Manual::Events/Return values and bubbling>.
 
 =over
 
@@ -1107,8 +1179,9 @@ follows these moves.
 
 =item C<Start> (L<Term::Fabulous::Event::Start>)
 
-On the root widget, once per C<run>, after the terminal is open and
-C<width> and C<height> hold its size, before the first frame.
+On the root widget, once each time the terminal is opened (by L</run>,
+or by the first L</step>), after C<width> and C<height> hold its size and
+before the first frame.
 
 =item C<Resize> (L<Term::Fabulous::Event::Resize>)
 
@@ -1123,10 +1196,14 @@ fires C<Start> instead; see L<Term::Fabulous::Event::Resize>.
 Widgets fire further events themselves: C<Change> from the input
 widgets, C<Submit> from L<Term::Fabulous::Widget::TextField>,
 C<Activate> from L<Term::Fabulous::Widget::Button>, C<Close> from
-L<Term::Fabulous::Widget::Dialog>, C<CanvasResize> from canvases, and
-Clay::UI's C<OnPress>, C<OnRelease>, C<OnHoverStart>, C<OnHoverStopped>,
-C<OnFocus>, C<OnBlur> and C<OnScroll>. The complete list is in
-L<Term::Fabulous::Manual/Event reference>.
+L<Term::Fabulous::Widget::Dialog>, C<CanvasResize> from canvases,
+C<SeriesHover> from charts, the table events (C<CursorMove>,
+C<SelectionChange>, C<RowActivate>, C<SortChange>, C<FilterChange>,
+C<PageChange>, C<Expand>, C<Collapse>, C<ColumnsChange>) from
+L<Term::Fabulous::Widget::Table>, and Clay::UI's C<OnPress>,
+C<OnRelease>, C<OnHoverStart>, C<OnHoverStopped>, C<OnFocus>, C<OnBlur>
+and C<OnScroll>. The complete list is in
+L<Term::Fabulous::Manual::Events/Event reference>.
 
 =head1 KEYBOARD AND FOCUS
 
@@ -1142,11 +1219,13 @@ stops the loop, so L</run> returns.
 =item C<Tab>
 
 moves the focus to the next widget that can take it, in tree order,
-wrapping around at the end.
+wrapping around at the end. An open L<Term::Fabulous::Widget::Dialog>
+keeps the focus among its own widgets, and a container can set an order
+of its own (see L<Term::Fabulous::Manual::Events/Custom focus order>).
 
 =item C<Shift+Tab> (key name C<BackTab>)
 
-moves the focus to the previous one.
+moves the focus to the previous one, in the same order.
 
 =back
 
@@ -1158,14 +1237,25 @@ When there is none, the focus is cleared; so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
 C<Mouse> event is fired.
 
-See L<Term::Fabulous::Manual/KEYBOARD> and
-L<Term::Fabulous::Manual/FOCUS>.
+See L<Term::Fabulous::Manual::Events/KEYBOARD> and
+L<Term::Fabulous::Manual::Events/FOCUS>.
 
 =head1 INLINE MODE
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 3, inline => 3 );
 	$ui->run;
 	say 'Done.';    # printed below the region
+
+=begin html
+
+<p><img src="/screenshots/cookbook-inline-prompt.svg" alt="An inline prompt in the three rows below a shell's earlier output: a question, a text field holding Ada Lovelace and a help line"></p>
+
+=end html
+
+The picture shows the recipe
+L<Ask for input below the shell's output|Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>,
+a complete program that asks for a name in three rows below the
+shell's output.
 
 With C<inline> set to a number of rows, L</run> leaves the screen as it
 is and draws the user interface into that many rows, starting at the
@@ -1228,7 +1318,9 @@ the scroll box around them stays put while they can still scroll.
 
 =head1 MODULES
 
-Every module has its own page. They are grouped here by purpose.
+Every module has its own page. They are grouped here by purpose; the
+modules marked "used internally" are documented for people who extend
+Term::Fabulous, and programs do not use them directly.
 
 =head2 Application
 
@@ -1245,7 +1337,7 @@ reports, command-line output and tests.
 
 =item L<Term::Fabulous::Layout>
 
-Builds a widget tree from a KDL layout file and documents the layout
+Builds a widget tree from a KDL layout file, and documents the layout
 file format.
 
 =item L<Term::Fabulous::Terminal::Memory>
@@ -1270,7 +1362,7 @@ Shows text in one color; wraps and aligns it.
 =item L<Term::Fabulous::Widget::Button>
 
 A box that can take the keyboard focus, shows when it is focused or
-pressed, and fires C<Activate> for a click or Enter.
+pressed, and fires C<Activate> for a click, Enter or Space.
 
 =item L<Term::Fabulous::Widget::Dialog>
 
@@ -1295,6 +1387,15 @@ circles.
 
 The abstract base class of all widgets except Text. Its page describes
 the constructor parameters and methods they all share.
+
+=item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
+
+The L<Clay::UI> roles behind Term::Fabulous::Widget and
+Term::Fabulous::Widget::Text. Used internally.
+
+=item L<Term::Fabulous::Widget::Dialog::Backdrop>
+
+The layer behind an open dialog. Used internally by the dialog.
 
 =back
 
@@ -1354,10 +1455,6 @@ scrolling, the cell of the cursor and the text under a click.
 
 The list an open dropdown shows. Used internally by the dropdown.
 
-=item L<Term::Fabulous::Widget::Dialog::Backdrop>
-
-The layer behind an open dialog. Used internally by the dialog.
-
 =back
 
 =head2 Tables
@@ -1367,8 +1464,9 @@ The layer behind an open dialog. Used internally by the dialog.
 =item L<Term::Fabulous::Widget::Table>
 
 Rows and columns of data, with sorting, filtering, grouping, trees,
-pages, selection and widgets as cells. Its page starts with a feature
-index.
+pages, selection and widgets as cells. The guide to tables starts at
+L<Term::Fabulous::Manual::Tables>, which has a feature index of its
+own.
 
 =item L<Term::Fabulous::Widget::Table::Column>
 
@@ -1392,6 +1490,17 @@ How tables read numbers and dates; natural sorting.
 
 The rows of a table and the lines it shows, without widgets.
 
+=item L<Term::Fabulous::Widget::Table::Style>, L<Term::Fabulous::Widget::Table::Borders>
+
+How a table checks its style hashes and works out its grid lines. Used
+internally by the table.
+
+=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Scrollbar>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
+
+The widgets a table is built of: cells, the open and close markers,
+the grids, the header, the scrollbar, the page controls and the column
+chooser. Used internally by the table.
+
 =back
 
 =head2 Charts
@@ -1408,10 +1517,10 @@ hover and the C<SeriesHover> event.
 The reference for charts with an x and a y axis: series and their data
 forms, axes, stacking, curves, rendering styles, transforms, live data.
 
-=item L<Term::Fabulous::Widget::LineChart>, L<Term::Fabulous::Widget::AreaChart>,
-L<Term::Fabulous::Widget::BarChart>, L<Term::Fabulous::Widget::ScatterPlot>
+=item L<Term::Fabulous::Widget::LineChart>, L<Term::Fabulous::Widget::AreaChart>, L<Term::Fabulous::Widget::BarChart>, L<Term::Fabulous::Widget::ScatterPlot>
 
-The XY charts, each with its default series type.
+The XY charts, each with its default series type: lines, filled areas,
+bars, and points with trend lines.
 
 =item L<Term::Fabulous::Widget::Histogram>
 
@@ -1421,8 +1530,7 @@ How values are distributed: counts in bins.
 
 A chart without axes, one row high.
 
-=item L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
-L<Term::Fabulous::Widget::PolarAreaChart>
+=item L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>, L<Term::Fabulous::Widget::PolarAreaChart>
 
 Parts of a whole as slices.
 
@@ -1434,38 +1542,26 @@ Several values per series on axes around a center.
 
 Adding, changing and removing the series of a chart and their data.
 
-=item L<Term::Fabulous::Event::SeriesHover>
+=item L<Term::Fabulous::Chart::Transform>, L<Term::Fabulous::Chart::Curve>, L<Term::Fabulous::Chart::Easing>
 
-The event a chart fires when the pointer moves onto another series,
-point or slice.
+Steps that prepare the data of a series; the curves between points and
+their easing functions.
 
-=item L<Term::Fabulous::Chart::Transform>, L<Term::Fabulous::Chart::Curve>,
-L<Term::Fabulous::Chart::Easing>
-
-Steps that prepare the data of a series; the curves between points.
-
-=item L<Term::Fabulous::Chart::Palette>, L<Term::Fabulous::Chart::Format>,
-L<Term::Fabulous::Chart::Marker>
+=item L<Term::Fabulous::Chart::Palette>, L<Term::Fabulous::Chart::Format>, L<Term::Fabulous::Chart::Marker>
 
 Palettes and ink colors; number and date labels; the character sets
 charts draw with.
 
-=item L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Chart::Raster>,
-L<Term::Fabulous::Chart::Surface>, L<Term::Fabulous::Chart::Radial>,
-L<Term::Fabulous::Chart::Series>
+=item L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Chart::Scale::Linear>, L<Term::Fabulous::Chart::Scale::Log>, L<Term::Fabulous::Chart::Scale::Time>, L<Term::Fabulous::Chart::Scale::Category>
 
-The machinery behind the charts: axes, subpixel drawing, the cell
-compositor, circle geometry and the series object; for charts of your
-own.
+The scales of chart axes: what they have in common, and numeric,
+logarithmic, date and time, and category axes.
 
-=item L<Term::Fabulous::Widget::Table::Style>, L<Term::Fabulous::Widget::Table::Borders>
+=item L<Term::Fabulous::Chart::Raster>, L<Term::Fabulous::Chart::Surface>, L<Term::Fabulous::Chart::Radial>, L<Term::Fabulous::Chart::Series>
 
-How a table checks its style hashes and works out its grid lines. Used
-internally by the table.
-
-=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Scrollbar>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
-
-The widgets a table is built of. Used internally by the table.
+The machinery behind the charts: subpixel drawing, the cells of a chart
+while it is drawn, the geometry of round charts and the series object;
+for charts of your own.
 
 =back
 
@@ -1514,9 +1610,13 @@ The user activated a button, by click or key.
 
 A dialog was closed.
 
+=item L<Term::Fabulous::Event::SeriesHover>
+
+The pointer moved onto another series, point or slice of a chart.
+
 =item L<Term::Fabulous::Event::CursorMove>
 
-The user moved the cursor of a table.
+The cursor of a table moved to another line.
 
 =item L<Term::Fabulous::Event::SelectionChange>
 
@@ -1528,7 +1628,7 @@ The user pressed Enter on a table row or double-clicked it.
 
 =item L<Term::Fabulous::Event::SortChange>
 
-The user sorted a table by a column.
+The user changed how a table is sorted.
 
 =item L<Term::Fabulous::Event::FilterChange>
 
@@ -1557,6 +1657,11 @@ The user showed or hid a table column in the column chooser.
 Color values: parsing color strings, converting between RGB and HSL,
 making colors lighter, darker or mixed.
 
+=item L<Term::Fabulous::Enum::WebColor>
+
+The 148 CSS named colors (C<Tomato>, C<SteelBlue>, ...) as
+Term::Fabulous::Color objects.
+
 =item L<Term::Fabulous::Enum::BorderStyle>
 
 The 20 border styles and their characters.
@@ -1570,17 +1675,12 @@ The per-side border styles of a widget and how borders take space.
 How many terminal columns a piece of text takes, and how text is made
 safe for the terminal.
 
-=item L<Term::Fabulous::Enum::WebColor>
-
-The 148 CSS named colors (C<Tomato>, C<SteelBlue>, ...) as
-Term::Fabulous::Color objects.
-
 =back
 
 =head2 Extending Term::Fabulous
 
 These modules matter only if you write widget classes that can be built
-from layout files, or your own application or output class.
+from layout files, or your own terminal or output class.
 
 =over
 
@@ -1593,11 +1693,6 @@ Makes a widget class usable in KDL layout files.
 Checks the values of widget properties, with one wording for each kind
 of value.
 
-=item L<Term::Fabulous::Render>
-
-The role that draws a laid-out widget tree; composed by Term::Fabulous
-and Term::Fabulous::Static.
-
 =item L<Term::Fabulous::Role::Terminal>
 
 What the application object needs from a terminal; write your own
@@ -1609,7 +1704,8 @@ The real terminal, through termbox2: the default terminal.
 
 =item L<Term::Fabulous::Terminal::Termbox::Cells>
 
-Sends the drawn cells to the terminal.
+Sends the drawn cells to the terminal. Used internally by the real
+terminal.
 
 =item L<Term::Fabulous::Termbox>
 
@@ -1621,36 +1717,30 @@ L<Term::Fabulous::Unicode> measures with.
 
 One termbox2 input event, as C<tb_peek_event> fills it.
 
-=item L<Term::Fabulous::Render::Target::Grid>
+=item L<Term::Fabulous::Render>
 
-Collects the drawn cells in memory.
-
-=item L<Term::Fabulous::Render::Target::Mask>
-
-Lets a frame keep cells of the previous frame, so unchanged canvases are
-not drawn again.
-
-=item L<Term::Fabulous::Render::Rectangle>
-
-Draws backgrounds.
-
-=item L<Term::Fabulous::Render::Border>
-
-Draws borders.
-
-=item L<Term::Fabulous::Render::Text>
-
-Draws text.
-
-=item L<Term::Fabulous::Render::Canvas>
-
-Draws canvases, only their changed cells when possible.
+The role that draws a laid-out widget tree; composed by Term::Fabulous
+and Term::Fabulous::Static.
 
 =item L<Term::Fabulous::Render::Frame>
 
 What one frame paints: the paint order, the clip rect of every command
 (the visible part of scroll containers) and the cells every command
 paints, for drawing and for finding the widget under the mouse.
+
+=item L<Term::Fabulous::Render::Target::Grid>
+
+Collects the drawn cells in memory.
+
+=item L<Term::Fabulous::Render::Target::Mask>
+
+The base role of the cell targets: lets a frame keep cells of the
+previous frame, so unchanged canvases are not drawn again.
+
+=item L<Term::Fabulous::Render::Rectangle>, L<Term::Fabulous::Render::Border>, L<Term::Fabulous::Render::Text>, L<Term::Fabulous::Render::Canvas>
+
+Draw backgrounds, borders, text and canvases; the canvas painter sends
+only the changed cells when possible.
 
 =item L<Term::Fabulous::Render::Attr>
 
@@ -1674,11 +1764,13 @@ tree costs CPU time on every frame it needs.
 
 =item *
 
-C<Alt> plus a key is recognized when the terminal sends the Escape and
-the key in one write, which terminals do. C<Escape> followed quickly
-by a key that arrives in the same read looks like C<Alt> plus that key.
-C<Alt+[> and C<Alt+O> cannot be bound: they begin the escape sequences
-of other keys.
+Without the kitty keyboard protocol (see L</new>), C<Alt> plus a key is
+recognized when the terminal sends the Escape and the key in one write,
+which terminals do. C<Escape> followed quickly by a key that arrives in
+the same read looks like C<Alt> plus that key. C<Alt+[> and C<Alt+O>
+cannot be bound: they begin the escape sequences of other keys. A
+terminal that speaks the protocol reports all of these keys without
+ambiguity.
 
 =item *
 
@@ -1699,8 +1791,8 @@ region away from where Term::Fabulous draws it.
 =item *
 
 Clay lays out at most C<max_element_count> elements per frame (8192 by
-default); every widget is one element and Term::Fabulous uses two
-more. A larger tree makes drawing die with a message that names the
+default); every widget is one element and Clay keeps two for
+itself. A larger tree makes drawing die with a message that names the
 limit; raise C<max_element_count> in L</new>.
 
 =back

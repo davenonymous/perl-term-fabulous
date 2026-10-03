@@ -84,11 +84,12 @@ Term::Fabulous::Render::Text - Paint lines of text
 
 =head1 DESCRIPTION
 
-Most programs never use this module directly. It is one of the roles
-L<Term::Fabulous::Render> is made of, and it paints the text render
-commands Clay emits for L<Term::Fabulous::Widget::Text> widgets. Clay
-breaks a widget's text into lines and words; each text command is one
-line.
+Most programs never use this module directly, and neither do widgets
+of your own. It is one of the roles L<Term::Fabulous::Render> is made
+of, and it paints the text render commands Clay emits for
+L<Term::Fabulous::Widget::Text> widgets. Clay breaks a widget's text
+into lines; each text command is one line. Read it if you write your
+own UI class or want to know exactly how text is drawn.
 
 =head1 METHODS
 
@@ -135,9 +136,10 @@ lines are cached by their text (the cache is emptied when it reaches
 
 =head1 REQUIRED METHODS
 
-The consuming class provides C<set_cell> and C<extend_cell> (from a
-cell target, see L<Term::Fabulous::Render/CELL TARGET>) and
-C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
+The consuming class provides C<cell_target>, which returns the cell
+target the text is painted into (its C<set_cell> and C<extend_cell> are
+called; see L<Term::Fabulous::Render/CELL TARGET>), and C<clip_rect>
+(from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 

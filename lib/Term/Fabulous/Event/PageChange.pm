@@ -47,12 +47,13 @@ Changing the page or the page size from your program
 (L<Term::Fabulous::Widget::Table/page>, C<next_page>,
 C<previous_page>, L<Term::Fabulous::Widget::Table/page_size>) fires
 nothing, and neither does the page following the cursor after the view
-changed (a filter, a sort, rows added or removed).
+changed (a filter, a sort, rows added or removed). Pages are explained
+in L<Term::Fabulous::Manual::TableRows/PAGES>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<PageChange>; listen
 for it with C<< $table->on( PageChange => sub ($event) { ... } ) >>. It
 bubbles to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -62,8 +63,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::PageChange->new( page => ..., page_size => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a missing C<page>
+or C<page_size>.
 
 =over
 
@@ -89,6 +90,7 @@ The number of lines per page (0: no pages).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::TableRows/Split many rows into pages (pager and page sizes)>.
 
 =cut

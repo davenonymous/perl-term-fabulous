@@ -22,8 +22,8 @@ my $root = Term::Fabulous::Widget::Box->new(
 srand 11;
 sub flowers ( $count, $length, $width, $slope ) {
 	return map {
-		my $petal = $length + ( rand() - 0.5 ) * 1.6;
-		[ $petal, $width + $slope * ( $petal - $length ) + ( rand() - 0.5 ) * 0.5 ];
+		my $petal = $length + ( rand() - 0.5 ) * 2;
+		[ $petal, $width + $slope * ( $petal - $length ) + ( rand() - 0.5 ) * 0.7 ];
 	} 1 .. $count;
 }
 
@@ -32,9 +32,9 @@ my $plot = Term::Fabulous::Widget::ScatterPlot->new(
 	x_axis => { title => 'length (cm)', grid => 'dotted' },
 	y_axis => { title => 'width (cm)' },
 	series => [
-		{ name => 'Setosa',     data => [ flowers( 30, 1.5, 0.3, 0.2 ) ] },
-		{ name => 'Versicolor', data => [ flowers( 30, 4.3, 1.3, 0.4 ) ], trend => 1 },
-		{ name => 'Virginica',  data => [ flowers( 30, 5.6, 2.0, 0.3 ) ], trend => 1, point => "\x{25C6}" },
+		{ name => 'Setosa',     data => [ flowers( 15, 1.5, 0.4, 0.1 ) ] },
+		{ name => 'Versicolor', data => [ flowers( 15, 4.3, 1.3, 0.4 ) ], trend => 1 },
+		{ name => 'Virginica',  data => [ flowers( 15, 5.6, 2.0, 0.3 ) ], trend => 1, point => "\x{25C6}" },
 	],
 );
 $root->add_child($plot);

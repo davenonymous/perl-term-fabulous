@@ -194,7 +194,11 @@ terminal cells
 Most programs never use this module directly. L<Term::Fabulous> (for
 the terminal) and L<Term::Fabulous::Static> (for text output) already
 compose it. Read on if you want to write your own UI class, for example
-one that paints into a different kind of output.
+one that paints into a different kind of output, or want to know
+exactly how a frame is painted. To write a widget of your own you do not
+need this module: build it on the existing widgets as
+L<Term::Fabulous::Manual::CustomWidgets> explains (a widget that draws
+itself is a L<Term::Fabulous::Widget::Canvas>).
 
 Term::Fabulous::Render is an L<Object::Pad> role for a subclass of
 L<Clay::UI>. It turns a laid-out widget tree into terminal cells:
@@ -214,9 +218,6 @@ own measure-text callback in Clay::UI (C<measure_text>), which reports
 text widths in terminal columns (see L<Term::Fabulous::Unicode>). The
 constructors of L<Term::Fabulous> and L<Term::Fabulous::Static> die
 when given a C<measure_text> of their own.
-
-Loading this module dies if the termbox2 library was built without
-truecolor support; see L<Term::Fabulous::Render::Attr>.
 
 =head1 REQUIREMENTS OF THE CONSUMING CLASS
 
@@ -386,12 +387,16 @@ and only a background with an alpha from 1 to 254 is blended.
 A widget's background. Its cells are filled with spaces in the
 background color. A translucent background is blended with what lies
 below it, covering the glyphs there or letting them show through as the
-widget's C<glyphs_show_through> says. See
+widget's C<glyphs_show_through> says. A widget whose C<reverse_video>
+is true (a pressed L<Term::Fabulous::Widget::Button>) adds reverse
+video to its background, so everything painted on it later swaps its
+colors. See
 L<Term::Fabulous::Render::Rectangle>.
 
 =item Text
 
-One line of a Text widget. It starts at the top-left cell of its box;
+One line of a Text widget, in its text color plus its bold, italic and
+underline style bits. It starts at the top-left cell of its box;
 every grapheme cluster takes as many columns as termbox2 will use for
 it. A cluster that would cross the right edge of the box or of the clip
 area ends the line. The background of each cell is whatever was painted
@@ -445,8 +450,9 @@ L<Term::Fabulous::Terminal::Memory>.
 =back
 
 Both compose L<Term::Fabulous::Render::Target::Mask>, which implements
-the methods below on top of a few primitives; write your own target the
-same way. All coordinates are cells, counted from 0 at the top-left, and
+all methods below except C<painted_cell> on top of a few primitives;
+write your own target the same way, and give it a C<painted_cell> of its
+own. All coordinates are cells, counted from 0 at the top-left, and
 always lie inside the viewport and the clip rect of the command:
 clipping happens before a target method is called.
 
@@ -501,7 +507,9 @@ starting at C<($x, $y)> and going right.
 
 	my ( $glyph, $fg, $bg ) = $target->painted_cell( $x, $y );
 
-Reads back what the frame holds at a cell so far: the glyph (a
+Not part of L<Term::Fabulous::Render::Target::Mask>: every target
+provides it itself. L<Term::Fabulous::Render::Rectangle> calls it to
+repaint the glyphs below a translucent background. Reads back what the frame holds at a cell so far: the glyph (a
 character string, the base character plus any combining characters),
 its foreground and its background attribute. Returns an empty list when
 nothing was painted there. The cell to the right of a wide glyph is

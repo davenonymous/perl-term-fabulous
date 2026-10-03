@@ -242,8 +242,11 @@ describe columns as hash references in the table's C<columns> parameter
 Column object of each. A Column is immutable: to change one, use
 L<Term::Fabulous::Widget::Table/update_column>, which builds a new one
 with L</with>. Which columns are visible is decided by the table (see
-L<Term::Fabulous::Widget::Table/COLUMNS>); C<visible> is only where a new
-column starts.
+L<Term::Fabulous::Manual::Tables/Choosing the visible columns>);
+C<visible> is only where a new column starts.
+
+In a KDL layout file, a column is a C<column> node inside the table's
+node; see L<Term::Fabulous::Widget::Table/KDL PROPERTIES>.
 
 =head2 Values, display text and cells
 
@@ -286,7 +289,8 @@ C<value>.
 
 =item C<title>
 
-The text of the header cell. Default: the key.
+The text of the header cell, also shown in the column chooser (where an
+empty title shows the key instead). Default: the key.
 
 =item C<type>
 
@@ -336,7 +340,9 @@ L<Term::Fabulous::Check/sizing>):
 
 The width includes the cell padding. Header cells, the filter field
 and every cell of the column are sized together, so the column is as
-wide as the widest of them (within the limits).
+wide as the widest of them (within the limits). A C<grow> or
+C<percent> column needs a table with a width of its own; see
+L<Term::Fabulous::Manual::Tables/Column widths>.
 
 =item C<wrap>
 
@@ -348,8 +354,8 @@ height of their tallest cell.
 =item C<sortable>
 
 A boolean, default 1: whether the user may sort by the column (clicking
-its header). L<Term::Fabulous::Widget::Table/sort_by> still sorts by any
-column.
+its header). The table's L<C<sort_by>|Term::Fabulous::Widget::Table/sort_by>
+method still sorts by any column.
 
 =item C<compare>
 
@@ -395,14 +401,16 @@ made). Only with C<cell>.
 =item C<header>
 
 A code reference C<< sub ($column) { ... } >> that returns the widget
-of the header cell. Default: the title in bold, with the sort marker.
+of the header cell, in place of the title. The sort marker still
+follows it. Default: the title in bold. See
+L<Term::Fabulous::Manual::Tables/Widgets as column titles>.
 
 =item C<cell_style>
 
 A code reference C<< sub ($cell) { ... } >>, called with the same hash
 as C<cell>, that returns a style hash (or C<undef>) for the cell:
 conditional formatting such as red negative numbers. See
-L<Term::Fabulous::Widget::Table/STYLES AND BORDERS>.
+L<Term::Fabulous::Manual::TableStyles/STYLES AND BORDERS>.
 
 =item C<style>
 
@@ -500,6 +508,7 @@ The parameters the column was made with, as a list of pairs.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Mutator>,
-L<Term::Fabulous::Widget::Table::Filter>.
+L<Term::Fabulous::Widget::Table::Filter>, L<Term::Fabulous::Manual::Tables/COLUMNS>,
+L<Term::Fabulous::Cookbook::TableStyles/Size, align and wrap columns (widths, wrapping, widget titles)>.
 
 =cut

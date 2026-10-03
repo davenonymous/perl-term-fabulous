@@ -6,60 +6,203 @@ Term::Fabulous::Manual - The Term::Fabulous user guide
 
 =head1 HOW TO READ THIS MANUAL
 
-This manual explains how Term::Fabulous works and how to use it. It is
-meant to be read from top to bottom the first time, and searched later:
-every topic has its own heading, and the L</FEATURE INDEX> at the end maps
-common tasks to the sections and modules that describe them.
-
-The other documents are:
+This manual explains how Term::Fabulous works and how you use it. This
+page is its starting point: it introduces the library, shows a first
+program and ends with the L</FEATURE INDEX>, which maps tasks to the
+sections, recipes and class pages that describe them. The topics
+themselves are on pages of their own, listed under L</CONTENTS>.
 
 =over
 
-=item L<Term::Fabulous>
+=item To learn Term::Fabulous
 
-The main class: the constructor, C<run> and the event loop, in reference
-form.
+Read L</INTRODUCTION> and L</YOUR FIRST PROGRAM> on this page, then the
+topic pages in the order of L</CONTENTS>. Every topic page links to the
+previous and the next page at its top and bottom, so you can read the
+whole manual from start to end.
 
-=item L<Term::Fabulous::Cookbook>
+=item To find something
 
-Complete programs for common tasks: forms, buttons, key bindings, timers,
-tables, canvases, reports, tests.
-
-=item L<Term::Fabulous::Examples>
-
-The example programs of the distribution, with a picture of each.
-
-=item The module pages
-
-One page per widget and helper class, for example
-L<Term::Fabulous::Widget::Box> or L<Term::Fabulous::Widget::TextField>.
-They list every constructor parameter and method.
+Look the task up in the L</FEATURE INDEX>. Every topic has its own
+heading, so you can also search a page: with C</> in C<perldoc>, or with
+the table of contents on MetaCPAN. Terms the manual uses are defined in
+L<Term::Fabulous::Manual::Glossary>.
 
 =back
 
-All examples use subroutine signatures. A complete program starts with
-this header, which works on every Perl that Term::Fabulous supports:
+The manual is one of four kinds of documentation:
+
+=over
+
+=item The manual (this page and its topic pages)
+
+Explains the concepts: layout, text and colors, events, the keyboard,
+the mouse and the focus, forms, tables, charts, KDL layout files, the
+event loop, testing and writing widgets of your own.
+
+=item L<Term::Fabulous::Cookbook>
+
+Recipes: complete, runnable programs for common tasks, each with a
+picture and notes on the lines that matter. Its index page lists every
+recipe; the recipes themselves are on fourteen topic pages, from
+L<Term::Fabulous::Cookbook::GettingStarted> to
+L<Term::Fabulous::Cookbook::Extending>.
+
+=item L<Term::Fabulous::Examples>
+
+The example programs of the distribution, each with a picture: demo
+programs, one program per widget, and the programs of the cookbook.
+
+=item The class pages
+
+One reference page per class, such as L<Term::Fabulous> (the
+application object), L<Term::Fabulous::Widget::Box> or
+L<Term::Fabulous::Widget::TextField>. A class page lists every
+constructor parameter, method, event, key, mouse action and KDL
+property of the class. The
+L<list of modules|Term::Fabulous/MODULES> on the main page names all of
+them, grouped by purpose.
+
+=back
+
+=head2 Conventions
+
+Every example uses subroutine signatures. A complete program starts
+with this header, which works on every Perl that Term::Fabulous
+supports (5.24 and later):
 
 	use v5.24;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
 
-Shorter snippets leave the header out and may use variables from earlier
-snippets of the same section.
+Shorter snippets leave the header out. A snippet may use variables from
+an earlier snippet of the same section, and usually C<$root> (the root
+widget) and C<$ui> (the L<Term::Fabulous> object).
 
 Code in these documents is indented. When you copy an example that
 contains a here-document (C<<< <<'KDL' >>>), remove the indentation from
-the line that ends it (C<KDL>), because Perl only recognizes the
-terminator at the start of a line.
+the line that ends it (C<KDL>): Perl recognizes the terminator only at
+the start of a line.
+
+=head1 CONTENTS
+
+The manual has these pages, in reading order:
+
+=over
+
+=item This page
+
+L</INTRODUCTION>: what Term::Fabulous does, the libraries it builds on,
+and how a frame is drawn. L</REQUIREMENTS>, L</YOUR FIRST PROGRAM> and
+the L</FEATURE INDEX>.
+
+=item L<Term::Fabulous::Manual::Layout>
+
+The widgets and the widget tree, widget ids, and how the layout engine
+sizes and places widgets: direction, sizing, padding, gaps, alignment,
+flow and stack layouts, floating widgets and equal sizes across the
+tree.
+
+=item L<Term::Fabulous::Manual::Looks>
+
+Text (character strings, wrapping, alignment, wide characters and
+emoji), colors (formats, alpha, the terminal's default colors, lighter
+and darker colors) and borders.
+
+=item L<Term::Fabulous::Manual::Events>
+
+Events and listeners, bubbling, the keyboard and key names, the focus,
+the mouse, hover and press, and scrolling.
+
+=item L<Term::Fabulous::Manual::Forms>
+
+The input widgets (text fields, text areas, check boxes, radio
+buttons, dropdowns, sliders), what they have in common, editing text,
+the clipboard, undo, and complete forms.
+
+=item L<Term::Fabulous::Manual::Charts>
+
+Canvases you draw on yourself, and the chart widgets that draw
+themselves from data.
+
+=item L<Term::Fabulous::Manual::Tables>
+
+The table widget: how it works, rows, columns, display text and
+mutators, widgets in cells, and the feature index of the table.
+
+=item L<Term::Fabulous::Manual::TableRows>
+
+Tables, continued: sorting, filtering, groups, trees, pages, the
+cursor and the selection.
+
+=item L<Term::Fabulous::Manual::TableStyles>
+
+Tables, continued: colors, styles, lines, padding, size, scrolling and
+printing a table.
+
+=item L<Term::Fabulous::Manual::KDL>
+
+Describing the widget tree in a KDL layout file instead of Perl code.
+
+=item L<Term::Fabulous::Manual::Programs>
+
+The event loop, timers and other asynchronous work, quitting, errors,
+output without a terminal, and testing.
+
+=item L<Term::Fabulous::Manual::CustomWidgets>
+
+Writing widgets of your own.
+
+=item L<Term::Fabulous::Manual::Troubleshooting>
+
+Solutions to common problems.
+
+=item L<Term::Fabulous::Manual::Glossary>
+
+The terms used in this documentation.
+
+=back
 
 =head1 INTRODUCTION
 
-Term::Fabulous builds full-screen terminal user interfaces in Perl: forms,
-dashboards, log viewers, editors, games. You describe the screen as a tree
-of widgets (boxes, text, input fields, canvases), and Term::Fabulous
-positions them, draws them, and turns key presses and mouse clicks into
-events your code can react to.
+Term::Fabulous builds terminal user interfaces in Perl: forms,
+dashboards, log viewers, data browsers, editors, games. You describe
+the screen as a tree of I<widgets>: boxes, text, buttons, input fields,
+tables, charts, scrollable areas and canvases. Term::Fabulous sizes and
+positions the widgets, draws them, and turns key presses, mouse clicks
+and terminal resizes into I<events> that your code reacts to.
+
+A program usually takes over the whole terminal while it runs and gives
+it back unchanged when it ends. It can also draw into a few rows below
+the shell's output instead, like a prompt (see
+L<Term::Fabulous/INLINE MODE>), or print a widget tree once as text,
+without any interaction (see
+L<Term::Fabulous::Manual::Programs/RENDERING WITHOUT A TERMINAL>).
+
+The parts of a program are always the same:
+
+=over
+
+=item The widget tree
+
+The widgets, built in Perl with C<new> and C<add_child>, or read from a
+KDL layout file. The top of the tree is the I<root widget>. See
+L<Term::Fabulous::Manual::Layout>.
+
+=item Listeners
+
+Code references registered with C<< $widget->on( EventName => sub {...} ) >>
+that run when an event happens: a key press, a click, a changed value.
+See L<Term::Fabulous::Manual::Events>.
+
+=item The application object
+
+A L<Term::Fabulous> object that holds the tree. Its C<run> method opens
+the terminal, runs the event loop and returns when the program should
+end.
+
+=back
 
 Three libraries do the heavy lifting:
 
@@ -69,38 +212,35 @@ Three libraries do the heavy lifting:
 
 A layout engine (used through L<Clay::XS> and L<Clay::UI>). It decides
 the position and size of every widget from rules such as "fill the
-remaining width" or "be as tall as the content". Term::Fabulous measures
-in terminal cells, so for Clay one unit is one cell.
+remaining width" or "be as tall as the content". Term::Fabulous
+measures in terminal cells, so for Clay one unit is one cell.
 
 =item termbox2
 
-A small C library (compiled into L<Term::Fabulous::Termbox>) that
-switches the terminal into full-screen mode, reads keys and mouse input,
-and writes characters with 24-bit colors.
+A small C library, compiled into L<Term::Fabulous::Termbox>, that
+switches the terminal into full-screen mode, reads keys and mouse
+input, and writes characters with 24-bit colors.
 
 =item IO::Async
 
-The event loop (L<IO::Async::Loop>). It waits for input, redraws the
-screen when something changed, and runs your timers and other
-asynchronous work in the same loop.
+The event loop (L<IO::Async::Loop>). It waits for input, draws the
+screen when something changed, and runs your timers, sockets and child
+processes in the same loop.
 
 =back
 
-You do not need to know these libraries in detail. This manual explains
-everything you need from them, and links to their documentation for the
+You do not need to know these libraries in detail. The manual explains
+everything you need from them and links to their documentation for the
 rest.
 
 =head2 How a frame is drawn
 
-While L<Term::Fabulous/run> is active, Term::Fabulous checks 30 times per
+A I<frame> is one complete layout and drawing of the screen. While L<run|Term::Fabulous/run> is active, Term::Fabulous checks 30 times per
 second whether anything changed since the last frame: a widget was
 changed through one of its methods, input arrived, the terminal was
 resized, or the program asked for a frame with
-L<Term::Fabulous/invalidate>. When nothing changed, nothing is drawn.
-When something did, a frame is drawn. A pointer that only moved is the
-exception: when frames take long to draw, frames for it alone are drawn
-at most every other check, so moving the mouse does not keep the
-program busy redrawing:
+L<invalidate|Term::Fabulous/invalidate>. When nothing changed, nothing is drawn.
+When something changed, a frame is drawn in three steps:
 
 =over
 
@@ -120,12 +260,18 @@ sends only the cells that changed.
 
 =back
 
-Because the whole screen is laid out again for every frame, you never
-call a "redraw" method. Change a widget (its text, color, size or
-children) and the change is visible in the next frame, at most 1/30
+Because the whole screen is laid out again in every frame, there is no
+"redraw" method to call. Change a widget (its text, color, size or
+children), and the change is visible in the next frame, at most 1/30
 second later. The widget methods tell Term::Fabulous that a frame is
-needed; only a widget of your own that draws from state it keeps
-itself has to say so (see L</WRITING YOUR OWN WIDGETS>).
+needed; only a widget of your own that draws from state it keeps itself
+has to say so (see
+L<telling Term::Fabulous that something changed|Term::Fabulous::Manual::CustomWidgets/Telling Term::Fabulous that something changed>).
+
+Pointer movement is the one exception to "drawn at the next check":
+when frames take long to draw, a frame that only shows the pointer at a
+new position is drawn at most at every other check, so that moving the
+mouse cannot keep the program busy with nothing but redrawing.
 
 =head1 REQUIREMENTS
 
@@ -146,27 +292,33 @@ library to install or find.
 
 A terminal that understands 24-bit ("truecolor") colors. Most modern
 terminals do (xterm, GNOME Terminal, Konsole, kitty, iTerm2, Windows
-Terminal, and tmux with truecolor enabled, see L</TROUBLESHOOTING>). In
-a terminal without truecolor support, colors come out wrong.
+Terminal), and so does tmux with truecolor enabled (see
+L<Term::Fabulous::Manual::Troubleshooting/Colors are wrong or look washed out>).
+In a terminal without truecolor support, the colors come out wrong.
 
 =item *
 
-A UTF-8 locale (for example C<LANG=C.UTF-8> or C<LANG=en_US.UTF-8>;
-C<locale -a> lists the installed ones). Without it, wide
-characters such as CJK text and emoji cannot be placed correctly, and
-L<Term::Fabulous/run> warns about it once.
+A UTF-8 locale, for example C<LANG=C.UTF-8> or C<LANG=en_US.UTF-8>
+(C<locale -a> lists the installed ones). Without it, wide characters
+such as CJK text and emoji cannot be placed correctly, and L<run|Term::Fabulous/run> warns about
+it when it starts.
 
 =item *
 
 For mouse support, a terminal that reports mouse events. Nearly all do;
-see L</MOUSE> for what is reported.
+see L<Term::Fabulous::Manual::Events/MOUSE> for what is reported.
 
 =back
 
 =head1 YOUR FIRST PROGRAM
 
 This program shows a dark blue screen with a framed greeting in the
-middle and quits when you press C<q>, C<Escape> or C<Ctrl+C>:
+middle and ends when you press C<q>, C<Escape> or C<Ctrl+C>. It is
+shipped as F<examples-cookbook/first-program.pl>; run it with
+C<perl examples-cookbook/first-program.pl> (see
+L<Term::Fabulous::Examples/RUNNING THE EXAMPLES>).
+
+=for code-from examples-cookbook/first-program.pl
 
 	use v5.24;
 	use warnings;
@@ -217,6 +369,12 @@ middle and quits when you press C<q>, C<Escape> or C<Ctrl+C>:
 	$ui->run;    # returns when the loop stops
 	say 'Bye!';
 
+=begin html
+
+<p><img src="/screenshots/cookbook-first-program.svg" alt="The first program: a greeting in a box with a rounded blue border, centered on a dark blue screen"></p>
+
+=end html
+
 What happens here:
 
 =over
@@ -229,14 +387,20 @@ background color, a border and any number of children.
 =item *
 
 The C<layout> hash tells Clay how to size and arrange the box and its
-children (see L</LAYOUT>). C<sizing_grow()> means "take all the room the
-parent offers"; a box without C<sizing> is as big as its content.
+children (see L<Term::Fabulous::Manual::Layout/LAYOUT>).
+C<sizing_grow()> means "take all the room the parent offers"; a box
+without C<sizing> is as big as its content. C<child_alignment> centers
+the children (see
+L<Term::Fabulous::Manual::Layout/Aligning and centering children>).
 
 =item *
 
 L<Term::Fabulous::Widget::Text> shows one piece of text. Colors are
-C<[red, green, blue, alpha]> arrays with values from 0 to 255 (see
-L</COLORS>).
+C<[red, green, blue, alpha]> arrays with values from 0 to 255; color
+strings such as C<'#78aaff'> work too (see
+L<Term::Fabulous::Manual::Looks/COLORS>). The border style comes from
+L<Term::Fabulous::Enum::BorderStyle> (see
+L<Term::Fabulous::Manual::Looks/BORDERS>).
 
 =item *
 
@@ -246,2686 +410,550 @@ real terminal size.
 
 =item *
 
-C<< $root->on( KeyPress => sub { ... } ) >> registers a I<listener>: code
-that runs when the event happens (see L</EVENTS>). C<key_name> returns a
-readable name of the key, such as C<q>, C<Escape> or C<Ctrl+Left> (see
-L</KEYBOARD>).
+C<< $root->on( KeyPress => sub { ... } ) >> registers a I<listener>:
+code that runs when the event happens (see
+L<Term::Fabulous::Manual::Events/EVENTS>). Key presses go to the widget
+that has the keyboard focus, or to the root widget when no widget has
+it, as here. C<key_name> returns a readable name of the key, such as
+C<q>, C<Escape> or C<Ctrl+Left> (see
+L<Term::Fabulous::Manual::Events/KEYBOARD>).
 
 =item *
 
 C<< $ui->run >> opens the terminal, handles input and draws frames until
 the loop stops: when a listener calls C<< $ui->loop->stop >>, when the
-user presses C<Ctrl+C>, or when the process receives C<SIGINT> or
-C<SIGTERM>. Then it restores the terminal and returns.
+user presses C<Ctrl+C>, or when the process receives C<SIGINT>,
+C<SIGTERM> or C<SIGHUP>. Then it restores the terminal and returns, and
+the program prints C<Bye!> on the normal screen.
 
 =item *
 
 Quitting on C<Escape> does not catch C<Alt> plus a letter: terminals
-send it as C<Escape> followed by the letter, in one write, and
-Term::Fabulous names that C<Alt+x> (see L</Key names>).
+send that as C<Escape> followed by the letter, in one write, and
+Term::Fabulous names it C<Alt+x> (see
+L<Term::Fabulous::Manual::Events/Key names>).
 
 =back
 
-=head1 WIDGETS AND THE WIDGET TREE
-
-The screen is described by a tree of widgets. The I<root widget> is passed
-to C<< Term::Fabulous->new >>; every other widget is a child, grandchild
-and so on of the root. Children are drawn on top of their parent, in the
-order they were added.
-
-=head2 The widgets
-
-=over
-
-=item L<Term::Fabulous::Widget::Box>
-
-A container with an optional background, border and padding. Most
-layouts are boxes inside boxes.
-
-=item L<Term::Fabulous::Widget::Text>
-
-Text. It wraps at word boundaries when it does not fit. It cannot have
-children.
-
-=item L<Term::Fabulous::Widget::Button>
-
-A box that can take the keyboard focus and fires C<Activate> when it is
-clicked or Enter or Space is pressed on it. It shows its focus with the
-border color and inverts its colors while it is pressed.
-
-=item L<Term::Fabulous::Widget::Dialog>
-
-A box that opens over the whole screen, centered, behind a dimming
-backdrop; Tab stays inside it and Escape closes it.
-
-=item L<Term::Fabulous::Widget::ScrollBox>
-
-A box whose content can be larger than the box itself and is scrolled
-with the mouse wheel.
-
-=item L<Term::Fabulous::Widget::Canvas>
-
-A box with a buffer of character cells you draw into freely: charts,
-maps, game boards.
-
-=item L<Term::Fabulous::Widget::PixelCanvas>
-
-A canvas that draws pixels, two per cell, with lines, rectangles and
-circles.
-
-=item L<Term::Fabulous::Widget::Table>
-
-Rows and columns of data: sorting, filtering, grouping, trees, pages,
-selection, any widget as a cell. See L</TABLES>.
-
-=item The chart widgets
-
-L<Term::Fabulous::Widget::LineChart>, L<Term::Fabulous::Widget::AreaChart>,
-L<Term::Fabulous::Widget::BarChart>, L<Term::Fabulous::Widget::ScatterPlot>,
-L<Term::Fabulous::Widget::Histogram>, L<Term::Fabulous::Widget::Sparkline>,
-L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
-L<Term::Fabulous::Widget::PolarAreaChart> and
-L<Term::Fabulous::Widget::RadarChart>: canvases that draw themselves
-from data. See L</CHARTS>.
-
-=item The input widgets
-
-L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
-L<Term::Fabulous::Widget::Checkbox>, L<Term::Fabulous::Widget::RadioGroup>
-with L<Term::Fabulous::Widget::RadioButton>,
-L<Term::Fabulous::Widget::Dropdown> and L<Term::Fabulous::Widget::Slider>.
-See L</FORMS AND INPUT WIDGETS>.
-
-=back
-
-=head2 Building the tree
-
-Create widgets with C<new> and attach them with C<add_child>, which takes
-one or more widgets and returns the parent, so calls can be chained:
-
-	my $header = Term::Fabulous::Widget::Box->new;
-	my $body   = Term::Fabulous::Widget::Box->new;
-	my $footer = Term::Fabulous::Widget::Box->new;
-	$root->add_child($header)->add_child( $body, $footer );
-
-You can build the whole tree before calling C<run>, or change it at any
-time while the program runs, for example from a listener. The change
-shows in the next frame.
-
-Instead of building the tree in Perl, you can also describe it in a KDL
-file and let L<Term::Fabulous::Layout> build it (see
-L</KDL LAYOUT FILES>).
-
-=head2 Widget ids
-
-Every widget accepts an optional C<id>, a non-empty string:
-
-	my $log = Term::Fabulous::Widget::ScrollBox->new( id => 'log' );
-
-Ids serve three purposes. Clay uses them to keep per-widget state
-between frames (a L<Term::Fabulous::Widget::ScrollBox> therefore
-requires one). C<remove_child> removes children by id (except Text
-widgets, see below). And your own code can use them to find a widget
-again, or to tell widgets apart in a listener
-(C<< $event->target->id >>).
-
-Rules for ids:
-
-=over
-
-=item *
-
-Two widgets in the same tree must not have the same id. Drawing a frame
-with duplicate ids dies with C<Clay error: ...>.
-
-=item *
-
-Ids starting with C<anon:> are reserved: widgets without an id get an
-automatic one of that form. Passing such an id dies.
-
-=item *
-
-The id cannot be changed after construction.
-
-=back
-
-Every container widget has a C<find_by_id> method. It searches the
-widget itself and everything below it, depth first, and returns the
-first widget whose id is the argument (Text widgets included), or
-C<undef> when there is none:
-
-	my $status = $root->find_by_id('status');
-
-C<< $ui->find_by_id >> searches from the root. See
-L<Term::Fabulous::Widget/find_by_id>.
-
-=head2 Changing the tree
-
-The container methods come from L<Clay::UI::Role::Core::Container>:
-
-	$box->add_child(@widgets);                          # append, returns $box
-	$box->remove_child('status');                       # remove children with that id (not Text widgets)
-	$box->remove_children_with( sub ($child) { ... } ); # remove where the code returns true
-	$box->clear_children;                               # remove all children
-	my $children = $box->children;                      # arrayref (a copy)
-	my $parent   = $widget->parent;                     # undef for the root
-
-C<remove_child> never removes Text widgets, even when they have that id;
-remove them with C<remove_children_with>, for example
-C<< $box->remove_children_with( sub ($child) { ( $child->id // '' ) eq 'status' } ) >>.
-
-B<A widget has at most one parent at a time.> Adding a widget that is
-still a child of another widget dies; remove it from its parent first,
-then add it wherever you like, to the same parent or another one. A
-removed widget keeps its children and its state. The rule is enforced by
-L<Clay::UI::Role::Layout::HasParent>.
-
-Removing a widget that has the keyboard focus clears the focus first, and
-the widget receives C<OnBlur>.
-
-=head1 LAYOUT
-
-Every widget that can have children (Box and everything based on it)
-takes a C<layout> hash. Its keys decide how the widget sizes itself and
-how it arranges its children. All sizes are in terminal cells.
-
-	use Clay::XS qw(sizing_grow sizing_fit sizing_fixed sizing_percent padding_all
-		CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
-		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT
-		CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM);
-
-	my $box = Term::Fabulous::Widget::Box->new(
-		layout => {
-			layout_direction => CLAY_TOP_TO_BOTTOM,
-			sizing           => { width => sizing_grow(), height => sizing_fit() },
-			padding          => { left => 1, right => 1, top => 0, bottom => 0 },
-			child_gap        => 1,
-			child_alignment  => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_TOP },
-		},
-	);
-
-Every key is optional. An unknown key or a value of the wrong shape dies
-when the hash is set, naming the key. The helper functions and constants
-come from L<Clay::XS>; import the ones you use.
-
-=head2 Direction
-
-C<layout_direction> decides how the children are arranged:
-
-=over
-
-=item C<CLAY_LEFT_TO_RIGHT> (the default)
-
-Children are placed next to each other, from left to right.
-
-=item C<CLAY_TOP_TO_BOTTOM>
-
-Children are stacked from top to bottom.
-
-=item C<CLAY_LEFT_TO_RIGHT_WRAP>
-
-Children are placed from left to right and wrap onto a new line when the
-row is full. See L</Flow layout>.
-
-=item C<CLAY_BACK_TO_FRONT>
-
-Children are placed on top of each other, later ones over earlier ones.
-See L</Stack layout>.
-
-=back
-
-A column of form rows, each row a left-to-right box of a label and an
-input, is the typical combination.
-
-=head2 Sizing
-
-C<sizing> holds a C<width> and a C<height> rule. A missing rule is
-C<sizing_fit()>.
-
-=over
-
-=item C<sizing_fit()>
-
-As small as the content: the children, the gaps between them, the
-padding and the border. Text counts with its unwrapped width, as far as
-the parent allows.
-
-=item C<sizing_grow()>
-
-Takes the room the parent has left after its other children got their
-size. Several growing siblings share the remaining room equally.
-
-=item C<sizing_fixed($cells)>
-
-Exactly C<$cells> columns or rows.
-
-=item C<sizing_percent($fraction)>
-
-A fraction of the parent's content size, from 0 to 1: C<sizing_percent(0.5)>
-is half. (In KDL layouts, write C<percent(50)> instead; see
-L</KDL LAYOUT FILES>.)
-
-=back
-
-C<sizing_fit> and C<sizing_grow> take an optional minimum and maximum:
-C<sizing_grow(10, 40)> grows, but stays between 10 and 40 cells. (In KDL
-layouts, write C<"grow(10, 40)"> or C<"fit(MIN, MAX)">; leave out MAX
-for no maximum.)
-
-	# A sidebar of 20 columns and a main area that takes the rest:
-	my $columns = Term::Fabulous::Widget::Box->new(
-		layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
-	);
-	my $sidebar = Term::Fabulous::Widget::Box->new(
-		background_color => [ 30, 30, 40, 255 ],
-		layout           => { sizing => { width => sizing_fixed(20), height => sizing_grow() } },
-	);
-	my $main = Term::Fabulous::Widget::Box->new(
-		layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
-	);
-	$columns->add_child( $sidebar, $main );
-
-The root widget usually uses C<sizing_grow()> in both directions, so that
-it fills the terminal.
-
-=head2 Padding
-
-C<padding> is empty space inside the widget, between its edge (or border)
-and its children: a hash with any of the keys C<left>, C<right>, C<top>
-and C<bottom>, each a number of cells. Missing sides are 0.
-C<padding_all(1)> from L<Clay::XS> builds a hash with the same value on
-all four sides.
-
-=head2 Gap between children
-
-C<child_gap> is the number of empty cells between two neighboring
-children, in the layout direction. There is no gap before the first or
-after the last child.
-
-=head2 Aligning and centering children
-
-C<child_alignment> positions the children inside the widget when they do
-not fill it: C<x> is one of C<CLAY_ALIGN_X_LEFT> (the default),
-C<CLAY_ALIGN_X_CENTER> and C<CLAY_ALIGN_X_RIGHT>; C<y> is one of
-C<CLAY_ALIGN_Y_TOP> (the default), C<CLAY_ALIGN_Y_CENTER> and
-C<CLAY_ALIGN_Y_BOTTOM>.
-
-	# A status bar: text pushed to the right edge.
-	my $status = Term::Fabulous::Widget::Box->new(
-		layout => {
-			sizing          => { width => sizing_grow() },
-			child_alignment => { x => CLAY_ALIGN_X_RIGHT },
-		},
-	);
-
-In a KDL layout, write C<child_alignment x=right>: C<x> is C<left>,
-C<center> or C<right>, C<y> is C<top>, C<center> or C<bottom>, and
-either may be left out. See L<Term::Fabulous::Layout/Box properties>.
-
-=head2 Flow layout
-
-With C<layout_direction =E<gt> CLAY_LEFT_TO_RIGHT_WRAP> a widget places
-its children from left to right, like C<CLAY_LEFT_TO_RIGHT>, but starts
-a new I<line> below whenever the next child does not fit into the
-remaining width. Tag lists, toolbars and button rows that should adapt
-to the terminal width need no code of their own:
-
-	use Clay::XS qw(sizing_grow CLAY_LEFT_TO_RIGHT_WRAP CLAY_LINE_SIZING_FIT);
-
-	my $tags = Term::Fabulous::Widget::Box->new(
-		layout => {
-			layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
-			sizing           => { width => sizing_grow() },
-			child_gap        => 1,
-			line_gap         => 0,
-			line_sizing      => CLAY_LINE_SIZING_FIT,
-		},
-	);
-	$tags->add_child( Term::Fabulous::Widget::Text->new( text => $_ ) ) foreach qw(perl terminal layout flow);
-
-=over
-
-=item *
-
-C<child_gap> is the number of columns between neighbors on a line,
-C<line_gap> the number of rows between two lines (default 0).
-
-=item *
-
-Lines break at the children's preferred widths. A child wider than the
-widget gets a line of its own and is narrowed to fit.
-
-=item *
-
-Give the widget a C<grow>, C<fixed> or C<percent> width. With
-C<sizing_fit()> it prefers a single line and only wraps when its parent
-is too narrow for that line.
-
-=item *
-
-When the widget is taller than its lines, C<line_sizing> decides what
-happens to the leftover rows: C<CLAY_LINE_SIZING_GROW> (the default)
-shares them equally between the lines, C<CLAY_LINE_SIZING_FIT> keeps
-every line as tall as its tallest child.
-
-=item *
-
-C<child_alignment> C<x> aligns every line on its own. C<y> aligns each
-child within its line and, with C<CLAY_LINE_SIZING_FIT>, the block of
-lines within the widget.
-
-=item *
-
-A C<grow> child takes the rest of its own line.
-
-=back
-
-Wrapping is horizontal only; there is no top-to-bottom variant. In a KDL
-layout, write C<layout direction=wrap gap=1 line_gap=0 line_sizing=fit>.
-See C<examples/flow.pl> for a tag list that rewraps when the terminal is
-resized.
-
-=head2 Stack layout
-
-With C<layout_direction =E<gt> CLAY_BACK_TO_FRONT> a widget places all
-its children on top of each other inside its padding. Later children
-are drawn over earlier ones, so a background, the content and a badge in
-the corner are three children in that order:
-
-	use Clay::XS qw(sizing_grow CLAY_BACK_TO_FRONT CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP);
-
-	my $card = Term::Fabulous::Widget::Box->new(
-		layout => {
-			layout_direction => CLAY_BACK_TO_FRONT,
-			child_alignment  => { x => CLAY_ALIGN_X_RIGHT, y => CLAY_ALIGN_Y_TOP },
-		},
-	);
-	$card->add_child(
-		Term::Fabulous::Widget::Box->new(
-			background_color => [ 30, 35, 50, 255 ],
-			layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, top => 1 } },
-		)->add_child( Term::Fabulous::Widget::Text->new( text => 'Inbox' ) ),
-		Term::Fabulous::Widget::Box->new(
-			background_color => [ 224, 108, 117, 255 ],
-			layout           => { padding => { left => 1, right => 1 } },
-		)->add_child( Term::Fabulous::Widget::Text->new( text => '3' ) ),
-	);
-
-=over
-
-=item *
-
-With C<sizing_fit()> the stack is as wide as its widest child and as
-tall as its tallest one. C<grow> children fill it.
-
-=item *
-
-C<child_alignment> places every child on its own, on both axes. A stack
-has only one C<child_alignment>; to put children in different corners,
-wrap each one in a C<grow> stack with its own alignment.
-
-=item *
-
-C<child_gap> has no effect.
-
-=item *
-
-Where children overlap, the one drawn on top gets the C<Mouse> event,
-the focus and the C<OnPress>. Uncovered parts of the children below
-still receive the mouse as usual.
-
-=back
-
-Unlike C<floating> widgets, the children of a stack take part in the
-layout: the stack, and so its parent, grows with its largest child. In
-a KDL layout, write C<layout direction=stack>. See C<examples/stack.pl>
-for cards with badges and a centered overlay.
-
-=head2 Borders take space
-
-A border is drawn on the outermost cells of a widget, inside its box.
-Term::Fabulous adds the border width to the padding, so the children
-always start inside the border: a box with C<border_width =E<gt> 1> and
-C<padding =E<gt> { left =E<gt> 1 }> has its first child at the third
-column. A box without a C<sizing> rule grows by the border, so its
-content keeps its size. A side with the C<Hidden> border style takes no
-space and draws nothing. See L</BORDERS>.
-
-=head2 Equal sizes across the tree
-
-Widgets in different parts of the tree can be made equally wide or high
-with a I<sizing group>: give them the same positive C<width_group> (or
-C<height_group>) number. After Clay has computed their natural size, all
-members of a group get the size of the largest one. This lines up, for
-example, the labels of a form whose rows are separate boxes:
-
-	my $label_a = Term::Fabulous::Widget::Box->new( width_group => 1 );
-	my $label_b = Term::Fabulous::Widget::Box->new( width_group => 1 );
-
-Only C<fit> and C<grow> sizes take part; C<fixed> and C<percent> sizes
-are left alone. Group numbers are integers from 1 to 1048575 (0 means no
-group). See L<Clay::UI::Role::Layout::HasSizingGroup> for the details.
-
-=head2 Changing the layout at run time
-
-C<layout> is an accessor. Reading it returns the current hash; writing
-replaces the whole hash. To change one key, copy the others:
-
-	$box->layout( { %{ $box->layout }, child_gap => 2 } );
-
-The new layout applies from the next frame on. The same is true for every
-other widget property: C<background_color>, C<border_width>, C<text> and
-so on are accessors that take effect in the next frame. (One exception:
-C<border_style> exists only as a constructor parameter; see L</BORDERS>.)
-
-=head1 TEXT
-
-L<Term::Fabulous::Widget::Text> shows text in one color. Text wraps at
-spaces when it is wider than the room its parent gives it, and a C<"\n">
-in the text starts a new line.
-
-	my $label = Term::Fabulous::Widget::Text->new(
-		text       => 'Disk usage: 42%',
-		text_color => [ 230, 230, 230, 255 ],
-	);
-	$label->text('Disk usage: 43%');    # shown in the next frame
-
-B<Always give a C<text_color>.> The default is opaque black,
-C<[0, 0, 0, 255]>, which is invisible on the dark background most
-terminals use. To use the terminal's default text color instead, pass
-C<[0, 0, 0, 0]> (see L</Alpha and the terminal default color>).
-
-=head2 Text is character strings
-
-B<The C<text> of a Text widget is a Perl character string>, like all text
-in Term::Fabulous: the input widgets (C<value>, C<label>, C<placeholder>,
-options), the canvas drawing methods, L<Term::Fabulous::Editor>,
-L<Term::Fabulous::Unicode> and
-C<< Term::Fabulous::Layout->new( string => ... ) >>. With C<use utf8;>,
-non-ASCII literals in your source work directly:
-
-	use utf8;                 # this source file contains non-ASCII text
-
-	my $greeting = Term::Fabulous::Widget::Text->new(
-		text       => 'Grüße aus München',
-		text_color => [ 255, 255, 255, 255 ],
-	);
-	$greeting->text('Schöne Grüße');
-
-Text that comes from outside the program (files, command output,
-sockets, C<@ARGV>) is bytes. Decode it first with
-C<Encode::decode('UTF-8', ...)>; otherwise each byte shows as one Latin-1
-character, so "ü" shows as two wrong characters:
-
-	use Encode qw(decode);
-
-	chomp( my $hostname = `hostname` );    # bytes
-	$label->text( decode( 'UTF-8', $hostname ) );
-
-Text in a KDL layout is already a character string and is passed to the
-Text widget as is.
-
-=head2 Wrapping
-
-The C<wrap_mode> parameter of a Text widget decides where lines break.
-Import the constants from L<Clay::XS>:
-
-=over
-
-=item C<CLAY_TEXT_WRAP_WORDS> (the default)
-
-Breaks at spaces when the text is wider than the room it gets, and at
-every C<"\n">.
-
-=item C<CLAY_TEXT_WRAP_NEWLINES>
-
-Breaks only at C<"\n">. Lines that are too long run past the edge of the
-widget's parent and are cut off at the edge of the terminal.
-
-=item C<CLAY_TEXT_WRAP_NONE>
-
-Behaves like C<CLAY_TEXT_WRAP_NEWLINES> in a terminal: C<"\n"> still
-starts a new line, and nothing else does.
-
-=back
-
-A single word longer than the available width is not broken. It runs
-past the right edge of its parent and is cut off only at the edge of the
-terminal, or of an enclosing L<Term::Fabulous::Widget::ScrollBox>.
-
-In a KDL layout, write C<wrap_mode newlines> (C<words>, C<newlines> or
-C<none>).
-
-=head2 Alignment
-
-C<text_alignment> aligns each line within the width of the Text widget:
-C<CLAY_TEXT_ALIGN_LEFT> (the default), C<CLAY_TEXT_ALIGN_CENTER> or
-C<CLAY_TEXT_ALIGN_RIGHT>. The Text widget is only as wide as its longest
-line, so alignment is visible on multi-line text. To center a short text
-in a wider box, use the box's C<child_alignment> (see
-L</Aligning and centering children>). In a KDL layout, write
-C<text_alignment center> (C<left>, C<center> or C<right>).
-
-=head2 Line height
-
-C<line_height> is the number of rows each line of text takes. The default,
-0, means one row. C<line_height =E<gt> 2> leaves an empty row below every
-line.
-
-The parameters C<font_id> and C<font_size> exist because Clay supports
-graphical fonts; they have no effect in a terminal. Do not use
-C<letter_spacing>: Clay takes it into account when it wraps lines, but the
-terminal cannot draw it, so lines break earlier than necessary.
-
-=head2 Wide characters and emoji
-
-A terminal cell holds one character. Some characters, most CJK
-characters and many emoji, take two cells. Term::Fabulous measures text
-the same way termbox2 draws it (with termbox2's own width tables, see
-L<Term::Fabulous::Unicode>), so wide characters line up as long as the
-locale is UTF-8 and the terminal agrees with termbox2 about each
-character's width. Characters made of several code points, such as a
-letter with a combining accent or a flag, are kept together and take the
-width of the whole cluster; an emoji presentation selector (U+FE0F), a
-zero-width joiner or a pair of regional indicators makes a cluster two
-cells wide.
-
-=head2 Control characters
-
-Control characters in text are never sent to the terminal, because they
-could move the cursor or change terminal settings. A tab becomes one
-space; every other control character (U+0000 to U+001F except tab and
-newline, U+007F to U+009F) is shown as U+FFFD, the replacement character.
-In Text widgets, a newline starts a new line, as described above.
-
-=head1 COLORS
-
-Colors are red, green, blue and alpha (opacity) channels, each from 0 to
-255. Term::Fabulous always draws with 24-bit colors.
-
-=head2 Color formats
-
-Every color a widget takes accepts the same formats: anything
-C<< Term::Fabulous::Color->new( color => ... ) >> accepts.
-
-=over
-
-=item Perl code
-
-C<background_color>, C<border_color> and the C<text_color> of a Text
-widget, the colors of the input widgets (C<text_color>,
-C<accent_color>, C<focus_background_color> and so on) and the C<$fg>
-and C<$bg> arguments of the canvas drawing methods take strings such
-as C<'#ff8800'>, C<'rgb(255, 136, 0)'> or C<'hsl(32, 100%, 50%)'>,
-three- or four-element arrays, C<{ r, g, b, a }> hashes, a
-L<Term::Fabulous::Color> object, or a packed C<0xRRGGBB> integer such
-as C<0xFF8800>.
-
-	background_color => '#14192b',
-	border_color     => Term::Fabulous::Enum::WebColor->SteelBlue,
-	text_color       => [ 220, 220, 220, 255 ],
-
-The box colors (C<background_color>, C<border_color>, Text
-C<text_color>) are stored and read back as C<[r, g, b, a]> whatever
-was given; the input and canvas colors keep the value as given.
-L<Term::Fabulous::Enum::WebColor> has the 148 CSS named colors as
-L<Term::Fabulous::Color> objects.
-
-=item KDL layout files
-
-Every property whose name ends in C<_color> takes a string in any format
-L<Term::Fabulous::Color> understands:
-
-	background_color "#14192b"
-	text_color "rgb(220, 220, 220)"
-	border color="hsl(210, 80%, 60%)"
-
-=back
-
-=head2 Alpha and the terminal default color
-
-Alpha has three meanings:
-
-=over
-
-=item Alpha 0
-
-"No color": the terminal's default color is used (the color the terminal
-shows when a program sets none). A box with
-C<background_color =E<gt> [0, 0, 0, 0]>, or without a background color,
-shows whatever is behind it, text and borders included.
-
-=item Alpha 255
-
-The color is drawn opaque.
-
-=item Alpha 1 to 254
-
-Translucent. A C<background_color> with such an alpha is blended, cell
-by cell, with whatever was drawn below the widget, like a sheet of
-tinted glass: C<[0, 0, 0, 128]> dims the area below to half its
-brightness. What happens to the text and borders below is up to the
-widget's C<glyphs_show_through> (see L<Term::Fabulous::Widget/new>).
-Off, the default, covers them with spaces in the blended color. On,
-they stay visible through the background, with their colors tinted the
-same way, until the widget draws its own content over them.
-
-Text and border colors are not blended; with such an alpha they are
-drawn opaque.
-
-=back
-
-The terminal default color cannot be blended, because the terminal
-alone knows which color it shows for it. Where the color below a
-translucent background is the default, the background is drawn opaque,
-and a glyph showing through with the default text color keeps it.
-F<examples/translucency.pl> shows all of this, with translucent boxes
-orbiting over a screen of text.
-
-=begin html
-
-<p><img src="/screenshots/example-translucency.svg" alt="A green, a red and a blue translucent box over a screen of text; the text shows through the green and the blue one"></p>
-
-=end html
-
-Black is a real color: C<[0, 0, 0, 255]> is drawn as black, not as the
-terminal's default.
-
-=head2 Working with colors
-
-L<Term::Fabulous::Color> parses colors and derives new ones, which is
-useful for themes:
-
-	use Term::Fabulous::Color;
-
-	my $accent  = Term::Fabulous::Color->hex('#3b82f6');
-	my $hover   = $accent->lighten(0.1);                 # 10 percentage points lighter
-	my $pressed = $accent->darken(0.1);
-	my $muted   = $accent->blend( Term::Fabulous::Color->rgb( 128, 128, 128 ), 0.5 );
-
-	$button->background_color($hover);
-
-Colors are immutable; every method returns a new object.
-
-=head1 BORDERS
-
-Box, Button, ScrollBox and the canvas and input widgets can have a border.
-Three parameters control it:
-
-=over
-
-=item C<border_width>
-
-How many cells wide the border is: a number for all four sides, or a hash
-C<{ left =E<gt> 1, right =E<gt> 1, top =E<gt> 0, bottom =E<gt> 0 }>.
-Only one line of border glyphs is drawn per side, so use 1 for a visible
-side and 0 for none (or give the side the C<Hidden> style, which
-switches it off without changing the width); a larger width adds empty
-space inside the border.
-
-=item C<border_style>
-
-A L<Term::Fabulous::Enum::BorderStyle> item that decides the characters:
-C<Round>, C<Solid>, C<Heavy>, C<Double>, C<Dashed>, C<Ascii>, C<Thick>,
-C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Inner>, C<Outer>, C<Hkey>,
-C<Vkey>, C<LightShade>, C<MediumShade>, C<DarkShade>, C<Hidden> and
-C<Blank>. C<border_style> sets all four sides; C<border_style_top>,
-C<border_style_right>, C<border_style_bottom> and C<border_style_left>
-set one side each. A side with a width but no style is drawn with
-C<Blank> (spaces). C<Hidden> switches a side off: it draws nothing and
-takes no space, whatever its width.
-
-=item C<border_color>
-
-The color of the border characters, in the formats described in
-L</Color formats>.
-
-=back
-
-	use Term::Fabulous::Enum::BorderStyle;
-
-	my $panel = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
-		border_style => Term::Fabulous::Enum::BorderStyle->Round,    # all four sides
-		border_color => [ 120, 170, 255, 255 ],
-	);
-	$panel->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );    # then change the top
-
-A side parameter wins over C<border_style> for its side, also when both
-are given to C<new>; C<border_style> fills the sides that have no style
-of their own. The side accessors change one side afterwards, as above.
-(KDL layout files work the same way; see L<Term::Fabulous::Layout>.)
-
-	my $by_name = Term::Fabulous::Enum::BorderStyle->from_name('Double');
-
-Some styles (C<Block>, C<Panel>, C<Tall>, C<Wide>, C<Inner>) use
-half-block characters that blend into the background of the parent
-widget; they look best when the widget and its parent have different
-background colors. The script F<examples/border-showcase.pl> shows all
-styles.
-
-=begin html
-
-<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
-
-=end html
-
-Two more parameters let a border join the lines around it (see
-L<Term::Fabulous::Role::HasBorderStyle>):
-
-=over
-
-=item C<border_corners>
-
-Replaces the glyph of any corner, for example C<├> instead of C<┌>
-where a line comes in from above. The class method
-L<Term::Fabulous::Enum::BorderStyle/junction> returns the glyph where
-lines of given styles meet: a line, a corner, a T or a cross, also
-where lines of different styles meet (a light line into a heavy one).
-
-=item C<outer_border_sides>
-
-Draws some sides on the background just outside the widget instead of
-the widget's own, so the border looks like part of its surroundings and
-a colored widget starts inside it.
-
-=back
-
-	my $solid = Term::Fabulous::Enum::BorderStyle->Solid;
-	my $lower = Term::Fabulous::Widget::Box->new(    # sits below a box with a left side
-		border_width       => { left => 1, top => 1 },
-		border_style       => $solid,
-		border_corners     => {
-			top_left => Term::Fabulous::Enum::BorderStyle->junction( up => $solid, right => $solid, down => $solid ),    # ├
-		},
-		outer_border_sides => ['left'],
-	);
-
-L<Term::Fabulous::Widget::Table> draws its grid lines this way.
-
-=head1 EVENTS
-
-Events tell your code that something happened: a key was pressed, the
-mouse was clicked, the terminal was resized, the user changed an input
-field. Every event has a name, such as C<KeyPress> or C<Change>, and is an
-object with fields that describe what happened.
-
-=head2 Listening to events
-
-Register a I<listener> with C<on>, giving the event name and a code
-reference. The listener receives the event object:
-
-	$field->on(
-		Change => sub ($event) {
-			say 'The text is now: ', $event->value;
-			return;
-		}
-	);
-
-You can register any number of listeners for the same event on the same
-widget; they run in the order they were registered. C<on> returns the
-widget, so calls can be chained. There is no method to remove a listener;
-if a listener must become inactive, let it check a flag.
-
-Several examples in this manual print with C<say> to keep them short.
-While C<run> is active, the terminal shows the user interface (full
-screen, or in some rows below the shell's output in inline mode), and
-printing to STDOUT writes over it. Real programs show
-messages in a widget (for example a status line made of a Text widget)
-or write them to a log file.
-
-Every event object has these fields in addition to its own:
-
-=over
-
-=item C<name>
-
-The event name, for example C<'KeyPress'>.
-
-=item C<target>
-
-The widget the event was fired on, for example the focused input field.
-
-=item C<current_target>
-
-The widget whose listener is running right now. It differs from C<target>
-when the event has bubbled up from a child (see below).
-
-=item C<bubble_mode>
-
-How the event travels to the ancestors: a L<Clay::UI::Enum::Bubble>
-value, C<IF_CONTINUE> for nearly all events (see below), C<NEVER> for the
-hover events.
-
-=back
-
-=head2 Return values and bubbling
-
-An event is I<fired on> one widget, its target. After the target's
-listeners have run, the event I<bubbles>: it is passed to the parent,
-then to the parent's parent, and so on up to the root. This lets one
-listener on a container handle the events of all its children, for
-example a C<Change> listener on a form box that sees every input inside
-it.
-
-B<What a listener returns decides whether the event bubbles further:>
-
-=over
-
-=item *
-
-C<< return Clay::UI::Enum::Result->CONTINUE; >> passes the event on to
-the parent.
-
-=item *
-
-Anything else stops it after the current widget: a plain C<return;>,
-C<< return Clay::UI::Enum::Result->HANDLED; >>, or whatever value the
-last statement of the listener happens to produce.
-
-=back
-
-The decision is made per widget: the event moves on to the parent only if
-B<every> listener of the current widget returned C<CONTINUE>. A widget
-without listeners for the event passes it on unchanged.
-
-	use Clay::UI::Enum::Result;
-
-	# Handle Ctrl+S here, let every other key bubble on.
-	$editor_box->on(
-		KeyPress => sub ($event) {
-			return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'Ctrl+S';
-			save_document();
-			return Clay::UI::Enum::Result->HANDLED;
-		}
-	);
-
-Because Perl returns the value of the last statement when there is no
-C<return>, always end a listener with an explicit C<return>. Otherwise
-whether the event bubbles depends on an accident.
-
-The input widgets follow the same rule: they stop the keys and clicks
-they use, and pass on the rest. That is why an application shortcut on
-the root still works while a text field has the focus, as long as the
-text field does not use that key (see L</Application shortcuts>).
-
-Two events never bubble: C<OnHoverStart> and C<OnHoverStopped> are only
-seen by the widget they are fired on.
-
-=head2 Event reference
-
-All events Term::Fabulous and Clay::UI fire, with the widget they are
-fired on and their fields:
-
-=over
-
-=item C<KeyPress> (L<Term::Fabulous::Event::KeyPress>)
-
-A key was pressed. Fired on the focused widget, or on the root widget
-when nothing has the focus. Fields: C<key>, C<char>, C<modifiers>; methods
-C<key_name> and C<text>. See L</KEYBOARD>.
-
-=item C<Mouse> (L<Term::Fabulous::Event::Mouse>)
-
-A mouse button was pressed or released, the mouse was dragged, or the
-wheel was turned. Fired on the topmost widget under the pointer (see
-L</MOUSE>). Fields: C<key> (which button or wheel direction), C<x>,
-C<y> (the cell), C<modifiers> (Shift, Alt, Ctrl and the motion flag).
-
-=item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
-
-The pointer moved with no button held. Fired on the topmost widget
-under the pointer, like C<Mouse>. Fields: C<x>, C<y>, C<modifiers>.
-
-=item C<Start> (L<Term::Fabulous::Event::Start>)
-
-C<run> opened the terminal. Fired on the root widget once per C<run>,
-from inside the running loop, before the first frame and before any
-input event, when C<< $ui->width >> and C<< $ui->height >> already hold
-the terminal size. A listener can use C<< $ui->loop >>, to add timers
-or to stop the loop right away. Timers the program queued on the loop
-before C<run> may run before it. Fields: C<width>, C<height>.
-
-=item C<Resize> (L<Term::Fabulous::Event::Resize>)
-
-The terminal changed size. Fired on the root widget, twice per resize:
-first before the new size is applied (C<is_pre_event> is true), then
-after it (C<is_post_event> is true). Fields: C<width>, C<height> in
-cells. Resizes are I<debounced>: while the user is still dragging the
-window edge, nothing is fired; the events come 1/10 second after the
-last size change. The layout adapts to the new size by itself; listen to
-C<Resize> when your program wants to change something more, for example
-hide a sidebar on narrow terminals:
-
-	$root->on(
-		Resize => sub ($event) {
-			return unless $event->is_post_event;
-			$sidebar->layout( { %{ $sidebar->layout },
-				sizing => { width => sizing_fixed( $event->width < 60 ? 0 : 20 ), height => sizing_grow() } } );
-			return;
-		}
-	);
-
-The starting size does not fire C<Resize>; it fires C<Start>, so a
-program that lays itself out by the terminal size listens to both (see
-L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>).
-
-=item C<CanvasResize> (L<Term::Fabulous::Event::CanvasResize>)
-
-A canvas got a new size from the layout. Fired on the canvas before the
-frame that shows the new size. Fields: C<columns>, C<rows>. See
-L</CANVASES>.
-
-=item C<Change> (L<Term::Fabulous::Event::Change>)
-
-The user changed the value of an input widget. Fired on the input (for
-radio buttons, on their L<Term::Fabulous::Widget::RadioGroup>). Field:
-C<value>. Not fired when your code sets a value with C<value> or
-C<checked>; the methods that act like the user, such as
-C<< $checkbox->toggle >> and C<< $group->choose($button) >>, do fire it.
-
-=item C<Submit> (L<Term::Fabulous::Event::Submit>)
-
-The user pressed C<Enter> in a L<Term::Fabulous::Widget::TextField>.
-Field: C<value>, the text.
-
-=item C<Activate> (L<Term::Fabulous::Event::Activate>)
-
-The user activated a L<Term::Fabulous::Widget::Button>: clicked it, or
-pressed C<Enter> or C<Space> while it had the focus. Fired on the
-button. No fields.
-
-=item C<Close> (L<Term::Fabulous::Event::Close>)
-
-A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
-code. Fired on the dialog, after it has left the screen. No fields.
-
-=item C<OnFocus>, C<OnBlur> (L<Clay::UI::Events::OnFocus>, L<Clay::UI::Events::OnBlur>)
-
-A widget got or lost the keyboard focus. Fired on that widget. See
-L</FOCUS>.
-
-=item C<OnPress>, C<OnRelease> (L<Clay::UI::Events::OnPress>, L<Clay::UI::Events::OnRelease>)
-
-The left mouse button went down over a pressable widget (Button and the
-input widgets), and went up again over the same widget. A press followed
-by a release on the same widget is a click; there is no separate click
-event. Fired on the innermost pressable widget under the pointer.
-Fields: C<x>, C<y>, the center of the cell (for example C<3.5>), and
-C<button> (always 1).
-
-=item C<OnHoverStart>, C<OnHoverStopped> (L<Clay::UI::Events::OnHoverStart>, L<Clay::UI::Events::OnHoverStopped>)
-
-The pointer came over a hoverable widget (Button and the input widgets),
-or left it. Never bubble. The hover state follows every pointer move,
-with the next frame.
-
-=item C<OnScroll> (L<Clay::UI::Events::OnScroll>)
-
-A L<Term::Fabulous::Widget::ScrollBox> scrolled. Fired on the scroll box.
-Fields: C<delta_x>, C<delta_y>, how far the content moved, in cells
-(C<delta_y> is -3 for one wheel notch down, 3 for one notch up).
-
-=back
-
-A L<Term::Fabulous::Widget::Table> fires these events on itself when the
-user acts on it; changes from your program fire none (see L</TABLES>):
-
-=over
-
-=item C<CursorMove> (L<Term::Fabulous::Event::CursorMove>)
-
-The user moved the table's cursor. Fields: C<row_id> (C<undef> on a
-group header), C<group_path>.
-
-=item C<SelectionChange> (L<Term::Fabulous::Event::SelectionChange>)
-
-The user changed which rows are selected. Fields: C<selected_ids>,
-C<added_ids>, C<removed_ids>.
-
-=item C<RowActivate> (L<Term::Fabulous::Event::RowActivate>)
-
-The user pressed C<Enter> on a row or double-clicked it. Fields:
-C<row_id>, C<row> (a copy of the row's data).
-
-=item C<SortChange> (L<Term::Fabulous::Event::SortChange>)
-
-The user sorted by a column. Field: C<sort>, the new sort.
-
-=item C<FilterChange> (L<Term::Fabulous::Event::FilterChange>)
-
-The user typed into a field of the table's filter row. Fields:
-C<column>, C<text>, C<error>.
-
-=item C<PageChange> (L<Term::Fabulous::Event::PageChange>)
-
-The user turned the page or chose another page size. Fields: C<page>,
-C<page_size>.
-
-=item C<Expand>, C<Collapse> (L<Term::Fabulous::Event::Expand>, L<Term::Fabulous::Event::Collapse>)
-
-The user opened or closed a tree row or a group. Fields: C<row_id> for
-a row, C<group_path> for a group.
-
-=item C<ColumnsChange> (L<Term::Fabulous::Event::ColumnsChange>)
-
-The user showed or hid a column in the column chooser. Field:
-C<visible>, the keys of the visible columns.
-
-=back
-
-=head2 Firing your own events
-
-Any widget based on Box can fire events with C<fire_event>. Events bubble
-like the built-in ones. For a simple event, create a
-L<Clay::UI::Events::Event> with a name:
-
-	use Clay::UI::Events::Event;
-
-	$root->on( Saved => sub ($event) { $status->text('Saved.'); return } );
-	$panel->fire_event( Clay::UI::Events::Event->new( name => 'Saved' ) );
-
-For an event with fields of its own, subclass it with L<Object::Pad> (its
-class syntax is explained in L</WRITING YOUR OWN WIDGETS>):
-
-	use Object::Pad 0.825;
-
-	class My::Event::Progress :isa(Clay::UI::Events::Event) {
-		field $percent :param :reader;
-		method event_name :common { 'Progress' }
-	}
-
-	$panel->fire_event( My::Event::Progress->new( percent => 40 ) );
-
-An event object can be fired only once; create a new one for every
-dispatch. To make an event that only the target sees, pass
-C<< bubble_mode =E<gt> Clay::UI::Enum::Bubble->NEVER >> to C<new>
-(C<use Clay::UI::Enum::Bubble;>).
-
-=head1 KEYBOARD
-
-=head2 Which widget receives key presses
-
-Every key press becomes a C<KeyPress> event, fired on the widget that has
-the keyboard focus. When no widget has the focus, it is fired on the root
-widget. From there it bubbles up as described in
-L</Return values and bubbling>, so a listener on the root sees every key
-that the focused widget and its ancestors did not stop.
-
-=head2 Key names
-
-C<< $event->key_name >> returns a readable name for the key and its
-modifiers, which makes key bindings easy to write:
-
-	my %action_for = (
-		'Ctrl+S' => \&save,
-		'F1'     => \&show_help,
-		'Escape' => \&close_dialog,
-		'q'      => \&quit,
-	);
-	$root->on(
-		KeyPress => sub ($event) {
-			my $action = $action_for{ $event->key_name // '' }
-				or return Clay::UI::Enum::Result->CONTINUE;
-			$action->();
-			return;
-		}
-	);
-
-Key names are: the typed character (C<a>, C<A>, C<?>, C<E<uuml>>);
-C<Space>, C<Enter>, C<Tab>, C<BackTab> (Shift+Tab), C<Escape>,
-C<Backspace>, C<Insert>, C<Delete>, C<Home>, C<End>, C<PageUp>,
-C<PageDown>, C<Left>, C<Right>, C<Up>, C<Down>, C<F1> to C<F12>; with
-modifiers in front in the fixed order C<Ctrl+>, C<Alt+>, C<Shift+>, for
-example C<Ctrl+W> or C<Ctrl+Shift+Left>. C<key_name> returns C<undef> for
-keys without a name.
-
-What a terminal can report is limited, and the names reflect it, unless
-the terminal speaks the kitty keyboard protocol (see below):
-
-=over
-
-=item *
-
-C<Ctrl> plus a letter arrives as one control byte. Most of them are named
-C<Ctrl+A> to C<Ctrl+Z>, but three are indistinguishable from other keys:
-C<Ctrl+H> arrives as C<Backspace>, C<Ctrl+I> as C<Tab> and C<Ctrl+M> as
-C<Enter>.
-
-=item *
-
-C<Shift> plus a letter arrives as the uppercase letter (C<A>), without a
-C<Shift+> prefix.
-
-=item *
-
-C<Alt> plus a key is named C<Alt+x>, C<Alt+Enter>, C<Alt+E<uuml>> and
-so on. Terminals send it as C<Escape> followed by the key in one go,
-which is how Term::Fabulous tells it from a real C<Escape>; only
-C<Alt+[> and C<Alt+O> cannot be bound, because they begin the escape
-sequences of other keys. Modifiers on special keys work in most
-terminals: C<Alt+Down>, C<Ctrl+Left>, C<Shift+Home>.
-
-=back
-
-Terminals that speak the
-L<kitty keyboard protocol|https://sw.kovidgoyal.net/kitty/keyboard-protocol/>
-lift these limits. L<Term::Fabulous/run> switches the protocol on when
-the terminal has it (the C<kitty_keyboard> parameter of
-L<Term::Fabulous/new> turns that off). Then every Ctrl combination has
-its own name (C<Ctrl+I>, C<Ctrl+Shift+W>, C<Ctrl+Enter>), C<Alt+[> can
-be bound, the modifiers C<Super+>, C<Hyper+> and C<Meta+> follow
-C<Shift+>, and keys such as C<F13> to C<F35>, C<KeypadEnter> and the
-media keys are reported. Keys typed without a modifier keep their
-names. Bindings that should treat the keypad keys like the main
-keyboard keys compare C<< $event->main_key_name >> instead, as the
-built-in widgets do. See
-L<Term::Fabulous::Event::KeyPress/THE KITTY KEYBOARD PROTOCOL>.
-
-For typing, use C<< $event->text >>: it returns the typed character as a
-character string, or C<undef> for keys that do not type anything (and
-for keys pressed with C<Ctrl>). See L<Term::Fabulous::Event::KeyPress>
-for the complete details, and for the raw C<key>, C<char> and
-C<modifiers> fields.
-
-=head2 Application shortcuts
-
-Put application-wide shortcuts in a C<KeyPress> listener on the root
-widget. The listener sees every key that was not used by the focused
-widget. The input widgets use the keys they need for editing (letters,
-arrows, C<Backspace>, ...) and pass on the rest, so keys like C<Escape>,
-C<F1> to C<F12> and C<Ctrl> combinations they do not use reach the root.
-Each input page lists the keys it uses under KEYS.
-
-There is no way to see a key before the focused input widget handles it:
-an input's own key handling runs before any listener you add to it, and
-you cannot stop it. To change which keys an input uses, derive a class
-from it and override C<handle_key> (see
-L<Term::Fabulous::Widget::Input/SUBCLASS INTERFACE>).
-
-=head2 Keys Term::Fabulous handles itself
-
-=over
-
-=item C<Ctrl+C>
-
-Fires its C<KeyPress> (key code 3) and then stops the loop, so C<run>
-returns. Listeners cannot prevent this. To ask before quitting, use
-another key; to clean up, put the code after C<< $ui->run >>.
-
-=item C<Tab> and C<Shift+Tab>
-
-Fire their C<KeyPress> and then move the focus to the next or previous
-widget (see L</FOCUS>). Listeners see the key but cannot prevent the move.
-
-=back
-
-=head1 FOCUS
-
-The I<focused> widget receives the key presses. At most one widget has the
-focus at a time. Widgets that can take the focus are the
-L<Term::Fabulous::Widget::Button>, the input widgets and the
-L<Term::Fabulous::Widget::RadioGroup> (one focus stop for all of its
-buttons).
-
-=head2 Moving the focus
-
-The focus moves:
-
-=over
-
-=item *
-
-with C<Tab> (next) and C<Shift+Tab> (previous), in tree order: the order
-in which the widgets appear when you walk the tree depth first, parents
-before their children. The order wraps around at the end.
-
-=item *
-
-when the user presses the left mouse button: the clicked widget, or its
-nearest ancestor that can take the focus, gets it. Clicking where no
-widget can take the focus clears the focus. Dragging does not move the
-focus.
-
-=item *
-
-from your code, through the I<interaction tracker> of the UI
-(L<Clay::UI::Interaction>):
-
-	$ui->interaction->set_focused_widget($name_field);   # focus a widget
-	$ui->interaction->set_focused_widget(undef);         # clear the focus
-	$ui->interaction->focus_next;                        # like Tab
-	$ui->interaction->focus_previous;                    # like Shift+Tab (BackTab)
-	my $focused = $ui->interaction->get_focused_widget;  # undef if none
-
-C<set_focused_widget> dies for a widget that cannot take the focus right
-now (for example a disabled input). You can call it before C<run>, for
-example to start with the cursor in the first field.
-
-=back
-
-To take a widget out of the focus order, pass C<can_focus =E<gt> 0> to
-C<new> (or C<can_focus #false> in a layout file), or call
-C<< $widget->can_focus(0) >> later; Tab skips it, a click does not focus
-it, and C<set_focused_widget> dies for it. A widget that has the focus
-when it stops being able to take it loses the focus at once (C<OnBlur>).
-Disabled widgets (the inputs and Buttons, through
-L<Clay::UI::Role::Interaction::Disableable>) cannot take the focus:
-while C<< $widget->disabled(1) >> is in force, C<can_focus> reads 0, and
-Clay::UI does not press them either. Once the widget is enabled again
-C<can_focus> reads what it was last set to, also when that was set
-while the widget was disabled. To ask whether a widget can take the
-focus now, ask the tracker:
-C<< $ui->interaction->can_take_focus($widget) >>.
-
-=head2 Reacting to focus changes
-
-C<OnFocus> and C<OnBlur> are fired on the widget that gets and loses the
-focus. They bubble, so a container can follow the focus of all its
-children; compare C<< $event->target >> with the container if it should
-only react to its own focus. C<< $widget->is_focused >> tells whether a
-widget has the focus now.
-
-The input widgets show their focus themselves (a different background and
-a cursor). A L<Term::Fabulous::Widget::Button> draws its border in its
-C<focus_border_color> while it has the focus. For another look, use
-these listeners:
-
-	use Clay::UI::Enum::Result;
-
-	$button->on( OnFocus => sub ($event) { $button->background_color( [ 60, 90, 160, 255 ] ); return Clay::UI::Enum::Result->CONTINUE } );
-	$button->on( OnBlur  => sub ($event) { $button->background_color( [ 40, 45, 60, 255 ] );  return Clay::UI::Enum::Result->CONTINUE } );
-
-A L<Term::Fabulous::Widget::Dialog> keeps the focus inside itself while
-it is open: Tab and Shift+Tab cycle through its widgets only, keys do
-not reach the widgets and key bindings behind it, a focused widget that
-is disabled or removed hands the focus to the dialog's backdrop, and
-when it closes the focus goes back to the widget that had it before.
-
-=head2 Custom focus order
-
-The default order follows the tree. To change it for part of the tree,
-compose L<Clay::UI::Role::Interaction::HasFocusOrder> into a container
-class and implement C<get_next_focus> and C<get_previous_focus>. When
-the focus moves (with Tab, Shift+Tab, C<focus_next> or
-C<focus_previous>), the nearest ancestor of the focused widget that
-composes the role decides where it goes: its method returns the widget
-to focus, or C<undef> to keep the focus where it is. The helpers
-C<default_next_focus> and C<default_previous_focus> return what the
-default order would pick, for everything you do not want to change.
-
-This form moves the focus through its fields in a fixed order, whatever
-order they have in the tree:
-
-	use Object::Pad 0.825;
-	use Clay::UI::Role::Interaction::HasFocusOrder;
-
-	class My::Form :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Interaction::HasFocusOrder) {
-		use List::Util qw(first);
-
-		field @order;    # the fields, in focus order
-
-		method set_order (@fields) { @order = @fields; return $self }
-
-		method _step ($direction) {
-			my $focused = $self->ui->interaction->get_focused_widget;
-			my $index   = first { $order[$_] == ( $focused // 0 ) } 0 .. $#order;
-			return $order[0] unless defined $index;
-			return $order[ ( $index + $direction ) % @order ];
-		}
-
-		method get_next_focus ()     { return $self->_step(1) }
-		method get_previous_focus () { return $self->_step(-1) }
-	}
-
-	my $form = My::Form->new;
-	$form->add_child( $street, $city, $zip );
-	$form->set_order( $street, $zip, $city );
-
-The role takes over only while the focused widget is inside the
-container (or, when nothing has the focus, if the container is the root).
-
-=head1 MOUSE
-
-Mouse support is on by default; pass C<mouse =E<gt> 0> to
-C<< Term::Fabulous->new >> to leave the mouse to the terminal (so the user
-can select and copy text as usual).
-
-=head2 What the terminal reports
-
-Term::Fabulous asks the terminal to report every mouse event: a button
-pressed or released, the pointer moving (with or without a button held)
-and the wheel turning, with the Shift, Alt and Ctrl keys held at the
-time. Hover effects (C<OnHoverStart>, C<OnHoverStopped>, C<is_hovered>)
-follow the pointer as it moves. Terminals report positions in cells;
-Term::Fabulous reads them in full, so wide terminals work.
-
-=head2 Mouse events
-
-Every report with a button or the wheel becomes a C<Mouse> event
-(L<Term::Fabulous::Event::Mouse>) with these fields:
-
-=over
-
-=item C<key>
-
-What happened, as a termbox2 constant: C<TB_KEY_MOUSE_LEFT>,
-C<TB_KEY_MOUSE_MIDDLE>, C<TB_KEY_MOUSE_RIGHT> (a button was pressed, or
-is held during a drag), C<TB_KEY_MOUSE_RELEASE> (a button was released;
-C<released_button> says which), C<TB_KEY_MOUSE_WHEEL_UP>,
-C<TB_KEY_MOUSE_WHEEL_DOWN>, and for a horizontal wheel
-C<TF_KEY_MOUSE_WHEEL_LEFT> and C<TF_KEY_MOUSE_WHEEL_RIGHT>. Import the
-constants from L<Term::Fabulous::Termbox>:
-
-	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION);
-
-=item C<x>, C<y>
-
-The cell under the pointer, counted from 0 at the top-left corner of the
-terminal.
-
-=item C<modifiers>
-
-A bit mask: C<TB_MOD_MOTION> is set while dragging, and C<TB_MOD_SHIFT>,
-C<TB_MOD_ALT> and C<TB_MOD_CTRL> for the keys held during the click.
-
-=back
-
-A report of the pointer moving with no button held becomes a
-C<MouseMove> event (L<Term::Fabulous::Event::MouseMove>) with C<x>, C<y>
-and C<modifiers>, fired on the same widget a C<Mouse> event would go to.
-Terminals send a move for every cell the pointer crosses, so keep these
-listeners cheap.
-
-The event is fired on the topmost widget that drew something in that cell
-in the last frame: its background, its border or its canvas. Text widgets
-do not receive mouse events; a click on text goes to the box behind it.
-A box without a background color and without a border draws nothing, so
-clicks go through it to the widget behind it. When no widget drew the
-cell, the event is fired on the root widget.
-
-	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
-
-	$box->on(
-		Mouse => sub ($event) {
-			return Clay::UI::Enum::Result->CONTINUE unless $event->key == TB_KEY_MOUSE_LEFT;
-			my $dragging = $event->modifiers & TB_MOD_MOTION;
-			say sprintf '%s at %d,%d', $dragging ? 'drag' : 'press', $event->x, $event->y;
-			return;
-		}
-	);
-
-A canvas converts the event's coordinates into its own cells with
-C<cell_at> (and a pixel canvas into pixels with C<pixel_at>); see
-L</CANVASES>.
-
-=head2 Clicks, hover and press
-
-For buttons, C<Mouse> events are too low level. Widgets that compose
-L<Clay::UI::Role::Interaction::Pressable> (Button and the input widgets)
-get C<OnPress> when the left button goes down over them and C<OnRelease>
-when it goes up over the same widget. A L<Term::Fabulous::Widget::Button>
-turns a complete click, and C<Enter> or C<Space> while it has the focus,
-into one C<Activate> event, which is what most programs want:
-
-	$ok_button->on( Activate => sub ($event) { submit_form(); return } );
-
-Use C<OnRelease> for a mouse-only action; the user can still cancel a
-click by releasing the button somewhere else.
-
-C<< $button->is_pressed >> is true while the button is held down over the
-widget, and C<< $button->is_hovered >> while the pointer is over it. A
-Button inverts its colors while it is pressed and draws its border in
-C<focus_border_color> while it has the focus; see
-L<Term::Fabulous::Widget::Button>.
-
-A press on a pressable widget fires both C<Mouse> and C<OnPress>.
-C<Mouse> comes first, as soon as the terminal reports the press;
-C<OnPress> follows when the next frame is drawn. A press and a release
-reported before the same frame (a quick tap) each get a frame of their
-own, so no click is too fast to be seen. Only the left button presses:
-releasing another button while the left one is held does not end the
-press. They can go to different
-widgets: C<Mouse> goes to the widget that drew the cell, C<OnPress> to the
-innermost pressable widget whose box contains the pointer, even if it
-draws nothing there.
-
-=head1 SCROLLING
-
-A L<Term::Fabulous::Widget::ScrollBox> is a box whose content may be
-larger than the box. The content is cut off at the box's edges, and the
-mouse wheel scrolls it:
-
-	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-	use Term::Fabulous::Widget::ScrollBox;
-	use Term::Fabulous::Widget::Text;
-
-	my $log = Term::Fabulous::Widget::ScrollBox->new(
-		id     => 'log',                      # required
-		layout => {
-			layout_direction => CLAY_TOP_TO_BOTTOM,
-			sizing           => { width => sizing_grow(), height => sizing_grow() },
-		},
-	);
-	$log->add_child( Term::Fabulous::Widget::Text->new( text => "Line $_", text_color => [ 220, 220, 220, 255 ] ) )
-		foreach 1 .. 500;
-
-Details:
-
-=over
-
-=item *
-
-The C<id> is required, because the scroll position is stored by id.
-
-=item *
-
-Each notch of the mouse wheel scrolls the scroll box under the pointer by
-three rows. Scroll boxes scroll vertically by default; C<vertical =E<gt> 0>
-switches vertical scrolling off. C<horizontal =E<gt> 1> lets content be
-wider than the box; a horizontal wheel (or a sideways tilt of the
-wheel) scrolls it by three columns per notch.
-
-A wheel notch scrolls the scroll box under the pointer unless a widget
-used it to scroll itself: a TextArea, a Slider or an open Dropdown list
-that moved calls C<use_wheel> on the C<Mouse> event
-(L<Term::Fabulous::Event::Mouse/use_wheel>), and the enclosing scroll
-box then stays put. One that is already at its end leaves the notch to
-the scroll box. Your own listeners do not change this: what they
-return only decides whether the C<Mouse> event bubbles on.
-
-=item *
-
-The scroll box fires C<OnScroll> when its position changed.
-
-=item *
-
-Adding children does not move the view; it stays where the user scrolled
-to. To keep a log at its newest line, see
-L<Term::Fabulous::Cookbook/Scroll a ScrollBox from code (keep a log at the newest line)>.
-
-=item *
-
-Scrolled content passes under the border, which is drawn on top of it.
-
-=item *
-
-To position the content yourself, set C<child_offset> to
-C<{ x =E<gt> 0, y =E<gt> -$rows }> (negative values move the content up);
-set it back to C<undef> to give control back to the mouse wheel. See
-L<Term::Fabulous::Widget::ScrollBox>.
-
-=back
-
-There is no keyboard scrolling and no scroll bar for ScrollBox. A
-L<Term::Fabulous::Widget::TextArea> scrolls its own text, with keys,
-wheel and a scroll bar, and the box around it does not scroll while the
-pointer is over it.
-
-=head1 CANVASES
-
-A L<Term::Fabulous::Widget::Canvas> is a box that holds a grid of cells
-you draw into: one character (or one grapheme cluster), a foreground and a
-background color per cell. It suits charts, maps, progress displays, game
-boards and anything else that is not text in boxes.
-
-=head2 The canvas size
-
-The layout decides the canvas size, like for any box. The buffer has as
-many columns and rows as the canvas's content box (inside border and
-padding). Before the first frame the buffer is empty (0 by 0 cells).
-Whenever the layout gives the canvas a new size, it fires
-C<CanvasResize>; draw in that listener, then the drawing always fits:
-
-	use Clay::XS qw(sizing_grow);
-	use Term::Fabulous::Widget::Canvas;
-
-	my $canvas = Term::Fabulous::Widget::Canvas->new(
-		background_color => [ 10, 10, 20, 255 ],
-		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
-	);
-	$canvas->on(
-		CanvasResize => sub ($event) {
-			$canvas->clear;
-			$canvas->put_text( 0, 0, 'Size: ' . $event->columns . 'x' . $event->rows, '#ffcc00' );
-			$canvas->fill( 0, 1, $event->columns, 1, '-', 0x808080 );
-			return;
-		}
-	);
-
-Drawing outside the buffer is silently ignored.
-
-=head2 Drawing
-
-C<put> sets one cell, C<put_text> writes a string, C<fill> fills a
-rectangle, C<erase> and C<clear> unset cells. Coordinates count from 0 at
-the top-left cell of the buffer and may be fractional (they are rounded
-down). Colors take every format listed for canvas cells in
-L</Color formats>; C<undef> means "no color of its own": the cell shows
-the canvas background, or the terminal's default text color.
-
-	$canvas->put( 5, 2, '@', 0xFFFF00 );                    # one cell, yellow
-	$canvas->put_text( 0, 0, 'Score: 100', '#ffffff', '#202040' );
-	$canvas->fill( 0, 3, 10, 2, '#', [ 0, 200, 0 ] );       # 10x2 block
-
-Text drawn on a canvas is a character string, like the text of a Text
-widget.
-
-=head2 Pixels
-
-L<Term::Fabulous::Widget::PixelCanvas> draws with half-block characters,
-two pixels per cell (one above the other), which gives roughly square
-pixels. It adds C<set_pixel>, C<draw_line>, C<draw_rect>, C<fill_rect>
-and C<draw_circle>, and C<pixel_at> to find the pixel under the mouse.
-
-=head2 Efficient updates
-
-A canvas remembers which cells changed since it was last drawn. As long
-as it stays in the same place and nothing is drawn over it, each frame
-sends only its changed cells to the terminal. This makes animations on
-large canvases cheap; you do not have to do anything to get it.
-
-=head1 CHARTS
-
-The chart widgets are canvases that draw themselves: give them data, and
-they lay out a title, a legend, axes and the plot in whatever room the
-layout gives them, and draw again whenever the data, an option or their
-size changes. This chapter explains the ideas; the widget pages have
-every parameter, and L<Term::Fabulous::Cookbook/CHARTS> a complete
-program for each feature.
-
-	use Term::Fabulous::Widget::LineChart;
-
-	my $chart = Term::Fabulous::Widget::LineChart->new(
-		title  => 'Requests per second',
-		labels => [qw(Mon Tue Wed Thu Fri)],
-		curve  => 'monotone',
-		y_axis => { title => 'req/s', min => 0 },
-		series => [
-			{ name => 'api', data => [ 120, 135, 160, 158, 171 ] },
-			{ name => 'web', data => [ 80, 82, 95, 110, 104 ], line_style => 'dashed' },
-		],
-	);
-	$chart->append( undef, { api => 180, web => 99 } );    # the next point of both series
-	$chart->on( SeriesHover => sub ($event) { $status->text( $event->series // '' ); return } );
-
-F<examples/widgets/line-chart.pl> (L<Term::Fabulous::Examples>) draws
-such a chart:
-
-=begin html
-
-<p><img src="/screenshots/widget-line-chart.svg" alt="A line chart of monthly active users on web, iOS and Android with smooth curves, a legend at the top and the y axis titled thousands"></p>
-
-=end html
-
-=head2 The chart widgets
-
-Charts with an x and a y axis are L<Term::Fabulous::Widget::LineChart>,
-L<Term::Fabulous::Widget::AreaChart>, L<Term::Fabulous::Widget::BarChart>
-and L<Term::Fabulous::Widget::ScatterPlot>; they are one widget,
-L<Term::Fabulous::Widget::XYChart>, with a different default I<series
-type>, and a chart may mix the types (bars with a target line).
-L<Term::Fabulous::Widget::Histogram> counts values into bins first, and
-L<Term::Fabulous::Widget::Sparkline> is an XY chart one row high without
-axes, for a trend next to a number. The round charts are
-L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>
-and L<Term::Fabulous::Widget::PolarAreaChart> for parts of a whole, and
-L<Term::Fabulous::Widget::RadarChart> for profiles over several axes.
-What all of them share (title, legend, palettes, hover) is on
-L<Term::Fabulous::Widget::Chart>.
-
-=head2 Series and data
-
-A I<series> is a named list of data points in one color. Its data are
-plain y values (the x is the point's position or the label there),
-C<[ x, y ]> pairs, or hashes; x values may be numbers, labels or dates,
-and the chart reads from them what kind of x axis it has: category,
-linear, logarithmic or time (L<Term::Fabulous::Widget::XYChart/AXES>).
-C<undef> is a gap. The data is kept as given and may be replaced, extended
-or appended to at any time (L<Term::Fabulous::Role::HasSeries>); every
-change shows in the next frame, and only the cells that changed go to the
-terminal, so a chart can take many updates per second. A series'
-C<transform> prepares the data before it is drawn: smoothing, running
-totals, rates, indexing, resampling (L<Term::Fabulous::Chart::Transform>).
-
-=head2 How a chart is drawn
-
-A chart draws into I<subpixels>, several per cell, and turns each cell
-into one character with two colors: Braille dots for lines and points (2
-x 4 per cell), eighth blocks for bars and areas, quadrants or sextants
-for round charts; the C<marker> of a series chooses
-(L<Term::Fabulous::Widget::XYChart/Rendering styles>). The value axis
-picks round ticks that land exactly on rows, so a grid line always lies
-beside its label; rows the ticks leave over become a margin below the
-axis. Colors that are not data (title, labels, axis and grid lines) are
-mixed from the background, so a chart suits a dark or a light panel; the
-palettes keep their colors apart for readers with color vision
-deficiencies (L<Term::Fabulous::Chart::Palette>).
-
-=head2 Hover and events
-
-Charts have no tooltips. While the pointer is on a series (or a slice),
-the chart emphasizes it and fades the others, and fires a C<SeriesHover>
-event with the series, the nearest point, its label and its value
-(L<Term::Fabulous::Event::SeriesHover>); a program shows the details its
-own way, for example in a status line. C<highlight> emphasizes a series
-from the program; C<< hover =E<gt> 0 >> turns it all off.
-
-=head2 Charts in layouts and reports
-
-Without a size, a chart grows to the room its parent leaves; a sparkline
-is one row high. Every chart has KDL properties, with its series and data
-in the layout file or added from Perl afterwards (L</KDL LAYOUT FILES>).
-Charts render through L<Term::Fabulous::Static> like every widget, so a
-report can print a bar chart or a sparkline as text
-(L</RENDERING WITHOUT A TERMINAL>).
-
-=head1 FORMS AND INPUT WIDGETS
-
-=head2 The input widgets
-
-=over
-
-=item L<Term::Fabulous::Widget::TextField>
-
-One line of text, optionally masked for passwords. Fires C<Submit> on
-C<Enter>.
-
-=item L<Term::Fabulous::Widget::TextArea>
-
-Several lines of text, wrapped or scrolled sideways, with a scroll bar.
-
-=item L<Term::Fabulous::Widget::Checkbox>
-
-On or off, with an optional "indeterminate" third look.
-
-=item L<Term::Fabulous::Widget::RadioGroup> and L<Term::Fabulous::Widget::RadioButton>
-
-One choice of several, all visible.
-
-=item L<Term::Fabulous::Widget::Dropdown>
-
-One choice of several, from a list that opens over the other widgets.
-
-=item L<Term::Fabulous::Widget::Slider>
-
-A number from a range.
-
-=back
-
-F<examples/form.pl> uses all of them in one form.
-
-=begin html
-
-<p><img src="/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
-
-=end html
-
-=head2 What all inputs have in common
-
-All input widgets except RadioGroup are built on
-L<Term::Fabulous::Widget::Input>; RadioGroup is a box that holds
-RadioButtons. They share these features:
-
-=over
-
-=item *
-
-C<value> reads the current value: the text of a TextField or TextArea,
-1 or 0 for a Checkbox, the selected button's value for a RadioGroup, the
-selected option's value for a Dropdown, the number of a Slider. To set
-it from code, call C<value> with an argument on TextField, TextArea,
-RadioGroup, Dropdown and Slider, and C<checked> on a Checkbox (its
-C<value> is read only). (C<value> with an argument on a RadioButton
-changes the value that button stands for; it does not select it.)
-Setting a value with C<value> or C<checked> never fires C<Change>;
-C<< $checkbox->toggle >>, C<< $group->choose($button) >> and
-C<< $dropdown->choose($index) >> act like the user and do fire it.
-
-=item *
-
-C<Change> is fired when the user changes the value, with the new value in
-C<< $event->value >>. It bubbles (when the listeners return C<CONTINUE>),
-so a listener on a container sees the changes of all inputs inside it;
-C<< $event->target >> is the input that changed.
-
-=item *
-
-C<disabled> greys the input out: it ignores keys and clicks and cannot
-take the focus. Buttons have C<disabled> too.
-
-=item *
-
-Colors: C<text_color>, C<disabled_color>, C<accent_color> (check marks,
-selection, slider fill) and C<focus_background_color>, in any format
-L<Term::Fabulous::Color> accepts. (A RadioGroup has none of these; its
-buttons have them.) C<background_color> and C<border_color> are box
-colors and take the same formats.
-
-=item *
-
-The size: without a C<sizing> rule in C<layout>, an input is exactly as
-big as its content (for text fields: C<preferred_columns> wide). A sizing
-rule in the C<layout> wins, for example
-C<< layout =E<gt> { sizing =E<gt> { width =E<gt> sizing_grow() } } >> for
-a text field that fills its row.
-
-=back
-
-=head2 A small form
-
-	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
-	use Term::Fabulous::Widget::Box;
-	use Term::Fabulous::Widget::TextField;
-	use Term::Fabulous::Widget::Checkbox;
-
-	my $form = Term::Fabulous::Widget::Box->new(
-		layout => { layout_direction => CLAY_TOP_TO_BOTTOM, child_gap => 1 },
-	);
-	my $name  = Term::Fabulous::Widget::TextField->new( id => 'name', placeholder => 'Your name' );
-	my $terms = Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms' );
-	$form->add_child( $name, $terms );
-
-	# One listener for every input of the form.
-	$form->on(
-		Change => sub ($event) {
-			say $event->target->id, ' is now ', $event->value;
-			return;
-		}
-	);
-
-	# Start with the cursor in the name field.
-	$ui->interaction->set_focused_widget($name);
-
-The other input widgets work the same way:
-
-	use Term::Fabulous::Widget::TextArea;
-	use Term::Fabulous::Widget::RadioGroup;
-	use Term::Fabulous::Widget::RadioButton;
-	use Term::Fabulous::Widget::Dropdown;
-	use Term::Fabulous::Widget::Slider;
-
-	my $notes = Term::Fabulous::Widget::TextArea->new(
-		id     => 'notes',
-		layout => { sizing => { width => sizing_grow(), height => sizing_fixed(4) } },
-	);
-
-	my $size = Term::Fabulous::Widget::RadioGroup->new( id => 'size', value => 'm' );
-	$size->add_child( Term::Fabulous::Widget::RadioButton->new( label => $_->[0], value => $_->[1] ) )
-		foreach [ Small => 's' ], [ Medium => 'm' ], [ Large => 'l' ];
-
-	my $color = Term::Fabulous::Widget::Dropdown->new(
-		id          => 'color',
-		options     => [ 'Red', 'Green', [ 'Dark blue' => 'navy' ] ],
-		placeholder => 'Pick a color',
-	);
-
-	my $volume = Term::Fabulous::Widget::Slider->new( id => 'volume', min => 0, max => 100, step => 5, value => 30 );
-
-	$form->add_child( $notes, $size, $color, $volume );
-
-	$color->value('navy');       # select by value; fires no Change
-	$terms->checked(1);          # a Checkbox is set with checked
-	$notes->disabled(1);         # greyed out, skipped by Tab
-
-The Cookbook has complete form programs, including reading all values at
-once and building the form from a KDL file
-(L<Term::Fabulous::Cookbook/A login form (centered dialog, masked password)>).
-
-=head1 TABLES
-
-L<Term::Fabulous::Widget::Table> shows a list of Perl hashes as rows and
-columns, and handles everything the user does with them: moving through
-the rows with the keyboard and the mouse, sorting by a click on a
-column title, filtering, opening and closing groups and tree rows,
-turning pages and selecting rows. This chapter explains the ideas; the
-table's own page describes every feature, parameter, method, key and
-event, and starts with a feature index.
-
-	use Term::Fabulous::Widget::Table;
-	use Term::Fabulous::Widget::Table::Mutator qw(date number);
-
-	my $table = Term::Fabulous::Widget::Table->new(
-		id        => 'staff',
-		row_id    => 'id',
-		selection => 'multiple',
-		columns   => [
-			{ key => 'name',    title => 'Name' },
-			{ key => 'started', title => 'Started', type => 'date',   mutator => date('%d %b %Y') },
-			{ key => 'salary',  title => 'Salary',  type => 'number', mutator => number( decimals => 0 ) },
-		],
-		rows => [
-			{ id => 1, name => 'Ada',   started => '2019-03-04', salary => 81000 },
-			{ id => 2, name => 'Grace', started => '2021-11-15', salary => 76500 },
-		],
-	);
-	$table->on( RowActivate => sub ($event) { say 'open ', $event->row->{name}; return } );
-
-=head2 Rows, columns, values
-
-Every row is a hash reference, copied when the table gets it, and has a
-I<row id> that names it in every method and event: an entry of the row
-(C<< row_id => 'id' >>), what a code reference returns, or a number the
-table counts up. A column reads one I<raw value> from each row and turns
-it into the I<display text> the cell shows, with I<mutators> such as
-C<date> and C<number> or code of your own. Sorting and filtering use the
-raw value, so a date shown as C<04 Mar 2019> still sorts as a date. See
-L<Term::Fabulous::Widget::Table/ROWS>,
-L<Term::Fabulous::Widget::Table/COLUMNS> and
-L<Term::Fabulous::Widget::Table/DISPLAY TEXT AND MUTATORS>.
-
-=head2 What the table shows
-
-The table computes the lines it shows from its rows: it leaves out the
-rows that do not match the filters, puts the rest into groups (with
-C<group_by>), sorts them, hides what is inside closed groups and closed
-tree rows, and cuts the lines into pages (with C<page_size>). Each step
-has its own chapter on the table's page:
-L<Term::Fabulous::Widget::Table/FILTERING>,
-L<Term::Fabulous::Widget::Table/GROUPING>,
-L<Term::Fabulous::Widget::Table/SORTING>,
-L<Term::Fabulous::Widget::Table/TREES> and
-L<Term::Fabulous::Widget::Table/PAGES>.
-
-=head2 Cursor, selection and events
-
-The I<cursor> is the line the keyboard works on; the table draws it
-while it has the focus. The I<selection> is a separate set of rows
-(C<< selection => 'single' >> or C<'multiple'>). What the user does
-fires events on the table: C<CursorMove>, C<SelectionChange>,
-C<RowActivate> (Enter or a double click), C<SortChange>, C<FilterChange>,
-C<PageChange>, C<Expand>, C<Collapse> and C<ColumnsChange> (see
-L</Event reference>). Changes your program makes through the table's
-methods fire none. See
-L<Term::Fabulous::Widget::Table/SELECTION AND CURSOR>,
-L<Term::Fabulous::Widget::Table/KEYS> and
-L<Term::Fabulous::Widget::Table/MOUSE>.
-
-=head2 Looks and lines
-
-The table draws its own lines, joined into one grid: a frame, lines
-between the columns, optional lines between the rows, and a line below
-the column titles. Colors, lines and text styles can be set for the
-whole table, a column, a row or a single cell, also depending on the
-data (red negative numbers, gray rows of finished tasks). See
-L<Term::Fabulous::Widget::Table/STYLES AND BORDERS>.
-
-=head2 Large tables
-
-Each shown cell is about two widgets, and every widget costs time in
-every frame. Use C<page_size> for more than a few hundred rows; see
-L<Term::Fabulous::Widget::Table/PERFORMANCE>.
-
-The table recipes in L<Term::Fabulous::Cookbook/TABLES> are complete
-programs for every feature, and F<examples/table-directory.pl> and
-F<examples/table-files.pl> (see L<Term::Fabulous::Examples>) are larger
-demos.
-
-=head1 KDL LAYOUT FILES
-
-Instead of building the widget tree in Perl, you can describe it in a
-L<KDL|https://kdl.dev> document, a simple configuration language, and let
-L<Term::Fabulous::Layout> build it:
-
-	use Term::Fabulous::Layout;
-
-	my $layout = Term::Fabulous::Layout->new( string => <<'KDL' );
-	use Term::Fabulous::Widget::Box as Box
-	use Term::Fabulous::Widget::Text as Text
-	use Term::Fabulous::Widget::TextField as TextField
-
-	Box "root" {
-		layout direction=down gap=1
-		sizing width=grow height=grow
-		padding left=2 right=2 top=1
-		background_color "#141937"
-
-		Text "title" {
-			text "Who are you?"
-			text_color "#ffffff"
-		}
-		TextField "name" {
-			placeholder "Your name"
-			preferred_columns 30
-		}
-	}
-	KDL
-
-	my $root = $layout->build;
-	my $ui   = Term::Fabulous->new( root => $root, width => 80, height => 24 );
-
-The rules in short:
-
-=over
-
-=item *
-
-C<use Module::Name as Alias> declares a widget class and the node name
-used for it. Only classes declared this way can be used. The short form
-C<use Module::Name> uses the full module name as the node name.
-
-=item *
-
-There is exactly one top-level widget node, the root.
-
-=item *
-
-A widget node takes an optional string argument, the widget's C<id>.
-
-=item *
-
-Inside a widget node, nodes whose names start with a lowercase letter
-are I<properties> of the widget (C<text>, C<sizing>, C<value>, ...), and
-nodes whose names start with an uppercase letter are child widgets.
-
-=item *
-
-Unknown properties, malformed values and unknown widgets die with a
-message that names the problem.
-
-=back
-
-Properties are applied after the widget was constructed, in the order
-they appear, except that values depending on each other are applied
-together wherever they stand: a dropdown's C<options> before its
-C<value>, a slider's C<min>, C<max> and C<step> as one range before its
-C<value>, a text field's C<max_length> before its C<value>.
-
-Text in a KDL layout is a character string and is passed to Text widgets
-as is.
-
-L<Term::Fabulous::Layout> documents the grammar and lists the properties
-of every widget. To use your own widget classes in a layout, see
-L</WRITING YOUR OWN WIDGETS>.
-
-B<Security:> a layout names the Perl modules it loads, and loading a module
-runs its code. Treat layout files like program code; do not load layouts
-from untrusted sources.
-
-=head1 RENDERING WITHOUT A TERMINAL
-
-L<Term::Fabulous::Static> lays out and draws a widget tree once and
-returns the result as text, without opening the terminal or running an
-event loop. It is useful for reports, command-line tools that print boxes
-and tables, and for tests:
-
-	use Term::Fabulous::Static;
-
-	my $page = Term::Fabulous::Static->new( root => $root, width => 60 );
-	$page->print;                                    # colored if STDOUT is a terminal
-	my @lines = $page->render_lines( colors => 0 );  # plain character strings
-
-The output has as many rows as the content needs, provided the root uses
-C<sizing_fit()> for its height. A root with C<sizing_grow()> fills the
-whole layout height, which is 4096 rows unless you pass a C<height>.
-Static uses exactly the same layout and drawing code as the interactive
-UI, so what you see in the text is what the terminal would show.
-
-=head1 THE EVENT LOOP
-
-C<< $ui->run >> starts an L<IO::Async::Loop> and returns when it stops.
-While it runs, it redraws the screen whenever something changed (checking
-every 1/30 second) and turns terminal input into events. See
-L<Term::Fabulous/run> for the details.
-
-=head2 Timers and other asynchronous work
-
-Term::Fabulous uses the process-wide IO::Async loop: C<< IO::Async::Loop->new >>
-returns the same loop object every time. Add timers, sockets, child
-processes and other notifiers to it before calling C<run> (or from a
-listener while it runs), and they run alongside the user interface:
-
-	use IO::Async::Loop;
-	use IO::Async::Timer::Periodic;
-	use POSIX qw(strftime);
-
-	my $clock = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 255, 255, 255, 255 ] );
-
-	my $timer = IO::Async::Timer::Periodic->new(
-		interval       => 1,
-		first_interval => 0,
-		on_tick        => sub { $clock->text( strftime( '%H:%M:%S', localtime ) ) },
-	);
-	$timer->start;
-	IO::Async::Loop->new->add($timer);
-
-	$ui->run;
-
-Never block in a listener or timer (no C<sleep>, no long computations,
-no blocking network calls): while your code runs, the screen is not
-redrawn and input is not read. Use IO::Async's non-blocking facilities
-instead, such as L<IO::Async::Process> or L<Future>-returning methods.
-
-=head2 Quitting
-
-C<run> returns when the loop stops:
-
-=over
-
-=item *
-
-when your code calls C<< $ui->loop->stop >> (C<loop> returns the loop of
-the running UI);
-
-=item *
-
-when the user presses C<Ctrl+C>;
-
-=item *
-
-when the process receives C<SIGINT>, C<SIGTERM> or C<SIGHUP> (the
-terminal window was closed).
-
-=back
-
-After C<run> has returned, the terminal is back to normal, the handlers
-your program had set in C<%SIG> for these signals are back in place
-(unless an L<IO::Async::Signal> of your program still watches one), and
-you can print to it, ask questions on the command line, or call C<run>
-again.
-
-=head2 Errors and terminal restore
-
-If a listener, a timer or other code inside the loop dies, C<run> restores
-the terminal and then dies with the same error, so the message appears on
-the normal screen. When the terminal's input ends without a C<SIGHUP>
-reaching the process (a terminal that went away while the process is
-not in its session, or input from a pipe), C<run> dies with
-"Term::Fabulous: the terminal was closed". The terminal is also
-restored when code calls C<exit>.
-Catch errors around C<run> if your program should continue:
-
-	use Feature::Compat::Try;
-
-	try { $ui->run }
-	catch ($error) { warn "The UI stopped with an error: $error" }
-
-=head1 WRITING YOUR OWN WIDGETS
-
-Term::Fabulous classes are written with L<Object::Pad>, a module that adds
-class syntax to Perl. The parts used here:
-
-=over
-
-=item C<class My::Card :isa(Parent) :strict(params) { ... }>
-
-declares a class derived from C<Parent>. C<:strict(params)> makes C<new>
-die on unknown parameters, like all Term::Fabulous classes do.
-
-=item C<field $title :param;>
-
-declares an instance variable, set from the constructor parameter of the
-same name (C<< My::Card->new( title => 'x' ) >>). C<:reader> adds a
-method that returns it.
-
-=item C<ADJUST { ... }>
-
-runs during construction, after the fields are set; C<$self> is the new
-object.
-
-=item C<method name (...) { ... }>
-
-declares a method; C<$self> is available inside. C<:override> marks a
-method that replaces one of the parent class.
-
-=back
-
-Your own widgets are Object::Pad classes that derive from one of the
-Term::Fabulous classes:
-
-=over
-
-=item Derive from L<Term::Fabulous::Widget::Box>
-
-for a container with fixed children or a fixed look, for example a
-"card" with a title and a body. Build the children in C<ADJUST>.
-
-=item Derive from L<Term::Fabulous::Widget::Canvas>
-
-for a widget that draws itself cell by cell.
-
-=item Derive from L<Term::Fabulous::Widget::Input>
-
-for an interactive widget: you get focus handling, colors, the disabled
-state, C<Change> events and painting at the right time. You write
-C<natural_size> (how many cells it needs) and C<paint> (how it looks),
-and handle keys and clicks in C<handle_key>, C<handle_mouse> and
-C<activate>. See the SUBCLASS INTERFACE of
-L<Term::Fabulous::Widget::Input>.
-
-=back
-
-Term::Fabulous draws a frame only when something changed. A widget that
-keeps state of its own, which its drawing or its size depends on, must
-say so whenever that state changes: it calls C<< $self->mark_changed >>
-(see L<Clay::UI::Role::Core::Element/mark_changed>), and a Canvas
-subclass that draws with the canvas methods gets that from them. An
-Input subclass does not paint in its setters: the frame that
-C<mark_changed> makes due calls its C<paint> (see
-L<Term::Fabulous::Widget::Input/Painting>). Otherwise a change made from
-a timer only shows when something else causes a frame.
-
-A minimal container widget:
-
-	use Object::Pad 0.825;
-
-	class My::Card :isa(Term::Fabulous::Widget::Box) :strict(params) {
-		use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
-		use Term::Fabulous::Enum::BorderStyle;
-		use Term::Fabulous::Widget::Text;
-
-		field $title :param;
-
-		ADJUST {
-			$self->layout( { %{ $self->layout }, layout_direction => CLAY_TOP_TO_BOTTOM } );
-			$self->border_width(1);
-			$self->border_color( [ 120, 170, 255, 255 ] );
-			$self->$_( Term::Fabulous::Enum::BorderStyle->Solid ) foreach qw(border_style_right border_style_bottom border_style_left);
-			$self->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
-			$self->add_child( Term::Fabulous::Widget::Text->new( text => $title, text_color => [ 255, 220, 120, 255 ] ) );
-		}
-	}
-
-	my $card = My::Card->new( title => 'Status' );
-	$card->add_child( Term::Fabulous::Widget::Text->new( text => 'All systems go', text_color => [ 220, 220, 220, 255 ] ) );
-
-A widget class can be used in KDL layouts once it composes
-L<Term::Fabulous::Role::CanParseLayout>. Classes derived from Box already
-do; they declare the properties a layout may set, and how each is read,
-in C<layout_properties>. A layout applies them after the widget was
-constructed, through the same accessors a program calls.
-See L<Term::Fabulous::Role::CanParseLayout> and
-L<Term::Fabulous::Cookbook/Make a widget usable from KDL>.
-
-=head1 TESTING
-
-You can test widgets and whole programs without a terminal:
-
-=over
-
-=item *
-
-Run the program's widget tree on a L<Term::Fabulous::Terminal::Memory>,
-a terminal in memory. Queue keys, clicks and resizes on it, let
-L<Term::Fabulous/step> handle them as L<Term::Fabulous/run> would, and
-compare what the screen shows.
-
-=item *
-
-Lay out and draw a tree once with L<Term::Fabulous::Static> and compare
-the lines it returns, for output that takes no input.
-
-=back
-
-	use Test2::V0;
-	use Term::Fabulous;
-	use Term::Fabulous::Terminal::Memory;
-
-	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 40, height => 10 );
-	my $ui       = Term::Fabulous->new( root => $root, width => 40, height => 10, terminal => $terminal );
-	$ui->step;    # opens the terminal, fires Start, draws the first frame
-
-	# Focus the field, type "hi", press Left, click the OK button.
-	$terminal->press_key('Tab')->type_text('hi')->press_key('Left');
-	$terminal->click( 2, 4 );
-	$ui->step;
-
-	is $field->value, 'hi', 'typed text';
-	like [ $terminal->lines ]->[0], qr/hi/, 'the text is shown';
-	ok $saved, 'the click activated the button';
-
-	done_testing;
-
-The input goes through everything real input goes through: keys go to
-the focused widget, C<Tab> and C<Shift+Tab> move the focus, a click is
-hit-tested against the last frame, focuses what it hits and presses and
-releases it (C<OnPress>, C<OnRelease>), the wheel scrolls the scroll
-box under the pointer, and a resize fires C<Resize>. C<step> draws
-every frame that is due, so after it the screen and the widgets are in
-the state a user would see. It returns the number of frames it drew,
-which shows whether something changed.
-
-A few things differ from C<run>, because there is no event loop:
-C<Ctrl+C> fires its C<KeyPress> but stops nothing, timers you added to
-the loop do not run (call the code they would run from the test), and a
-resize is applied at once instead of after the size settled. Mouse
-events are dropped when the program runs without the mouse (as a real
-terminal would not send them), for example in inline mode.
-
-To test the key handling of a single widget in isolation, you can fire
-events at it directly with C<fire_event>. They go only through the
-widget and its listeners: nothing is focused, Tab does nothing, and a
-L<Term::Fabulous::Event::Mouse> fired this way is not hit-tested and
-does not press anything.
-
-	use Term::Fabulous::Event::KeyPress;
-	use Term::Fabulous::Termbox::Event;
-
-	my %fields = Term::Fabulous::Event::KeyPress->fields_for_name('Ctrl+Left');
-	$field->fire_event( Term::Fabulous::Event::KeyPress->of( Term::Fabulous::Termbox::Event->new(%fields) ) );
-
-An input needs to have been laid out at least once (a C<step>, or
-C<render_lines> of L<Term::Fabulous::Static>) before it paints
-anything, because its size comes from the layout.
-
-The Cookbook has a complete test file:
-L<Term::Fabulous::Cookbook/Test a widget without a terminal>.
-
-=head1 TROUBLESHOOTING
-
-=head2 My text does not show (invisible text)
-
-The default C<text_color> of a Text widget is opaque black, which is
-invisible on a dark background. Always pass a C<text_color>, or
-C<[0, 0, 0, 0]> for the terminal's default text color. See L</TEXT>.
-
-=head2 "the widget tree has more elements than max_element_count (8192) allows"
-
-The widget tree is too large for Clay's element table: by default at
-most 8190 widgets fit in a frame. Pass a larger C<max_element_count> to
-C<< Term::Fabulous->new >>, or show fewer widgets at a time, for example
-by building only the visible part of a long list, or by drawing many
-small items on a canvas instead. See L<Term::Fabulous/new>.
-
-=head2 A table shows no cursor
-
-The cursor of a L<Term::Fabulous::Widget::Table> is drawn only while the
-table, or a widget in one of its cells, has the keyboard focus. Give it
-the focus with C<Tab>, a click, or
-C<< $ui->interaction->set_focused_widget($table) >>. See
-L<Term::Fabulous::Widget::Table/The cursor>.
-
-=head2 Garbled characters in a Text widget, input, canvas or KDL layout
-
-All of these take character strings. If your source code contains
-non-ASCII characters, add C<use utf8;>. If the text comes from a file,
-a command or C<@ARGV>, decode it first (C<decode('UTF-8', $bytes)>); see
-L</Text is character strings>.
-
-=head2 Wide characters (CJK, emoji) shift the rest of the line
-
-The locale is not UTF-8 (C<run> warns about it), or the terminal
-disagrees with the C library about the character's width. Set a UTF-8
-locale, for example C<export LANG=C.UTF-8> (C<locale -a> lists the
-installed locales).
-
-=head2 Colors are wrong or look washed out
-
-The terminal does not support 24-bit colors. Use a terminal that does;
-inside tmux, enable truecolor (C<set -as terminal-features ",*:RGB">).
-
-=head2 A KeyPress listener on the root never sees some keys
-
-The focused widget used them, or one of its listeners (or one on a widget
-between it and the root) did not return
-C<< Clay::UI::Enum::Result->CONTINUE >>. See
-L</Return values and bubbling>.
-
-=head2 A Mouse listener never fires
-
-The widget draws nothing at the clicked cell (no background color, no
-border), so the click goes to the widget behind it, or it is a Text
-widget. Give the box a background color, or listen on an ancestor.
-
-=head2 Hover effects do not follow the mouse
-
-The terminal does not report mouse movement (mode 1003), or a terminal
-multiplexer between it and the program drops the reports. Clicks, drags
-and the wheel still work. See L</What the terminal reports>.
-
-=head2 A change from a timer does not show
-
-Term::Fabulous draws a frame only when it knows that something changed.
-The widget methods tell it; state a widget of your own keeps itself does
-not. Call C<mark_changed> on the widget after changing it, or
-C<< $ui->invalidate >>. See L</WRITING YOUR OWN WIDGETS>.
-
-=head2 Unrecognised parameters for ... constructor
-
-Every Term::Fabulous class rejects constructor parameters it does not
-know, to catch typos. Check the spelling against the class's
-documentation.
-
-=head2 The program dies with "is still attached to a parent"
-
-A widget has one parent at a time. Remove it from its current parent
-before adding it elsewhere; see L</Changing the tree>.
-
-=head1 GLOSSARY
-
-=over
-
-=item ancestor
-
-A widget's parent, the parent's parent, and so on up to the root.
-
-=item bubbling
-
-An event, after the listeners of its target ran, is passed on to the
-target's ancestors. See L</Return values and bubbling>.
-
-=item cell
-
-One character position of the terminal. Wide characters take two cells.
-
-=item character string
-
-Decoded Perl text, where each character is one Unicode code point.
-Compare "UTF-8 byte string".
-
-=item Clay
-
-The layout engine Term::Fabulous uses; see L<Clay::XS> and L<Clay::UI>.
-
-=item column, row
-
-The horizontal and vertical position of a cell, counted from 0 at the
-top-left corner.
-
-=item content box
-
-The area of a widget inside its border and padding, where its children
-(or a canvas's cells) are placed.
-
-=item cursor (table)
-
-The line of a L<Term::Fabulous::Widget::Table> the keyboard works on,
-highlighted while the table has the focus. Not the same as the
-selection. See L<Term::Fabulous::Widget::Table/The cursor>.
-
-=item debounced
-
-Delayed until the input has stopped changing for a short time; used for
-terminal resizes, see L</Event reference>.
-
-=item display text (table)
-
-The text a table cell shows: its raw value after the column's mutators.
-See L<Term::Fabulous::Widget::Table/DISPLAY TEXT AND MUTATORS>.
-
-=item focus
-
-Which widget receives key presses. See L</FOCUS>.
-
-=item frame
-
-One complete layout and drawing of the screen. L<Term::Fabulous> checks
-30 times per second whether a frame is needed and draws one when
-something changed, so a change "shows in the next frame" within 1/30
-second.
-
-=item grapheme cluster
-
-What a reader sees as one character, even if it consists of several
-Unicode code points (a letter with combining accents, a flag emoji).
-Cursor movement and canvas cells work with clusters.
-
-=item hoverable, pressable, focusable
-
-Widgets that track whether the pointer is over them, whether they are
-pressed, and whether they can take the keyboard focus (Button and the
-input widgets). They compose the L<Clay::UI> roles of these names.
-
-=item KDL
-
-A configuration language (L<https://kdl.dev>) in which widget trees can
-be written. See L</KDL LAYOUT FILES>.
-
-=item listener
-
-A code reference registered with C<< $widget->on( $event_name => $code ) >>.
-
-=item mutator
-
-A code reference that turns a table cell's raw value into its display
-text, for example epoch seconds into a date; see
-L<Term::Fabulous::Widget::Table::Mutator>.
-
-=item notifier
-
-L<IO::Async>'s word for anything that runs in its event loop: timers,
-sockets, child processes, signal handlers.
-
-=item raw value (table)
-
-The value a table column reads from a row (or computes from it). Tables
-sort by it and filter by it unless told otherwise. See
-L<Term::Fabulous::Widget::Table/How a table works>.
-
-=item root widget
-
-The widget passed as C<root> to C<< Term::Fabulous->new >>; the top of the
-widget tree.
-
-=item row id (table)
-
-The name of a row of a L<Term::Fabulous::Widget::Table>, used by every
-method and event. See L<Term::Fabulous::Widget::Table/Row ids>.
-
-=item series (chart)
-
-A named list of data points a chart draws in one color: a line, an area,
-a group of bars or a set of points. Pie charts have slices instead. See
-L<Term::Fabulous::Widget::XYChart/SERIES>.
-
-=item sizing group
-
-Widgets with the same C<width_group> (or C<height_group>) number get the
-same width (or height); see L</Equal sizes across the tree>.
-
-=item target
-
-The widget an event was fired on.
-
-=item termbox2
-
-The C library that controls the terminal; see L<Term::Fabulous::Termbox>.
-
-=item terminal default color
-
-The text and background color the terminal uses when a program does not
-set one. Colors with alpha 0 select it.
-
-=item UTF-8 byte string
-
-Text encoded as UTF-8, where non-ASCII characters take several bytes, as
-produced by C<encode('UTF-8', $text)>.
-
-=item widget tree
-
-The root widget, its children, their children, and so on.
-
-=back
+Where to go next: L<Term::Fabulous::Manual::Layout> explains the widget
+tree and the layout, and
+the recipe
+L<A minimal program to start from|Term::Fabulous::Cookbook::GettingStarted/A minimal program to start from>
+is a program to start your own from.
 
 =head1 FEATURE INDEX
 
-Where to find what, by task.
+Where to find what, by task. Each entry names the section of the manual
+that explains the feature, the recipes that show it in a complete
+program, and the class pages with the reference.
+
+=head2 Programs and the event loop
 
 =over
 
 =item Start a full-screen application
 
-L</YOUR FIRST PROGRAM>, L<Term::Fabulous>.
+L</YOUR FIRST PROGRAM>, L<Term::Fabulous/run>,
+L<Term::Fabulous::Cookbook::GettingStarted/A minimal program to start from>.
 
-=item Show a prompt below the shell's output instead of taking the whole screen
+=item Quit the program on a key
 
-L<Term::Fabulous/INLINE MODE>.
+L<Term::Fabulous::Manual::Programs/Quitting>,
+L<Term::Fabulous::Cookbook::GettingStarted/Quit with q or Escape>.
 
-=item Arrange widgets in rows and columns, sizes, padding, gaps
+=item Ask for input below the shell's output instead of taking the whole screen (inline mode)
 
-L</LAYOUT>, L<Term::Fabulous::Widget::Box>.
+L<Term::Fabulous/INLINE MODE>,
+L<Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>.
+
+=item Timers, animation, background work, sockets, child processes
+
+L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>,
+L<Term::Fabulous::Cookbook::LiveData/Update the screen from a timer (a clock)>,
+L<Term::Fabulous::Cookbook::LiveData/Show the output of a running command>.
+
+=item React to the terminal size and to resizes
+
+L<Term::Fabulous::Manual::Events/Event reference> (C<Start>, C<Resize>),
+L<Term::Fabulous::Event::Start>, L<Term::Fabulous::Event::Resize>,
+L<Term::Fabulous::Cookbook::Layout/Change the layout with the terminal size (Start and Resize events)>.
+
+=item Errors, crashes, restoring the terminal
+
+L<Term::Fabulous::Manual::Programs/Errors and terminal restore>.
+
+=item Draw a frame now, or after the next frame
+
+L<Term::Fabulous/invalidate>, L<Term::Fabulous::Render/after_draw>.
+
+=back
+
+=head2 Widgets, layout and the widget tree
+
+=over
+
+=item Which widgets there are
+
+L<Term::Fabulous::Manual::Layout/The widgets>, L<Term::Fabulous/MODULES>.
+
+=item Build, change and search the widget tree; widget ids
+
+L<Term::Fabulous::Manual::Layout/Building the tree>,
+L<Term::Fabulous::Manual::Layout/Widget ids>,
+L<Term::Fabulous::Manual::Layout/Changing the tree>,
+L<Term::Fabulous::Cookbook::Forms/Find widgets by id>,
+L<Term::Fabulous::Widget>.
+
+=item Arrange widgets in rows and columns; sizes, padding and gaps
+
+L<Term::Fabulous::Manual::Layout/LAYOUT>, L<Term::Fabulous::Widget::Box>.
 
 =item Center something
 
-L</Aligning and centering children>, L</Alignment>.
+L<Term::Fabulous::Manual::Layout/Aligning and centering children>,
+L<Term::Fabulous::Manual::Looks/Alignment>.
 
-=item Show text, wrap or align it, non-ASCII text
+=item Let widgets wrap onto the next line, or stack them on top of each other
 
-L</TEXT>, L<Term::Fabulous::Widget::Text>.
+L<Term::Fabulous::Manual::Layout/Flow layout>,
+L<Term::Fabulous::Manual::Layout/Stack layout>.
 
-=item Colors, color strings, lighter and darker colors
+=item Place a widget over the others (floating widgets, overlays)
 
-L</COLORS>, L<Term::Fabulous::Color>.
+L<Term::Fabulous::Manual::Layout/Floating widgets>,
+L<Term::Fabulous::Widget/floating>.
 
-=item Borders and border styles
+=item Give widgets in different places the same width or height
 
-L</BORDERS>, L<Term::Fabulous::Enum::BorderStyle>,
-L<Term::Fabulous::Role::HasBorderStyle>.
+L<Term::Fabulous::Manual::Layout/Equal sizes across the tree>,
+L<Term::Fabulous::Cookbook::Layout/Line up labels with equal widths (width_group)>.
 
-=item React to keys, key bindings, shortcuts
+=item Change the layout while the program runs
 
-L</KEYBOARD>, L<Term::Fabulous::Event::KeyPress>,
-L<Term::Fabulous::Cookbook/Bind a key to an action>.
+L<Term::Fabulous::Manual::Layout/Changing the layout at run time>.
 
-=item Quit the program
+=item Scroll content that is larger than its box; scroll it from code
 
-L</Quitting>, L<Term::Fabulous::Cookbook/Quit with q or Escape>.
+L<Term::Fabulous::Manual::Layout/Scrolling content>,
+L<Term::Fabulous::Manual::Events/SCROLLING>,
+L<Term::Fabulous::Widget::ScrollBox>,
+L<Term::Fabulous/bounding_box, scroll_state, scroll_to>,
+L<Term::Fabulous::Cookbook::LiveData/Add lines to a scrolling log (ScrollBox)>,
+L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
 
-=item Move or set the keyboard focus
+=item Mark widgets with states and classes and style them by those
 
-L</FOCUS>.
+L<Term::Fabulous::Widget/add_state>,
+L<Term::Fabulous::Cookbook::Layout/Mark widgets with states and classes>.
 
-=item Buttons and clicks
+=back
 
-L</Clicks, hover and press>, L<Term::Fabulous::Widget::Button>,
-L<Term::Fabulous::Cookbook/Clickable buttons with focus and press styling>.
+=head2 Text, colors and borders
 
-=item Low-level mouse handling, dragging, pointer movement
+=over
 
-L</MOUSE>, L<Term::Fabulous::Event::Mouse>,
-L<Term::Fabulous::Event::MouseMove>.
+=item Show text; wrap, align and space it; bold, italic and underlined text
 
-=item Dialogs, modal windows
+L<Term::Fabulous::Manual::Looks/TEXT>,
+L<Term::Fabulous::Manual::Looks/Bold, italic and underline>,
+L<Term::Fabulous::Widget::Text>,
+L<Term::Fabulous::Cookbook::GettingStarted/Wrap, align and space text>.
+
+=item Non-ASCII text, wide characters, emoji, combining characters
+
+L<Term::Fabulous::Manual::Looks/Text is character strings>,
+L<Term::Fabulous::Manual::Looks/Wide characters and emoji>,
+L<Term::Fabulous::Unicode>,
+L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, combining accents)>.
+
+=item Colors and color strings; lighter, darker and mixed colors
+
+L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Color>,
+L<Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>.
+
+=item Named colors (Tomato, SteelBlue, ...)
+
+L<Term::Fabulous::Enum::WebColor>.
+
+=item Transparent and translucent backgrounds; the terminal's default colors
+
+L<Term::Fabulous::Manual::Looks/Alpha and the terminal default color>.
+
+=item Borders on all or some sides, border styles, a different style per side
+
+L<Term::Fabulous::Manual::Looks/BORDERS>,
+L<Term::Fabulous::Manual::Looks/Border width and space>,
+L<Term::Fabulous::Enum::BorderStyle>,
+L<Term::Fabulous::Role::HasBorderStyle>,
+L<Term::Fabulous::Cookbook::Layout/Use a different border style on each side>.
+
+=back
+
+=head2 Events, keyboard, focus and mouse
+
+=over
+
+=item Listen to events; stop an event from reaching the parent widgets
+
+L<Term::Fabulous::Manual::Events/Listening to events>,
+L<Term::Fabulous::Manual::Events/Return values and bubbling>.
+
+=item The list of all events
+
+L<Term::Fabulous::Manual::Events/Event reference>, L<Term::Fabulous/EVENTS>.
+
+=item Fire events of your own
+
+L<Term::Fabulous::Manual::Events/Firing your own events>,
+L<Term::Fabulous::Cookbook::Extending/Fire your own events>.
+
+=item React to keys; key bindings and shortcuts
+
+L<Term::Fabulous::Manual::Events/KEYBOARD>,
+L<Term::Fabulous::Event::KeyPress/KEY NAMES>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Bind a key to an action>.
+
+=item Keys that only some terminals can tell apart (Ctrl+I and Tab, Super, F13 and up)
+
+L<Term::Fabulous::Event::KeyPress/THE KITTY KEYBOARD PROTOCOL>,
+L<Term::Fabulous/new> (C<kitty_keyboard>).
+
+=item Move or set the keyboard focus; react to focus changes
+
+L<Term::Fabulous::Manual::Events/FOCUS>,
+L<Term::Fabulous/KEYBOARD AND FOCUS>,
+L<Term::Fabulous::Cookbook::Forms/Show a status line that follows the focus (OnFocus)>.
+
+=item Change the Tab order
+
+L<Term::Fabulous::Manual::Events/Custom focus order>,
+L<Term::Fabulous::Cookbook::Forms/Change the Tab order (HasFocusOrder)>.
+
+=item Buttons, clicks, hover and press
+
+L<Term::Fabulous::Manual::Events/Clicks, hover and press>,
+L<Term::Fabulous::Widget::Button>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Add buttons for the mouse and the keyboard (Button)>.
+
+=item Low-level mouse handling: buttons, dragging, pointer movement
+
+L<Term::Fabulous::Manual::Events/MOUSE>, L<Term::Fabulous::Event::Mouse>,
+L<Term::Fabulous::Event::MouseMove>,
+L<Term::Fabulous::Cookbook::Canvases/Paint with the mouse (Canvas, clicks and drags)>.
+
+=item Mouse wheel
+
+L<Term::Fabulous::Manual::Events/SCROLLING>,
+L<Term::Fabulous/MOUSE WHEEL SCROLLING>.
+
+=item Let the terminal keep the mouse, so the user can select and copy text
+
+L<Term::Fabulous/new> (C<mouse>),
+L<Term::Fabulous::Cookbook::GettingStarted/Let the terminal handle the mouse (select and copy text)>.
+
+=item Dialogs and modal windows
 
 L<Term::Fabulous::Widget::Dialog>,
-L<Term::Fabulous::Cookbook/Ask a question in a dialog (Dialog widget)>.
+L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>.
 
-=item Scrollable areas
+=back
 
-L</SCROLLING>, L<Term::Fabulous::Widget::ScrollBox>.
+=head2 Forms and input
 
-=item Draw freely, charts, pixels
+=over
 
-L</CANVASES>, L<Term::Fabulous::Widget::Canvas>,
-L<Term::Fabulous::Widget::PixelCanvas>.
+=item The input widgets and what they have in common
+
+L<Term::Fabulous::Manual::Forms/FORMS AND INPUT WIDGETS>,
+L<Term::Fabulous::Widget::Input>.
 
 =item Text input, password fields, multi-line text
 
+L<Term::Fabulous::Manual::Forms/Text fields>,
+L<Term::Fabulous::Manual::Forms/Password fields>,
+L<Term::Fabulous::Manual::Forms/Text areas>,
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
-L<Term::Fabulous::Editor>.
+L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>.
 
-=item Checkboxes, radio buttons, dropdowns, sliders
+=item Check boxes, radio buttons, dropdowns, sliders
 
-L</FORMS AND INPUT WIDGETS> and the widget pages.
+L<Term::Fabulous::Manual::Forms/THE INPUT WIDGETS ONE BY ONE>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
-=item Forms: read values, react to changes, disable fields
+=item Read the values of a form; react to changes and to Enter
 
-L</FORMS AND INPUT WIDGETS>, L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Cookbook/Read all values of a form>.
+L<Term::Fabulous::Manual::Forms/Values>,
+L<Term::Fabulous::Manual::Forms/The Change and Submit events>,
+L<Term::Fabulous::Cookbook::Forms/Read all values of a form>.
 
-=item Tables: rows and columns of data, sorting, filtering, selection
+=item Disable inputs, make text read-only
 
-L</TABLES>, L<Term::Fabulous::Widget::Table> (its L<FEATURE INDEX|Term::Fabulous::Widget::Table/FEATURE INDEX>
-lists every table feature), L<Term::Fabulous::Cookbook/TABLES>.
+L<Term::Fabulous::Manual::Forms/Disabled inputs>,
+L<Term::Fabulous::Manual::Forms/Read-only text>,
+L<Term::Fabulous::Cookbook::Forms/Disable inputs until a checkbox is checked>.
+
+=item Editing keys, selection, clipboard, undo
+
+L<Term::Fabulous::Manual::Forms/EDITING TEXT>,
+L<Term::Fabulous::Manual::Forms/KEYS OF THE INPUT WIDGETS>,
+L<Term::Fabulous::Editor>,
+L<Term::Fabulous::Cookbook::Forms/Copy and paste through the clipboard>.
+
+=item Check what the user typed
+
+L<Term::Fabulous::Manual::Forms/Checking input>.
+
+=back
+
+=head2 Tables
+
+=over
+
+=item Show rows of data in a table
+
+L<Term::Fabulous::Manual::Tables/TABLES>,
+L<Term::Fabulous::Widget::Table>,
+L<Term::Fabulous::Cookbook::Tables/Show a list of hashes in a table (sort, select, open a row)>.
+
+=item Every table feature, by task
+
+The table's own feature index: L<Term::Fabulous::Manual::Tables/FEATURE INDEX>.
+
+=item Columns: widths, alignment, wrapping, computed columns, the visible columns
+
+L<Term::Fabulous::Manual::Tables/COLUMNS>,
+L<Term::Fabulous::Widget::Table::Column>,
+L<Term::Fabulous::Cookbook::TableStyles/Size, align and wrap columns (widths, wrapping, widget titles)>,
+L<Term::Fabulous::Cookbook::Tables/Let the user choose the visible columns (column chooser)>.
+
+=item Format dates, numbers and sizes in cells
+
+L<Term::Fabulous::Manual::Tables/DISPLAY TEXT AND MUTATORS>,
+L<Term::Fabulous::Widget::Table::Mutator>,
+L<Term::Fabulous::Cookbook::Tables/Format cells: dates, numbers, sizes and flags (mutators)>.
+
+=item Widgets in cells; edit the data of a table
+
+L<Term::Fabulous::Manual::Tables/CELL WIDGETS>,
+L<Term::Fabulous::Manual::Tables/Changing the data>,
+L<Term::Fabulous::Cookbook::Tables/Edit the data of a table (widget cells, add and remove rows and columns)>.
+
+=item Sort and filter rows
+
+L<Term::Fabulous::Manual::TableRows/SORTING>,
+L<Term::Fabulous::Manual::TableRows/FILTERING>,
+L<Term::Fabulous::Widget::Table::Filter>,
+L<Term::Fabulous::Cookbook::TableRows/Sort rows, also with your own comparison>,
+L<Term::Fabulous::Cookbook::TableRows/Let the user filter rows (filter row and search box)>,
+L<Term::Fabulous::Cookbook::TableRows/Filter rows from Perl (numbers, dates, text, raw or shown values)>.
 
 =item Group rows, trees of nested rows, pages
 
-L<Term::Fabulous::Widget::Table/GROUPING>,
-L<Term::Fabulous::Widget::Table/TREES>,
-L<Term::Fabulous::Widget::Table/PAGES>.
+L<Term::Fabulous::Manual::TableRows/GROUPING>,
+L<Term::Fabulous::Manual::TableRows/TREES>,
+L<Term::Fabulous::Manual::TableRows/PAGES>,
+L<Term::Fabulous::Cookbook::TableRows/Group rows by a column (collapsible group headers)>,
+L<Term::Fabulous::Cookbook::TableRows/Show nested data as a tree (expand and collapse rows)>,
+L<Term::Fabulous::Cookbook::TableRows/Split many rows into pages (pager and page sizes)>.
 
-=item Format dates, numbers and sizes in table cells
+=item The cursor, selecting rows, opening a row
 
-L<Term::Fabulous::Widget::Table::Mutator>.
+L<Term::Fabulous::Manual::TableRows/SELECTION AND CURSOR>.
 
-=item Charts: lines, areas, bars, points over an x and a y axis
+=item Colors, striped rows, lines and styles of rows, columns and cells
 
-L</CHARTS>, L<Term::Fabulous::Widget::XYChart>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Manual::TableStyles/STYLES AND BORDERS>,
+L<Term::Fabulous::Cookbook::TableStyles/Lines and colors per row, column and cell (conditional formatting)>,
+L<Term::Fabulous::Cookbook::TableStyles/A table with colored rows and titles (block frame, no grid lines)>,
+L<Term::Fabulous::Cookbook::TableStyles/Compare the line options of a table (frames, grid lines, block frames)>.
+
+=item Print a table as a report
+
+L<Term::Fabulous::Manual::TableStyles/PRINTING A TABLE>,
+L<Term::Fabulous::Cookbook::Tables/Print a table as a report (Static)>.
+
+=back
+
+=head2 Canvases and charts
+
+=over
+
+=item Draw freely in character cells or pixels
+
+L<Term::Fabulous::Manual::Charts/CANVASES>,
+L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>,
+L<Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>.
+
+=item Charts that draw themselves from data
+
+L<Term::Fabulous::Manual::Charts/CHARTS>, L<Term::Fabulous::Widget::Chart>.
+
+=item Chart titles and legends
+
+L<Term::Fabulous::Manual::Charts/Titles and legends>,
+L<Term::Fabulous::Widget::Chart/Title and legend>.
+
+=item Line, area, bar and scatter charts
+
+L<Term::Fabulous::Widget::XYChart>,
+L<Term::Fabulous::Cookbook::Charts/Draw a line chart with labels and points (LineChart)>,
+L<Term::Fabulous::Cookbook::Charts/Grouped, stacked and horizontal bars (BarChart)>,
+L<Term::Fabulous::Cookbook::Charts/A scatter plot with trend lines (ScatterPlot)>.
+
+=item Axes: ranges, ticks, titles and number or date formats of the labels
+
+L<Term::Fabulous::Widget::XYChart/AXES>,
+L<Term::Fabulous::Widget::XYChart/Axis keys>,
+L<Term::Fabulous::Chart::Format>.
+
+=item Stacked bars and areas, shares of 100% (percent stacking)
+
+L<Term::Fabulous::Widget::XYChart/STACKING>,
+L<Term::Fabulous::Cookbook::Charts/Grouped, stacked and horizontal bars (BarChart)>,
+L<Term::Fabulous::Cookbook::Charts/Stacked areas and shares of 100% (AreaChart)>,
+L<Term::Fabulous::Cookbook::ChartStyles/Line styles, gaps, bar widths, stack groups and grid lines>.
+
+=item Time axes and logarithmic axes
+
+L<Term::Fabulous::Widget::XYChart/Time axes>,
+L<Term::Fabulous::Widget::XYChart/Logarithmic axes>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Plot values over time (time axis, from and to, a dashed forecast)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Show values of very different sizes (logarithmic axis)>.
 
 =item Pie, donut, polar area and radar charts
 
 L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::DonutChart>,
-L<Term::Fabulous::Widget::PolarAreaChart>, L<Term::Fabulous::Widget::RadarChart>.
+L<Term::Fabulous::Widget::PolarAreaChart>, L<Term::Fabulous::Widget::RadarChart>,
+L<Term::Fabulous::Cookbook::Charts/Show shares as a pie or donut (PieChart, DonutChart)>,
+L<Term::Fabulous::Cookbook::Charts/Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)>.
 
-=item Histograms, sparklines
+=item Histograms and sparklines
 
-L<Term::Fabulous::Widget::Histogram>, L<Term::Fabulous::Widget::Sparkline>.
+L<Term::Fabulous::Widget::Histogram>, L<Term::Fabulous::Widget::Sparkline>,
+L<Term::Fabulous::Cookbook::Charts/How values are distributed (Histogram)>,
+L<Term::Fabulous::Cookbook::Charts/Show sparklines in table cells (Sparkline)>.
 
-=item Live charts, smoothing and other transforms of chart data
+=item Live charts; smoothing and other transforms of chart data
 
-L<Term::Fabulous::Widget::XYChart/DATA>, L<Term::Fabulous::Chart::Transform>.
+L<Term::Fabulous::Widget::XYChart/DATA>, L<Term::Fabulous::Chart::Transform>,
+L<Term::Fabulous::Cookbook::ChartTechniques/A live chart that follows new data (append, max_points, span)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Smooth noisy data and index it to 100 (transforms)>.
+
+=item Curves, markers, line styles, palettes and light backgrounds
+
+L<Term::Fabulous::Widget::XYChart/LOOKS>, L<Term::Fabulous::Chart::Curve>,
+L<Term::Fabulous::Chart::Marker>, L<Term::Fabulous::Chart::Palette>,
+L<Term::Fabulous::Cookbook::ChartStyles/Connect points with curves and easings (curve)>,
+L<Term::Fabulous::Cookbook::ChartStyles/Draw with Braille, blocks or box lines (marker)>,
+L<Term::Fabulous::Cookbook::ChartStyles/Light backgrounds, palettes and colors of your own>,
+L<Term::Fabulous::Cookbook::ChartStyles/Line styles, gaps, bar widths, stack groups and grid lines>.
 
 =item Show what the pointer is on in a chart (hover)
 
 L<Term::Fabulous::Widget::Chart/Hover and emphasis>,
-L<Term::Fabulous::Event::SeriesHover>.
+L<Term::Fabulous::Event::SeriesHover>,
+L<Term::Fabulous::Cookbook::ChartStyles/Show details of the point under the pointer (SeriesHover, highlight)>.
 
-=item Describe the screen in a file
+=back
 
-L</KDL LAYOUT FILES>, L<Term::Fabulous::Layout>.
+=head2 Layout files
 
-=item Print boxes and tables to STDOUT, reports
+=over
 
-L</RENDERING WITHOUT A TERMINAL>, L<Term::Fabulous::Static>.
+=item Describe the screen in a KDL file
 
-=item Timers, background work, network
+L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>, L<Term::Fabulous::Layout>,
+L<Term::Fabulous::Cookbook::Forms/Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>.
 
-L</Timers and other asynchronous work>.
+=item The KDL properties of each widget
 
-=item Terminal size and resize
+The KDL PROPERTIES section of every class page, for example
+L<Term::Fabulous::Widget::Box/KDL PROPERTIES>;
+the L<list of node types|Term::Fabulous::Layout/NODE TYPES> links to all
+of them.
 
-L</Event reference> (C<Start>, C<Resize>), L<Term::Fabulous::Event::Start>,
-L<Term::Fabulous::Event::Resize>.
+=item Tables and charts in a KDL file
 
-=item Your own widgets
+L<Term::Fabulous::Cookbook::Tables/Describe a table in a KDL layout (columns, lines, sort, groups)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Describe charts in a KDL layout (series, slices, transforms)>.
 
-L</WRITING YOUR OWN WIDGETS>, L<Term::Fabulous::Widget::Input>,
-L<Term::Fabulous::Cookbook/Write a custom input widget (a toggle switch)>.
+=back
 
-=item Unit tests
+=head2 Output without a terminal, tests and pictures
 
-L</TESTING>.
+=over
 
-=item Widget ids, removing and replacing widgets
+=item Print boxes, tables and charts to STDOUT or a file (reports)
 
-L</Widget ids>, L</Changing the tree>.
+L<Term::Fabulous::Manual::Programs/RENDERING WITHOUT A TERMINAL>,
+L<Term::Fabulous::Static>,
+L<Term::Fabulous::Cookbook::Output/Render a report to a file or pipe (Static)>,
+L<Term::Fabulous::Cookbook::Tables/Print a table as a report (Static)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Print charts in a report (Static)>.
 
-=item Equal widths or heights across the tree (sizing groups)
+=item Test a program or a widget without a terminal
 
-L</Equal sizes across the tree>.
+L<Term::Fabulous::Manual::Programs/TESTING>,
+L<Term::Fabulous::Terminal::Memory>, L<Term::Fabulous/step>,
+L<Term::Fabulous::Cookbook::Output/Test a widget without a terminal>.
 
-=item Transparent backgrounds, the terminal's default colors
+=item Take a screenshot of your program
 
-L</Alpha and the terminal default color>.
+L<Term::Fabulous::Examples/PICTURES OF YOUR OWN PROGRAMS>.
 
-=item Hover and press state, clicks
+=back
 
-L</Clicks, hover and press>.
+=head2 Extending Term::Fabulous
 
-=item Mouse wheel
+=over
 
-L</SCROLLING>, L<Term::Fabulous/MOUSE WHEEL SCROLLING>.
+=item Write widgets of your own
 
-=item UTF-8 bytes versus character strings
+L<Term::Fabulous::Manual::CustomWidgets/WRITING YOUR OWN WIDGETS>,
+L<Term::Fabulous::Widget::Input>,
+L<Term::Fabulous::Cookbook::Extending/Write a custom input widget (a toggle switch)>.
 
-L</Text is character strings>.
+=item Use your own widgets in KDL layout files
 
-=item Errors, crashes, restoring the terminal
+L<Term::Fabulous::Role::CanParseLayout>,
+L<Term::Fabulous::Cookbook::Extending/Make a widget usable from KDL>.
 
-L</Errors and terminal restore>.
+=item Check property values the way the built-in widgets do
+
+L<Term::Fabulous::Check>.
+
+=item Run on another terminal, or write a terminal of your own
+
+L<Term::Fabulous/new> (C<terminal>), L<Term::Fabulous::Terminal::Termbox>,
+L<Term::Fabulous::Role::Terminal>.
+
+=item Use termbox2 directly
+
+L<Term::Fabulous::Termbox>.
+
+=back
+
+=head2 Help
+
+=over
 
 =item Something does not work
 
-L</TROUBLESHOOTING>.
+L<Term::Fabulous::Manual::Troubleshooting/TROUBLESHOOTING>.
 
-=item Character widths, wide characters, control characters
+=item A term in the documentation is unclear
 
-L</Wide characters and emoji>, L<Term::Fabulous::Unicode>.
+L<Term::Fabulous::Manual::Glossary>.
+
+=item What Term::Fabulous cannot do
+
+L<Term::Fabulous/LIMITATIONS>.
 
 =back
 
 =head1 SEE ALSO
+
+Next page: L<Term::Fabulous::Manual::Layout>.
 
 L<Term::Fabulous>, L<Term::Fabulous::Cookbook>,
 L<Term::Fabulous::Examples>, L<Clay::UI>, L<Clay::XS>,

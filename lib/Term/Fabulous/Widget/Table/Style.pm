@@ -103,7 +103,7 @@ Term::Fabulous::Widget::Table::Style - Check the style hashes of a table
 
 L<Term::Fabulous::Widget::Table> takes looks and lines as I<style
 hashes> at four levels: the table, its columns, its rows and single
-cells (see L<Term::Fabulous::Widget::Table/STYLES AND BORDERS>). This
+cells (see L<Term::Fabulous::Manual::TableStyles/STYLES AND BORDERS>). This
 module checks them where they are given. You do not need it unless you
 write a table subclass.
 
@@ -116,7 +116,7 @@ write a table subclass.
 A validated copy of C<\%style>, or an empty hash for C<undef>. C<$kind>
 says which keys are allowed: C<cell>, C<row>, C<column> or C<header>
 (the look of a header cell; see
-L<Term::Fabulous::Widget::Table/Style keys>). Colors become
+L<Term::Fabulous::Manual::TableStyles/Style keys>). Colors become
 C<[r, g, b, a]> (any format L<Term::Fabulous::Color> takes), booleans 1
 or 0, and lines L<Term::Fabulous::Enum::BorderStyle> items (an item, a
 style name such as C<'Heavy'>, or C<'none'> for no line, which is the
@@ -139,6 +139,7 @@ has it (C<undef> arguments are skipped).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::TableStyles/Style keys>,
+L<Term::Fabulous::Manual::TableStyles/Which style wins>.
 
 =cut

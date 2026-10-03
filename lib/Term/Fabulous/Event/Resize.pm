@@ -64,7 +64,7 @@ fired twice for the final size, always on the root widget. No C<Resize>
 is fired when C<run> starts and replaces the C<width> and C<height>
 given to C<new> with the terminal's size: that fires C<Start>
 (L<Term::Fabulous::Event::Start>) instead (see
-L<Term::Fabulous::Cookbook/Resize-aware layout (Start and Resize events)>).
+L<Term::Fabulous::Cookbook::Layout/Change the layout with the terminal size (Start and Resize events)>).
 The two events of a resize:
 
 =over
@@ -156,6 +156,6 @@ applied.
 =head1 SEE ALSO
 
 L<Term::Fabulous>, L<Term::Fabulous::Event::Start>,
-L<Term::Fabulous::Event::CanvasResize>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Event::CanvasResize>, L<Term::Fabulous::Manual::Events/EVENTS>.
 
 =cut

@@ -21,4 +21,5 @@ foreach my $pair ( [ 'Name', 'Ada Lovelace' ], [ 'Occupation', 'Mathematician' ]
 	$root->add_child($row);
 }
 
-Term::Fabulous::Static->new( root => $root, width => 40 )->print( colors => 0 );
+# Colors only when STDOUT is a terminal.
+Term::Fabulous::Static->new( root => $root, width => 40 )->print;

@@ -42,6 +42,10 @@ restyle($_) foreach @items;
 # Derived states follow the interaction tracker and cannot be set.
 $page->interaction->set_focused_widget( $items[0] );
 
+# The menu, with Save in the color of the selected state (colors only when
+# STDOUT is a terminal), and the states and classes of each item.
+$page->print;
+
 foreach my $item (@items) {
 	printf "%-5s states: %-18s classes: %s\n", $item->id, join( ',', sort $item->states ), join( ' ', sort $item->get_classes );
 }

@@ -174,7 +174,7 @@ Term::Fabulous::Color objects
 	use Term::Fabulous::Enum::WebColor;
 
 	my $tomato = Term::Fabulous::Enum::WebColor->Tomato;    # a Term::Fabulous::Color
-	$box->background_color( [ $tomato->to_rgba ] );
+	$box->background_color($tomato);                         # widgets take the object itself
 	$canvas->fill( 0, 0, 10, 2, ' ', undef, Term::Fabulous::Enum::WebColor->MidnightBlue );
 
 	my $color = Term::Fabulous::Enum::WebColor->from_name('SteelBlue');    # undef for unknown names
@@ -192,7 +192,7 @@ Term::Fabulous::Color objects.
 
 The item names are in PascalCase, as the other enumerations of
 Term::Fabulous, and C<from_name> is case sensitive: C<'SteelBlue'> is
-found, C<'steelblue'> is not. Color strings such as C<'red'> are still
+found, C<'steelblue'> is not. Color names as strings, such as C<'red'>, are
 not accepted by L<Term::Fabulous::Color/new> or in KDL layouts; use
 C<< Term::Fabulous::Enum::WebColor->Red->hexString >> or the hex value
 there. F<examples/web-colors.pl> shows all of the colors in a grid.
@@ -217,11 +217,26 @@ Class method. All items in the order of the table below.
 
 Class method. The item with that exact name, or C<undef>.
 
+=head2 from_ordinal
+
+	my $color = Term::Fabulous::Enum::WebColor->from_ordinal(0);    # AliceBlue
+
+Class method. The item at a position of L</values>, counted from 0, or
+C<undef> when there is none.
+
 =head2 name
 
 	say Term::Fabulous::Enum::WebColor->Tomato->name;    # Tomato
 
 The name of an item.
+
+=head2 ordinal
+
+	my $position = Term::Fabulous::Enum::WebColor->Tomato->ordinal;
+
+The position of an item in L</values>, counted from 0.
+
+Every item also has all methods of L<Term::Fabulous::Color>.
 
 =head1 COLORS
 
@@ -379,6 +394,6 @@ The name of an item.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Color>, L<Object::PadX::Enum>,
-L<Term::Fabulous::Manual/COLORS>.
+L<Term::Fabulous::Manual::Looks/COLORS>.
 
 =cut

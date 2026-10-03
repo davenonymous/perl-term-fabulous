@@ -6,6 +6,8 @@
 #     perl -Mblib tools/screenshot --size 100x30 --scale 2 --output demo.png examples/showcase.pl
 #     perl -Mblib tools/screenshot --steps 'key "Tab"; type "Ada"' --output login.svg \
 #         examples-cookbook/login-form.pl
+#     perl -Mblib tools/screenshot --size 80x8 --shell '$ perl inline-prompt.pl' \
+#         --output prompt.png examples-cookbook/inline-prompt.pl
 #
 # See tools/README.md.
 
@@ -38,6 +40,8 @@ ends (a Term::Fabulous::Static report) is shown with its output.
   --steps KDL     input before the screenshot, as in screenshots/screenshots.kdl,
                   for example 'key "Tab"; type "Ada"; click 10 4; wait 2'
   --title TEXT    the window title (default: perl SCRIPT ARGUMENT ...)
+  --shell LINE    a line a shell printed before the program started, shown
+                  above an inline region; repeat it for more lines
   --clock TIME    the time the program's clock starts at, in UTC
                   (default: 2026-06-01T09:41:00Z)
   --scale N       pixels per unit of a PNG (default: 2, sharp on high-resolution screens)
@@ -46,7 +50,7 @@ USAGE
 
 sub main () {
 	my %option = ( size => '80x24', scale => 2 );
-	GetOptions( \%option, 'output=s', 'size=s', 'steps=s', 'title=s', 'clock=s', 'scale=i', 'help' ) or die usage();
+	GetOptions( \%option, 'output=s', 'size=s', 'steps=s', 'title=s', 'clock=s', 'shell=s@', 'scale=i', 'help' ) or die usage();
 	if ( $option{help} ) {
 		print usage();
 		return 0;
@@ -63,6 +67,7 @@ sub main () {
 		columns   => $scenario->columns,
 		rows      => $scenario->rows,
 		epoch     => $scenario->epoch,
+		shell     => $scenario->shell,
 		steps     => $scenario->harness_steps,
 	);
 
@@ -87,6 +92,7 @@ sub scenario_kdl ( $script, $arguments, $columns, $rows, $option ) {
 	push @settings, 'args ' . join( ' ', map { $quote->($_) } @$arguments ) if @$arguments;
 	push @settings, 'title ' . $quote->( $option->{title} ) if defined $option->{title};
 	push @settings, 'clock ' . $quote->( $option->{clock} ) if defined $option->{clock};
+	push @settings, 'shell ' . join( ' ', map { $quote->($_) } @{ $option->{shell} } ) if $option->{shell};
 	push @settings, "steps { $option->{steps} }" if defined $option->{steps};
 	return sprintf "screenshot \"command-line\" {\n%s\n}\n", join "\n", @settings;
 }

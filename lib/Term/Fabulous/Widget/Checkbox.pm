@@ -152,6 +152,10 @@ Term::Fabulous::Widget::Checkbox - A box the user can check and uncheck
 
 =head1 DESCRIPTION
 
+The picture shows a checkbox in each of its states: focused (on the
+C<focus_background_color>), unchecked, checked, indeterminate and
+disabled. The program is F<examples/widgets/checkbox.pl>.
+
 A checkbox shows a mark followed by a label:
 
 	[x] I accept the terms
@@ -180,8 +184,8 @@ C<layout> sizes it.
 Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
 (C<id>, C<layout>, C<background_color>, the border parameters,
 C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
-C<accent_color>, C<focus_background_color>) and the ones below. Unknown
-parameters die.
+C<accent_color>, C<focus_background_color>, the other Box parameters)
+and the ones below. Unknown parameters die.
 
 =over
 
@@ -192,12 +196,13 @@ after the mark, painted in C<text_color>. Dies if not a string.
 
 =item C<checked>
 
-A boolean. Default: 0. Whether the box starts checked. Stored as 1 or 0.
+A boolean. Default: 0. Whether the box starts checked. Stored as 1 or 0;
+a reference dies.
 
 =item C<indeterminate>
 
 A boolean. Default: 0. Whether the box starts indeterminate (see
-L</DESCRIPTION>). Stored as 1 or 0.
+L</DESCRIPTION>). Stored as 1 or 0; a reference dies.
 
 =item C<checked_mark>
 
@@ -230,8 +235,9 @@ C<is_enabled>, the color accessors, C<mark_changed>), plus:
 	$checkbox->checked(1);
 
 Accessor. Returns 1 or 0. Writing sets the state, clears
-C<indeterminate>, marks the input changed, and returns the new state. Writing fires no
-C<Change> event.
+C<indeterminate>, marks the input changed, and returns the new state.
+Writing fires no C<Change> event. A reference dies and leaves the state
+unchanged.
 
 =head2 value
 
@@ -245,8 +251,10 @@ change the state. This is the value C<Change> events carry.
 	my $is_indeterminate = $checkbox->indeterminate;
 	$checkbox->indeterminate(1);
 
-Accessor. Returns 1 or 0. Writing marks the input changed, returns the new state and
-fires no event; it does not change C<checked>.
+Accessor. Returns 1 or 0. Writing marks the input changed, returns the
+new state and fires no event; it does not change C<checked>, so
+C<< $checkbox->indeterminate(0) >> shows the C<checked> state again. A
+reference dies and leaves the state unchanged.
 
 =head2 toggle
 
@@ -323,8 +331,9 @@ L</toggle> is called); C<< $event->value >> is 1 (now checked) or 0
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
-C<label>, C<checked> and C<indeterminate> (C<#true> / C<#false>),
-C<checked_mark>, C<unchecked_mark> and C<indeterminate_mark>:
+C<label> (a string), C<checked> and C<indeterminate> (C<#true> /
+C<#false>), and C<checked_mark>, C<unchecked_mark> and
+C<indeterminate_mark> (strings):
 
 	use Term::Fabulous::Widget::Checkbox as Checkbox
 
@@ -369,6 +378,7 @@ L</CONSTRUCTOR>).
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the checkbox section of the forms guide|Term::Fabulous::Manual::Forms/Checkboxes>,
+L<Term::Fabulous::Cookbook::Forms/Disable inputs until a checkbox is checked>.
 
 =cut

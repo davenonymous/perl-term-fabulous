@@ -252,7 +252,16 @@ the corners where lines meet get the junction glyphs of
 L<Term::Fabulous::Enum::BorderStyle/junction>. This module decides, from
 the styles of the table, its columns, its lines (rows) and its cells,
 which cell draws which side in which style and which glyph each drawn
-corner gets. It has no widgets; the table applies the result.
+corner gets. It has no widgets; the table applies the result. You do
+not need it unless you draw a grid of your own; the lines of a table
+are explained in
+L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-table-line-styles.svg" alt="Nine small tables with different lines: the default round frame, a full grid, no lines, a double frame with a heavy title line, a heavy frame with dashed row lines, ASCII lines, and Outer, Inner and Thick block frames"></p>
+
+=end html
 
 =head2 Where a line is, and in which style
 
@@ -321,7 +330,8 @@ L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table/STYLES AND BORDERS>,
+L<Term::Fabulous::Manual::TableStyles/STYLES AND BORDERS>,
+L<Term::Fabulous::Manual::TableStyles/Lines of columns, rows and cells>,
 L<Term::Fabulous::Enum::BorderStyle/junction>.
 
 =cut

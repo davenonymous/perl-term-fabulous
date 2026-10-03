@@ -130,8 +130,10 @@ only every second (third, ...) category is labeled.
 
 	my $scale = Term::Fabulous::Chart::Scale::Category->fit( labels => \@labels, cells => $cells, band => 1 );
 
-Also takes C<orientation> (default C<horizontal>) and C<measure> like
-L<Term::Fabulous::Chart::Scale::Linear/fit>.
+C<cells> is required; C<labels> defaults to none, C<band> to true (false
+makes a point scale). Also takes C<orientation> (default C<horizontal>)
+and C<measure> like L<Term::Fabulous::Chart::Scale::Linear/fit>. The
+labels are shown as they are: a category scale takes no C<format>.
 
 =head1 METHODS
 
@@ -143,7 +145,7 @@ The labels and their number.
 
 =head2 slot_cells
 
-The cells one category takes along the axis (a fraction).
+The cells one category takes along the axis; it can be a fraction.
 
 =head1 SEE ALSO
 

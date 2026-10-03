@@ -103,12 +103,24 @@ Term::Fabulous::Widget::Table::Scrollbar - The vertical scrollbar of a table
 
 A one column wide L<Term::Fabulous::Widget::Canvas> that
 L<Term::Fabulous::Widget::Table> shows right of its body. When the body
-has more lines than fit, it draws a track (C<\x{2502}>) with a thumb
-(C<\x{2503}>) whose length and place show which part of the body is
-visible; otherwise it is empty. It paints from the scroll state of the
-frame being drawn, so it is always up to date, and it paints again only
-when the thumb moved. The table scrolls the body when the scrollbar is
-clicked or dragged (see L</position_at_row>).
+has more lines than fit, it draws a track (a thin vertical line,
+U+2502) with a thumb (a heavy vertical line, U+2503) whose length and
+place show which part of the body is visible; otherwise it is empty. It
+paints from the scroll state of the frame being drawn, so it is always
+up to date, and it paints again only when the thumb moved. The table
+scrolls the body when the scrollbar is clicked or dragged (see
+L</position_at_row>).
+
+=begin html
+
+<p><img src="/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, and the scrollbar right of the frame shows a thumb in its middle"></p>
+
+=end html
+
+The table makes its scrollbar itself, with its C<line_color> as the
+track color and its C<text_color> as the thumb color, and shows it
+while its C<scrollbar> parameter is true. See
+L<Term::Fabulous::Manual::TableStyles/SIZE AND SCROLLING>.
 
 =head1 CONSTRUCTOR
 
@@ -148,6 +160,6 @@ scrollbar, or C<undef> when there is nothing to scroll.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::TableStyles/SIZE AND SCROLLING>.
 
 =cut

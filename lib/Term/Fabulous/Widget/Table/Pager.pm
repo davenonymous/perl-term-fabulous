@@ -114,12 +114,58 @@ The row below a L<Term::Fabulous::Widget::Table> with pages:
 
 	« ‹ Page 2 of 7 › »   Rows per page 25 ▾   26–50 of 160
 
+=begin html
+
+<p><img src="/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
+
+=end html
+
 Buttons for the first, previous, next and last page (disabled where they
-lead nowhere; they take no focus, the table has keys for them), the page
-number, a L<Term::Fabulous::Widget::Dropdown> with the page sizes and
-the lines shown. When the table is too narrow for one line, the three
-parts flow onto more lines. The table builds it, wires its buttons and
-list and keeps it up to date; do not change it.
+lead nowhere; they take no focus, the table has keys for them, see
+L<Term::Fabulous::Widget::Table/KEYS>), the page number, a
+L<Term::Fabulous::Widget::Dropdown> with the page sizes and which lines
+are shown out of how many. When the table is too narrow for one line,
+the three parts flow onto more lines.
+
+The table builds it, wires its buttons and list, keeps it up to date and
+shows it while it has pages (see the table's C<pager> parameter); do
+not change it. Its colors follow the table's C<text_color> and
+C<muted_color>. Pages are explained in
+L<Term::Fabulous::Manual::TableRows/PAGES>, and
+L<Term::Fabulous::Widget::Table/pager_widget> returns the pager of a
+table.
+
+=head1 CONSTRUCTOR
+
+	my $pager = Term::Fabulous::Widget::Table::Pager->new( page_sizes => [ 10, 25, 50 ] );
+
+The table makes its pager itself. Unknown parameters die.
+
+=over
+
+=item C<page_sizes>
+
+Required. An array reference of positive integers, the choices of the
+list. Anything else dies.
+
+=item C<text_color>
+
+The color of the page number and the button glyphs. Default:
+C<[220, 223, 228, 255]>.
+
+=item C<muted_color>
+
+The color of the label, the count and disabled buttons. Default:
+C<[140, 146, 158, 255]>.
+
+=item C<button_color>
+
+The background of the buttons. Default: C<[44, 49, 60, 255]>.
+
+=back
+
+The colors take any format of L<Term::Fabulous::Color>. The pager is a
+L<Term::Fabulous::Widget::Box>; its layout is set by the constructor.
 
 =head1 METHODS
 
@@ -137,11 +183,15 @@ The dropdown with the page sizes; its value is the page size.
 
 	$pager->show( page => 2, page_count => 7, page_size => 25, first => 26, last => 50, total => 160 );
 
-Shows a state of the table. A page size that is not in the list is
-added to it.
+Shows a state of the table: the current page and the number of pages,
+the page size, and the first and last line shown and the number of
+lines (counted from 1). The first and previous buttons are disabled on
+the first page, the next and last buttons on the last one. A page size
+that is not in the list is added to it. Returns the pager.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::TableRows/PAGES>,
+L<Term::Fabulous::Cookbook::TableRows/Split many rows into pages (pager and page sizes)>.
 
 =cut

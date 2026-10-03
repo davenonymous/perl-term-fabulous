@@ -52,7 +52,7 @@ widget and fire no C<RowActivate>.
 It is a L<Clay::UI::Events::Event> whose name is C<RowActivate>; listen
 for it with C<< $table->on( RowActivate => sub ($event) { ... } ) >>. It
 bubbles to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -62,8 +62,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::RowActivate->new( row_id => ..., row => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. C<row> is required. Unknown parameters die, and so do
+array and hash parameters of the wrong kind; they are copied.
 
 =over
 
@@ -89,6 +89,7 @@ A copy of the row's data (a new hash reference).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Tables/Show a list of hashes in a table (sort, select, open a row)>.
 
 =cut

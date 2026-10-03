@@ -123,7 +123,7 @@ L<Unicode::GCString>.
 The widths do not depend on the locale, but the terminal does: termbox2
 sends UTF-8, and a terminal running under a non-UTF-8 locale such as
 C<C> shows the bytes of a wide character as several narrow ones, so
-everything after it shifts. L<Term::Fabulous/run> warns when the
+everything after it shifts. L<C<run>|Term::Fabulous/run> warns when the
 locale's character set is not UTF-8 (each time it is called); see
 L</terminal_is_utf8>.
 
@@ -181,7 +181,7 @@ entries.
 	my $columns = cluster_columns($cluster);
 
 Returns the number of columns termbox2 advances for one grapheme
-cluster: L<Term::Fabulous::Termbox/tb_cluster_width> of its code
+cluster: the L<C<tb_cluster_width>|Term::Fabulous::Termbox/tb_cluster_width> of its code
 points (the widest one; 1 when a variation selector 15 asks for text
 presentation, 2 when a variation selector 16, a zero-width joiner or a
 pair of regional indicators asks for emoji presentation), and at least 1
@@ -214,8 +214,8 @@ locale, termbox2 cannot place wide characters correctly.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/Wide characters and emoji>,
-L<Term::Fabulous::Manual/Control characters>, L<Term::Fabulous::Termbox>,
+L<Term::Fabulous::Manual::Looks/Wide characters and emoji>,
+L<Term::Fabulous::Manual::Looks/Control characters>, L<Term::Fabulous::Termbox>,
 L<Unicode::GCString>.
 
 =cut

@@ -37,7 +37,8 @@ Term::Fabulous::Event::CanvasResize - A canvas got a new size
 =head1 DESCRIPTION
 
 A L<Term::Fabulous::Widget::Canvas> (and every widget built on it, such
-as L<Term::Fabulous::Widget::PixelCanvas> and the input widgets) fires
+as L<Term::Fabulous::Widget::PixelCanvas>, the charts and the input
+widgets) fires
 C<CanvasResize> on itself when the layout gives its content box a new
 size. The canvas buffer has already been resized when the event fires,
 and the frame that shows the new size is painted right after the
@@ -47,8 +48,9 @@ depends on the size.
 A C<CanvasResize> event bubbles like other events (its bubble mode is
 C<IF_CONTINUE>): a listener on an ancestor, for example on the root,
 also sees the resizes of every canvas, pixel canvas and input widget
-below it whose listeners returned
-C<< Clay::UI::Enum::Result->CONTINUE >> (the input widgets do). Check
+below it, as long as the listeners on the way return
+C<< Clay::UI::Enum::Result->CONTINUE >> (the built-in widgets add no
+C<CanvasResize> listeners of their own, so they pass it on). Check
 C<< $event->target >> in such a listener:
 
 	$root->on( CanvasResize => sub ($event) {
@@ -107,6 +109,7 @@ C<< $canvas->rows >>).
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>,
-L<Term::Fabulous::Manual/CANVASES>.
+L<Term::Fabulous::Manual::Charts/CANVASES>,
+L<Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>.
 
 =cut

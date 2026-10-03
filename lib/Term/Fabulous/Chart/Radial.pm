@@ -69,7 +69,27 @@ Pie, donut, polar area and radar charts are round, but terminal cells are
 not square: a cell is about twice as high as it is wide. These functions
 measure distances in cell widths and count a row as C<CELL_ASPECT> (2) of
 them, so circles come out round. Angles are in turns (1 is a full circle),
-clockwise from 12 o'clock.
+clockwise from 12 o'clock. Positions are in cells and may be fractional:
+C<(0, 0)> is the top-left corner of the area's first cell, and
+C<(0.5, 0.5)> its center.
+
+You need this module only for round charts of your own; the chart
+widgets use it internally. All functions and constants are exported on
+request.
+
+=head1 CONSTANTS
+
+=over
+
+=item C<CELL_ASPECT>
+
+2: how many cell widths a cell is high.
+
+=item C<TAU>
+
+A full circle in radians (2 pi).
+
+=back
 
 =head1 FUNCTIONS
 
@@ -77,19 +97,29 @@ clockwise from 12 o'clock.
 
 	my $circle = circle_frame( $x, $y, $width, $height, $margin );
 
-The largest circle in an area of cells, less C<$margin>: a hash with
-C<center_x>, C<center_y> (cells) and C<radius> (cell widths).
+The largest circle that fits an area of C<$width> by C<$height> cells
+starting at cell C<($x, $y)>, its radius less C<$margin> cell widths
+(default 0): a hash with C<center_x>, C<center_y> (cells) and C<radius>
+(cell widths, never below 0).
 
 =head2 polar_of
 
 	my ( $distance, $angle ) = polar_of( $circle, $x, $y, $start );
 
+The polar coordinates of the point C<($x, $y)> (cells): its distance from
+the circle's center in cell widths, and its angle in turns from 0 to 1,
+clockwise from C<$start> (in turns; default 0, 12 o'clock).
+
 =head2 point_at
 
 	my ( $x, $y ) = point_at( $circle, $distance, $angle, $start );
 
+The reverse: the point in cells at C<$distance> cell widths from the
+center and C<$angle> turns clockwise from C<$start> (default 0).
+
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::RadarChart>.
+L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::RadarChart>,
+L<Term::Fabulous::Widget::Chart/SUBCLASS INTERFACE>.
 
 =cut

@@ -343,9 +343,9 @@ allowed (the message lists the allowed keys).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Layout>, L<Term::Fabulous::Manual/KDL LAYOUT FILES>,
+L<Term::Fabulous::Layout>, L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>,
 L<Term::Fabulous::Widget::Box/SUBCLASS INTERFACE>,
-L<Term::Fabulous::Manual/WRITING YOUR OWN WIDGETS>, L<Text::KDL::XS>,
+L<Term::Fabulous::Manual::CustomWidgets/WRITING YOUR OWN WIDGETS>, L<Text::KDL::XS>,
 the example program F<examples/custom-widget.pl>.
 
 =cut

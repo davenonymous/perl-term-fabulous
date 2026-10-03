@@ -278,8 +278,9 @@ L<Term::Fabulous::Role::HasBorderStyle/Border space>.
 
 All parameters are optional; unknown parameters die. A Box accepts the
 parameters common to all container widgets. Each is listed here with
-its meaning in one sentence; L<Term::Fabulous::Widget/new> describes
-the accepted values in full.
+its meaning in one sentence;
+L<the constructor of Term::Fabulous::Widget|Term::Fabulous::Widget/new>
+describes the accepted values in full.
 
 =over
 
@@ -308,6 +309,11 @@ The color of the box's area, in any format L<Term::Fabulous::Color>
 accepts (C<[r, g, b, a]>, C<{ r, g, b, a }>, a string such as
 C<'#14192b'>, a Color object). Default: C<undef>, so the box is
 transparent.
+
+=item C<glyphs_show_through>
+
+A boolean. Default: false. With a translucent C<background_color>,
+whether text and borders below the box stay visible through it.
 
 =item C<border_width>
 
@@ -338,6 +344,16 @@ border style; a side with a width is then drawn with spaces).
 A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of one
 side. Default: C<undef>. It wins over C<border_style> for that side.
 
+=item C<border_corners>
+
+A hash reference of glyphs drawn at the corners instead of the style's
+corner glyphs. Default: C<undef>.
+
+=item C<outer_border_sides>
+
+An array reference of sides whose border glyphs are drawn on the
+background outside the box. Default: C<[]>.
+
 =item C<width_group>
 
 =item C<height_group>
@@ -358,7 +374,7 @@ A Box has all methods of L<Term::Fabulous::Widget>: children
 (C<add_child>, C<remove_child>, C<children>, ...), events (C<on>,
 C<fire_event>), the search L<Term::Fabulous::Widget/find_by_id>, the
 accessors C<layout>, C<floating>, C<background_color>,
-C<border_color>, C<border_width>, C<border_style_top>,
+C<glyphs_show_through>, C<border_color>, C<border_width>, C<border_style_top>,
 C<border_style_right>, C<border_style_bottom>, C<border_style_left>,
 C<width_group> and C<height_group>, and the state methods. It adds
 nothing for applications; the methods in L</SUBCLASS INTERFACE> are for
@@ -367,7 +383,7 @@ widget authors.
 =head1 EVENTS
 
 A Box fires no events of its own. Events fired on its children bubble
-up to it (see L<Term::Fabulous::Manual/EVENTS>), and
+up to it (see L<Term::Fabulous::Manual::Events/EVENTS>), and
 L<Term::Fabulous> fires C<KeyPress> on it when it is the root and
 nothing has the focus, and C<Mouse> when it is the topmost widget
 painted under the pointer. A Box receives C<Mouse> events only on the
@@ -404,9 +420,9 @@ unknown keys and invalid values die, naming the property.
 
 C<direction> is C<down> (aliases C<ttb>, C<top_to_bottom>), C<right>
 (aliases C<ltr>, C<left_to_right>), C<wrap> (aliases C<ltr_wrap>,
-C<left_to_right_wrap>; see L<Term::Fabulous::Manual/Flow layout>) or
+C<left_to_right_wrap>; see L<Term::Fabulous::Manual::Layout/Flow layout>) or
 C<stack> (aliases C<back_to_front>, C<btf>; see
-L<Term::Fabulous::Manual/Stack layout>).
+L<Term::Fabulous::Manual::Layout/Stack layout>).
 C<gap> (alias C<child_gap>; giving both dies) is the number of cells
 between children, a non-negative integer. C<line_gap> is the number of
 rows between the lines of a C<wrap> box, a non-negative integer.
@@ -518,6 +534,11 @@ The border width, for all sides or per side.
 
 Any L<Term::Fabulous::Color> string.
 
+=item C<glyphs_show_through #true>
+
+C<#true> or C<#false> (the default), see
+L<Term::Fabulous::Widget/glyphs_show_through>.
+
 =item C<width_group N>
 
 =item C<height_group N>
@@ -525,6 +546,10 @@ Any L<Term::Fabulous::Color> string.
 Sizing group numbers, see L<Term::Fabulous::Widget/width_group>.
 
 =back
+
+C<border_corners>, C<outer_border_sides> and C<classes> cannot be set
+from KDL; set them in Perl after the build (see
+L<Term::Fabulous::Layout/LIMITATIONS>).
 
 =head1 SUBCLASS INTERFACE
 
@@ -550,7 +575,10 @@ extend the table as shown.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget> for the common parameters and methods,
-L<Term::Fabulous::Manual/LAYOUT>, L<Term::Fabulous::Layout>,
-L<Term::Fabulous::Role::HasBorderStyle>.
+L<Term::Fabulous::Manual::Layout/LAYOUT> (every layout option with a
+picture), the example program F<examples/widgets/box.pl>, L<Term::Fabulous::Layout>,
+L<Term::Fabulous::Role::HasBorderStyle>,
+L<Term::Fabulous::Cookbook::Layout/Line up labels with equal widths (width_group)>,
+L<Term::Fabulous::Cookbook::Layout/Use a different border style on each side>.
 
 =cut

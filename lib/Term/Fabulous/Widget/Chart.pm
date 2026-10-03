@@ -562,6 +562,16 @@ title, legend, colors and hover
 	} );
 	$chart->highlight('api');    # emphasize one series from the program
 
+=begin html
+
+<p><img src="/screenshots/widget-chart.svg" alt="Four bar charts of the same data: the legend at the top, at the bottom under a centered title, at the right with the iOS series highlighted and the others faded, and at the left of a chart on a light panel with a right-aligned title"></p>
+
+=end html
+
+F<examples/widgets/chart.pl> shows the features of this page on four
+bar charts: title alignment, legend positions, palettes, C<highlight>
+and the light theme.
+
 =head1 DESCRIPTION
 
 The base class of the chart widgets:
@@ -586,25 +596,44 @@ A chart is a L<Term::Fabulous::Widget::Canvas> that draws itself: give it
 data, and it lays out its title, legend, axes and plot in whatever room
 the layout gives it, and draws them again whenever the data, an option or
 its size changes. Only cells that changed are sent to the terminal, so a
-chart can be updated many times per second.
+chart can be updated many times per second. Do not draw into a chart
+with the canvas methods (C<put>, C<fill>, ...): the chart paints over
+them in the next frame.
 
 Without a C<sizing> in its C<layout>, a chart grows to the room its parent
-has left (C<sizing_grow> in both directions). It has every parameter of a
+has left (C<sizing_grow> in both directions); a size given for one
+direction is kept, and only the other one grows. It has every parameter of a
 L<Term::Fabulous::Widget::Box> as well (background, border, padding, ...).
+
+L<Term::Fabulous::Manual::Charts> introduces the chart widgets and helps
+you choose one; L<Term::Fabulous::Cookbook::Charts>,
+L<Term::Fabulous::Cookbook::ChartTechniques> and
+L<Term::Fabulous::Cookbook::ChartStyles> have complete programs.
 
 =head2 Title and legend
 
-The C<title> is drawn in bold in the chart's first row. The legend lists
-the series (or, in pie charts, the slices) with their colors. With
+The C<title> is drawn in bold in the chart's first row, at the left,
+in the center or at the right (C<title_align>). A chart of 12 rows or
+more leaves an empty row below it; a chart of fewer than 3 rows (such
+as a sparkline) shows no title.
+
+The legend lists the series (or, in pie charts, the slices) with their
+colors: a short line for a line series, a square for areas, bars and
+slices, the point character for scatter series. With
 C<< legend =E<gt> 'auto' >> (the default), a chart shows a legend when it
 has at least two entries: a single series is named by the title. Charts
-with axes put it at the C<top>, round charts on the C<right>. A legend at
-the top or bottom wraps into more rows when the entries do not fit in one
-(up to a third of the chart's height); a legend beside the plot lists one
-entry per row and cuts long labels. When not all entries fit, the legend
-ends with C<+N more>; a chart too narrow to show even one entry beside
-that count (about 15 columns) has no legend. A legend at the bottom sits
-right below the plot, also when the axis ticks leave rows free.
+with axes and radar charts put it at the C<top>; pie, donut and polar
+area charts on the C<right>. C<top>, C<bottom>, C<left> and C<right> put
+it there whatever the number of entries; C<none> hides it.
+
+A legend at the top or bottom wraps into more rows when the entries do
+not fit in one (up to a third of the chart's height); a legend beside
+the plot lists one entry per row, centered vertically, takes at most
+half of the chart's width and cuts long labels. When not all entries
+fit, the legend ends with C<+N more>; a chart too narrow to show even
+one entry beside that count (about 15 columns) has no legend. A legend
+at the bottom sits right below the plot, also when the axis ticks leave
+rows free.
 
 =head2 Colors and themes
 
@@ -612,9 +641,12 @@ Every series (or slice) gets the next color of the C<palette> when it is
 added, and keeps it when other series come and go; a C<color> of its own
 wins. The palettes are described in L<Term::Fabulous::Chart::Palette>: the
 C<default> palette's colors are chosen to stay apart for readers with
-color vision deficiencies. With more series than the palette has colors
-(eight), the colors repeat; give such series colors of their own, or
-better, fewer series.
+color vision deficiencies. A palette may also be an array of colors of
+your own, used in their order; their alpha is ignored (give a series a
+translucent C<color>, or a C<fill_opacity>, for translucency). With more
+series than the palette has colors (eight in the named palettes), the
+colors repeat; give such series colors of their own, or better, fewer
+series.
 
 The chart has no background of its own by default: it is drawn on the
 background of its nearest ancestor with an opaque one, and blends its
@@ -636,7 +668,8 @@ or its legend entry), the chart emphasizes it: the series keeps its color
 and is drawn on top, the other series fade towards the background
 (C<hover_fade> of the way, default 0.7), and the series' legend entry is
 shown in bold. In pie, donut and polar area charts the same happens to
-slices. Thin lines can be hit from a cell next to them.
+slices, and a donut shows the slice's share in its hole. Thin lines can
+be hit from a cell next to them.
 
 Each time the pointer moves onto something else, the chart fires a
 C<SeriesHover> event (L<Term::Fabulous::Event::SeriesHover>) with the
@@ -645,7 +678,12 @@ is how a program shows details, for example in a status line.
 
 C<highlight> emphasizes a series from the program the same way, for
 example the one selected in a list; the pointer wins while it is on a
-series. C<< hover =E<gt> 0 >> turns hover effects and events off.
+series. C<< hover =E<gt> 0 >> turns hover effects and events off;
+C<highlight> still works.
+
+The chart listens to C<Mouse> and C<MouseMove> events itself to find
+what the pointer is on, and lets them bubble on, so listeners of your
+own on the chart and its ancestors still get them.
 
 =head1 CONSTRUCTOR
 
@@ -658,7 +696,8 @@ L<Term::Fabulous::Widget::Box>, every chart takes:
 
 =item C<title>
 
-A character string, or C<undef> (the default) for none.
+A character string, or C<undef> (the default) for none. See
+L</Title and legend>.
 
 =item C<title_align>
 
@@ -670,19 +709,24 @@ C<auto> (the default), C<top>, C<bottom>, C<left>, C<right> or C<none>.
 
 =item C<palette>
 
-A palette name (C<default>, C<classic>, C<pastel>, C<vivid>; see
-L<Term::Fabulous::Chart::Palette>) or an array reference of colors in
-any format a canvas cell takes.
+A palette name (C<default>, the default, C<classic>, C<pastel> or
+C<vivid>; see L<Term::Fabulous::Chart::Palette>) or a non-empty array
+reference of colors in any format a canvas cell takes
+(L<Term::Fabulous::Widget::Canvas/Colors>).
 
 =item C<theme>
 
-C<auto> (the default), C<dark> or C<light>.
+C<auto> (the default), C<dark> or C<light>: whether the chart's text
+and lines are light (for a dark background) or dark (for a light one),
+and which steps of the palette it uses. C<auto> picks C<light> when the
+background is light; see L</Colors and themes>.
 
 =item C<title_color>, C<text_color>, C<label_color>, C<axis_color>, C<grid_color>
 
 Colors for the title, the legend text, the tick labels and axis titles,
-the axis lines and the grid lines. Default: mixed from the background
-and the theme's ink, as described above.
+the axis lines and the grid lines, in any format a canvas cell takes.
+Default: C<undef>, mixed from the background and the theme's ink (see
+L</Colors and themes>).
 
 =item C<hover>
 
@@ -700,13 +744,26 @@ The name of a series (or the label of a slice) to emphasize, or C<undef>
 
 =back
 
+An invalid value dies with a message that names the parameter, for
+example C<Term::Fabulous::Widget::LineChart: legend must be auto,
+bottom, left, none, right, top, got 'center'>.
+
 =head1 METHODS
 
 Every parameter has an accessor of the same name: without an argument it
-returns the value, with one it checks and sets it, and the chart shows
-the change in the next frame. The color accessors return packed
-C<0xRRGGBB> integers, C<undef> for the derived default; C<palette>
-returns the name or a copy of the array of colors (packed integers).
+returns the value, with one it checks and sets it (an invalid value dies
+and changes nothing), and the chart shows the change in the next frame.
+
+	$chart->title('Requests per minute');
+	$chart->legend('bottom');
+	$chart->palette( [ '#61afef', '#e06c75' ] );
+	$chart->label_color(undef);    # back to the color mixed from the background
+	$chart->highlight(undef);      # nothing emphasized
+
+The color accessors return packed C<0xRRGGBB> integers, C<undef> for the
+derived default; C<palette> returns the name or a copy of the array of
+colors (packed integers). C<< hover(0) >> also ends a hover in progress:
+the chart fires a C<SeriesHover> event without a series.
 
 =head2 hovered
 
@@ -744,16 +801,32 @@ not listen.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, and
-C<title>, C<title_align>, C<legend>, C<theme>, C<hover> (C<#true> or
-C<#false>), C<hover_fade>, C<highlight>, the color properties, and
-C<palette> with a palette name or several colors:
+every parameter of this page: C<title>, C<title_align>, C<legend>,
+C<theme>, C<hover> (C<#true> or C<#false>), C<hover_fade>,
+C<highlight>, the color properties C<title_color>, C<text_color>,
+C<label_color>, C<axis_color> and C<grid_color>, and C<palette> with a
+palette name or one or more colors:
+
+	use Term::Fabulous::Widget::LineChart as LineChart
 
 	LineChart "load" {
 		title "System load"
+		title_align "center"
 		legend "bottom"
+		theme "dark"
 		palette "#61afef" "#e06c75" "#98c379"
 		label_color "#8b93a7"
+		grid_color "#2a2f3a"
+		hover #true
+		hover_fade 0.5
+		highlight "web"
 	}
+
+C<palette "vivid"> names a palette. The series and data of a chart are
+properties of the chart class; see
+L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>,
+L<Term::Fabulous::Widget::PieChart/KDL PROPERTIES> and
+L<Term::Fabulous::Widget::RadarChart/KDL PROPERTIES>.
 
 =head1 SUBCLASS INTERFACE
 
@@ -795,7 +868,12 @@ surface's owner maps, so the pointer finds what was drawn there.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Manual/CHARTS>,
-L<Term::Fabulous::Cookbook/CHARTS>, L<Term::Fabulous::Chart::Palette>.
+L<Term::Fabulous::Manual::Charts/CHARTS> (the guide),
+L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::PieChart>,
+L<Term::Fabulous::Widget::RadarChart>, L<Term::Fabulous::Chart::Palette>,
+L<Term::Fabulous::Event::SeriesHover>,
+L<Term::Fabulous::Cookbook::Charts>, L<Term::Fabulous::Cookbook::ChartTechniques>,
+L<Term::Fabulous::Cookbook::ChartStyles>,
+the example program F<examples/widgets/chart.pl>.
 
 =cut

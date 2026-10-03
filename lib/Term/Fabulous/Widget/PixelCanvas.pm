@@ -231,6 +231,9 @@ per cell
 
 =end html
 
+F<examples/pixel-paint.pl> draws these shapes and lets you paint with
+the mouse.
+
 =head1 DESCRIPTION
 
 A PixelCanvas is a L<Term::Fabulous::Widget::Canvas> that you draw on
@@ -251,7 +254,8 @@ background (or that of its nearest ancestor with one).
 The pixels are stored in the cells themselves. The inherited cell
 methods (C<put>, C<put_text>, C<fill>, C<erase>, C<clear>) therefore
 still work, for example to write text over an image. A cell written
-that way shows no pixels any more: both of its pixels count as unset
+that way shows no pixels any more (unless the character written is one
+of the two half blocks): both of its pixels count as unset
 until a pixel is set in it again, and setting one leaves the other
 unset.
 
@@ -324,8 +328,9 @@ Colors the one-pixel outline of the same rectangle as C<fill_rect>.
 	$image->draw_line( $from_x, $from_y, $to_x, $to_y, $color );
 
 Colors every pixel on the straight line between the two points, both
-end points included (Bresenham's algorithm). The time this takes grows
-with the length of the line, including the part outside the image.
+end points included (Bresenham's algorithm). Only the part inside the
+image is computed, so a line far longer than the image costs no more
+than one across it.
 
 =head2 draw_circle
 
@@ -363,7 +368,8 @@ frame.
 
 The events of L<Term::Fabulous::Widget::Canvas/EVENTS>: C<CanvasResize>
 when the size changes (its C<columns> and C<rows> are in cells; use
-L</pixel_width> and L</pixel_height> for pixels) and C<Mouse>.
+L</pixel_width> and L</pixel_height> for pixels), C<Mouse> and
+C<MouseMove> (use L</pixel_at> to find the pixel).
 
 =head1 KDL PROPERTIES
 
@@ -378,7 +384,9 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>:
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Manual/CANVASES>,
+L<Term::Fabulous::Manual::Charts/CANVASES> (the guide),
+L<Term::Fabulous::Widget::Canvas>,
+L<Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>,
 the example program F<examples/pixel-paint.pl>.
 
 =cut

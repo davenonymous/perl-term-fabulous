@@ -122,7 +122,7 @@ boxes, borders and colors as an interactive program;
 
 =item *
 
-tests of widgets and layouts (see L<Term::Fabulous::Manual/TESTING>);
+tests of widgets and layouts (see L<Term::Fabulous::Manual::Programs/TESTING>);
 
 =item *
 
@@ -153,11 +153,12 @@ measured in terminal columns.
 
 =item C<root>
 
-Required. The root widget of the tree to render. It must not have a
-parent (see L<Term::Fabulous::Manual/WIDGETS AND THE WIDGET TREE>).
+Required. The root widget of the tree to render: any widget, a
+L<Term::Fabulous::Widget::Text> included. It must not have a parent
+(see L<Term::Fabulous::Manual::Layout/WIDGETS AND THE WIDGET TREE>).
 A widget tree can belong to only one live Term::Fabulous::Static or
 L<Term::Fabulous> object at a time: a second C<new> with the same root
-dies with C<Clay::UI: widget already bound to a Clay::UI controller>.
+dies with C<Clay::UI: 'root' is already the root of another Clay::UI>.
 Once the first object is gone, the root can be used again. To render
 the same tree repeatedly, keep one object and call L</render_lines>
 again.
@@ -194,6 +195,12 @@ L<Term::Fabulous::Render/CONSTRUCTOR PARAMETERS>). Leave it out.
 Passed to L<Clay::UI>: the bytes Clay reserves for a layout. Rarely
 needed; it does not raise the limit on the number of widgets (see
 L<Term::Fabulous/LIMITATIONS>).
+
+=item C<max_element_count>
+
+Passed to L<Clay::UI>: how many widgets a frame may hold (default
+8192, of which Clay keeps two for itself). Raise it for very large
+trees; see L<Term::Fabulous/new>.
 
 =item C<error_handler>
 
@@ -292,9 +299,20 @@ Write a report to a file, without colors:
 Check what a widget shows, in a test:
 
 	use Test2::V0;
+	use Term::Fabulous::Static;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Text;
+
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child( Term::Fabulous::Widget::Text->new( text => 'Hello', text_color => [ 255, 255, 255, 255 ] ) );
 
 	my $page = Term::Fabulous::Static->new( root => $root, width => 20 );
 	is [ $page->render_lines( colors => 0 ) ], [ 'Hello' ], 'the greeting is shown';
+	done_testing;
+
+For tests of programs that take input (keys, clicks), use
+L<Term::Fabulous::Terminal::Memory> instead; see
+L<Term::Fabulous::Manual::Programs/TESTING>.
 
 The script F<examples/static-report.pl> in the distribution renders
 several bordered panels with non-ASCII text.
@@ -307,8 +325,12 @@ several bordered panels with non-ASCII text.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/RENDERING WITHOUT A TERMINAL>,
-L<Term::Fabulous::Manual/TESTING>, L<Term::Fabulous>,
-L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Target::Grid>.
+L<Term::Fabulous::Manual::Programs/RENDERING WITHOUT A TERMINAL>,
+L<Term::Fabulous::Manual::Programs/TESTING>, L<Term::Fabulous>,
+L<Term::Fabulous::Render>, L<Term::Fabulous::Render::Target::Grid>,
+L<Term::Fabulous::Cookbook::Output/Render a report to a file or pipe (Static)>,
+L<Term::Fabulous::Cookbook::Output/Test a widget without a terminal>,
+L<Term::Fabulous::Cookbook::Tables/Print a table as a report (Static)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Print charts in a report (Static)>.
 
 =cut

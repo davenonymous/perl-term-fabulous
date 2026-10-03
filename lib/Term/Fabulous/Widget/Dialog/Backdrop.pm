@@ -137,9 +137,12 @@ the dialog in itself;
 
 =item *
 
-catches every mouse event outside the dialog, since it paints every
-cell of the screen; Clay treats it as a floating element that captures
-the pointer, so nothing below it is hovered or pressed;
+catches every mouse event outside the dialog, whatever its color,
+since it covers every cell of the screen: the C<Mouse> and C<MouseMove>
+events are fired on the Backdrop and bubble to the root widget, its
+parent, not to the widgets behind it. Clay treats it as a floating
+element that captures the pointer, so nothing below it is hovered or
+pressed;
 
 =item *
 

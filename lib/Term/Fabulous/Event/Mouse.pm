@@ -84,9 +84,9 @@ turn from the terminal
 L<Term::Fabulous> fires a C<Mouse> event for every mouse report the
 terminal sends while L<Term::Fabulous/run> is active and mouse input is
 enabled (the C<mouse> parameter of L<Term::Fabulous/new>, on by
-default). The event is fired on the topmost widget that painted the
+default except in inline mode, which has no mouse support). The event is fired on the topmost widget that painted the
 cell under the pointer in the last frame (see
-L<Term::Fabulous::Manual/MOUSE> for the exact rules), or on the root
+L<Term::Fabulous::Manual::Events/MOUSE> for the exact rules), or on the root
 widget when there is none, and then bubbles up to the ancestors.
 
 The class is a subclass of L<Clay::UI::Events::Event>, so C<target>,
@@ -138,12 +138,13 @@ C<TB_MOD_ALT>, so a Shift+click can be told from a click.
 
 Programs rarely build mouse events themselves; L<Term::Fabulous> does it
 for every report. Building one by hand is useful in tests of one
-widget's C<Mouse> listeners; L<Term::Fabulous::Terminal::Memory/click>
-clicks like a real mouse (see L<Term::Fabulous::Manual/TESTING>). Note
+widget's C<Mouse> listeners; the
+L<C<click>|Term::Fabulous::Terminal::Memory/click> method of
+Term::Fabulous::Terminal::Memory clicks like a real mouse (see L<Term::Fabulous::Manual::Programs/TESTING>). Note
 that firing a hand-built event
 on a widget only runs the listeners. For a real left press,
 L<Term::Fabulous> records the pointer position and moves the keyboard
-focus (see L<Term::Fabulous::Manual/FOCUS>) before it fires the
+focus (see L<Term::Fabulous::Manual::Events/FOCUS>) before it fires the
 C<Mouse> event. Clay::UI's C<OnPress> and C<OnRelease>
 events (L<Clay::UI::Role::Interaction::Pressable>) come later, during
 the next frame (within 1/30 second), when the recorded pointer is
@@ -283,8 +284,9 @@ as for any event. Returns the event.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/MOUSE>, L<Term::Fabulous>,
+L<Term::Fabulous::Manual::Events/MOUSE>, L<Term::Fabulous>,
 L<Term::Fabulous::Event::MouseMove>, L<Term::Fabulous::Event::KeyPress>,
-L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>.
+L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>,
+L<Term::Fabulous::Cookbook::Canvases/Paint with the mouse (Canvas, clicks and drags)>.
 
 =cut

@@ -399,7 +399,7 @@ rows and columns
 	foreach my $row ( $view->visible_rows ) {
 		my ( $line, $from, $to, $is_last, $shown_from ) = @$row;
 		my @clusters = $view->clusters( $line, $shown_from, $to );    # [ $offset, $shown, $columns ]
-		...
+		say join '', map { $_->[1] } @clusters;                      # "The quick ", "brown fox", "jumps"
 	}
 
 	my ( $line, $offset ) = $view->position_at( 3, 1 );    # under a click
@@ -494,7 +494,8 @@ C<Term::Fabulous::TextView:>.
 	$view->set_size( $columns, $rows );
 
 The size of the view in cells, non-negative integers. Returns the view.
-A view without columns or rows scrolls nowhere.
+A view without columns or rows scrolls nowhere. Dies unless both are
+non-negative integers.
 
 =head2 columns
 
@@ -510,7 +511,8 @@ The height of the view, in cells.
 	$view->set_scrollbar(1);
 
 Change the C<wrap> and C<scrollbar> settings; C<set_wrap> also scrolls
-back to the left edge. Return the view.
+back to the left edge. Return the view. Any plain value is taken as a
+boolean; a reference dies.
 
 =head2 wrap, scrollbar
 
@@ -521,7 +523,7 @@ The settings.
 	$view->set_display( sub ($cluster) { '*' } );
 
 Changes how clusters are shown, which may change their widths. Returns
-the view.
+the view. Dies unless given a code reference.
 
 =head2 display_changed
 
@@ -616,7 +618,8 @@ the view.
 	my $moved = $view->scroll_rows(3);
 
 Scrolls by visual rows (negative: up), staying within the text, without
-moving the cursor. Returns the rows it moved, 0 at an end.
+moving the cursor. Returns how many rows it moved, negative when it
+moved up, and 0 when it is already at that end.
 
 =head2 cursor_cell
 

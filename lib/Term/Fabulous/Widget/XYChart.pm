@@ -1309,9 +1309,9 @@ a y axis
 		series => [ { name => 'outside', data => [ [ '2026-06-01 06:00', 12.5 ], [ '2026-06-01 12:00', 21.0 ] ] } ],
 	);
 
-	# Live data
-	$chart->append( time, { api => 180, web => 99 } );    # one point per series
-	$chart->max_points(300);                              # keep the newest 300
+	# More data: one point for each series, here in a new category
+	$chart->append( 'Sat', { api => 180, web => 99, jobs => 22 } );
+	$chart->max_points(300);    # every series keeps its newest 300 points
 
 	# Changes show in the next frame
 	$chart->set_series( web => ( type => 'area', fill_opacity => 0.4 ) );
@@ -1328,6 +1328,14 @@ carry a line series for a target, a line chart an area for a range.
 L<Term::Fabulous::Widget::Histogram> and
 L<Term::Fabulous::Widget::Sparkline> are XYCharts too, with their own
 pages.
+
+=begin html
+
+<p><img src="/screenshots/widget-line-chart.svg" alt="A line chart with three smooth lines for Web, iOS and Android over the months of a year, a legend at the top, y axis labels with a title at the left and month labels below"></p>
+
+=end html
+
+The program is F<examples/widgets/line-chart.pl>.
 
 The chart lays itself out in the room it has: the title and legend from
 L<Term::Fabulous::Widget::Chart>, the y axis labels at the left, the x
@@ -1346,8 +1354,11 @@ bars), L</DATA> (transforms, cutting series to a range, live data),
 L</HOVER>, and then the reference: L</CONSTRUCTOR>, L</METHODS>,
 L</EVENTS>, L</KDL PROPERTIES> and the L</SUBCLASS INTERFACE>. Title,
 legend, colors, themes and the hover mechanics are on
-L<Term::Fabulous::Widget::Chart>; complete programs are in
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart>. For an introduction to all chart
+widgets, read L<the charts chapter of the manual|Term::Fabulous::Manual::Charts>;
+complete programs are in L<Term::Fabulous::Cookbook::Charts>,
+L<Term::Fabulous::Cookbook::ChartTechniques> and
+L<Term::Fabulous::Cookbook::ChartStyles>.
 
 =head1 SERIES
 
@@ -1368,11 +1379,18 @@ C<remove_series>, C<hide_series>, ...).
 		%options,                   # the drawing options below
 	}
 
+C<color> takes every form of L<Term::Fabulous::Color> (C<'#3987e5'>,
+C<'rgb(57, 135, 229)'>, C<[ 57, 135, 229, 255 ]>, ...) and a packed
+C<0x3987e5> integer; an alpha below 255 makes the series' areas and bars
+more translucent. How series get their colors is described in
+L<Term::Fabulous::Widget::Chart/Colors and themes>. A key the series does
+not know dies, with the list of known keys in the message.
+
 Besides C<name>, C<type>, C<data> and C<color>, a series takes these
-options. Every one of them has a default, and the first eleven can also
-be set on the chart for all of its series (as constructor parameters or
-accessors of the same name): a series uses its own value when it has
-one, else the chart's, else the default.
+options. Every one of them has a default. The options from C<marker> to
+C<value_labels> can also be set on the chart for all of its series (as
+constructor parameters or accessors of the same name): a series uses its
+own value when it has one, else the chart's, else the default.
 
 =over
 
@@ -1398,9 +1416,10 @@ C<solid> (the default), C<dashed> or C<dotted>; see L</Line styles>.
 
 =item C<points>, C<point>
 
-C<points> true marks every data point of a line or area; C<point> is
-the mark: C<dot>, C<square> or a single character. Default: no points on
-lines, square points on scatter series. See L</Points>.
+C<points> true marks every data point of a line or area series (default:
+false). C<point> is the mark: C<dot>, C<square> or a single character
+one column wide; default: a bullet on lines and areas, C<square> on
+scatter series. See L</Points>.
 
 =item C<fill_opacity>
 
@@ -1410,11 +1429,12 @@ Default: 0.6 for areas, 0.8 for stacked areas, 1 for bars.
 =item C<transform>
 
 Steps that prepare the data before it is drawn; see L</Preparing data>.
+Default: none.
 
 =item C<max_points>
 
 A positive integer: the series keeps only its newest points; see
-L</Live data>.
+L</Live data>. Default: no limit.
 
 =item C<span_gaps>
 
@@ -1423,28 +1443,29 @@ Default: false.
 
 =item C<value_labels>
 
-For bars: true writes the value of each bar above (or right of) it. See
-L</Value labels>.
+For bars: true writes the value of each bar above (or right of) it.
+Default: false. See L</Value labels>.
 
 =item C<stack>
 
-A group name: series with the same name stack on each other, whatever
-C<stacked> says. See L</STACKING>.
+A group name: series of the same type with the same group name stack on
+each other, whatever C<stacked> says. See L</STACKING>.
 
 =item C<from>, C<to>
 
-x values: the series is drawn only from C<from> to C<to>. See
-L</From, to and span>.
+x values in the form of the axis (a number, a date, a category label):
+the series is drawn only from C<from> to C<to>, either may be left out.
+See L</From, to and span>.
 
 =item C<trend>
 
 True adds a dashed least-squares line through the points, in the
-series' color.
+series' color, from the smallest x to the largest. Default: false.
 
 =item C<visible>
 
 False hides the series (also from the legend and the axes); its data is
-kept. C<show_series> and C<hide_series> change it.
+kept. C<show_series> and C<hide_series> change it. Default: true.
 
 =back
 
@@ -1467,8 +1488,10 @@ areas stop before a gap and start again after it (unless C<span_gaps>),
 bars and points leave it out. What the x values may be, and what they
 make of the x axis, is explained in L</What the x values are>.
 
-The data is kept as you gave it: C<< $chart->series($name) >> returns
-it. Transforms, sorting and stacking happen when a frame is drawn.
+The chart keeps the data as you gave it, and C<< $chart->series($name) >>
+returns it: y values as numbers, C<[ x, y ]> pairs as pairs (hashes
+come back as pairs too), x values unchanged. Transforms, sorting and
+stacking happen each time a frame is drawn.
 
 =head2 Several series
 
@@ -1476,7 +1499,16 @@ Series are drawn in the order they were added, layer by layer: areas,
 then bars, then lines, then points; so a line stays visible over an
 area of the same chart. The legend lists them in order. Each gets the
 next color of the palette; a series keeps its color when others before
-it are removed.
+it are removed. While the pointer is on a series, that series is drawn
+last in its layer, unless it is part of a stack (see L</HOVER>).
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-line.svg" alt="A line chart of three series, the average monthly temperatures of Lisbon, Berlin and Oslo, each in its own palette color with a dot on every month and a legend at the top"></p>
+
+=end html
+
+The program is in L<Term::Fabulous::Cookbook::Charts/Draw a line chart with labels and points (LineChart)>.
 
 =head1 AXES
 
@@ -1504,11 +1536,14 @@ distance between two bars.
 
 =item *
 
-When every x value is a date, the axis is a time axis. A date is a string
-like C<2026-06-01>, C<2026-06-01 14:30> or C<2026-06-01T14:30:15>, an
-epoch number is a number and so makes a linear axis unless the axis type
-is C<time>, and any object with an C<epoch> method (DateTime,
-Time::Piece, Time::Moment) is a date. See L</Time axes>.
+When every x value is a date, the axis is a time axis. A date is a
+string like C<2026-06>, C<2026-06-01>, C<2026-06-01 14:30> or
+C<2026-06-01T14:30:15> (local time; with a trailing C<Z> after the time,
+as in C<2026-06-01 14:30Z>, UTC; the exact forms are listed in
+L<Term::Fabulous::Widget::Table::Value/date_interval>), or any object
+with an C<epoch> method (DateTime, Time::Piece, Time::Moment). Epoch
+seconds are numbers, so they make a linear axis unless the axis type is
+C<time>. See L</Time axes>.
 
 =item *
 
@@ -1521,14 +1556,17 @@ samples).
 Set C<type> in C<x_axis> to decide yourself: C<category>, C<linear>,
 C<log> or C<time>. A value the axis cannot show then dies when the frame
 is drawn (a label on a linear axis), with the series and the value in
-the message.
+the message. On a category axis every x value is a label: numbers too,
+and a date object becomes its C<YYYY-MM-DD> date in local time.
 
 =head2 Axis keys
 
 C<x_axis> and C<y_axis> are hashes; every key is optional. The y axis
 shows the values; with C<horizontal> bars the two change places on the
 screen, but the keys keep their meaning: C<y_axis> still describes the
-values.
+values. Some keys apply only to some kinds of axis, as noted; on other
+axes they are accepted and have no effect. An unknown key or an invalid
+value dies when the hash is given, with the known keys in the message.
 
 =over
 
@@ -1539,79 +1577,106 @@ C<linear> (the default) or C<log>.
 
 =item C<min>, C<max>
 
-Fixed ends. Numbers for a value axis, numbers or dates for a time axis.
-Without them the axis covers the data, rounded out to the next ticks
-(see C<nice>); a y axis of bars or areas includes 0 (see C<zero>).
+Fixed ends: numbers on a linear or logarithmic axis (greater than 0 on
+a logarithmic one), numbers or dates on a time axis; C<min> must be
+less than C<max>. Without them the axis covers the data, rounded out to
+the next ticks (see C<nice>); a linear y axis of bars or areas includes
+0 (see C<zero>). A category axis has no ends to set.
 
 =item C<title>
 
-A string written above the y axis values, or centered below the x axis
-labels.
+A string: the title of the y axis is written above its values, that of
+the x axis centered below its labels. With horizontal bars the titles
+stay with their axes: the y axis title is centered below the values at
+the bottom, the x axis title stands above the categories at the left.
 
 =item C<format>
 
-How tick labels (and the value labels of bars) are written: C<auto> (the
-default), C<si>, C<integer>, C<percent>, a C<sprintf> format with a C<%>
-or a code reference; for a time axis a L<POSIX/strftime> format or a
-code reference. See L<Term::Fabulous::Chart::Format>.
+How tick labels (and the value labels of bars) are written. On a linear
+or logarithmic axis: C<auto> (the default), C<si>, C<integer>,
+C<percent>, a C<sprintf> format with a C<%>, or a code reference. On a
+time axis: a L<POSIX/strftime> format or a code reference. With the x
+axis type C<auto>, a format with a C<%> serves as either, whichever
+kind the axis turns out to be. Category labels are shown as they are.
+See L<Term::Fabulous::Chart::Format>.
 
 =item C<ticks>
 
-The number of ticks wanted; the chart takes the nearest number whose
-ticks are round and fit.
+Linear axes: the number of ticks wanted; the chart takes the nearest
+number whose ticks are round and fit.
 
 =item C<step>
 
-A fixed distance between ticks.
+Linear axes: a fixed distance between ticks.
 
 =item C<grid>
 
-Grid lines at the ticks: C<0> or C<1>, or C<solid>, C<dashed> or
-C<dotted>. Default: solid lines for the value axis, none for the x axis.
-Where solid lines of both axes cross, they join.
+Grid lines at the ticks: C<0> or C<1> (solid), or C<solid>, C<dashed>
+or C<dotted>. Default: solid lines for the value axis, none for the x
+axis. A category axis with bars has no grid lines (the bars stand
+between them). Where solid lines of both axes cross, they join.
 
 =item C<visible>
 
-False hides the axis labels (the plot takes their room). Default: true.
+False hides the tick labels (the plot takes their room; the axis title
+stays). Default: true.
 
 =item C<zero>
 
-Whether the value axis includes 0. Default: true when a bar or area
-series is drawn or series are stacked, else false, so a line of values
-from 1200 to 1300 fills the plot.
+Linear y axes: whether the axis includes 0. Default: true when a bar or
+area series is drawn or series are stacked, else false, so a line of
+values from 1200 to 1300 fills the plot.
 
 =item C<nice>
 
-False keeps the ends of the axis at the data instead of rounding them to
-ticks. Default: true (except for histograms, whose bins set the ends).
+Linear axes: false keeps the ends of the axis at the data instead of
+rounding them out to ticks. Default: true (except for histograms, whose
+bins set the ends).
 
 =item C<utc>
 
-For a time axis: true labels the ticks in UTC instead of local time.
+Time axes: true labels the ticks in UTC instead of local time, and puts
+them on UTC boundaries. Default: false.
 
 =item C<span>
 
-For a numeric or time x axis: how much of x is shown, counted back from
-the last point (C<3600> for the last hour of epoch seconds); older points
+Linear and time x axes: how much of x is shown, counted back from the
+newest point (C<3600> for the last hour of epoch seconds); older points
 are neither drawn nor counted for the y axis. See L</From, to and span>.
 
 =item C<base>
 
-The base of a logarithmic axis. Default: 10.
+Logarithmic axes: the base, a number greater than 1. Default: 10.
 
 =back
 
 	y_axis => { title => 'ms', min => 0, max => 500, ticks => 6, format => 'integer' },
 	x_axis => { type => 'time', format => '%H:%M', utc => 1, grid => 'dotted' },
 
+Grid lines in all three styles are shown in
+L<Term::Fabulous::Cookbook::ChartStyles/Line styles, gaps, bar widths, stack groups and grid lines>.
+
 =head2 Logarithmic axes
+
+	y_axis => { type => 'log' },
+	x_axis => { type => 'log', base => 2 },
 
 C<< type =E<gt> 'log' >> on either axis puts every power of C<base> the
 same distance from the next, for data that spans orders of magnitude or
 grows by a constant factor. The ticks are the powers (1, 10, 100, 1k,
-...). Values of zero or below have no place on it: lines get a gap
+...); where they would crowd, only every second (third, ...) power is
+labeled. Values of zero or below have no place on it: lines get a gap
 there, bars and points are left out. Bars and areas grow from the low
 end of the axis.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-log-scale.svg" alt="The same two series twice: on a linear axis the small values lie flat on the bottom, on a logarithmic axis both series rise as nearly straight lines"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartTechniques/Show values of very different sizes (logarithmic axis)>.
 
 =head2 Time axes
 
@@ -1619,13 +1684,22 @@ A time axis places points by their moment and labels ticks on calendar
 boundaries: every few seconds, minutes or hours, days, weeks (Mondays),
 months or years, whichever the room allows. Without a C<format> the
 labels fit the interval (C<06:00>, with the date at midnight; C<Jun 3>;
-C<Feb>, with the year in January; C<2026>). Times are read and shown in
-local time, in UTC with C<< utc =E<gt> 1 >>. The x values of the points
-can be date strings, epoch numbers (with C<< type =E<gt> 'time' >>) or
-date objects; mixed forms are fine. A time axis needs x values: plain y
-values die.
+C<Feb>, with the year in January; C<2026>). Ticks are placed and
+labeled in local time, in UTC with C<< utc =E<gt> 1 >>. The x values of
+the points can be date strings, epoch numbers (with
+C<< type =E<gt> 'time' >>) or date objects; mixed forms are fine. A time
+axis needs x values: a series of plain y values dies when the frame is
+drawn. See L<Term::Fabulous::Chart::Scale::Time> for the tick
+intervals.
 
-Cookbook: L<Term::Fabulous::Cookbook/CHARTS> has a time series recipe.
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-time-series.svg" alt="Hourly temperatures over four days on a time axis labeled with dates at midnight and hours between: a solid measured line, a dashed forecast and a shaded area under part of the measurements"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartTechniques/Plot values over time (time axis, from and to, a dashed forecast)>.
 
 =head1 STACKING
 
@@ -1637,16 +1711,32 @@ With C<< stacked =E<gt> 1 >> every bar series stands on the bar series
 before it and every area series lies on the area series before it, at
 each x; the y axis covers the totals. Positive and negative values stack
 in their own directions from the baseline. C<< stacked =E<gt> 'percent' >>
-divides each stack by its total, so every stack reaches 100%, and the
-value axis shows percentages. Lines and points never stack.
+divides each value by the total of its stack (the sum of the absolute
+values at that x), so every stack reaches 100%, and the value axis
+shows percentages. C<stacked> does not stack lines and points.
 
-The C<stack> option of a series puts it in a named group: series of one
-group stack on each other, series of different groups stand side by
-side, and series without a group stay unstacked, with or without
-C<stacked>. Stacked areas are drawn more opaque (0.8) than single ones.
+The C<stack> option of a series puts it in a named group: series of the
+same type and group stack on each other, whatever C<stacked> says, and
+bars of different groups stand side by side in their slot. This also
+stacks line or scatter series that share a group name. With
+C<stacked>, the bars and areas without a group name form one group of
+their own. Stacked areas are drawn more opaque (0.8) than single ones.
 
 Hover and the C<SeriesHover> event report a point's own value, not the
 stacked total; value labels on bars show the total of each stack.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-stacked-areas.svg" alt="Two stacked area charts of electricity from coal, gas, wind and solar from 2016 to 2026: the amounts in TWh on the left, each source's share of 100 percent on the right"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::Charts/Stacked areas and shares of 100% (AreaChart)>;
+stacked bars are in
+L<Term::Fabulous::Cookbook::Charts/Grouped, stacked and horizontal bars (BarChart)>,
+and two named stack groups side by side in
+L<Term::Fabulous::Cookbook::ChartStyles/Line styles, gaps, bar widths, stack groups and grid lines>.
 
 =head1 LOOKS
 
@@ -1666,8 +1756,11 @@ Straight segments.
 
 =item C<step>, C<step-after>, C<step-before>, C<step-middle>
 
-The value holds until the next point, where the line jumps (after the
-point, before the next one, or halfway): for counters and states.
+Horizontal and vertical segments, for counters and states. With
+C<step-after> (C<step> for short) each value holds until the next
+point, where the line jumps; with C<step-before> the line jumps to the
+next value right after a point; with C<step-middle> it jumps halfway
+between two points.
 
 =item C<monotone>
 
@@ -1677,17 +1770,26 @@ the best smooth curve for data.
 =item C<catmull-rom>, C<natural>
 
 Smooth splines through the points; they may overshoot. C<tension> (0 to
-1) tightens C<catmull-rom>.
+1, default 0) tightens C<catmull-rom>; 1 gives straight lines.
 
 =item an easing name or a code reference
 
 Each segment follows an easing function (C<ease-in-out-sine>,
 C<ease-out-bounce>, ... from L<Term::Fabulous::Chart::Easing>) or your
-own function from C<t> (0 to 1) to the share of the change.
+own function from C<t> (0 to 1) to the share of the change:
+C<< curve =E<gt> sub ($t) { $t ** 2 } >>.
 
 =back
 
-Details and the full list are in L<Term::Fabulous::Chart::Curve>.
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-curves.svg" alt="Six small charts of the same seven points connected linear, step, monotone, catmull-rom, ease-in-out-sine and ease-out-bounce"></p>
+
+=end html
+
+Details and the full list are in L<Term::Fabulous::Chart::Curve>; the
+program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Connect points with curves and easings (curve)>.
 
 =head2 Rendering styles
 
@@ -1727,12 +1829,25 @@ it.
 
 Lines take C<braille>, C<half>, C<quadrant>, C<sextant> and C<box>;
 areas and bars C<block>, C<braille>, C<half>, C<quadrant> and
-C<sextant>; points everything but C<block> and C<box>. More on how cells
-get their colors: L<Term::Fabulous::Chart::Marker>.
+C<sextant>; points everything but C<block> and C<box>. A C<marker> set
+on the chart applies to the series that can draw with it; the others
+keep their default. A series' own C<marker> must suit its type, or it
+dies. The line along the top of an area (C<line>) and the points of
+lines and areas are always drawn in Braille. More on how cells get
+their colors: L<Term::Fabulous::Chart::Marker>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-styles.svg" alt="Nine small charts of one wave: lines in Braille, half blocks, quadrants, sextants and box drawing lines, an area in eighth blocks, and bars in quadrants, blocks and Braille"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Draw with Braille, blocks or box lines (marker)>.
 
 =head2 Points
 
-	points => 1,                                     # mark the points of every line
+	points => 1,                                     # mark the points of every line and area
 	series => [ { name => 'a', points => 1, point => 'x' } ],
 	Term::Fabulous::Widget::ScatterPlot->new( point => 'dot', ... );
 
@@ -1740,26 +1855,54 @@ C<points> marks the data points of a line or area series; a scatter
 series is nothing but points. The mark is the series' C<point>: C<dot>
 (one Braille dot), C<square> (four dots, placed to a quarter cell: the
 default of scatter series) or any single character one column wide
-(C<x>, C<+>, C<o>, a bullet, the default of lines). Characters are
-placed on the cell their point falls in; dots and squares at the
-subpixel.
+(C<x>, C<+>, C<o>; a bullet is the default of lines and areas).
+Characters are placed on the cell their point falls in; dots and
+squares at the subpixel. The legend shows a scatter series by its
+character, or by a circle for dots and squares.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-scatter.svg" alt="A scatter plot of petal length and width of three species as three clusters of points, two drawn as Braille squares and the largest flowers as diamond characters, and a dashed trend line through each of the two larger species"></p>
+
+=end html
+
+Points on lines are shown in
+L<Term::Fabulous::Cookbook::Charts/Draw a line chart with labels and points (LineChart)>,
+the scatter plot above in
+L<Term::Fabulous::Cookbook::Charts/A scatter plot with trend lines (ScatterPlot)>.
 
 =head2 Line styles
 
+	series => [ { name => 'forecast', data => \@forecast, line_style => 'dashed' } ],
+
 C<line_style> draws a line C<solid> (the default), C<dashed> or
-C<dotted>; the pattern runs on from segment to segment. A trend line is
-always dashed with a longer pattern, so the two tell apart.
+C<dotted>; the pattern runs on from segment to segment. A trend line
+(C<trend>) is always dashed, with a longer pattern than C<dashed>, so
+the two can be told apart.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-options.svg" alt="Six small charts: a solid, a dashed and a dotted line; a line with a gap next to one drawn across the gap; an area with a line and a mark on every point; narrow bars; bars of 2025 and 2026 in two stacks per quarter; a line over dashed vertical and solid horizontal grid lines"></p>
+
+=end html
+
+The picture also shows gaps and C<span_gaps>, an area with C<line> and
+C<points>, a narrow C<bar_width>, two C<stack> groups and grid lines;
+the program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Line styles, gaps, bar widths, stack groups and grid lines>.
 
 =head2 Value labels
 
 	value_labels => 1,
 
 Writes the value of every bar over its top (right of its end, when
-horizontal), of a stack its total, in the format of the value axis,
-with as many decimals as the largest needs. The chart keeps a row above
-the plot for the labels of the highest bars. Labels that would touch a
-neighbor are left out, so narrow bars show every other value. Lines,
-areas and points have no value labels; use L</HOVER>.
+horizontal; below the end of a negative bar), of a stack its total, in
+the format of the value axis. Without a C<format>, all labels of a
+chart have as many decimals as the value that needs the most (C<48.0>
+beside C<51.2>). A plot of six rows or more keeps a row free above it
+for the labels of the highest bars. Labels that would touch a neighbor
+are left out, so narrow bars show every other value. Lines, areas and
+points have no value labels; use L</HOVER>.
 
 =head2 Horizontal bars
 
@@ -1767,17 +1910,31 @@ areas and points have no value labels; use L</HOVER>.
 
 Turns the chart on its side: categories down the left, values along the
 bottom, bars growing to the right. For long category names, and when
-there are many categories. A horizontal chart shows bar series only;
+there are many categories. A horizontal chart shows bar series only:
 adding a series of another type dies, and so does turning a chart with
-one horizontal. The axis hashes keep their meaning (C<y_axis> describes
-the values).
+such a series horizontal (the chart stays as it was). The axis hashes
+keep their meaning (C<y_axis> describes the values).
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-bars.svg" alt="Three bar charts: grouped bars with their values above them, stacked bars, and horizontal bars of four pages with their values right of the bars"></p>
+
+=end html
+
+The program, with grouped, stacked and horizontal bars and value labels,
+is in L<Term::Fabulous::Cookbook::Charts/Grouped, stacked and horizontal bars (BarChart)>.
 
 =head2 Bar width
+
+	bar_width => 0.4,
 
 C<bar_width> (0 to 1, default 0.7) is the share of a category slot the
 bars of the slot take together; the rest is the gap between slots.
 Grouped bars (several bar series) divide the share equally and are all
-a whole number of subpixels wide.
+a whole number of subpixels wide. Every bar is at least one subpixel
+wide. On a numeric or time x axis the slot is the smallest distance
+between two bars. The picture under L</Line styles> shows bars with a
+C<bar_width> of 0.4.
 
 =head1 DATA
 
@@ -1791,54 +1948,96 @@ a whole number of subpixels wide.
 	],
 
 A C<transform> lists steps that prepare the points before a frame is
-drawn: normalize, share, zscore, index, cumulative, difference, rate,
-moving_average, exponential, median, gaussian, scale, offset, clip, abs,
-sort, resample, downsample, regression, or a code reference of your own.
-The steps run again whenever the data changes, so live data stays
-prepared. A series with a transform of its own does not run the chart's.
-Every step is described in L<Term::Fabulous::Chart::Transform>.
+drawn: C<normalize>, C<share>, C<zscore>, C<index>, C<cumulative>,
+C<difference>, C<rate>, C<moving_average>, C<exponential>, C<median>,
+C<gaussian>, C<scale>, C<offset>, C<clip>, C<abs>, C<sort>,
+C<resample>, C<downsample>, C<regression>, or a code reference of your
+own. The steps run again whenever the data changes, so live data stays
+prepared. A series with a transform of its own does not run the
+chart's. Every step, with its arguments and an example, is described in
+L<Term::Fabulous::Chart::Transform/Steps>.
+
+The steps get the x values as numbers: the positions 0, 1, 2, ... of
+points without x, the category numbers on a category axis, epoch
+seconds on a time axis. On numeric and time axes the points of lines
+and areas are sorted by x before the steps run. Stacking happens after
+the steps, so a stack adds up the prepared values.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-transform.svg" alt="Daily visits as a dim raw line with a 7-day moving average and a dashed exponentially smoothed line over it, and below it share and bond prices both indexed to 100 at day 1"></p>
+
+=end html
 
 The chart has no second y axis: two scales on one plot invite misreading.
 To compare series of different sizes, use the C<index> transform (both
 start at 100), C<normalize> or C<zscore>, or put two charts side by side.
+The program in the picture is in
+L<Term::Fabulous::Cookbook::ChartTechniques/Smooth noisy data and index it to 100 (transforms)>.
 
 =head2 From, to and span
 
 	series => [ { name => 'forecast', data => \@all, from => '2026-07-01', line_style => 'dashed' } ],
 	x_axis => { span => 300 },     # the last five minutes
 
-C<from> and C<to> of a series cut its line to that range of x, with the
-ends interpolated, so a dashed forecast can start exactly where the
-measured data ends. The points outside do not count for the axes.
+C<from> and C<to> of a series cut it to that range of x. Lines and the
+tops of areas are cut with the ends interpolated, so a dashed forecast
+can start exactly where the measured data ends; bars and points outside
+the range are left out. The points outside do not count for the axes.
+The picture under L</Time axes> shows a forecast and a shaded area cut
+this way.
+
 C<span> of the x axis shows only the last so much of x (in the unit of
 the axis: seconds for a time axis), counted from the newest point of all
 series, so a live chart scrolls with its data; the points that scrolled
 out do not count for the y axis either, so a peak leaves the axis when
-it leaves the plot.
+it leaves the plot. The points stay in the series; use C<max_points> to
+drop them.
 
 =head2 Live data
 
-	my $chart = Term::Fabulous::Widget::LineChart->new( max_points => 120, series => [ { name => 'cpu' }, { name => 'mem' } ] );
-	$timer->on_tick( sub { $chart->append( time, { cpu => cpu_load(), mem => memory_use() } ) } );
+	my $chart = Term::Fabulous::Widget::LineChart->new(
+		x_axis     => { type => 'time', span => 60 },
+		max_points => 240,
+		series     => [ { name => 'cpu' }, { name => 'mem' } ],
+	);
+
+	# In a timer, four times a second:
+	$chart->append( Time::HiRes::time(), { cpu => cpu_load(), mem => memory_use() } );
 
 C<append> adds one point to several series at once, at the same x (or
 at the next position, with C<undef>); C<add_points> adds to one series.
 C<max_points> (of the chart or a series) drops the oldest points, so the
-chart does not grow without end; C<span> on the x axis does the same by
-time. Every change marks the chart for the next frame; only the cells
-that changed are sent to the terminal, so a chart can take many updates
-per second. For charts that need a given time window even when no data
-arrives, set C<min> and C<max> of the x axis from the timer instead.
+chart does not grow without end; C<span> on the x axis keeps the plot
+on the newest points. Every change marks the chart for the next frame;
+only the cells that changed are sent to the terminal, so a chart can
+take many updates per second. For charts that need a given time window
+even when no data arrives, set C<min> and C<max> of the x axis from the
+timer instead. A complete program is in
+L<Term::Fabulous::Cookbook::ChartTechniques/A live chart that follows new data (append, max_points, span)>.
 
 =head1 HOVER
 
 While the mouse pointer is on a series, the chart emphasizes it and
 fades the others, and fires a C<SeriesHover> event with the series, the
-nearest data point, its label (the category, the x value as the axis
-writes it) and its value. Thin lines are hit from the neighboring cell
-too. C<highlight> emphasizes a series from the program. How it works and
-how to turn it off: L<Term::Fabulous::Widget::Chart/Hover and emphasis>
-and L<Term::Fabulous::Event::SeriesHover>.
+nearest data point, its label and its value. The label is the category
+on a category axis, the moment in the axis' C<format> on a time axis
+(C<%Y-%m-%d %H:%M> without a string format), and the x value as a plain
+number otherwise. The value is the point's own value after the
+transforms, not a stacked total. Thin lines are hit from the
+neighboring cell too. C<highlight> emphasizes a series from the
+program. How it works and how to turn it off:
+L<Term::Fabulous::Widget::Chart/Hover and emphasis> and
+L<Term::Fabulous::Event::SeriesHover>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-hover.svg" alt="A stacked area chart of closed issues per team with the area under the mouse pointer emphasized, the others faded, and a status line that names the team, the week and the number of issues"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Show details of the point under the pointer (SeriesHover, highlight)>.
 
 =head1 CONSTRUCTOR
 
@@ -1860,12 +2059,17 @@ An array reference of series hashes; see L</Series keys>. Default: none.
 =item C<labels>
 
 An array reference of strings: the categories of the x axis, in order.
-Makes the x axis a category axis. Default: C<undef>.
+Makes the x axis a category axis. Default: C<undef> (no labels; a
+category axis then takes its labels from the data, see
+L</What the x values are>).
 
 =item C<x_axis>, C<y_axis>
 
 Hash references with the keys of L</Axis keys>. Default: C<{}>. Unknown
 keys and invalid values die.
+
+	x_axis => { type => 'time', format => '%H:%M' },
+	y_axis => { title => 'req/s', min => 0 },
 
 =item C<stacked>
 
@@ -1884,31 +2088,64 @@ A number from 0 to 1. Default: 0.7.
 The series options of the same names, for every series without one of
 its own; see L</Series keys>. A value a series type cannot use is kept
 for the series that can (a C<curve> applies to lines and areas, not to
-bars).
+bars). A C<marker> must be one that some series type can draw with.
+Default: none, so each series uses its own value or the default of the
+option.
 
 =back
 
 =head1 METHODS
 
-Every parameter has an accessor of the same name: without an argument
-it returns the value, with one it checks and sets it and the chart
-redraws in the next frame. C<labels>, C<x_axis> and C<y_axis> return
-copies; C<x_axis> and C<y_axis> replace the whole hash (merge yourself:
-C<< $chart->y_axis( { %{ $chart->y_axis }, max => 10 } ) >>). C<transform>
-only sets. The series accessors (C<curve>, C<marker>, ...) return the
-chart-wide value or C<undef>; C<undef> removes it.
+Every parameter except C<series> has an accessor of the same name:
+without an argument it returns the value, with one it checks and sets
+it, returns the new value, and the chart redraws in the next frame. An
+invalid value dies and leaves the chart as it was.
+
+	$chart->stacked('percent');
+	$chart->curve('monotone');          # for every series without a curve of its own
+	my $axis = $chart->x_axis;           # a copy, with type filled in
+
+C<labels>, C<x_axis> and C<y_axis> return copies; C<x_axis> and
+C<y_axis> replace the whole hash (merge yourself:
+C<< $chart->y_axis( { %{ $chart->y_axis }, max => 10 } ) >>).
+C<transform> only sets, and returns nothing. The series accessors
+(C<curve>, C<marker>, ...) return the chart-wide value or C<undef>;
+C<undef> removes it.
 
 The series methods come from L<Term::Fabulous::Role::HasSeries>:
 
 =over
 
-=item C<add_series>, C<remove_series>, C<clear_series>, C<series_names>, C<has_series>, C<series>
+=item *
 
-=item C<set_series>, C<set_data>, C<add_points>, C<clear_data>, C<append>
+Adding and removing series:
+L<add_series|Term::Fabulous::Role::HasSeries/add_series>,
+L<remove_series and clear_series|Term::Fabulous::Role::HasSeries/remove_series, clear_series>.
 
-=item C<show_series>, C<hide_series>, C<is_series_visible>
+=item *
 
-=item C<series_default>, C<series_option>, C<all_series>, C<visible_series>
+Reading them:
+L<series_names and has_series|Term::Fabulous::Role::HasSeries/series_names, has_series>,
+L<series|Term::Fabulous::Role::HasSeries/series>.
+
+=item *
+
+Changing a series and its data:
+L<set_series|Term::Fabulous::Role::HasSeries/set_series>,
+L<set_data, add_points and clear_data|Term::Fabulous::Role::HasSeries/set_data, add_points, clear_data>,
+L<append|Term::Fabulous::Role::HasSeries/append>.
+
+=item *
+
+Showing and hiding:
+L<show_series, hide_series and is_series_visible|Term::Fabulous::Role::HasSeries/show_series, hide_series, is_series_visible>.
+
+=item *
+
+Options and series objects:
+L<series_default|Term::Fabulous::Role::HasSeries/series_default>,
+L<series_option|Term::Fabulous::Role::HasSeries/series_option>,
+L<all_series and visible_series|Term::Fabulous::Role::HasSeries/all_series, visible_series>.
 
 =back
 
@@ -1923,7 +2160,7 @@ canvas events C<CanvasResize>, C<Mouse> and C<MouseMove>.
 
 =head1 KDL PROPERTIES
 
-In a KDL layout (see L<Term::Fabulous::Manual/KDL LAYOUT FILES>) an XY
+In a KDL layout (see L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>) an XY
 chart takes the properties of L<Term::Fabulous::Widget::Chart/KDL PROPERTIES>
 and these:
 
@@ -1953,7 +2190,7 @@ and these:
 
 =item C<labels "a" "b" ...>
 
-The categories.
+The categories, as the C<labels> parameter.
 
 =item C<x_axis key=value ...>, C<y_axis key=value ...>
 
@@ -1963,7 +2200,10 @@ C<base>, C<nice>, C<type>). Several nodes merge.
 
 =item C<stacked>, C<horizontal>, C<bar_width>, C<marker>, C<curve>, C<tension>, C<line_style>, C<line>, C<points>, C<point>, C<fill_opacity>, C<max_points>, C<span_gaps>, C<value_labels>
 
-As the parameters; booleans as C<#true> or C<#false>.
+As the parameters; booleans as C<#true> or C<#false>, C<stacked> also
+as C<"percent">. On the chart, C<point> is the mark of the points
+(C<point "dot">); inside a C<series> block a C<point> node is a data
+point.
 
 =item C<transform "step" args...>
 
@@ -1973,8 +2213,10 @@ in order.
 =item C<series "name" type="..." color="..." option=value ... { ... }>
 
 A series: its name as the argument, C<type>, C<color> and the series
-options as properties, and in its block any number of C<data> nodes (y
-values), C<point x y> nodes and C<transform "step" args...> nodes.
+options of L</Series keys> as properties (C<stack="a">,
+C<from="2026-06-01">, C<trend=#true>, ...), and in its block any number
+of C<data> nodes (y values; C<#null> is a gap), C<point x y> nodes and
+C<transform "step" args...> nodes, in order.
 
 =back
 
@@ -1982,6 +2224,22 @@ Axes and labels are applied before the series, whatever their order in
 the file, so the series' x values are read the way the axis says. Data
 that comes from the program (live values, code references) is added
 afterwards with the methods.
+
+A horizontal bar chart of shares:
+
+	use Term::Fabulous::Widget::BarChart as BarChart
+
+	BarChart "tickets" {
+		stacked "percent"
+		horizontal #true
+		labels "Mon" "Tue" "Wed"
+		y_axis grid="dashed"
+		series "open" { data 3 #null 4; }
+		series "closed" color="#199e70" { data 5 6 7; }
+	}
+
+A complete program with charts from a layout is in
+L<Term::Fabulous::Cookbook::ChartTechniques/Describe charts in a KDL layout (series, slices, transforms)>.
 
 =head1 SUBCLASS INTERFACE
 
@@ -2046,6 +2304,7 @@ L<Term::Fabulous::Widget::ScatterPlot>, L<Term::Fabulous::Widget::Histogram>,
 L<Term::Fabulous::Widget::Sparkline>, L<Term::Fabulous::Role::HasSeries>,
 L<Term::Fabulous::Chart::Transform>, L<Term::Fabulous::Chart::Curve>,
 L<Term::Fabulous::Chart::Marker>, L<Term::Fabulous::Chart::Format>,
-L<Term::Fabulous::Manual/CHARTS>, L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Manual::Charts/CHARTS>, L<Term::Fabulous::Cookbook::Charts>,
+L<Term::Fabulous::Cookbook::ChartTechniques>, L<Term::Fabulous::Cookbook::ChartStyles>.
 
 =cut

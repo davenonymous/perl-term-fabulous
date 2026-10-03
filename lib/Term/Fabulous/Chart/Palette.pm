@@ -141,7 +141,11 @@ the chart widgets
 The functions the chart widgets (L<Term::Fabulous::Widget::Chart> and its
 subclasses) use to pick, check and mix colors. Colors are passed around as
 packed C<0xRRGGBB> integers, the fastest form a canvas cell takes. All
-functions are exported on request.
+functions are exported on request. To choose a palette for a chart, pass
+its name (or an array of colors of your own) as the chart's C<palette>;
+see L<Term::Fabulous::Widget::Chart/Colors and themes> and the recipe
+L<Term::Fabulous::Cookbook::ChartStyles/Light backgrounds, palettes and colors of your own>.
+You need the functions below only for charts or widgets of your own.
 
 =head2 Palettes
 
@@ -155,10 +159,13 @@ steps that suit its background (see L<Term::Fabulous::Widget::Chart/theme>).
 
 =item C<default>
 
-Blue, orange, aqua, yellow, magenta, green, violet, red. Every color has at
-least 3:1 contrast to a dark (or light) chart background, and the order keeps
-neighbors apart for readers with the common color vision deficiencies. Use
-it unless you have a reason not to.
+Blue, orange, aqua, yellow, magenta, green, violet, red: the palette a
+chart uses unless you choose another. The order keeps neighbors apart for
+readers with the common color vision deficiencies. On a dark background
+every color has at least 3:1 contrast to the background; on a light one,
+aqua, yellow and magenta have less (about 2:1 to 2.7:1), so use them
+there for fills and bars rather than for thin lines. Use this palette
+unless you have a reason not to.
 
 =item C<classic>
 
@@ -250,6 +257,7 @@ The C<#rrggbb> string of a packed color.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Color>.
+L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Color>.
 
 =cut

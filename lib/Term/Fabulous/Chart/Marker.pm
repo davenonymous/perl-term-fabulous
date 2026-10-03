@@ -231,8 +231,8 @@ series (see L<Term::Fabulous::Widget::XYChart/Rendering styles>).
 
 2 x 4 subpixels: the Braille patterns U+2800 to U+28FF, one dot per
 subpixel. The finest resolution, for lines and points. A cell has only one
-foreground color, so where series cross, the cell takes the color most of
-its dots have; the background stays as it was.
+foreground color, so where series cross, the cell takes the color of the
+dot drawn last (see L</cell>); the background stays as it was.
 
 =item C<block>
 
@@ -269,13 +269,27 @@ more colors shows the two most frequent ones, and every other subpixel
 takes the nearer of the two. C<block> and C<block-horizontal> cannot show
 every shape; a shape they lack is shown as the most similar one.
 
+The C<box> style of chart lines is not a marker: the chart draws box
+lines in cells, without subpixels.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-styles.svg" alt="Nine small charts of one wave: lines in Braille, half blocks, quadrants, sextants and box drawing lines, an area in eighth blocks, and bars in quadrants, blocks and Braille"></p>
+
+=end html
+
+The program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Draw with Braille, blocks or box lines (marker)>.
+
 =head1 CLASS METHODS
 
 =head2 named
 
 	my $marker = Term::Fabulous::Chart::Marker->named($name);
 
-The marker of a name; the same object every time. Dies for unknown names.
+The marker of a name (C<braille>, C<block>, C<block-horizontal>,
+C<half>, C<quadrant>, C<sextant>); the same object every time. Dies for
+unknown names.
 
 =head2 names
 
@@ -283,7 +297,7 @@ The names of all markers, sorted.
 
 =head2 is_name
 
-True for the name of a marker.
+1 for the name of a marker, else 0.
 
 =head1 METHODS
 
@@ -291,9 +305,7 @@ True for the name of a marker.
 
 The marker's name.
 
-=head2 columns
-
-=head2 rows
+=head2 columns, rows
 
 The subpixels per cell across and down.
 

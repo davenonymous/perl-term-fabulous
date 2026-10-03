@@ -21,7 +21,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 
 # 600 exam scores from 0 to 100, most of them around 62 points.
 srand 5;
-my @scores = map { int( 62 + 14 * ( rand() + rand() + rand() - 1.5 ) * 1.4 ) } 1 .. 600;
+my @scores = map { 62 + 14 * ( rand() + rand() + rand() - 1.5 ) * 1.4 } 1 .. 600;
 
 # Bins chosen from the data...
 $root->add_child(

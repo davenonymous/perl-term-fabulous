@@ -41,18 +41,50 @@ Term::Fabulous::Widget::DonutChart - A pie chart with a hole
 
 =begin html
 
-<p><img src="/screenshots/widget-donut-chart.svg" alt="A donut of sales by region with the total in the middle and the values in the legend"></p>
+<p><img src="/screenshots/widget-donut-chart.svg" alt="A donut of a monthly budget with the total in the middle and the amounts and shares in the legend"></p>
 
 =end html
+
+F<examples/widgets/donut-chart.pl> draws this chart.
 
 =head1 DESCRIPTION
 
 A donut is a L<Term::Fabulous::Widget::PieChart> whose C<hole> is 0.6
-of the radius by default. The hole shows the total of the slices in bold
-with the word C<Total> below it; while the pointer is on a slice, the
-slice's share and label; or C<center_text>, when given (an empty string
-for nothing). The text appears when the hole is at least three cell
-widths across.
+of the radius by default. A ring shows shares as well as a pie does, and
+the hole holds a text.
+
+=head2 The text in the hole
+
+=begin html
+
+<p><img src="/screenshots/widget-donut-chart-centers.svg" alt="Three donuts of the same budget: the total 2170 euros in the middle of the first, 21% Food in the middle of the second with the other slices faded, and a text of its own, 2170 euros per month, in the third"></p>
+
+=end html
+
+The hole shows, in this order of preference:
+
+=over
+
+=item *
+
+the C<center_text>, when it is set: one or more lines separated by
+newlines, the first in bold (an empty string shows nothing);
+
+=item *
+
+the share and the label of the emphasized slice, while the pointer is
+on a slice or its legend entry, or while C<highlight> names a slice;
+
+=item *
+
+the total of the slices in bold, with the word C<Total> below it.
+
+=back
+
+Values are written with the chart's C<format>. The text appears when the
+radius of the hole is at least three cell widths, that is when the hole
+is at least six columns wide; lines wider than the hole are cut.
+F<examples/widgets/donut-chart-centers.pl> shows the three cases.
 
 Everything else, the data forms, the parameters, methods, events and KDL
 properties, is on L<Term::Fabulous::Widget::PieChart>.
@@ -71,6 +103,7 @@ C<hole> defaulting to 0.6.
 	use Term::Fabulous::Widget::DonutChart as DonutChart
 
 	DonutChart "sales" {
+		hole 0.5
 		center_text "Orders"
 		slice "Europe" 412000
 		slice "Asia" 290000
@@ -80,6 +113,10 @@ See L<Term::Fabulous::Widget::PieChart/KDL PROPERTIES>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::Chart>,
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Show shares as a pie or donut (PieChart, DonutChart)>,
+the example programs F<examples/widgets/donut-chart.pl> and
+F<examples/widgets/donut-chart-centers.pl>.
 
 =cut

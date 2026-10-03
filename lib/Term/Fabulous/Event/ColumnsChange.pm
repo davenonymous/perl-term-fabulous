@@ -44,14 +44,15 @@ Term::Fabulous::Event::ColumnsChange - The user chose which columns of a table a
 L<Term::Fabulous::Widget::Table> fires C<ColumnsChange> on itself each
 time the user shows or hides a column in its column chooser (see
 L<Term::Fabulous::Widget::Table/open_column_chooser>).
-L<Term::Fabulous::Widget::Table/show_columns> and its relatives fire
-nothing.
+The methods L<show_columns|Term::Fabulous::Widget::Table/show_columns> and its relatives fire
+nothing. The column chooser is explained in
+L<the column chooser section of the tables guide|Term::Fabulous::Manual::Tables/Choosing the visible columns>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<ColumnsChange>;
 listen for it with
 C<< $table->on( ColumnsChange => sub ($event) { ... } ) >>. It bubbles
 to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -61,8 +62,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::ColumnsChange->new( visible => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. C<visible> is required and must be an array reference;
+it is copied. Unknown parameters die.
 
 =over
 
@@ -81,6 +82,8 @@ reference).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Manual::Tables/Choosing the visible columns>,
+L<Term::Fabulous::Cookbook::Tables/Let the user choose the visible columns (column chooser)>.
 
 =cut

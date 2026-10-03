@@ -95,11 +95,16 @@ Term::Fabulous::Widget::TextField - Single-line text input
 
 =begin html
 
-<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: Ada Lovelace being typed, a placeholder, a masked password and a disabled field"></p>
+<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: a focused field with Ada Lovelace typed and Lovelace selected, a placeholder, a masked password and a disabled field"></p>
 
 =end html
 
 =head1 DESCRIPTION
+
+The picture shows the states of a text field: focused, with part of the
+text selected (the block cursor stands on the first selected
+character); empty, showing its C<placeholder>; masked for a password;
+and disabled. The program is F<examples/widgets/text-field.pl>.
 
 A text field holds one line of text that the user can type, edit, select
 and copy. When the text is wider than the field, the field scrolls
@@ -125,13 +130,14 @@ colors and sizing are described in L<Term::Fabulous::Widget::Input>.
 
 	my $field = Term::Fabulous::Widget::TextField->new(%parameters);
 
-Accepts the parameters of L<Term::Fabulous::Widget::TextInput/CONSTRUCTOR>
-(C<value>, C<placeholder>, C<max_length>, C<read_only>,
-C<placeholder_color>, C<selection_color>, C<background_color>) and of
+Accepts the parameters of
+L<Term::Fabulous::Widget::TextInput/CONSTRUCTOR> (C<value>,
+C<placeholder>, C<max_length>, C<read_only>, C<placeholder_color>,
+C<selection_color>, C<background_color>) and of
 L<Term::Fabulous::Widget::Input/CONSTRUCTOR> (C<id>, C<layout>,
 C<disabled>, C<can_focus>, C<text_color>, C<disabled_color>,
-C<accent_color>, C<focus_background_color>, the border parameters), plus
-the two below. Unknown parameters die.
+C<accent_color>, C<focus_background_color>, the border parameters, the
+other Box parameters), plus the two below. Unknown parameters die.
 
 =over
 
@@ -221,7 +227,7 @@ C<< $event->value >> is the text.
 =back
 
 Neither is fired for changes made by the program. Both bubble to the
-ancestors (see L<Term::Fabulous::Manual/Return values and bubbling>).
+ancestors (see L<Term::Fabulous::Manual::Events/Return values and bubbling>).
 
 =head1 KDL PROPERTIES
 
@@ -279,6 +285,7 @@ plus C<preferred_columns> and C<mask>:
 
 L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextArea>,
 L<Term::Fabulous::Event::Submit>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the text field section of the forms guide|Term::Fabulous::Manual::Forms/Text fields>,
+L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>.
 
 =cut

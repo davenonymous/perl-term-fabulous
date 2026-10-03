@@ -48,6 +48,8 @@ lines
 
 =end html
 
+The program is F<examples/widgets/scatter-plot.pl>.
+
 =head1 DESCRIPTION
 
 A scatter plot shows every observation as one point at its x and y
@@ -59,8 +61,9 @@ C<trend> on a series adds the least-squares line through its points,
 dashed, from the first x to the last. Neither axis includes zero unless
 asked to.
 
-Many points draw as fast as few; the C<downsample> transform is for
-series of tens of thousands of points. Everything else is described on
+For series of tens of thousands of points, the C<downsample> transform
+of L<Term::Fabulous::Chart::Transform> keeps the shape and draws
+faster. Everything else is described on
 L<Term::Fabulous::Widget::XYChart>; a ScatterPlot is an XYChart whose
 series are C<scatter> series unless they say otherwise, so a line
 series can draw a model over the observations.
@@ -97,6 +100,7 @@ See L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Chart::Transform>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/A scatter plot with trend lines (ScatterPlot)>.
 
 =cut

@@ -254,7 +254,9 @@ Term::Fabulous::Chart::Surface - The cells of a chart while it is drawn
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Chart::Surface;
+	use Term::Fabulous::Termbox qw(TB_BOLD);
 
+	# $raster is a Term::Fabulous::Chart::Raster, $canvas the chart's canvas.
 	my $surface = Term::Fabulous::Chart::Surface->new( columns => 40, rows => 12, background => 0x141923 );
 	$surface->text( 0, 0, 'Sales', 0xFFFFFF, flags => TB_BOLD );
 	$surface->put( $_, 5, "\x{2500}", 0x2c3340 ) foreach 0 .. 39;    # a grid line
@@ -283,8 +285,13 @@ fill keeps the fill as its background.
 
 	Term::Fabulous::Chart::Surface->new( columns => $columns, rows => $rows, background => $rgb );
 
+C<columns> and C<rows> (non-negative integers) are required.
 C<background> is what every cell shows at first (C<undef> for the
 terminal's default background).
+
+=head2 columns, rows, background
+
+The size and the background given to the constructor.
 
 =head2 fill
 
@@ -311,16 +318,24 @@ columns written; text that would cross the right edge is cut there.
 
 	my $width = Term::Fabulous::Chart::Surface->text_columns($text);
 
+The columns C<text> takes for a string (a class method).
+
 =head2 composite
 
-	$surface->composite( $raster, $layer );
+	$surface->composite( $raster, $layer, $left, $top );
 
-Draws a raster over the surface; C<$layer> is C<stroke> or C<fill>.
+Draws a raster over the surface, the raster's cell (0, 0) at
+C<($left, $top)> (default: 0, 0). C<$layer> is C<stroke> or C<fill>:
+each drawn cell is owned in that layer by the owner most of its
+subpixels have. Dies for another layer.
 
 =head2 set_owner, owner
 
 	$surface->set_owner( $x, $y, $layer, $owner );
 	my $owner = $surface->owner( $x, $y, $layer );
+
+Set and read the owner of one cell in a layer (C<stroke> or C<fill>);
+charts set the owners of the points they draw as characters.
 
 =head2 owner_near
 

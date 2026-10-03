@@ -61,4 +61,4 @@ $root->add_child(
 	)
 );
 
-Term::Fabulous->new( root => $root, width => 100, height => 20 )->run;
+Term::Fabulous->new( root => $root, width => 100, height => 22 )->run;

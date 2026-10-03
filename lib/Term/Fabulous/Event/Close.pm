@@ -35,8 +35,9 @@ Term::Fabulous::Event::Close - A dialog was closed
 A L<Term::Fabulous::Widget::Dialog> fires C<Close> on itself when it
 closes, whether the user pressed C<Escape> or the program called
 C<< $dialog->close >>. When the listeners run, the dialog is no longer
-part of the widget tree and the keyboard focus has gone back to where
-it was before the dialog opened.
+part of the widget tree, and the keyboard focus has gone back to the
+widget that had it before the dialog opened, if that widget can still
+take the focus.
 
 The event has no fields of its own; C<< $event->target >> is the
 dialog. It is a L<Clay::UI::Events::Event> whose name is C<Close>. The
@@ -54,6 +55,7 @@ L<Clay::UI::Events::Event> are accepted.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Dialog>, L<Clay::UI::Events::Event>.
+L<Term::Fabulous::Widget::Dialog>, L<Clay::UI::Events::Event>,
+L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>.
 
 =cut

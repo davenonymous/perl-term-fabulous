@@ -138,6 +138,8 @@ length shows their value
 
 =end html
 
+F<examples/widgets/polar-area-chart.pl> draws this chart.
+
 =head1 DESCRIPTION
 
 A polar area chart (a Nightingale rose) gives every slice the same angle
@@ -152,7 +154,14 @@ It is a L<Term::Fabulous::Widget::PieChart>: the data forms, C<sort>,
 C<other>, C<start_angle>, C<gap>, C<marker>, C<format>, the methods and
 events are the same, except that the slices show no labels by default
 (C<slice_labels> is C<none>, the rings tell the values) and the legend
-shows the values (C<legend_values> is C<value>).
+shows the values (C<legend_values> is C<value>). The ring values are
+written with the chart's C<format>. Hover reports a slice as in a pie
+chart: its label as the series and the label, its value as the value.
+
+Use it for values of one kind over categories that form a cycle (hours,
+weekdays, months, compass directions); for parts of a whole use a
+L<Term::Fabulous::Widget::PieChart>, and to compare several series over
+the same categories a L<Term::Fabulous::Widget::RadarChart>.
 
 =head1 CONSTRUCTOR
 
@@ -166,20 +175,25 @@ The parameters of L<Term::Fabulous::Widget::PieChart/CONSTRUCTOR>, and:
 
 =item C<max>
 
-A positive number: the value of the outer ring. Default: C<undef>, a
-round value above the largest slice.
+A positive number: the value at the outer edge; a slice of this value
+reaches the edge. Default: C<undef>, a round value at or above the
+largest slice. A slice larger than C<max> is cut at the edge.
 
 =item C<ticks>
 
-A positive integer: the number of rings wanted. Default: C<undef>, about
-one ring per three rows of radius.
+A positive integer: about how many rings you want; the chart picks the
+round step that comes closest. Default: C<undef>, which spaces the rings
+two to three rows apart, so a larger chart has more of them.
 
 =back
 
 =head1 METHODS
 
-C<max> and C<ticks> read and set the parameters, and the methods of
+C<max> and C<ticks> read and set the parameters (C<undef> restores the
+default; an invalid value dies and changes nothing), and the methods of
 L<Term::Fabulous::Widget::PieChart/METHODS> manage the slices.
+
+	$chart->max(undef);    # from the data again
 
 =head1 KDL PROPERTIES
 
@@ -198,6 +212,8 @@ L<Term::Fabulous::Widget::PieChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::PieChart>, L<Term::Fabulous::Widget::RadarChart>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)>,
+the example program F<examples/widgets/polar-area-chart.pl>.
 
 =cut

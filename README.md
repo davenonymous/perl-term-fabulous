@@ -46,6 +46,9 @@ widgets, keyboard and mouse
      $ui->run;    # returns after Ctrl+C, SIGINT, SIGTERM or SIGHUP
 ```
 
+The picture shows `examples/showcase.pl`, a demo program of the
+distribution (see [Term::Fabulous::Examples](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AExamples)):
+
 <div>
     <p><img src="/screenshots/overview.svg" alt="A Term::Fabulous program: a sign-up form with text fields, radio buttons, a dropdown, a slider, a check box and buttons, a chart of requests per second with a translucent notification, an event log and text in several scripts"></p>
 </div>
@@ -54,8 +57,9 @@ widgets, keyboard and mouse
 
 Term::Fabulous builds full-screen terminal applications in Perl. You
 describe the screen as a tree of widgets (boxes, text, buttons, input
-fields, tables, scrollable areas and canvases), in Perl code or in a layout file
-written in KDL, a small configuration language ([https://kdl.dev](https://kdl.dev)).
+fields, tables, charts, scrollable areas and canvases), in Perl code or
+in a layout file written in KDL, a small configuration language
+([https://kdl.dev](https://kdl.dev)).
 Term::Fabulous sizes and positions the widgets with the Clay layout
 engine, draws them with 24-bit colors through the termbox2 library, and
 turns key presses, mouse clicks and terminal resizes into events your
@@ -78,13 +82,20 @@ stacking, curves, transforms and live data; histograms; sparklines;
 pie, donut, polar area and radar charts; a legend, hover with a
 `SeriesHover` event, and palettes for dark and light backgrounds.
 - Keyboard focus with Tab and mouse clicks, readable key names for key
-bindings (`Ctrl+S`, `Shift+Left`), mouse wheel scrolling.
+bindings (`Ctrl+S`, `Shift+Left`), the kitty keyboard protocol for
+keys older terminals cannot tell apart, mouse wheel scrolling.
+- Dialogs that open over the screen and keep the keyboard focus inside.
 - Canvases for free drawing, including a half-block pixel canvas with
 lines, rectangles and circles.
 - Correct handling of Unicode: wide CJK characters, emoji, combining
 characters.
+- A prompt of a few rows below the shell's output instead of the whole
+screen (["INLINE MODE"](#inline-mode)).
 - The same widget tree can be printed once as text (with or without
 colors) for reports and tests, through [Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic).
+- Whole programs can be tested without a terminal: a terminal in memory
+([Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory)) takes keys, clicks and resizes,
+and ["step"](#step) handles them as ["run"](#run) would.
 - Runs on [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync), so timers, sockets and child processes work
 alongside the user interface.
 
@@ -98,32 +109,50 @@ without an event loop.
 
 # DOCUMENTATION
 
-- [Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual)
+The documentation has four parts. If you are new to Term::Fabulous,
+start with the manual's first page and its first program.
 
-    The user guide. Start here: it explains layout, text, colors, events,
-    the keyboard and the mouse, focus, forms, tables, KDL layout files, the event
-    loop and writing your own widgets, with examples throughout. Its
-    [FEATURE INDEX](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FEATURE-INDEX) maps tasks to the
-    documentation.
+- The manual: [Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual)
 
-- [Term::Fabulous::Cookbook](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook)
+    The user guide. Its first page introduces the library, shows a first
+    program, lists the topic pages and ends with a
+    [FEATURE INDEX](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FEATURE-INDEX) that maps tasks
+    to the sections, recipes and class pages that describe them. The topic
+    pages explain the concepts, with examples throughout:
+    [Term::Fabulous::Manual::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ALayout) (widgets, the widget tree and
+    layout), [Term::Fabulous::Manual::Looks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ALooks) (text, colors, borders),
+    [Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents) (events, keyboard, focus, mouse,
+    scrolling), [Term::Fabulous::Manual::Forms](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AForms) (input widgets),
+    [Term::Fabulous::Manual::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACharts) (canvases and charts),
+    [Term::Fabulous::Manual::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATables), [Term::Fabulous::Manual::TableRows](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableRows)
+    and [Term::Fabulous::Manual::TableStyles](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATableStyles) (the table widget),
+    [Term::Fabulous::Manual::KDL](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AKDL) (layout files),
+    [Term::Fabulous::Manual::Programs](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3APrograms) (event loop, output without a
+    terminal, testing), [Term::Fabulous::Manual::CustomWidgets](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACustomWidgets),
+    [Term::Fabulous::Manual::Troubleshooting](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATroubleshooting) and
+    [Term::Fabulous::Manual::Glossary](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AGlossary).
 
-    Complete programs for common tasks.
+- The cookbook: [Term::Fabulous::Cookbook](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook)
 
-- This page
+    Recipes: complete, runnable programs for common tasks, each with a
+    picture and notes on the lines that matter. Its first page lists every
+    recipe; the recipes are on topic pages such as
+    [Term::Fabulous::Cookbook::GettingStarted](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3AGettingStarted),
+    [Term::Fabulous::Cookbook::Forms](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3AForms), [Term::Fabulous::Cookbook::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3ATables)
+    and [Term::Fabulous::Cookbook::Charts](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3ACharts).
 
-    The reference for `new`, `run` and the other methods of the
-    application object.
-
-- The module pages
-
-    One page per class, listed under ["MODULES"](#modules).
-
-- [Term::Fabulous::Examples](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AExamples)
+- The examples: [Term::Fabulous::Examples](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AExamples)
 
     The example programs of the distribution, with a picture of each: demo
-    programs, a gallery of the widgets and the complete programs of the
-    cookbook. The picture above is `examples/showcase.pl`.
+    programs, a gallery with one program per widget, and the complete
+    programs of the cookbook.
+
+- The class pages
+
+    One reference page per class, listed by purpose under ["MODULES"](#modules).
+    This page is the reference of the application object: ["new"](#new),
+    ["run"](#run), ["step"](#step) and the other methods, the events it fires, the keys
+    it handles itself, inline mode and wheel scrolling.
 
 # REQUIREMENTS
 
@@ -154,10 +183,18 @@ add timers first. Unknown parameters die
     Required. The root widget, the top of the widget tree, usually a
     [Term::Fabulous::Widget::Box](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ABox). It receives every event that no other
     widget receives: key presses while nothing has the focus, mouse events
-    where no widget is drawn, and every `Resize`. It must therefore be able
-    to fire events (compose [Clay::UI::Role::Events::Emitter](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AEmitter), as all
-    Term::Fabulous widgets except Text do); otherwise `new` dies. A widget
-    that was ever attached to another widget cannot be the root.
+    where no widget is drawn, and every `Start` and `Resize`. It must
+    therefore be able to fire events (compose
+    [Clay::UI::Role::Events::Emitter](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AEmitter), as all Term::Fabulous widgets
+    except Text do); otherwise `new` dies
+    (`Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got ...`).
+    The root must not have a parent (`new` dies with
+    `Clay::UI: 'root' must not have a parent; ...`); a widget that was
+    removed from its parent can be a root. A widget tree belongs to one
+    application object (or [Term::Fabulous::Static](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AStatic)) at a time: a second
+    object with the same root dies with
+    `Clay::UI: 'root' is already the root of another Clay::UI`, as long as
+    the first one exists.
 
 - `width`
 
@@ -184,7 +221,7 @@ add timers first. Unknown parameters die
 
     A boolean. Default: 1, or 0 in inline mode. With 1, the terminal
     reports mouse clicks, drags, movement and the wheel to the program (see
-    ["MOUSE" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#MOUSE)). With 0, the terminal keeps the mouse
+    ["MOUSE" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#MOUSE)). With 0, the terminal keeps the mouse
     for itself, so the user can select and copy text as usual, and no
     `Mouse` or `MouseMove` events are fired. Inline mode has no mouse
     support: `mouse` with a true value and `inline` together die.
@@ -212,7 +249,7 @@ add timers first. Unknown parameters die
     [Term::Fabulous::Role::Terminal](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ATerminal). Default: a new
     [Term::Fabulous::Terminal::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox), the real terminal. Pass a
     [Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory) to test a program without a
-    terminal (see ["step"](#step) and ["TESTING" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#TESTING)). Anything
+    terminal (see ["step"](#step) and ["TESTING" in Term::Fabulous::Manual::Programs](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3APrograms#TESTING)). Anything
     else dies (`Term::Fabulous: terminal must consume Term::Fabulous::Role::Terminal`).
 
 - `clock`
@@ -240,9 +277,9 @@ add timers first. Unknown parameters die
 - `max_element_count`
 
     Optional. The number of Clay elements a frame may hold: a positive
-    integer, default 8192. Every widget is one element and Term::Fabulous
-    uses two more, so the default allows 8190 widgets on the screen at
-    once; a larger tree dies with
+    integer, default 8192. Every widget is one element and Clay keeps two
+    elements for itself, so the default allows 8190 widgets on the screen
+    at once; a larger tree dies with
     `Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...`.
     Raise it for very large trees; the memory Clay reserves grows with it.
     See ["new" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#new).
@@ -346,10 +383,11 @@ methods queue keys, clicks and resizes. `step`
 to its size and fires `Start`, as `run` does (but there is no loop:
 ["loop"](#loop) is the one of the last `run`, or `undef`);
 2. reads every event that waits and dispatches it exactly as `run` does:
-keys to the focused widget, then Tab, Shift+Tab; mouse events to the
-widget under the pointer, focusing it on a press; wheel notches; see
-["EVENTS"](#events) and ["KEYBOARD AND FOCUS"](#keyboard-and-focus). `Ctrl+C` fires its `KeyPress`
-but has no loop to stop;
+a key to the focused widget (after which Tab and Shift+Tab also move
+the focus), a mouse event to the widget under the pointer (a press
+focuses it first), a wheel notch to the scroll box under the pointer;
+see ["EVENTS"](#events) and ["KEYBOARD AND FOCUS"](#keyboard-and-focus). `Ctrl+C` fires its
+`KeyPress` but has no loop to stop;
 3. applies a resize at once, firing the `Resize` pair, instead of waiting
 for the size to settle;
 4. draws frames as long as one is due: for a click, one frame for the
@@ -402,7 +440,7 @@ Returns the [Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AI
 keyboard focus and the hover and press state of the widgets. Use it to
 move the focus from code (`set_focused_widget`, `focus_next`,
 `focus_previous`) and to ask which widget has it
-(`get_focused_widget`). See ["FOCUS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FOCUS). Inherited
+(`get_focused_widget`). See ["FOCUS" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#FOCUS). Inherited
 from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
 
 ## root
@@ -515,7 +553,7 @@ changed through its methods, input arrived or the terminal was resized,
 so most programs never need this; call it when something the frame
 depends on changed behind Term::Fabulous's back, for example state a
 custom widget reads while it draws without calling `mark_changed`
-(see ["WRITING YOUR OWN WIDGETS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#WRITING-YOUR-OWN-WIDGETS)).
+(see [telling Term::Fabulous that something changed](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ACustomWidgets#Telling-Term::Fabulous-that-something-changed)).
 
 ## find\_by\_id
 
@@ -560,19 +598,48 @@ not need it; see ["invalidate"](#invalidate) to ask for a frame instead. With th
 real terminal, it only has a visible effect while the terminal is open.
 See ["draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#draw).
 
+## bounding\_box, scroll\_state, scroll\_to
+
+```perl
+     my $box   = $ui->bounding_box($widget);       # { x, y, width, height } in cells, or undef
+     my $state = $ui->scroll_state($scroll_box);   # { position, viewport, content }
+     $ui->scroll_to( $scroll_box, { y => -10 } );  # ten rows down from the top
+```
+
+`bounding_box` returns where the last frame placed a widget.
+`scroll_state` and `scroll_to` read and set the scroll position of a
+scroll container such as a [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox), in
+cells: 0 at the top and left, negative when scrolled down or right.
+Inherited from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI); see ["bounding\_box" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#bounding_box),
+["scroll\_state" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_state) and ["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to), and the recipe
+[Scroll a ScrollBox from code](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3ALiveData#Scroll-a-ScrollBox-from-code-keep-a-log-at-the-newest-line).
+
+## after\_draw
+
+```perl
+     $ui->after_draw( sub { ... } );
+```
+
+Queues a code reference to call once after the next frame has been
+drawn, for work that needs the layout of that frame. See
+["after\_draw" in Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender#after_draw).
+
 ## Other inherited methods
 
 The class inherits further methods from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) (`render`,
-`widget_for`, `measure_text`) and from [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
-(`last_frame`, the [Term::Fabulous::Render::Frame](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AFrame) of the last frame).
-`cell_target` returns the cell target of the ["terminal"](#terminal).
-Applications rarely need them; they are documented on those pages.
+`widget_for`, `measure_text`, `max_element_count`,
+`laid_out_revision`), from [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender) (`last_frame`,
+the [Term::Fabulous::Render::Frame](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AFrame) of the last frame, and
+`clip_rect`) and from [Term::Fabulous::Render::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ACanvas)
+(`invalidate_canvases`). `cell_target` returns the cell target of the
+["terminal"](#terminal). Applications rarely need them; they are documented on
+those pages.
 
 # EVENTS
 
-`run` fires these events. Each one bubbles from the widget it is fired
-on to the root, as described in
-["Return values and bubbling" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#Return-values-and-bubbling).
+["run"](#run) and ["step"](#step) fire these events. Each one bubbles from the
+widget it is fired on to the root, as described in
+["Return values and bubbling" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#Return-values-and-bubbling).
 
 - `KeyPress` ([Term::Fabulous::Event::KeyPress](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AKeyPress))
 
@@ -598,8 +665,9 @@ on to the root, as described in
 
 - `Start` ([Term::Fabulous::Event::Start](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AStart))
 
-    On the root widget, once per `run`, after the terminal is open and
-    `width` and `height` hold its size, before the first frame.
+    On the root widget, once each time the terminal is opened (by ["run"](#run),
+    or by the first ["step"](#step)), after `width` and `height` hold its size and
+    before the first frame.
 
 - `Resize` ([Term::Fabulous::Event::Resize](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AResize))
 
@@ -612,10 +680,14 @@ on to the root, as described in
 Widgets fire further events themselves: `Change` from the input
 widgets, `Submit` from [Term::Fabulous::Widget::TextField](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextField),
 `Activate` from [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton), `Close` from
-[Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog), `CanvasResize` from canvases, and
-Clay::UI's `OnPress`, `OnRelease`, `OnHoverStart`, `OnHoverStopped`,
-`OnFocus`, `OnBlur` and `OnScroll`. The complete list is in
-["Event reference" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#Event-reference).
+[Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog), `CanvasResize` from canvases,
+`SeriesHover` from charts, the table events (`CursorMove`,
+`SelectionChange`, `RowActivate`, `SortChange`, `FilterChange`,
+`PageChange`, `Expand`, `Collapse`, `ColumnsChange`) from
+[Term::Fabulous::Widget::Table](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable), and Clay::UI's `OnPress`,
+`OnRelease`, `OnHoverStart`, `OnHoverStopped`, `OnFocus`, `OnBlur`
+and `OnScroll`. The complete list is in
+["Event reference" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#Event-reference).
 
 # KEYBOARD AND FOCUS
 
@@ -629,11 +701,13 @@ for any other key, and then:
 - `Tab`
 
     moves the focus to the next widget that can take it, in tree order,
-    wrapping around at the end.
+    wrapping around at the end. An open [Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog)
+    keeps the focus among its own widgets, and a container can set an order
+    of its own (see ["Custom focus order" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#Custom-focus-order)).
 
 - `Shift+Tab` (key name `BackTab`)
 
-    moves the focus to the previous one.
+    moves the focus to the previous one, in the same order.
 
 Listeners cannot prevent these actions.
 
@@ -643,8 +717,8 @@ When there is none, the focus is cleared; so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
 `Mouse` event is fired.
 
-See ["KEYBOARD" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#KEYBOARD) and
-["FOCUS" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual#FOCUS).
+See ["KEYBOARD" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#KEYBOARD) and
+["FOCUS" in Term::Fabulous::Manual::Events](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3AEvents#FOCUS).
 
 # INLINE MODE
 
@@ -653,6 +727,15 @@ See ["KEYBOARD" in Term::Fabulous::Manual](https://metacpan.org/pod/Term%3A%3AFa
      $ui->run;
      say 'Done.';    # printed below the region
 ```
+
+<div>
+    <p><img src="/screenshots/cookbook-inline-prompt.svg" alt="An inline prompt in the three rows below a shell's earlier output: a question, a text field holding Ada Lovelace and a help line"></p>
+</div>
+
+The picture shows the recipe
+[Ask for input below the shell's output](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ACookbook%3A%3AForms#Ask-for-input-below-the-shells-output-inline-mode),
+a complete program that asks for a name in three rows below the
+shell's output.
 
 With `inline` set to a number of rows, ["run"](#run) leaves the screen as it
 is and draws the user interface into that many rows, starting at the
@@ -697,7 +780,9 @@ the scroll box around them stays put while they can still scroll.
 
 # MODULES
 
-Every module has its own page. They are grouped here by purpose.
+Every module has its own page. They are grouped here by purpose; the
+modules marked "used internally" are documented for people who extend
+Term::Fabulous, and programs do not use them directly.
 
 ## Application
 
@@ -712,7 +797,7 @@ Every module has its own page. They are grouped here by purpose.
 
 - [Term::Fabulous::Layout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ALayout)
 
-    Builds a widget tree from a KDL layout file and documents the layout
+    Builds a widget tree from a KDL layout file, and documents the layout
     file format.
 
 - [Term::Fabulous::Terminal::Memory](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3AMemory)
@@ -733,7 +818,7 @@ Every module has its own page. They are grouped here by purpose.
 - [Term::Fabulous::Widget::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AButton)
 
     A box that can take the keyboard focus, shows when it is focused or
-    pressed, and fires `Activate` for a click or Enter.
+    pressed, and fires `Activate` for a click, Enter or Space.
 
 - [Term::Fabulous::Widget::Dialog](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog)
 
@@ -758,6 +843,15 @@ Every module has its own page. They are grouped here by purpose.
 
     The abstract base class of all widgets except Text. Its page describes
     the constructor parameters and methods they all share.
+
+- [Term::Fabulous::Widget::Element](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AElement), [Term::Fabulous::Widget::TextNode](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATextNode)
+
+    The [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) roles behind Term::Fabulous::Widget and
+    Term::Fabulous::Widget::Text. Used internally.
+
+- [Term::Fabulous::Widget::Dialog::Backdrop](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog%3A%3ABackdrop)
+
+    The layer behind an open dialog. Used internally by the dialog.
 
 ## Input widgets
 
@@ -813,17 +907,14 @@ Every module has its own page. They are grouped here by purpose.
 
     The list an open dropdown shows. Used internally by the dropdown.
 
-- [Term::Fabulous::Widget::Dialog::Backdrop](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADialog%3A%3ABackdrop)
-
-    The layer behind an open dialog. Used internally by the dialog.
-
 ## Tables
 
 - [Term::Fabulous::Widget::Table](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable)
 
     Rows and columns of data, with sorting, filtering, grouping, trees,
-    pages, selection and widgets as cells. Its page starts with a feature
-    index.
+    pages, selection and widgets as cells. The guide to tables starts at
+    [Term::Fabulous::Manual::Tables](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AManual%3A%3ATables), which has a feature index of its
+    own.
 
 - [Term::Fabulous::Widget::Table::Column](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumn)
 
@@ -847,6 +938,17 @@ Every module has its own page. They are grouped here by purpose.
 
     The rows of a table and the lines it shows, without widgets.
 
+- [Term::Fabulous::Widget::Table::Style](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AStyle), [Term::Fabulous::Widget::Table::Borders](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ABorders)
+
+    How a table checks its style hashes and works out its grid lines. Used
+    internally by the table.
+
+- [Term::Fabulous::Widget::Table::Cell](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ACell), [Term::Fabulous::Widget::Table::Toggle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AToggle), [Term::Fabulous::Widget::Table::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AGrid), [Term::Fabulous::Widget::Table::HeaderView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AHeaderView), [Term::Fabulous::Widget::Table::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AScrollbar), [Term::Fabulous::Widget::Table::Pager](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3APager), [Term::Fabulous::Widget::Table::ColumnChooser](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumnChooser)
+
+    The widgets a table is built of: cells, the open and close markers,
+    the grids, the header, the scrollbar, the page controls and the column
+    chooser. Used internally by the table.
+
 ## Charts
 
 - [Term::Fabulous::Widget::Chart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AChart)
@@ -859,10 +961,10 @@ Every module has its own page. They are grouped here by purpose.
     The reference for charts with an x and a y axis: series and their data
     forms, axes, stacking, curves, rendering styles, transforms, live data.
 
-- [Term::Fabulous::Widget::LineChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ALineChart), [Term::Fabulous::Widget::AreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AAreaChart),
-[Term::Fabulous::Widget::BarChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ABarChart), [Term::Fabulous::Widget::ScatterPlot](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScatterPlot)
+- [Term::Fabulous::Widget::LineChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ALineChart), [Term::Fabulous::Widget::AreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AAreaChart), [Term::Fabulous::Widget::BarChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ABarChart), [Term::Fabulous::Widget::ScatterPlot](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScatterPlot)
 
-    The XY charts, each with its default series type.
+    The XY charts, each with its default series type: lines, filled areas,
+    bars, and points with trend lines.
 
 - [Term::Fabulous::Widget::Histogram](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AHistogram)
 
@@ -872,8 +974,7 @@ Every module has its own page. They are grouped here by purpose.
 
     A chart without axes, one row high.
 
-- [Term::Fabulous::Widget::PieChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APieChart), [Term::Fabulous::Widget::DonutChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADonutChart),
-[Term::Fabulous::Widget::PolarAreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APolarAreaChart)
+- [Term::Fabulous::Widget::PieChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APieChart), [Term::Fabulous::Widget::DonutChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADonutChart), [Term::Fabulous::Widget::PolarAreaChart](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3APolarAreaChart)
 
     Parts of a whole as slices.
 
@@ -885,38 +986,26 @@ Every module has its own page. They are grouped here by purpose.
 
     Adding, changing and removing the series of a chart and their data.
 
-- [Term::Fabulous::Event::SeriesHover](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASeriesHover)
+- [Term::Fabulous::Chart::Transform](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ATransform), [Term::Fabulous::Chart::Curve](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ACurve), [Term::Fabulous::Chart::Easing](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AEasing)
 
-    The event a chart fires when the pointer moves onto another series,
-    point or slice.
+    Steps that prepare the data of a series; the curves between points and
+    their easing functions.
 
-- [Term::Fabulous::Chart::Transform](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ATransform), [Term::Fabulous::Chart::Curve](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ACurve),
-[Term::Fabulous::Chart::Easing](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AEasing)
-
-    Steps that prepare the data of a series; the curves between points.
-
-- [Term::Fabulous::Chart::Palette](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3APalette), [Term::Fabulous::Chart::Format](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AFormat),
-[Term::Fabulous::Chart::Marker](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AMarker)
+- [Term::Fabulous::Chart::Palette](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3APalette), [Term::Fabulous::Chart::Format](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AFormat), [Term::Fabulous::Chart::Marker](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AMarker)
 
     Palettes and ink colors; number and date labels; the character sets
     charts draw with.
 
-- [Term::Fabulous::Chart::Scale](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale), [Term::Fabulous::Chart::Raster](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARaster),
-[Term::Fabulous::Chart::Surface](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASurface), [Term::Fabulous::Chart::Radial](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARadial),
-[Term::Fabulous::Chart::Series](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASeries)
+- [Term::Fabulous::Chart::Scale](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale), [Term::Fabulous::Chart::Scale::Linear](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale%3A%3ALinear), [Term::Fabulous::Chart::Scale::Log](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale%3A%3ALog), [Term::Fabulous::Chart::Scale::Time](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale%3A%3ATime), [Term::Fabulous::Chart::Scale::Category](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3AScale%3A%3ACategory)
 
-    The machinery behind the charts: axes, subpixel drawing, the cell
-    compositor, circle geometry and the series object; for charts of your
-    own.
+    The scales of chart axes: what they have in common, and numeric,
+    logarithmic, date and time, and category axes.
 
-- [Term::Fabulous::Widget::Table::Style](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AStyle), [Term::Fabulous::Widget::Table::Borders](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ABorders)
+- [Term::Fabulous::Chart::Raster](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARaster), [Term::Fabulous::Chart::Surface](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASurface), [Term::Fabulous::Chart::Radial](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ARadial), [Term::Fabulous::Chart::Series](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AChart%3A%3ASeries)
 
-    How a table checks its style hashes and works out its grid lines. Used
-    internally by the table.
-
-- [Term::Fabulous::Widget::Table::Cell](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ACell), [Term::Fabulous::Widget::Table::Toggle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AToggle), [Term::Fabulous::Widget::Table::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AGrid), [Term::Fabulous::Widget::Table::HeaderView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AHeaderView), [Term::Fabulous::Widget::Table::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AScrollbar), [Term::Fabulous::Widget::Table::Pager](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3APager), [Term::Fabulous::Widget::Table::ColumnChooser](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumnChooser)
-
-    The widgets a table is built of. Used internally by the table.
+    The machinery behind the charts: subpixel drawing, the cells of a chart
+    while it is drawn, the geometry of round charts and the series object;
+    for charts of your own.
 
 ## Events
 
@@ -961,9 +1050,13 @@ Every module has its own page. They are grouped here by purpose.
 
     A dialog was closed.
 
+- [Term::Fabulous::Event::SeriesHover](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASeriesHover)
+
+    The pointer moved onto another series, point or slice of a chart.
+
 - [Term::Fabulous::Event::CursorMove](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ACursorMove)
 
-    The user moved the cursor of a table.
+    The cursor of a table moved to another line.
 
 - [Term::Fabulous::Event::SelectionChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASelectionChange)
 
@@ -975,7 +1068,7 @@ Every module has its own page. They are grouped here by purpose.
 
 - [Term::Fabulous::Event::SortChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASortChange)
 
-    The user sorted a table by a column.
+    The user changed how a table is sorted.
 
 - [Term::Fabulous::Event::FilterChange](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3AFilterChange)
 
@@ -1000,6 +1093,11 @@ Every module has its own page. They are grouped here by purpose.
     Color values: parsing color strings, converting between RGB and HSL,
     making colors lighter, darker or mixed.
 
+- [Term::Fabulous::Enum::WebColor](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEnum%3A%3AWebColor)
+
+    The 148 CSS named colors (`Tomato`, `SteelBlue`, ...) as
+    Term::Fabulous::Color objects.
+
 - [Term::Fabulous::Enum::BorderStyle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEnum%3A%3ABorderStyle)
 
     The 20 border styles and their characters.
@@ -1013,15 +1111,10 @@ Every module has its own page. They are grouped here by purpose.
     How many terminal columns a piece of text takes, and how text is made
     safe for the terminal.
 
-- [Term::Fabulous::Enum::WebColor](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEnum%3A%3AWebColor)
-
-    The 148 CSS named colors (`Tomato`, `SteelBlue`, ...) as
-    Term::Fabulous::Color objects.
-
 ## Extending Term::Fabulous
 
 These modules matter only if you write widget classes that can be built
-from layout files, or your own application or output class.
+from layout files, or your own terminal or output class.
 
 - [Term::Fabulous::Role::CanParseLayout](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ACanParseLayout)
 
@@ -1031,11 +1124,6 @@ from layout files, or your own application or output class.
 
     Checks the values of widget properties, with one wording for each kind
     of value.
-
-- [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
-
-    The role that draws a laid-out widget tree; composed by Term::Fabulous
-    and Term::Fabulous::Static.
 
 - [Term::Fabulous::Role::Terminal](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARole%3A%3ATerminal)
 
@@ -1048,7 +1136,8 @@ from layout files, or your own application or output class.
 
 - [Term::Fabulous::Terminal::Termbox::Cells](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATerminal%3A%3ATermbox%3A%3ACells)
 
-    Sends the drawn cells to the terminal.
+    Sends the drawn cells to the terminal. Used internally by the real
+    terminal.
 
 - [Term::Fabulous::Termbox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ATermbox)
 
@@ -1060,36 +1149,30 @@ from layout files, or your own application or output class.
 
     One termbox2 input event, as `tb_peek_event` fills it.
 
-- [Term::Fabulous::Render::Target::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3AGrid)
+- [Term::Fabulous::Render](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender)
 
-    Collects the drawn cells in memory.
-
-- [Term::Fabulous::Render::Target::Mask](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3AMask)
-
-    Lets a frame keep cells of the previous frame, so unchanged canvases are
-    not drawn again.
-
-- [Term::Fabulous::Render::Rectangle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ARectangle)
-
-    Draws backgrounds.
-
-- [Term::Fabulous::Render::Border](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ABorder)
-
-    Draws borders.
-
-- [Term::Fabulous::Render::Text](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AText)
-
-    Draws text.
-
-- [Term::Fabulous::Render::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ACanvas)
-
-    Draws canvases, only their changed cells when possible.
+    The role that draws a laid-out widget tree; composed by Term::Fabulous
+    and Term::Fabulous::Static.
 
 - [Term::Fabulous::Render::Frame](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AFrame)
 
     What one frame paints: the paint order, the clip rect of every command
     (the visible part of scroll containers) and the cells every command
     paints, for drawing and for finding the widget under the mouse.
+
+- [Term::Fabulous::Render::Target::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3AGrid)
+
+    Collects the drawn cells in memory.
+
+- [Term::Fabulous::Render::Target::Mask](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ATarget%3A%3AMask)
+
+    The base role of the cell targets: lets a frame keep cells of the
+    previous frame, so unchanged canvases are not drawn again.
+
+- [Term::Fabulous::Render::Rectangle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ARectangle), [Term::Fabulous::Render::Border](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ABorder), [Term::Fabulous::Render::Text](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AText), [Term::Fabulous::Render::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3ACanvas)
+
+    Draw backgrounds, borders, text and canvases; the canvas painter sends
+    only the changed cells when possible.
 
 - [Term::Fabulous::Render::Attr](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ARender%3A%3AAttr)
 
@@ -1104,11 +1187,13 @@ from layout files, or your own application or output class.
 - A frame lays out and draws the whole screen, whatever changed. Only the
 cells that changed are sent to the terminal, but a very large widget
 tree costs CPU time on every frame it needs.
-- `Alt` plus a key is recognized when the terminal sends the Escape and
-the key in one write, which terminals do. `Escape` followed quickly
-by a key that arrives in the same read looks like `Alt` plus that key.
-`Alt+[` and `Alt+O` cannot be bound: they begin the escape sequences
-of other keys.
+- Without the kitty keyboard protocol (see ["new"](#new)), `Alt` plus a key is
+recognized when the terminal sends the Escape and the key in one write,
+which terminals do. `Escape` followed quickly by a key that arrives in
+the same read looks like `Alt` plus that key. `Alt+[` and `Alt+O`
+cannot be bound: they begin the escape sequences of other keys. A
+terminal that speaks the protocol reports all of these keys without
+ambiguity.
 - Mouse reports with the buttons 8 to 11 (extra buttons of some mice)
 are decoded by termbox2 as the left, middle or right button.
 - In inline mode, a terminal that rewraps its lines when it gets narrower
@@ -1120,8 +1205,8 @@ history too: copies of the old region stay there. Output that other
 programs write to the terminal while `run` is active also moves the
 region away from where Term::Fabulous draws it.
 - Clay lays out at most `max_element_count` elements per frame (8192 by
-default); every widget is one element and Term::Fabulous uses two
-more. A larger tree makes drawing die with a message that names the
+default); every widget is one element and Clay keeps two for
+itself. A larger tree makes drawing die with a message that names the
 limit; raise `max_element_count` in ["new"](#new).
 
 # SEE ALSO

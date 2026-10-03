@@ -200,6 +200,7 @@ sub screenshot_worker ( $scenario, $work_dir ) {
 			columns   => $scenario->columns,
 			rows      => $scenario->rows,
 			epoch     => $scenario->epoch,
+			shell     => $scenario->shell,
 			steps     => $scenario->harness_steps,
 		);
 		my $scene = Term::Fabulous::Screenshot::Scene->new( screen => $screen, theme => Term::Fabulous::Screenshot::Theme->new, title => $scenario->title );

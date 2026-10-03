@@ -149,6 +149,11 @@ Term::Fabulous::Widget::RadioButton - One choice of a radio group
 
 =head1 DESCRIPTION
 
+The picture shows three radio groups: one with its buttons in a row,
+which has the focus (the selected button is on the
+C<focus_background_color>), one in a column, and a disabled one. The
+program is F<examples/widgets/radio.pl>.
+
 A radio button is one choice of a L<Term::Fabulous::Widget::RadioGroup>.
 It shows a mark and a label:
 
@@ -179,9 +184,9 @@ buttons are painted in C<disabled_color> and skipped by the arrow keys.
 Accepts the parameters of L<Term::Fabulous::Widget::Input/CONSTRUCTOR>
 (C<id>, C<layout>, C<background_color>, the border parameters,
 C<disabled>, C<text_color>, C<disabled_color>, C<accent_color>,
-C<focus_background_color>) and the ones below. C<can_focus> is accepted
-but has no effect: a radio button never takes the focus. Unknown
-parameters die.
+C<focus_background_color>, the other Box parameters) and the ones below.
+C<can_focus> is accepted but has no effect: a radio button never takes
+the focus. Unknown parameters die.
 
 =over
 
@@ -295,6 +300,9 @@ L<Term::Fabulous::Widget::RadioGroup/KDL PROPERTIES>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::Input>.
+L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::Input>,
+L<the radio button section of the forms guide|Term::Fabulous::Manual::Forms/Radio buttons>,
+L<Term::Fabulous::Cookbook::Forms/Build a form from a KDL file (text fields, radio buttons, dropdown, slider, checkbox)>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
 =cut

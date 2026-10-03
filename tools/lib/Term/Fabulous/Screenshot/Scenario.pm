@@ -36,6 +36,10 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 	field $title     :param :reader = undef;
 	field $epoch     :param :reader = _parse_clock(DEFAULT_CLOCK);
 
+	# Lines a shell printed before the program started, shown above an
+	# inline region.
+	field $shell :param :reader = [];
+
 	# The steps for the harness: { action => 'wait', seconds } and
 	# { action => 'send', bytes } (hexadecimal).
 	field $steps :param = [];
@@ -115,11 +119,17 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 			elsif ( $name eq 'clock' ) {
 				$settings{epoch} = _parse_clock( _single_string( $setting, $where, 'clock' ), $where );
 			}
+			elsif ( $name eq 'shell' ) {
+				my @lines = map { _string_value( $_, $where ) } @{ $setting->args };
+				croak "Term::Fabulous::Screenshot::Scenario: $where: give at least one line, and no properties" unless @lines && !@{ $setting->props };
+				croak "Term::Fabulous::Screenshot::Scenario: $where: a line must not contain control characters" if grep {/[\x00-\x1f\x7f]/} @lines;
+				$settings{shell} = \@lines;
+			}
 			elsif ( $name eq 'steps' ) {
 				$settings{steps} = [ map { _compile_step( $_, "$origin: $context: steps" ) } @{ $setting->children } ];
 			}
 			else {
-				croak "Term::Fabulous::Screenshot::Scenario: $where: unknown setting (known: script, args, size, title, clock, steps)";
+				croak "Term::Fabulous::Screenshot::Scenario: $where: unknown setting (known: script, args, size, title, clock, shell, steps)";
 			}
 		}
 		return %settings;
@@ -302,6 +312,23 @@ quoted as a shell needs them.
 The time the program's clock starts at, in UTC. Every program runs with
 C<TZ=UTC>. Default: C<2026-06-01T09:41:00Z>.
 
+=item C<shell "LINE" ...>
+
+For a program in inline mode (L<Term::Fabulous/INLINE MODE>): the lines
+a shell printed before the program started, for example a prompt and the
+command that started it. The terminal's cursor starts at the beginning
+of the row below the last line, or on the last row of the terminal when
+the lines fill it, and the terminal answers the program's cursor
+position query (C<ESC [ 6 n>) with that position. The screenshot shows
+the lines directly above the region the program drew into; lines the
+program scrolled up out of the terminal are not shown. A line must fit
+the terminal's width. A program that does not draw into an inline region
+dies with a message, because a full-screen program would cover the
+lines.
+
+Without C<shell>, the cursor starts in the top-left corner, so an
+inline region starts on the first row.
+
 =item C<steps { ... }>
 
 What happens before the screenshot, in order. The steps start half a
@@ -367,12 +394,12 @@ the source in error messages.
 	Term::Fabulous::Screenshot::Scenario->new( name => 'form', script => 'examples/form.pl', steps => [ ... ] );
 
 Takes C<name>, C<script>, C<arguments>, C<columns>, C<rows>, C<title>,
-C<epoch> and C<steps> (harness steps; see
+C<epoch>, C<shell> and C<steps> (harness steps; see
 L<Term::Fabulous::Screenshot::Harness/CONFIGURATION>).
 
 =head1 METHODS
 
-=head2 name, script, arguments, columns, rows, title, epoch
+=head2 name, script, arguments, columns, rows, title, epoch, shell
 
 The settings.
 

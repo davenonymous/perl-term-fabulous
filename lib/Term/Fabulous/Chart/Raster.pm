@@ -283,8 +283,8 @@ per terminal cell
 	$raster->start_pattern( [ 3, 2 ] )->line( 0, 20, 79, 20, 0xd95926 );
 	$raster->fill_rect( 10, 30, 20, 40, 0x199e70, undef, 0.4, 0x141923 );
 
-	$raster->each_cell( sub ( $x, $y, $colors, $owners ) {
-		my ( $glyph, $fg, $bg ) = $raster->marker->cell( $colors, 0x141923 );
+	$raster->each_cell( sub ( $x, $y, $colors, $owners, $drawn ) {
+		my ( $glyph, $fg, $bg ) = $raster->marker->cell( $colors, 0x141923, $drawn );
 		...
 	} );
 
@@ -307,6 +307,10 @@ was drawn yet.
 
 	my $raster = Term::Fabulous::Chart::Raster->new( marker => $marker, columns => $cells, rows => $cells );
 
+C<marker> is a L<Term::Fabulous::Chart::Marker> object; C<columns> and
+C<rows> are the size in cells, non-negative integers. All three are
+required.
+
 =head1 METHODS
 
 =head2 set, blend
@@ -314,42 +318,60 @@ was drawn yet.
 	$raster->set( $x, $y, $color, $owner );
 	$raster->blend( $x, $y, $color, $opacity, $base, $owner );
 
-Draws one subpixel (whole coordinates).
+Draws one subpixel (whole coordinates). C<blend> mixes C<$opacity> (0 to
+1) of C<$color> into the subpixel's color, or into C<$base> where nothing
+was drawn yet. C<$owner> is optional.
 
 =head2 line
 
 	$raster->line( $x0, $y0, $x1, $y1, $color, $owner, $opacity, $base );
 
-Draws the subpixels on the line between two points (Bresenham), both end
-points included, following the dash pattern of L</start_pattern>.
+Draws the subpixels on the line between two points (continuous
+coordinates; the subpixels of both end points included), following the
+dash pattern of L</start_pattern>. With C<$opacity> below 1 the line is
+blended as L</set, blend> describes. Returns the raster.
 
 =head2 start_pattern
 
 	$raster->start_pattern( [ $on, $off, ... ] );
 	$raster->start_pattern(undef);    # solid
 
-Sets the dash pattern of the following lines and restarts it.
+Sets the dash pattern of the following lines and restarts it: run
+lengths in subpixel steps, alternately drawn and skipped (C<[ 3, 2 ]>:
+three on, two off). The pattern runs on from one line to the next.
+Returns the raster, so a line can follow.
 
 =head2 fill_rect
 
 	$raster->fill_rect( $x0, $y0, $x1, $y1, $color, $owner, $opacity, $base );
 
+The subpixels whose centers lie in the rectangle between two corners
+(continuous coordinates, in either order). C<$owner>, C<$opacity>
+(default 1) and C<$base> work as for L</set, blend>.
+
 =head2 fill_column
 
 	$raster->fill_column( $x, $top, $bottom, $color, $owner, $opacity, $base );
 
-The subpixels of one column between two heights.
+The subpixels of column C<$x> whose centers lie between two heights
+(continuous, in either order).
 
 =head2 fill_polygon
 
 	$raster->fill_polygon( [ [ $x, $y ], ... ], $color, $owner, $opacity, $base );
 
+The subpixels whose centers lie inside the polygon of the corners
+(continuous coordinates), by the even-odd rule. Fewer than three
+corners draw nothing.
+
 =head2 paint_area
 
 	$raster->paint_area( $x0, $y0, $x1, $y1, sub ( $x, $y ) { return ( $color, $owner ) } );
 
-Asks a function for the color of every subpixel of an area; pie charts use
-it.
+Asks a function for the color of every subpixel from C<($x0, $y0)> up
+to, but not including, C<($x1, $y1)> (whole numbers, cut to the
+raster). A function that returns the empty list leaves the subpixel as
+it is. Pie charts use it.
 
 =head2 color_at, owner_at
 

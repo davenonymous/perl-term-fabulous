@@ -35,7 +35,7 @@ Term::Fabulous::Event::Start - The terminal is open and its size is known
 
 =head1 DESCRIPTION
 
-L<Term::Fabulous/run> fires one C<Start> event on the root widget after
+L<C<< $ui->run >>|Term::Fabulous/run> fires one C<Start> event on the root widget after
 it has opened the terminal and replaced the C<width> and C<height>
 given to C<new> with the terminal's size (in inline mode, the height is
 the rows of the region; see L<Term::Fabulous/INLINE MODE>), and before
@@ -47,7 +47,10 @@ queued on the loop before C<run> may run before it. Later size changes fire
 C<Resize> (L<Term::Fabulous::Event::Resize>) instead; a program that
 lays itself out by the terminal size usually listens to both.
 
-The event is fired at every call of C<run>.
+The event is fired at every call of C<run>. A program that drives the
+UI with L<Term::Fabulous/step> instead gets it from the C<step> that
+opens the terminal; a C<run> on a terminal that C<step> has opened
+already does not fire it again.
 
 The class is a subclass of L<Clay::UI::Events::Event>, so C<target>,
 C<current_target>, C<name> (C<'Start'> unless given to the constructor)
@@ -92,6 +95,7 @@ The terminal height in rows.
 =head1 SEE ALSO
 
 L<Term::Fabulous>, L<Term::Fabulous::Event::Resize>,
-L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Layout/Change the layout with the terminal size (Start and Resize events)>.
 
 =cut

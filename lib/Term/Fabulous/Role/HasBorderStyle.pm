@@ -234,6 +234,17 @@ and a C<border_color>:
 	border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color => [ 180, 200, 220, 255 ],
 
+L<The borders section of the looks guide|Term::Fabulous::Manual::Looks/BORDERS>
+explains borders with examples. F<examples/border-options.pl> shows per-side styles, a wider
+border, a C<Hidden> side, C<border_corners> and
+C<outer_border_sides>:
+
+=begin html
+
+<p><img src="/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
+
+=end html
+
 =head2 How a border is drawn
 
 =over
@@ -282,8 +293,8 @@ before Clay lays the widget out. The effect is:
 
 =item * The content starts inside the border, and the C<padding> in the
 widget's C<layout> is extra space between the border and the content.
-In the SYNOPSIS the text starts two cells right of the left edge: one
-for the border, one for the padding.
+In the SYNOPSIS, a child of the box starts two cells right of the left
+edge: one for the border, one for the padding.
 
 =item * A width larger than 1 still draws a one-cell border, followed
 by empty cells: C<border_width => 2> is a border plus one cell of
@@ -299,7 +310,8 @@ edge of the widget.
 C<border_width> is a number for all four sides, or a hash reference
 C<< { left => ..., right => ..., top => ..., bottom => ... } >> in which
 missing sides count as 0. Each width must be an integer from 0 to 65535
-(checked by Clay::UI when it is set). The widget's stored C<layout> is
+(checked by Clay::UI when it is set). Clay's C<between_children> key
+is not supported. The widget's stored C<layout> is
 not modified; only the configuration handed to Clay is.
 
 =head1 CONSTRUCTOR PARAMETERS
@@ -333,7 +345,8 @@ Default: C<undef>. A side parameter wins over C<border_style>:
 	border_style_left => Term::Fabulous::Enum::BorderStyle->Thick,
 
 gives a thick left side and solid other sides, like
-C<border style=Solid style-left=Thick> in a KDL layout.
+C<border style=Solid style-left=Thick> in a KDL layout file. The side
+accessors change one side after construction.
 
 =item C<border_corners>
 
@@ -367,6 +380,9 @@ L<Term::Fabulous::Widget::Table> draws its outer frame this way, so a
 highlighted row ends at the frame.
 
 =back
+
+C<border_corners> and C<outer_border_sides> cannot be set from a KDL
+layout file.
 
 =head1 METHODS
 
@@ -455,7 +471,7 @@ padding as described in L</Border space>. You do not call it yourself.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Enum::BorderStyle>, L<Term::Fabulous::Manual/BORDERS>,
+L<Term::Fabulous::Enum::BorderStyle>, L<Term::Fabulous::Manual::Looks/BORDERS>,
 L<Term::Fabulous::Widget>, L<Clay::UI::Role::Style::HasBorder>, the
 example program F<examples/border-showcase.pl>, which shows every style.
 

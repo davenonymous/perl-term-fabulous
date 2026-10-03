@@ -40,7 +40,7 @@ $root->add_child( $chart, $status );
 my $tick = 0;
 sub measure () {
 	$tick++;
-	return ( 40 + 25 * sin( $tick / 23 ) + 12 * sin( $tick / 3.1 ) + 6 * sin( $tick * 1.7 ), 12 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ) );
+	return ( 65 + 20 * sin( $tick / 23 ) + 8 * sin( $tick / 3.1 ) + 4 * sin( $tick * 1.7 ), 18 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ) );
 }
 
 my $timer = IO::Async::Timer::Periodic->new(

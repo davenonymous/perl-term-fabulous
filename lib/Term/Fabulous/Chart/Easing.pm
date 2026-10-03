@@ -81,6 +81,7 @@ charts
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Chart::Easing qw(easing easing_names);
+	use Term::Fabulous::Widget::LineChart;
 
 	my $ease = easing('ease-in-out-cubic');
 	say $ease->(0.25);    # 0.0625
@@ -97,7 +98,8 @@ An easing function maps the way from one point to the next (C<t> from 0
 to 1) to the share of the change made so far. A chart whose C<curve> is
 an easing name draws each segment of a line or area along that function:
 C<linear> is a straight line, C<ease-in-out-sine> a gentle S between
-every two points, C<ease-out-bounce> a playful bounce. Every curve passes
+every two points, C<ease-out-bounce> a bounce at the end of every
+segment. Every curve passes
 through the data points themselves, so the values stay exact; the shape
 between them is decoration. For smooth lines that stay faithful to the
 data, prefer the C<monotone> curve of L<Term::Fabulous::Chart::Curve>.
@@ -108,6 +110,17 @@ C<circ>, C<back>, C<elastic> and C<bounce> there is C<ease-in-FAMILY>
 (slow start), C<ease-out-FAMILY> (slow end) and C<ease-in-out-FAMILY>
 (slow at both ends), plus C<linear>. C<back> and C<elastic> overshoot:
 their curves leave the range between two points for a moment.
+That makes 31 names, such as C<ease-in-quad>, C<ease-out-expo> and
+C<ease-in-out-elastic>.
+
+=begin html
+
+<p><img src="/screenshots/cookbook-chart-curves.svg" alt="Six small charts of the same seven points connected linear, step, monotone, catmull-rom, ease-in-out-sine and ease-out-bounce"></p>
+
+=end html
+
+The last two charts in the picture use easings; the program is in
+L<Term::Fabulous::Cookbook::ChartStyles/Connect points with curves and easings (curve)>.
 
 =head1 FUNCTIONS
 
@@ -115,16 +128,17 @@ their curves leave the range between two points for a moment.
 
 	my $function = easing($name);
 
-The function of a name: a code reference from C<t> to the eased C<t>.
-Dies for an unknown name.
+The function of a name: a code reference from C<t> (0 to 1) to the
+eased C<t> (0 at 0, 1 at 1). Dies for an unknown name, with all names
+in the message.
 
 =head2 easing_names
 
-All names, sorted.
+All names, C<linear> included, sorted.
 
 =head2 is_easing_name
 
-True for an easing name.
+1 for an easing name, else 0.
 
 =head1 SEE ALSO
 

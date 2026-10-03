@@ -47,13 +47,15 @@ the user sorts it by a C<sortable> column: a click on the column's
 header (with C<Shift>, C<Ctrl> or C<Alt> it adds the column to the
 sort), or C<Enter> or C<Space> on the header in header mode (see
 L<Term::Fabulous::Widget::Table/KEYS>). Each of these cycles the column
-from ascending to descending to unsorted. Sorting from your program
+from ascending to descending to unsorted. A column with
+C<< sortable => 0 >> ignores them and fires nothing. Sorting from your program
 (L<Term::Fabulous::Widget::Table/sort_by>, C<clear_sort>) fires nothing.
+Sorting is explained in L<Term::Fabulous::Manual::TableRows/SORTING>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<SortChange>; listen
 for it with C<< $table->on( SortChange => sub ($event) { ... } ) >>. It
 bubbles to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -63,8 +65,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::SortChange->new( sort => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a C<sort> that is
+not an array reference of array references; it is copied.
 
 =over
 
@@ -84,6 +86,7 @@ empty when the table is unsorted.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::TableRows/Sort rows, also with your own comparison>.
 
 =cut

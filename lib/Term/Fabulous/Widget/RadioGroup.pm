@@ -157,6 +157,11 @@ one is selected
 
 =head1 DESCRIPTION
 
+The picture shows three radio groups: one with its buttons in a row,
+which has the focus (the selected button is on the
+C<focus_background_color>), one in a column, and a disabled one. The
+program is F<examples/widgets/radio.pl>.
+
 A radio group lets the user choose exactly one of several options, all
 visible at once. It is a L<Term::Fabulous::Widget::Box> that holds
 L<Term::Fabulous::Widget::RadioButton>s, directly or inside other boxes.
@@ -198,7 +203,7 @@ C<border_style>, ...) and the ones below. Unknown parameters die.
 =item C<value>
 
 A string, a number or C<undef>. Default: C<undef> (no button selected).
-The value of the button to select.
+The value of the button to select. A reference dies.
 
 =item C<disabled>
 
@@ -228,7 +233,8 @@ C<remove_child>, C<children>, C<layout>, C<on>, ...), plus:
 Accessor. Returns the value of the selected button, or C<undef>. Writing
 selects the button(s) whose value equals the new value (compared as
 strings), or no button when none has it; the next frame shows it on the
-buttons. Writing fires no C<Change> event. Returns the new value.
+buttons. Writing fires no C<Change> event. Returns the new value. A
+reference dies and leaves the value unchanged.
 
 =head2 disabled
 
@@ -360,9 +366,8 @@ Fired by Clay::UI when the group gains or loses the focus.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<value>, C<disabled> and C<can_focus> (C<#true> / C<#false>). The radio
-buttons are
-written as child nodes:
+C<value> (a string or number), C<disabled> and C<can_focus> (C<#true> /
+C<#false>). The radio buttons are written as child nodes:
 
 	use Term::Fabulous::Widget::RadioGroup as RadioGroup
 	use Term::Fabulous::Widget::RadioButton as RadioButton
@@ -414,6 +419,7 @@ above.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::RadioButton>, L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>.
+L<the radio button section of the forms guide|Term::Fabulous::Manual::Forms/Radio buttons>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
 =cut

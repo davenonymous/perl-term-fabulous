@@ -7,7 +7,7 @@ no warnings 'experimental::signatures';
 
 use IO::Async::Loop;
 use IO::Async::Timer::Periodic;
-use List::Util qw(max min);
+use List::Util qw(min);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
@@ -44,28 +44,18 @@ my $log = Term::Fabulous::Widget::ScrollBox->new(
 );
 $root->add_child($log);
 
-# Clay keeps the scroll position of every scroll container by id. The
-# data describes the last frame: the visible size of the box, the size
-# of its content and the position, which is 0 at the top and left and
-# negative when scrolled down or right.
-my $log_id = Clay::XS::Clay_GetElementId('log');
-sub scroll_data () { return Clay::XS::Clay_GetScrollContainerData($log_id) }
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
-sub lowest_y ($data) { return min( 0, $data->{scrollContainerDimensions}{height} - $data->{contentDimensions}{height} ) }
-sub lowest_x ($data) { return min( 0, $data->{scrollContainerDimensions}{width} - $data->{contentDimensions}{width} ) }
+# scroll_state describes the last frame: the scroll position, the visible
+# size of the box (viewport) and the size of its content. The position is
+# 0 at the top and left and negative when scrolled down or right; the
+# lowest one shows the bottom of the content.
+sub lowest_y ($state) { return min( 0, $state->{viewport}{height} - $state->{content}{height} ) }
 
-# Moves the view; the values are kept within the content.
-sub scroll_to ( $x, $y ) {
-	my $data = scroll_data();
-	return unless $data->{found};    # not laid out yet
-	Clay::XS::set_scroll_position( $log_id, { x => max( lowest_x($data), min( 0, $x ) ), y => max( lowest_y($data), min( 0, $y ) ) } );
-	return;
-}
-
+# Moves the view; scroll_to keeps it within the content.
 sub scroll_by ( $columns, $rows ) {
-	my $data = scroll_data();
-	return unless $data->{found};
-	scroll_to( $data->{scrollPosition}{x} - $columns, $data->{scrollPosition}{y} - $rows );
+	my $state = $ui->scroll_state($log) or return;    # not laid out yet
+	$ui->scroll_to( $log, { x => $state->{position}{x} - $columns, y => $state->{position}{y} - $rows } );
 	return;
 }
 
@@ -83,7 +73,7 @@ my %action_by_key = (
 	Down  => sub { scroll_by( 0, 1 ) },
 	Left  => sub { scroll_by( -4, 0 ) },
 	Right => sub { scroll_by( 4, 0 ) },
-	Home  => sub { $follow = 0; scroll_to( 0, 0 ) },
+	Home  => sub { $follow = 0; $ui->scroll_to( $log, { x => 0, y => 0 } ) },
 	End   => sub { $follow = 1 },
 );
 $root->on(
@@ -115,12 +105,12 @@ $loop->add(
 	IO::Async::Timer::Periodic->new(
 		interval => 1 / 30,
 		on_tick  => sub {
-			my $data = scroll_data();
-			return unless $follow && $data->{found};
-			scroll_to( $data->{scrollPosition}{x}, lowest_y($data) ) if $data->{scrollPosition}{y} != lowest_y($data);
+			return unless $follow;
+			my $state = $ui->scroll_state($log) or return;
+			$ui->scroll_to( $log, { y => lowest_y($state) } ) if $state->{position}{y} != lowest_y($state);
 			return;
 		},
 	)->start
 );
 
-Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+$ui->run;

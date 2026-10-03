@@ -30,8 +30,8 @@ $root->add_child(
 	)
 );
 
-# Text has no color of its own in a report: give it one, as the chart
-# gives its labels.
+# Text is black unless it has a text_color, which a dark terminal does
+# not show: give it a color, as the chart does for its labels.
 my $line = Term::Fabulous::Widget::Box->new( layout => { child_gap => 1 } );
 $line->add_child(
 	Term::Fabulous::Widget::Text->new( text => 'Load, last 18 hours:', text_color => [ 230, 230, 230, 255 ] ),

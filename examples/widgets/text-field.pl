@@ -1,8 +1,9 @@
 #!/usr/bin/env perl
 
-# Term::Fabulous::Widget::TextField: a field being typed in, an empty
-# one with a placeholder, a masked password and a disabled field. Tab
-# moves the focus, Ctrl+C quits.
+# Term::Fabulous::Widget::TextField: a focused field to type in, an
+# empty one with a placeholder, a masked password and a disabled field.
+# Shift with the arrow keys selects text, Tab moves the focus, Ctrl+C
+# quits.
 #
 #     perl examples/widgets/text-field.pl
 

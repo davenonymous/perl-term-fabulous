@@ -60,7 +60,7 @@ listeners on the way return C<< Clay::UI::Enum::Result->CONTINUE >> (a
 widget without C<Submit> listeners passes it on). A form can therefore
 handle C<Enter> in any of its fields with one listener; use
 C<< $event->target >> to see which field it came from. See
-L<Term::Fabulous::Manual/Return values and bubbling>.
+L<Term::Fabulous::Manual::Events/Return values and bubbling>.
 
 =back
 
@@ -101,6 +101,8 @@ L<Clay::UI::Events::Event>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>,
+L<Term::Fabulous::Cookbook::Forms/Read all values of a form>.
 
 =cut

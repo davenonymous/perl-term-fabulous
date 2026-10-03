@@ -255,28 +255,53 @@ bins
 
 =end html
 
+F<examples/widgets/histogram.pl> draws this chart.
+
 =head1 DESCRIPTION
 
 A histogram shows how a set of numbers is distributed: the x axis is
 divided into bins of equal width, and each bin is a bar as high as the
 number of observations that fall into it. Give each series its
-observations as plain numbers; the chart counts them when a frame is
-drawn, and counts again when the data or the bins change.
+observations as plain numbers (C<undef> values are skipped); the chart
+counts them when a frame is drawn, and counts again when the data or the
+bins change. C<[ x, y ]> pairs and hashes die when they are given: a
+histogram has no x values of its own.
+
+=head2 Bins
 
 By default the chart chooses the bin width from the data (the
 Freedman-Diaconis rule: twice the interquartile range over the cube root
 of the count, rounded to 1, 2, 2.5 or 5 times a power of ten, at most
 fifty bins), and the bins start at a multiple of that width. C<bins>
 asks for a number of bins over the data's range, C<bin_width> for a
-width, C<range> fixes the ends. With several series, the same bins count
-every series, and the bars of different series overlap, translucent, so
-both distributions are visible; with C<stacked> they stack.
+width, C<range> fixes the ends. A bin holds the values from its left
+edge up to, but not including, its right edge; the last bin includes
+its right edge too. With C<range> and a C<bin_width> that does not
+divide it, the last bin is narrower.
+
+With several series, the same bins count every series, and the bars of
+different series overlap, translucent (60% opaque), so both
+distributions are visible; with C<stacked> (see
+L<Term::Fabulous::Widget::XYChart/STACKING>) they stack, opaque.
+
+=head2 Measures
+
+=begin html
+
+<p><img src="/screenshots/widget-histogram-measures.svg" alt="Four histograms of the same response times: counts per bin, percent per bin, density per bin, and cumulative percentages rising to 100%"></p>
+
+=end html
 
 C<measure> decides what a bar's height is: the C<count> of
-observations, their C<percent> of the series (as a fraction; the axis
-shows percentages), or the C<density> (the share divided by the bin
-width, so the area under the histogram is 1 and bins of different
-widths compare). C<cumulative> accumulates the bins from the left.
+observations, their C<percent> of the series (as a fraction from 0 to 1;
+the axis and the value labels show percentages), or the C<density> (the
+share divided by the bin width, so the area under the histogram is 1 and
+bins of different widths compare). C<cumulative> accumulates the bins
+from the left: with C<percent> the last bar reaches 100%, which reads as
+"the share of the observations below this value".
+F<examples/widgets/histogram-measures.pl> shows the four forms.
+
+=head2 What a histogram shares with the XY charts
 
 A Histogram is a L<Term::Fabulous::Widget::XYChart> of bar series, with
 the x axis fixed to numbers from the first bin's left edge to the last
@@ -284,7 +309,9 @@ bin's right edge, so C<labels>, C<horizontal> and the other series types
 are not for it; the axis keys, C<value_labels>, C<marker>,
 C<fill_opacity>, transforms (run on the observations before they are
 counted) and hover work as described there. Hover reports the bin as the
-point: its range as the label and its count as the value.
+point: its range (such as C<100-125>, written with an en dash) as the
+label, the height of its bar in the chosen measure as the value, its
+number (from 0) as the index and its middle as the x.
 
 =head1 CONSTRUCTOR
 
@@ -299,8 +326,9 @@ L<Term::Fabulous::Widget::Chart/CONSTRUCTOR>, and:
 
 =item C<bins>
 
-C<auto> (the default) or a positive integer: the number of bins over the
-range of the data (or C<range>).
+C<auto> (the default) or a positive integer: the number of bins of
+equal width from the smallest to the largest observation (or over
+C<range>). C<auto> chooses a round bin width; see L</Bins>.
 
 =item C<bin_width>
 
@@ -309,26 +337,29 @@ C<bins> decide. When given, C<bins> is not used.
 
 =item C<range>
 
-C<[ $low, $high ]>: the ends of the first and the last bin.
-Observations outside are not counted. Default: C<undef>, the smallest
-and largest observation (rounded out to the bin width with automatic
-bins).
+C<[ $low, $high ]> with C<$low> below C<$high>: the left edge of the
+first bin and the right edge of the last. Observations outside are not
+counted. Default: C<undef>, the smallest and largest observation; with
+C<< bins =E<gt> 'auto' >> or a C<bin_width>, rounded out to multiples of
+the bin width.
 
 =item C<measure>
 
-C<count> (the default), C<percent> or C<density>.
+C<count> (the default), C<percent> or C<density>; see L</Measures>.
 
 =item C<cumulative>
 
-A boolean. Default: false.
+A boolean: true adds every bin to the ones left of it. Default: false.
 
 =back
 
 =head1 METHODS
 
 C<bins>, C<bin_width>, C<range>, C<measure> and C<cumulative> read and
-set the parameters (C<range> returns a copy), and the methods of
-L<Term::Fabulous::Widget::XYChart/METHODS> manage the series.
+set the parameters (C<range> returns a copy; C<undef> restores the
+default of C<bin_width> and C<range>; an invalid value dies and changes
+nothing), and the methods of L<Term::Fabulous::Widget::XYChart/METHODS>
+manage the series.
 
 =head2 bin_edges
 
@@ -346,20 +377,26 @@ it yourself to label or to count things the way the chart does.
 	use Term::Fabulous::Widget::Histogram as Histogram
 
 	Histogram "latency" {
-		bins 20
+		bin_width 25
 		range 0 500
 		measure "percent"
 		cumulative #false
-		series "eu-west" { data 120 131 98 145 }
+		series "eu-west" { data 120 131 98 145; }
+		series "us-east" { data 170 182 151 199; }
 	}
 
-C<bins>, C<bin_width>, C<measure>, C<cumulative> as the parameters,
+C<bins> (C<"auto"> or a number), C<bin_width>, C<measure>,
+C<cumulative> as the parameters,
 C<range> with the low and the high value as its arguments, and the
 properties of L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::BarChart>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart> (title, legend, colors, hover),
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/How values are distributed (Histogram)>,
+the example programs F<examples/widgets/histogram.pl> and
+F<examples/widgets/histogram-measures.pl>.
 
 =cut

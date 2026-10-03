@@ -97,6 +97,12 @@ protect kept cells during a frame
 		method put_cell ( $x, $y, $glyph, $fg, $bg ) { push @written, [ $x, $y, $glyph ]; return }
 		method put_extension ( $x, $y, $character ) { $written[-1][2] .= $character; return }
 		method put_row ( $x, $y, $columns, $bg )    { push @written, map { [ $_, $y, ' ' ] } $x .. $x + $columns - 1; return }
+
+		# Not a primitive of this role, but every target needs it.
+		method painted_cell ( $x, $y ) {
+			my ($cell) = grep { $_->[0] == $x && $_->[1] == $y } reverse @written;
+			return defined $cell ? ( $cell->[2], 0, 0 ) : ();
+		}
 	}
 
 =head1 DESCRIPTION
@@ -112,7 +118,8 @@ L<Term::Fabulous::Render/CELL TARGET>). The class of a cell target
 composes this role. This role implements the
 target methods the renderer calls (C<begin_frame>, C<end_frame>,
 C<release_rect>, C<set_cell>, C<extend_cell>, C<fill_row>) on top of
-five simple primitives that a concrete target provides. On the way, it
+five simple primitives that a concrete target provides; the target
+also provides C<painted_cell> (see L</REQUIRED METHODS>). On the way, it
 implements I<kept rectangles>: parts of the previous frame that must
 stay as they are, because an unchanged canvas is there (see
 L<Term::Fabulous::Render::Canvas/Painting only the changes>). Writes
@@ -199,6 +206,16 @@ cell written last at that position.
 
 Writes C<$columns> cells of spaces with the background attribute C<$bg>
 and the terminal default foreground, from C<($x, $y)> to the right.
+
+=head2 painted_cell
+
+	method painted_cell ( $x, $y ) { ... }
+
+Not used by this role, but the renderer calls it on every target (see
+L<Term::Fabulous::Render/painted_cell>): returns the glyph, foreground
+and background attribute painted at a cell in this frame, or an empty
+list. It is called only for a translucent background with
+C<glyphs_show_through>, but a target without it dies there.
 
 =head1 SEE ALSO
 

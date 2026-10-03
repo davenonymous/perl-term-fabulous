@@ -2,8 +2,9 @@
 
 # Term::Fabulous::Widget::Button: buttons that take the focus (shown by
 # the border color), react to clicks and to Enter or Space, and swap
-# their colors while the mouse button is held on them. Tab moves the
-# focus, Ctrl+C quits.
+# their colors while the mouse button is held on them. The Archive
+# button is disabled: it is drawn gray, Tab skips it and clicks do
+# nothing. Tab moves the focus, Ctrl+C quits.
 #
 #     perl examples/widgets/button.pl
 
@@ -51,7 +52,9 @@ sub button ( $caption, $background, $border ) {
 
 my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 my $save    = button( 'Save',   [ 40, 60, 90, 255 ],  [ 90, 110, 140, 255 ] );
-$buttons->add_child( $save, button( 'Cancel', [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] ), button( 'Delete', [ 110, 40, 45, 255 ], [ 170, 80, 85, 255 ] ) );
+my $archive = button( 'Archive', [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] );
+$archive->disabled(1);
+$buttons->add_child( $save, button( 'Cancel', [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] ), button( 'Delete', [ 110, 40, 45, 255 ], [ 170, 80, 85, 255 ] ), $archive );
 $root->add_child( $buttons, $status );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );

@@ -33,17 +33,29 @@ sub sample ( $caption, $text, %options ) {
 	return $box;
 }
 
-my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+# Three samples side by side in each row.
+sub row (@samples) {
+	my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+	$row->add_child(@samples);
+	return $row;
+}
+
+my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, child_gap => 1 } );
 $root->add_child(
-	sample( 'Default: wrap at words', $words ),
-	sample( 'Centered lines',         $words, text_alignment => CLAY_TEXT_ALIGN_CENTER ),
-	sample( 'Right-aligned lines',    $words, text_alignment => CLAY_TEXT_ALIGN_RIGHT ),
-	sample( 'Line breaks only', "No wrapping at spaces,\nonly at line breaks.", wrap_mode   => CLAY_TEXT_WRAP_NEWLINES ),
-	sample( 'Two rows per line', "First line\nSecond line",                    line_height => 2 ),
-	sample(
-		'A centered label', 'OK',
-		box_layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(24) }, child_alignment => { x => CLAY_ALIGN_X_CENTER } },
+	row(
+		sample( 'Default: wrap at words', $words ),
+		sample( 'Centered lines',         $words, text_alignment => CLAY_TEXT_ALIGN_CENTER ),
+		sample( 'Right-aligned lines',    $words, text_alignment => CLAY_TEXT_ALIGN_RIGHT ),
+	),
+	row(
+		sample( 'Line breaks only',  "No wrapping at spaces,\nonly at line breaks.", wrap_mode   => CLAY_TEXT_WRAP_NEWLINES ),
+		sample( 'Two rows per line', "First line\nSecond line",                      line_height => 2 ),
+		sample(
+			'A centered label', 'OK',
+			box_layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(24) }, child_alignment => { x => CLAY_ALIGN_X_CENTER } },
+		),
 	),
 );
 
-Term::Fabulous::Static->new( root => $root, width => 30 )->print( colors => 0 );
+# Colors only when STDOUT is a terminal.
+Term::Fabulous::Static->new( root => $root, width => 76 )->print;

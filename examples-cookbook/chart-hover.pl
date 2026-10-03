@@ -32,7 +32,7 @@ my $chart = Term::Fabulous::Widget::AreaChart->new(
 		{ name => 'Mobile',   data => [ 5,  4,  6,  9,  7,  8,  11, 10, 9,  12, 14, 13 ] },
 	],
 );
-my $status = Term::Fabulous::Widget::Text->new( text => 'Point at the chart, or press 1, 2 or 3 to emphasize a team (0: none, q: quit).', text_color => [ 150, 160, 180, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).', text_color => [ 150, 160, 180, 255 ] );
 $root->add_child( $chart, $status );
 
 # What the pointer is on: a point of a series, a legend entry, or nothing.
@@ -40,7 +40,7 @@ $chart->on(
 	SeriesHover => sub ($event) {
 		my $series = $event->series;
 		$status->text(
-			  !defined $series        ? 'Point at the chart, or press 1, 2 or 3 to emphasize a team (0: none, q: quit).'
+			  !defined $series        ? 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).'
 			: !defined $event->index ? "$series: " . join( ', ', map { $_ // 0 } $chart->series($series)->{data}->@* )
 			:                          sprintf( '%s closed %d issues in week %s', $series, $event->value, $event->label )
 		);

@@ -614,7 +614,10 @@ L<Term::Fabulous::Widget::TextInput/editor>).
 		max_length => undef,
 	);
 
-All parameters are optional. Unknown parameters die.
+All parameters are optional. Unknown parameters die, and so do invalid
+values, with a message that starts with C<Term::Fabulous::Editor:>.
+Through a text input, the message names the input's class instead (see
+L<Term::Fabulous::Widget::TextInput/max_length>).
 
 =over
 
@@ -632,7 +635,8 @@ it is given into a space, so its text is always one line.
 
 A non-negative integer, or C<undef>. Default: C<undef> (no limit). The
 most grapheme clusters the text may hold; every line break counts as
-one. Inserted and typed text is cut to fit.
+one. Inserted and typed text is cut to fit. Dies if it is not a
+non-negative integer or C<undef>.
 
 =back
 
@@ -1051,6 +1055,9 @@ C<Ctrl+V> then pastes the text.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::TextInput>, L<Term::Fabulous::Widget::TextField>,
-L<Term::Fabulous::Widget::TextArea>, L<Term::Fabulous::Unicode>.
+L<Term::Fabulous::Widget::TextArea>, L<Term::Fabulous::TextView>,
+L<Term::Fabulous::Unicode>,
+L<the editing section of the forms guide|Term::Fabulous::Manual::Forms/EDITING TEXT>,
+L<Term::Fabulous::Cookbook::Forms/Copy and paste through the clipboard>.
 
 =cut

@@ -48,6 +48,13 @@ termbox2 as it would a real one. The harness
   and waits until the program has received it;
 - reads what the terminal shows from termbox2's front buffer.
 
+The runner itself answers the cursor position query (`ESC [ 6 n`) that
+inline mode (`inline => ROWS`) sends when it starts, as a terminal
+would. A scenario's `shell` lines stand for what a shell printed before
+the program started: the cursor starts below them, and the screenshot
+shows them above the program's inline region, so an inline program
+looks as it does in a real terminal.
+
 A program that prints a report and ends (`Term::Fabulous::Static`) is
 captured from its colored output instead.
 
@@ -72,6 +79,8 @@ as SVG or PNG:
 perl -Mblib tools/screenshot --output form.svg examples/form.pl
 perl -Mblib tools/screenshot --size 100x30 --steps 'type "Ada"; key "Tab"' \
     --output form.png examples/form.pl
+perl -Mblib tools/screenshot --size 80x7 --shell '$ perl inline-prompt.pl' \
+    --output prompt.png examples-cookbook/inline-prompt.pl
 perl -Mblib tools/screenshot --help
 ```
 
@@ -90,7 +99,7 @@ All under `tools/lib/Term/Fabulous/Screenshot/`:
 |---|---|
 | `Scenario` | parses `screenshots.kdl` |
 | `Input` | key names, text and mouse actions as terminal bytes |
-| `Runner` | runs a program in a pseudo terminal and returns its screen |
+| `Runner` | runs a program in a pseudo terminal, answers its cursor position queries and returns its screen |
 | `Harness`, `Clock`, `VirtualLoop` | run inside the program: input, virtual time, capture |
 | `Screen` | the captured cells |
 | `Scene`, `BoxDrawing`, `Theme` | what the image shows, independent of the format |

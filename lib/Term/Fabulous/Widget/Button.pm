@@ -172,9 +172,11 @@ activated
 
 =begin html
 
-<p><img src="/screenshots/widget-button.svg" alt="Save, Cancel and Delete buttons, Save focused, and the line Save was pressed"></p>
+<p><img src="/screenshots/widget-button.svg" alt="Save, Cancel, Delete and Archive buttons: Save focused with a blue border, Archive disabled and drawn in gray, and the line Save was pressed"></p>
 
 =end html
+
+The program is F<examples/widgets/button.pl>.
 
 =head1 DESCRIPTION
 
@@ -202,8 +204,10 @@ replaces that with a background color, or switches it off;
 
 =item * while it has the focus, its border is drawn in
 C<focus_border_color>, the blue the input widgets use for their accent.
-A Button without a border shows nothing; give it C<border_width =E<gt> 1>
-or change its background in an C<OnFocus> listener;
+A Button without a visible border shows nothing: give it a border
+with both C<border_width =E<gt> 1> and a C<border_style> (a border
+without a style is drawn as spaces, which show no color), or change its
+background in an C<OnFocus> listener;
 
 =item * hovering changes nothing by default. C<is_hovered> and the
 C<OnHoverStart> and C<OnHoverStopped> events follow the pointer, so a
@@ -258,7 +262,7 @@ C<[ 108, 112, 120, 255 ]>, the C<disabled_color> of the input widgets.
 The color of the border while the Button has the focus, in any format
 L<Term::Fabulous::Color> accepts, or C<undef> for no focus look.
 Default: C<[ 97, 175, 239, 255 ]>. It only shows on sides with a
-positive C<border_width>.
+positive C<border_width> and a C<border_style> other than C<Blank>.
 
 =item C<pressed_background_color>
 
@@ -306,8 +310,8 @@ string C<reverse>, the stored C<[r, g, b, a]>, or C<undef>.
 	my $swapped = $button->reverse_video;
 
 1 while the Button is pressed and C<pressed_background_color> is
-C<reverse>, 0 otherwise. The renderer calls it; see
-L<Term::Fabulous::Widget/reverse_video>.
+C<reverse>, 0 otherwise. The renderer calls it for every widget; see
+L<Term::Fabulous::Manual::CustomWidgets/A box that takes the focus and reacts to the mouse>.
 
 =head2 disabled
 
@@ -371,7 +375,7 @@ and the pointer is still over it.
 
 All events are delivered to listeners registered with
 C<< $button->on( $name => sub ($event) { ... } ) >>; see
-L<Term::Fabulous::Manual/EVENTS> for how listener return values decide
+L<Term::Fabulous::Manual::Events/EVENTS> for how listener return values decide
 whether an event continues to the Button's ancestors.
 
 =over
@@ -379,10 +383,12 @@ whether an event continues to the Button's ancestors.
 =item C<Activate> (L<Term::Fabulous::Event::Activate>)
 
 The user activated the Button: a click (C<OnRelease> over the Button
-after C<OnPress> on it), or C<Enter> or C<Space> while the Button has
-the focus. C<< $event->target >> is the Button. Fired by the Button
-itself, from its own C<OnRelease> and C<KeyPress> listeners, which run
-before any listener you add.
+after C<OnPress> on it), or C<Enter> (also the keypad's Enter) or
+C<Space> without modifiers while the Button has the focus.
+C<< $event->target >> is the Button. Fired by the Button itself, from its
+own C<OnRelease> and C<KeyPress> listeners, which run before any
+listener you add. So a listener on an ancestor sees C<Activate> before
+the C<OnRelease> it came from bubbles up to it.
 
 =item C<OnPress> (L<Clay::UI::Events::OnPress>)
 
@@ -422,10 +428,11 @@ or a border there).
 
 =head1 KEYS
 
-C<Enter> and C<Space> activate the focused Button, unless it is
-disabled (a disabled Button cannot have the focus, but keys fired at it
-from code bubble on as well). Tab and Shift+Tab always move the focus
-away (see L<Term::Fabulous::Manual/FOCUS>).
+C<Enter> (also the keypad's Enter) and C<Space> activate the focused
+Button, unless it is disabled. With a modifier (C<Ctrl+Enter>,
+C<Shift+Space>, ...) they bubble on like every other key. A disabled
+Button cannot have the focus; keys fired at it from code bubble on. Tab and Shift+Tab always move the focus
+away (see L<Term::Fabulous::Manual::Events/FOCUS>).
 
 =head1 MOUSE
 
@@ -471,10 +478,12 @@ the layout.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Box>, L<Term::Fabulous::Event::Activate>,
-L<Term::Fabulous::Manual/FOCUS>, L<Term::Fabulous::Manual/MOUSE>,
+L<Term::Fabulous::Manual::Events/FOCUS>, L<Term::Fabulous::Manual::Events/MOUSE>,
 L<Clay::UI::Role::Interaction::Pressable>,
 L<Clay::UI::Role::Interaction::Focusable>,
-L<Clay::UI::Role::Interaction::Hoverable>, the example program
+L<Clay::UI::Role::Interaction::Hoverable>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Add buttons for the mouse and the keyboard (Button)>,
+the example programs F<examples/widgets/button.pl> and
 F<examples/buttons-and-keys.pl>.
 
 =cut

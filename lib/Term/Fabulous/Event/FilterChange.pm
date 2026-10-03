@@ -44,13 +44,14 @@ a non-empty field with C<Escape>, after the table has applied the text.
 A text that is not a valid filter expression leaves the column
 unfiltered and is shown in the C<error_color>; C<error> says why.
 Setting filters from your program (C<filter>, C<filter_text>,
-C<search>, ...) fires nothing.
+C<search>, ...) fires nothing. The filter row and its expressions are
+explained in L<Term::Fabulous::Manual::TableRows/The filter row>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<FilterChange>;
 listen for it with
 C<< $table->on( FilterChange => sub ($event) { ... } ) >>. It bubbles
 to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -60,8 +61,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::FilterChange->new( column => ..., text => ..., error => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a missing C<column>
+or C<text>.
 
 =over
 
@@ -99,6 +100,7 @@ C<< $table->filter_error($column) >>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::TableRows/Let the user filter rows (filter row and search box)>.
 
 =cut

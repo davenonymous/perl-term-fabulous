@@ -310,7 +310,7 @@ L<Term::Fabulous> fires a C<KeyPress> event for every key the terminal
 reports while L<Term::Fabulous/run> is active. The event is fired on the
 focused widget, or on the root widget when no widget has the focus, and
 then bubbles up to the ancestors (see
-L<Term::Fabulous::Manual/Return values and bubbling>). Listen for it with
+L<Term::Fabulous::Manual::Events/Return values and bubbling>). Listen for it with
 C<< $widget->on( KeyPress => sub ($event) { ... } ) >>.
 
 The class is a subclass of L<Clay::UI::Events::Event>, so C<target>,
@@ -347,7 +347,7 @@ Programs rarely build key presses themselves; L<Term::Fabulous> does it
 for every key. Building one by hand is useful in tests of one widget,
 to simulate typing at it; a whole program is tested with the keys of
 L<Term::Fabulous::Terminal::Memory/press_key>, which go through the
-focus like real ones (see L<Term::Fabulous::Manual/TESTING>). The
+focus like real ones (see L<Term::Fabulous::Manual::Programs/TESTING>). The
 three parameters below are required, and unknown parameters die. The
 C<name> and C<bubble_mode> parameters of L<Clay::UI::Events::Event> are
 accepted as well.
@@ -404,7 +404,8 @@ name, the way termbox2 and its kitty keyboard protocol parser report
 it. C<Ctrl+W> is the control byte 0x17 with the Ctrl bit, C<Enter> the
 byte 0x0D (with the Ctrl bit termbox2 sets on every control byte),
 C<Ctrl+I> the character C<i> with the Ctrl bit, C<a> the character.
-L<Term::Fabulous::Terminal::Memory/press_key> uses it. Class method.
+The L<C<press_key>|Term::Fabulous::Terminal::Memory/press_key> method
+of Term::Fabulous::Terminal::Memory uses it. Class method.
 
 The name must be one that L</key_name> returns, with its modifiers in
 the order C<Ctrl>, C<Alt>, C<Shift>, C<Super>, C<Hyper>, C<Meta> (see
@@ -703,7 +704,8 @@ L<Term::Fabulous> acts on itself.
 
 Compare L</key_name> with the name of the key you want, or
 L</main_key_name> when the keypad keys should count as the main keyboard
-keys they stand for. A dispatch table keeps longer lists readable:
+keys they stand for. To find the name of a key on your terminal, run
+F<examples/event-monitor.pl> and press it. A dispatch table keeps longer lists readable:
 
 	use Clay::UI::Enum::Result;
 
@@ -725,16 +727,18 @@ root sees a key only if no widget on the way returned anything other
 than C<< Clay::UI::Enum::Result->CONTINUE >>. The input widgets pass on
 the keys they do not use (Escape, function keys, Ctrl+S, ...), so
 application shortcuts on the root keep working while the user types.
-See L<Term::Fabulous::Manual/KEYBOARD>.
+See L<Term::Fabulous::Manual::Events/KEYBOARD>.
 
 Ctrl+C, Tab and Shift+Tab are fired like every other key, but
 L<Term::Fabulous> then acts on them itself (it stops on Ctrl+C and moves
 the focus on Tab and Shift+Tab); see
-L<Term::Fabulous::Manual/Keys Term::Fabulous handles itself>.
+L<Term::Fabulous::Manual::Events/Keys Term::Fabulous handles itself>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/KEYBOARD>, L<Term::Fabulous>,
-L<Term::Fabulous::Event::Mouse>, L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>.
+L<Term::Fabulous::Manual::Events/KEYBOARD>, L<Term::Fabulous>,
+L<Term::Fabulous::Event::Mouse>, L<Clay::UI::Events::Event>, L<Term::Fabulous::Termbox>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Bind a key to an action>,
+L<Term::Fabulous::Cookbook::GettingStarted/Quit with q or Escape>.
 
 =cut

@@ -45,16 +45,18 @@ Term::Fabulous::Widget::AreaChart - Lines with the area below them filled
 
 =begin html
 
-<p><img src="/screenshots/widget-area-chart.svg" alt="Three stacked, translucent areas over the days of a week with a legend at the top"></p>
+<p><img src="/screenshots/widget-area-chart.svg" alt="Three stacked areas for Search, Social and Direct over the months of a year, with a title and a legend at the top"></p>
 
 =end html
+
+The program is F<examples/widgets/area-chart.pl>.
 
 =head1 DESCRIPTION
 
 An area chart is a line chart whose series are filled down to the
 baseline, in block characters placed to an eighth of a cell, translucent
-(0.6 of the color over the background) so that overlapping areas show
-through each other. With C<stacked> the areas lie on each other and show
+so that overlapping areas show through each other: 0.6 of the color
+over the background, 0.8 when the areas are stacked. With C<stacked> the areas lie on each other and show
 how parts add up to a whole; C<< stacked =E<gt> 'percent' >> shows the
 shares. The y axis includes zero, where the areas grow from.
 
@@ -95,6 +97,7 @@ See L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::LineChart>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Stacked areas and shares of 100% (AreaChart)>.
 
 =cut

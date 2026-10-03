@@ -468,6 +468,8 @@ Term::Fabulous::Widget::PieChart - A pie chart: parts of a whole as slices
 
 =end html
 
+F<examples/widgets/pie-chart.pl> draws this chart.
+
 =head1 DESCRIPTION
 
 A pie chart shows how a whole divides into parts: each slice's angle is
@@ -483,7 +485,25 @@ label and value.
 
 Pies read well with up to about six slices. C<other> folds the small
 ones into one slice labeled C<other_label>, when at least two are below
-that share. Slices with a value of 0 are not drawn.
+that share; that slice comes last and is gray. Slices with a value of 0
+are neither drawn nor listed in the legend.
+
+=head2 Styles
+
+=begin html
+
+<p><img src="/screenshots/widget-pie-chart-styles.svg" alt="Four pies of the same budget: in quadrant blocks with percentages, in sextants with gaps between the slices, in Braille dots with the slice labels, and in half blocks with the values, sorted ascending and starting at 3 o'clock"></p>
+
+=end html
+
+F<examples/widgets/pie-chart-styles.pl> draws the same slices four
+ways. C<marker> chooses the characters: C<quadrant> blocks (2 x 2
+subpixels per cell, the default), C<sextant> (2 x 3), C<braille> dots (2
+x 4, finest, but one color per cell, so slice edges look dotted) or
+C<half> blocks (1 x 2). C<gap> separates the slices by a thin line of
+background. C<slice_labels> writes the share, the value or the label on
+each slice that has room for it, C<sort> orders the slices by value, and
+C<start_angle> turns the whole pie.
 
 L<Term::Fabulous::Widget::DonutChart> is a pie with a hole for a text in
 the middle; L<Term::Fabulous::Widget::PolarAreaChart> gives every slice
@@ -503,7 +523,12 @@ forms by position.
 
 A slice keeps its palette color for as long as its label is in the
 chart, also when other slices come and go and when C<set_data> replaces
-the data; so a slice stays recognizable while its value changes.
+the data; so a slice stays recognizable while its value changes. A label
+that is removed and added again gets the next free color.
+
+Invalid data dies with a message that names the slice, for example
+C<the value of slice 'Chrome' must be a number of at least 0, got '-5'>,
+and so does a label used twice.
 
 =head1 CONSTRUCTOR
 
@@ -523,7 +548,8 @@ The slices; see L</Data>. Default: none.
 =item C<hole>
 
 A number from 0 to 0.9: the radius of the hole in the middle as a share
-of the pie's radius. Default: 0 (0.6 for a donut).
+of the pie's radius. Default: 0 (0.6 for a donut). A hole whose radius
+is at least three cell widths shows a text; see C<center_text>.
 
 =item C<start_angle>
 
@@ -549,9 +575,11 @@ C<none>.
 
 =item C<center_text>
 
-For a donut: the text in the hole, lines separated by newlines. Default:
-C<undef>, which shows the total (or the hovered slice); an empty string
-shows nothing.
+For a chart with a hole (a donut): the text in the hole, lines separated
+by newlines; the first line is bold. Default: C<undef>, which shows the
+total with the word C<Total> below it, or, while a slice is emphasized
+(by the pointer or by C<highlight>), its share and label. An empty
+string shows nothing. Lines longer than the hole is wide are cut.
 
 =item C<marker>
 
@@ -566,7 +594,7 @@ least two of them exist. Default: 0 (never).
 
 =item C<other_label>
 
-The label of that slice. Default: C<Other>.
+The label of that slice; C<undef> means the default, C<Other>.
 
 =item C<gap>
 
@@ -577,16 +605,25 @@ or C<braille>.
 =item C<format>
 
 How values are written (on slices, in the legend, in the center): a
-format of L<Term::Fabulous::Chart::Format> (C<si>, C<integer>, a
-C<sprintf> format, a code reference). Default: up to two decimals, SI
-prefixes from a million on.
+format of L<Term::Fabulous::Chart::Format>: C<si>, C<integer>,
+C<percent>, a C<sprintf> format such as C<'%d €'>, or a code reference
+that gets the value and returns the text. Default: C<undef>, up to two
+decimals (three significant digits below 1) and SI prefixes from a
+million on (C<1.2M>). Shares are always written as whole percentages,
+C<< <1% >> for a share below one percent.
 
 =back
 
 =head1 METHODS
 
-Every parameter except the data has an accessor of the same name; an
-invalid value dies and changes nothing.
+Every parameter except the data has an accessor of the same name:
+without an argument it returns the value, with one it checks and sets
+it; an invalid value dies and changes nothing. The chart shows every
+change in the next frame.
+
+	$chart->sort('desc');
+	$chart->slice_labels('value');
+	$chart->hole(0.5);
 
 =head2 set_data
 
@@ -599,7 +636,8 @@ invalid data.
 
 	$chart->set_value( Chrome => 6500 );
 
-Changes a slice's value; adds the slice when the label is new.
+Changes a slice's value; adds the slice when the label is new. Returns
+the chart.
 
 =head2 add_slice, remove_slice, clear_slices
 
@@ -607,11 +645,17 @@ Changes a slice's value; adds the slice when the label is new.
 	$chart->remove_slice( 'Opera', 'Vivaldi' );
 	$chart->clear_slices;
 
+C<add_slice> adds a slice at the end (the color is optional) and dies
+when the label exists already. C<remove_slice> removes the slices with
+these labels and dies, removing none, when one of them does not exist.
+C<clear_slices> removes all. They return the chart.
+
 =head2 set_slice_color
 
 	$chart->set_slice_color( Chrome => '#4285f4' );
 
-A color, or C<undef> for the palette color again.
+A color, or C<undef> for the palette color again. Dies for an unknown
+label.
 
 =head2 slices, value, total
 
@@ -619,17 +663,20 @@ A color, or C<undef> for the palette color again.
 	my $value  = $chart->value('Chrome');
 	my $total  = $chart->total;
 
-The slices as given (C<color> only when the slice has one of its own),
-the value of one slice (C<undef> for an unknown label), and the sum.
+The slices as given, in their order (C<color> only when the slice has
+one of its own, as a C<#rrggbb> string), the value of one slice
+(C<undef> for an unknown label), and the sum of all values.
 
 Also C<hovered>, C<revision> and C<effective_background> from
 L<Term::Fabulous::Widget::Chart>.
 
 =head1 EVENTS
 
-C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>) with the slice
-label as the series, the slice's number as the index and its value,
-when the pointer moves onto another slice or legend entry, or away.
+C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>) when the pointer
+moves onto another slice or legend entry, or away. The series and the
+label are the slice's label (C<other_label> for the folded slice), the
+value is its value, and on a slice the index is its position among the
+slices as drawn (after sorting and folding, from 0).
 
 =head1 KDL PROPERTIES
 
@@ -652,11 +699,66 @@ C<hole>, C<start_angle>, C<sort>, C<slice_labels>, C<legend_values>,
 C<center_text>, C<marker>, C<other>, C<other_label>, C<gap> (C<#true>
 or C<#false>) and C<format> as the parameters; and one C<slice> node per
 slice with the label and the value as its arguments and an optional
-C<color> property.
+C<color> property. The slice nodes add the slices in their order, as
+C<add_slice> does; C<data>, C<labels> and C<colors> are not layout
+properties. More slices can be added from Perl after the layout is
+built.
+
+=head1 SUBCLASS INTERFACE
+
+L<Term::Fabulous::Widget::DonutChart> and
+L<Term::Fabulous::Widget::PolarAreaChart> are subclasses of PieChart
+that override some of the methods below. A round chart of your own can
+do the same. These methods come in addition to the ones of
+L<Term::Fabulous::Widget::Chart/SUBCLASS INTERFACE>, which PieChart
+already provides; C<$look> is the hash of colors described there.
+
+=over
+
+=item C<default_hole>, C<default_slice_labels>, C<default_legend_values>
+
+The defaults of C<hole>, C<slice_labels> and C<legend_values>: 0,
+C<percent> and C<percent>. A donut chart's C<default_hole> is 0.6; a
+polar area chart's C<default_slice_labels> is C<none> and its
+C<default_legend_values> is C<value>.
+
+=item C<shown_slices($look)>
+
+The slices as they are drawn: the slices with a value above 0, sorted
+as C<sort> says, the small ones folded into one slice as C<other> and
+C<other_label> say.
+Each is a hash with C<label>, C<value>, C<share> (of the total, from 0
+to 1) and the colors it is drawn in. C<legend_entries> and
+C<draw_plot> call it.
+
+=item C<slice_geometry( $look, @slices )>
+
+Returns one C<[ $from, $to, $reach ]> per slice of C<shown_slices>:
+the start and end angle in turns (0 to 1, before C<start_angle> is
+added), and how far out the slice reaches (1 is the full radius). By
+default each slice takes an angle in proportion to its share and
+reaches the full radius; a polar area chart gives every slice the same
+angle and lets the value decide its reach.
+
+=item C<draw_background_grid( $surface, $x, $y, $width, $height, $circle, $look, \@slices )>
+
+=item C<draw_foreground_grid( $surface, $x, $y, $width, $height, $circle, $look, \@slices )>
+
+Called before and after the slices are drawn into the plot area at
+C<$x>, C<$y> of the L<Term::Fabulous::Chart::Surface>. C<$circle> is
+the hash of L<Term::Fabulous::Chart::Radial/circle_frame>, relative to
+the plot area. Both draw nothing by default; a polar area chart draws
+its rings behind the slices and their values in front of them.
+
+=back
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::DonutChart>, L<Term::Fabulous::Widget::PolarAreaChart>,
-L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart> (title, legend, colors, hover),
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Show shares as a pie or donut (PieChart, DonutChart)>,
+the example programs F<examples/widgets/pie-chart.pl> and
+F<examples/widgets/pie-chart-styles.pl>.
 
 =cut

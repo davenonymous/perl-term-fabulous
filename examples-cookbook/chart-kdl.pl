@@ -25,10 +25,10 @@ Box "root" {
 		labels "Q1" "Q2" "Q3" "Q4"
 		value_labels #true
 		y_axis title="units" grid="dotted"
-		series "Sold" color="#3987e5" { data 120 145 132 170; }
+		series "Sold" color="#3987e5" { data 90 140 165 190; }
 		series "Returned" color="#e66767" { data 14 11 17 12; }
 		series "Trend" type="line" line_style="dashed" color="#c98500" {
-			data 120 145 132 170
+			data 90 140 165 190
 			transform "moving_average" 2
 		}
 	}

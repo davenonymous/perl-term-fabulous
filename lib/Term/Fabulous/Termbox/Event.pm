@@ -30,7 +30,7 @@ Term::Fabulous::Termbox::Event - One termbox2 input event
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Termbox qw(tb_peek_event TB_OK TB_EVENT_KEY);
+	use Term::Fabulous::Termbox qw(tb_peek_event TB_OK TB_EVENT_KEY TB_EVENT_MOUSE TB_KEY_MOUSE_LEFT);
 	use Term::Fabulous::Termbox::Event;
 
 	my $event = Term::Fabulous::Termbox::Event->new;
@@ -43,8 +43,9 @@ Term::Fabulous::Termbox::Event - One termbox2 input event
 
 =head1 DESCRIPTION
 
-The Perl side of termbox2's C<struct tb_event>. L<Term::Fabulous::Termbox/tb_peek_event>
-and L<Term::Fabulous::Termbox/tb_poll_event> fill an instance in place;
+The Perl side of termbox2's C<struct tb_event>.
+L<C<tb_peek_event>|Term::Fabulous::Termbox/tb_peek_event> and
+L<C<tb_poll_event>|Term::Fabulous::Termbox/tb_poll_event> fill an instance in place;
 L<Term::Fabulous::Event::KeyPress>, L<Term::Fabulous::Event::Mouse> and
 L<Term::Fabulous::Event::Resize> build their events from one.
 
@@ -81,7 +82,10 @@ A C<TB_KEY_*> or C<TF_KEY_*> code, 0 for a printable character.
 The Unicode codepoint of a printable character, 0 for a special key.
 With the kitty keyboard protocol it also holds the key of a Ctrl
 combination the legacy encoding cannot carry, such as Ctrl+Enter or
-Ctrl+I (see L<Term::Fabulous::Termbox/tf_install_input_parser>).
+Ctrl+I (see L<Term::Fabulous::Termbox/tf_install_input_parser>). For
+a C<TB_KEY_MOUSE_RELEASE>, it names the released button
+(C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE> or C<TB_KEY_MOUSE_RIGHT>),
+or is 0 when the terminal did not say.
 
 =item C<w>, C<h>
 

@@ -187,7 +187,7 @@ Term::Fabulous::Chart::Scale::Time - A date and time axis
 		cells  => 60,
 		utc    => 1,
 	);
-	say join ' ', map { $_->{label} } $scale->ticks;    # Jun 1 12:00 Jun 2 12:00 Jun 3
+	say join ', ', map { $_->{label} } $scale->ticks;    # Jun 1, 12:00, Jun 2, 12:00, Jun 3
 
 =head1 DESCRIPTION
 
@@ -216,9 +216,10 @@ them across changes of daylight saving time.
 	my $scale = Term::Fabulous::Chart::Scale::Time->fit(%options);
 
 Takes C<cells>, C<extent>, C<min>, C<max>, C<orientation> (default
-C<horizontal>), C<measure> and C<format> like
-L<Term::Fabulous::Chart::Scale::Linear/fit>, all in epoch seconds, and
-C<utc>.
+C<horizontal>), C<measure> and C<format> (a L<POSIX/strftime> format or
+a code reference called with the epoch seconds) like
+L<Term::Fabulous::Chart::Scale::Linear/fit>, the values in epoch
+seconds, and C<utc>. C<min> must be before C<max>.
 
 =head1 METHODS
 
@@ -227,6 +228,6 @@ the tick interval as C<[ $unit, $count ]> (C<[ 'hour', 6 ]>).
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Widget::XYChart/Time series>.
+L<Term::Fabulous::Chart::Scale>, L<Term::Fabulous::Widget::XYChart/Time axes>.
 
 =cut

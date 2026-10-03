@@ -62,12 +62,13 @@ a collapsed row or group, removed).
 It fires before the L<Term::Fabulous::Event::SelectionChange>, the
 L<Term::Fabulous::Event::PageChange> and the
 L<Term::Fabulous::Event::Expand> or L<Term::Fabulous::Event::Collapse>
-the same action causes.
+the same action causes. The cursor is explained in
+L<Term::Fabulous::Manual::TableRows/The cursor>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<CursorMove>; listen
 for it with C<< $table->on( CursorMove => sub ($event) { ... } ) >>. It
 bubbles to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -77,8 +78,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::CursorMove->new( row_id => ..., group_path => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a C<group_path>
+that is not C<undef> or an array reference; it is copied.
 
 =over
 
@@ -106,6 +107,7 @@ outermost first (a new array reference); C<undef> on a row.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Tables/Show a list of hashes in a table (sort, select, open a row)>.
 
 =cut

@@ -1216,7 +1216,7 @@ L</View>) convert.
 =item 1.
 
 Rows pass when they match every filter and the search (see
-L<Term::Fabulous::Widget::Table/FILTERING>); in a tree, the ancestors
+L<Term::Fabulous::Manual::TableRows/FILTERING>); in a tree, the ancestors
 of a passing row pass too, so nothing is cut off from its parent.
 
 =item 2.
@@ -1722,8 +1722,8 @@ filtered out stay selected.
 =item C<set_selection(@ids)>
 
 Selects exactly these rows. Returns C<( \@added, \@removed )>: the ids
-that became selected and those that stopped being selected, each sorted
-as strings (two empty array references when nothing changed). The model
+that became selected and those that stopped being selected, each in
+data order (two empty array references when nothing changed). The model
 does not know the table's C<selection> mode; any number of rows may be
 selected.
 

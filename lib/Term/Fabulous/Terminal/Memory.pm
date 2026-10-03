@@ -196,17 +196,27 @@ Term::Fabulous::Terminal::Memory - A terminal in memory, for tests
 	use Test2::V0;
 	use Term::Fabulous;
 	use Term::Fabulous::Terminal::Memory;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::TextField;
 
-	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 30, height => 4 );
-	my $ui       = Term::Fabulous->new( root => $root, width => 30, height => 4, terminal => $terminal );
+	my $field = Term::Fabulous::Widget::TextField->new( preferred_columns => 10 );
+	my $root  = Term::Fabulous::Widget::Box->new;
+	$root->add_child($field);
 
-	$ui->step;                       # opens the terminal, fires Start, draws a frame
-	$terminal->press_key('Tab');     # focus the first field
-	$terminal->type_text('Ada');
-	$terminal->click( 2, 3 );        # press and release the left button
-	$ui->step;                       # handles the input as run would, draws
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 30, height => 2 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 30, height => 2, terminal => $terminal );
 
-	is [ $terminal->lines ], [ 'Name: Ada', '', '', '[ OK ]' ], 'what the screen shows';
+	$ui->step;                                        # opens the terminal, fires Start, draws a frame
+	$terminal->press_key('Tab')->type_text('Ada');    # focus the field and type
+	$ui->step;                                        # handles the input as run would, draws
+
+	is $field->value, 'Ada', 'the field holds the text';
+	is [ $terminal->lines ], [ 'Ada       ', '' ], 'what the screen shows';
+	done_testing;
+
+The text field has a background color, so its ten columns are kept as
+spaces in L</lines>. A longer test, with clicks, is in
+L<Term::Fabulous::Cookbook::Output/Test a widget without a terminal>.
 
 =head1 DESCRIPTION
 
@@ -247,8 +257,9 @@ gets it; default 0. Unknown parameters die.
 
 =head1 INPUT
 
-Input is queued until the application reads it: L<Term::Fabulous/step>
-reads all of it, and L<Term::Fabulous/run> watches C<read_handles>
+Input is queued until the application reads it:
+L<C<< $ui->step >>|Term::Fabulous/step> reads all of it, and
+L<C<< $ui->run >>|Term::Fabulous/run> watches C<read_handles>
 (see L<Term::Fabulous::Role::Terminal/read_handles>), a pipe that is
 readable while input waits. Every method returns the
 terminal, so calls can be chained. After L</end_input>, queuing more
@@ -390,7 +401,7 @@ row of the screen.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous/step>, L<Term::Fabulous::Manual/TESTING>,
+L<Term::Fabulous/step>, L<Term::Fabulous::Manual::Programs/TESTING>,
 L<Term::Fabulous::Role::Terminal>, L<Term::Fabulous::Terminal::Termbox>.
 
 =cut

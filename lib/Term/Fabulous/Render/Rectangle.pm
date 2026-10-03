@@ -112,9 +112,11 @@ Term::Fabulous::Render::Rectangle - Paint widget backgrounds
 
 =head1 DESCRIPTION
 
-Most programs never use this module directly. It is one of the roles
-L<Term::Fabulous::Render> is made of, and it paints the rectangle render
-commands Clay emits for widget backgrounds (C<background_color>).
+Most programs never use this module directly, and neither do widgets
+of your own. It is one of the roles L<Term::Fabulous::Render> is made
+of, and it paints the rectangle render commands Clay emits for widget
+backgrounds (C<background_color>). Read it if you write your own UI
+class or want to know exactly how backgrounds are painted and blended.
 
 =head1 METHODS
 
@@ -154,6 +156,14 @@ covers are not touched.
 
 =back
 
+When C<$widget> is a L<Term::Fabulous::Widget> whose
+C<reverse_video> method returns true (a pressed
+L<Term::Fabulous::Widget::Button>, see
+L<Term::Fabulous::Widget::Button/reverse_video>), every background attribute
+gets the C<TB_REVERSE> flag. The text and borders painted on top later
+take their background from C<$buffer>, flag included, so the whole
+widget is shown with swapped colors.
+
 Clay never emits a rectangle for a color with alpha 0.
 
 C<$command> is a Clay render command hash (see
@@ -161,10 +171,11 @@ L<Clay::XS/RENDER COMMANDS>); C<$widget> is the widget it belongs to.
 
 =head1 REQUIRED METHODS
 
-The consuming class provides C<fill_row>, C<set_cell>, C<extend_cell>
-and C<painted_cell> (from a cell target, see
-L<Term::Fabulous::Render/CELL TARGET>) and
-C<clip_rect> (from L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
+The consuming class provides C<cell_target>, which returns the cell
+target the background is painted into (its C<fill_row>, C<set_cell>,
+C<extend_cell> and C<painted_cell> are called; see
+L<Term::Fabulous::Render/CELL TARGET>), and C<clip_rect> (from
+L<Term::Fabulous::Render>, see L<Term::Fabulous::Render/clip_rect>).
 
 =head1 SEE ALSO
 

@@ -79,7 +79,7 @@ if that widget has no C<Change> listeners, or if every one of its
 C<Change> listeners returned C<< Clay::UI::Enum::Result->CONTINUE >>. A
 listener that returns anything else, including a plain C<return;> or the
 value of its last statement, stops the event at that widget. See
-L<Term::Fabulous::Manual/Return values and bubbling>.
+L<Term::Fabulous::Manual::Events/Return values and bubbling>.
 
 =back
 
@@ -153,7 +153,9 @@ now.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Event::Submit>,
-L<Term::Fabulous::Manual/FORMS AND INPUT WIDGETS>,
-L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Manual::Forms/FORMS AND INPUT WIDGETS>,
+L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::Forms/Read all values of a form>,
+L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>.
 
 =cut

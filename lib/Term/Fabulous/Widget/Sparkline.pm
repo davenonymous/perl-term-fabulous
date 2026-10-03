@@ -156,6 +156,7 @@ Term::Fabulous::Widget::Sparkline - A small chart without axes, one row high
 
 =head1 SYNOPSIS
 
+	use Clay::XS qw(sizing_fixed);
 	use Term::Fabulous::Widget::Sparkline;
 
 	my $load = Term::Fabulous::Widget::Sparkline->new(
@@ -176,14 +177,34 @@ Term::Fabulous::Widget::Sparkline - A small chart without axes, one row high
 
 =end html
 
+F<examples/widgets/sparkline.pl> shows the three types side by side and
+adds a value to each every second.
+
 =head1 DESCRIPTION
 
 A sparkline is a chart the size of a word: one row high, as wide as the
-layout gives it, with no axes, labels or legend, for a trend next to a
-number in a dashboard, a list or a table cell. It holds one series of
-values and draws it as a line (Braille dots, an eighth of a row high), a
-filled area (eighth blocks), or bars (one column per value, eighth
-blocks; when there are more values than columns, the newest that fit).
+layout gives it, with no axes, labels or legend, for a trend next
+to a number in a dashboard, a list or a table cell. It holds one series
+of values and draws it in one of three types:
+
+=over
+
+=item C<line>
+
+A line of Braille dots (a quarter of a row high), the values spread
+over the whole width.
+
+=item C<area>
+
+The area under the line, filled with eighth blocks (an eighth of a row
+high), the values spread over the whole width.
+
+=item C<bar>
+
+One column per value, filled with eighth blocks; when there are more
+values than columns, the newest that fit.
+
+=back
 
 The row covers the range from the smallest to the largest value, so the
 shape fills the height; C<min> and C<max> fix the range instead, so
@@ -194,10 +215,16 @@ says otherwise.
 A Sparkline is a L<Term::Fabulous::Widget::XYChart> with one series
 named C<values>, so its options apply: C<curve>, C<marker>,
 C<line_style>, C<transform>, C<max_points>, C<span_gaps>, and hover,
-which reports the index and the value under the pointer. Unless the
-layout sizes it, it is one row high and grows in width.
+which emphasizes nothing (there is only one series) but fires
+C<SeriesHover> with the series C<values> and the index and value under
+the pointer. Unless the layout sets a width or a height, it is one row
+high and grows in width; a sparkline more rows high draws its shape in
+all of them. A sparkline has no title unless you give it one (with
+C<title>, see L<Term::Fabulous::Widget::Chart/CONSTRUCTOR>); a title
+is drawn only when the sparkline is three or more rows high, and takes
+its first row.
 
-L<Term::Fabulous::Cookbook/CHARTS> shows sparklines as table cells.
+L<Term::Fabulous::Cookbook::Charts> shows sparklines as table cells.
 
 =head1 CONSTRUCTOR
 
@@ -205,8 +232,11 @@ L<Term::Fabulous::Cookbook/CHARTS> shows sparklines as table cells.
 
 	my $sparkline = Term::Fabulous::Widget::Sparkline->new(%parameters);
 
-The parameters of L<Term::Fabulous::Widget::Chart/CONSTRUCTOR>, the
-series options of L<Term::Fabulous::Widget::XYChart/CONSTRUCTOR>, and:
+The parameters of L<Term::Fabulous::Widget::Chart/CONSTRUCTOR> (a
+sparkline never shows a legend, whatever C<legend> says, and shows a
+C<title> only when it is three or more rows high), the series options of
+L<Term::Fabulous::Widget::XYChart/CONSTRUCTOR> (C<max_points>,
+C<curve>, C<marker>, ...), and:
 
 =over
 
@@ -220,12 +250,14 @@ An array reference of numbers (C<undef> for a gap). Default: none.
 
 =item C<color>
 
-The color of the series. Default: the first palette color.
+The color of the series, in any format a canvas cell takes. Default:
+C<undef>, the first color of the C<palette>.
 
 =item C<min>, C<max>
 
-Numbers: the fixed ends of the value range. Default: C<undef>, from the
-data.
+Numbers: the fixed ends of the value range; values beyond them are cut
+off. Default: C<undef>, from the data. An invalid value dies with a
+message that names C<min> or C<max>.
 
 =item C<zero>
 
@@ -256,6 +288,9 @@ Appends values; with C<max_points>, the oldest are dropped.
 
 Read and set the parameters; an invalid value dies and changes nothing.
 
+	$sparkline->type('bar');
+	$sparkline->max(undef);    # from the data again
+
 Everything else: L<Term::Fabulous::Widget::XYChart/METHODS>.
 
 =head1 KDL PROPERTIES
@@ -278,7 +313,10 @@ L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::LineChart>,
-L<Term::Fabulous::Widget::Table/CELL WIDGETS>,
-L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Manual::Tables/CELL WIDGETS>,
+L<Term::Fabulous::Cookbook::Charts/Show sparklines in table cells (Sparkline)>,
+L<Term::Fabulous::Cookbook::ChartTechniques/Print charts in a report (Static)>,
+the example program F<examples/widgets/sparkline.pl>.
 
 =cut

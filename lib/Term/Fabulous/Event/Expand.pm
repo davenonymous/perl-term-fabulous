@@ -53,12 +53,14 @@ L<Term::Fabulous::Event::CursorMove> the click causes.
 Opening from your program (C<expand>, C<expand_all>, C<expand_group>,
 C<expand_all_groups>) fires nothing, and neither does the table opening
 rows to show what a filter found. Its counterpart is
-L<Term::Fabulous::Event::Collapse>.
+L<Term::Fabulous::Event::Collapse>. Groups and trees are explained in
+L<Term::Fabulous::Manual::TableRows/Opening and closing groups> and
+L<Term::Fabulous::Manual::TableRows/Opening and closing tree rows>.
 
 It is a L<Clay::UI::Events::Event> whose name is C<Expand>; listen for
 it with C<< $table->on( Expand => sub ($event) { ... } ) >>. It bubbles
 to the table's ancestors like every event (see
-L<Term::Fabulous::Manual/Return values and bubbling>), and
+L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
 C<< $event->target >> is the table.
 
 =head1 CONSTRUCTOR
@@ -68,8 +70,8 @@ C<< $event->target >> is the table.
 	my $event = Term::Fabulous::Event::Expand->new( row_id => ..., group_path => ... );
 
 The table builds these events itself; build one yourself only to test
-your listeners. Unknown parameters die, and so do array and hash
-parameters of the wrong kind; they are copied.
+your listeners. Unknown parameters die, and so does a C<group_path>
+that is not C<undef> or an array reference; it is copied.
 
 =over
 
@@ -96,6 +98,8 @@ outermost first (a new array reference); C<undef> for a row.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual/EVENTS>.
+L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Cookbook::TableRows/Show nested data as a tree (expand and collapse rows)>,
+L<Term::Fabulous::Cookbook::TableRows/Group rows by a column (collapsible group headers)>.
 
 =cut

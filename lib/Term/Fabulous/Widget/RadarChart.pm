@@ -421,6 +421,8 @@ around a center
 
 =end html
 
+F<examples/widgets/radar-chart.pl> draws this chart.
+
 =head1 DESCRIPTION
 
 A radar chart (a spider or web chart) compares profiles: each series
@@ -433,8 +435,10 @@ share a scale (ratings, percentages).
 The axes are the C<labels>, clockwise from 12 o'clock (C<start_angle>
 turns them). Rings mark round values from the center (C<min>, 0 by
 default) to the outer ring (C<max>, a round value above the data), as a
-C<polygon> through the axes or a C<circle>; the values of the rings are
-written along the first axis. An C<area> series (the default type) is a
+C<polygon> through the axes or a C<circle>, with a spoke from the
+center to every axis label; the values of the rings are written along
+the first axis. C<< grid =E<gt> 'none' >> leaves out the rings, the
+spokes and the ring values. An C<area> series (the default type) is a
 translucent polygon with its outline, a C<line> series only the outline;
 C<points> marks the values. The web is drawn over the fills and under
 the outlines, so it stays readable.
@@ -486,16 +490,21 @@ C<undef>, from the data (the center is 0 unless the data goes below).
 
 =item C<ticks>
 
-A positive integer: the number of rings wanted. Default: C<undef>, about
-one ring per two rows of radius.
+A positive integer: about how many rings you want; the chart picks the
+round step that comes closest. Default: C<undef>, which spaces the rings
+about three rows apart, so a larger chart has more of them.
 
 =item C<grid>
 
-C<polygon> (the default), C<circle> or C<none>.
+C<polygon> (the default): rings that run straight from axis to axis;
+C<circle>: round rings; C<none>: no rings, spokes or ring values.
 
 =item C<format>
 
-How the ring values are written; see L<Term::Fabulous::Chart::Format>.
+How the ring values are written: C<si>, C<integer>, C<percent>, a
+C<sprintf> format or a code reference; see
+L<Term::Fabulous::Chart::Format>. Default: C<undef>, as many decimals
+as the step between the rings needs.
 
 =item C<start_angle>
 
@@ -503,23 +512,56 @@ Degrees clockwise from 12 o'clock for the first axis. Default: 0.
 
 =item C<marker>, C<line_style>, C<points>, C<point>, C<fill_opacity>, C<transform>
 
-Series options for every series without one of its own: the characters
-of the fill (C<quadrant> by default; C<half>, C<sextant>, C<braille>),
-C<solid>, C<dashed> or C<dotted> outlines, marks at the values and their
-character (a bullet by default), the translucency of the fill (0.25 by
-default), and transform steps.
+Series options for every series without one of its own (a series hash
+may set each of them too):
+
+=over
+
+=item C<marker>
+
+The characters of the fill: C<quadrant> (the default), C<half>,
+C<sextant> or C<braille>.
+
+=item C<line_style>
+
+The outline: C<solid> (the default), C<dashed> or C<dotted>.
+
+=item C<points>, C<point>
+
+C<points> true marks every value; C<point> is the mark: a single
+character (a bullet, C<U+2022>, by default), or C<dot> or C<square> as
+in L<Term::Fabulous::Widget::XYChart/Points>.
+
+=item C<fill_opacity>
+
+0 to 1: how much of the fill color covers the background. Default: 0.25.
+
+=item C<transform>
+
+Steps that prepare the values; see
+L<Term::Fabulous::Chart::Transform>.
+
+=back
 
 =back
 
 =head1 METHODS
 
-Every parameter has an accessor of the same name (C<labels> returns a
-copy, and dies without changing anything for labels that would leave a
-value of a series without its axis; C<transform> only sets); the series
-methods of
+Every parameter except C<series> has an accessor of the same name
+(the series methods are listed below): without an argument it returns
+the value, with one it checks and sets it, and an invalid
+value dies and changes nothing. C<labels> returns a copy, and dies
+without changing anything for labels that would leave a value of a
+series without its axis; C<transform> only sets, and returns nothing.
+
+	$chart->labels( [ 'Speed', 'Battery', 'Screen', 'Keyboard', 'Weight', 'Price', 'Ports' ] );
+	$chart->max(undef);         # from the data again
+	$chart->fill_opacity(0.4);
+
+The series are managed with the methods of
 L<Term::Fabulous::Role::HasSeries> (C<add_series>, C<set_series>,
-C<set_data>, C<add_points>, C<remove_series>, C<hide_series>, ...); and
-C<hovered>, C<revision> and C<effective_background> from
+C<set_data>, C<add_points>, C<remove_series>, C<hide_series>, ...); the
+chart also has C<hovered>, C<revision> and C<effective_background> from
 L<Term::Fabulous::Widget::Chart>.
 
 =head1 EVENTS
@@ -555,7 +597,10 @@ The labels are applied before the series.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::Chart>, L<Term::Fabulous::Role::HasSeries>,
-L<Term::Fabulous::Widget::PolarAreaChart>, L<Term::Fabulous::Cookbook/CHARTS>.
+L<Term::Fabulous::Widget::Chart> (title, legend, colors, hover),
+L<Term::Fabulous::Role::HasSeries>, L<Term::Fabulous::Widget::PolarAreaChart>,
+L<Term::Fabulous::Manual::Charts/CHARTS>,
+L<Term::Fabulous::Cookbook::Charts/Compare profiles on radar and polar area charts (RadarChart, PolarAreaChart)>,
+the example program F<examples/widgets/radar-chart.pl>.
 
 =cut

@@ -282,7 +282,8 @@ The series of L<Term::Fabulous::Widget::XYChart> and
 L<Term::Fabulous::Widget::RadarChart>: adding, changing and removing them
 and their data. Every series has a unique name; methods find series by it
 and die for names the chart does not have. Every change shows in the next
-frame.
+frame. The methods that change series return the chart, so calls can
+be chained.
 
 Each series gets the next color of the chart's palette when it is added
 and keeps it, also when series before it are removed. Options the chart
@@ -307,6 +308,9 @@ chart: a value for a label it does not have); nothing is added then.
 	$chart->remove_series( 'web', 'api' );
 	$chart->clear_series;
 
+Remove the named series, or all of them. An unknown name dies before any
+series is removed. The remaining series keep their colors.
+
 =head2 series_names, has_series
 
 The names of all series in order; whether a name is one of them.
@@ -316,15 +320,20 @@ The names of all series in order; whether a name is one of them.
 	my $description = $chart->series('web');
 	# { name => 'web', type => 'line', color => '#3987e5', curve => 'monotone', data => [ ... ] }
 
-A new hash describing a series: name, type, color (when it has one of its
-own), the options it has set itself, and the data as it was given.
+A new hash describing a series: name, type, color (as C<#rrggbb>, when it
+has one of its own), the options it has set itself except C<transform>,
+and the data: y values for points without x, C<[ x, y ]> pairs for the
+others (points given as hashes come back as pairs).
 
 =head2 set_series
 
 	$chart->set_series( web => ( type => 'area', fill_opacity => 0.5, color => undef ) );
 
 Changes the type, the color, the data or options of a series; C<undef>
-removes an option (the chart's applies again). The name cannot change.
+removes an option (the chart's applies again) or the color (the palette's
+applies again). The name cannot change. Everything is checked first: an
+invalid value dies and leaves the series as it was. A new type drops a
+C<marker> of the series that the new type cannot draw with.
 
 =head2 set_data, add_points, clear_data
 
@@ -341,8 +350,10 @@ or data the chart cannot show, dies and changes nothing.
 	$chart->append( $x, { web => 12, api => 4 } );
 	$chart->append( undef, { web => 12 } );    # the next index
 
-Adds one point to each series named in the hash, all at the same x: the
-way to feed several series from one measurement.
+Adds one point to each series named in the hash, all at the same x (with
+C<undef>: each at its next position): the way to feed several series from
+one measurement. An unknown name or an invalid value dies and adds no
+point to any series.
 
 =head2 show_series, hide_series, is_series_visible
 
@@ -354,8 +365,10 @@ the axes; its data is kept.
 	my $curve = $chart->series_default('curve');
 	$chart->series_default( curve => 'monotone' );
 
-Reads or sets an option the chart gives all its series. The charts also
-have an accessor for each (C<< $chart->curve('monotone') >>).
+Reads or sets an option the chart gives all its series; C<undef> removes
+it. Dies for a name the chart does not take as a series option, and for
+an invalid value. The charts also have an accessor for each
+(C<< $chart->curve('monotone') >>).
 
 =head2 series_option
 
@@ -377,13 +390,14 @@ show a series of that type in its current state (the role calls it
 before a series is added or changes its type), and
 C<< check_series_points( $name, $points ) >>, which dies when the chart
 cannot show the points (C<[ $x, $y ]> pairs, as
-L<Term::Fabulous::Chart::Series/points> holds them); the role has every
+L<Term::Fabulous::Chart::Series/points, count> holds them); the role has every
 series call it with its new points before they are stored, so bad data
 dies at once and leaves the series as it was.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::XYChart>, L<Term::Fabulous::Widget::RadarChart>,
-L<Term::Fabulous::Chart::Series>.
+L<Term::Fabulous::Chart::Series>, L<Term::Fabulous::Manual::Charts/Series and data>,
+L<Term::Fabulous::Cookbook::ChartTechniques/A live chart that follows new data (append, max_points, span)>.
 
 =cut

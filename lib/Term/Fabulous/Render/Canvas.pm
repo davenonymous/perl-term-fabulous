@@ -170,15 +170,20 @@ changed cells when possible
 
 	# What Term::Fabulous::Render::draw does with canvases:
 	my @kept_rects = $ui->plan_canvases($frame);         # before begin_frame
-	$ui->begin_frame(@kept_rects);
+	$ui->cell_target->begin_frame(@kept_rects);
 	$ui->render_custom( $command, $canvas, $buffer );     # for each canvas command
-	$ui->end_frame;
+	$ui->cell_target->end_frame;
 	$ui->finish_canvases;                                 # after a complete frame
 
 =head1 DESCRIPTION
 
-Most programs never use this module directly. It is one of the roles
-L<Term::Fabulous::Render> is made of, and it paints
+Most programs never use this module directly, and neither do widgets
+of your own: a widget built on L<Term::Fabulous::Widget::Canvas> is
+painted by this role without any help (see
+L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>).
+Read it if you write your own UI class or want to know when a canvas is
+repainted. It is one of the roles L<Term::Fabulous::Render> is made of,
+and it paints
 L<Term::Fabulous::Widget::Canvas> widgets (and everything built on them:
 L<Term::Fabulous::Widget::PixelCanvas> and the input widgets).
 
@@ -289,8 +294,9 @@ empty back buffer.
 
 =head1 REQUIRED METHODS
 
-The consuming class provides C<widget_for> (from L<Clay::UI>),
-C<set_cell>, C<extend_cell> and C<release_rect> (from a cell target,
+The consuming class provides C<widget_for> (from L<Clay::UI>) and
+C<cell_target>, which returns the cell target the canvases are painted
+into (its C<set_cell>, C<extend_cell> and C<release_rect> are called;
 see L<Term::Fabulous::Render/CELL TARGET>).
 
 =head1 SEE ALSO

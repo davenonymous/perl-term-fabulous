@@ -132,9 +132,10 @@ Term::Fabulous::Render::Attr - Turn colors into termbox2 truecolor attributes
 =head1 DESCRIPTION
 
 Most programs never use this module directly. It is used by the render
-roles and the canvas widgets, and it explains what the color values
-returned by L<Term::Fabulous::Widget::Canvas/cell> and
-L<Term::Fabulous::Widget::PixelCanvas/pixel> mean.
+roles and the canvas widgets. Read it if you write your own cell target
+or UI class (see L<Term::Fabulous::Render>), or to understand the color
+values returned by L<Term::Fabulous::Widget::Canvas/cell> and
+L<Term::Fabulous::Widget::PixelCanvas/pixel>.
 
 termbox2 describes the colors of a cell with an integer I<attribute>. In
 truecolor mode, the one Term::Fabulous uses, an attribute holds a
@@ -161,11 +162,8 @@ compute the mix of such a color with the attribute below it. The
 terminal default color has no RGB value to mix with; see those functions
 for what happens then.
 
-Loading this module dies if the installed termbox2 library was built
-without truecolor support (C<TB_OPT_TRUECOLOR>), because Term::Fabulous
-needs 24-bit colors:
-
-	Term::Fabulous::Render::Attr: the termbox2 library was built without truecolor support (TB_OPT_TRUECOLOR); Term::Fabulous needs 24-bit colors
+Truecolor is always available: termbox2 is compiled into the
+distribution with 64-bit attributes (see L<Term::Fabulous::Termbox>).
 
 =head1 FUNCTIONS
 
@@ -248,6 +246,6 @@ unchanged; style flags such as C<TB_REVERSE> are kept.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Color>, L<Term::Fabulous::Render>,
-L<Term::Fabulous::Manual/COLORS>.
+L<Term::Fabulous::Manual::Looks/COLORS>.
 
 =cut

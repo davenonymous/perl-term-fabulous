@@ -461,10 +461,13 @@ limit: pasted text is cut to fit. Dies if the initial C<value> is longer.
 
 =item C<read_only>
 
-A boolean, stored as 1 or 0. Default: 0. A read-only input can still take the focus, and
-its text can be selected and copied, but the user cannot change it:
-typing and the editing keys are not used and bubble on to the
-ancestors. Programmatic writes to C<value> still work.
+A boolean, stored as 1 or 0. Default: 0. A read-only input can still
+take the focus, and its text can be selected and copied, but the user
+cannot change it: typing and the editing keys are not used and bubble
+on to the ancestors. Programmatic writes to C<value> still work. A read-only input looks
+like an editable one; disable it (L<Term::Fabulous::Widget::Input/disabled>)
+when the user should see that the text cannot be changed. A reference
+dies.
 
 =item C<placeholder_color>
 
@@ -522,7 +525,9 @@ leaves the placeholder unchanged.
 	$input->read_only(1);
 
 Accessor for the C<read_only> flag. Returns 1 or 0, also for a value
-passed to C<new>. Any value is accepted.
+passed to C<new>. Any plain value is accepted as a boolean; a reference
+dies and leaves the flag unchanged. Writing does not change what the
+input shows.
 
 =head2 placeholder_color
 
@@ -745,8 +750,8 @@ into spaces (0, the default).
 	$self->view->set_wrap(1);
 
 The L<Term::Fabulous::TextView> of the input: one row without wrapping
-until a subclass changes its settings (L<Term::Fabulous::TextView/set_wrap>,
-L<Term::Fabulous::TextView/set_scrollbar>). The input gives it the size
+until a subclass changes its settings (see
+L<Term::Fabulous::TextView/set_wrap, set_scrollbar>). The input gives it the size
 of its buffer and lets it follow the cursor every time a frame is drawn,
 and paints the rows it shows. Use it to move the cursor by rows
 (L<Term::Fabulous::TextView/move_vertically>) or to scroll
@@ -803,6 +808,8 @@ returned from C<handle_key> directly.
 
 L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
 L<Term::Fabulous::Editor>, L<Term::Fabulous::TextView>,
-L<Term::Fabulous::Widget::Input>.
+L<Term::Fabulous::Widget::Input>,
+L<the editing section of the forms guide|Term::Fabulous::Manual::Forms/EDITING TEXT>,
+L<Term::Fabulous::Cookbook::Forms/Copy and paste through the clipboard>.
 
 =cut

@@ -83,19 +83,20 @@ my $process = IO::Async::Process->new(
 );
 $loop->add($process);
 
-# Keep the newest line in view (see "Scroll a ScrollBox from code").
-my $output_id = Clay::XS::Clay_GetElementId('output');
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+# Keep the newest line in view (see the recipe "Scroll a ScrollBox from
+# code").
 $loop->add(
 	IO::Async::Timer::Periodic->new(
 		interval => 1 / 30,
 		on_tick  => sub {
-			my $data = Clay::XS::Clay_GetScrollContainerData($output_id);
-			return unless $data->{found};
-			my $lowest = min( 0, $data->{scrollContainerDimensions}{height} - $data->{contentDimensions}{height} );
-			Clay::XS::set_scroll_position( $output_id, { x => 0, y => $lowest } ) if $data->{scrollPosition}{y} != $lowest;
+			my $state = $ui->scroll_state($output) or return;
+			my $lowest = min( 0, $state->{viewport}{height} - $state->{content}{height} );
+			$ui->scroll_to( $output, { y => $lowest } ) if $state->{position}{y} != $lowest;
 			return;
 		},
 	)->start
 );
 
-Term::Fabulous->new( root => $root, width => 80, height => 24 )->run;
+$ui->run;

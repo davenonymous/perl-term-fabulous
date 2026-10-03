@@ -247,8 +247,10 @@ in the terminal's default background and not in reverse video.
 
 =back
 
-Unknown options die. L<Term::Fabulous::Static/render_lines> and
-L<Term::Fabulous::Terminal::Memory/lines> are built on it.
+Unknown options die. The
+L<C<render_lines>|Term::Fabulous::Static/render_lines> method of
+Term::Fabulous::Static and the L<C<lines>|Term::Fabulous::Terminal::Memory/lines>
+method of Term::Fabulous::Terminal::Memory are built on it.
 
 =head2 grid_height
 

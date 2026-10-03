@@ -372,7 +372,11 @@ C<border_style_left> (one side each); see
 L<Term::Fabulous::Role::HasBorderStyle>. A border is only drawn on the
 sides where the widget's C<border_width> is positive and the style is
 not L</Hidden>; see
-L<Term::Fabulous::Manual/BORDERS>.
+L<Term::Fabulous::Manual::Looks/BORDERS>.
+
+In a KDL layout file, a style is named in the C<border> node, for
+example C<border style=Round style-top=Heavy> (see
+L<Term::Fabulous::Widget::Box/KDL PROPERTIES>).
 
 The styles and their glyphs come from the Python TUI library Textual.
 To see all of them, run F<examples/border-showcase.pl> from the
@@ -691,7 +695,8 @@ L</get_mixed_joint>. Use L</get_mixed_joint> instead.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Manual/BORDERS>, L<Term::Fabulous::Role::HasBorderStyle>,
-L<Term::Fabulous::Render::Border>, L<Object::PadX::Enum>.
+L<Term::Fabulous::Manual::Looks/BORDERS>, L<Term::Fabulous::Role::HasBorderStyle>,
+L<Term::Fabulous::Render::Border>, L<Object::PadX::Enum>,
+L<Term::Fabulous::Cookbook::Layout/Use a different border style on each side>.
 
 =cut
