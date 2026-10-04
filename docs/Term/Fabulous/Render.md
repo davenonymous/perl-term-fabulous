@@ -238,9 +238,9 @@ and only a background with an alpha from 1 to 254 is blended.
 - Canvases
 
     The cells of a [Term::Fabulous::Widget::Canvas](Widget/Canvas.md), painted into its
-    content box. Clay emits a canvas's background rectangle after the
-    canvas's own command; the renderer swaps the two, so the background is
-    painted first. See [Term::Fabulous::Render::Canvas](Render/Canvas.md).
+    content box. Clay carries a canvas's background in the canvas's own
+    command; the frame paints it as a rectangle before the canvas, so the
+    background lies below the cells. See [Term::Fabulous::Render::Canvas](Render/Canvas.md).
 
 - Borders
 

@@ -463,9 +463,9 @@ there before. See L<Term::Fabulous::Render::Text>.
 =item Canvases
 
 The cells of a L<Term::Fabulous::Widget::Canvas>, painted into its
-content box. Clay emits a canvas's background rectangle after the
-canvas's own command; the renderer swaps the two, so the background is
-painted first. See L<Term::Fabulous::Render::Canvas>.
+content box. Clay carries a canvas's background in the canvas's own
+command; the frame paints it as a rectangle before the canvas, so the
+background lies below the cells. See L<Term::Fabulous::Render::Canvas>.
 
 =item Borders
 

@@ -95,13 +95,12 @@ subtest 'a border paints the edges of its sides with a width' => sub {
 subtest 'paint order, painted_after and topmost_at' => sub {
 	my $frame = frame(
 		rectangle( 0, 0, 10, 5, id => 1 ),
-		command( CLAY_RENDER_COMMAND_TYPE_CUSTOM, 1, 1, 4, 2, id => 2 ),
-		rectangle( 1, 1, 4, 2, id => 2 ),
-		command( CLAY_RENDER_COMMAND_TYPE_TEXT, 3, 2, 5, 1, id => 3 ),
+		command( CLAY_RENDER_COMMAND_TYPE_CUSTOM, 1, 1, 4, 2, id => 2, data => { backgroundColor => { r => 10, g => 20, b => 30, a => 255 } } ),
+		command( CLAY_RENDER_COMMAND_TYPE_TEXT,   3, 2, 5, 1, id => 3 ),
 	);
 	is [ map { [ $_->{commandType}, $_->{id} ] } $frame->commands ],
 		[ [ CLAY_RENDER_COMMAND_TYPE_RECTANGLE, 1 ], [ CLAY_RENDER_COMMAND_TYPE_RECTANGLE, 2 ], [ CLAY_RENDER_COMMAND_TYPE_CUSTOM, 2 ], [ CLAY_RENDER_COMMAND_TYPE_TEXT, 3 ] ],
-		"a canvas's background is painted before the canvas";
+		"a canvas's background, carried in its command, is painted as a rectangle before the canvas";
 	is $frame->command_count, 4, 'command_count';
 
 	is $frame->painted_after( 2, [ 1, 1, 3, 2 ] ), 0, 'nothing is painted over the top row of the canvas';

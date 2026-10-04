@@ -38,9 +38,9 @@ that needs them, the rest when it is constructed):
 
 - the paint order
 
-    The order of Clay's commands, except that the background rectangle of a
-    canvas is painted before the canvas's own command, which Clay emits
-    first.
+    The order of Clay's commands, with one addition: Clay carries the
+    background of a canvas in the canvas's own command, and the frame
+    paints it as a rectangle right before that command.
 
 - the clip rect of every command
 

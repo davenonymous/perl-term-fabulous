@@ -56,7 +56,7 @@ class Term::Fabulous::Render::Frame :strict(params) {
 		_check_size( width  => $width );
 		_check_size( height => $height );
 
-		@_commands   = _backgrounds_first(@$commands);
+		@_commands   = _with_custom_backgrounds(@$commands);
 		@_clip_rects = $self->_replay_scissors;
 	}
 
@@ -70,18 +70,22 @@ class Term::Fabulous::Render::Frame :strict(params) {
 		return;
 	}
 
-	# Clay emits an element's custom command before its background
-	# rectangle; paint the background first, below the custom content.
-	sub _backgrounds_first (@commands) {
-		foreach my $index ( 0 .. $#commands - 1 ) {
-			my ( $custom, $next ) = @commands[ $index, $index + 1 ];
-			next
-				unless $custom->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM
-				&& $next->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
-				&& $next->{id} == $custom->{id};
-			@commands[ $index, $index + 1 ] = ( $next, $custom );
-		}
-		return @commands;
+	# Clay carries a custom element's background in the custom command
+	# itself, without a rectangle of its own; a rectangle painted before
+	# the custom command puts the background below the custom content.
+	sub _with_custom_backgrounds (@commands) {
+		return map { ( _custom_background($_), $_ ) } @commands;
+	}
+
+	# The background rectangle of a custom command: the command's box in
+	# its background color. Nothing for other commands and for a custom
+	# command without a visible background, as Clay emits no rectangle for
+	# a background with alpha 0 either.
+	sub _custom_background ($command) {
+		return () unless $command->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM;
+		my $data = $command->{renderData};
+		return () unless ( $data->{backgroundColor}{a} // 0 ) > 0;
+		return { %$command, commandType => CLAY_RENDER_COMMAND_TYPE_RECTANGLE, renderData => { backgroundColor => $data->{backgroundColor}, cornerRadius => $data->{cornerRadius} } };
 	}
 
 	# Everything between a SCISSOR_START and its SCISSOR_END is clipped to
@@ -230,9 +234,9 @@ that needs them, the rest when it is constructed):
 
 =item * the paint order
 
-The order of Clay's commands, except that the background rectangle of a
-canvas is painted before the canvas's own command, which Clay emits
-first.
+The order of Clay's commands, with one addition: Clay carries the
+background of a canvas in the canvas's own command, and the frame
+paints it as a rectangle right before that command.
 
 =item * the clip rect of every command
 
