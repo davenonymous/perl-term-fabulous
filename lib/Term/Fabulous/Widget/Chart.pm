@@ -86,9 +86,9 @@ class Term::Fabulous::Widget::Chart
 				return $continue;
 			}
 		);
-		}
+	}
 
-		method _fail ( $name, $expected, $value ) {
+	method _fail ( $name, $expected, $value ) {
 		croak ref($self) . ": $name must be $expected, got " . describe($value);
 	}
 

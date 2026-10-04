@@ -67,11 +67,11 @@ role Term::Fabulous::Role::HasBorderStyle {
 				$self->$accessor($border_style) unless defined $self->$accessor;
 			}
 		}
-		}
+	}
 
-		# Hand-written accessors rather than :accessor ones, so that writing a
-		# style marks the widget changed.
-		method border_style_top (@new) { return $self->_set_border_style( top => \$border_style_top, @new ) }
+	# Hand-written accessors rather than :accessor ones, so that writing a
+	# style marks the widget changed.
+	method border_style_top    (@new) { return $self->_set_border_style( top    => \$border_style_top,    @new ) }
 	method border_style_right  (@new) { return $self->_set_border_style( right  => \$border_style_right,  @new ) }
 	method border_style_bottom (@new) { return $self->_set_border_style( bottom => \$border_style_bottom, @new ) }
 	method border_style_left   (@new) { return $self->_set_border_style( left   => \$border_style_left,   @new ) }

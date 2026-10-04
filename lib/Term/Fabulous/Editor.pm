@@ -57,9 +57,9 @@ class Term::Fabulous::Editor :strict(params) {
 	ADJUST :params ( :$text = '' ) {
 		$self->set_max_length($max_length);
 		$self->set_text($text);
-		}
+	}
 
-		sub _describe ($value) {
+	sub _describe ($value) {
 		return defined $value ? "'$value'" : 'undef';
 	}
 

@@ -38,10 +38,10 @@ class Term::Fabulous::Layout :strict(params) {
 		$required_modules = _use_instructions($raw);
 		_load_widget_class( $_, $required_modules->{$_} ) foreach sort keys %$required_modules;
 		$_root_node = _root_node( $raw, $required_modules );
-		}
+	}
 
-		# Text::KDL::XS reads a filehandle as UTF-8 bytes, a string as characters
-		sub _open_file ($path) {
+	# Text::KDL::XS reads a filehandle as UTF-8 bytes, a string as characters
+	sub _open_file ($path) {
 		open my $handle, '<:raw', $path or die "Term::Fabulous::Layout: cannot open '$path': $!";
 		return $handle;
 	}

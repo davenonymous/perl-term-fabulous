@@ -28,9 +28,9 @@ class Term::Fabulous::Color :strict(params) {
 	my $NUMBER   = qr/[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
 	my $COMMA    = qr/\s*,\s*/;
 
-	field $red :reader;
+	field $red   :reader;
 	field $green :reader;
-	field $blue :reader;
+	field $blue  :reader;
 	field $alpha :reader;
 
 	# INVARIANT: Color is immutable post-ADJUST; lazy memo slots are safe.

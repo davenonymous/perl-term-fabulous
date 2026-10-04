@@ -7,8 +7,8 @@
 #   perl tools/tidy --check $(git ls-files '*.pm' '*.pl' '*.t')
 #
 # perltidy alone joins the opening brace of a class or role whose
-# attributes span several lines onto the last attribute line; tools/tidy
-# puts it back on a line of its own.
+# attributes span several lines onto the last attribute line, and reads
+# "ADJUST :params (" as a label; tools/tidy works around both.
 
 # Line length and indentation: one tab per level, continuation lines one
 # more tab.

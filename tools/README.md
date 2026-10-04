@@ -133,4 +133,7 @@ perlcritic lib t examples tools
 brace of a class or role whose attributes span several lines back on a
 line of its own, which perltidy alone joins onto the last attribute
 line. With `--check` it writes nothing, lists the files that are not
-tidy and exits with status 1.
+tidy and exits with status 1. It also hides `ADJUST :params (` from
+perltidy, which would read it as a label before a call and indent the
+rest of the class one level deeper, by showing it a method with a
+signature instead.

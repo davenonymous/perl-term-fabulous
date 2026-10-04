@@ -16,6 +16,13 @@
 #         :strict(params)
 #     {
 #
+# perltidy also reads "ADJUST :params (" as a label before a call: it
+# pads the colon, ends the block with a semicolon and indents the rest
+# of the class one level deeper. This script shows perltidy such a
+# block as a method with a signature and puts the ADJUST back:
+#
+#     ADJUST :params ( :$text = '' ) {
+#
 # See tools/README.md.
 #
 # Copyright (C) 2026 davenonymous.
@@ -34,6 +41,14 @@ use Perl::Tidy ();
 
 use constant PERLTIDYRC => "$FindBin::Bin/../.perltidyrc";
 
+# An ADJUST block with named parameters, and the method perltidy sees in
+# its place, named so that no code of this distribution uses it. This
+# script tidies itself, so the method declaration must not appear in it
+# as a whole: the postfilter would rewrite it.
+use constant ADJUST_PARAMS_STAND_IN => 'ADJUST__PARAMS__';
+my $ADJUST_PARAMS           = qr/\bADJUST[ \t]+:params[ \t]*\(/;
+my $ADJUST_PARAMS_AS_METHOD = qr/\bmethod[ \t]+\Q${\ ADJUST_PARAMS_STAND_IN}\E[ \t]*\(/;
+
 # A class or role header followed by attribute lines, the last of which
 # perltidy ended with the opening brace.
 my $JOINED_CLASS_BRACE = qr/
@@ -42,6 +57,18 @@ my $JOINED_CLASS_BRACE = qr/
 
 sub unjoin_class_braces ($code) {
 	return $code =~ s/$JOINED_CLASS_BRACE/$1$2\n$1\{/gr;
+}
+
+sub hide_adjust_params ($code) {
+	return $code =~ s/$ADJUST_PARAMS/method ${\ ADJUST_PARAMS_STAND_IN} (/gr;
+}
+
+sub restore_adjust_params ($code) {
+	return $code =~ s/$ADJUST_PARAMS_AS_METHOD/ADJUST :params (/gr;
+}
+
+sub restore_source_syntax ($code) {
+	return unjoin_class_braces( restore_adjust_params($code) );
 }
 
 sub read_raw ($file) {
@@ -68,7 +95,8 @@ sub tidied ($file) {
 		errorfile   => \$errors,
 		perltidyrc  => PERLTIDYRC,
 		argv        => [],
-		postfilter  => \&unjoin_class_braces,
+		prefilter   => \&hide_adjust_params,
+		postfilter  => \&restore_source_syntax,
 	);
 	die "tidy: perltidy failed on $file:\n$errors" if $failed;
 	return ( $source, $tidied );

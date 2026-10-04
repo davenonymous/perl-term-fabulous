@@ -62,9 +62,9 @@ class Term::Fabulous::Widget::RadarChart
 		croak ref($self) . ": series must be an array reference of series hashes" unless ref $initial_series eq 'ARRAY';
 		$self->add_series($_) foreach @$initial_series;
 		$initial_series = undef;
-		}
+	}
 
-		method default_series_type () { return 'area' }
+	method default_series_type ()             { return 'area' }
 	method series_types ()                    { return qw(area line) }
 	method series_default_names ()            { return @DEFAULTS }
 	method check_series_type ( $name, $type ) { return }

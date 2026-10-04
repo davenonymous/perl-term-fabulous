@@ -71,9 +71,10 @@ class Term::Fabulous::Widget::XYChart
 	method series_default_names () { return @SERIES_DEFAULTS }
 
 	ADJUST :params (
-		:$marker = undef, :$curve = undef, :$tension = undef, :$line = undef, :$line_style = undef, :$points = undef, :$point = undef,
+		:$marker       = undef, :$curve     = undef, :$tension    = undef, :$line      = undef, :$line_style   = undef, :$points = undef, :$point = undef,
 		:$fill_opacity = undef, :$transform = undef, :$max_points = undef, :$span_gaps = undef, :$value_labels = undef
-		) {
+		)
+	{
 		my %given = (
 			marker     => $marker,     curve      => $curve,      tension   => $tension,   line         => $line,
 			line_style => $line_style, points     => $points,     point     => $point,     fill_opacity => $fill_opacity,
@@ -89,13 +90,13 @@ class Term::Fabulous::Widget::XYChart
 		croak ref($self) . ": series must be an array reference of series hashes, got " . describe($initial_series) unless ref $initial_series eq 'ARRAY';
 		$self->add_series($_) foreach @$initial_series;
 		$initial_series = undef;
-		}
+	}
 
-		# ---------------------------------------------------------------------
-		# Checks
-		# ---------------------------------------------------------------------
+	# ---------------------------------------------------------------------
+	# Checks
+	# ---------------------------------------------------------------------
 
-		method _checked_labels ($value) {
+	method _checked_labels ($value) {
 		croak ref($self) . ": labels must be an array reference of strings, got " . describe($value) unless ref $value eq 'ARRAY';
 		foreach my $label (@$value) {
 			croak ref($self) . ": every label must be a string, got " . describe($label) unless defined $label && !ref $label;

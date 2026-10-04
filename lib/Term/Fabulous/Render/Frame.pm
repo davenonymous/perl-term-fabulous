@@ -58,9 +58,9 @@ class Term::Fabulous::Render::Frame :strict(params) {
 
 		@_commands   = _backgrounds_first(@$commands);
 		@_clip_rects = $self->_replay_scissors;
-		}
+	}
 
-		method _all_painted_rects () {
+	method _all_painted_rects () {
 		return $_painted_rects //= [ map { [ _painted_rects( $_commands[$_], $_clip_rects[$_] ) ] } 0 .. $#_commands ];
 	}
 

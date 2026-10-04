@@ -56,9 +56,9 @@ class Term::Fabulous::Chart::Series :strict(params) {
 		$self->set_option( $_ => delete $options{$_} ) foreach grep { exists $options{$_} } @OPTIONS;
 		croak "$owner: series '$name' does not take " . join( ', ', sort keys %options ) . " (known: name, type, data, color, " . join( ', ', @OPTIONS ) . ")" if %options;
 		$self->set_data($data);
-		}
+	}
 
-		sub _is_number ($value) {
+	sub _is_number ($value) {
 		return defined $value && !ref $value && looks_like_number($value) && $value == $value && $value - $value == 0;
 	}
 
