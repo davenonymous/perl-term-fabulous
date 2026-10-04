@@ -17,7 +17,8 @@ use Term::Fabulous::Chart::Easing qw(easing easing_names is_easing_name);
 my %SHAPES = map { $_ => 1 } qw(linear step step-after step-before step-middle monotone catmull-rom natural);
 
 sub curve_names () {
-	return sort( keys %SHAPES ), grep { $_ ne 'linear' } easing_names();
+	my @names = ( sort( keys %SHAPES ), grep { $_ ne 'linear' } easing_names() );
+	return @names;
 }
 
 sub is_curve ($curve) {

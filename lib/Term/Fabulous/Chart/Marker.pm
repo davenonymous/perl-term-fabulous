@@ -72,7 +72,8 @@ class Term::Fabulous::Chart::Marker :strict(params) {
 	}
 
 	method names :common () {
-		return sort keys %SPEC;
+		my @names = sort keys %SPEC;
+		return @names;
 	}
 
 	method is_name :common ($candidate) {

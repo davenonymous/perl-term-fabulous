@@ -64,7 +64,7 @@ class Term::Fabulous::Static
 		_checked_options( print => \%options, qw(fh colors) );
 		my $fh = $options{fh} // \*STDOUT;
 		die "Term::Fabulous::Static: fh must be an open file handle" unless openhandle($fh);
-		my $colors = $options{colors} // ( -t $fh ? 1 : 0 );
+		my $colors = $options{colors} // ( -t $fh ? 1 : 0 );    ## no critic (InputOutput::ProhibitInteractiveTest) $fh is any handle, not STDIN
 		print {$fh} encode( 'UTF-8', $self->render_string( colors => $colors ) );
 		return;
 	}

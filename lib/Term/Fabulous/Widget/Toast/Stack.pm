@@ -54,7 +54,8 @@ class Term::Fabulous::Widget::Toast::Stack
 	}
 
 	method positions :common () {
-		return sort keys %ATTACH_POINT_OF_POSITION;
+		my @positions = sort keys %ATTACH_POINT_OF_POSITION;
+		return @positions;
 	}
 }
 

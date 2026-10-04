@@ -66,7 +66,9 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 	# for all screenshots after it.
 	sub from_file ( $class, $file ) {
 		open my $handle, '<:raw', $file or croak "Term::Fabulous::Screenshot::Scenario: cannot read $file: $!";
-		my $source = decode( 'UTF-8', do { local $/; <$handle> }, Encode::FB_CROAK );
+		my $bytes = do { local $/; <$handle> };
+		close $handle;
+		my $source = decode( 'UTF-8', $bytes, Encode::FB_CROAK );
 		return $class->from_string( $source, $file );
 	}
 

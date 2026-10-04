@@ -31,9 +31,17 @@ sub frame {
 	return Term::Fabulous::Render::Frame->new( commands => \@commands, width => 10, height => 5 );
 }
 
-sub rectangle     { command( CLAY_RENDER_COMMAND_TYPE_RECTANGLE,     @_ ) }
-sub scissor_start { command( CLAY_RENDER_COMMAND_TYPE_SCISSOR_START, @_ ) }
-sub scissor_end   { command( CLAY_RENDER_COMMAND_TYPE_SCISSOR_END, 0, 0, 0, 0 ) }
+sub rectangle {
+	my (@bounds) = @_;
+	return command( CLAY_RENDER_COMMAND_TYPE_RECTANGLE, @bounds );
+}
+
+sub scissor_start {
+	my (@bounds) = @_;
+	return command( CLAY_RENDER_COMMAND_TYPE_SCISSOR_START, @bounds );
+}
+
+sub scissor_end { return command( CLAY_RENDER_COMMAND_TYPE_SCISSOR_END, 0, 0, 0, 0 ) }
 
 subtest 'clip rects replay nested scissors' => sub {
 	my $frame = frame(

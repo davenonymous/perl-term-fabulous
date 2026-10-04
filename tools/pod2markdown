@@ -222,7 +222,7 @@ package My::Pod::Markdown {
 	}
 }
 
-package main;
+package main;    ## no critic (Modules::ProhibitMultiplePackages) the script after its Pod::Markdown subclass
 
 my %options;
 GetOptions(\%options, 'check', 'help')
@@ -262,7 +262,8 @@ sub existingDocsFiles() {
 	return () unless -d DOCS_DIRECTORY;
 	my @files;
 	find({ no_chdir => 1, wanted => sub { push @files, $_ if -f } }, DOCS_DIRECTORY);
-	return sort @files;
+	my @sorted = sort @files;
+	return @sorted;
 }
 
 sub convert($podFile, $markdownFile, $markdownFiles) {

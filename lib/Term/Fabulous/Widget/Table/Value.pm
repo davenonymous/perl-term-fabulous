@@ -32,7 +32,7 @@ sub number_of ($value) {
 # after it ). Its granularity is the last part given: "2024" is a year,
 # "2024-05" a month, "2024-05-03" a day, "2024-05-03 14:30" a minute.
 # Local time, or UTC with a trailing Z. Undef for anything else.
-sub date_interval ($text) {
+sub date_interval ($text) {    ## no critic (Subroutines::RequireFinalReturn) PPI does not parse try/catch
 	return undef unless defined $text && !ref $text;
 	my ( $year, $month, $day, $hour, $minute, $second, $utc ) = $text =~ m{
 		\A \s* ([0-9]{4})

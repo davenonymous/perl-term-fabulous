@@ -13,9 +13,17 @@ sub series {
 	return $Series->new( owner => 'Chart', name => 'CPU', type => 'line', slot => 0, %options );
 }
 
-package Moment {
-	sub new   { return bless { epoch => $_[1] }, $_[0] }
-	sub epoch { return $_[0]{epoch} }
+package Moment {    ## no critic (Modules::RequireFilenameMatchesPackage) a stand-in date object
+
+	sub new {
+		my ( $class, $epoch ) = @_;
+		return bless { epoch => $epoch }, $class;
+	}
+
+	sub epoch {
+		my ($self) = @_;
+		return $self->{epoch};
+	}
 }
 
 subtest 'construction' => sub {

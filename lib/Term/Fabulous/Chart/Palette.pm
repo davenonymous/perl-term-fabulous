@@ -44,7 +44,8 @@ my %PALETTES = (
 my %INK = ( dark => 0xFFFFFF, light => 0x0B0B0B );
 
 sub palette_names () {
-	return sort keys %PALETTES;
+	my @names = sort keys %PALETTES;
+	return @names;
 }
 
 sub is_palette_name ($name) {

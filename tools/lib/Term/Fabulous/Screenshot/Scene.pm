@@ -224,7 +224,8 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 			}
 			push @result, @joined;
 		}
-		return sort { $a->{y} <=> $b->{y} || $a->{x} <=> $b->{x} || $a->{color} <=> $b->{color} } @result;
+		my @sorted = sort { $a->{y} <=> $b->{y} || $a->{x} <=> $b->{x} || $a->{color} <=> $b->{color} } @result;
+		return @sorted;
 	}
 
 	# $over mixed over $under: 0 is $under, 1 is $over.

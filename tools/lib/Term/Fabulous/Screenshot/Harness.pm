@@ -116,14 +116,14 @@ sub _send_to_terminal ($bytes) {
 	until ( _pending_input_bytes() >= length $bytes ) {
 		die "Term::Fabulous::Screenshot::Harness: the terminal did not deliver the input within " . INPUT_DELIVERY_TIMEOUT . " seconds\n"
 			if CORE::time() - $started > INPUT_DELIVERY_TIMEOUT;
-		select( undef, undef, undef, 0.001 );
+		select( undef, undef, undef, 0.001 );    ## no critic (BuiltinFunctions::ProhibitSleepViaSelect) sleep and Time::HiRes run on the virtual clock
 	}
 	return;
 }
 
 # Bytes waiting to be read on the terminal, which is the program's STDIN.
 sub _pending_input_bytes () {
-	require 'sys/ioctl.ph';
+	require 'sys/ioctl.ph';    ## no critic (Modules::RequireBarewordIncludes) a .ph file has no module name
 	my $count = pack 'L', 0;
 	ioctl( STDIN, FIONREAD(), $count ) or die "Term::Fabulous::Screenshot::Harness: FIONREAD on the terminal failed: $!\n";
 	return unpack 'L', $count;

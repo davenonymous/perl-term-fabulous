@@ -11,7 +11,7 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Exporter 'import';
-our @EXPORT = qw(sized draw glyph_row fg_at bg_at glyph_at rgb is_bold braille_dots cells_with bar_eighths hover_ui pointer_to hovers);
+our @EXPORT = qw(sized draw glyph_row fg_at bg_at glyph_at rgb is_bold braille_dots cells_with bar_eighths hover_ui pointer_to hovers);    ## no critic (Modules::ProhibitAutomaticExportation) every test uses all helpers
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);

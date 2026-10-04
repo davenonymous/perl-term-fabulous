@@ -14,7 +14,9 @@ use Term::Fabulous::Widget::RadioButton;
 use Term::Fabulous::Widget::RadioGroup;
 
 sub radio_group {
-	my $group   = Term::Fabulous::Widget::RadioGroup->new(@_);
+	my (%options) = @_;
+
+	my $group   = Term::Fabulous::Widget::RadioGroup->new(%options);
 	my @buttons = map { Term::Fabulous::Widget::RadioButton->new( label => $_->[0], value => $_->[1] ) } [ Small => 's' ], [ Medium => 'm' ], [ Large => 'l' ];
 	my $nested  = Term::Fabulous::Widget::Box->new;
 	$group->add_child( @buttons[ 0, 1 ], $nested );

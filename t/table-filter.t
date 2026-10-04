@@ -17,13 +17,13 @@ use Term::Fabulous::Widget::Table::Filter;
 my $F = 'Term::Fabulous::Widget::Table::Filter';
 
 # What filters read: the raw values, display texts in brackets, the types.
-package Source {
+package Source {    ## no critic (Modules::RequireFilenameMatchesPackage) a stand-in table model
 	my %type = ( name => 'string', age => 'number', joined => 'date' );
-	sub new        { bless {}, shift }
-	sub value_of   { $_[1]{ $_[2] } }
-	sub display_of { defined $_[1]{ $_[2] } ? "<$_[1]{ $_[2] }>" : '' }
-	sub type_of    { $type{ $_[1] } }
-	sub has_column { exists $type{ $_[1] } }
+	sub new        ($class)              { return bless {}, $class }
+	sub value_of   ( $self, $row, $key ) { return $row->{$key} }
+	sub display_of ( $self, $row, $key ) { return defined $row->{$key} ? "<$row->{$key}>" : '' }
+	sub type_of    ( $self, $key )       { return $type{$key} }
+	sub has_column ( $self, $key )       { return exists $type{$key} }
 }
 
 my $source = Source->new;

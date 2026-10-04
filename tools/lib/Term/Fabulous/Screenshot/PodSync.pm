@@ -29,8 +29,9 @@ use constant IMAGE_SOURCE   => qr{src="\Q${\ IMAGE_URL_BASE}\E/([^"/]+)/screensh
 
 sub read_text ($file) {
 	open my $handle, '<:raw', $file or croak "Term::Fabulous::Screenshot::PodSync: cannot read $file: $!";
-	local $/;
-	return decode( 'UTF-8', scalar <$handle>, Encode::FB_CROAK );
+	my $bytes = do { local $/; <$handle> };
+	close $handle;
+	return decode( 'UTF-8', $bytes, Encode::FB_CROAK );
 }
 
 sub write_text ( $file, $text ) {

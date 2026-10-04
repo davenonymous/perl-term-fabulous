@@ -12,7 +12,9 @@ use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_DOWN TB_KEY_MOUSE_WHEEL_UP);
 use Term::Fabulous::Widget::TextArea;
 
 sub text_area {
-	my $area = Term::Fabulous::Widget::TextArea->new( preferred_columns => 12, preferred_rows => 3, @_ );
+	my (%options) = @_;
+
+	my $area = Term::Fabulous::Widget::TextArea->new( preferred_columns => 12, preferred_rows => 3, %options );
 	my $ui   = layout_ui($area);
 	return ( $area, $ui );
 }

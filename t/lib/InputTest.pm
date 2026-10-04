@@ -13,7 +13,7 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Exporter 'import';
-our @EXPORT = qw(layout_ui press type_text click screen_click shown row_text);
+our @EXPORT = qw(layout_ui press type_text click screen_click shown row_text);    ## no critic (Modules::ProhibitAutomaticExportation) every test uses all helpers
 
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous;

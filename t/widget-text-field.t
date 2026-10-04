@@ -13,7 +13,9 @@ use Term::Fabulous::Editor;
 use Term::Fabulous::Widget::TextField;
 
 sub text_field {
-	my $field = Term::Fabulous::Widget::TextField->new( preferred_columns => 8, @_ );
+	my (%options) = @_;
+
+	my $field = Term::Fabulous::Widget::TextField->new( preferred_columns => 8, %options );
 	my $ui    = layout_ui($field);
 	return ( $field, $ui );
 }

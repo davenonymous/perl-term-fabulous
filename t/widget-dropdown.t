@@ -17,7 +17,9 @@ use Term::Fabulous::Widget::Dropdown;
 my @COLORS = qw(Red Green Blue Cyan Magenta Yellow);
 
 sub dropdown {
-	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [@COLORS], @_ );
+	my (%options) = @_;
+
+	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [@COLORS], %options );
 	my $ui       = layout_ui($dropdown);
 	my @changes;
 	$dropdown->on( Change => sub { push @changes, $_[0]->value; return } );

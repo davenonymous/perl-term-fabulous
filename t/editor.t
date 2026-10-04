@@ -7,7 +7,8 @@ use Test2::V0;
 use Term::Fabulous::Editor;
 
 sub editor {
-	return Term::Fabulous::Editor->new(@_);
+	my (%options) = @_;
+	return Term::Fabulous::Editor->new(%options);
 }
 
 subtest 'text and lines' => sub {

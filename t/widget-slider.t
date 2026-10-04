@@ -13,7 +13,9 @@ use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_
 use Term::Fabulous::Widget::Slider;
 
 sub slider {
-	my $slider = Term::Fabulous::Widget::Slider->new( preferred_columns => 11, @_ );
+	my (%options) = @_;
+
+	my $slider = Term::Fabulous::Widget::Slider->new( preferred_columns => 11, %options );
 	my $ui     = layout_ui($slider);
 	my @changes;
 	$slider->on( Change => sub { push @changes, $_[0]->value; return } );

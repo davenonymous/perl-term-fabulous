@@ -204,8 +204,9 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 
 	sub _read_json ($file) {
 		open my $handle, '<:raw', $file or croak "Term::Fabulous::Screenshot::Runner: cannot read $file: $!";
-		local $/;
-		return JSON::PP->new->utf8->decode( scalar <$handle> );
+		my $json = do { local $/; <$handle> };
+		close $handle;
+		return JSON::PP->new->utf8->decode($json);
 	}
 }
 

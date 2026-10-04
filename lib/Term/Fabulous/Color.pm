@@ -171,20 +171,20 @@ class Term::Fabulous::Color :strict(params) {
 
 	# Unrounded RGB -> HSL. Channels in 0..255; returns hue in [0, 360) and
 	# saturation / lightness in 0..100 as floats.
-	sub _rgb_to_hsl_float ( $r, $g, $b ) {
-		( $r, $g, $b ) = map { $_ / 255 } ( $r, $g, $b );
+	sub _rgb_to_hsl_float ( $red, $green, $blue ) {
+		( $red, $green, $blue ) = map { $_ / 255 } ( $red, $green, $blue );
 
-		my $max       = max( $r, $g, $b );
-		my $min       = min( $r, $g, $b );
+		my $max       = max( $red, $green, $blue );
+		my $min       = min( $red, $green, $blue );
 		my $lightness = ( $max + $min ) / 2;
 		return ( 0, 0, $lightness * 100 ) if $max == $min;
 
 		my $delta      = $max - $min;
 		my $saturation = $lightness < 0.5 ? $delta / ( $max + $min ) : $delta / ( 2 - $max - $min );
 		my $hue
-			= $max == $r ? 60 * ( ( $g - $b ) / $delta )
-			: $max == $g ? 60 * ( 2 + ( $b - $r ) / $delta )
-			:              60 * ( 4 + ( $r - $g ) / $delta );
+			= $max == $red   ? 60 * ( ( $green - $blue ) / $delta )
+			: $max == $green ? 60 * ( 2 + ( $blue - $red ) / $delta )
+			:                  60 * ( 4 + ( $red - $green ) / $delta );
 		$hue += 360 if $hue < 0;
 
 		return ( $hue, $saturation * 100, $lightness * 100 );

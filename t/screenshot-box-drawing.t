@@ -11,7 +11,10 @@ use Term::Fabulous::Screenshot::BoxDrawing qw(is_drawn_glyph glyph_shapes);
 
 # A 10 x 20 cell with lines one unit thick; the shapes of the chart
 # glyphs that terminals draw themselves.
-sub shapes { return [ glyph_shapes( $_[0], 10, 20, 1 ) ] }
+sub shapes {
+	my ($glyph) = @_;
+	return [ glyph_shapes( $glyph, 10, 20, 1 ) ];
+}
 
 subtest 'Braille dots are circles on a 2 x 4 grid' => sub {
 	is shapes("\x{2801}"), [ { type => 'circle', cx => 2.5, cy => 2.5, r => 2 } ], 'dot 1 sits in the top left; its radius is 0.4 of half a dot cell';

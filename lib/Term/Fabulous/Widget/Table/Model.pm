@@ -584,7 +584,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		}
 		my %order;
 		@order{@ids} = 0 .. $#ids;    # the ids come in data order
-		return sort {
+		my @sorted = sort {
 			my $result = 0;
 			foreach my $plan (@plans) {
 				my ( $kind, $what, $key, $direction ) = @$plan;
@@ -602,6 +602,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 			}
 			$result || $order{$a} <=> $order{$b};
 		} @ids;
+		return @sorted;
 	}
 
 	# =====================================================================

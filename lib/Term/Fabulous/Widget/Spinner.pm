@@ -127,7 +127,8 @@ class Term::Fabulous::Widget::Spinner
 	method stop ()  { $self->running(0); return $self }
 
 	method styles :common () {
-		return sort keys %STYLE;
+		my @styles = sort keys %STYLE;
+		return @styles;
 	}
 
 	# frames "-" "\\" "|" "/"

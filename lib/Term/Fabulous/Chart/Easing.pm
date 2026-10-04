@@ -56,7 +56,8 @@ foreach my $family ( keys %IN ) {
 }
 
 sub easing_names () {
-	return sort keys %EASING;
+	my @names = sort keys %EASING;
+	return @names;
 }
 
 sub is_easing_name ($name) {

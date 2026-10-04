@@ -76,7 +76,7 @@ sub glyph ( $owner, $name, $value ) {
 	return $value;
 }
 
-sub color ( $owner, $name, $value ) {
+sub color ( $owner, $name, $value ) {    ## no critic (Subroutines::RequireFinalReturn) PPI does not parse try/catch
 	_fail( $owner, $name, 'a color', $value ) unless defined $value;
 	try {
 		my $object = blessed $value && $value->isa('Term::Fabulous::Color') ? $value : Term::Fabulous::Color->new( color => $value );

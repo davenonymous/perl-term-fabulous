@@ -69,7 +69,7 @@ subtest 'event object' => sub {
 
 subtest 'input parser' => sub {
 	pipe my $read, my $write or die "pipe: $!";
-	open my $sink, '>', '/dev/null' or die "/dev/null: $!";
+	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
 	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
 	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
 	tb_set_input_mode( TB_INPUT_ESC | TB_INPUT_MOUSE );
@@ -126,7 +126,7 @@ subtest 'input parser' => sub {
 
 subtest 'kitty keyboard query' => sub {
 	pipe my $read, my $write or die "pipe: $!";
-	open my $sink, '>', '/dev/null' or die "/dev/null: $!";
+	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
 	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
 	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
 

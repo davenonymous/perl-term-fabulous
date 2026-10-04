@@ -104,7 +104,8 @@ sub require_built_distribution () {
 sub pod_files () {
 	my @files;
 	find( { no_chdir => 1, wanted => sub { push @files, $_ if /\.(?:pm|pod)\z/ } }, POD_DIRECTORIES );
-	return sort @files;
+	my @sorted = sort @files;
+	return @sorted;
 }
 
 sub sync_all_code_blocks ( $pod_files, $check ) {
@@ -215,7 +216,7 @@ sub take_screenshots ( $scenarios, $jobs, $check ) {
 
 # In a child process: takes one screenshot and writes NAME.svg, or
 # NAME.error with the reason. Never returns.
-sub screenshot_worker ( $scenario, $work_dir ) {
+sub screenshot_worker ( $scenario, $work_dir ) {    ## no critic (Subroutines::RequireFinalReturn) PPI does not parse try/catch
 	@SIG{qw(INT TERM HUP)} = ('DEFAULT') x 3;    # the parent's handlers are for the parent
 	my $name = $scenario->name;
 	try {

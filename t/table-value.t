@@ -79,5 +79,5 @@ subtest 'mutators' => sub {
 
 done_testing;
 
-package My::Moment;
-sub epoch { 42 }
+package My::Moment;    ## no critic (Modules::RequireFilenameMatchesPackage) a stand-in date object
+sub epoch { return 42 }

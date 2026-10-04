@@ -105,13 +105,13 @@ subtest 'the end of the input' => sub {
 
 subtest 'errors' => sub {
 	my ( $pty, $input ) = pseudo_terminal( 10, 3 );
-	open my $write_only, '>', '/dev/null' or die "/dev/null: $!";
+	open my $write_only, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) the terminal reads from it
 	my $unreadable = Term::Fabulous::Terminal::Termbox->new( input => $write_only, output => $pty->slave );
 	$unreadable->open( inline => undef, mouse => 0, kitty_keyboard => 0 );
 	like dies { $unreadable->next_event }, qr/^Term::Fabulous::Terminal::Termbox: reading terminal input failed/, 'a read error dies';
 	$unreadable->close;
 
-	open my $read_only, '<', '/dev/null' or die "/dev/null: $!";
+	open my $read_only, '<', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) the terminal writes to it
 	my $unwritable = Term::Fabulous::Terminal::Termbox->new( input => $input, output => $read_only );
 	like dies { $unwritable->open( inline => undef, mouse => 0, kitty_keyboard => 0 ) }, qr/^Term::Fabulous::Terminal::Termbox: tb_init_rwfd failed/, 'termbox2 cannot start';
 	is $unwritable->is_open, 0, 'and nothing is open';

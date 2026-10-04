@@ -249,7 +249,8 @@ sub _largest_triangles ( $xs, $ys, $count ) {
 }
 
 sub transform_names () {
-	return sort keys %TRANSFORM;
+	my @names = sort keys %TRANSFORM;
+	return @names;
 }
 
 # One step: a name, [ name, arguments ], or a code reference.
