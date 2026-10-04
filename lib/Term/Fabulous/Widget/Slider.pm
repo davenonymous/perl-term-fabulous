@@ -33,16 +33,16 @@ class Term::Fabulous::Widget::Slider
 		End      => [ end  =>  1 ],
 	);
 
-	field $min :param               = 0;
-	field $max :param               = 100;
-	field $step :param              = 1;
-	field $page_step :param         = undef;
-	field $show_value :param        = 1;
-	field $value_format :param      = undef;
+	field $min               :param = 0;
+	field $max               :param = 100;
+	field $step              :param = 1;
+	field $page_step         :param = undef;
+	field $show_value        :param = 1;
+	field $value_format      :param = undef;
 	field $preferred_columns :param = 20;
-	field $fill_glyph :param        = "\x{2501}";
-	field $track_glyph :param       = "\x{2500}";
-	field $thumb_glyph :param       = "\x{25CF}";
+	field $fill_glyph        :param = "\x{2501}";
+	field $track_glyph       :param = "\x{2500}";
+	field $thumb_glyph       :param = "\x{25CF}";
 
 	field $current;
 

@@ -78,7 +78,7 @@ class Term::Fabulous::Widget::TextInput
 	field $editor :reader = Term::Fabulous::Editor->new( multi_line => __CLASS__->is_multi_line );
 
 	field $placeholder :param = '';
-	field $read_only :param   = 0;
+	field $read_only   :param = 0;
 
 	# How the text is laid out in the buffer: one row without wrapping
 	# unless a subclass says otherwise.

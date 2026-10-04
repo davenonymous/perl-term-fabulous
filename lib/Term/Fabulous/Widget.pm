@@ -19,7 +19,7 @@ class Term::Fabulous::Widget
 
 	my @COLOR_PARAMS = qw(background_color border_color);
 
-	field $classes :param             = [];
+	field $classes             :param = [];
 	field $glyphs_show_through :param = 0;
 
 	# Clay::UI validates the colors before any ADJUST of this class runs,

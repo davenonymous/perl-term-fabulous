@@ -34,7 +34,7 @@ class Term::Fabulous::Widget::Accordion::Item
 	);
 
 	field $title :param = '';
-	field $icon :param  = undef;
+	field $icon  :param = undef;
 
 	# The header the user acts on, the body that holds the children, and
 	# the texts of the header, which the look updates.

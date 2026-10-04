@@ -38,7 +38,7 @@ class Term::Fabulous::Widget::Tabs::Button
 	my %PAGE_SIDE = ( top => 'bottom', bottom => 'top', left => 'right', right => 'left' );
 
 	field $title :param = '';
-	field $icon :param  = undef;
+	field $icon  :param = undef;
 
 	field $_icon_text;
 	field $_title_text;
@@ -151,10 +151,10 @@ class Term::Fabulous::Widget::Tabs::Button
 		return $side eq $PAGE_SIDE{ $self->_look('side') } ? Term::Fabulous::Enum::BorderStyle->Hidden : $self->_look('line_style');
 	}
 
-	method border_style_top :override (@new)    { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
-	method border_style_right :override (@new)  { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
+	method border_style_top    :override (@new) { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
+	method border_style_right  :override (@new) { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
 	method border_style_bottom :override (@new) { return $self->_border_style_of( bottom => 'border_style_bottom', @new ) }
-	method border_style_left :override (@new)   { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
+	method border_style_left   :override (@new) { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
 
 	# The labels are drawn in the bar's text colors.
 	method child_text_color :override ($explicit) {

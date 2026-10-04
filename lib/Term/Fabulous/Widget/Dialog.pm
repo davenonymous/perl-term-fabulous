@@ -27,7 +27,7 @@ class Term::Fabulous::Widget::Dialog
 		child_gap        => 1,
 	);
 
-	field $z_index :param         = 1000;
+	field $z_index         :param = 1000;
 	field $close_on_escape :param = 1;
 
 	# The Term::Fabulous::Widget::Dialog::Backdrop while open. The tree owns

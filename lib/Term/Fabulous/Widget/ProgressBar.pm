@@ -38,21 +38,21 @@ class Term::Fabulous::Widget::ProgressBar
 
 	my %IS_POSITION = map { $_ => 1 } qw(left right inside);
 
-	field $min :param               = 0;
-	field $max :param               = 100;
-	field $indeterminate :param     = 0;
-	field $show_value :param        = 1;
-	field $value_position :param    = 'right';
-	field $value_format :param      = undef;
+	field $min               :param = 0;
+	field $max               :param = 100;
+	field $indeterminate     :param = 0;
+	field $show_value        :param = 1;
+	field $value_position    :param = 'right';
+	field $value_format      :param = undef;
 	field $preferred_columns :param = 20;
-	field $style :param             = 'block';
-	field $fill_glyph :param        = undef;
-	field $track_glyph :param       = undef;
-	field $stripe_glyph :param      = undef;
-	field $fractional :param        = 1;
-	field $striped :param           = 0;
-	field $animated :param          = 0;
-	field $separated :param         = 0;
+	field $style             :param = 'block';
+	field $fill_glyph        :param = undef;
+	field $track_glyph       :param = undef;
+	field $stripe_glyph      :param = undef;
+	field $fractional        :param = 1;
+	field $striped           :param = 0;
+	field $animated          :param = 0;
+	field $separated         :param = 0;
 
 	# The colors come from the theme's progress family unless given.
 	my @COLOR_NAMES = qw(color track_color text_color inside_text_color);

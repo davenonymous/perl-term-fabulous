@@ -62,12 +62,12 @@ class Term::Fabulous::Widget::Spinner
 
 	my %IS_POSITION = map { $_ => 1 } qw(left right);
 
-	field $style :param          = 'dots';
-	field $frames :param         = undef;
-	field $interval :param       = undef;
-	field $label :param          = '';
+	field $style          :param = 'dots';
+	field $frames         :param = undef;
+	field $interval       :param = undef;
+	field $label          :param = '';
 	field $label_position :param = 'right';
-	field $running :param        = 1;
+	field $running        :param = 1;
 
 	ADJUST {
 		$style          = $self->_checked_style($style);

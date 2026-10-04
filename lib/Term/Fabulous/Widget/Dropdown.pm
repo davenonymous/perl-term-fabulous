@@ -36,7 +36,7 @@ class Term::Fabulous::Widget::Dropdown
 	field @options;
 	field $selected;    # index into @options, or undef
 
-	field $placeholder :param         = '';
+	field $placeholder         :param = '';
 	field $max_visible_options :param = 8;
 
 	# The colors of the placeholder, the open list and the highlighted

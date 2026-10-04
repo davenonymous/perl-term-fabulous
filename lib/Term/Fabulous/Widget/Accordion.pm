@@ -30,13 +30,13 @@ class Term::Fabulous::Widget::Accordion
 	# Key name => step through the enabled headers, or an end.
 	my %MOVE_BY_KEY = ( Up => [ step => -1 ], Down => [ step => 1 ], Home => [ end => 0 ], End => [ end => -1 ] );
 
-	field $multiple :param        = 0;
-	field $bordered :param        = 0;
+	field $multiple        :param = 0;
+	field $bordered        :param = 0;
 	field $toggle_position :param = 'start';
-	field $open_glyph :param      = "\x{25BE}";
-	field $closed_glyph :param    = "\x{25B8}";
-	field $title_bold :param      = 0;
-	field $body_indent :param     = 2;
+	field $open_glyph      :param = "\x{25BE}";
+	field $closed_glyph    :param = "\x{25B8}";
+	field $title_bold      :param = 0;
+	field $body_indent     :param = 2;
 
 	# The colors come from the theme's accordion family unless given.
 	my @COLOR_NAMES = qw(title_color accent_color header_background_color focus_background_color hover_background_color disabled_color);

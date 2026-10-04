@@ -107,42 +107,42 @@ class Term::Fabulous::Widget::Table
 	# ---------------------------------------------------------------------
 
 	# What the model is made of; handed over in ADJUST and dropped there.
-	field $initial_columns :param(columns)     = [];
-	field $initial_rows :param(rows)           = [];
-	field $initial_sort :param(sort)           = [];
-	field $initial_group :param(group_by)      = undef;
-	field $row_id :param                       = undef;
-	field $children_key :param                 = undef;
-	field $tree_expanded :param                = 0;
+	field $initial_columns   :param(columns)   = [];
+	field $initial_rows      :param(rows)      = [];
+	field $initial_sort      :param(sort)      = [];
+	field $initial_group     :param(group_by)  = undef;
+	field $row_id            :param            = undef;
+	field $children_key      :param            = undef;
+	field $tree_expanded     :param            = 0;
 	field $initial_page_size :param(page_size) = 0;
 
-	field $selection :param        = 'none';
+	field $selection        :param = 'none';
 	field $selection_column :param = undef;
 	field $_explicit_selection_column;    # selection_column as the user set it, else undef
-	field $show_header :param(header)  = 1;
-	field $filter_row :param           = 0;
-	field $page_sizes :param           = [ 10, 25, 50, 100 ];
-	field $show_pager :param(pager)    = undef;
-	field $scrollbar :param            = 1;
-	field $hover :param                = 1;
-	field $tree_column :param          = undef;
-	field $group_label :param          = undef;
-	field $row_style :param            = undef;
-	field $header_style :param         = undef;
-	field $group_style :param          = undef;
-	field $empty_text :param           = 'No rows';
-	field $no_match_text :param        = 'No rows match';
-	field $cell_padding :param         = 1;
-	field $double_click_seconds :param = 0.4;
+	field $show_header          :param(header) = 1;
+	field $filter_row           :param         = 0;
+	field $page_sizes           :param         = [ 10, 25, 50, 100 ];
+	field $show_pager           :param(pager)  = undef;
+	field $scrollbar            :param         = 1;
+	field $hover                :param         = 1;
+	field $tree_column          :param         = undef;
+	field $group_label          :param         = undef;
+	field $row_style            :param         = undef;
+	field $header_style         :param         = undef;
+	field $group_style          :param         = undef;
+	field $empty_text           :param         = 'No rows';
+	field $no_match_text        :param         = 'No rows match';
+	field $cell_padding         :param         = 1;
+	field $double_click_seconds :param         = 0.4;
 
-	field $border :param        = 'Round';
-	field $border_top :param    = undef;
-	field $border_right :param  = undef;
+	field $border        :param = 'Round';
+	field $border_top    :param = undef;
+	field $border_right  :param = undef;
 	field $border_bottom :param = undef;
-	field $border_left :param   = undef;
-	field $column_lines :param  = 'Solid';
-	field $row_lines :param     = undef;
-	field $header_line :param   = 'Solid';
+	field $border_left   :param = undef;
+	field $column_lines  :param = 'Solid';
+	field $row_lines     :param = undef;
+	field $header_line   :param = 'Solid';
 
 	# ---------------------------------------------------------------------
 	# State

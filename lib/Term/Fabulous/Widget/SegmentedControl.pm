@@ -28,9 +28,9 @@ class Term::Fabulous::Widget::SegmentedControl
 	field @options;    # { label, value, disabled }
 	field $selected;    # index into @options, or undef
 
-	field $vertical :param        = 0;
+	field $vertical        :param = 0;
 	field $segment_padding :param = 1;
-	field $separator :param       = "\x{2502}";
+	field $separator       :param = "\x{2502}";
 
 	# The colors of the selected label, the separators and the hovered
 	# segment come from the theme's input family unless given.

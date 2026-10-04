@@ -23,11 +23,11 @@ class Term::Fabulous::Widget::Text
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
 
-	field $id :param :reader = undef;
-	field $bold :param       = 0;
-	field $italic :param     = 0;
-	field $underline :param  = 0;
-	field $classes :param    = [];
+	field $id        :param :reader = undef;
+	field $bold      :param = 0;
+	field $italic    :param = 0;
+	field $underline :param = 0;
+	field $classes   :param = [];
 
 	# Whether the program gave a text_color (BUILDARGS says so); without
 	# one the theme's text color is drawn. The Clay::UI::Text field always

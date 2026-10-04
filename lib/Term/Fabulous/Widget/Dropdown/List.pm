@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	use constant SCROLLBAR_TRACK => "\x{2502}";
 	use constant SCROLLBAR_THUMB => "\x{2503}";
 
-	field $dropdown :param :weak;
+	field $dropdown     :param :weak;
 	field $visible_rows :param :reader;
 
 	# The first option shown.
@@ -73,10 +73,10 @@ class Term::Fabulous::Widget::Dropdown::List
 		return $self->$method // ( defined $dropdown ? $dropdown->look('list.border.style') : undef );
 	}
 
-	method border_style_top :override (@new)    { return $self->_list_border_style( border_style_top    => @new ) }
-	method border_style_right :override (@new)  { return $self->_list_border_style( border_style_right  => @new ) }
+	method border_style_top    :override (@new) { return $self->_list_border_style( border_style_top    => @new ) }
+	method border_style_right  :override (@new) { return $self->_list_border_style( border_style_right  => @new ) }
 	method border_style_bottom :override (@new) { return $self->_list_border_style( border_style_bottom => @new ) }
-	method border_style_left :override (@new)   { return $self->_list_border_style( border_style_left   => @new ) }
+	method border_style_left   :override (@new) { return $self->_list_border_style( border_style_left   => @new ) }
 
 	method _scrolls () {
 		return $dropdown->option_count > $visible_rows;

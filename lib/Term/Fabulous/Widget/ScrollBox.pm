@@ -43,7 +43,7 @@ class Term::Fabulous::Widget::ScrollBox
 	);
 	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
 
-	field $scrollbar :param   = 1;
+	field $scrollbar   :param = 1;
 	field $track_color :param = undef;
 	field $thumb_color :param = undef;
 	field $_gutter;

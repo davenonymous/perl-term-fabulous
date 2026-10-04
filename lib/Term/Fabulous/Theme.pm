@@ -288,8 +288,8 @@ class Term::Fabulous::Theme :strict(params) {
 	field %_look_table_cache;
 
 	# The constructor parameters, read once in ADJUST and then dropped.
-	field $palette :param            = {};
-	field $slots :param              = {};
+	field $palette  :param           = {};
+	field $slots    :param           = {};
 	field $variants :param           = {};
 	field $_builtin :param(_builtin) = undef;
 

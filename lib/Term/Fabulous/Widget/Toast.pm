@@ -39,17 +39,17 @@ class Term::Fabulous::Widget::Toast
 
 	my %DEFAULT_SIZING = ( width => sizing_fit( 20, 44 ) );
 
-	field $kind :param      = 'info';
-	field $title :param     = '';
-	field $message :param   = '';
-	field $icon :param      = undef;
-	field $closable :param  = 1;
-	field $timeout :param   = 5;
+	field $kind      :param = 'info';
+	field $title     :param = '';
+	field $message   :param = '';
+	field $icon      :param = undef;
+	field $closable  :param = 1;
+	field $timeout   :param = 5;
 	field $important :param = 0;
-	field $position :param  = 'top_right';
-	field $z_index :param   = 2000;
-	field $margin :param    = 1;
-	field $color :param     = undef;
+	field $position  :param = 'top_right';
+	field $z_index   :param = 2000;
+	field $margin    :param = 1;
+	field $color     :param = undef;
 
 	# The parts of the toast, and the stack it is shown in.
 	field $_icon_text;

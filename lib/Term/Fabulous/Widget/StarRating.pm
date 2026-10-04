@@ -33,15 +33,15 @@ class Term::Fabulous::Widget::StarRating
 		End   => [ end  =>  1 ],
 	);
 
-	field $max :param          = 5;
-	field $half :param         = 0;
-	field $read_only :param    = 0;
-	field $show_value :param   = 0;
+	field $max          :param = 5;
+	field $half         :param = 0;
+	field $read_only    :param = 0;
+	field $show_value   :param = 0;
 	field $value_format :param = undef;
-	field $gap :param          = 1;
-	field $full_glyph :param   = "\x{2605}";
-	field $empty_glyph :param  = "\x{2606}";
-	field $half_glyph :param   = undef;
+	field $gap          :param = 1;
+	field $full_glyph   :param = "\x{2605}";
+	field $empty_glyph  :param = "\x{2606}";
+	field $half_glyph   :param = undef;
 
 	field $current = 0;
 

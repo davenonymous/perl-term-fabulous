@@ -48,14 +48,14 @@ class Term::Fabulous::Widget::Tabs::Bar
 	# Key name => step through the enabled tabs.
 	my %STEP_BY_KEY = ( Left => -1, Up => -1, Right => 1, Down => 1 );
 
-	field $side :param          = $DEFAULT_LOOK{side};
-	field $orientation :param   = $DEFAULT_LOOK{orientation};
+	field $side          :param = $DEFAULT_LOOK{side};
+	field $orientation   :param = $DEFAULT_LOOK{orientation};
 	field $tab_alignment :param = 'start';
-	field $tab_gap :param       = 1;
-	field $tab_margin :param    = 1;
-	field $tab_padding :param   = $DEFAULT_LOOK{tab_padding};
-	field $active_bold :param   = $DEFAULT_LOOK{active_bold};
-	field $page_border :param   = 0;
+	field $tab_gap       :param = 1;
+	field $tab_margin    :param = 1;
+	field $tab_padding   :param = $DEFAULT_LOOK{tab_padding};
+	field $active_bold   :param = $DEFAULT_LOOK{active_bold};
+	field $page_border   :param = 0;
 
 	# The colors and the line style come from the theme's tabs family
 	# unless given.

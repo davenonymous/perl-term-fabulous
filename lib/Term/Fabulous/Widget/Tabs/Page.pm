@@ -20,8 +20,8 @@ class Term::Fabulous::Widget::Tabs::Page
 	use Term::Fabulous::Check qw(boolean string);
 	use Term::Fabulous::Enum::BorderStyle;
 
-	field $title :param    = '';
-	field $icon :param     = undef;
+	field $title    :param = '';
+	field $icon     :param = undef;
 	field $disabled :param = 0;
 
 	# Whether the page asks to be the active one when it joins a Tabs.
@@ -142,10 +142,10 @@ class Term::Fabulous::Widget::Tabs::Page
 		return $side eq $bar->side ? Term::Fabulous::Enum::BorderStyle->Hidden : $bar->line_style;
 	}
 
-	method border_style_top :override (@new)    { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
-	method border_style_right :override (@new)  { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
+	method border_style_top    :override (@new) { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
+	method border_style_right  :override (@new) { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
 	method border_style_bottom :override (@new) { return $self->_border_style_of( bottom => 'border_style_bottom', @new ) }
-	method border_style_left :override (@new)   { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
+	method border_style_left   :override (@new) { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
 
 	method contribute_look_theme :override ($config) {
 		$self->SUPER::contribute_look_theme($config);

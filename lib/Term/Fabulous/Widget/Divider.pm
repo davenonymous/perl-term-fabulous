@@ -30,13 +30,13 @@ class Term::Fabulous::Widget::Divider
 
 	my %IS_POSITION = map { $_ => 1 } qw(start center end);
 
-	field $vertical :param      = 0;
-	field $text :param          = '';
+	field $vertical      :param = 0;
+	field $text          :param = '';
 	field $text_position :param = 'center';
-	field $text_margin :param   = 1;
-	field $text_padding :param  = 1;
-	field $glyph :param         = undef;
-	field $bold :param          = 0;
+	field $text_margin   :param = 1;
+	field $text_padding  :param = 1;
+	field $glyph         :param = undef;
+	field $bold          :param = 0;
 
 	# The line's style and the colors come from the theme's divider family
 	# unless given.

@@ -49,13 +49,13 @@ class Term::Fabulous
 	# frame would never settle.
 	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
-	field $inline :param :reader         = undef;    # the rows of the inline region, or undef for the full screen
-	field $mouse :param :reader          = undef;
+	field $inline         :param :reader = undef;    # the rows of the inline region, or undef for the full screen
+	field $mouse          :param :reader = undef;
 	field $kitty_keyboard :param :reader = 1;
-	field $terminal :param :reader //= Term::Fabulous::Terminal::Termbox->new;
-	field $clock :param = sub { Time::HiRes::time() };
-	field $loop :reader;
-	field $termbox_draw_interval :reader            = 1 / 30;
+	field $terminal       :param :reader //= Term::Fabulous::Terminal::Termbox->new;
+	field $clock          :param = sub { Time::HiRes::time() };
+	field $loop           :reader;
+	field $termbox_draw_interval            :reader = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
 
 	field $_running = 0;    # whether run's loop is active

@@ -24,10 +24,10 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 	use constant Z_INDEX => 32767;
 
 	# [ key, title, visible ] per column, in order.
-	field $columns :param;
-	field $on_toggle :param;    # sub ( $key, $visible )
-	field $on_close :param;    # sub ()
-	field $text_color :param  = [ 220, 223, 228, 255 ];
+	field $columns     :param;
+	field $on_toggle   :param;    # sub ( $key, $visible )
+	field $on_close    :param;    # sub ()
+	field $text_color  :param = [ 220, 223, 228, 255 ];
 	field $muted_color :param = [ 140, 146, 158, 255 ];
 	field @_boxes;
 
