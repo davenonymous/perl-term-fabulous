@@ -42,7 +42,6 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-          install-modules-with: cpanm
 
       - name: Show Perl configuration
         run: perl -V
@@ -80,7 +79,6 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: latest
-          install-modules-with: cpanm
 
       - name: Install Clay::UI from GitHub
         run: cpanm --notest "$CLAY_UI_TARBALL"
