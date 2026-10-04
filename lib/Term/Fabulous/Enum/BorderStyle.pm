@@ -251,22 +251,22 @@ enum Term::Fabulous::Enum::BorderStyle {
 
 	# Styles that draw their joints with the joints of another style (see
 	# joints) belong to that style's family for mixed joints.
-	my %JOINT_FAMILY = ( Round => 'Solid', Dashed => 'Heavy' );
+	state $joint_family = { Round => 'Solid', Dashed => 'Heavy' };
 
 	sub _family_name ($style) {
-		return $JOINT_FAMILY{ $style->name } // $style->name;
+		return $joint_family->{ $style->name } // $style->name;
 	}
 
 	# Which glyph a set of arms needs: [ joints index, mixed index ] for the
 	# T shapes and the cross; corners and straight lines are handled apart.
-	my %JOINT_OF_ARMS = (
+	state $joint_of_arms = {
 		'up right down left' => [ 2, 0 ],
 		'right down left'    => [ 3, 1 ],
 		'up right left'      => [ 4, 2 ],
 		'up right down'      => [ 5, 3 ],
 		'up down left'       => [ 6, 4 ],
-	);
-	my %CORNER_OF_ARMS = ( 'right down' => 0, 'down left' => 2, 'up right' => 5, 'up left' => 7 );
+	};
+	state $corner_of_arms = { 'right down' => 0, 'down left' => 2, 'up right' => 5, 'up left' => 7 };
 
 	# The glyph where lines of grid styles meet: arms maps up, right, down
 	# and left to the style of the line leaving the cell that way, or undef.
@@ -285,12 +285,12 @@ enum Term::Fabulous::Enum::BorderStyle {
 		my $shape = join ' ', @directions;
 		return $horizontal->glyphs->[1] unless defined $vertical;
 		return $vertical->glyphs->[3]   unless defined $horizontal;
-		if ( exists $CORNER_OF_ARMS{$shape} ) {
+		if ( exists $corner_of_arms->{$shape} ) {
 			my $owner = _family_name($horizontal) eq _family_name($vertical) ? $vertical : $horizontal;
-			return $owner->glyphs->[ $CORNER_OF_ARMS{$shape} ];
+			return $owner->glyphs->[ $corner_of_arms->{$shape} ];
 		}
 
-		my ( $joint_index, $mixed_index ) = @{ $JOINT_OF_ARMS{$shape} };
+		my ( $joint_index, $mixed_index ) = @{ $joint_of_arms->{$shape} };
 		return $horizontal->joints->[$joint_index] if _family_name($horizontal) eq _family_name($vertical);
 		my $family = Term::Fabulous::Enum::BorderStyle->from_name( _family_name($horizontal) );
 		my $mixed  = $family->get_mixed_joint( Term::Fabulous::Enum::BorderStyle->from_name( _family_name($vertical) ) );
