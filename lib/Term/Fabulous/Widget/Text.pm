@@ -12,25 +12,34 @@ our $VERSION = '0.01';
 class Term::Fabulous::Widget::Text
 	:isa(Term::Fabulous::Widget::TextNode)
 	:does(Term::Fabulous::Role::CanParseLayout)
+	:does(Term::Fabulous::Role::Themed)
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use Clay::UI::Revision qw(bump_revision);
-	use Term::Fabulous::Check qw(boolean color);
+	use Term::Fabulous::Check qw(boolean class_names color);
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
 
-	field $id        :param :reader = undef;
-	field $bold      :param = 0;
-	field $italic    :param = 0;
-	field $underline :param = 0;
+	field $id :param :reader = undef;
+	field $bold :param       = 0;
+	field $italic :param     = 0;
+	field $underline :param  = 0;
+	field $classes :param    = [];
+
+	# Whether the program gave a text_color (BUILDARGS says so); without
+	# one the theme's text color is drawn. The Clay::UI::Text field always
+	# holds a color; the role knows whether it is an explicit one.
+	field $_has_text_color :param(_has_text_color) = 0;
 
 	ADJUST {
 		$bold      = boolean( $self, bold      => $bold );
 		$italic    = boolean( $self, italic    => $italic );
 		$underline = boolean( $self, underline => $underline );
+		$classes   = class_names( $self, classes => $classes );
+		$self->set_look( text_color => $self->SUPER::text_color ) if $_has_text_color;
 	}
 
 	method _set_style ( $name, $field_ref, @new ) {
@@ -52,7 +61,9 @@ class Term::Fabulous::Widget::Text
 	# Clay::UI validates text_color before any ADJUST of this class runs,
 	# so it is converted while the arguments are still a plain list.
 	sub BUILDARGS ( $class, %params ) {
-		$params{text_color} = color( $class, text_color => $params{text_color} ) if defined $params{text_color};
+		return %params unless defined $params{text_color};
+		$params{text_color}      = color( $class, text_color => $params{text_color} );
+		$params{_has_text_color} = 1;
 		return %params;
 	}
 
@@ -63,20 +74,69 @@ class Term::Fabulous::Widget::Text
 		die "Term::Fabulous::Widget::Text: invalid $what " . ( defined $name ? "'$name'" : 'null' ) . " (known: " . join( ', ', sort keys %$value_by_name ) . ")";
 	}
 
+	# The reader returns the color the text is drawn in: the explicit one,
+	# or the theme's. undef is not a color; reset_look returns to the theme.
 	method text_color :override (@new) {
-		return $self->SUPER::text_color( @new && defined $new[0] ? color( $self, text_color => $new[0] ) : @new );
+		return $self->_explicit_text_color // $self->look('color') unless @new;
+		return $self->set_look( text_color => $self->SUPER::text_color( color( $self, text_color => $new[0] ) ) );
 	}
 
-	# Inside a disabled widget that grays its text (a Button), the text is
-	# drawn in that widget's color.
+	method _explicit_text_color () {
+		return $self->has_look_override('text_color') ? $self->SUPER::text_color : undef;
+	}
+
+	# ---------------------------------------------------------------------
+	# The theme (Term::Fabulous::Role::Themed)
+	# ---------------------------------------------------------------------
+
+	method theme_family :common () {
+		return 'text';
+	}
+
+	method themed_params :common () {
+		return ( text_color => [ 'color', 'normal' ] );
+	}
+
+	method look_state () {
+		return 'normal';
+	}
+
+	method look_reset ($name) {
+		return;
+	}
+
+	method classes (@new) {
+		return [@$classes] unless @new;
+		$classes = class_names( $self, classes => $new[0] );
+		$self->forget_looks;
+		$self->mark_changed;
+		return [@$classes];
+	}
+
+	method _set_parent :override ($new_parent) {
+		$self->SUPER::_set_parent($new_parent);
+		$self->forget_looks;
+		return;
+	}
+
+	method _detach_parent :override () {
+		$self->SUPER::_detach_parent;
+		$self->forget_looks;
+		return;
+	}
+
+	# The color the text is drawn in. The nearest ancestor that colors the
+	# text inside it (a Button, say) decides, given the explicit color if
+	# there is one; otherwise the explicit color, or the theme's.
 	method text_config :override () {
-		my $config = $self->SUPER::text_config;
+		my $config   = $self->SUPER::text_config;
+		my $explicit = $self->_explicit_text_color;
 		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
-			next unless $node->can('disabled_text_color');
-			my $color = $node->disabled_text_color // last;
+			next unless $node->can('child_text_color');
+			my $color = $node->child_text_color($explicit) // last;
 			return { %$config, text_color => $color };
 		}
-		return $config;
+		return { %$config, text_color => $explicit // $self->look('color') };
 	}
 
 	method layout_properties :common () {
@@ -86,6 +146,7 @@ class Term::Fabulous::Widget::Text
 			letter_spacing => 'scalar',
 			line_height    => 'scalar',
 			text_color     => 'color',
+			classes        => \&_parse_classes,
 			bold           => 'boolean',
 			italic         => 'boolean',
 			underline      => 'boolean',
@@ -93,6 +154,11 @@ class Term::Fabulous::Widget::Text
 			wrap_mode      => \&_parse_wrap_mode,
 			text_alignment => \&_parse_text_alignment,
 		);
+	}
+
+	method _parse_classes ($kid) {
+		$self->classes( $self->kdl_strings($kid) );
+		return;
 	}
 
 	method _parse_text ($kid) {
@@ -210,11 +276,18 @@ accepts: C<[r, g, b, a]> (or C<[r, g, b]>), C<{ r, g, b, a }>, a string
 such as C<'#ffffff'> or C<'rgb(255, 255, 255)'>, a packed C<0xRRGGBB>
 integer, or a Term::Fabulous::Color object such as an item of
 L<Term::Fabulous::Enum::WebColor>; it is stored as C<[r, g, b, a]>. An
-alpha from 1 to 254 is drawn opaque. Default:
-C<[0, 0, 0, 255]>, opaque black, which is invisible on a dark
-background; you will almost always want to set it. Pass
-C<[0, 0, 0, 0]> (alpha 0) for the terminal's default foreground color.
-See L<Term::Fabulous::Manual::Looks/COLORS>.
+alpha from 1 to 254 is drawn opaque. Default: the theme's C<text.color>
+(C<[220, 223, 228, 255]> in the dark theme), or, inside a widget that
+colors its texts (a L<Term::Fabulous::Widget::Button>), that widget's
+text look. Pass C<[0, 0, 0, 0]> (alpha 0) for the terminal's default
+foreground color. See L<Term::Fabulous::Manual::Looks/COLORS> and
+L<Term::Fabulous::Manual::Looks/THEMES>.
+
+=item C<classes>
+
+An array reference of strings. Default: C<[]>. Names that select the
+theme's variants of the C<text> family, as for
+L<Term::Fabulous::Widget/classes>.
 
 Inside a disabled L<Term::Fabulous::Widget::Button>, the text is drawn
 in the button's C<disabled_color> instead, whatever its C<text_color>.
@@ -311,11 +384,26 @@ text is a character string; the layout adapts to the new length.
 	$label->text_color( [ 255, 80, 80, 255 ] );
 	$label->text_color('#ff5050');
 
-Accessor. Without an argument it returns the current value as
-C<[r, g, b, a]>; with an argument it sets it, in any format the
-constructor parameter accepts, and returns the stored C<[r, g, b, a]>.
-An invalid value dies like the constructor parameter. The change shows
-in the next frame.
+Accessor. Without an argument it returns the color in use, the given
+one or the theme's, as C<[r, g, b, a]>; with an argument it sets it, in
+any format the constructor parameter accepts, and returns the stored
+C<[r, g, b, a]>. An invalid value dies like the constructor parameter,
+and so does C<undef>: C<< $label->reset_look('text_color') >> returns
+the text to the theme. The change shows in the next frame.
+
+=head2 classes
+
+	$label->classes( ['muted'] );
+
+Accessor for the C<classes> parameter, as
+L<Term::Fabulous::Widget/classes>.
+
+=head2 reset_look
+
+	$label->reset_look('text_color');
+
+Drops the given C<text_color>, so the theme's text color is drawn
+again; see L<Term::Fabulous::Widget/reset_look>.
 
 =head2 bold
 

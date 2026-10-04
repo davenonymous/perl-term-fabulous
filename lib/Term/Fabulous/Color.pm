@@ -28,9 +28,9 @@ class Term::Fabulous::Color :strict(params) {
 	my $NUMBER   = qr/[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
 	my $COMMA    = qr/\s*,\s*/;
 
-	field $red   :reader;
+	field $red :reader;
 	field $green :reader;
-	field $blue  :reader;
+	field $blue :reader;
 	field $alpha :reader;
 
 	# INVARIANT: Color is immutable post-ADJUST; lazy memo slots are safe.
@@ -42,9 +42,9 @@ class Term::Fabulous::Color :strict(params) {
 	ADJUST :params ( :$color ) {
 		my @channels = _channels_from_input($color);
 		( $red, $green, $blue, $alpha ) = map { _checked_channel( $CHANNEL_NAMES[$_], $channels[$_] ) } 0 .. 3;
-		}
+	}
 
-		sub _describe ($value) {
+	sub _describe ($value) {
 		return 'undef' unless defined $value;
 		return ref($value) . ' reference' if ref $value;
 		return "'$value'";
@@ -693,6 +693,7 @@ an integer. Dies if a channel is outside 0..255.
 
 L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Render::Attr>,
 L<Term::Fabulous::Widget::Canvas/Colors>, L<Term::Fabulous::Enum::WebColor>,
-L<Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>.
+L<Term::Fabulous::Theme>,
+L<Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>.
 
 =cut

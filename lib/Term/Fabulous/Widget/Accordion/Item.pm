@@ -21,24 +21,20 @@ class Term::Fabulous::Widget::Accordion::Item
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean string);
+	use Term::Fabulous::Theme;
 
-	# The look an item shows while it has no accordion to take it from.
+	# The settings an item shows while it has no accordion to take them
+	# from; the colors come from the default theme's accordion family.
 	my %DEFAULT_LOOK = (
-		toggle_position         => 'start',
-		open_glyph              => "\x{25BE}",
-		closed_glyph            => "\x{25B8}",
-		title_color             => [ 220, 223, 228, 255 ],
-		title_bold              => 0,
-		accent_color            => [ 97, 175, 239, 255 ],
-		header_background_color => undef,
-		focus_background_color  => [ 52,  58,  72,  255 ],
-		hover_background_color  => [ 40,  45,  58,  255 ],
-		disabled_color          => [ 108, 112, 120, 255 ],
-		body_indent             => 2,
+		toggle_position => 'start',
+		open_glyph      => "\x{25BE}",
+		closed_glyph    => "\x{25B8}",
+		title_bold      => 0,
+		body_indent     => 2,
 	);
 
 	field $title :param = '';
-	field $icon  :param = undef;
+	field $icon :param  = undef;
 
 	# The header the user acts on, the body that holds the children, and
 	# the texts of the header, which the look updates.
@@ -70,10 +66,10 @@ class Term::Fabulous::Widget::Accordion::Item
 		$_header->disabled( boolean( $self, disabled => $disabled ) );
 		$self->open( boolean( $self, open => $open ) );
 		$self->refresh_look;
-		}
+	}
 
-		# The accordion the item belongs to, if any.
-		method accordion () {
+	# The accordion the item belongs to, if any.
+	method accordion () {
 		my $parent = $self->parent;
 		return blessed $parent && $parent->isa('Term::Fabulous::Widget::Accordion') ? $parent : undef;
 	}
@@ -189,10 +185,15 @@ class Term::Fabulous::Widget::Accordion::Item
 	# Look
 	# ---------------------------------------------------------------------
 
-	# One setting of the look: the accordion's, or the default.
+	# One setting of the look: the accordion's; without one, the default
+	# setting, or the default theme's accordion look.
 	method _look ($name) {
 		my $accordion = $self->accordion;
-		return defined $accordion ? $accordion->$name : $DEFAULT_LOOK{$name};
+		return $accordion->$name if defined $accordion;
+		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
+		require Term::Fabulous::Widget::Accordion;
+		my %themed = Term::Fabulous::Widget::Accordion->themed_params;
+		return Term::Fabulous::Theme->default->look( 'accordion', @{ $themed{$name} } );
 	}
 
 	# Updates the header's texts, order and colors from the state and the

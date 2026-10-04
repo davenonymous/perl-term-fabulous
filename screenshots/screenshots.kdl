@@ -75,6 +75,14 @@ screenshot "example-colors" {
 	size 80 13
 }
 
+screenshot "example-themes" {
+	script "examples/themes.pl"
+	steps {
+		type "Ada"
+		key "F2" "F2"
+	}
+}
+
 screenshot "example-custom-widget" {
 	script "examples/custom-widget.pl"
 	size 80 11
@@ -384,7 +392,7 @@ screenshot "cookbook-theme-switch" {
 	size 72 8
 	steps {
 		type "Light and readable"
-		key "F2"
+		key "F2" "F2"
 	}
 }
 

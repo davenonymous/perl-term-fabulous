@@ -48,21 +48,18 @@ class Term::Fabulous::Widget::Tabs::Bar
 	# Key name => step through the enabled tabs.
 	my %STEP_BY_KEY = ( Left => -1, Up => -1, Right => 1, Down => 1 );
 
-	field $side                   :param = $DEFAULT_LOOK{side};
-	field $orientation            :param = $DEFAULT_LOOK{orientation};
-	field $tab_alignment          :param = 'start';
-	field $tab_gap                :param = 1;
-	field $tab_margin             :param = 1;
-	field $tab_padding            :param = $DEFAULT_LOOK{tab_padding};
-	field $line_style             :param = $DEFAULT_LOOK{line_style};
-	field $line_color             :param = $DEFAULT_LOOK{line_color};
-	field $text_color             :param = $DEFAULT_LOOK{text_color};
-	field $active_text_color      :param = $DEFAULT_LOOK{active_text_color};
-	field $active_bold            :param = $DEFAULT_LOOK{active_bold};
-	field $hover_background_color :param = $DEFAULT_LOOK{hover_background_color};
-	field $focus_border_color     :param = $DEFAULT_LOOK{focus_border_color};
-	field $disabled_color         :param = $DEFAULT_LOOK{disabled_color};
-	field $page_border            :param = 0;
+	field $side :param          = $DEFAULT_LOOK{side};
+	field $orientation :param   = $DEFAULT_LOOK{orientation};
+	field $tab_alignment :param = 'start';
+	field $tab_gap :param       = 1;
+	field $tab_margin :param    = 1;
+	field $tab_padding :param   = $DEFAULT_LOOK{tab_padding};
+	field $active_bold :param   = $DEFAULT_LOOK{active_bold};
+	field $page_border :param   = 0;
+
+	# The colors and the line style come from the theme's tabs family
+	# unless given.
+	my @THEMED_PARAMS = qw(line_style line_color text_color active_text_color hover_background_color focus_border_color disabled_color);
 
 	# The row of tabs and the line toward the page; the active tab; the
 	# sizing the layout asked for, which wins over the side's.
@@ -75,21 +72,14 @@ class Term::Fabulous::Widget::Tabs::Bar
 	field $_owner;
 
 	ADJUST {
-		$side                   = $self->_checked_side($side);
-		$orientation            = $self->_checked_orientation($orientation);
-		$tab_alignment          = $self->_checked_alignment($tab_alignment);
-		$tab_gap                = non_negative_integer( $self, tab_gap     => $tab_gap );
-		$tab_margin             = non_negative_integer( $self, tab_margin  => $tab_margin );
-		$tab_padding            = non_negative_integer( $self, tab_padding => $tab_padding );
-		$line_style             = $self->_checked_style($line_style);
-		$line_color             = color( $self, line_color        => $line_color );
-		$text_color             = color( $self, text_color        => $text_color );
-		$active_text_color      = color( $self, active_text_color => $active_text_color );
-		$active_bold            = boolean( $self, active_bold => $active_bold );
-		$hover_background_color = color( $self, hover_background_color => $hover_background_color );
-		$focus_border_color     = $self->_optional_color( focus_border_color => $focus_border_color );
-		$disabled_color         = color( $self, disabled_color => $disabled_color );
-		$page_border            = boolean( $self, page_border => $page_border );
+		$side          = $self->_checked_side($side);
+		$orientation   = $self->_checked_orientation($orientation);
+		$tab_alignment = $self->_checked_alignment($tab_alignment);
+		$tab_gap       = non_negative_integer( $self, tab_gap     => $tab_gap );
+		$tab_margin    = non_negative_integer( $self, tab_margin  => $tab_margin );
+		$tab_padding   = non_negative_integer( $self, tab_padding => $tab_padding );
+		$active_bold   = boolean( $self, active_bold => $active_bold );
+		$page_border   = boolean( $self, page_border => $page_border );
 
 		$_sizing_wish = $self->layout->{sizing} // {};
 		$_row         = Term::Fabulous::Widget::Box->new;
@@ -98,6 +88,31 @@ class Term::Fabulous::Widget::Tabs::Bar
 
 		weaken( my $weak_self = $self );
 		$self->on( KeyPress => sub ($event) { return $weak_self && $weak_self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+	}
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @THEMED_PARAMS );
+	}
+
+	# ---------------------------------------------------------------------
+	# The theme: the tabs family
+	# ---------------------------------------------------------------------
+
+	method theme_family :common () {
+		return 'tabs';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			line_style             => [ 'line.style',       'normal' ],
+			line_color             => [ 'line.color',       'normal' ],
+			text_color             => [ 'text',             'normal' ],
+			active_text_color      => [ 'text',             'active' ],
+			disabled_color         => [ 'text',             'disabled' ],
+			hover_background_color => [ 'hover_background', 'normal' ],
+			focus_border_color     => [ 'focus_border',     'normal' ],
+		);
 	}
 
 	# ---------------------------------------------------------------------
@@ -359,21 +374,33 @@ class Term::Fabulous::Widget::Tabs::Bar
 		return $$field_ref;
 	}
 
-	method side                   (@new) { return @new ? $self->_set( \$side, $self->_checked_side( $new[0] ), 1 )                                    : $side }
-	method orientation            (@new) { return @new ? $self->_set( \$orientation, $self->_checked_orientation( $new[0] ), 1 )                      : $orientation }
-	method tab_alignment          (@new) { return @new ? $self->_set( \$tab_alignment, $self->_checked_alignment( $new[0] ), 1 )                      : $tab_alignment }
-	method tab_gap                (@new) { return @new ? $self->_set( \$tab_gap, non_negative_integer( $self, tab_gap => $new[0] ), 1 )               : $tab_gap }
-	method tab_margin             (@new) { return @new ? $self->_set( \$tab_margin, non_negative_integer( $self, tab_margin => $new[0] ), 1 )         : $tab_margin }
-	method tab_padding            (@new) { return @new ? $self->_set( \$tab_padding, non_negative_integer( $self, tab_padding => $new[0] ) )          : $tab_padding }
-	method line_style             (@new) { return @new ? $self->_set( \$line_style, $self->_checked_style( $new[0] ) )                                : $line_style }
-	method line_color             (@new) { return @new ? $self->_set( \$line_color, color( $self, line_color => $new[0] ) )                           : $line_color }
-	method text_color             (@new) { return @new ? $self->_set( \$text_color, color( $self, text_color => $new[0] ) )                           : $text_color }
-	method active_text_color      (@new) { return @new ? $self->_set( \$active_text_color, color( $self, active_text_color => $new[0] ) )             : $active_text_color }
-	method active_bold            (@new) { return @new ? $self->_set( \$active_bold, boolean( $self, active_bold => $new[0] ) )                       : $active_bold }
-	method hover_background_color (@new) { return @new ? $self->_set( \$hover_background_color, color( $self, hover_background_color => $new[0] ) )   : $hover_background_color }
-	method focus_border_color     (@new) { return @new ? $self->_set( \$focus_border_color, $self->_optional_color( focus_border_color => $new[0] ) ) : $focus_border_color }
-	method disabled_color         (@new) { return @new ? $self->_set( \$disabled_color, color( $self, disabled_color => $new[0] ) )                   : $disabled_color }
-	method page_border            (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                       : $page_border }
+	method _set_look ( $name, $value ) {
+		$self->set_look( $name => $value );
+		$self->_restyle;
+		return $value;
+	}
+
+	method look_reset :override ($name) {
+		$self->SUPER::look_reset($name);
+		$self->_restyle;
+		return;
+	}
+
+	method side              (@new) { return @new ? $self->_set( \$side, $self->_checked_side( $new[0] ), 1 )                             : $side }
+	method orientation       (@new) { return @new ? $self->_set( \$orientation, $self->_checked_orientation( $new[0] ), 1 )               : $orientation }
+	method tab_alignment     (@new) { return @new ? $self->_set( \$tab_alignment, $self->_checked_alignment( $new[0] ), 1 )               : $tab_alignment }
+	method tab_gap           (@new) { return @new ? $self->_set( \$tab_gap, non_negative_integer( $self, tab_gap => $new[0] ), 1 )        : $tab_gap }
+	method tab_margin        (@new) { return @new ? $self->_set( \$tab_margin, non_negative_integer( $self, tab_margin => $new[0] ), 1 )  : $tab_margin }
+	method tab_padding       (@new) { return @new ? $self->_set( \$tab_padding, non_negative_integer( $self, tab_padding => $new[0] ) )   : $tab_padding }
+	method active_bold       (@new) { return @new ? $self->_set( \$active_bold, boolean( $self, active_bold => $new[0] ) )                : $active_bold }
+	method page_border       (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                : $page_border }
+	method line_style        (@new) { return @new ? $self->_set_look( line_style => $self->_checked_style( $new[0] ) )                    : $self->_checked_style( $self->look_value('line_style') ) }
+	method line_color        (@new) { return @new ? $self->_set_look( line_color => color( $self, line_color => $new[0] ) )               : $self->look_value('line_color') }
+	method text_color        (@new) { return @new ? $self->_set_look( text_color => color( $self, text_color => $new[0] ) )               : $self->look_value('text_color') }
+	method active_text_color (@new) { return @new ? $self->_set_look( active_text_color => color( $self, active_text_color => $new[0] ) ) : $self->look_value('active_text_color') }
+	method hover_background_color (@new) { return @new ? $self->_set_look( hover_background_color => color( $self, hover_background_color => $new[0] ) ) : $self->look_value('hover_background_color') }
+	method focus_border_color     (@new) { return @new ? $self->_set_look( focus_border_color => $self->_optional_color( focus_border_color => $new[0] ) ) : $self->look_value('focus_border_color') }
+	method disabled_color         (@new) { return @new ? $self->_set_look( disabled_color => color( $self, disabled_color => $new[0] ) )                   : $self->look_value('disabled_color') }
 
 	# The focus color is not a plain color: #null switches the focus look
 	# off, and the line style may be a name.
@@ -532,7 +559,7 @@ known ones.
 =item C<line_color>
 
 The color of the borders and the line, in any format
-L<Term::Fabulous::Color> accepts. Default: C<[90, 96, 110, 255]>, a
+L<Term::Fabulous::Color> accepts. Default: the theme's C<tabs.line.color>, C<[90, 96, 110, 255]> in the dark theme, a
 gray.
 
 =item C<text_color>

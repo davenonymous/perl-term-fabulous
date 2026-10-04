@@ -206,6 +206,13 @@ trees; see L<Term::Fabulous/new>.
 
 Passed to L<Clay::UI>; see there.
 
+=item C<theme>
+
+The L<Term::Fabulous::Theme> the widgets draw with: a theme object or
+a built-in name, C<dark> (the default) or C<light>; the C<theme>
+accessor changes it. See L<Term::Fabulous/new> and
+L<Term::Fabulous::Manual::Looks/THEMES>.
+
 =back
 
 =head1 METHODS

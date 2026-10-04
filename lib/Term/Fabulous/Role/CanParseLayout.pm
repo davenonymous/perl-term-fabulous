@@ -91,6 +91,15 @@ role Term::Fabulous::Role::CanParseLayout {
 		die sprintf( "%s: layout property '%s' needs exactly one argument", ref $self, $kid->name );
 	}
 
+	# The string arguments of a property node as an array reference: one
+	# or more, and nothing else.
+	method kdl_strings ($kid) {
+		my @args = $kid->args->@*;
+		die sprintf( "%s: layout property '%s' takes one or more string arguments", ref $self, $kid->name )
+			if !@args || $kid->props->@* || $kid->children->@* || grep { !$_->is_string } @args;
+		return [ map { $_->value } @args ];
+	}
+
 	# The key=value properties of a property node as a hashref; only the
 	# given keys are allowed and at least one is required.
 	method kdl_properties ( $kid, @allowed ) {

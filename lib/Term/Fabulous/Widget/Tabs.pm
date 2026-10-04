@@ -23,7 +23,6 @@ class Term::Fabulous::Widget::Tabs
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(describe);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Select;
 
 	use constant PAGE_CLASS => 'Term::Fabulous::Widget::Tabs::Page';
@@ -215,21 +214,12 @@ class Term::Fabulous::Widget::Tabs
 	# Look: the bar's, and the border of the pages
 	# ---------------------------------------------------------------------
 
-	# A page has the line's style on the three sides away from the bar and
-	# none on the bar's side, where the line closes it; or no border.
+	# A page has a border around it, or none; its style and color follow
+	# the bar (see Term::Fabulous::Widget::Tabs::Page).
 	method _restyle_pages () {
-		my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
+		my $width = $_bar->page_border ? 1 : undef;
 		foreach my $page (@_pages) {
-			unless ( $_bar->page_border ) {
-				$page->border_width(undef);
-				next;
-			}
-			$page->border_width(1);
-			$page->border_color( $_bar->line_color );
-			foreach my $side (qw(top right bottom left)) {
-				my $accessor = "border_style_$side";
-				$page->$accessor( $side eq $_bar->side ? $hidden : $_bar->line_style );
-			}
+			$page->border_width($width) unless ( $page->border_width // 0 ) eq ( $width // 0 );
 		}
 		return;
 	}

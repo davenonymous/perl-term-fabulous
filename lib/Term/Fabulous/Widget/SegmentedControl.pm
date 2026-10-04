@@ -28,12 +28,13 @@ class Term::Fabulous::Widget::SegmentedControl
 	field @options;    # { label, value, disabled }
 	field $selected;    # index into @options, or undef
 
-	field $vertical               :param = 0;
-	field $segment_padding        :param = 1;
-	field $separator              :param = "\x{2502}";
-	field $selected_text_color    :param = [ 16, 18, 22,  255 ];
-	field $separator_color        :param = [ 90, 96, 110, 255 ];
-	field $hover_background_color :param = [ 60, 66, 80,  255 ];
+	field $vertical :param        = 0;
+	field $segment_padding :param = 1;
+	field $separator :param       = "\x{2502}";
+
+	# The colors of the selected label, the separators and the hovered
+	# segment come from the theme's input family unless given.
+	my @COLOR_NAMES = qw(selected_text_color separator_color hover_background_color);
 
 	# The segment the pointer is over while it hovers.
 	field $_hover_index;
@@ -41,12 +42,9 @@ class Term::Fabulous::Widget::SegmentedControl
 	ADJUST :params ( :$options = undef, :$value = undef, :$selected_index = undef ) {
 		die ref($self) . ": give 'value' or 'selected_index', not both"
 			if defined $value && defined $selected_index;
-		$vertical               = boolean( $self, vertical => $vertical );
-		$segment_padding        = non_negative_integer( $self, segment_padding => $segment_padding );
-		$separator              = $self->_checked_separator($separator);
-		$selected_text_color    = cell_color( $self, selected_text_color    => $selected_text_color );
-		$separator_color        = cell_color( $self, separator_color        => $separator_color );
-		$hover_background_color = cell_color( $self, hover_background_color => $hover_background_color );
+		$vertical        = boolean( $self, vertical => $vertical );
+		$segment_padding = non_negative_integer( $self, segment_padding => $segment_padding );
+		$separator       = $self->_checked_separator($separator);
 
 		$self->options($options) if defined $options;
 		$self->value($value) if defined $value;
@@ -56,9 +54,9 @@ class Term::Fabulous::Widget::SegmentedControl
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_index_at($event) ) if $weak_self;                           return $continue } );
 		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
-		}
+	}
 
-		method _checked_separator ($glyph) {
+	method _checked_separator ($glyph) {
 		return undef unless defined $glyph;
 		return Term::Fabulous::Check::glyph( $self, separator => $glyph );
 	}
@@ -154,12 +152,26 @@ class Term::Fabulous::Widget::SegmentedControl
 		return $$field_ref;
 	}
 
-	method vertical               (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                                : $vertical }
-	method segment_padding        (@new) { return @new ? $self->_set( \$segment_padding, non_negative_integer( $self, segment_padding => $new[0] ) )     : $segment_padding }
-	method separator              (@new) { return @new ? $self->_set( \$separator, $self->_checked_separator( $new[0] ) )                                : $separator }
-	method selected_text_color    (@new) { return @new ? $self->_set( \$selected_text_color, cell_color( $self, selected_text_color => $new[0] ) )       : $selected_text_color }
-	method separator_color        (@new) { return @new ? $self->_set( \$separator_color, cell_color( $self, separator_color => $new[0] ) )               : $separator_color }
-	method hover_background_color (@new) { return @new ? $self->_set( \$hover_background_color, cell_color( $self, hover_background_color => $new[0] ) ) : $hover_background_color }
+	method vertical            (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                              : $vertical }
+	method segment_padding     (@new) { return @new ? $self->_set( \$segment_padding, non_negative_integer( $self, segment_padding => $new[0] ) )   : $segment_padding }
+	method separator           (@new) { return @new ? $self->_set( \$separator, $self->_checked_separator( $new[0] ) )                              : $separator }
+	method selected_text_color (@new) { return @new ? $self->set_look( selected_text_color => cell_color( $self, selected_text_color => $new[0] ) ) : $self->look_value('selected_text_color') }
+	method separator_color     (@new) { return @new ? $self->set_look( separator_color => cell_color( $self, separator_color => $new[0] ) )         : $self->look_value('separator_color') }
+
+	method hover_background_color (@new) {
+		return @new ? $self->set_look( hover_background_color => cell_color( $self, hover_background_color => $new[0] ) ) : $self->look_value('hover_background_color');
+	}
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_NAMES );
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params, selected_text_color => [ 'selected_text', 'normal' ], separator_color => [ 'separator', 'normal' ],
+			hover_background_color => [ 'hover_background', 'normal' ]
+		);
+	}
 
 	method layout_properties :common () {
 		return (
@@ -168,7 +180,7 @@ class Term::Fabulous::Widget::SegmentedControl
 			option  => \&_parse_options,
 			( map { $_ => 'scalar' } qw(value selected_index segment_padding separator) ),
 			vertical => 'boolean',
-			( map { $_ => 'color' } qw(selected_text_color separator_color hover_background_color) ),
+			( map { $_ => 'color' } @COLOR_NAMES ),
 		);
 	}
 
@@ -303,8 +315,8 @@ class Term::Fabulous::Widget::SegmentedControl
 			my $option      = $options[$index];
 			my $is_selected = defined $selected && $selected == $index;
 			my $is_hovered  = $enabled && !$option->{disabled} && defined $_hover_index && $_hover_index == $index;
-			my $segment_bg  = $is_selected ? $self->accent_attr                      : $is_hovered         ? $self->color_attr($hover_background_color) : $bg;
-			my $fg          = $is_selected ? $self->color_attr($selected_text_color) : $option->{disabled} ? $self->color_attr( $self->disabled_color ) : $self->foreground_attr;
+			my $segment_bg  = $is_selected ? $self->accent_attr                              : $is_hovered         ? $self->color_attr( $self->hover_background_color ) : $bg;
+			my $fg          = $is_selected ? $self->color_attr( $self->selected_text_color ) : $option->{disabled} ? $self->color_attr( $self->disabled_color )         : $self->foreground_attr;
 
 			my $label  = $option->{label};
 			my $width  = $vertical ? $across         : $segment_length;
@@ -316,7 +328,7 @@ class Term::Fabulous::Widget::SegmentedControl
 			$self->paint_text( List::Util::max( $x0, $label_x ), $y0 + int( ( $height - 1 ) / 2 ), $label, $fg, $segment_bg, $x0 + $width );
 
 			next if $vertical || !defined $separator || $index == $#spans;
-			$self->put_attrs( $start + $segment_length, $_, $separator, $self->color_attr( $enabled ? $separator_color : $self->disabled_color ), $bg ) foreach 0 .. $height - 1;
+			$self->put_attrs( $start + $segment_length, $_, $separator, $self->color_attr( $enabled ? $self->separator_color : $self->disabled_color ), $bg ) foreach 0 .. $height - 1;
 		}
 		return;
 	}
@@ -467,17 +479,20 @@ of a horizontal control; C<undef> draws none.
 
 The color of the selected segment's label, which sits on the
 C<accent_color>, in any format
-L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default:
-C<[16, 18, 22, 255]>, nearly black.
+L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default: the theme's
+C<input.selected_text>, C<[16, 18, 22, 255]> in the dark theme, nearly
+black.
 
 =item C<separator_color>
 
-The color of the separators. Default: C<[90, 96, 110, 255]>, a gray.
+The color of the separators. Default: the theme's C<input.separator>,
+C<[90, 96, 110, 255]> in the dark theme, a gray.
 
 =item C<hover_background_color>
 
-The background of the segment under the pointer. Default:
-C<[60, 66, 80, 255]>, a dark gray.
+The background of the segment under the pointer. Default: the theme's
+C<input.hover_background>, C<[60, 66, 80, 255]> in the dark theme, a
+dark gray.
 
 =back
 

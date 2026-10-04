@@ -62,14 +62,12 @@ class Term::Fabulous::Widget::Spinner
 
 	my %IS_POSITION = map { $_ => 1 } qw(left right);
 
-	field $style          :param = 'dots';
-	field $frames         :param = undef;
-	field $interval       :param = undef;
-	field $label          :param = '';
+	field $style :param          = 'dots';
+	field $frames :param         = undef;
+	field $interval :param       = undef;
+	field $label :param          = '';
 	field $label_position :param = 'right';
-	field $running        :param = 1;
-	field $color          :param = [ 97,  175, 239, 255 ];
-	field $label_color    :param = [ 220, 223, 228, 255 ];
+	field $running :param        = 1;
 
 	ADJUST {
 		$style          = $self->_checked_style($style);
@@ -78,8 +76,19 @@ class Term::Fabulous::Widget::Spinner
 		$label          = string( $self, label => $label );
 		$label_position = $self->_checked_position($label_position);
 		$running        = boolean( $self, running => $running );
-		$color          = cell_color( $self, color       => $color );
-		$label_color    = cell_color( $self, label_color => $label_color );
+	}
+
+	# The colors come from the theme's spinner family unless given.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, qw(color label_color) );
+	}
+
+	method theme_family :common () {
+		return 'spinner';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, color => [ 'color', 'normal' ], label_color => [ 'label', 'normal' ] );
 	}
 
 	method _checked_style ($name) {
@@ -119,13 +128,13 @@ class Term::Fabulous::Widget::Spinner
 		return $$field_ref;
 	}
 
-	method style          (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                  : $style }
-	method interval       (@new) { return @new ? $self->_set( \$interval, $self->_checked_interval( $new[0] ) )            : $interval // $STYLE{$style}{interval} }
-	method label          (@new) { return @new ? $self->_set( \$label, string( $self, label => $new[0] ) )                 : $label }
-	method label_position (@new) { return @new ? $self->_set( \$label_position, $self->_checked_position( $new[0] ) )      : $label_position }
-	method running        (@new) { return @new ? $self->_set( \$running, boolean( $self, running => $new[0] ) )            : $running }
-	method color          (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )             : $color }
-	method label_color    (@new) { return @new ? $self->_set( \$label_color, cell_color( $self, label_color => $new[0] ) ) : $label_color }
+	method style          (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                      : $style }
+	method interval       (@new) { return @new ? $self->_set( \$interval, $self->_checked_interval( $new[0] ) )                : $interval // $STYLE{$style}{interval} }
+	method label          (@new) { return @new ? $self->_set( \$label, string( $self, label => $new[0] ) )                     : $label }
+	method label_position (@new) { return @new ? $self->_set( \$label_position, $self->_checked_position( $new[0] ) )          : $label_position }
+	method running        (@new) { return @new ? $self->_set( \$running, boolean( $self, running => $new[0] ) )                : $running }
+	method color          (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )             : $self->look_value('color') }
+	method label_color    (@new) { return @new ? $self->set_look( label_color => cell_color( $self, label_color => $new[0] ) ) : $self->look_value('label_color') }
 
 	method frames (@new) {
 		return [ ( $frames // $STYLE{$style}{frames} )->@* ] unless @new;
@@ -202,12 +211,12 @@ class Term::Fabulous::Widget::Spinner
 		my $label_columns = $self->_label_columns;
 		my $frame_x       = $label_position eq 'left' ? $label_columns : 0;
 		my @rows          = _rows_of( $self->frames->[ $self->frame_index ] );
-		my $fg            = $self->color_attr($color);
+		my $fg            = $self->color_attr( $self->color );
 		$self->paint_text( $frame_x, $_, $rows[$_], $fg, undef, $frame_x + $frame_columns ) foreach 0 .. $#rows;
 		return unless $label_columns;
 
 		my $y = int( ( $frame_rows - 1 ) / 2 );
-		$self->paint_text( $label_position eq 'left' ? 0 : $frame_columns + 1, $y, $label, $self->color_attr($label_color), undef );
+		$self->paint_text( $label_position eq 'left' ? 0 : $frame_columns + 1, $y, $label, $self->color_attr( $self->label_color ), undef );
 		return;
 	}
 }
@@ -324,12 +333,14 @@ frame and stands still. Stored as 1 or 0; a reference dies.
 =item C<color>
 
 The color of the frames, in any format
-L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default:
-C<[97, 175, 239, 255]>, the blue of the input widgets' accent.
+L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default: the theme's
+C<spinner.color>, C<[97, 175, 239, 255]> in the dark theme, the blue of
+the input widgets' accent.
 
 =item C<label_color>
 
-The color of the label. Default: C<[220, 223, 228, 255]>.
+The color of the label. Default: the theme's C<spinner.label>,
+C<[220, 223, 228, 255]> in the dark theme.
 
 =back
 

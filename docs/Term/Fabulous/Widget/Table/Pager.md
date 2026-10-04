@@ -54,7 +54,8 @@ The table makes its pager itself. Unknown parameters die.
 
 - `button_color`
 
-    The background of the buttons. Default: `[44, 49, 60, 255]`.
+    The background of the buttons. Default: `[44, 49, 60, 255]`; the
+    table passes its theme's `table.pager.button`.
 
 The colors take any format of [Term::Fabulous::Color](../../Color.md). The pager is a
 [Term::Fabulous::Widget::Box](../Box.md); its layout is set by the constructor.

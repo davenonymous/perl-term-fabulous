@@ -158,6 +158,10 @@ The L<IO::Async::Loop> that L<C<< $ui->run >>|Term::Fabulous/run>
 runs: it waits for input, draws frames and runs timers. See
 L<Term::Fabulous::Manual::Programs/THE EVENT LOOP>.
 
+=item family (theme)
+
+The kind of a widget as the theme sees it: C<button>, C<input>, C<table>, ... Each family has slots. See L<Term::Fabulous::Manual::Looks/What a theme colors>.
+
 =item filter expression (table)
 
 The text in a field of a table's filter row, such as C<< >=2019 >> or
@@ -347,6 +351,10 @@ One part of a pie, donut or polar area chart: a unique label and a
 value. The slices are the chart's series. See
 L<Term::Fabulous::Manual::Charts/Series and data>.
 
+=item slot (theme)
+
+One colored or styled part of a widget family in a theme: C<button.border.color>, C<input.placeholder>, C<divider.line.style>. A slot has a value for the normal state and may have one for each state the widget shows (C<focused>, C<disabled>, ...). It defaults to a token. See L<Term::Fabulous::Theme/Families, slots and states>.
+
 =item style hash (table)
 
 A hash reference of looks and lines for a column, a row or a cell of a
@@ -379,12 +387,24 @@ L<Term::Fabulous::Role::Terminal>.
 The text and background color the terminal uses when a program does not
 set one. Colors with alpha 0 select it.
 
+=item theme
+
+The colors and border styles every widget draws with when it is not given its own: a palette of tokens and the slots of every widget family, with variants. Set per UI (C<< Term::Fabulous->new( theme => ... ) >>) and switched at run time; built-in: C<dark> and C<light>; written in theme files or in Perl. See L<Term::Fabulous::Manual::Looks/THEMES> and L<Term::Fabulous::Theme>.
+
 =item theme (chart)
 
 Whether a chart draws its text, axes and grid with a C<dark> or a
 C<light> ink, and which steps of its palette it uses; C<auto> (the
 default) chooses by the background. See
 L<Term::Fabulous::Manual::Charts/Colors, palettes and themes>.
+
+=item theme file
+
+A KDL file that describes a theme: a C<theme> node, a C<palette> node and one node per widget family. Loaded with L<Term::Fabulous::Theme/from_file>. See L<Term::Fabulous::Theme/THEME FILES>.
+
+=item token (theme)
+
+A named color of a theme's palette, such as C<accent>, C<surface> or C<text>, which the slots default to. See L<Term::Fabulous::Theme/Tokens>.
 
 =item tree row, child row (table)
 
@@ -396,6 +416,10 @@ L<Term::Fabulous::Manual::TableRows/TREES>.
 
 Text encoded as UTF-8, where non-ASCII characters take several bytes, as
 produced by C<encode('UTF-8', $text)>.
+
+=item variant (theme)
+
+Slots of a widget family that apply to the widgets whose C<classes> name the variant: a C<primary> variant of C<button> styles the buttons with C<< classes => ['primary'] >>. See L<Term::Fabulous::Manual::Looks/Variants and classes>.
 
 =item view (table)
 

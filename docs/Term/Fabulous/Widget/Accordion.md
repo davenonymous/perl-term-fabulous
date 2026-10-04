@@ -107,7 +107,8 @@ and the ones below. All are optional; unknown parameters die.
 - `title_color`
 
     The color of the titles, in any format [Term::Fabulous::Color](../Color.md)
-    accepts. Default: `[220, 223, 228, 255]`.
+    accepts. Default: the theme's `accordion.title`,
+    `[220, 223, 228, 255]` in the dark theme.
 
 - `title_bold`
 
@@ -115,28 +116,33 @@ and the ones below. All are optional; unknown parameters die.
 
 - `accent_color`
 
-    The color of an open item's toggle. Default: `[97, 175, 239, 255]`, a
-    blue.
+    The color of an open item's toggle. Default: the theme's
+    `accordion.accent`, `[97, 175, 239, 255]` in the dark theme, a blue.
 
 - `header_background_color`
 
-    The background of the headers, or `undef` for none. Default:
-    `undef`.
+    The background of the headers, or `undef` for none. Default: the
+    theme's `accordion.header.background`, none in the built-in themes.
 
 - `focus_background_color`
 
-    The background of the header that has the focus. Default:
-    `[52, 58, 72, 255]`.
+    The background of the header that has the focus. Default: the theme's
+    `accordion.header.background` in the `focused` state,
+    `[52, 58, 72, 255]` in the dark theme.
 
 - `hover_background_color`
 
-    The background of the header under the pointer. Default:
-    `[40, 45, 58, 255]`.
+    The background of the header under the pointer. Default: the theme's
+    `accordion.header.background` in the `hovered` state,
+    `[40, 45, 58, 255]` in the dark theme.
 
 - `disabled_color`
 
-    The color of a disabled item's header, and of the borders. Default:
-    `[108, 112, 120, 255]`, a gray.
+    The color of a disabled item's header. Default: the theme's
+    `accordion.disabled`, `[108, 112, 120, 255]` in the dark theme, a
+    gray. The borders of a `bordered` accordion take the theme's
+    `accordion.border.color` and `accordion.border.style`; the six
+    colors return to the theme with ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look).
 
 - `body_indent`
 

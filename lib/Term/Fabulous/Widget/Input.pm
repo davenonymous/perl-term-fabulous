@@ -30,19 +30,14 @@ class Term::Fabulous::Widget::Input
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::Change;
 
+	# The colors come from the theme's input family unless given.
 	my @COLOR_NAMES = qw(text_color disabled_color accent_color focus_background_color);
 
-	field $text_color             :param = [ 220, 223, 228, 255 ];
-	field $disabled_color         :param = [ 108, 112, 120, 255 ];
-	field $accent_color           :param = [ 97,  175, 239, 255 ];
-	field $focus_background_color :param = [ 52,  58,  72,  255 ];
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_NAMES );
+	}
 
 	ADJUST {
-		$text_color             = cell_color( $self, text_color             => $text_color );
-		$disabled_color         = cell_color( $self, disabled_color         => $disabled_color );
-		$accent_color           = cell_color( $self, accent_color           => $accent_color );
-		$focus_background_color = cell_color( $self, focus_background_color => $focus_background_color );
-
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		my $own      = sub ($event) { defined $weak_self && refaddr( $event->target ) == refaddr($weak_self) };
@@ -61,38 +56,67 @@ class Term::Fabulous::Widget::Input
 
 	# ---------------------------------------------------------------------
 	# Colors: anything Term::Fabulous::Widget::Canvas accepts for a cell,
-	# kept as [r, g, b, a]
+	# kept as [r, g, b, a]; the theme's input family supplies the rest
 	# ---------------------------------------------------------------------
 
-	method _set_color ( $name, $field_ref, $value ) {
-		$$field_ref = cell_color( $self, $name => $value );
-		$self->mark_changed;
-		return $$field_ref;
+	method theme_family :common () {
+		return 'input';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			text_color             => [ 'text',       'normal' ],
+			disabled_color         => [ 'text',       'disabled' ],
+			accent_color           => [ 'accent',     'normal' ],
+			focus_background_color => [ 'background', 'focused' ],
+		);
+	}
+
+	# A disabled input is neither focused nor hovered.
+	method look_state :override () {
+		return !$self->is_enabled ? 'disabled' : $self->is_focused ? 'focused' : $self->is_hovered ? 'hovered' : 'normal';
+	}
+
+	# The focus background is painted inside the content, not on the
+	# widget's box, so only the border follows the state here.
+	method contribute_look_theme :override ($config) {
+		my $background = $config->{background_color} // $self->look('background');
+		$config->{background_color} = $background if defined $background;
+
+		my $border = $config->{border} // return;
+		my $color  = $self->themed_value( 'border.color', $self->look_state, $border->{color} // $self->look('border.color') );
+		$config->{border} = { %$border, color => $color } if defined $color;
+		return;
+	}
+
+	method _set_color ( $name, $value ) {
+		return $self->set_look( $name => cell_color( $self, $name => $value ) );
 	}
 
 	method text_color (@new) {
-		return @new ? $self->_set_color( text_color => \$text_color, @new ) : $text_color;
+		return @new ? $self->_set_color( text_color => @new ) : $self->look_value('text_color');
 	}
 
 	method disabled_color (@new) {
-		return @new ? $self->_set_color( disabled_color => \$disabled_color, @new ) : $disabled_color;
+		return @new ? $self->_set_color( disabled_color => @new ) : $self->look_value('disabled_color');
 	}
 
 	method accent_color (@new) {
-		return @new ? $self->_set_color( accent_color => \$accent_color, @new ) : $accent_color;
+		return @new ? $self->_set_color( accent_color => @new ) : $self->look_value('accent_color');
 	}
 
 	method focus_background_color (@new) {
-		return @new ? $self->_set_color( focus_background_color => \$focus_background_color, @new ) : $focus_background_color;
+		return @new ? $self->_set_color( focus_background_color => @new ) : $self->look_value('focus_background_color');
 	}
 
 	# The attribute for normal text: the text color, or the disabled color.
 	method foreground_attr () {
-		return $self->color_attr( $self->is_enabled ? $text_color : $disabled_color );
+		return $self->color_attr( $self->look_value( $self->is_enabled ? 'text_color' : 'disabled_color' ) );
 	}
 
 	method accent_attr () {
-		return $self->color_attr( $self->is_enabled ? $accent_color : $disabled_color );
+		return $self->color_attr( $self->look_value( $self->is_enabled ? 'accent_color' : 'disabled_color' ) );
 	}
 
 	method reverse_attr ($attr) {
@@ -123,7 +147,7 @@ class Term::Fabulous::Widget::Input
 	# The background of the content while the input shows the focus,
 	# otherwise undef: the widget's own background shows.
 	method focus_background_attr () {
-		return $self->is_focused ? $self->color_attr($focus_background_color) : undef;
+		return $self->is_focused ? $self->color_attr( $self->look_value('focus_background_color') ) : undef;
 	}
 
 	# Paints the focus background under the whole buffer, when there is one,
@@ -418,25 +442,34 @@ it the parameter has no effect.
 
 =item C<text_color>
 
-The color of the input's text. Default: C<[220, 223, 228, 255]>, a light
-gray.
+The color of the input's text. Default: the theme's C<input.text>,
+C<[220, 223, 228, 255]> in the dark theme, a light gray.
 
 =item C<disabled_color>
 
 The color of all text while the input is disabled, and of inactive parts
-such as scrollbar tracks. Default: C<[108, 112, 120, 255]>, a medium
-gray.
+such as scrollbar tracks. Default: the theme's C<input.text> in the
+C<disabled> state, C<[108, 112, 120, 255]> in the dark theme, a
+medium gray.
 
 =item C<accent_color>
 
 The color of highlights: check marks, the selected radio button's mark,
 the filled part of a slider, the dropdown's arrow and the border of its
-open list. Default: C<[97, 175, 239, 255]>, a light blue.
+open list. Default: the theme's C<input.accent>, C<[97, 175, 239, 255]>
+in the dark theme, a light blue.
 
 =item C<focus_background_color>
 
 The background of the input's content while it has the focus. Default:
-C<[52, 58, 72, 255]>, a dark blue-gray.
+the theme's C<input.background> in the C<focused> state,
+C<[52, 58, 72, 255]> in the dark theme, a dark blue-gray.
+
+The four colors return to the theme with
+L<Term::Fabulous::Widget/reset_look>; the input's own
+C<background_color>, C<border_color> and border style come from the
+theme's C<input> family too when they are not given. See
+L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =back
 

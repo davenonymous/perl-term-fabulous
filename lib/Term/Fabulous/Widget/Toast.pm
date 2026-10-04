@@ -23,34 +23,33 @@ class Term::Fabulous::Widget::Toast
 	use IO::Async::Timer::Countdown;
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean describe integer non_negative_integer number string);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Close;
 
 	use constant STACK_CLASS => 'Term::Fabulous::Widget::Toast::Stack';
 	use constant CLOSE_MARK  => "\x{2715}";
 
-	# The color and the default icon of each kind.
+	# The default icon of each kind; its color is the theme's toast slot of
+	# the kind's name.
 	my %KIND = (
-		info    => { color => [ 97,  175, 239, 255 ], icon => 'i' },
-		success => { color => [ 152, 195, 121, 255 ], icon => "\x{2713}" },
-		warning => { color => [ 229, 192, 123, 255 ], icon => '!' },
-		danger  => { color => [ 224, 108, 117, 255 ], icon => "\x{2717}" },
+		info    => { icon => 'i' },
+		success => { icon => "\x{2713}" },
+		warning => { icon => '!' },
+		danger  => { icon => "\x{2717}" },
 	);
 
 	my %DEFAULT_SIZING = ( width => sizing_fit( 20, 44 ) );
 
-	field $kind       :param = 'info';
-	field $title      :param = '';
-	field $message    :param = '';
-	field $icon       :param = undef;
-	field $closable   :param = 1;
-	field $timeout    :param = 5;
-	field $important  :param = 0;
-	field $position   :param = 'top_right';
-	field $z_index    :param = 2000;
-	field $margin     :param = 1;
-	field $color      :param = undef;
-	field $text_color :param = [ 220, 223, 228, 255 ];
+	field $kind :param      = 'info';
+	field $title :param     = '';
+	field $message :param   = '';
+	field $icon :param      = undef;
+	field $closable :param  = 1;
+	field $timeout :param   = 5;
+	field $important :param = 0;
+	field $position :param  = 'top_right';
+	field $z_index :param   = 2000;
+	field $margin :param    = 1;
+	field $color :param     = undef;
 
 	# The parts of the toast, and the stack it is shown in.
 	field $_icon_text;
@@ -66,29 +65,27 @@ class Term::Fabulous::Widget::Toast
 	field $_panel_color;
 	field $_styling = 0;
 
-	# A toast looks like a toast unless told otherwise.
+	# A toast looks like a toast unless told otherwise: a bordered panel in
+	# the theme's toast colors and border style.
 	sub BUILDARGS ( $class, %params ) {
-		$params{background_color} //= [ 28, 33, 45, 255 ];
-		$params{border_width}     //= 1;
-		$params{border_style}     //= Term::Fabulous::Enum::BorderStyle->Round;
+		$params{border_width} //= 1;
 		$params{layout}         = { padding => { left => 1, right => 1 }, child_gap => 1, %{ $params{layout} // {} } };
 		$params{layout}{sizing} = { %DEFAULT_SIZING, %{ $params{layout}{sizing} // {} } };
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
 	ADJUST {
-		$kind       = $self->_checked_kind($kind);
-		$title      = string( $self, title   => $title );
-		$message    = string( $self, message => $message );
-		$icon       = defined $icon ? string( $self, icon => $icon ) : undef;
-		$closable   = boolean( $self, closable => $closable );
-		$timeout    = $self->_checked_timeout($timeout);
-		$important  = boolean( $self, important => $important );
-		$position   = $self->_checked_position($position);
-		$z_index    = integer( $self, z_index => $z_index );
-		$margin     = non_negative_integer( $self, margin => $margin );
-		$color      = defined $color ? Term::Fabulous::Check::color( $self, color => $color ) : undef;
-		$text_color = Term::Fabulous::Check::color( $self, text_color => $text_color );
+		$kind      = $self->_checked_kind($kind);
+		$title     = string( $self, title   => $title );
+		$message   = string( $self, message => $message );
+		$icon      = defined $icon ? string( $self, icon => $icon ) : undef;
+		$closable  = boolean( $self, closable => $closable );
+		$timeout   = $self->_checked_timeout($timeout);
+		$important = boolean( $self, important => $important );
+		$position  = $self->_checked_position($position);
+		$z_index   = integer( $self, z_index => $z_index );
+		$margin    = non_negative_integer( $self, margin => $margin );
+		$color     = defined $color ? Term::Fabulous::Check::color( $self, color => $color ) : undef;
 
 		weaken( my $weak_self = $self );
 		$_icon_text    = Term::Fabulous::Widget::Text->new( text => '' );
@@ -108,6 +105,32 @@ class Term::Fabulous::Widget::Toast
 		my $result = $self->SUPER::background_color(@new);
 		$_panel_color = $result if @new && !$_styling;
 		return $result;
+	}
+
+	# The text color comes from the theme's toast family unless given, and
+	# so do the colors of the kinds.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, 'text_color' );
+	}
+
+	method theme_family :common () {
+		return 'toast';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, text_color => [ 'text', 'normal' ] );
+	}
+
+	# The parts copy the colors; they take them again after a switch.
+	method theme_changed () {
+		$self->_refresh_look;
+		return;
+	}
+
+	method look_reset :override ($name) {
+		$self->SUPER::look_reset($name);
+		$self->_refresh_look;
+		return;
 	}
 
 	method _checked_kind ($name) {
@@ -161,12 +184,13 @@ class Term::Fabulous::Widget::Toast
 	# ---------------------------------------------------------------------
 
 	method kind_color () {
-		return $color // $KIND{$kind}{color};
+		return $color // $self->look($kind);
 	}
 
 	method _refresh_look () {
-		my $accent = $self->kind_color;
-		my $dark   = [ 16, 18, 22, 255 ];
+		my $accent     = $self->kind_color;
+		my $dark       = $self->look('important_text');
+		my $text_color = $self->text_color;
 		$_styling = 1;
 		$self->border_color($accent);
 		$self->background_color( $important ? $accent : $_panel_color );
@@ -213,7 +237,13 @@ class Term::Fabulous::Widget::Toast
 	method closable   (@new) { return @new ? $self->_set( \$closable, boolean( $self, closable => $new[0] ) )                                          : $closable }
 	method important  (@new) { return @new ? $self->_set( \$important, boolean( $self, important => $new[0] ) )                                        : $important }
 	method color      (@new) { return @new ? $self->_set( \$color, defined $new[0] ? Term::Fabulous::Check::color( $self, color => $new[0] ) : undef ) : $color }
-	method text_color (@new) { return @new ? $self->_set( \$text_color, Term::Fabulous::Check::color( $self, text_color => $new[0] ) )                 : $text_color }
+	method text_color (@new) { return @new ? $self->_set_look( text_color => Term::Fabulous::Check::color( $self, text_color => $new[0] ) )            : $self->look_value('text_color') }
+
+	method _set_look ( $name, $value ) {
+		$self->set_look( $name => $value );
+		$self->_refresh_look;
+		return $value;
+	}
 
 	method timeout (@new) {
 		return $timeout unless @new;
@@ -408,11 +438,12 @@ fills a toast with its color, for messages that must not be missed.
 The children you add to a toast go below the message, for a button
 or a link.
 
-A toast is a L<Term::Fabulous::Widget::Box> with a round border in
-its color, a dark panel background (C<[28, 33, 45, 255]>), a cell of
-padding and a width that fits its text up to 44 columns, at which the
-message wraps; every one of these is an ordinary Box parameter and
-can be overridden.
+A toast is a L<Term::Fabulous::Widget::Box> with a border in its
+color (in the theme's C<toast.border.style>, round in the built-in
+themes), the theme's C<toast.background> (a dark panel,
+C<[28, 33, 45, 255]>, in the dark theme), a cell of padding and a width
+that fits its text up to 44 columns, at which the message wraps; every
+one of these is an ordinary Box parameter and can be overridden.
 
 =head1 CONSTRUCTOR
 
@@ -487,13 +518,16 @@ toasts and the edges of the screen.
 =item C<color>
 
 A color in any format L<Term::Fabulous::Color> accepts, or C<undef>.
-Default: C<undef>, the color of the kind. A color of your own for the
-border, the icon and the title (and the fill of an important toast).
+Default: C<undef>, the color of the kind: the theme's C<toast.info>,
+C<toast.success>, C<toast.warning> or C<toast.danger>. A color of your
+own for the border, the icon and the title (and the fill of an
+important toast).
 
 =item C<text_color>
 
-The color of the message and the close mark. Default:
-C<[220, 223, 228, 255]>.
+The color of the message and the close mark. Default: the theme's
+C<toast.text>, C<[220, 223, 228, 255]> in the dark theme. An important
+toast writes in the theme's C<toast.important_text> instead.
 
 =back
 

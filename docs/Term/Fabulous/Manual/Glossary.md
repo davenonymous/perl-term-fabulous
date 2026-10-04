@@ -129,6 +129,10 @@ belongs to, such as (table) or (KDL).
     runs: it waits for input, draws frames and runs timers. See
     ["THE EVENT LOOP" in Term::Fabulous::Manual::Programs](Programs.md#the-event-loop).
 
+- family (theme)
+
+    The kind of a widget as the theme sees it: `button`, `input`, `table`, ... Each family has slots. See ["What a theme colors" in Term::Fabulous::Manual::Looks](Looks.md#what-a-theme-colors).
+
 - filter expression (table)
 
     The text in a field of a table's filter row, such as `>=2019` or
@@ -307,6 +311,10 @@ belongs to, such as (table) or (KDL).
     value. The slices are the chart's series. See
     ["Series and data" in Term::Fabulous::Manual::Charts](Charts.md#series-and-data).
 
+- slot (theme)
+
+    One colored or styled part of a widget family in a theme: `button.border.color`, `input.placeholder`, `divider.line.style`. A slot has a value for the normal state and may have one for each state the widget shows (`focused`, `disabled`, ...). It defaults to a token. See ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states).
+
 - style hash (table)
 
     A hash reference of looks and lines for a column, a row or a cell of a
@@ -339,12 +347,24 @@ belongs to, such as (table) or (KDL).
     The text and background color the terminal uses when a program does not
     set one. Colors with alpha 0 select it.
 
+- theme
+
+    The colors and border styles every widget draws with when it is not given its own: a palette of tokens and the slots of every widget family, with variants. Set per UI (`Term::Fabulous->new( theme => ... )`) and switched at run time; built-in: `dark` and `light`; written in theme files or in Perl. See ["THEMES" in Term::Fabulous::Manual::Looks](Looks.md#themes) and [Term::Fabulous::Theme](../Theme.md).
+
 - theme (chart)
 
     Whether a chart draws its text, axes and grid with a `dark` or a
     `light` ink, and which steps of its palette it uses; `auto` (the
     default) chooses by the background. See
     ["Colors, palettes and themes" in Term::Fabulous::Manual::Charts](Charts.md#colors-palettes-and-themes).
+
+- theme file
+
+    A KDL file that describes a theme: a `theme` node, a `palette` node and one node per widget family. Loaded with ["from\_file" in Term::Fabulous::Theme](../Theme.md#from_file). See ["THEME FILES" in Term::Fabulous::Theme](../Theme.md#theme-files).
+
+- token (theme)
+
+    A named color of a theme's palette, such as `accent`, `surface` or `text`, which the slots default to. See ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens).
 
 - tree row, child row (table)
 
@@ -356,6 +376,10 @@ belongs to, such as (table) or (KDL).
 
     Text encoded as UTF-8, where non-ASCII characters take several bytes, as
     produced by `encode('UTF-8', $text)`.
+
+- variant (theme)
+
+    Slots of a widget family that apply to the widgets whose `classes` name the variant: a `primary` variant of `button` styles the buttons with `classes => ['primary']`. See ["Variants and classes" in Term::Fabulous::Manual::Looks](Looks.md#variants-and-classes).
 
 - view (table)
 

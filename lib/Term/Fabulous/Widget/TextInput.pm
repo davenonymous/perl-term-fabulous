@@ -19,13 +19,12 @@ class Term::Fabulous::Widget::TextInput
 {
 	use Feature::Compat::Try;
 	use Scalar::Util qw(weaken);
-	use Term::Fabulous::Check qw(boolean cell_color string);
+	use Term::Fabulous::Check qw(boolean string);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_MOD_MOTION TB_MOD_SHIFT);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters);
 
 	use constant DOUBLE_CLICK_SECONDS => 0.4;
-	use constant DEFAULT_BACKGROUND   => [ 36, 40, 48, 255 ];
 
 	# Cursor movement: key name => [ editor method, extend the selection ].
 	my %MOVEMENT_BY_KEY = (
@@ -78,10 +77,8 @@ class Term::Fabulous::Widget::TextInput
 
 	field $editor :reader = Term::Fabulous::Editor->new( multi_line => __CLASS__->is_multi_line );
 
-	field $placeholder       :param = '';
-	field $read_only         :param = 0;
-	field $placeholder_color :param = [ 120, 126, 138, 255 ];
-	field $selection_color   :param = [ 38,  79,  120, 255 ];
+	field $placeholder :param = '';
+	field $read_only :param   = 0;
 
 	# How the text is laid out in the buffer: one row without wrapping
 	# unless a subclass says otherwise.
@@ -96,18 +93,15 @@ class Term::Fabulous::Widget::TextInput
 		weaken( my $weak_self = $self );
 		$view = Term::Fabulous::TextView->new( editor => $editor, display => sub ($cluster) { $weak_self->display_cluster($cluster) } );
 
-		$read_only         = boolean( $self, read_only => $read_only );
-		$placeholder       = string( $self, placeholder => $placeholder );
-		$placeholder_color = cell_color( $self, placeholder_color => $placeholder_color );
-		$selection_color   = cell_color( $self, selection_color   => $selection_color );
-		$self->background_color( [ @{ +DEFAULT_BACKGROUND } ] ) unless defined $self->background_color;
+		$read_only   = boolean( $self, read_only => $read_only );
+		$placeholder = string( $self, placeholder => $placeholder );
 		$self->max_length($max_length) if defined $max_length;
 		$self->value($value) if defined $value;
-		}
+	}
 
-		# Runs an editor call for a public method; the editor's errors are
-		# reworded to name this widget, which is the class the caller used.
-		method _in_editor ($code) {
+	# Runs an editor call for a public method; the editor's errors are
+	# reworded to name this widget, which is the class the caller used.
+	method _in_editor ($code) {
 		try {
 			return $code->();
 		}
@@ -156,12 +150,26 @@ class Term::Fabulous::Widget::TextInput
 		return $read_only;
 	}
 
+	# The placeholder and selection colors come from the theme's text_input
+	# family unless given, as does the background.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, qw(placeholder_color selection_color) );
+	}
+
+	method theme_family :common () {
+		return 'text_input';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, placeholder_color => [ 'placeholder', 'normal' ], selection_color => [ 'selection', 'normal' ] );
+	}
+
 	method placeholder_color (@new) {
-		return @new ? $self->_set_color( placeholder_color => \$placeholder_color, @new ) : $placeholder_color;
+		return @new ? $self->_set_color( placeholder_color => @new ) : $self->look_value('placeholder_color');
 	}
 
 	method selection_color (@new) {
-		return @new ? $self->_set_color( selection_color => \$selection_color, @new ) : $selection_color;
+		return @new ? $self->_set_color( selection_color => @new ) : $self->look_value('selection_color');
 	}
 
 	method layout_properties :common () {
@@ -331,7 +339,7 @@ class Term::Fabulous::Widget::TextInput
 		$cursor_offset = $from if $cursor_offset >= $hidden_from && $cursor_offset < $from;
 		my $fg       = $self->foreground_attr;
 		my $bg       = $self->focus_background_attr;
-		my $selected = $self->color_attr($selection_color);
+		my $selected = $self->color_attr( $self->look_value('selection_color') );
 
 		my $x = -$view->left_column;
 		foreach my $cluster ( $view->clusters( $row, $from, $to ) ) {
@@ -356,13 +364,13 @@ class Term::Fabulous::Widget::TextInput
 
 		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
 		return if $self->is_focused && $cursor_row == $line && $cursor_offset == length $editor->line($line);
-		$self->put_attrs( $x, $y, ' ', undef, $self->color_attr($selection_color) );
+		$self->put_attrs( $x, $y, ' ', undef, $self->color_attr( $self->look_value('selection_color') ) );
 		return;
 	}
 
 	method _paint_placeholder () {
 		my $bg = $self->focus_background_attr;
-		$self->paint_text( 0, 0, $placeholder, $self->color_attr($placeholder_color), $bg );
+		$self->paint_text( 0, 0, $placeholder, $self->color_attr( $self->look_value('placeholder_color') ), $bg );
 		return unless $self->is_focused;
 
 		my ($first) = grapheme_clusters($placeholder);
@@ -472,18 +480,22 @@ dies.
 =item C<placeholder_color>
 
 A color, in any format L<Term::Fabulous::Widget::Input> accepts.
-Default: C<[120, 126, 138, 255]>, a gray.
+Default: the theme's C<text_input.placeholder>, C<[120, 126, 138, 255]>
+in the dark theme, a gray.
 
 =item C<selection_color>
 
 A color, in any format L<Term::Fabulous::Widget::Input> accepts. The
-background of selected text. Default: C<[38, 79, 120, 255]>, a dark blue.
+background of selected text. Default: the theme's
+C<text_input.selection>, C<[38, 79, 120, 255]> in the dark theme, a
+dark blue.
 
 =item C<background_color>
 
 Any L<Term::Fabulous::Color> format, stored as C<[r, g, b, a]>.
-Default: C<[36, 40, 48, 255]>, a dark gray, so the input stands out from
-its surroundings. Pass C<[0, 0, 0, 0]> for no background of its own.
+Default: the theme's C<text_input.background>, C<[36, 40, 48, 255]> in
+the dark theme, a dark gray, so the input stands out from its
+surroundings. Pass C<[0, 0, 0, 0]> for no background of its own.
 
 =back
 

@@ -33,50 +33,51 @@ class Term::Fabulous::Widget::StarRating
 		End   => [ end  =>  1 ],
 	);
 
-	field $max            :param = 5;
-	field $half           :param = 0;
-	field $read_only      :param = 0;
-	field $show_value     :param = 0;
-	field $value_format   :param = undef;
-	field $gap            :param = 1;
-	field $full_glyph     :param = "\x{2605}";
-	field $empty_glyph    :param = "\x{2606}";
-	field $half_glyph     :param = undef;
-	field $inactive_color :param = [ 90, 96, 110, 255 ];
-	field $half_color     :param = undef;
+	field $max :param          = 5;
+	field $half :param         = 0;
+	field $read_only :param    = 0;
+	field $show_value :param   = 0;
+	field $value_format :param = undef;
+	field $gap :param          = 1;
+	field $full_glyph :param   = "\x{2605}";
+	field $empty_glyph :param  = "\x{2606}";
+	field $half_glyph :param   = undef;
 
 	field $current = 0;
 
 	# The star the pointer is over, counted from 1, while it hovers.
 	field $_hover_star;
 
-	# Stars are yellow unless told otherwise.
-	sub BUILDARGS ( $class, %params ) {
-		$params{accent_color} //= [ 229, 192, 123, 255 ];
-		return $class->SUPER::BUILDARGS(%params);
+	# The stars are drawn in the theme's input.star (a yellow in the
+	# built-in themes), the empty ones in input.inactive and the half star
+	# in input.half, unless told otherwise.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, qw(inactive_color half_color) );
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, accent_color => [ 'star', 'normal' ], inactive_color => [ 'inactive', 'normal' ], half_color => [ 'half', 'normal' ] );
 	}
 
 	ADJUST :params ( :$value = 0 ) {
-		$max            = positive_integer( $self, max => $max );
-		$half           = boolean( $self, half       => $half );
-		$read_only      = boolean( $self, read_only  => $read_only );
-		$show_value     = boolean( $self, show_value => $show_value );
-		$value_format   = $self->_checked_format($value_format);
-		$gap            = non_negative_integer( $self, gap => $gap );
-		$full_glyph     = Term::Fabulous::Check::glyph( $self, full_glyph  => $full_glyph );
-		$empty_glyph    = Term::Fabulous::Check::glyph( $self, empty_glyph => $empty_glyph );
-		$half_glyph     = $self->_checked_half_glyph($half_glyph);
-		$inactive_color = cell_color( $self, inactive_color => $inactive_color );
-		$half_color     = $self->_checked_half_color($half_color);
+		$max          = positive_integer( $self, max => $max );
+		$half         = boolean( $self, half       => $half );
+		$read_only    = boolean( $self, read_only  => $read_only );
+		$show_value   = boolean( $self, show_value => $show_value );
+		$value_format = $self->_checked_format($value_format);
+		$gap          = non_negative_integer( $self, gap => $gap );
+		$full_glyph   = Term::Fabulous::Check::glyph( $self, full_glyph  => $full_glyph );
+		$empty_glyph  = Term::Fabulous::Check::glyph( $self, empty_glyph => $empty_glyph );
+		$half_glyph   = $self->_checked_half_glyph($half_glyph);
 		$self->value($value);
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_star_at($event) ) if $weak_self;                            return $continue } );
 		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
-		}
+	}
 
-		method _checked_format ($format) {
+	method _checked_format ($format) {
 		return undef unless defined $format;
 		die ref($self) . ": value_format must be a sprintf format string or a code reference, got " . describe($format) unless ref $format eq 'CODE' || !ref $format;
 		return $format;
@@ -168,8 +169,8 @@ class Term::Fabulous::Widget::StarRating
 	method full_glyph     (@new) { return @new ? $self->_set( \$full_glyph, Term::Fabulous::Check::glyph( $self, full_glyph => $new[0] ) )   : $full_glyph }
 	method empty_glyph    (@new) { return @new ? $self->_set( \$empty_glyph, Term::Fabulous::Check::glyph( $self, empty_glyph => $new[0] ) ) : $empty_glyph }
 	method half_glyph     (@new) { return @new ? $self->_set( \$half_glyph, $self->_checked_half_glyph( $new[0] ) )                          : $half_glyph }
-	method inactive_color (@new) { return @new ? $self->_set( \$inactive_color, cell_color( $self, inactive_color => $new[0] ) )             : $inactive_color }
-	method half_color     (@new) { return @new ? $self->_set( \$half_color, $self->_checked_half_color( $new[0] ) )                          : $half_color }
+	method inactive_color (@new) { return @new ? $self->set_look( inactive_color => cell_color( $self, inactive_color => $new[0] ) )         : $self->look_value('inactive_color') }
+	method half_color     (@new) { return @new ? $self->set_look( half_color => $self->_checked_half_color( $new[0] ) )                      : $self->look_value('half_color') }
 
 	# A read-only rating never takes the focus.
 	method accepts_focus :override () {
@@ -270,16 +271,17 @@ class Term::Fabulous::Widget::StarRating
 
 	method _half_attr () {
 		return $self->color_attr( $self->disabled_color ) unless $self->is_enabled;
+		my $half_color = $self->half_color;
 		return $self->color_attr($half_color) if defined $half_color;
 		my $accent = Term::Fabulous::Color->new( color => $self->accent_color );
-		return $self->color_attr( $accent->blend( Term::Fabulous::Color->new( color => $inactive_color ), 0.5 ) );
+		return $self->color_attr( $accent->blend( Term::Fabulous::Color->new( color => $self->inactive_color ), 0.5 ) );
 	}
 
 	method paint () {
 		my $bg       = $self->paint_focus_background;
 		my $shown    = defined $_hover_star ? $_hover_star : $current;
 		my $full_fg  = $self->accent_attr;
-		my $empty_fg = $self->color_attr( $self->is_enabled ? $inactive_color : $self->disabled_color );
+		my $empty_fg = $self->color_attr( $self->is_enabled ? $self->inactive_color : $self->disabled_color );
 		my $half_fg  = $self->_half_attr;
 
 		foreach my $star ( 1 .. $max ) {
@@ -441,18 +443,20 @@ black) is one where they do.
 =item C<inactive_color>
 
 The color of the empty stars, in any format
-L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default:
-C<[90, 96, 110, 255]>, a gray.
+L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default: the theme's
+C<input.inactive>, C<[90, 96, 110, 255]> in the dark theme, a gray.
 
 =item C<half_color>
 
-The color of a half star, or C<undef>. Default: C<undef>, a color
-halfway between C<accent_color> and C<inactive_color>.
+The color of a half star, or C<undef>. Default: the theme's
+C<input.half>, none in the built-in themes: a color halfway between
+C<accent_color> and C<inactive_color>.
 
 =item C<accent_color>
 
-As for every input, but the default is C<[229, 192, 123, 255]>, a
-yellow.
+As for every input, but it comes from the theme's C<input.star>,
+C<[229, 192, 123, 255]> in the dark theme, a yellow, when it is not
+given.
 
 =back
 

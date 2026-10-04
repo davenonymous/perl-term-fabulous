@@ -114,6 +114,7 @@ class Term::Fabulous::Widget::Box
 	method layout_properties :common () {
 		return (
 			background_color    => 'color',
+			classes             => \&_parse_classes,
 			glyphs_show_through => 'boolean',
 			border_color        => 'color',
 			border_width        => 'scalar',
@@ -126,6 +127,11 @@ class Term::Fabulous::Widget::Box
 			child_alignment     => \&_parse_child_alignment,
 			floating            => \&_parse_floating,
 		);
+	}
+
+	method _parse_classes ($kid) {
+		$self->classes( $self->kdl_strings($kid) );
+		return;
 	}
 
 	method _parse_layout ($kid) {

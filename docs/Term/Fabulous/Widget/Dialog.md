@@ -68,10 +68,11 @@ and fires `Close`
 opened again, as often as needed, and keeps its children and their
 state in between.
 
-A Dialog comes with a look: a dark background, a round border in the
-accent blue of the input widgets, one cell of padding and a vertical
-layout with a gap of one row between the children. Every one of these
-is an ordinary Box parameter and can be overridden. Give the dialog a
+A Dialog comes with a look from the theme's `dialog` family (a dark
+background and a round border in the accent blue in the built-in dark
+theme), one cell of padding and a vertical layout with a gap of one
+row between the children. Every one of these is an ordinary Box
+parameter and can be overridden. Give the dialog a
 width (`sizing` in `layout`); without one it is as wide as its
 widest child.
 
@@ -91,7 +92,8 @@ plus:
 - `backdrop_color`
 
     The color of the layer behind the dialog, in any format
-    [Term::Fabulous::Color](../Color.md) accepts. Default: `[ 0, 0, 0, 128 ]`, black at
+    [Term::Fabulous::Color](../Color.md) accepts. Default: the theme's
+    `dialog.backdrop`, `[ 0, 0, 0, 128 ]` in the dark theme, black at
     half opacity, which dims the screen behind the dialog. An opaque color
     hides it; alpha 0 leaves it as it is.
 

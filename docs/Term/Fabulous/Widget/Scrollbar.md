@@ -66,13 +66,15 @@ Unknown parameters die. A Scrollbar takes every parameter of
 
 - `track_color`
 
-    The color of the track. Default: a dark grey, `[ 70, 76, 90, 255 ]`.
+    The color of the track. Default: the theme's `scrollbar.track`, a
+    dark grey, `[ 70, 76, 90, 255 ]`, in the dark theme.
     Takes anything a canvas cell takes (see
     ["put" in Term::Fabulous::Widget::Canvas](Canvas.md#put)).
 
 - `thumb_color`
 
-    The color of the thumb. Default: a light blue, `[ 97, 175, 239, 255 ]`.
+    The color of the thumb. Default: the theme's `scrollbar.thumb`, a
+    light blue, `[ 97, 175, 239, 255 ]`, in the dark theme.
 
 # METHODS
 

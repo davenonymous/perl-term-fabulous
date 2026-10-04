@@ -223,7 +223,7 @@ L<Use a different border style on each side|Term::Fabulous::Cookbook::Layout/Use
 
 =item *
 
-L<Change colors at run time (a theme with lighten and darken)|Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>
+L<Switch themes at run time (built-in themes and a theme file)|Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>
 
 =item *
 

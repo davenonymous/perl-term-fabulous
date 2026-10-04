@@ -19,7 +19,6 @@ class Term::Fabulous::Widget::Dialog
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean color integer);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Close;
 
 	my %DEFAULT_LAYOUT = (
@@ -28,8 +27,7 @@ class Term::Fabulous::Widget::Dialog
 		child_gap        => 1,
 	);
 
-	field $backdrop_color  :param = [ 0, 0, 0, 128 ];
-	field $z_index         :param = 1000;
+	field $z_index :param         = 1000;
 	field $close_on_escape :param = 1;
 
 	# The Term::Fabulous::Widget::Dialog::Backdrop while open. The tree owns
@@ -39,21 +37,30 @@ class Term::Fabulous::Widget::Dialog
 	field $_is_open = 0;
 	field $_focus_before;    # the widget focused when the dialog opened
 
-	# A dialog looks like a dialog unless told otherwise: a panel with a
-	# round border, laid out top to bottom with a cell of padding.
+	# A dialog looks like a dialog unless told otherwise: a bordered
+	# panel in the theme's dialog colors and border style, laid out top to
+	# bottom with a cell of padding.
 	sub BUILDARGS ( $class, %params ) {
-		$params{background_color} //= [ 28, 33, 45, 255 ];
-		$params{border_width}     //= 1;
-		$params{border_color}     //= [ 97, 175, 239, 255 ];
-		$params{border_style}     //= Term::Fabulous::Enum::BorderStyle->Round;
+		$params{border_width} //= 1;
 		$params{layout} = { %DEFAULT_LAYOUT, %{ $params{layout} // {} } };
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
 	ADJUST {
-		$backdrop_color  = color( $self, backdrop_color => $backdrop_color );
 		$z_index         = integer( $self, z_index => $z_index );
 		$close_on_escape = boolean( $self, close_on_escape => $close_on_escape );
+	}
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, 'backdrop_color' );
+	}
+
+	method theme_family :common () {
+		return 'dialog';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, backdrop_color => [ 'backdrop', 'normal' ] );
 	}
 
 	method layout_properties :common () {
@@ -65,11 +72,10 @@ class Term::Fabulous::Widget::Dialog
 		);
 	}
 
+	# The backdrop reads the color when a frame is drawn.
 	method backdrop_color (@new) {
-		return $backdrop_color unless @new;
-		$backdrop_color = color( $self, backdrop_color => $new[0] );
-		$_backdrop->background_color($backdrop_color) if defined $_backdrop;
-		return $backdrop_color;
+		return $self->look_value('backdrop_color') unless @new;
+		return $self->set_look( backdrop_color => color( $self, backdrop_color => $new[0] ) );
 	}
 
 	method z_index (@new) {
@@ -102,11 +108,7 @@ class Term::Fabulous::Widget::Dialog
 		$_focus_before = $interaction->get_focused_widget;
 		weaken $_focus_before if defined $_focus_before;
 
-		my $backdrop = Term::Fabulous::Widget::Dialog::Backdrop->new(
-			dialog           => $self,
-			background_color => $backdrop_color,
-			z_index          => $z_index,
-		);
+		my $backdrop = Term::Fabulous::Widget::Dialog::Backdrop->new( dialog => $self, z_index => $z_index );
 		$backdrop->add_child($self);
 		$ui->root->add_child($backdrop);
 		weaken( $_backdrop = $backdrop );
@@ -236,10 +238,11 @@ and fires C<Close>
 opened again, as often as needed, and keeps its children and their
 state in between.
 
-A Dialog comes with a look: a dark background, a round border in the
-accent blue of the input widgets, one cell of padding and a vertical
-layout with a gap of one row between the children. Every one of these
-is an ordinary Box parameter and can be overridden. Give the dialog a
+A Dialog comes with a look from the theme's C<dialog> family (a dark
+background and a round border in the accent blue in the built-in dark
+theme), one cell of padding and a vertical layout with a gap of one
+row between the children. Every one of these is an ordinary Box
+parameter and can be overridden. Give the dialog a
 width (C<sizing> in C<layout>); without one it is as wide as its
 widest child.
 
@@ -259,7 +262,8 @@ plus:
 =item C<backdrop_color>
 
 The color of the layer behind the dialog, in any format
-L<Term::Fabulous::Color> accepts. Default: C<[ 0, 0, 0, 128 ]>, black at
+L<Term::Fabulous::Color> accepts. Default: the theme's
+C<dialog.backdrop>, C<[ 0, 0, 0, 128 ]> in the dark theme, black at
 half opacity, which dims the screen behind the dialog. An opaque color
 hides it; alpha 0 leaves it as it is.
 

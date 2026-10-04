@@ -49,13 +49,13 @@ class Term::Fabulous
 	# frame would never settle.
 	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
-	field $inline         :param :reader = undef;    # the rows of the inline region, or undef for the full screen
-	field $mouse          :param :reader = undef;
+	field $inline :param :reader         = undef;    # the rows of the inline region, or undef for the full screen
+	field $mouse :param :reader          = undef;
 	field $kitty_keyboard :param :reader = 1;
-	field $terminal       :param :reader //= Term::Fabulous::Terminal::Termbox->new;
-	field $clock          :param = sub { Time::HiRes::time() };
-	field $loop           :reader;
-	field $termbox_draw_interval            :reader = 1 / 30;
+	field $terminal :param :reader //= Term::Fabulous::Terminal::Termbox->new;
+	field $clock :param = sub { Time::HiRes::time() };
+	field $loop :reader;
+	field $termbox_draw_interval :reader            = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
 
 	field $_running = 0;    # whether run's loop is active
@@ -802,6 +802,14 @@ the widgets that animate (see L</request_frame_at>). A test gives it a
 clock it controls to check the pacing with C<< step( paced => 1 ) >>
 or to move an animation on. Anything but a code reference dies.
 
+=item C<theme>
+
+Optional. The L<Term::Fabulous::Theme> the widgets draw with: a theme
+object, or the name of a built-in theme, C<dark> (the default) or
+C<light>. Widgets that were given a color or a border style keep it.
+L</theme> switches the theme at run time. See
+L<Term::Fabulous::Manual::Looks/THEMES>.
+
 =item C<output_mode>
 
 Optional, and only one value is allowed: C<TB_OUTPUT_TRUECOLOR> from
@@ -1101,6 +1109,18 @@ widgets from it. When the button went down and up again between two
 frames, each state gets a frame of its own, so a click is never too
 fast to press a widget. C<down> follows the left button only: the
 release of another button does not end a press.
+
+=head2 theme
+
+	my $theme = $ui->theme;
+	$ui->theme('light');
+	$ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
+
+Accessor for the theme (see L</new>). Without an argument it returns
+the L<Term::Fabulous::Theme> object; with one it sets the theme, a
+theme object or a built-in name, makes every widget read its colors
+and border styles again, and draws a frame. Anything else dies. See
+L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =head2 invalidate
 

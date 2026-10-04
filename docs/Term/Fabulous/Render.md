@@ -71,7 +71,29 @@ The class that composes this role must provide:
     `Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR`.
     There is no reason to pass it.
 
+- `theme`
+
+    The [Term::Fabulous::Theme](Theme.md) the widgets draw with: a theme object or
+    the name of a built-in theme (`dark`, `light`). Default: `dark`.
+    See ["theme"](#theme).
+
 # METHODS
+
+## theme
+
+```perl
+my $theme = $ui->theme;
+$ui->theme('light');
+$ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
+```
+
+Accessor for the theme. Without an argument it returns the
+[Term::Fabulous::Theme](Theme.md) object; with one it sets the theme (an object
+or a built-in name; anything else dies), makes every widget read its
+looks again, calls `theme_changed` on every widget of the tree that
+has such a method (see ["theme\_changed" in Term::Fabulous::Role::Themed](Role/Themed.md#theme_changed))
+and draws a frame. Widgets that were given a color or a border style
+explicitly keep it; see ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
 
 ## draw
 

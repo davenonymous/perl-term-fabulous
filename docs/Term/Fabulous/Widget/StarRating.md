@@ -135,18 +135,20 @@ and the ones below. Unknown parameters die.
 - `inactive_color`
 
     The color of the empty stars, in any format
-    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default:
-    `[90, 96, 110, 255]`, a gray.
+    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default: the theme's
+    `input.inactive`, `[90, 96, 110, 255]` in the dark theme, a gray.
 
 - `half_color`
 
-    The color of a half star, or `undef`. Default: `undef`, a color
-    halfway between `accent_color` and `inactive_color`.
+    The color of a half star, or `undef`. Default: the theme's
+    `input.half`, none in the built-in themes: a color halfway between
+    `accent_color` and `inactive_color`.
 
 - `accent_color`
 
-    As for every input, but the default is `[229, 192, 123, 255]`, a
-    yellow.
+    As for every input, but it comes from the theme's `input.star`,
+    `[229, 192, 123, 255]` in the dark theme, a yellow, when it is not
+    given.
 
 The glyph parameters die unless they are exactly one grapheme cluster
 one column wide.

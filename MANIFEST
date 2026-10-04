@@ -83,6 +83,7 @@ examples/layout-direction.pl
 examples/layout-floating.pl
 examples/layout-padding.pl
 examples/layout-sizing.pl
+examples/ocean.kdl
 examples/pixel-paint.pl
 examples/scroll-box.pl
 examples/stack.pl
@@ -91,6 +92,7 @@ examples/table-directory.pl
 examples/table-files.pl
 examples/text-features.pl
 examples/text-sizing.pl
+examples/themes.pl
 examples/translucency.pl
 examples/web-colors.pl
 lib/Term/Fabulous.pm
@@ -180,6 +182,7 @@ lib/Term/Fabulous/Role/CanParseLayout.pm
 lib/Term/Fabulous/Role/HasBorderStyle.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/Terminal.pm
+lib/Term/Fabulous/Role/Themed.pm
 lib/Term/Fabulous/Static.pm
 lib/Term/Fabulous/Termbox.pm
 lib/Term/Fabulous/Termbox.xs
@@ -188,6 +191,7 @@ lib/Term/Fabulous/Terminal/Memory.pm
 lib/Term/Fabulous/Terminal/Termbox.pm
 lib/Term/Fabulous/Terminal/Termbox/Cells.pm
 lib/Term/Fabulous/TextView.pm
+lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
@@ -294,6 +298,9 @@ t/termbox.t
 t/terminal-memory.t
 t/terminal-termbox.t
 t/text-view.t
+t/theme-binding.t
+t/theme-file.t
+t/theme.t
 t/unicode.t
 t/web-color.t
 t/widget-accordion.t
@@ -450,6 +457,7 @@ screenshots/example-table-files.svg
 screenshots/example-table-files-scrolling.svg
 screenshots/example-text-features.svg
 screenshots/example-text-sizing.svg      
+screenshots/example-themes.svg
 screenshots/example-translucency.svg     
 screenshots/example-web-colors.svg       
 screenshots/overview.svg                 

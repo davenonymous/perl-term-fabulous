@@ -25,10 +25,10 @@ class Term::Fabulous::Widget::Table::Pager :isa(Term::Fabulous::Widget::Box) :st
 	field $size_label;
 	field $size_list :reader;
 
-	field $text_color   :param = [ 220, 223, 228, 255 ];
-	field $muted_color  :param = [ 140, 146, 158, 255 ];
+	field $text_color :param   = [ 220, 223, 228, 255 ];
+	field $muted_color :param  = [ 140, 146, 158, 255 ];
 	field $button_color :param = [ 44,  49,  60,  255 ];
-	field $page_sizes   :param;
+	field $page_sizes :param;
 
 	ADJUST {
 		$text_color   = color( $self, text_color   => $text_color );
@@ -166,7 +166,8 @@ C<[140, 146, 158, 255]>.
 
 =item C<button_color>
 
-The background of the buttons. Default: C<[44, 49, 60, 255]>.
+The background of the buttons. Default: C<[44, 49, 60, 255]>; the
+table passes its theme's C<table.pager.button>.
 
 =back
 

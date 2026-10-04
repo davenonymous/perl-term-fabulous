@@ -99,7 +99,7 @@ The manual has these pages, in reading order:
 
     Text (character strings, wrapping, alignment, wide characters and
     emoji), colors (formats, alpha, the terminal's default colors, lighter
-    and darker colors) and borders.
+    and darker colors), borders and themes.
 
 - [Term::Fabulous::Manual::Events](Manual/Events.md)
 
@@ -504,8 +504,13 @@ program, and the class pages with the reference.
 
 - Colors and color strings; lighter, darker and mixed colors
 
-    ["COLORS" in Term::Fabulous::Manual::Looks](Manual/Looks.md#colors), [Term::Fabulous::Color](Color.md),
-    ["Change colors at run time (a theme with lighten and darken)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#change-colors-at-run-time-a-theme-with-lighten-and-darken).
+    ["COLORS" in Term::Fabulous::Manual::Looks](Manual/Looks.md#colors), [Term::Fabulous::Color](Color.md).
+
+- Themes: colors and border styles for every widget, theme files, variants, switching at run time
+
+    ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes), [Term::Fabulous::Theme](Theme.md),
+    ["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file),
+    ["theme" in Term::Fabulous](../../../README.md#theme).
 
 - Named colors (Tomato, SteelBlue, ...)
 

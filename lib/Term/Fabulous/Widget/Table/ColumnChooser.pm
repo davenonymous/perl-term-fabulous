@@ -24,10 +24,11 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 	use constant Z_INDEX => 32767;
 
 	# [ key, title, visible ] per column, in order.
-	field $columns    :param;
-	field $on_toggle  :param;    # sub ( $key, $visible )
-	field $on_close   :param;    # sub ()
-	field $text_color :param = [ 220, 223, 228, 255 ];
+	field $columns :param;
+	field $on_toggle :param;    # sub ( $key, $visible )
+	field $on_close :param;    # sub ()
+	field $text_color :param  = [ 220, 223, 228, 255 ];
+	field $muted_color :param = [ 140, 146, 158, 255 ];
 	field @_boxes;
 
 	ADJUST {
@@ -45,7 +46,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 			$box->on( Change => sub ($event) { $on_toggle->( $key, $event->value ); return } );
 			push @_boxes, $box;
 		}
-		$self->add_child( @_boxes, Term::Fabulous::Widget::Text->new( text => 'Esc closes', text_color => [ 140, 146, 158, 255 ] ) );
+		$self->add_child( @_boxes, Term::Fabulous::Widget::Text->new( text => 'Esc closes', text_color => $muted_color ) );
 
 		weaken( my $weak_self = $self );
 		$self->on(
@@ -157,7 +158,12 @@ the focus leaves the chooser. It must remove the chooser.
 =item C<text_color>
 
 The color of the title and the check boxes. Default:
-C<[220, 223, 228, 255]>.
+C<[220, 223, 228, 255]>; the table passes its C<text_color>.
+
+=item C<muted_color>
+
+The color of the closing hint. Default: C<[140, 146, 158, 255]>; the
+table passes its C<muted_color>.
 
 =back
 

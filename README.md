@@ -271,6 +271,14 @@ add timers first. Unknown parameters die
     clock it controls to check the pacing with `step( paced => 1 )`
     or to move an animation on. Anything but a code reference dies.
 
+- `theme`
+
+    Optional. The [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md) the widgets draw with: a theme
+    object, or the name of a built-in theme, `dark` (the default) or
+    `light`. Widgets that were given a color or a border style keep it.
+    ["theme"](#theme) switches the theme at run time. See
+    ["THEMES" in Term::Fabulous::Manual::Looks](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Looks.md#themes).
+
 - `output_mode`
 
     Optional, and only one value is allowed: `TB_OUTPUT_TRUECOLOR` from
@@ -551,6 +559,20 @@ widgets from it. When the button went down and up again between two
 frames, each state gets a frame of its own, so a click is never too
 fast to press a widget. `down` follows the left button only: the
 release of another button does not end a press.
+
+## theme
+
+```perl
+my $theme = $ui->theme;
+$ui->theme('light');
+$ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
+```
+
+Accessor for the theme (see ["new"](#new)). Without an argument it returns
+the [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md) object; with one it sets the theme, a
+theme object or a built-in name, makes every widget read its colors
+and border styles again, and draws a frame. Anything else dies. See
+["THEMES" in Term::Fabulous::Manual::Looks](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Looks.md#themes).
 
 ## invalidate
 

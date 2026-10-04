@@ -30,10 +30,13 @@ role Term::Fabulous::Render
 		CLAY_RENDER_COMMAND_TYPE_TEXT
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM
 	);
+	use Clay::UI::Revision qw(bump_revision);
 	use Feature::Compat::Try;
-	use Scalar::Util qw(looks_like_number);
+	use Scalar::Util qw(blessed looks_like_number);
+	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR);
 	use Term::Fabulous::Render::Frame;
+	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	# Scissors paint nothing: the Frame has turned them into clip rects.
@@ -49,6 +52,10 @@ role Term::Fabulous::Render
 	use constant CELLS_PER_CLAY_SCROLL_UNIT => 10;
 
 	field $output_mode :param :reader = TB_OUTPUT_TRUECOLOR;
+
+	# The theme the widgets draw with (Term::Fabulous::Theme), set at
+	# construction and through the theme accessor.
+	field $theme :param = undef;
 
 	# Background attribute of every cell painted this frame, indexed [y][x].
 	field $buffer = [];
@@ -77,7 +84,38 @@ role Term::Fabulous::Render
 		die "Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR (" . TB_OUTPUT_TRUECOLOR . "), got '$output_mode'"
 			unless looks_like_number($output_mode) && $output_mode == TB_OUTPUT_TRUECOLOR;
 
+		$theme = _checked_theme( $theme // 'dark' );
+		Term::Fabulous::Theme::bump_generation();    # widgets built before this UI look their looks up again
+		_notify_theme_changed( $self->root );
 		$self->measure_text( \&_measure_text );
+	}
+
+	# A Term::Fabulous::Theme, or one of the built-in themes by name.
+	sub _checked_theme ($value) {
+		return $value if blessed $value && $value->isa('Term::Fabulous::Theme');
+		my $builtin = defined $value && !ref $value ? Term::Fabulous::Theme->builtin($value) : undef;
+		die "Term::Fabulous::Render: theme must be a Term::Fabulous::Theme or the name of a built-in theme (" . join( ', ', Term::Fabulous::Theme::builtin_names() ) . "), got " . describe($value)
+			unless defined $builtin;
+		return $builtin;
+	}
+
+	# Setting a theme makes every widget look its looks up again, tells
+	# the widgets that copy looks into their parts (a Table), and draws a
+	# frame.
+	method theme (@new) {
+		return $theme unless @new;
+		$theme = _checked_theme( $new[0] );
+		Term::Fabulous::Theme::bump_generation();
+		_notify_theme_changed( $self->root );
+		bump_revision();
+		return $theme;
+	}
+
+	sub _notify_theme_changed ($node) {
+		$node->theme_changed if $node->can('theme_changed');
+		return unless $node->can('layout_children');
+		_notify_theme_changed($_) foreach @{ $node->layout_children };
+		return;
 	}
 
 	# Clay measures single words and single lines, so the height is one cell.
@@ -245,9 +283,29 @@ paints 24-bit colors. Any other value dies with
 C<Term::Fabulous::Render: output_mode must be TB_OUTPUT_TRUECOLOR>.
 There is no reason to pass it.
 
+=item C<theme>
+
+The L<Term::Fabulous::Theme> the widgets draw with: a theme object or
+the name of a built-in theme (C<dark>, C<light>). Default: C<dark>.
+See L</theme>.
+
 =back
 
 =head1 METHODS
+
+=head2 theme
+
+	my $theme = $ui->theme;
+	$ui->theme('light');
+	$ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
+
+Accessor for the theme. Without an argument it returns the
+L<Term::Fabulous::Theme> object; with one it sets the theme (an object
+or a built-in name; anything else dies), makes every widget read its
+looks again, calls C<theme_changed> on every widget of the tree that
+has such a method (see L<Term::Fabulous::Role::Themed/theme_changed>)
+and draws a frame. Widgets that were given a color or a border style
+explicitly keep it; see L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =head2 draw
 

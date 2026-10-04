@@ -131,7 +131,7 @@ The pages, in reading order, each with its recipes:
 
     - [Line up labels with equal widths (width\_group)](Cookbook/Layout.md#line-up-labels-with-equal-widths-width_group)
     - [Use a different border style on each side](Cookbook/Layout.md#use-a-different-border-style-on-each-side)
-    - [Change colors at run time (a theme with lighten and darken)](Cookbook/Layout.md#change-colors-at-run-time-a-theme-with-lighten-and-darken)
+    - [Switch themes at run time (built-in themes and a theme file)](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file)
     - [Mark widgets with states and classes](Cookbook/Layout.md#mark-widgets-with-states-and-classes)
     - [Change the layout with the terminal size (Start and Resize events)](Cookbook/Layout.md#change-the-layout-with-the-terminal-size-start-and-resize-events)
 

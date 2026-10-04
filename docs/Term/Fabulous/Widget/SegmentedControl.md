@@ -123,17 +123,20 @@ and the ones below. Unknown parameters die.
 
     The color of the selected segment's label, which sits on the
     `accent_color`, in any format
-    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default:
-    `[16, 18, 22, 255]`, nearly black.
+    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default: the theme's
+    `input.selected_text`, `[16, 18, 22, 255]` in the dark theme, nearly
+    black.
 
 - `separator_color`
 
-    The color of the separators. Default: `[90, 96, 110, 255]`, a gray.
+    The color of the separators. Default: the theme's `input.separator`,
+    `[90, 96, 110, 255]` in the dark theme, a gray.
 
 - `hover_background_color`
 
-    The background of the segment under the pointer. Default:
-    `[60, 66, 80, 255]`, a dark gray.
+    The background of the segment under the pointer. Default: the theme's
+    `input.hover_background`, `[60, 66, 80, 255]` in the dark theme, a
+    dark gray.
 
 # METHODS
 

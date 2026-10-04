@@ -30,16 +30,17 @@ class Term::Fabulous::Widget::Divider
 
 	my %IS_POSITION = map { $_ => 1 } qw(start center end);
 
-	field $vertical      :param = 0;
-	field $text          :param = '';
+	field $vertical :param      = 0;
+	field $text :param          = '';
 	field $text_position :param = 'center';
-	field $text_margin   :param = 1;
-	field $text_padding  :param = 1;
-	field $line_style    :param = undef;
-	field $glyph         :param = undef;
-	field $color         :param = [ 90,  96,  110, 255 ];
-	field $text_color    :param = [ 150, 160, 180, 255 ];
-	field $bold          :param = 0;
+	field $text_margin :param   = 1;
+	field $text_padding :param  = 1;
+	field $glyph :param         = undef;
+	field $bold :param          = 0;
+
+	# The line's style and the colors come from the theme's divider family
+	# unless given.
+	my @THEMED_PARAMS = qw(line_style color text_color);
 
 	ADJUST {
 		$vertical      = boolean( $self, vertical => $vertical );
@@ -47,11 +48,20 @@ class Term::Fabulous::Widget::Divider
 		$text_position = $self->_checked_position($text_position);
 		$text_margin   = non_negative_integer( $self, text_margin  => $text_margin );
 		$text_padding  = non_negative_integer( $self, text_padding => $text_padding );
-		$line_style    = $self->_checked_style( $line_style // Term::Fabulous::Enum::BorderStyle->Solid );
 		$glyph         = $self->_checked_glyph($glyph);
-		$color         = cell_color( $self, color      => $color );
-		$text_color    = cell_color( $self, text_color => $text_color );
 		$bold          = boolean( $self, bold => $bold );
+	}
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @THEMED_PARAMS );
+	}
+
+	method theme_family :common () {
+		return 'divider';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, line_style => [ 'line.style', 'normal' ], color => [ 'line.color', 'normal' ], text_color => [ 'text', 'normal' ] );
 	}
 
 	method _checked_position ($position) {
@@ -91,11 +101,11 @@ class Term::Fabulous::Widget::Divider
 	method text_position (@new) { return @new ? $self->_set( \$text_position, $self->_checked_position( $new[0] ) )                   : $text_position }
 	method text_margin   (@new) { return @new ? $self->_set( \$text_margin, non_negative_integer( $self, text_margin => $new[0] ) )   : $text_margin }
 	method text_padding  (@new) { return @new ? $self->_set( \$text_padding, non_negative_integer( $self, text_padding => $new[0] ) ) : $text_padding }
-	method line_style    (@new) { return @new ? $self->_set( \$line_style, $self->_checked_style( $new[0] ) )                         : $line_style }
 	method glyph         (@new) { return @new ? $self->_set( \$glyph, $self->_checked_glyph( $new[0] ) )                              : $glyph }
-	method color         (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )                         : $color }
-	method text_color    (@new) { return @new ? $self->_set( \$text_color, cell_color( $self, text_color => $new[0] ) )               : $text_color }
 	method bold          (@new) { return @new ? $self->_set( \$bold, boolean( $self, bold => $new[0] ) )                              : $bold }
+	method line_style (@new) { return @new ? $self->set_look( line_style => $self->_checked_style( $new[0] ) )           : $self->look_value('line_style') // Term::Fabulous::Enum::BorderStyle->Solid }
+	method color      (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )           : $self->look_value('color') }
+	method text_color (@new) { return @new ? $self->set_look( text_color => cell_color( $self, text_color => $new[0] ) ) : $self->look_value('text_color') }
 
 	method layout_properties :common () {
 		return (
@@ -112,7 +122,7 @@ class Term::Fabulous::Widget::Divider
 
 	# The glyph the line is drawn with.
 	method line_glyph () {
-		return $glyph // $line_style->glyphs->[ $vertical ? VERTICAL_GLYPH : HORIZONTAL_GLYPH ];
+		return $glyph // $self->line_style->glyphs->[ $vertical ? VERTICAL_GLYPH : HORIZONTAL_GLYPH ];
 	}
 
 	# The clusters of the text, each with its columns; a vertical divider
@@ -155,8 +165,8 @@ class Term::Fabulous::Widget::Divider
 
 	method paint () {
 		my ( $columns, $rows ) = ( $self->columns, $self->rows );
-		my $line_fg = $self->color_attr($color);
-		my $text_fg = ( $self->color_attr($text_color) // 0 ) | ( $bold ? TB_BOLD : 0 );
+		my $line_fg = $self->color_attr( $self->color );
+		my $text_fg = ( $self->color_attr( $self->text_color ) // 0 ) | ( $bold ? TB_BOLD : 0 );
 		my $line    = $self->line_glyph;
 
 		if ($vertical) {
@@ -286,7 +296,8 @@ text.
 =item C<line_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item, or the name of one
-(C<'Double'>). Default: C<Solid>. The line is drawn with the style's
+(C<'Double'>). Default: the theme's C<divider.line.style>, C<Solid> in
+the built-in themes. The line is drawn with the style's
 top glyph, or its left glyph when the divider is vertical:
 C<Solid> and C<Round> give a thin line, C<Heavy> a thick one,
 C<Double> a double line, C<Dashed> a dashed one, C<Ascii> C<-> or C<|>,
@@ -302,12 +313,13 @@ C<'='> or C<'.'>; it wins over C<line_style>. Anything else dies.
 =item C<color>
 
 The color of the line, in any format
-L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default:
-C<[90, 96, 110, 255]>, a gray.
+L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default: the theme's
+C<divider.line.color>, C<[90, 96, 110, 255]> in the dark theme, a gray.
 
 =item C<text_color>
 
-The color of the text. Default: C<[150, 160, 180, 255]>, a lighter
+The color of the text. Default: the theme's C<divider.text>,
+C<[150, 160, 180, 255]> in the dark theme, a lighter
 gray.
 
 =item C<bold>

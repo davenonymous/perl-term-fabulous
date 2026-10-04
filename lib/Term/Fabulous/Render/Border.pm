@@ -46,7 +46,8 @@ role Term::Fabulous::Render::Border {
 	# HasBorderStyle has already set the width of Hidden sides to 0. The
 	# "inner" background of a cell is the shadow buffer at that cell, the
 	# "outer" one is the cell just outside the box on the same side. A side
-	# without a border style is drawn with the Blank style.
+	# without a border style is drawn in the theme's style for the widget,
+	# or with the Blank style when the theme has none.
 	method render_border ( $command, $widget, $buffer ) {
 		return unless defined $widget && $widget->DOES('Term::Fabulous::Role::HasBorderStyle');
 
@@ -65,7 +66,7 @@ role Term::Fabulous::Render::Border {
 
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
 		my $border_attr = color_attr( clay_color( $data->{color} ) );
-		my $blank       = Term::Fabulous::Enum::BorderStyle->Blank;
+		my $blank       = $widget->look('border.style') // Term::Fabulous::Enum::BorderStyle->Blank;
 		my $target      = $self->cell_target;
 
 		my $shade_at = sub ( $x, $y ) {

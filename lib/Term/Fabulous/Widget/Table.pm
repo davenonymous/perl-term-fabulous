@@ -87,62 +87,62 @@ class Term::Fabulous::Widget::Table
 		text_color header_text_color header_background_color group_text_color group_background_color
 		cursor_color selected_color hover_color filter_background_color error_color muted_color line_color
 	);
+	my %COLOR_SLOT = (
+		text_color              => 'text',
+		header_text_color       => 'header.text',
+		header_background_color => 'header.background',
+		group_text_color        => 'group.text',
+		group_background_color  => 'group.background',
+		cursor_color            => 'cursor',
+		selected_color          => 'selected',
+		hover_color             => 'hover',
+		filter_background_color => 'filter.background',
+		error_color             => 'error',
+		muted_color             => 'muted',
+		line_color              => 'line.color',
+	);
 
 	# ---------------------------------------------------------------------
 	# Parameters
 	# ---------------------------------------------------------------------
 
 	# What the model is made of; handed over in ADJUST and dropped there.
-	field $initial_columns   :param(columns)   = [];
-	field $initial_rows      :param(rows)      = [];
-	field $initial_sort      :param(sort)      = [];
-	field $initial_group     :param(group_by)  = undef;
-	field $row_id            :param            = undef;
-	field $children_key      :param            = undef;
-	field $tree_expanded     :param            = 0;
+	field $initial_columns :param(columns)     = [];
+	field $initial_rows :param(rows)           = [];
+	field $initial_sort :param(sort)           = [];
+	field $initial_group :param(group_by)      = undef;
+	field $row_id :param                       = undef;
+	field $children_key :param                 = undef;
+	field $tree_expanded :param                = 0;
 	field $initial_page_size :param(page_size) = 0;
 
-	field $selection        :param = 'none';
+	field $selection :param        = 'none';
 	field $selection_column :param = undef;
 	field $_explicit_selection_column;    # selection_column as the user set it, else undef
-	field $show_header          :param(header) = 1;
-	field $filter_row           :param         = 0;
-	field $page_sizes           :param         = [ 10, 25, 50, 100 ];
-	field $show_pager           :param(pager)  = undef;
-	field $scrollbar            :param         = 1;
-	field $hover                :param         = 1;
-	field $tree_column          :param         = undef;
-	field $group_label          :param         = undef;
-	field $row_style            :param         = undef;
-	field $header_style         :param         = undef;
-	field $group_style          :param         = undef;
-	field $empty_text           :param         = 'No rows';
-	field $no_match_text        :param         = 'No rows match';
-	field $cell_padding         :param         = 1;
-	field $stripe_color         :param         = undef;
-	field $double_click_seconds :param         = 0.4;
+	field $show_header :param(header)  = 1;
+	field $filter_row :param           = 0;
+	field $page_sizes :param           = [ 10, 25, 50, 100 ];
+	field $show_pager :param(pager)    = undef;
+	field $scrollbar :param            = 1;
+	field $hover :param                = 1;
+	field $tree_column :param          = undef;
+	field $group_label :param          = undef;
+	field $row_style :param            = undef;
+	field $header_style :param         = undef;
+	field $group_style :param          = undef;
+	field $empty_text :param           = 'No rows';
+	field $no_match_text :param        = 'No rows match';
+	field $cell_padding :param         = 1;
+	field $double_click_seconds :param = 0.4;
 
-	field $border        :param = 'Round';
-	field $border_top    :param = undef;
-	field $border_right  :param = undef;
+	field $border :param        = 'Round';
+	field $border_top :param    = undef;
+	field $border_right :param  = undef;
 	field $border_bottom :param = undef;
-	field $border_left   :param = undef;
-	field $column_lines  :param = 'Solid';
-	field $row_lines     :param = undef;
-	field $header_line   :param = 'Solid';
-
-	field $text_color              :param = [ 220, 223, 228, 255 ];
-	field $header_text_color       :param = [ 235, 238, 243, 255 ];
-	field $header_background_color :param = [ 36,  40,  50,  255 ];
-	field $group_text_color        :param = [ 97,  175, 239, 255 ];
-	field $group_background_color  :param = [ 28,  32,  41,  255 ];
-	field $cursor_color            :param = [ 52,  58,  72,  255 ];
-	field $selected_color          :param = [ 38,  62,  92,  255 ];
-	field $hover_color             :param = [ 38,  42,  52,  255 ];
-	field $filter_background_color :param = [ 30,  33,  40,  255 ];
-	field $error_color             :param = [ 224, 108, 117, 255 ];
-	field $muted_color             :param = [ 140, 146, 158, 255 ];
-	field $line_color              :param = [ 88,  96,  112, 255 ];
+	field $border_left :param   = undef;
+	field $column_lines :param  = 'Solid';
+	field $row_lines :param     = undef;
+	field $header_line :param   = 'Solid';
 
 	# ---------------------------------------------------------------------
 	# State
@@ -193,6 +193,37 @@ class Term::Fabulous::Widget::Table
 	field $_reveal_cursor = 0;
 	field $_shown_page    = 0;
 
+	# The colors come from the theme's table family unless given.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_PARAMS, 'stripe_color' );
+	}
+
+	method theme_family :common () {
+		return 'table';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			stripe_color => [ 'stripe', 'normal' ],
+			map { $_ => [ $COLOR_SLOT{$_}, 'normal' ] } @COLOR_PARAMS,
+		);
+	}
+
+	# Dresses the cells, the pager and the scrollbar in the new theme's
+	# colors.
+	method theme_changed () {
+		$self->_colors_changed(@COLOR_PARAMS);
+		return;
+	}
+
+	# A color returned to the theme shows in the parts too.
+	method look_reset :override ($name) {
+		$self->SUPER::look_reset($name);
+		$self->_colors_changed($name);
+		return;
+	}
+
 	ADJUST {
 		my $id = $self->id;
 		die "Term::Fabulous::Widget::Table: a table needs an id (its body keeps its scroll position by it)" unless defined $id;
@@ -239,7 +270,6 @@ class Term::Fabulous::Widget::Table
 		$empty_text    = string( $self, empty_text    => $empty_text );
 		$no_match_text = string( $self, no_match_text => $no_match_text );
 		$cell_padding  = $self->_padding($cell_padding);
-		$stripe_color  = color( $self, stripe_color => $stripe_color ) if defined $stripe_color;
 		die "Term::Fabulous::Widget::Table: double_click_seconds must be a number of at least 0, got " . _describe($double_click_seconds)
 			unless defined $double_click_seconds && !ref $double_click_seconds && $double_click_seconds =~ /\A[0-9]*\.?[0-9]+\z/;
 
@@ -256,10 +286,6 @@ class Term::Fabulous::Widget::Table
 		foreach my $name (@LINE_PARAMS) {
 			my $value = $line{$name} // ( $name =~ /\Aborder_/ ? $outer : undef );
 			$_line_style{$name} = defined $value ? border_style_of( $self, $name => $value ) : undef;
-		}
-		foreach my $name (@COLOR_PARAMS) {
-			my $field_ref = $self->_color_field($name);
-			$$field_ref = color( $self, $name => $$field_ref );
 		}
 		return;
 	}
@@ -281,24 +307,6 @@ class Term::Fabulous::Widget::Table
 		die "Term::Fabulous::Widget::Table: cell_padding must be a number of cells or a hash reference of left, right, top and bottom, got " . _describe($padding)
 			unless ref $padding eq 'HASH' && !grep { !/\A(?:left|right|top|bottom)\z/ } keys %$padding;
 		return { map { $_ => non_negative_integer( $self, "cell_padding $_", $padding->{$_} // 0 ) } qw(left right top bottom) };
-	}
-
-	method _color_field ($name) {
-		my %field = (
-			text_color              => \$text_color,
-			header_text_color       => \$header_text_color,
-			header_background_color => \$header_background_color,
-			group_text_color        => \$group_text_color,
-			group_background_color  => \$group_background_color,
-			cursor_color            => \$cursor_color,
-			selected_color          => \$selected_color,
-			hover_color             => \$hover_color,
-			filter_background_color => \$filter_background_color,
-			error_color             => \$error_color,
-			muted_color             => \$muted_color,
-			line_color              => \$line_color,
-		);
-		return $field{$name} // die "Term::Fabulous::Widget::Table: internal: no color '$name'";
 	}
 
 	# ---------------------------------------------------------------------
@@ -340,21 +348,30 @@ class Term::Fabulous::Widget::Table
 		$_body_row->add_child($_body);
 		$_scrollbar = Term::Fabulous::Widget::Scrollbar->new(
 			follows     => $_body,
-			thumb_color => $text_color,
-			track_color => $line_color,
+			thumb_color => $self->text_color,
+			track_color => $self->line_color,
 			layout      => { sizing => { width => sizing_fixed(1), height => sizing_grow() } },
 		);
 
-		$_pager = Term::Fabulous::Widget::Table::Pager->new( page_sizes => $page_sizes, text_color => $text_color, muted_color => $muted_color );
+		$_pager = $self->_new_pager;
 		$self->_wire_pager;
 		$self->add_child( $_header_row, $_body_row );
 		return;
 	}
 
+	method _new_pager () {
+		return Term::Fabulous::Widget::Table::Pager->new(
+			page_sizes   => $page_sizes,
+			text_color   => $self->text_color,
+			muted_color  => $self->muted_color,
+			button_color => $self->look('pager.button'),
+		);
+	}
+
 	# A new pager, for new page sizes or colors; prepare_layout shows it.
 	method _rebuild_pager () {
 		my $old = $_pager;
-		$_pager = Term::Fabulous::Widget::Table::Pager->new( page_sizes => $page_sizes, text_color => $text_color, muted_color => $muted_color );
+		$_pager = $self->_new_pager;
 		$self->_wire_pager;
 		$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($old) } );
 		return;
@@ -521,8 +538,8 @@ class Term::Fabulous::Widget::Table
 		my $field = Term::Fabulous::Widget::TextField->new(
 			value                  => $_filter_text{$key} // '',
 			placeholder            => "\x{2026}",
-			text_color             => $text_color,
-			focus_background_color => $cursor_color,
+			text_color             => $self->text_color,
+			focus_background_color => $self->cursor_color,
 			layout                 => { sizing => { width => sizing_grow(0) } },    # one row high, as wide as the column
 		);
 		weaken( my $weak = $self );
@@ -829,7 +846,7 @@ class Term::Fabulous::Widget::Table
 				: $line->{kind} eq 'row' && $model->is_selected( $line->{id} ) ? 'selected'
 				: $hover                 && defined $_hover_key && $_hover_key eq $line->{key} ? 'hover'
 				:                                                                                '';
-			my $stripe   = $line->{kind} eq 'row' && defined $stripe_color && $data_index++ % 2 ? 1 : 0;
+			my $stripe   = $line->{kind} eq 'row' && defined $self->stripe_color && $data_index++ % 2 ? 1 : 0;
 			my $look_key = join "\0", $_borders_generation, $state, $stripe, $self->_line_look_key($line);
 			next if defined $built->{look_key} && $built->{look_key} eq $look_key;
 			$built->{look_key} = $look_key;
@@ -846,7 +863,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _state_color ($state) {
-		return $state eq 'cursor' ? $cursor_color : $state eq 'selected' ? $selected_color : $state eq 'hover' ? $hover_color : undef;
+		return $state eq 'cursor' ? $self->cursor_color : $state eq 'selected' ? $self->selected_color : $state eq 'hover' ? $self->hover_color : undef;
 	}
 
 	# The grid lines of the header rows and the lines.
@@ -881,7 +898,7 @@ class Term::Fabulous::Widget::Table
 			my $row   = $self->_row_style_for($id);
 			my @looks = map {
 				my $cell = defined $grid_columns->[$_]{column} ? $self->_cell_style_for( $id, $grid_columns->[$_]{column} ) : {};
-				$self->_body_look( $state_color // ( $stripe ? $stripe_color : undef ), $row, $cell, $grid_columns->[$_]{column}, defined $state_color );
+				$self->_body_look( $state_color // ( $stripe ? $self->stripe_color : undef ), $row, $cell, $grid_columns->[$_]{column}, defined $state_color );
 			} 0 .. $#$grid_columns;
 			$built->{dressed} //= [];
 			$self->_dress_cell( $built->{cells}[$_], $looks[$_], $borders->[$_], \$built->{dressed}[$_] ) foreach 0 .. $#looks;
@@ -908,12 +925,12 @@ class Term::Fabulous::Widget::Table
 		my $style  = merge_styles( defined $column ? $column->header_style : {}, $header_style );
 		my $active = defined $_header_cursor && $_header_cursor == $index && $self->_has_focus_within;
 		return {
-			background_color => $active ? $cursor_color : $style->{background_color} // $header_background_color,
-			text_color       => $style->{text_color}                                 // $header_text_color,
-			bold             => $style->{bold}                                       // 1,
-			italic           => $style->{italic}                                     // 0,
-			underline        => $style->{underline}                                  // 0,
-			border_color     => $style->{border_color}                               // $line_color,
+			background_color => $active ? $self->cursor_color : $style->{background_color} // $self->header_background_color,
+			text_color       => $style->{text_color}                                       // $self->header_text_color,
+			bold             => $style->{bold}                                             // 1,
+			italic           => $style->{italic}                                           // 0,
+			underline        => $style->{underline}                                        // 0,
+			border_color     => $style->{border_color}                                     // $self->line_color,
 		};
 	}
 
@@ -921,20 +938,20 @@ class Term::Fabulous::Widget::Table
 		my $column = $grid_column->{column};
 		if ( defined $cell->{field} ) {
 			my $error = defined $_filter_error{ $column->key };
-			_set( $cell->{field}, text_color => $error ? $error_color : $text_color );
+			_set( $cell->{field}, text_color => $error ? $self->error_color : $self->text_color );
 		}
-		return { background_color => $filter_background_color, border_color => $line_color };
+		return { background_color => $self->filter_background_color, border_color => $self->line_color };
 	}
 
 	method _group_look ($state_color) {
 		my $style = $group_style;
 		return {
-			background_color => $state_color           // $style->{background_color} // $group_background_color,
-			text_color       => $style->{text_color}   // $group_text_color,
+			background_color => $state_color           // $style->{background_color} // $self->group_background_color,
+			text_color       => $style->{text_color}   // $self->group_text_color,
 			bold             => $style->{bold}         // 1,
 			italic           => $style->{italic}       // 0,
 			underline        => $style->{underline}    // 0,
-			border_color     => $style->{border_color} // $line_color,
+			border_color     => $style->{border_color} // $self->line_color,
 		};
 	}
 
@@ -944,11 +961,11 @@ class Term::Fabulous::Widget::Table
 		my $background   = ( $state_wins ? $base_color : $look->{background_color} // $base_color ) // $self->_base_background;
 		return {
 			background_color => $background,
-			text_color       => $look->{text_color}   // $text_color,
+			text_color       => $look->{text_color}   // $self->text_color,
 			bold             => $look->{bold}         // 0,
 			italic           => $look->{italic}       // 0,
 			underline        => $look->{underline}    // 0,
-			border_color     => $look->{border_color} // $line_color,
+			border_color     => $look->{border_color} // $self->line_color,
 		};
 	}
 
@@ -998,7 +1015,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _empty_look () {
-		return { background_color => $self->_base_background, text_color => $muted_color, border_color => $line_color, italic => 1 };
+		return { background_color => $self->_base_background, text_color => $self->muted_color, border_color => $self->line_color, italic => 1 };
 	}
 
 	# The color of cells that have none of their own: the table's
@@ -1793,10 +1810,11 @@ class Term::Fabulous::Widget::Table
 		weaken( my $weak = $self );
 		$_chooser = Term::Fabulous::Widget::Table::ColumnChooser->new(
 			columns          => [ map { [ $_->key, length $_->title ? $_->title : $_->key, $model->is_column_visible( $_->key ) ] } $model->columns ],
-			text_color       => $text_color,
-			background_color => $group_background_color,
+			text_color       => $self->text_color,
+			muted_color      => $self->muted_color,
+			background_color => $self->group_background_color,
 			border_width     => 1,
-			border_color     => $text_color,
+			border_color     => $self->text_color,
 			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 			on_toggle        => sub ( $key, $visible ) { $weak->_chooser_toggled( $key, $visible ) if $weak },
 			on_close         => sub () { $weak->close_column_chooser if $weak },
@@ -2150,15 +2168,22 @@ class Term::Fabulous::Widget::Table
 	# --- Appearance ------------------------------------------------------
 
 	method _color_property ( $name, @new ) {
-		my $field_ref = $self->_color_field($name);
-		return $$field_ref unless @new;
-		$$field_ref = color( $self, $name => $new[0] );
-		$_scrollbar->thumb_color($text_color) if $name eq 'text_color';
-		$_scrollbar->track_color($line_color) if $name eq 'line_color';
-		$self->_rebuild_pager if $name eq 'text_color'   || $name eq 'muted_color';
-		$_header_signature = '' if $name eq 'text_color' || $name eq 'cursor_color';    # the filter fields take them when built
+		return $self->look_value($name) unless @new;
+		$self->set_look( $name => color( $self, $name => $new[0] ) );
+		$self->_colors_changed($name);
+		return $self->look_value($name);
+	}
+
+	# The parts that copy the table's colors take them again.
+	method _colors_changed (@names) {
+		return unless defined $_scrollbar;    # the constructor adopts the given colors before it builds the parts
+		my %changed = map { $_ => 1 } @names;
+		$_scrollbar->thumb_color( $self->text_color ) if $changed{text_color};
+		$_scrollbar->track_color( $self->line_color ) if $changed{line_color};
+		$self->_rebuild_pager if $changed{text_color}   || $changed{muted_color};
+		$_header_signature = '' if $changed{text_color} || $changed{cursor_color};    # the filter fields take them when built
 		$self->_restyle;
-		return $$field_ref;
+		return;
 	}
 
 	method text_color              (@new) { return $self->_color_property( text_color              => @new ) }
@@ -2175,10 +2200,10 @@ class Term::Fabulous::Widget::Table
 	method line_color              (@new) { return $self->_color_property( line_color              => @new ) }
 
 	method stripe_color (@new) {
-		return $stripe_color unless @new;
-		$stripe_color = defined $new[0] ? color( $self, stripe_color => $new[0] ) : undef;
+		return $self->look_value('stripe_color') unless @new;
+		$self->set_look( stripe_color => defined $new[0] ? color( $self, stripe_color => $new[0] ) : undef );
 		$self->_restyle;
-		return $stripe_color;
+		return $self->look_value('stripe_color');
 	}
 
 	# The table's own background is the color of its cells (see

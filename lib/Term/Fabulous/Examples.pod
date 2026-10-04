@@ -251,6 +251,22 @@ L<Term::Fabulous::Manual::Looks/Working with colors>.
 
 =end html
 
+=head3 examples/themes.pl
+
+L<Term::Fabulous::Theme>: a panel with a text field, a check box, a
+progress bar and two buttons under the built-in C<dark> and C<light>
+themes and under F<examples/ocean.kdl>, a theme file; F2 switches to
+the next theme. The Save button has the class C<primary>, which the
+ocean theme draws in its accent, and the Cancel button keeps its own
+border color under every theme. See
+L<Term::Fabulous::Manual::Looks/THEMES>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-themes.svg" alt="A panel in the ocean theme: teal accents on a deep blue background, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+
+=end html
+
 =head3 examples/web-colors.pl
 
 All colors of L<Term::Fabulous::Enum::WebColor> in a grid that adapts
@@ -1256,14 +1272,14 @@ the result and ends.
 
 =item F<theme-switch.pl>
 
-L<Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>:
-a dark and a light theme, each derived from one base color with
-C<lighten> and C<darken>; F2 switches between them. The picture shows
-the light theme, after typing a line and F2.
+L<Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>:
+the built-in C<dark> and C<light> themes and the theme file
+F<examples/ocean.kdl>; F2 switches to the next one. The picture shows
+the ocean theme, after typing a line and two presses of F2.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2: dark text on a light panel and a text field holding Light and readable"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-theme-switch.svg" alt="The ocean theme after two presses of F2: teal text on a dark blue background, a text field holding Light and readable, and a Save button with a teal border"></p>
 
 =end html
 

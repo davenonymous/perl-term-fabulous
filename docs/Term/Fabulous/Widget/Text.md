@@ -87,11 +87,18 @@ except `id` also has an accessor of the same name.
     such as `'#ffffff'` or `'rgb(255, 255, 255)'`, a packed `0xRRGGBB`
     integer, or a Term::Fabulous::Color object such as an item of
     [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md); it is stored as `[r, g, b, a]`. An
-    alpha from 1 to 254 is drawn opaque. Default:
-    `[0, 0, 0, 255]`, opaque black, which is invisible on a dark
-    background; you will almost always want to set it. Pass
-    `[0, 0, 0, 0]` (alpha 0) for the terminal's default foreground color.
-    See ["COLORS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#colors).
+    alpha from 1 to 254 is drawn opaque. Default: the theme's `text.color`
+    (`[220, 223, 228, 255]` in the dark theme), or, inside a widget that
+    colors its texts (a [Term::Fabulous::Widget::Button](Button.md)), that widget's
+    text look. Pass `[0, 0, 0, 0]` (alpha 0) for the terminal's default
+    foreground color. See ["COLORS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#colors) and
+    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes).
+
+- `classes`
+
+    An array reference of strings. Default: `[]`. Names that select the
+    theme's variants of the `text` family, as for
+    ["classes" in Term::Fabulous::Widget](../Widget.md#classes).
 
     Inside a disabled [Term::Fabulous::Widget::Button](Button.md), the text is drawn
     in the button's `disabled_color` instead, whatever its `text_color`.
@@ -186,11 +193,30 @@ $label->text_color( [ 255, 80, 80, 255 ] );
 $label->text_color('#ff5050');
 ```
 
-Accessor. Without an argument it returns the current value as
-`[r, g, b, a]`; with an argument it sets it, in any format the
-constructor parameter accepts, and returns the stored `[r, g, b, a]`.
-An invalid value dies like the constructor parameter. The change shows
-in the next frame.
+Accessor. Without an argument it returns the color in use, the given
+one or the theme's, as `[r, g, b, a]`; with an argument it sets it, in
+any format the constructor parameter accepts, and returns the stored
+`[r, g, b, a]`. An invalid value dies like the constructor parameter,
+and so does `undef`: `$label->reset_look('text_color')` returns
+the text to the theme. The change shows in the next frame.
+
+## classes
+
+```perl
+$label->classes( ['muted'] );
+```
+
+Accessor for the `classes` parameter, as
+["classes" in Term::Fabulous::Widget](../Widget.md#classes).
+
+## reset\_look
+
+```perl
+$label->reset_look('text_color');
+```
+
+Drops the given `text_color`, so the theme's text color is drawn
+again; see ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look).
 
 ## bold
 

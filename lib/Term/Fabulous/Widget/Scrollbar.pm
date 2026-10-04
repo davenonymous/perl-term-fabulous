@@ -31,11 +31,22 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Canvas) :st
 		horizontal => { track => "\x{2500}", thumb => "\x{2501}", position => 'x', size => 'width',  thickness => 'height' },
 	);
 
-	field $follows     :param;
-	field $axis        :param = 'vertical';
-	field $track_color :param = [ 70, 76,  90,  255 ];
-	field $thumb_color :param = [ 97, 175, 239, 255 ];
+	field $follows :param;
+	field $axis :param = 'vertical';
 	field $_painted_key;
+
+	# The colors come from the theme's scrollbar family unless given.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, qw(track_color thumb_color) );
+	}
+
+	method theme_family :common () {
+		return 'scrollbar';
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, track_color => [ 'track', 'normal' ], thumb_color => [ 'thumb', 'normal' ] );
+	}
 
 	ADJUST {
 		die "Term::Fabulous::Widget::Scrollbar: follows must be a scroll container"
@@ -43,23 +54,19 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Canvas) :st
 		weaken $follows;
 		die "Term::Fabulous::Widget::Scrollbar: axis must be 'vertical' or 'horizontal', got " . describe($axis)
 			unless defined $axis && !ref $axis && exists $AXIS{$axis};
-		$track_color = cell_color( $self, track_color => $track_color );
-		$thumb_color = cell_color( $self, thumb_color => $thumb_color );
 		weaken( my $weak = $self );
 		$self->on( Mouse => sub ($event) { return $weak ? $weak->_on_mouse($event) : $CONTINUE } );
 	}
 
 	method axis () { return $axis }
 
-	method _set_color ( $name, $field_ref, @new ) {
-		return $$field_ref unless @new;
-		$$field_ref = cell_color( $self, $name => $new[0] );
-		$self->mark_changed;
-		return $$field_ref;
+	method _set_color ( $name, @new ) {
+		return $self->look_value($name) unless @new;
+		return $self->set_look( $name => cell_color( $self, $name => $new[0] ) );
 	}
 
-	method track_color (@new) { return $self->_set_color( track_color => \$track_color, @new ) }
-	method thumb_color (@new) { return $self->_set_color( thumb_color => \$thumb_color, @new ) }
+	method track_color (@new) { return $self->_set_color( track_color => @new ) }
+	method thumb_color (@new) { return $self->_set_color( thumb_color => @new ) }
 
 	# The cells of the track along the scrollbar's axis.
 	method _length () {
@@ -107,7 +114,8 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Canvas) :st
 		my $length = $self->_length;
 		my $state  = $self->_scrolling;
 		my $thumb  = defined $state && $length > 0 ? $self->_thumb( $state, $length ) : undef;
-		my $key    = join ':', $self->columns, $self->rows, ( defined $thumb ? @$thumb : 'none' ), @$track_color, @$thumb_color;
+		my ( $track_color, $thumb_color ) = ( $self->track_color, $self->thumb_color );
+		my $key = join ':', $self->columns, $self->rows, ( defined $thumb ? @$thumb : 'none' ), @$track_color, @$thumb_color;
 		return if defined $_painted_key && $key eq $_painted_key;
 		$_painted_key = $key;
 		$self->clear;
@@ -219,13 +227,15 @@ C<'vertical'> (the default) or C<'horizontal'>; anything else dies.
 
 =item C<track_color>
 
-The color of the track. Default: a dark grey, C<[ 70, 76, 90, 255 ]>.
+The color of the track. Default: the theme's C<scrollbar.track>, a
+dark grey, C<[ 70, 76, 90, 255 ]>, in the dark theme.
 Takes anything a canvas cell takes (see
 L<Term::Fabulous::Widget::Canvas/put>).
 
 =item C<thumb_color>
 
-The color of the thumb. Default: a light blue, C<[ 97, 175, 239, 255 ]>.
+The color of the thumb. Default: the theme's C<scrollbar.thumb>, a
+light blue, C<[ 97, 175, 239, 255 ]>, in the dark theme.
 
 =back
 

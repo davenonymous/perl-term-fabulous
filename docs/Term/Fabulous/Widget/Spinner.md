@@ -102,12 +102,14 @@ and the ones below. All are optional; unknown parameters die.
 - `color`
 
     The color of the frames, in any format
-    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default:
-    `[97, 175, 239, 255]`, the blue of the input widgets' accent.
+    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default: the theme's
+    `spinner.color`, `[97, 175, 239, 255]` in the dark theme, the blue of
+    the input widgets' accent.
 
 - `label_color`
 
-    The color of the label. Default: `[220, 223, 228, 255]`.
+    The color of the label. Default: the theme's `spinner.label`,
+    `[220, 223, 228, 255]` in the dark theme.
 
 # METHODS
 

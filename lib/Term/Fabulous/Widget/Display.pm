@@ -18,6 +18,7 @@ class Term::Fabulous::Widget::Display
 	use Clay::XS qw(sizing_fixed);
 	use Time::HiRes ();
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
+	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	# Counts mark_changed calls, the changes of the widget's own state; with
@@ -52,11 +53,11 @@ class Term::Fabulous::Widget::Display
 		return;
 	}
 
-	# What paint reads: the size and the widget's own state (every setter
-	# calls mark_changed). A subclass that paints from the state of other
-	# objects adds it.
+	# What paint reads: the size, the widget's own state (every setter
+	# calls mark_changed) and the theme. A subclass that paints from the
+	# state of other objects adds it.
 	method paint_key () {
-		return ( $self->columns, $self->rows, $_change_count );
+		return ( $self->columns, $self->rows, $_change_count, Term::Fabulous::Theme::generation() );
 	}
 
 	# The termbox2 attribute of a color, undef for none.

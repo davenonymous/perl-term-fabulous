@@ -151,7 +151,8 @@ and the ones below. Unknown parameters die.
 - `track_color`
 
     A color, in any format [Term::Fabulous::Widget::Input](Input.md) accepts. The
-    track right of the thumb. Default: `[90, 96, 110, 255]`, a gray.
+    track right of the thumb. Default: the theme's `input.track`,
+    `[90, 96, 110, 255]` in the dark theme, a gray.
 
 The glyph parameters die unless they are exactly one grapheme cluster
 one column wide; the numeric parameters die unless they are finite

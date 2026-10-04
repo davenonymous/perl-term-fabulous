@@ -178,23 +178,27 @@ and the ones below. All are optional; unknown parameters die.
 - `color`
 
     The color of the filled part, in any format
-    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default:
-    `[97, 175, 239, 255]`, the blue of the input widgets' accent.
+    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default: the theme's
+    `progress.color`, `[97, 175, 239, 255]` in the dark theme, the blue
+    of the input widgets' accent.
 
 - `track_color`
 
-    The color of the empty part. Default: `[58, 63, 75, 255]`, a dark
+    The color of the empty part. Default: the theme's `progress.track`,
+    `[58, 63, 75, 255]` in the dark theme, a dark
     gray.
 
 - `text_color`
 
-    The color of the value label. Default: `[220, 223, 228, 255]`.
+    The color of the value label. Default: the theme's `progress.text`,
+    `[220, 223, 228, 255]` in the dark theme.
 
 - `inside_text_color`
 
     The color of the label where it lies over the filled part, with
-    `value_position => 'inside'`. Default: `[16, 18, 22, 255]`,
-    nearly black.
+    `value_position => 'inside'`. Default: the theme's
+    `progress.inside_text`, `[16, 18, 22, 255]` in the dark theme, a
+    near black.
 
 # METHODS
 

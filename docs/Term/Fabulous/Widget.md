@@ -62,6 +62,7 @@ and the one it composes itself:
 - [Clay::UI::Role::Style::HasBorder](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AStyle%3A%3AHasBorder): `border_width`, `border_color`
 - [Clay::UI::Role::Style::HasStates](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AStyle%3A%3AHasStates): `add_state`, `states`, ...
 - [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md): the border glyphs (`border_style`, ...)
+- [Term::Fabulous::Role::Themed](Role/Themed.md): the colors and border styles the theme supplies (`look`, `reset_look`, ...)
 
 The sections below summarize what you need for everyday use; the role
 pages have the full details.
@@ -299,10 +300,19 @@ empty; add children afterwards with ["add\_child"](#add_child).
 
 - `classes`
 
-    An array reference of strings. Default: `[]`. Free-form names for
-    your own use, returned by ["get\_classes"](#get_classes). Term::Fabulous itself does
-    not read them. The array is copied; anything but an array of defined,
-    non-reference names dies.
+    An array reference of strings. Default: `[]`. Names of your own,
+    returned by ["get\_classes"](#get_classes) and ["classes"](#classes). The theme reads them: a
+    widget whose classes name a variant of its family draws with that
+    variant (see ["Variants and classes" in Term::Fabulous::Manual::Looks](Manual/Looks.md#variants-and-classes)).
+    The array is copied; anything but an array of defined, non-reference
+    names dies.
+
+The background, the border color and the border style come from the
+theme of the UI when they are not given, where the theme has them for
+the widget's family (a plain Box has none in the built-in themes; a
+Button, a Dialog or a Toast has); see
+["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes). Subclasses document the
+theme slot each of their colors reads.
 
 # METHODS
 
@@ -515,12 +525,14 @@ $box->background_color( [ 60, 90, 140, 255 ] );
 $box->background_color('#3c5a8c');
 ```
 
-Accessor. Without an argument it returns the current value as
-`[r, g, b, a]` (`undef` when none is set); with an argument it sets
-the value, in any format the constructor parameter accepts, and returns
-the stored `[r, g, b, a]`. `undef` removes the background color. An
-invalid value dies like the constructor parameter of the same name. The
-change shows in the next frame.
+Accessor. Without an argument it returns the color in use as
+`[r, g, b, a]`: the given one, or the theme's background for the
+widget's family (`undef` for a widget whose family has none, such as
+a plain Box); with an argument it sets the value, in any format the
+constructor parameter accepts, and returns the stored `[r, g, b, a]`.
+`undef` removes the given background color (["reset\_look"](#reset_look) does the
+same). An invalid value dies like the constructor parameter of the
+same name. The change shows in the next frame.
 
 ## glyphs\_show\_through
 
@@ -540,12 +552,14 @@ $box->border_color( [ 97, 175, 239, 255 ] );
 $box->border_color( Term::Fabulous::Enum::WebColor->SteelBlue );
 ```
 
-Accessor. Without an argument it returns the current value as
-`[r, g, b, a]` (`undef` when none is set); with an argument it sets
-the value, in any format the constructor parameter accepts, and returns
-the stored `[r, g, b, a]`. `undef` returns to the terminal's default
-color. An invalid value dies like the constructor parameter of the same
-name. The change shows in the next frame.
+Accessor. Without an argument it returns the color in use as
+`[r, g, b, a]`: the given one, or the theme's border color for the
+widget's family (`undef` for the terminal's default color, as for a
+plain Box); with an argument it sets the value, in any format the
+constructor parameter accepts, and returns the stored `[r, g, b, a]`.
+`undef` removes the given color (["reset\_look"](#reset_look) does the same). An
+invalid value dies like the constructor parameter of the same name.
+The change shows in the next frame.
 
 ## border\_width
 
@@ -699,6 +713,19 @@ my @active = $row->states;
 
 The active state names, in no particular order.
 
+## classes
+
+```perl
+my $names = $widget->classes;    # ['sidebar']
+$widget->classes( [ 'sidebar', 'primary' ] );
+```
+
+Accessor for the `classes` parameter. Without an argument it returns
+a copy of the names; with an array reference it replaces them, makes
+the widget read its theme looks again and returns a copy of the new
+names. An invalid value dies like the constructor parameter. The
+change shows in the next frame.
+
 ## get\_classes
 
 ```perl
@@ -706,7 +733,24 @@ my @classes = $widget->get_classes;    # ('sidebar', 'state_focused')
 ```
 
 The names from the `classes` parameter, followed by `state_NAME` for
-every active state (`state_hovered`, `state_selected`, ...).
+every active state (`state_hovered`, `state_selected`, ...). The
+theme reads the classes only, not the state names.
+
+## reset\_look
+
+```perl
+$button->reset_look('border_color');
+$button->reset_look( 'background_color', 'focus_border_color' );
+```
+
+Drops the colors or border styles the program gave for the named
+parameters, so the theme supplies them again. Takes the names of
+the widget's themed parameters (`background_color`, `border_color`
+and the ones a subclass lists); an unknown name dies naming the known
+ones. Returns the widget. The change shows in the next frame. From
+[Term::Fabulous::Role::Themed](Role/Themed.md), which also has [look](Role/Themed.md#look)
+and [look\_value](Role/Themed.md#look_value) for widget
+authors.
 
 ## mark\_changed
 

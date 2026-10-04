@@ -9,19 +9,22 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 This page explains how widgets look: how a Text widget shows text
 (character strings, wrapping, alignment, line height, bold, italic and
 underlined text, wide characters and control characters), how colors
-are written and how translucent colors are blended, and how borders are
+are written and how translucent colors are blended, how borders are
 drawn (border styles, per-side styles, widths, colors and borders that
-join the lines around them). Every feature is shown in a picture, with
-the Perl code and, where a layout file can set it, the form it takes in
-a [KDL layout file](KDL.md#kdl-layout-files).
+join the lines around them), and how a theme colors every widget at
+once (the built-in themes, theme files, variants, switching at run
+time). Every feature is shown in a picture, with the Perl code and,
+where a layout file can set it, the form it takes in a
+[KDL layout file](KDL.md#kdl-layout-files).
 
 The reference pages for this topic are
 [Term::Fabulous::Widget::Text](../Widget/Text.md), [Term::Fabulous::Color](../Color.md),
-[Term::Fabulous::Enum::WebColor](../Enum/WebColor.md), [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md)
-and [Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md). Complete programs are in
-[Term::Fabulous::Cookbook::GettingStarted](../Cookbook/GettingStarted.md) (non-ASCII text, wrapping
-and alignment) and [Term::Fabulous::Cookbook::Layout](../Cookbook/Layout.md) (per-side border
-styles, a color theme).
+[Term::Fabulous::Enum::WebColor](../Enum/WebColor.md), [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md),
+[Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md) and [Term::Fabulous::Theme](../Theme.md).
+Complete programs are in [Term::Fabulous::Cookbook::GettingStarted](../Cookbook/GettingStarted.md)
+(non-ASCII text, wrapping and alignment) and
+[Term::Fabulous::Cookbook::Layout](../Cookbook/Layout.md) (per-side border styles, switching
+themes).
 
 # TEXT
 
@@ -46,9 +49,9 @@ Text "usage" {
 }
 ```
 
-**Always give a `text_color`.** The default is opaque black,
-`[0, 0, 0, 255]`, which is invisible on the dark background most
-terminals use. To use the terminal's default text color instead, pass
+Without a `text_color`, a Text is drawn in the theme's text color
+(["THEMES"](#themes)): a light gray in the built-in `dark` theme, a dark gray
+in `light`. To use the terminal's default text color instead, pass
 `[0, 0, 0, 0]` (see ["Alpha and the terminal default color"](#alpha-and-the-terminal-default-color)).
 
 A Text widget has no background, border or padding of its own; put it in
@@ -443,9 +446,9 @@ my $hex = $muted->hexString;                                             # '#5e8
 The other constructors are `rgb`, `rgba`, `hsl` and `hsla`; the
 other methods read channels (`red`, `to_hsl`, `rgb_int`, ...) and
 write ANSI escape sequences (`ansi`, `fg_sgr`, ...). See
-[Term::Fabulous::Color](../Color.md) for all of them. The recipe
-[Change colors at run time](../Cookbook/Layout.md#change-colors-at-run-time-a-theme-with-lighten-and-darken)
-builds a dark and a light theme from one base color.
+[Term::Fabulous::Color](../Color.md) for all of them. To color every widget at
+once, and to switch all the colors at run time, use a theme
+(["THEMES"](#themes)).
 
 # BORDERS
 
@@ -601,6 +604,12 @@ border styles say which. Change the color like any other color:
 $panel->border_color('#ff5050');    # shown in the next frame
 ```
 
+A widget that was given no `border_color` or no `border_style` takes
+them from the theme, where the theme has them for the widget's family
+(a button, a dialog, a toast, ...); see ["THEMES"](#themes). A plain Box has
+none in the built-in themes, so its border is drawn in the terminal's
+default color and, without a style, with spaces.
+
 ## Joining borders
 
 Two more parameters let a border join the lines around it. Both are set
@@ -642,12 +651,176 @@ my $body  = Term::Fabulous::Widget::Box->new(
 [Term::Fabulous::Widget::Table](../Widget/Table.md) draws its grid lines this way. See
 [Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md) for the exact rules.
 
+# THEMES
+
+A _theme_ decides the colors and the border styles of every widget
+that does not set them itself: the text color of a Text, the
+background of a text field, the border of a focused button, the lines
+of a table. Term::Fabulous comes with two themes, `dark` (the colors
+the pictures on these pages show) and `light`, for terminals with a
+light background. A theme is set per UI and can be switched at any
+time:
+
+```perl
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24, theme => 'light' );
+$ui->theme('dark');    # every widget takes the new colors in the next frame
+```
+
+[Term::Fabulous::Static](../Static.md) takes the same parameter. Without one, a UI
+uses `dark`. The program `examples/themes.pl` shows the same panel
+under both built-in themes and under a theme file (F2 switches):
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes.svg" alt="A panel in the ocean theme: teal accents on a deep blue background, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+</div>
+
+## What a theme colors
+
+A theme has two layers. The _palette_ is a set of named colors, the
+_tokens_: `background`, `surface`, `border`, `text`,
+`text_muted`, `accent`, `focus_background`, `success`, `warning`,
+`danger` and some twenty more (the full list is in
+["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)). Above it, every kind of widget, a
+_family_, has _slots_, one for each colored or styled part: a
+button has `background`, `border.color`, `border.style` and
+`text`; an input has `text`, `accent`, `placeholder`, `selection`
+and more; a table has `header.background`, `cursor`, `line.color`,
+... Each slot defaults to a token, so a theme that changes the
+`accent` token changes the focus borders, the check marks, the
+scrollbar thumbs and the group headers of tables at once, while a
+theme that sets `button.border.color` changes buttons only.
+
+A slot can have a different value in a _state_ of the widget:
+`hovered`, `focused`, `pressed`, `disabled`, `selected` or
+`active`, where the widget shows such a state. `button.border.color`
+in the `focused` state is the accent by default; a state a theme
+does not set looks like the normal state.
+["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states) lists every
+family with its slots and their states, and the parameter of each
+widget class says which slot it reads (for example
+["new" in Term::Fabulous::Widget::Button](../Widget/Button.md#new)).
+
+## Your own colors win
+
+A color or a border style given to a widget, in `new`, through an
+accessor or in a layout file, stays whatever the theme says. So a
+program that colors its widgets as the earlier sections describe
+looks the same under every theme, and a program that leaves the
+colors to the theme follows it. The reader of a themed parameter
+returns the color in use, the given one or the theme's. To return a
+given color to the theme, call ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look)
+with the parameter's name:
+
+```perl
+$button->border_color('#ff5050');    # red under every theme
+$button->reset_look('border_color');  # the theme's again
+```
+
+Only the colors and border styles are themed. Layout, text and the
+glyphs of a widget (the marks of a check box, the frames of a
+spinner) are the widget's own.
+
+## Variants and classes
+
+A theme may define _variants_ of a family, named after the classes a
+widget can be given (["classes" in Term::Fabulous::Widget](../Widget.md#classes)): a button with
+`classes => ['primary']` draws with the `primary` variant of the
+`button` family where the theme has one, and like every other button
+where it has none. A variant sets any slots and states of its family;
+the rest stay the family's. A widget with several classes takes the
+variants of all of them, later classes winning where two set the same
+slot. The classes can be changed at run time
+(`$button->classes(['primary', 'wide'])`), and a layout file
+sets them with `classes "primary" "wide"`. Text widgets have
+classes too, so a theme can define `text.muted` or `text.heading`.
+
+## Theme files
+
+A theme is a KDL file ([https://kdl.dev](https://kdl.dev), the language of the layout
+files) with a `theme` node that names the theme and the built-in
+theme it starts from, a `palette` node, and one node per family. In
+a family node, `name "value"` sets a slot (a token name or any color
+string), `border style=Round color="border"` sets `border.style`
+and `border.color` at once, a node named after a state holds the
+slots of that state, and `variant "NAME"` holds a variant:
+
+```kdl
+theme "ocean" extends="dark"
+
+palette {
+        accent "#5fd3c0"
+        surface "#10242f"
+        text "#d8e8ee"
+}
+
+button {
+        border style=Round
+        focused { border color="accent" }
+        variant "primary" {
+                border color="accent"
+                text "accent"
+        }
+}
+
+divider {
+        line style=Double
+}
+```
+
+`none` switches a color or a style off, and `reverse` (for
+`button.background` in the `pressed` state) draws the button in
+reverse video. Unknown tokens, families, slots, states and styles die
+with the known names. The program loads the file and gives the theme
+to the UI:
+
+```perl
+use Term::Fabulous::Theme;
+
+my $ocean = Term::Fabulous::Theme->from_file('ocean.kdl');
+my $ui    = Term::Fabulous->new( root => $root, width => 80, height => 24, theme => $ocean );
+```
+
+`examples/ocean.kdl` is a complete theme file, and the recipe
+[Switch themes at run time](../Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file)
+a complete program. The grammar is described in
+["THEME FILES" in Term::Fabulous::Theme](../Theme.md#theme-files).
+
+## Themes in Perl
+
+A theme can be built in Perl as well, with the same parts: the theme
+it extends, palette tokens, slots (under `family.slot` or
+`family.slot.state` keys) and variants:
+
+```perl
+my $theme = Term::Fabulous::Theme->new(
+        name     => 'ocean',
+        extends  => 'dark',
+        palette  => { accent => '#5fd3c0', surface => '#10242f' },
+        slots    => { 'button.border.style' => 'Round', 'button.border.color.focused' => 'accent' },
+        variants => { 'button.primary' => { 'border.color' => 'accent', text => 'accent' } },
+);
+```
+
+A theme may extend another theme object, so a program can derive a
+variation of a theme it loaded. [Term::Fabulous::Color](../Color.md) helps with
+the colors (["Working with colors"](#working-with-colors)): `$accent->lighten(0.1)` is
+a color like any other. See ["CONSTRUCTORS" in Term::Fabulous::Theme](../Theme.md#constructors).
+
+## Widgets of your own
+
+A widget class of your own inherits the family of its base class, so
+a widget derived from [Term::Fabulous::Widget::Input](../Widget/Input.md) draws with the
+`input` slots, and declares which of its parameters the theme
+supplies. ["Colors from the theme" in Term::Fabulous::Manual::CustomWidgets](CustomWidgets.md#colors-from-the-theme)
+explains it, and [Term::Fabulous::Role::Themed](../Role/Themed.md) is the reference.
+
 # SEE ALSO
 
 This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Layout](Layout.md). Next page: [Term::Fabulous::Manual::Events](Events.md).
 
 [Term::Fabulous::Widget::Text](../Widget/Text.md), [Term::Fabulous::Color](../Color.md),
 [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md), [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md),
-[Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md), [Term::Fabulous::Unicode](../Unicode.md),
+[Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md), [Term::Fabulous::Theme](../Theme.md),
+[Term::Fabulous::Role::Themed](../Role/Themed.md), [Term::Fabulous::Unicode](../Unicode.md),
 [Term::Fabulous::Cookbook::GettingStarted](../Cookbook/GettingStarted.md),
 [Term::Fabulous::Cookbook::Layout](../Cookbook/Layout.md).

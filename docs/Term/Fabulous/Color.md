@@ -415,4 +415,5 @@ an integer. Dies if a channel is outside 0..255.
 
 ["COLORS" in Term::Fabulous::Manual::Looks](Manual/Looks.md#colors), [Term::Fabulous::Render::Attr](Render/Attr.md),
 ["Colors" in Term::Fabulous::Widget::Canvas](Widget/Canvas.md#colors), [Term::Fabulous::Enum::WebColor](Enum/WebColor.md),
-["Change colors at run time (a theme with lighten and darken)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#change-colors-at-run-time-a-theme-with-lighten-and-darken).
+[Term::Fabulous::Theme](Theme.md),
+["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file).

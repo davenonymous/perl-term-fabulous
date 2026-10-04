@@ -117,12 +117,14 @@ Unknown parameters die. A ScrollBox takes every parameter of
 - `track_color`
 
     The color of the scrollbars' track, anything [Term::Fabulous::Color](../Color.md)
-    understands. Default: the scrollbar's dark grey, `[ 70, 76, 90, 255 ]`.
+    understands. Default: the theme's `scrollbar.track`, a dark grey,
+    `[ 70, 76, 90, 255 ]`, in the dark theme.
 
 - `thumb_color`
 
-    The color of the scrollbars' thumb. Default: the scrollbar's light blue,
-    `[ 97, 175, 239, 255 ]`.
+    The color of the scrollbars' thumb. Default: the theme's
+    `scrollbar.thumb`, a light blue, `[ 97, 175, 239, 255 ]`, in the
+    dark theme.
 
 # METHODS
 

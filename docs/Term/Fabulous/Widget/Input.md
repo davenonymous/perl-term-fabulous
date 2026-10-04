@@ -189,25 +189,34 @@ dies.
 
 - `text_color`
 
-    The color of the input's text. Default: `[220, 223, 228, 255]`, a light
-    gray.
+    The color of the input's text. Default: the theme's `input.text`,
+    `[220, 223, 228, 255]` in the dark theme, a light gray.
 
 - `disabled_color`
 
     The color of all text while the input is disabled, and of inactive parts
-    such as scrollbar tracks. Default: `[108, 112, 120, 255]`, a medium
-    gray.
+    such as scrollbar tracks. Default: the theme's `input.text` in the
+    `disabled` state, `[108, 112, 120, 255]` in the dark theme, a
+    medium gray.
 
 - `accent_color`
 
     The color of highlights: check marks, the selected radio button's mark,
     the filled part of a slider, the dropdown's arrow and the border of its
-    open list. Default: `[97, 175, 239, 255]`, a light blue.
+    open list. Default: the theme's `input.accent`, `[97, 175, 239, 255]`
+    in the dark theme, a light blue.
 
 - `focus_background_color`
 
     The background of the input's content while it has the focus. Default:
-    `[52, 58, 72, 255]`, a dark blue-gray.
+    the theme's `input.background` in the `focused` state,
+    `[52, 58, 72, 255]` in the dark theme, a dark blue-gray.
+
+    The four colors return to the theme with
+    ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look); the input's own
+    `background_color`, `border_color` and border style come from the
+    theme's `input` family too when they are not given. See
+    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes).
 
 The four colors accept every color format of the canvas: a packed
 `0xRRGGBB` integer, an `[r, g, b]` or `[r, g, b, a]` array reference,

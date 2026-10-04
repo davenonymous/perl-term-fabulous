@@ -1,3 +1,4 @@
+
 =pod
 
 =encoding UTF-8
@@ -48,7 +49,8 @@ L</A widget that draws itself>.
 =item L<Term::Fabulous::Widget::Input>
 
 for an interactive widget that edits a value: you get focus handling,
-the four colors, the disabled state, C<Change> events and painting at
+the four colors (from the theme unless given), the disabled state,
+C<Change> events and painting at
 the right time. See L</An input widget>.
 
 =item A Box with the Clay::UI interaction roles
@@ -275,6 +277,85 @@ The complete example, a toggle switch with keys, clicks, C<Change>
 events and KDL support, is the recipe
 L<Write a custom input widget|Term::Fabulous::Cookbook::Extending/Write a custom input widget (a toggle switch)>.
 
+=head2 Colors from the theme
+
+Every widget draws the colors and border styles it was not given from
+the theme of its UI (L<Term::Fabulous::Manual::Looks/THEMES>). A
+widget class of your own takes part through
+L<Term::Fabulous::Role::Themed>, which every widget composes:
+
+=over
+
+=item *
+
+The widget's I<family> decides which slots it reads. A class inherits
+the family of its base class (a widget derived from Input reads the
+C<input> slots, a Box the C<box> slots); C<theme_family> names another
+one.
+
+=item *
+
+C<themed_params> lists the parameters the theme supplies when the
+program gives none, each with the slot and the state it reads. Do not
+declare such a parameter as a field: take it out of the constructor's
+arguments with C<adopt_look_params>, which calls the accessor for the
+values that were given.
+
+=item *
+
+The accessor reads C<look_value> and writes C<set_look>; C<paint> and
+the C<contribute_*> methods read the accessor or C<look_value>, never a
+field, so that a theme switch shows at once. A widget that paints into
+a buffer of its own (a Display) repaints after a switch by itself; one
+that copies colors into widgets it builds does so again in
+C<theme_changed>.
+
+=back
+
+A gauge that reads its fill color from the C<progress> family:
+
+	use Object::Pad 0.825;
+
+	class My::Gauge :isa(Term::Fabulous::Widget::Display) :strict(params) {
+		use Term::Fabulous::Check qw(cell_color);
+
+		field $fraction :param = 0;
+
+		ADJUSTPARAMS ($params) {
+			$self->adopt_look_params( $params, 'fill_color' );    # fill_color => ... was given, or not
+		}
+
+		method theme_family :common () { return 'progress' }
+
+		method themed_params :common () {
+			return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal' ] );
+		}
+
+		method fill_color (@new) {
+			return $self->look_value('fill_color') unless @new;
+			return $self->set_look( fill_color => cell_color( $self, fill_color => $new[0] ) );
+		}
+
+		method natural_size () { return ( 20, 1 ) }
+
+		method paint () {
+			my $filled = int( $self->columns * $fraction + 0.5 );
+			$self->fill_attrs( 0,       0, $filled,                  "\x{2588}", $self->color_attr( $self->fill_color ), undef );
+			$self->fill_attrs( $filled, 0, $self->columns - $filled, "\x{2591}", $self->color_attr( $self->look('track') ), undef );
+			return;
+		}
+	}
+
+	my $gauge = My::Gauge->new( fraction => 0.25 );                 # the theme's progress.color
+	my $red   = My::Gauge->new( fraction => 0.25, fill_color => '#ff0000' );    # its own
+	$red->reset_look('fill_color');                                   # the theme's again
+
+A slot the family does not have dies the first time the class is used,
+naming the family. The slots of every family are listed in
+L<Term::Fabulous::Theme/Families, slots and states>; a widget whose
+look needs none of them, such as a canvas drawn by its program, needs
+nothing here.
+
 =head2 A box that takes the focus and reacts to the mouse
 
 The focus, hover and press states come from roles of L<Clay::UI>.
@@ -385,13 +466,15 @@ background colors swapped, its children included. Override it to show
 a state:
 C<< method reverse_video :override () { return $self->is_pressed ? 1 : 0 } >>.
 
-=item C<disabled_text_color>
+=item C<child_text_color>
 
 Not defined by default. A L<Term::Fabulous::Widget::Text> asks its
-nearest ancestor that has this method for a color and, when that
-returns one, draws its text in it instead of its own C<text_color>.
-Return a color while the widget is disabled and C<undef> otherwise, to
-gray out the labels inside it.
+nearest ancestor that has this method, passing the color it was given
+(or C<undef>), and draws its text in what the method returns; when it
+returns C<undef>, the Text uses its given color or the theme's text
+color. Return a gray while the widget is disabled, and the given color
+or a theme look (C<< $self->look('text', $self->look_state) >>)
+otherwise, as L<Term::Fabulous::Widget::Button> does.
 
 =back
 

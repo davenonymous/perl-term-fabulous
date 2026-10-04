@@ -76,7 +76,7 @@ subtest 'properties' => sub {
 	is $root->layout->{padding}, { left => 1, top => 2 }, 'a second padding node keeps the sides of the first';
 
 	like dies { build( sprintf $box, 'colour "#000000"' ) },
-		qr/known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group\)/,
+		qr/known: background_color, border, border_color, border_width, child_alignment, classes, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group\)/,
 		'the known names include the structured properties';
 	like dies { build( sprintf $box, '_note "x"' ) }, qr/unknown layout property '_note'/, 'a node not starting with an uppercase letter is a property';
 	is build( sprintf $box, 'glyphs_show_through 1' )->glyphs_show_through, 1, 'a boolean property takes 1';

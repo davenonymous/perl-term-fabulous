@@ -1,6 +1,18 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Themes: Term::Fabulous::Theme colors every widget that is not
+          given its own colors or border styles, from a palette of
+          tokens and the slots of each widget family, with variants
+          selected by a widget's classes. Built-in themes dark and
+          light; themes written in KDL theme files (from_file) or in
+          Perl; set per UI with theme => ... and switched at run time
+          with $ui->theme(...); reset_look returns a given color to the
+          theme. A Text without a text_color is now drawn in the
+          theme's text color instead of black. Widget authors: the
+          Term::Fabulous::Role::Themed role (theme_family,
+          themed_params, look, look_value, theme_changed); a Button's
+          disabled_text_color became child_text_color
         - Needs Perl 5.32.1 or later (was 5.24)
         - Term::Fabulous::Layout needs Text::KDL::XS 0.002, which reads a
           string as Perl characters; layouts given as a string are passed

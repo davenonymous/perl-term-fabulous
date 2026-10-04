@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	use constant SCROLLBAR_TRACK => "\x{2502}";
 	use constant SCROLLBAR_THUMB => "\x{2503}";
 
-	field $dropdown     :param :weak;
+	field $dropdown :param :weak;
 	field $visible_rows :param :reader;
 
 	# The first option shown.
@@ -45,6 +45,38 @@ class Term::Fabulous::Widget::Dropdown::List
 	method top_option () {
 		return $top;
 	}
+
+	# The list's background, border color and border style come from the
+	# dropdown (its list colors, its accent and the theme's dropdown
+	# family), read when the frame is drawn; the readers say so too.
+	method background_color :override (@new) {
+		return $self->SUPER::background_color(@new) if @new;
+		return $self->SUPER::background_color // ( defined $dropdown ? $dropdown->list_background_color : undef );
+	}
+
+	method border_color :override (@new) {
+		return $self->SUPER::border_color(@new) if @new;
+		return $self->SUPER::border_color // ( defined $dropdown ? $dropdown->accent_color : undef );
+	}
+
+	method contribute_look_theme :override ($config) {
+		return unless defined $dropdown;
+		$config->{background_color} = $self->background_color;
+		my $border = $config->{border} // return;
+		$config->{border} = { %$border, color => $self->border_color };
+		return;
+	}
+
+	method _list_border_style ( $accessor, @new ) {
+		my $method = "SUPER::$accessor";
+		return $self->$method(@new) if @new;
+		return $self->$method // ( defined $dropdown ? $dropdown->look('list.border.style') : undef );
+	}
+
+	method border_style_top :override (@new)    { return $self->_list_border_style( border_style_top    => @new ) }
+	method border_style_right :override (@new)  { return $self->_list_border_style( border_style_right  => @new ) }
+	method border_style_bottom :override (@new) { return $self->_list_border_style( border_style_bottom => @new ) }
+	method border_style_left :override (@new)   { return $self->_list_border_style( border_style_left   => @new ) }
 
 	method _scrolls () {
 		return $dropdown->option_count > $visible_rows;

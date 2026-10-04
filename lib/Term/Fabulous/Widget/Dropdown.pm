@@ -22,7 +22,6 @@ class Term::Fabulous::Widget::Dropdown
 	use Term::Fabulous::Check qw(cell_color positive_integer string);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
 	use Time::HiRes qw(time);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant ARROW_DOWN        => "\x{25BE}";
@@ -37,11 +36,12 @@ class Term::Fabulous::Widget::Dropdown
 	field @options;
 	field $selected;    # index into @options, or undef
 
-	field $placeholder           :param = '';
-	field $max_visible_options   :param = 8;
-	field $placeholder_color     :param = [ 120, 126, 138, 255 ];
-	field $list_background_color :param = [ 30,  33,  40,  255 ];
-	field $highlight_text_color  :param = [ 16,  18,  22,  255 ];
+	field $placeholder :param         = '';
+	field $max_visible_options :param = 8;
+
+	# The colors of the placeholder, the open list and the highlighted
+	# option come from the theme's dropdown family unless given.
+	my @COLOR_NAMES = qw(placeholder_color list_background_color highlight_text_color);
 
 	# The open list, the option it highlights and whether it opened upwards.
 	field $list;
@@ -55,21 +55,17 @@ class Term::Fabulous::Widget::Dropdown
 	ADJUST :params ( :$options = undef, :$value = undef, :$selected_index = undef ) {
 		die "Term::Fabulous::Widget::Dropdown: give 'value' or 'selected_index', not both"
 			if defined $value && defined $selected_index;
-		$placeholder           = string( $self, placeholder => $placeholder );
-		$max_visible_options   = positive_integer( $self, max_visible_options => $max_visible_options );
-		$placeholder_color     = cell_color( $self, placeholder_color     => $placeholder_color );
-		$list_background_color = cell_color( $self, list_background_color => $list_background_color );
-		$highlight_text_color  = cell_color( $self, highlight_text_color  => $highlight_text_color );
-		$self->background_color( [ 36, 40, 48, 255 ] ) unless defined $self->background_color;
+		$placeholder         = string( $self, placeholder => $placeholder );
+		$max_visible_options = positive_integer( $self, max_visible_options => $max_visible_options );
 
 		$self->options($options) if defined $options;
 		$self->value($value) if defined $value;
 		$self->selected_index($selected_index) if defined $selected_index;
-		}
+	}
 
-		# An option is a label (its own value), [ label, value ] or
-		# { label => ..., value => ... }.
-		method _parse_option ($option) {
+	# An option is a label (its own value), [ label, value ] or
+	# { label => ..., value => ... }.
+	method _parse_option ($option) {
 		my ( $label, $value )
 			= ref $option eq 'ARRAY' && @$option == 2 ? @$option
 			: ref $option eq 'HASH'                   ? @{$option}{qw(label value)}
@@ -144,16 +140,33 @@ class Term::Fabulous::Widget::Dropdown
 		return $max_visible_options = positive_integer( $self, max_visible_options => $new[0] );
 	}
 
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_NAMES );
+	}
+
+	method theme_family :common () {
+		return 'dropdown';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			placeholder_color     => [ 'placeholder',     'normal' ],
+			list_background_color => [ 'list.background', 'normal' ],
+			highlight_text_color  => [ 'highlight.text',  'normal' ],
+		);
+	}
+
 	method placeholder_color (@new) {
-		return @new ? $self->_set_color( placeholder_color => \$placeholder_color, @new ) : $placeholder_color;
+		return @new ? $self->_set_color( placeholder_color => @new ) : $self->look_value('placeholder_color');
 	}
 
 	method list_background_color (@new) {
-		return @new ? $self->_set_color( list_background_color => \$list_background_color, @new ) : $list_background_color;
+		return @new ? $self->_set_color( list_background_color => @new ) : $self->look_value('list_background_color');
 	}
 
 	method highlight_text_color (@new) {
-		return @new ? $self->_set_color( highlight_text_color => \$highlight_text_color, @new ) : $highlight_text_color;
+		return @new ? $self->_set_color( highlight_text_color => @new ) : $self->look_value('highlight_text_color');
 	}
 
 	method disabled :override (@new) {
@@ -164,15 +177,13 @@ class Term::Fabulous::Widget::Dropdown
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			value                 => 'scalar',
-			selected_index        => 'scalar',
-			placeholder           => 'scalar',
-			max_visible_options   => 'scalar',
-			placeholder_color     => 'color',
-			list_background_color => 'color',
-			highlight_text_color  => 'color',
-			options               => \&_parse_options,
-			option                => \&_parse_options,
+			value               => 'scalar',
+			selected_index      => 'scalar',
+			placeholder         => 'scalar',
+			max_visible_options => 'scalar',
+			( map { $_ => 'color' } @COLOR_NAMES ),
+			options => \&_parse_options,
+			option  => \&_parse_options,
 		);
 	}
 
@@ -226,14 +237,11 @@ class Term::Fabulous::Widget::Dropdown
 
 		my ( $element, $parent ) = $upwards ? ( CLAY_ATTACH_POINT_LEFT_BOTTOM, CLAY_ATTACH_POINT_LEFT_TOP ) : ( CLAY_ATTACH_POINT_LEFT_TOP, CLAY_ATTACH_POINT_LEFT_BOTTOM );
 		$list = Term::Fabulous::Widget::Dropdown::List->new(
-			dropdown         => $self,
-			visible_rows     => $visible,
-			background_color => $self->rgba_of($list_background_color),
-			border_color     => $self->rgba_of( $self->accent_color ),
-			border_width     => 1,
-			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
-			layout           => { sizing => { width => sizing_fixed($width), height => sizing_fixed( $visible + 2 ) } },
-			floating         => {
+			dropdown     => $self,
+			visible_rows => $visible,
+			border_width => 1,
+			layout       => { sizing => { width => sizing_fixed($width), height => sizing_fixed( $visible + 2 ) } },
+			floating     => {
 				attach_to     => CLAY_ATTACH_TO_PARENT,
 				attach_points => { element => $element, parent => $parent },
 				z_index       => LIST_Z_INDEX,
@@ -395,7 +403,7 @@ class Term::Fabulous::Widget::Dropdown
 	method paint () {
 		my $bg    = $self->paint_focus_background;
 		my $label = $self->selected_label;
-		my $fg    = defined $label ? $self->foreground_attr : $self->color_attr($placeholder_color);
+		my $fg    = defined $label ? $self->foreground_attr : $self->color_attr( $self->placeholder_color );
 		$self->paint_text( 0, 0, $label // $placeholder, $fg, $bg, max( 0, $self->columns - 2 ) );
 		$self->put_attrs( $self->columns - 1, 0, $opens_upwards && $self->is_open ? ARROW_UP : ARROW_DOWN, $self->accent_attr, $bg );
 		return;
@@ -403,10 +411,17 @@ class Term::Fabulous::Widget::Dropdown
 
 	# The attributes of an option's row in the list:
 	# ( $fg, $bg ) for the highlighted, the selected and the other options.
+	# The highlighted option sits on the theme's dropdown.highlight.background,
+	# or on the accent the program gave.
+	method _highlight_background_attr () {
+		return $self->accent_attr if $self->has_look_override('accent_color');
+		return $self->color_attr( $self->look('highlight.background') );
+	}
+
 	method option_attrs ($index) {
-		return ( $self->color_attr($highlight_text_color), $self->accent_attr ) if defined $highlighted && $index == $highlighted;
-		return ( $self->accent_attr,                       undef ) if defined $selected                 && $index == $selected;
-		return ( $self->foreground_attr,                   undef );
+		return ( $self->color_attr( $self->highlight_text_color ), $self->_highlight_background_attr ) if defined $highlighted && $index == $highlighted;
+		return ( $self->accent_attr,                               undef ) if defined $selected                                && $index == $selected;
+		return ( $self->foreground_attr,                           undef );
 	}
 
 	method option_label ($index) {
@@ -548,23 +563,27 @@ above and below the dropdown.
 =item C<placeholder_color>
 
 A color, in any format L<Term::Fabulous::Widget::Input> accepts.
-Default: C<[120, 126, 138, 255]>, a gray.
+Default: the theme's C<dropdown.placeholder>, C<[120, 126, 138, 255]>
+in the dark theme, a gray.
 
 =item C<list_background_color>
 
-A color, as above. The background of the open list. Default:
-C<[30, 33, 40, 255]>, a very dark gray.
+A color, as above. The background of the open list. Default: the
+theme's C<dropdown.list.background>, C<[30, 33, 40, 255]> in the dark
+theme, a very dark gray.
 
 =item C<highlight_text_color>
 
 A color, as above. The text color of the highlighted option in the open
-list, which is painted on the C<accent_color>. Default:
-C<[16, 18, 22, 255]>, almost black.
+list, which is painted on the theme's C<dropdown.highlight.background>
+(the accent). Default: the theme's C<dropdown.highlight.text>,
+C<[16, 18, 22, 255]> in the dark theme, nearly black.
 
 =item C<background_color>
 
 Any L<Term::Fabulous::Color> format, stored as C<[r, g, b, a]>.
-Default: C<[36, 40, 48, 255]>, a dark gray, like the text inputs.
+Default: the theme's C<dropdown.background>, C<[36, 40, 48, 255]> in
+the dark theme, a dark gray, like the text inputs.
 
 =back
 

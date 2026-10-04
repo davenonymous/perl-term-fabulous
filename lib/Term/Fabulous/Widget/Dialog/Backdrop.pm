@@ -56,6 +56,19 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		);
 	}
 
+	# The backdrop is painted in the dialog's backdrop color, read when
+	# the frame is drawn, so a theme switch shows at once.
+	method background_color :override (@new) {
+		return $self->SUPER::background_color(@new) if @new;
+		return $self->SUPER::background_color // ( defined $dialog ? $dialog->backdrop_color : undef );
+	}
+
+	method contribute_look_theme :override ($config) {
+		my $background = $self->background_color // return;
+		$config->{background_color} = $background;
+		return;
+	}
+
 	# Every key stops here while the dialog is open: the widgets and key
 	# bindings behind it do not see it. Escape closes the dialog.
 	method _handle_key ($event) {

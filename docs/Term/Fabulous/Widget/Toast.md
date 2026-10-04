@@ -71,11 +71,12 @@ fills a toast with its color, for messages that must not be missed.
 The children you add to a toast go below the message, for a button
 or a link.
 
-A toast is a [Term::Fabulous::Widget::Box](Box.md) with a round border in
-its color, a dark panel background (`[28, 33, 45, 255]`), a cell of
-padding and a width that fits its text up to 44 columns, at which the
-message wraps; every one of these is an ordinary Box parameter and
-can be overridden.
+A toast is a [Term::Fabulous::Widget::Box](Box.md) with a border in its
+color (in the theme's `toast.border.style`, round in the built-in
+themes), the theme's `toast.background` (a dark panel,
+`[28, 33, 45, 255]`, in the dark theme), a cell of padding and a width
+that fits its text up to 44 columns, at which the message wraps; every
+one of these is an ordinary Box parameter and can be overridden.
 
 # CONSTRUCTOR
 
@@ -148,13 +149,16 @@ and the ones below. All are optional; unknown parameters die.
 - `color`
 
     A color in any format [Term::Fabulous::Color](../Color.md) accepts, or `undef`.
-    Default: `undef`, the color of the kind. A color of your own for the
-    border, the icon and the title (and the fill of an important toast).
+    Default: `undef`, the color of the kind: the theme's `toast.info`,
+    `toast.success`, `toast.warning` or `toast.danger`. A color of your
+    own for the border, the icon and the title (and the fill of an
+    important toast).
 
 - `text_color`
 
-    The color of the message and the close mark. Default:
-    `[220, 223, 228, 255]`.
+    The color of the message and the close mark. Default: the theme's
+    `toast.text`, `[220, 223, 228, 255]` in the dark theme. An important
+    toast writes in the theme's `toast.important_text` instead.
 
 # METHODS
 

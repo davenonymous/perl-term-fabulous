@@ -43,7 +43,7 @@ class Term::Fabulous::Widget::ScrollBox
 	);
 	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
 
-	field $scrollbar   :param = 1;
+	field $scrollbar :param   = 1;
 	field $track_color :param = undef;
 	field $thumb_color :param = undef;
 	field $_gutter;
@@ -249,12 +249,14 @@ from the content.
 =item C<track_color>
 
 The color of the scrollbars' track, anything L<Term::Fabulous::Color>
-understands. Default: the scrollbar's dark grey, C<[ 70, 76, 90, 255 ]>.
+understands. Default: the theme's C<scrollbar.track>, a dark grey,
+C<[ 70, 76, 90, 255 ]>, in the dark theme.
 
 =item C<thumb_color>
 
-The color of the scrollbars' thumb. Default: the scrollbar's light blue,
-C<[ 97, 175, 239, 255 ]>.
+The color of the scrollbars' thumb. Default: the theme's
+C<scrollbar.thumb>, a light blue, C<[ 97, 175, 239, 255 ]>, in the
+dark theme.
 
 =back
 

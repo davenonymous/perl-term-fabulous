@@ -12,13 +12,14 @@ use Object::Pad 0.825;
 class Term::Fabulous::Widget
 	:isa(Term::Fabulous::Widget::Element)
 	:does(Term::Fabulous::Role::HasBorderStyle)
+	:does(Term::Fabulous::Role::Themed)
 	:abstract
 {
-	use Term::Fabulous::Check qw(boolean color);
+	use Term::Fabulous::Check qw(boolean class_names color);
 
 	my @COLOR_PARAMS = qw(background_color border_color);
 
-	field $classes             :param = [];
+	field $classes :param             = [];
 	field $glyphs_show_through :param = 0;
 
 	# Clay::UI validates the colors before any ADJUST of this class runs,
@@ -30,26 +31,82 @@ class Term::Fabulous::Widget
 
 	ADJUST {
 		$glyphs_show_through = boolean( $self, glyphs_show_through => $glyphs_show_through );
-		$classes             = _class_names($classes);
+		$classes             = class_names( $self, classes => $classes );
 	}
 
-	# A copy of an array of class names: defined strings, no references.
-	sub _class_names ($names) {
-		die "Term::Fabulous::Widget: classes must be an array reference of names, got " . ( ref $names ? ref($names) . ' reference' : defined $names ? "'$names'" : 'undef' )
-			unless ref $names eq 'ARRAY';
-		foreach my $name (@$names) {
-			die "Term::Fabulous::Widget: every class name must be a string, got " . ( defined $name ? ref($name) . ' reference' : 'undef' )
-				unless defined $name && !ref $name;
-		}
-		return [@$names];
-	}
-
+	# The readers return the color in use: the given one, or the theme's
+	# for the widget's family (none for a plain box).
 	method background_color :override (@new) {
-		return $self->SUPER::background_color( @new && defined $new[0] ? color( $self, background_color => $new[0] ) : @new );
+		return $self->SUPER::background_color( defined $new[0] ? color( $self, background_color => $new[0] ) : @new ) if @new;
+		return $self->SUPER::background_color // $self->look('background');
 	}
 
 	method border_color :override (@new) {
-		return $self->SUPER::border_color( @new && defined $new[0] ? color( $self, border_color => $new[0] ) : @new );
+		return $self->SUPER::border_color( defined $new[0] ? color( $self, border_color => $new[0] ) : @new ) if @new;
+		return $self->SUPER::border_color // $self->look('border.color');
+	}
+
+	# ---------------------------------------------------------------------
+	# The theme (Term::Fabulous::Role::Themed): a container is a box, whose
+	# background and border the theme colors only when the program gave
+	# none. Subclasses name their family and add their parameters.
+	# ---------------------------------------------------------------------
+
+	method theme_family :common () {
+		return 'box';
+	}
+
+	method themed_params :common () {
+		return ( background_color => [ 'background', 'normal' ], border_color => [ 'border.color', 'normal' ] );
+	}
+
+	method look_state () {
+		return 'normal';
+	}
+
+	# background_color and border_color live in the Clay::UI roles.
+	method look_reset ($name) {
+		$self->SUPER::background_color(undef) if $name eq 'background_color';
+		$self->SUPER::border_color(undef) if $name eq 'border_color';
+		return;
+	}
+
+	method classes (@new) {
+		return [@$classes] unless @new;
+		$classes = class_names( $self, classes => $new[0] );
+		$self->forget_looks;
+		$self->mark_changed;
+		return [@$classes];
+	}
+
+	# A widget that joins or leaves a tree may be in another UI, with
+	# another theme, from now on.
+	method _set_parent :override ($new_parent) {
+		$self->SUPER::_set_parent($new_parent);
+		$self->forget_looks;
+		return;
+	}
+
+	method _detach_parent :override () {
+		$self->SUPER::_detach_parent;
+		$self->forget_looks;
+		return;
+	}
+
+	# Runs after contribute_background and contribute_border (Clay::UI
+	# calls the contributors in alphabetical order) and before a subclass's
+	# contribute_state_look: fills the background and the border color the
+	# program left to the theme, for the state the widget is in. A border
+	# is colored only where there is one.
+	method contribute_look_theme ($config) {
+		my $state      = $self->look_state;
+		my $background = $self->themed_value( 'background', $state, $config->{background_color} // $self->look('background') );
+		$config->{background_color} = $background if defined $background && ref $background;
+
+		my $border = $config->{border} // return;
+		my $color  = $self->themed_value( 'border.color', $state, $border->{color} // $self->look('border.color') );
+		$config->{border} = { %$border, color => $color } if defined $color;
+		return;
 	}
 
 	# The first node at or below $node, in depth-first pre-order, whose id
@@ -166,6 +223,8 @@ and the one it composes itself:
 =item * L<Clay::UI::Role::Style::HasStates>: C<add_state>, C<states>, ...
 
 =item * L<Term::Fabulous::Role::HasBorderStyle>: the border glyphs (C<border_style>, ...)
+
+=item * L<Term::Fabulous::Role::Themed>: the colors and border styles the theme supplies (C<look>, C<reset_look>, ...)
 
 =back
 
@@ -417,12 +476,21 @@ L<Clay::UI::Role::Layout::HasSizingGroup>.
 
 =item C<classes>
 
-An array reference of strings. Default: C<[]>. Free-form names for
-your own use, returned by L</get_classes>. Term::Fabulous itself does
-not read them. The array is copied; anything but an array of defined,
-non-reference names dies.
+An array reference of strings. Default: C<[]>. Names of your own,
+returned by L</get_classes> and L</classes>. The theme reads them: a
+widget whose classes name a variant of its family draws with that
+variant (see L<Term::Fabulous::Manual::Looks/Variants and classes>).
+The array is copied; anything but an array of defined, non-reference
+names dies.
 
 =back
+
+The background, the border color and the border style come from the
+theme of the UI when they are not given, where the theme has them for
+the widget's family (a plain Box has none in the built-in themes; a
+Button, a Dialog or a Toast has); see
+L<Term::Fabulous::Manual::Looks/THEMES>. Subclasses document the
+theme slot each of their colors reads.
 
 =head1 METHODS
 
@@ -601,12 +669,14 @@ frame.
 	$box->background_color( [ 60, 90, 140, 255 ] );
 	$box->background_color('#3c5a8c');
 
-Accessor. Without an argument it returns the current value as
-C<[r, g, b, a]> (C<undef> when none is set); with an argument it sets
-the value, in any format the constructor parameter accepts, and returns
-the stored C<[r, g, b, a]>. C<undef> removes the background color. An
-invalid value dies like the constructor parameter of the same name. The
-change shows in the next frame.
+Accessor. Without an argument it returns the color in use as
+C<[r, g, b, a]>: the given one, or the theme's background for the
+widget's family (C<undef> for a widget whose family has none, such as
+a plain Box); with an argument it sets the value, in any format the
+constructor parameter accepts, and returns the stored C<[r, g, b, a]>.
+C<undef> removes the given background color (L</reset_look> does the
+same). An invalid value dies like the constructor parameter of the
+same name. The change shows in the next frame.
 
 =head2 glyphs_show_through
 
@@ -622,12 +692,14 @@ frame.
 	$box->border_color( [ 97, 175, 239, 255 ] );
 	$box->border_color( Term::Fabulous::Enum::WebColor->SteelBlue );
 
-Accessor. Without an argument it returns the current value as
-C<[r, g, b, a]> (C<undef> when none is set); with an argument it sets
-the value, in any format the constructor parameter accepts, and returns
-the stored C<[r, g, b, a]>. C<undef> returns to the terminal's default
-color. An invalid value dies like the constructor parameter of the same
-name. The change shows in the next frame.
+Accessor. Without an argument it returns the color in use as
+C<[r, g, b, a]>: the given one, or the theme's border color for the
+widget's family (C<undef> for the terminal's default color, as for a
+plain Box); with an argument it sets the value, in any format the
+constructor parameter accepts, and returns the stored C<[r, g, b, a]>.
+C<undef> removes the given color (L</reset_look> does the same). An
+invalid value dies like the constructor parameter of the same name.
+The change shows in the next frame.
 
 =head2 border_width
 
@@ -751,12 +823,38 @@ True when the state is active, including the derived ones.
 
 The active state names, in no particular order.
 
+=head2 classes
+
+	my $names = $widget->classes;    # ['sidebar']
+	$widget->classes( [ 'sidebar', 'primary' ] );
+
+Accessor for the C<classes> parameter. Without an argument it returns
+a copy of the names; with an array reference it replaces them, makes
+the widget read its theme looks again and returns a copy of the new
+names. An invalid value dies like the constructor parameter. The
+change shows in the next frame.
+
 =head2 get_classes
 
 	my @classes = $widget->get_classes;    # ('sidebar', 'state_focused')
 
 The names from the C<classes> parameter, followed by C<state_NAME> for
-every active state (C<state_hovered>, C<state_selected>, ...).
+every active state (C<state_hovered>, C<state_selected>, ...). The
+theme reads the classes only, not the state names.
+
+=head2 reset_look
+
+	$button->reset_look('border_color');
+	$button->reset_look( 'background_color', 'focus_border_color' );
+
+Drops the colors or border styles the program gave for the named
+parameters, so the theme supplies them again. Takes the names of
+the widget's themed parameters (C<background_color>, C<border_color>
+and the ones a subclass lists); an unknown name dies naming the known
+ones. Returns the widget. The change shows in the next frame. From
+L<Term::Fabulous::Role::Themed>, which also has L<look|Term::Fabulous::Role::Themed/look>
+and L<look_value|Term::Fabulous::Role::Themed/look_value> for widget
+authors.
 
 =head2 mark_changed
 

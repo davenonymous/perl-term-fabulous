@@ -58,7 +58,7 @@
 <text x="48" y="236" textLength="45" fill="#96a0b4">alpha</text>
 <text x="138" y="236" textLength="459" fill="#141414">alpha 255  alpha 192  alpha 128  alpha 64   alpha 0</text>
 <text x="48" y="272" textLength="63" fill="#96a0b4">default</text>
-<text x="129" y="272" textLength="441" fill="#d4d8e0">text_color [0, 0, 0, 0] is the default text color</text>
+<text x="129" y="272" textLength="540" fill="#d4d8e0">text_color [0, 0, 0, 0] is the terminal's default text color</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

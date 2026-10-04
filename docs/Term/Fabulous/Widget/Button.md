@@ -103,22 +103,34 @@ every parameter of [Term::Fabulous::Widget::Box](Box.md) (`id`, `layout`,
 - `disabled_color`
 
     The color of the border and of the text of a disabled Button, in any
-    format [Term::Fabulous::Color](../Color.md) accepts. Default:
-    `[ 108, 112, 120, 255 ]`, the `disabled_color` of the input widgets.
+    format [Term::Fabulous::Color](../Color.md) accepts. Default: the theme's
+    `button.border.color` in the `disabled` state (the text takes
+    `button.text` in that state), `[ 108, 112, 120, 255 ]` in the
+    built-in dark theme. See ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes).
 
 - `focus_border_color`
 
     The color of the border while the Button has the focus, in any format
     [Term::Fabulous::Color](../Color.md) accepts, or `undef` for no focus look.
-    Default: `[ 97, 175, 239, 255 ]`. It only shows on sides with a
-    positive `border_width` and a `border_style` other than `Blank`.
+    Default: the theme's `button.border.color` in the `focused` state,
+    the accent `[ 97, 175, 239, 255 ]` in the built-in dark theme. It
+    only shows on sides with a positive `border_width` and a
+    `border_style` other than `Blank`.
 
 - `pressed_background_color`
 
     What the Button looks like while it is pressed: the string `reverse`
-    (the default) draws it in reverse video, a color in any format
+    draws it in reverse video, a color in any format
     [Term::Fabulous::Color](../Color.md) accepts replaces the background with that
     color, and `undef` leaves the Button unchanged while pressed.
+    Default: the theme's `button.background` in the `pressed` state,
+    `reverse` in the built-in themes.
+
+    The background, the border color and the border style of the Button
+    itself come from the theme's `button` family when they are not
+    given (see ["new" in Term::Fabulous::Widget](../Widget.md#new)); so does the color of the
+    Text widgets inside it that have no `text_color`. The three looks
+    above return to the theme with ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look).
 
 # METHODS
 
@@ -143,9 +155,9 @@ $button->focus_border_color(undef);
 ```
 
 Accessor for the constructor parameter of the same name. Without an
-argument it returns the stored `[r, g, b, a]` (or `undef`); with an
-argument it sets the value and returns the stored form. An invalid
-color dies.
+argument it returns the color in use, the given one or the theme's,
+as `[r, g, b, a]` (or `undef` for no focus look); with an argument
+it sets the value and returns the stored form. An invalid color dies.
 
 ## pressed\_background\_color
 
@@ -156,7 +168,8 @@ $button->pressed_background_color(undef);
 ```
 
 Accessor for the constructor parameter of the same name. Returns the
-string `reverse`, the stored `[r, g, b, a]`, or `undef`.
+look in use, the given one or the theme's: the string `reverse`, a
+`[r, g, b, a]`, or `undef`.
 
 ## reverse\_video
 
@@ -188,18 +201,20 @@ $button->disabled_color('#555555');
 ```
 
 Accessor for the constructor parameter of the same name; returns the
-stored `[r, g, b, a]`. An invalid color dies.
+color in use, the given one or the theme's, as `[r, g, b, a]`. An
+invalid color dies.
 
-## disabled\_text\_color
+## child\_text\_color
 
 ```perl
-my $color = $button->disabled_text_color;
+my $color = $button->child_text_color($explicit_color);
 ```
 
-The color the Text widgets inside the Button are drawn in: its
-`disabled_color` while it is disabled, `undef` while it is enabled.
-[Term::Fabulous::Widget::Text](Text.md) asks its nearest ancestor that has this
-method.
+The color a Text widget inside the Button is drawn in, given the color
+the Text was given (or `undef`): the disabled color while the Button
+is disabled, otherwise the given color or the theme's `button.text`
+for the Button's state. [Term::Fabulous::Widget::Text](Text.md) asks its
+nearest ancestor that has this method.
 
 ## can\_focus
 

@@ -552,6 +552,38 @@ is a complete program, and
 L<Term::Fabulous::Manual::CustomWidgets> explains widget classes in
 general.
 
+=head1 THEME FILES
+
+A layout file says what the widgets are; a I<theme file> says what
+colors and border styles they draw with, for every widget that is not
+given its own. Theme files are KDL too, kept apart from the layouts,
+and loaded with L<Term::Fabulous::Theme/from_file>:
+
+=for highlighter language=kdl
+
+	theme "ocean" extends="dark"
+
+	palette {
+		accent "#5fd3c0"
+		surface "#10242f"
+	}
+
+	button {
+		border style=Round
+		variant "primary" { border color="accent" }
+	}
+
+=for highlighter language=perl
+
+	my $theme = Term::Fabulous::Theme->from_file('ocean.kdl');
+	my $ui    = Term::Fabulous->new( root => $layout->build, width => 80, height => 24, theme => $theme );
+
+A widget node sets its theme variants with the C<classes> property:
+C<classes "primary" "wide"> on a C<Box>, a C<Button> or a C<Text>. The
+grammar of theme files is described in
+L<Term::Fabulous::Theme/THEME FILES>, and themes in
+L<Term::Fabulous::Manual::Looks/THEMES>.
+
 =head1 ERRORS
 
 Everything that is wrong with a layout dies with a message that starts

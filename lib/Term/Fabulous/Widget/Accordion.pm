@@ -21,7 +21,6 @@ class Term::Fabulous::Widget::Accordion
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean color describe non_negative_integer string);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Select;
 
 	use constant ITEM_CLASS => 'Term::Fabulous::Widget::Accordion::Item';
@@ -31,34 +30,25 @@ class Term::Fabulous::Widget::Accordion
 	# Key name => step through the enabled headers, or an end.
 	my %MOVE_BY_KEY = ( Up => [ step => -1 ], Down => [ step => 1 ], Home => [ end => 0 ], End => [ end => -1 ] );
 
-	field $multiple                :param = 0;
-	field $bordered                :param = 0;
-	field $toggle_position         :param = 'start';
-	field $open_glyph              :param = "\x{25BE}";
-	field $closed_glyph            :param = "\x{25B8}";
-	field $title_color             :param = [ 220, 223, 228, 255 ];
-	field $title_bold              :param = 0;
-	field $accent_color            :param = [ 97, 175, 239, 255 ];
-	field $header_background_color :param = undef;
-	field $focus_background_color  :param = [ 52,  58,  72,  255 ];
-	field $hover_background_color  :param = [ 40,  45,  58,  255 ];
-	field $disabled_color          :param = [ 108, 112, 120, 255 ];
-	field $body_indent             :param = 2;
+	field $multiple :param        = 0;
+	field $bordered :param        = 0;
+	field $toggle_position :param = 'start';
+	field $open_glyph :param      = "\x{25BE}";
+	field $closed_glyph :param    = "\x{25B8}";
+	field $title_bold :param      = 0;
+	field $body_indent :param     = 2;
+
+	# The colors come from the theme's accordion family unless given.
+	my @COLOR_NAMES = qw(title_color accent_color header_background_color focus_background_color hover_background_color disabled_color);
 
 	ADJUST {
-		$multiple                = boolean( $self, multiple => $multiple );
-		$bordered                = boolean( $self, bordered => $bordered );
-		$toggle_position         = $self->_checked_position($toggle_position);
-		$open_glyph              = string( $self, open_glyph   => $open_glyph );
-		$closed_glyph            = string( $self, closed_glyph => $closed_glyph );
-		$title_color             = color( $self, title_color => $title_color );
-		$title_bold              = boolean( $self, title_bold => $title_bold );
-		$accent_color            = color( $self, accent_color => $accent_color );
-		$header_background_color = defined $header_background_color ? color( $self, header_background_color => $header_background_color ) : undef;
-		$focus_background_color  = color( $self, focus_background_color => $focus_background_color );
-		$hover_background_color  = color( $self, hover_background_color => $hover_background_color );
-		$disabled_color          = color( $self, disabled_color         => $disabled_color );
-		$body_indent             = non_negative_integer( $self, body_indent => $body_indent );
+		$multiple        = boolean( $self, multiple => $multiple );
+		$bordered        = boolean( $self, bordered => $bordered );
+		$toggle_position = $self->_checked_position($toggle_position);
+		$open_glyph      = string( $self, open_glyph   => $open_glyph );
+		$closed_glyph    = string( $self, closed_glyph => $closed_glyph );
+		$title_bold      = boolean( $self, title_bold => $title_bold );
+		$body_indent     = non_negative_integer( $self, body_indent => $body_indent );
 
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), %{ $layout->{sizing} // {} } } } );
@@ -173,17 +163,57 @@ class Term::Fabulous::Widget::Accordion
 	# Look
 	# ---------------------------------------------------------------------
 
+	# A bordered item takes the theme's accordion border.
 	method _style_item ($item) {
 		if ($bordered) {
+			my $style = $self->look('border.style');
 			$item->border_width(1);
-			$item->$_( Term::Fabulous::Enum::BorderStyle->Round ) foreach qw(border_style_top border_style_right border_style_bottom border_style_left);
-			$item->border_color($disabled_color);
+			$item->$_($style) foreach qw(border_style_top border_style_right border_style_bottom border_style_left);
+			$item->border_color( $self->look('border.color') );
 		}
 		else {
 			$item->border_width(undef);
 		}
 		$item->refresh_look;
 		return;
+	}
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_NAMES );
+	}
+
+	method theme_family :common () {
+		return 'accordion';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			title_color             => [ 'title',             'normal' ],
+			accent_color            => [ 'accent',            'normal' ],
+			header_background_color => [ 'header.background', 'normal' ],
+			focus_background_color  => [ 'header.background', 'focused' ],
+			hover_background_color  => [ 'header.background', 'hovered' ],
+			disabled_color          => [ 'disabled',          'normal' ],
+		);
+	}
+
+	# The items copy the colors; they take them again after a switch.
+	method theme_changed () {
+		$self->_restyle;
+		return;
+	}
+
+	method look_reset :override ($name) {
+		$self->SUPER::look_reset($name);
+		$self->_restyle;
+		return;
+	}
+
+	method _set_look ( $name, $value ) {
+		$self->set_look( $name => $value );
+		$self->_restyle;
+		return $value;
 	}
 
 	method _restyle () {
@@ -209,18 +239,21 @@ class Term::Fabulous::Widget::Accordion
 		return $multiple;
 	}
 
-	method bordered                (@new) { return @new ? $self->_set( \$bordered, boolean( $self, bordered => $new[0] ) )                                       : $bordered }
-	method toggle_position         (@new) { return @new ? $self->_set( \$toggle_position, $self->_checked_position( $new[0] ) )                                  : $toggle_position }
-	method open_glyph              (@new) { return @new ? $self->_set( \$open_glyph, string( $self, open_glyph => $new[0] ) )                                    : $open_glyph }
-	method closed_glyph            (@new) { return @new ? $self->_set( \$closed_glyph, string( $self, closed_glyph => $new[0] ) )                                : $closed_glyph }
-	method title_color             (@new) { return @new ? $self->_set( \$title_color, color( $self, title_color => $new[0] ) )                                   : $title_color }
-	method title_bold              (@new) { return @new ? $self->_set( \$title_bold, boolean( $self, title_bold => $new[0] ) )                                   : $title_bold }
-	method accent_color            (@new) { return @new ? $self->_set( \$accent_color, color( $self, accent_color => $new[0] ) )                                 : $accent_color }
-	method header_background_color (@new) { return @new ? $self->_set( \$header_background_color, $self->_optional_color( header_background_color => $new[0] ) ) : $header_background_color }
-	method focus_background_color  (@new) { return @new ? $self->_set( \$focus_background_color, color( $self, focus_background_color => $new[0] ) )             : $focus_background_color }
-	method hover_background_color  (@new) { return @new ? $self->_set( \$hover_background_color, color( $self, hover_background_color => $new[0] ) )             : $hover_background_color }
-	method disabled_color          (@new) { return @new ? $self->_set( \$disabled_color, color( $self, disabled_color => $new[0] ) )                             : $disabled_color }
-	method body_indent             (@new) { return @new ? $self->_set( \$body_indent, non_negative_integer( $self, body_indent => $new[0] ) )                    : $body_indent }
+	method bordered        (@new) { return @new ? $self->_set( \$bordered, boolean( $self, bordered => $new[0] ) )                    : $bordered }
+	method toggle_position (@new) { return @new ? $self->_set( \$toggle_position, $self->_checked_position( $new[0] ) )               : $toggle_position }
+	method open_glyph      (@new) { return @new ? $self->_set( \$open_glyph, string( $self, open_glyph => $new[0] ) )                 : $open_glyph }
+	method closed_glyph    (@new) { return @new ? $self->_set( \$closed_glyph, string( $self, closed_glyph => $new[0] ) )             : $closed_glyph }
+	method title_bold      (@new) { return @new ? $self->_set( \$title_bold, boolean( $self, title_bold => $new[0] ) )                : $title_bold }
+	method body_indent     (@new) { return @new ? $self->_set( \$body_indent, non_negative_integer( $self, body_indent => $new[0] ) ) : $body_indent }
+	method title_color     (@new) { return @new ? $self->_set_look( title_color => color( $self, title_color => $new[0] ) )           : $self->look_value('title_color') }
+	method accent_color    (@new) { return @new ? $self->_set_look( accent_color => color( $self, accent_color => $new[0] ) )         : $self->look_value('accent_color') }
+
+	method header_background_color (@new) {
+		return @new ? $self->_set_look( header_background_color => $self->_optional_color( header_background_color => $new[0] ) ) : $self->look_value('header_background_color');
+	}
+	method focus_background_color (@new) { return @new ? $self->_set_look( focus_background_color => color( $self, focus_background_color => $new[0] ) ) : $self->look_value('focus_background_color') }
+	method hover_background_color (@new) { return @new ? $self->_set_look( hover_background_color => color( $self, hover_background_color => $new[0] ) ) : $self->look_value('hover_background_color') }
+	method disabled_color         (@new) { return @new ? $self->_set_look( disabled_color         => color( $self, disabled_color         => $new[0] ) ) : $self->look_value('disabled_color') }
 
 	method layout_properties :common () {
 		return (
@@ -367,7 +400,8 @@ closed item; C<'-'> and C<'+'> give a plus toggle.
 =item C<title_color>
 
 The color of the titles, in any format L<Term::Fabulous::Color>
-accepts. Default: C<[220, 223, 228, 255]>.
+accepts. Default: the theme's C<accordion.title>,
+C<[220, 223, 228, 255]> in the dark theme.
 
 =item C<title_bold>
 
@@ -375,28 +409,33 @@ A boolean. Default: 0. Whether the titles are bold.
 
 =item C<accent_color>
 
-The color of an open item's toggle. Default: C<[97, 175, 239, 255]>, a
-blue.
+The color of an open item's toggle. Default: the theme's
+C<accordion.accent>, C<[97, 175, 239, 255]> in the dark theme, a blue.
 
 =item C<header_background_color>
 
-The background of the headers, or C<undef> for none. Default:
-C<undef>.
+The background of the headers, or C<undef> for none. Default: the
+theme's C<accordion.header.background>, none in the built-in themes.
 
 =item C<focus_background_color>
 
-The background of the header that has the focus. Default:
-C<[52, 58, 72, 255]>.
+The background of the header that has the focus. Default: the theme's
+C<accordion.header.background> in the C<focused> state,
+C<[52, 58, 72, 255]> in the dark theme.
 
 =item C<hover_background_color>
 
-The background of the header under the pointer. Default:
-C<[40, 45, 58, 255]>.
+The background of the header under the pointer. Default: the theme's
+C<accordion.header.background> in the C<hovered> state,
+C<[40, 45, 58, 255]> in the dark theme.
 
 =item C<disabled_color>
 
-The color of a disabled item's header, and of the borders. Default:
-C<[108, 112, 120, 255]>, a gray.
+The color of a disabled item's header. Default: the theme's
+C<accordion.disabled>, C<[108, 112, 120, 255]> in the dark theme, a
+gray. The borders of a C<bordered> accordion take the theme's
+C<accordion.border.color> and C<accordion.border.style>; the six
+colors return to the theme with L<Term::Fabulous::Widget/reset_look>.
 
 =item C<body_indent>
 

@@ -112,23 +112,27 @@ Unknown parameters die.
 - `placeholder_color`
 
     A color, in any format [Term::Fabulous::Widget::Input](Input.md) accepts.
-    Default: `[120, 126, 138, 255]`, a gray.
+    Default: the theme's `dropdown.placeholder`, `[120, 126, 138, 255]`
+    in the dark theme, a gray.
 
 - `list_background_color`
 
-    A color, as above. The background of the open list. Default:
-    `[30, 33, 40, 255]`, a very dark gray.
+    A color, as above. The background of the open list. Default: the
+    theme's `dropdown.list.background`, `[30, 33, 40, 255]` in the dark
+    theme, a very dark gray.
 
 - `highlight_text_color`
 
     A color, as above. The text color of the highlighted option in the open
-    list, which is painted on the `accent_color`. Default:
-    `[16, 18, 22, 255]`, almost black.
+    list, which is painted on the theme's `dropdown.highlight.background`
+    (the accent). Default: the theme's `dropdown.highlight.text`,
+    `[16, 18, 22, 255]` in the dark theme, nearly black.
 
 - `background_color`
 
     Any [Term::Fabulous::Color](../Color.md) format, stored as `[r, g, b, a]`.
-    Default: `[36, 40, 48, 255]`, a dark gray, like the text inputs.
+    Default: the theme's `dropdown.background`, `[36, 40, 48, 255]` in
+    the dark theme, a dark gray, like the text inputs.
 
 The open list's border has the `accent_color`, and so does the label of
 the selected option in the list.

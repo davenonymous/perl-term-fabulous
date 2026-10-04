@@ -42,7 +42,8 @@ widget classes. Choose the base class by what the widget does:
 - [Term::Fabulous::Widget::Input](../Widget/Input.md)
 
     for an interactive widget that edits a value: you get focus handling,
-    the four colors, the disabled state, `Change` events and painting at
+    the four colors (from the theme unless given), the disabled state,
+    `Change` events and painting at
     the right time. See ["An input widget"](#an-input-widget).
 
 - A Box with the Clay::UI interaction roles
@@ -261,6 +262,75 @@ The complete example, a toggle switch with keys, clicks, `Change`
 events and KDL support, is the recipe
 [Write a custom input widget](../Cookbook/Extending.md#write-a-custom-input-widget-a-toggle-switch).
 
+## Colors from the theme
+
+Every widget draws the colors and border styles it was not given from
+the theme of its UI (["THEMES" in Term::Fabulous::Manual::Looks](Looks.md#themes)). A
+widget class of your own takes part through
+[Term::Fabulous::Role::Themed](../Role/Themed.md), which every widget composes:
+
+- The widget's _family_ decides which slots it reads. A class inherits
+the family of its base class (a widget derived from Input reads the
+`input` slots, a Box the `box` slots); `theme_family` names another
+one.
+- `themed_params` lists the parameters the theme supplies when the
+program gives none, each with the slot and the state it reads. Do not
+declare such a parameter as a field: take it out of the constructor's
+arguments with `adopt_look_params`, which calls the accessor for the
+values that were given.
+- The accessor reads `look_value` and writes `set_look`; `paint` and
+the `contribute_*` methods read the accessor or `look_value`, never a
+field, so that a theme switch shows at once. A widget that paints into
+a buffer of its own (a Display) repaints after a switch by itself; one
+that copies colors into widgets it builds does so again in
+`theme_changed`.
+
+A gauge that reads its fill color from the `progress` family:
+
+```perl
+use Object::Pad 0.825;
+
+class My::Gauge :isa(Term::Fabulous::Widget::Display) :strict(params) {
+        use Term::Fabulous::Check qw(cell_color);
+
+        field $fraction :param = 0;
+
+        ADJUSTPARAMS ($params) {
+                $self->adopt_look_params( $params, 'fill_color' );    # fill_color => ... was given, or not
+        }
+
+        method theme_family :common () { return 'progress' }
+
+        method themed_params :common () {
+                return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal' ] );
+        }
+
+        method fill_color (@new) {
+                return $self->look_value('fill_color') unless @new;
+                return $self->set_look( fill_color => cell_color( $self, fill_color => $new[0] ) );
+        }
+
+        method natural_size () { return ( 20, 1 ) }
+
+        method paint () {
+                my $filled = int( $self->columns * $fraction + 0.5 );
+                $self->fill_attrs( 0,       0, $filled,                  "\x{2588}", $self->color_attr( $self->fill_color ), undef );
+                $self->fill_attrs( $filled, 0, $self->columns - $filled, "\x{2591}", $self->color_attr( $self->look('track') ), undef );
+                return;
+        }
+}
+
+my $gauge = My::Gauge->new( fraction => 0.25 );                 # the theme's progress.color
+my $red   = My::Gauge->new( fraction => 0.25, fill_color => '#ff0000' );    # its own
+$red->reset_look('fill_color');                                   # the theme's again
+```
+
+A slot the family does not have dies the first time the class is used,
+naming the family. The slots of every family are listed in
+["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states); a widget whose
+look needs none of them, such as a canvas drawn by its program, needs
+nothing here.
+
 ## A box that takes the focus and reacts to the mouse
 
 The focus, hover and press states come from roles of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
@@ -367,13 +437,15 @@ children. [Term::Fabulous::Widget::Button](../Widget/Button.md) uses both:
     a state:
     `method reverse_video :override () { return $self->is_pressed ? 1 : 0 }`.
 
-- `disabled_text_color`
+- `child_text_color`
 
     Not defined by default. A [Term::Fabulous::Widget::Text](../Widget/Text.md) asks its
-    nearest ancestor that has this method for a color and, when that
-    returns one, draws its text in it instead of its own `text_color`.
-    Return a color while the widget is disabled and `undef` otherwise, to
-    gray out the labels inside it.
+    nearest ancestor that has this method, passing the color it was given
+    (or `undef`), and draws its text in what the method returns; when it
+    returns `undef`, the Text uses its given color or the theme's text
+    color. Return a gray while the widget is disabled, and the given color
+    or a theme look (`$self->look('text', $self->look_state)`)
+    otherwise, as [Term::Fabulous::Widget::Button](../Widget/Button.md) does.
 
 ## Telling Term::Fabulous that something changed
 

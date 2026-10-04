@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing describe);
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names describe);
 
 use Carp qw(croak);
 use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
@@ -122,6 +122,13 @@ sub sizing ( $owner, $name, $value ) {
 		return sizing_fixed( $cells + 0 );
 	}
 	croak _owner_name($owner) . ": invalid $name '$spec' (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)";
+}
+
+# A copy of an array of class names: defined strings, no references.
+sub class_names ( $owner, $name, $value ) {
+	_fail( $owner, $name,              'an array reference of names', $value ) unless ref $value eq 'ARRAY';
+	_fail( $owner, 'every class name', 'a string',                    $_ ) foreach grep { !_is_plain($_) } @$value;
+	return [@$value];
 }
 
 # Canvas cells also take a packed 0xRRGGBB integer, which is opaque.

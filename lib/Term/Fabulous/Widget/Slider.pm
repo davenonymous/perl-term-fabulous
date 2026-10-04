@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::Slider
 {
 	use List::Util ();    # min and max are methods here
 	use POSIX qw(floor);
-	use Term::Fabulous::Check qw(boolean cell_color glyph number positive_integer);
+	use Term::Fabulous::Check qw(boolean glyph number positive_integer);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 	use Term::Fabulous::Unicode qw(string_columns);
 
@@ -33,17 +33,16 @@ class Term::Fabulous::Widget::Slider
 		End      => [ end  =>  1 ],
 	);
 
-	field $min               :param = 0;
-	field $max               :param = 100;
-	field $step              :param = 1;
-	field $page_step         :param = undef;
-	field $show_value        :param = 1;
-	field $value_format      :param = undef;
+	field $min :param               = 0;
+	field $max :param               = 100;
+	field $step :param              = 1;
+	field $page_step :param         = undef;
+	field $show_value :param        = 1;
+	field $value_format :param      = undef;
 	field $preferred_columns :param = 20;
-	field $fill_glyph        :param = "\x{2501}";
-	field $track_glyph       :param = "\x{2500}";
-	field $thumb_glyph       :param = "\x{25CF}";
-	field $track_color       :param = [ 90, 96, 110, 255 ];
+	field $fill_glyph :param        = "\x{2501}";
+	field $track_glyph :param       = "\x{2500}";
+	field $thumb_glyph :param       = "\x{25CF}";
 
 	field $current;
 
@@ -55,14 +54,13 @@ class Term::Fabulous::Widget::Slider
 		$fill_glyph        = glyph( $self, fill_glyph  => $fill_glyph );
 		$track_glyph       = glyph( $self, track_glyph => $track_glyph );
 		$thumb_glyph       = glyph( $self, thumb_glyph => $thumb_glyph );
-		$track_color       = cell_color( $self, track_color => $track_color );
 		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step );
 		$current = $min;
 		$self->value( $value // $min );
-		}
+	}
 
-		# The range with the given parts changed, checked as a whole.
-		method _checked_range (%range) {
+	# The range with the given parts changed, checked as a whole.
+	method _checked_range (%range) {
 		my ( $low, $high, $increment ) = map { number( $self, $_ => $range{$_} ) } qw(min max step);
 		die "Term::Fabulous::Widget::Slider: min ($low) must be less than max ($high)" unless $low < $high;
 		die "Term::Fabulous::Widget::Slider: step must be positive, got $increment" unless $increment > 0;
@@ -190,8 +188,17 @@ class Term::Fabulous::Widget::Slider
 		return $$field_ref;
 	}
 
+	# The track color comes from the theme's input.track unless given.
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, 'track_color' );
+	}
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, track_color => [ 'track', 'normal' ] );
+	}
+
 	method track_color (@new) {
-		return @new ? $self->_set_color( track_color => \$track_color, @new ) : $track_color;
+		return @new ? $self->_set_color( track_color => @new ) : $self->look_value('track_color');
 	}
 
 	method layout_properties :common () {
@@ -290,8 +297,8 @@ class Term::Fabulous::Widget::Slider
 		my $track = $self->_track_columns;
 		my $thumb = int( ( $track - 1 ) * ( $current - $min ) / ( $max - $min ) + 0.5 );
 
-		$self->fill_attrs( 0,          0, $thumb,              $fill_glyph,  $self->accent_attr,                                                            $bg );
-		$self->fill_attrs( $thumb + 1, 0, $track - $thumb - 1, $track_glyph, $self->color_attr( $self->is_enabled ? $track_color : $self->disabled_color ), $bg );
+		$self->fill_attrs( 0,          0, $thumb,              $fill_glyph,  $self->accent_attr,                                                                  $bg );
+		$self->fill_attrs( $thumb + 1, 0, $track - $thumb - 1, $track_glyph, $self->color_attr( $self->is_enabled ? $self->track_color : $self->disabled_color ), $bg );
 		$self->put_attrs( $thumb, 0, $thumb_glyph, $self->is_focused ? $self->foreground_attr : $self->accent_attr, $bg );
 		return unless $show_value;
 
@@ -459,7 +466,8 @@ C<text_color> while the slider has the focus.
 =item C<track_color>
 
 A color, in any format L<Term::Fabulous::Widget::Input> accepts. The
-track right of the thumb. Default: C<[90, 96, 110, 255]>, a gray.
+track right of the thumb. Default: the theme's C<input.track>,
+C<[90, 96, 110, 255]> in the dark theme, a gray.
 
 =back
 

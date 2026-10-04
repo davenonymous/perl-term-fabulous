@@ -38,25 +38,24 @@ class Term::Fabulous::Widget::ProgressBar
 
 	my %IS_POSITION = map { $_ => 1 } qw(left right inside);
 
-	field $min               :param = 0;
-	field $max               :param = 100;
-	field $indeterminate     :param = 0;
-	field $show_value        :param = 1;
-	field $value_position    :param = 'right';
-	field $value_format      :param = undef;
+	field $min :param               = 0;
+	field $max :param               = 100;
+	field $indeterminate :param     = 0;
+	field $show_value :param        = 1;
+	field $value_position :param    = 'right';
+	field $value_format :param      = undef;
 	field $preferred_columns :param = 20;
-	field $style             :param = 'block';
-	field $fill_glyph        :param = undef;
-	field $track_glyph       :param = undef;
-	field $stripe_glyph      :param = undef;
-	field $fractional        :param = 1;
-	field $striped           :param = 0;
-	field $animated          :param = 0;
-	field $separated         :param = 0;
-	field $color             :param = [ 97,  175, 239, 255 ];
-	field $track_color       :param = [ 58,  63,  75,  255 ];
-	field $text_color        :param = [ 220, 223, 228, 255 ];
-	field $inside_text_color :param = [ 16,  18,  22,  255 ];
+	field $style :param             = 'block';
+	field $fill_glyph :param        = undef;
+	field $track_glyph :param       = undef;
+	field $stripe_glyph :param      = undef;
+	field $fractional :param        = 1;
+	field $striped :param           = 0;
+	field $animated :param          = 0;
+	field $separated :param         = 0;
+
+	# The colors come from the theme's progress family unless given.
+	my @COLOR_NAMES = qw(color track_color text_color inside_text_color);
 
 	field $current = 0;
 	field @segments;    # { value, color }, or empty for a single value
@@ -78,16 +77,12 @@ class Term::Fabulous::Widget::ProgressBar
 		$striped           = boolean( $self, striped    => $striped );
 		$animated          = boolean( $self, animated   => $animated );
 		$separated         = boolean( $self, separated  => $separated );
-		$color             = cell_color( $self, color             => $color );
-		$track_color       = cell_color( $self, track_color       => $track_color );
-		$text_color        = cell_color( $self, text_color        => $text_color );
-		$inside_text_color = cell_color( $self, inside_text_color => $inside_text_color );
 		$current           = $min;
 		$self->value($value) if defined $value;
 		$self->segments($segments) if defined $segments;
-		}
+	}
 
-		method _checked_range (%range) {
+	method _checked_range (%range) {
 		my ( $low, $high ) = map { number( $self, $_ => $range{$_} ) } qw(min max);
 		die ref($self) . ": min ($low) must be less than max ($high)" unless $low < $high;
 		return ( $low, $high );
@@ -218,10 +213,28 @@ class Term::Fabulous::Widget::ProgressBar
 	method striped           (@new) { return @new ? $self->_set( \$striped, boolean( $self, striped => $new[0] ) )                              : $striped }
 	method animated          (@new) { return @new ? $self->_set( \$animated, boolean( $self, animated => $new[0] ) )                            : $animated }
 	method separated         (@new) { return @new ? $self->_set( \$separated, boolean( $self, separated => $new[0] ) )                          : $separated }
-	method color             (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )                               : $color }
-	method track_color       (@new) { return @new ? $self->_set( \$track_color, cell_color( $self, track_color => $new[0] ) )                   : $track_color }
-	method text_color        (@new) { return @new ? $self->_set( \$text_color, cell_color( $self, text_color => $new[0] ) )                     : $text_color }
-	method inside_text_color (@new) { return @new ? $self->_set( \$inside_text_color, cell_color( $self, inside_text_color => $new[0] ) )       : $inside_text_color }
+	method color             (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )                           : $self->look_value('color') }
+	method track_color       (@new) { return @new ? $self->set_look( track_color => cell_color( $self, track_color => $new[0] ) )               : $self->look_value('track_color') }
+	method text_color        (@new) { return @new ? $self->set_look( text_color => cell_color( $self, text_color => $new[0] ) )                 : $self->look_value('text_color') }
+	method inside_text_color (@new) { return @new ? $self->set_look( inside_text_color => cell_color( $self, inside_text_color => $new[0] ) )   : $self->look_value('inside_text_color') }
+
+	ADJUSTPARAMS($params) {
+		$self->adopt_look_params( $params, @COLOR_NAMES );
+	}
+
+	method theme_family :common () {
+		return 'progress';
+	}
+
+	method themed_params :common () {
+		return (
+			$class->SUPER::themed_params,
+			color             => [ 'color',       'normal' ],
+			track_color       => [ 'track',       'normal' ],
+			text_color        => [ 'text',        'normal' ],
+			inside_text_color => [ 'inside_text', 'normal' ],
+		);
+	}
 
 	# The glyphs in use: the style's, unless given one by one.
 	method glyphs () {
@@ -234,7 +247,7 @@ class Term::Fabulous::Widget::ProgressBar
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(min max value value_position value_format preferred_columns style fill_glyph track_glyph stripe_glyph) ),
 			( map { $_ => 'boolean' } qw(indeterminate show_value fractional striped animated separated) ),
-			( map { $_ => 'color' } qw(color track_color text_color inside_text_color) ),
+			( map { $_ => 'color' } @COLOR_NAMES ),
 			segment => \&_parse_segment,
 		);
 	}
@@ -314,13 +327,13 @@ class Term::Fabulous::Widget::ProgressBar
 		my ( $fill, $track, $stripe ) = $self->glyphs;
 		my $frame  = $self->_animation_frame;
 		my $inside = $self->_shows_label && $value_position eq 'inside';
-		my @cells  = map { [ $inside ? ' ' : $track, $self->color_attr($track_color), $inside ? $self->color_attr($track_color) : undef, 0 ] } 1 .. $bar;
+		my @cells  = map { [ $inside ? ' ' : $track, $self->color_attr( $self->track_color ), $inside ? $self->color_attr( $self->track_color ) : undef, 0 ] } 1 .. $bar;
 
 		my @parts = @segments ? @segments : ( { value => $current - $min, color => undef } );
 		my ( $edge, $at ) = ( 0, 0 );
 		foreach my $index ( 0 .. $#parts ) {
 			my $part  = $parts[$index];
-			my $fg    = $self->color_attr( $part->{color} // $color );
+			my $fg    = $self->color_attr( $part->{color} // $self->color );
 			my $bg    = $inside ? $fg : undef;
 			my $start = $at;
 			$edge += $part->{value} / ( $max - $min ) * $bar;
@@ -337,7 +350,7 @@ class Term::Fabulous::Widget::ProgressBar
 			}
 			next if $index < $#parts || $at >= $bar || !$fractional || $fill ne FULL_BLOCK;
 			my $eighths = int( ( $edge - $full ) * 8 );
-			$cells[$at] = [ $EIGHTH_BLOCK[ $eighths - 1 ], $fg, $inside ? $self->color_attr($track_color) : undef, 0 ] if $eighths > 0;
+			$cells[$at] = [ $EIGHTH_BLOCK[ $eighths - 1 ], $fg, $inside ? $self->color_attr( $self->track_color ) : undef, 0 ] if $eighths > 0;
 		}
 		return @cells;
 	}
@@ -348,7 +361,7 @@ class Term::Fabulous::Widget::ProgressBar
 		my $width  = $self->_runner_width($bar);
 		my $travel = $bar - $width;
 		my $at     = $travel > 0 ? ( $frame <= $travel ? $frame : 2 * $travel - $frame ) : 0;
-		return map { $_ >= $at && $_ < $at + $width ? [ $fill, $self->color_attr($color), undef, 1 ] : [ $track, $self->color_attr($track_color), undef, 0 ] } 0 .. $bar - 1;
+		return map { $_ >= $at && $_ < $at + $width ? [ $fill, $self->color_attr( $self->color ), undef, 1 ] : [ $track, $self->color_attr( $self->track_color ), undef, 0 ] } 0 .. $bar - 1;
 	}
 
 	method paint () {
@@ -366,12 +379,12 @@ class Term::Fabulous::Widget::ProgressBar
 			my $x = List::Util::max( 0, int( ( $bar - string_columns($label) ) / 2 ) );
 			foreach my $cluster ( grapheme_clusters($label) ) {
 				my $cell = $cells[$x] // last;
-				$self->put_attrs( $start + $x, $y, $cluster, $self->color_attr( $cell->[3] ? $inside_text_color : $text_color ), $cell->[2] );
+				$self->put_attrs( $start + $x, $y, $cluster, $self->color_attr( $cell->[3] ? $self->inside_text_color : $self->text_color ), $cell->[2] );
 				$x += cluster_columns($cluster);
 			}
 			return;
 		}
-		$self->paint_text( $value_position eq 'left' ? 0 : $self->columns - string_columns($label), $y, $label, $self->color_attr($text_color), undef );
+		$self->paint_text( $value_position eq 'left' ? 0 : $self->columns - string_columns($label), $y, $label, $self->color_attr( $self->text_color ), undef );
 		return;
 	}
 }
@@ -564,23 +577,27 @@ segments.
 =item C<color>
 
 The color of the filled part, in any format
-L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default:
-C<[97, 175, 239, 255]>, the blue of the input widgets' accent.
+L<Term::Fabulous::Widget::Canvas/Colors> accepts. Default: the theme's
+C<progress.color>, C<[97, 175, 239, 255]> in the dark theme, the blue
+of the input widgets' accent.
 
 =item C<track_color>
 
-The color of the empty part. Default: C<[58, 63, 75, 255]>, a dark
+The color of the empty part. Default: the theme's C<progress.track>,
+C<[58, 63, 75, 255]> in the dark theme, a dark
 gray.
 
 =item C<text_color>
 
-The color of the value label. Default: C<[220, 223, 228, 255]>.
+The color of the value label. Default: the theme's C<progress.text>,
+C<[220, 223, 228, 255]> in the dark theme.
 
 =item C<inside_text_color>
 
 The color of the label where it lies over the filled part, with
-C<< value_position => 'inside' >>. Default: C<[16, 18, 22, 255]>,
-nearly black.
+C<< value_position => 'inside' >>. Default: the theme's
+C<progress.inside_text>, C<[16, 18, 22, 255]> in the dark theme, a
+near black.
 
 =back
 

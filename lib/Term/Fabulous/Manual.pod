@@ -109,7 +109,7 @@ close, and tabs.
 
 Text (character strings, wrapping, alignment, wide characters and
 emoji), colors (formats, alpha, the terminal's default colors, lighter
-and darker colors) and borders.
+and darker colors), borders and themes.
 
 =item L<Term::Fabulous::Manual::Events>
 
@@ -590,8 +590,13 @@ L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, co
 
 =item Colors and color strings; lighter, darker and mixed colors
 
-L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Color>,
-L<Term::Fabulous::Cookbook::Layout/Change colors at run time (a theme with lighten and darken)>.
+L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Color>.
+
+=item Themes: colors and border styles for every widget, theme files, variants, switching at run time
+
+L<Term::Fabulous::Manual::Looks/THEMES>, L<Term::Fabulous::Theme>,
+L<Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>,
+L<Term::Fabulous/theme>.
 
 =item Named colors (Tomato, SteelBlue, ...)
 

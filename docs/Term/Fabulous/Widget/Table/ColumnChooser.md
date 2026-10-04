@@ -61,7 +61,12 @@ parameters die.
 - `text_color`
 
     The color of the title and the check boxes. Default:
-    `[220, 223, 228, 255]`.
+    `[220, 223, 228, 255]`; the table passes its `text_color`.
+
+- `muted_color`
+
+    The color of the closing hint. Default: `[140, 146, 158, 255]`; the
+    table passes its `muted_color`.
 
 # METHODS
 

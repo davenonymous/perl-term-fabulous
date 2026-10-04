@@ -83,7 +83,7 @@ color_row( 'alpha', $panel );
 
 color_row(
 	'default',
-	Term::Fabulous::Widget::Text->new( text => 'text_color [0, 0, 0, 0] is the default text color', text_color => [ 0, 0, 0, 0 ] ),
+	Term::Fabulous::Widget::Text->new( text => 'text_color [0, 0, 0, 0] is the terminal\'s default text color', text_color => [ 0, 0, 0, 0 ] ),
 );
 
 Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

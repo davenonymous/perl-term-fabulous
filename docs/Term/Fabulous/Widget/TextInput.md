@@ -97,18 +97,22 @@ parameters die.
 - `placeholder_color`
 
     A color, in any format [Term::Fabulous::Widget::Input](Input.md) accepts.
-    Default: `[120, 126, 138, 255]`, a gray.
+    Default: the theme's `text_input.placeholder`, `[120, 126, 138, 255]`
+    in the dark theme, a gray.
 
 - `selection_color`
 
     A color, in any format [Term::Fabulous::Widget::Input](Input.md) accepts. The
-    background of selected text. Default: `[38, 79, 120, 255]`, a dark blue.
+    background of selected text. Default: the theme's
+    `text_input.selection`, `[38, 79, 120, 255]` in the dark theme, a
+    dark blue.
 
 - `background_color`
 
     Any [Term::Fabulous::Color](../Color.md) format, stored as `[r, g, b, a]`.
-    Default: `[36, 40, 48, 255]`, a dark gray, so the input stands out from
-    its surroundings. Pass `[0, 0, 0, 0]` for no background of its own.
+    Default: the theme's `text_input.background`, `[36, 40, 48, 255]` in
+    the dark theme, a dark gray, so the input stands out from its
+    surroundings. Pass `[0, 0, 0, 0]` for no background of its own.
 
 # METHODS
 

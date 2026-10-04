@@ -95,7 +95,8 @@ and the ones below. All are optional; unknown parameters die.
 - `line_style`
 
     A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item, or the name of one
-    (`'Double'`). Default: `Solid`. The line is drawn with the style's
+    (`'Double'`). Default: the theme's `divider.line.style`, `Solid` in
+    the built-in themes. The line is drawn with the style's
     top glyph, or its left glyph when the divider is vertical:
     `Solid` and `Round` give a thin line, `Heavy` a thick one,
     `Double` a double line, `Dashed` a dashed one, `Ascii` `-` or `|`,
@@ -111,12 +112,13 @@ and the ones below. All are optional; unknown parameters die.
 - `color`
 
     The color of the line, in any format
-    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default:
-    `[90, 96, 110, 255]`, a gray.
+    ["Colors" in Term::Fabulous::Widget::Canvas](Canvas.md#colors) accepts. Default: the theme's
+    `divider.line.color`, `[90, 96, 110, 255]` in the dark theme, a gray.
 
 - `text_color`
 
-    The color of the text. Default: `[150, 160, 180, 255]`, a lighter
+    The color of the text. Default: the theme's `divider.text`,
+    `[150, 160, 180, 255]` in the dark theme, a lighter
     gray.
 
 - `bold`

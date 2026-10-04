@@ -221,6 +221,20 @@ backgrounds over a light panel, and the terminal's default text color
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
 </div>
 
+### examples/themes.pl
+
+[Term::Fabulous::Theme](Theme.md): a panel with a text field, a check box, a
+progress bar and two buttons under the built-in `dark` and `light`
+themes and under `examples/ocean.kdl`, a theme file; F2 switches to
+the next theme. The Save button has the class `primary`, which the
+ocean theme draws in its accent, and the Cancel button keeps its own
+border color under every theme. See
+["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes.svg" alt="A panel in the ocean theme: teal accents on a deep blue background, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+</div>
+
 ### examples/web-colors.pl
 
 All colors of [Term::Fabulous::Enum::WebColor](Enum/WebColor.md) in a grid that adapts
@@ -1068,13 +1082,13 @@ The programs of [Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md).
 
 - `theme-switch.pl`
 
-    ["Change colors at run time (a theme with lighten and darken)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#change-colors-at-run-time-a-theme-with-lighten-and-darken):
-    a dark and a light theme, each derived from one base color with
-    `lighten` and `darken`; F2 switches between them. The picture shows
-    the light theme, after typing a line and F2.
+    ["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file):
+    the built-in `dark` and `light` themes and the theme file
+    `examples/ocean.kdl`; F2 switches to the next one. The picture shows
+    the ocean theme, after typing a line and two presses of F2.
 
     <div>
-            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2: dark text on a light panel and a text field holding Light and readable"></p>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-theme-switch.svg" alt="The ocean theme after two presses of F2: teal text on a dark blue background, a text field holding Light and readable, and a Save button with a teal border"></p>
     </div>
 
 - `states-and-classes.pl`

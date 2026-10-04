@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
@@ -23,27 +24,21 @@ class Term::Fabulous::Widget::Tabs::Button
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Unicode qw(grapheme_clusters);
 
-	# The look a tab shows while it has no bar to take it from; the bar's
-	# defaults are these as well.
+	# The settings a tab shows while it has no bar to take them from; the
+	# bar's defaults are these as well. The colors and the line style come
+	# from the theme's tabs family (see Term::Fabulous::Widget::Tabs::Bar).
 	my %DEFAULT_LOOK = (
-		side                   => 'top',
-		orientation            => 'horizontal',
-		tab_padding            => 1,
-		line_style             => Term::Fabulous::Enum::BorderStyle->Round,
-		line_color             => [ 90,  96,  110, 255 ],
-		text_color             => [ 150, 160, 180, 255 ],
-		active_text_color      => [ 220, 223, 228, 255 ],
-		active_bold            => 0,
-		hover_background_color => [ 40,  45,  58,  255 ],
-		focus_border_color     => [ 97,  175, 239, 255 ],
-		disabled_color         => [ 108, 112, 120, 255 ],
+		side        => 'top',
+		orientation => 'horizontal',
+		tab_padding => 1,
+		active_bold => 0,
 	);
 
 	# The side of a tab that faces the page, by the side of the bar.
 	my %PAGE_SIDE = ( top => 'bottom', bottom => 'top', left => 'right', right => 'left' );
 
 	field $title :param = '';
-	field $icon  :param = undef;
+	field $icon :param  = undef;
 
 	field $_icon_text;
 	field $_title_text;
@@ -124,10 +119,46 @@ class Term::Fabulous::Widget::Tabs::Button
 	# Look
 	# ---------------------------------------------------------------------
 
-	# One setting of the look: the bar's, or the default.
+	# One setting of the look: the bar's; without a bar, the default
+	# setting, or the default theme's tabs look.
 	method _look ($name) {
 		my $bar = $self->bar;
-		return defined $bar ? $bar->$name : $DEFAULT_LOOK{$name};
+		return $bar->$name if defined $bar;
+		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
+		my %themed = Term::Fabulous::Widget::Tabs::Bar->themed_params;
+		return Term::Fabulous::Theme->default->look( 'tabs', @{ $themed{$name} } );
+	}
+
+	# The tab's border and background follow the bar's colors and the
+	# tab's state, read when the frame is built, so a theme switch shows
+	# at once.
+	method contribute_look_theme :override ($config) {
+		my $border = $config->{border} // return;
+		my $color
+			= !$self->is_enabled ? $self->_look('disabled_color')
+			: $self->is_focused  ? $self->_look('focus_border_color') // $self->_look('line_color')
+			:                      $self->_look('line_color');
+		$config->{border}           = { %$border, color => $color };
+		$config->{background_color} = $self->_look('hover_background_color') if $self->is_enabled && !$_active && $self->is_hovered;
+		return;
+	}
+
+	# The border is the line's style on the three sides away from the page
+	# and none on the page's side, read when the frame is drawn.
+	method _border_style_of ( $side, $accessor, @new ) {
+		my $method = "SUPER::$accessor";
+		return $self->$method(@new) if @new;
+		return $side eq $PAGE_SIDE{ $self->_look('side') } ? Term::Fabulous::Enum::BorderStyle->Hidden : $self->_look('line_style');
+	}
+
+	method border_style_top :override (@new)    { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
+	method border_style_right :override (@new)  { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
+	method border_style_bottom :override (@new) { return $self->_border_style_of( bottom => 'border_style_bottom', @new ) }
+	method border_style_left :override (@new)   { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
+
+	# The labels are drawn in the bar's text colors.
+	method child_text_color :override ($explicit) {
+		return $self->_look( !$self->is_enabled ? 'disabled_color' : $_active ? 'active_text_color' : 'text_color' );
 	}
 
 	# A label as a Text shows it: as it is, or one cluster per line for a
@@ -136,23 +167,12 @@ class Term::Fabulous::Widget::Tabs::Button
 		return $vertical ? join( "\n", grapheme_clusters($text) ) : $text;
 	}
 
-	# Updates the borders, the padding, the label and the colors from the
-	# tab's state and the bar's settings. Called by the bar when they
-	# change.
+	# Updates the borders, the padding and the label from the tab's state
+	# and the bar's settings. Called by the bar when they change.
 	method refresh_look () {
 		my $side      = $self->_look('side');
 		my $vertical  = $self->_look('orientation') eq 'vertical';
-		my $style     = $self->_look('line_style');
 		my $page_side = $PAGE_SIDE{$side};
-		my $hidden    = Term::Fabulous::Enum::BorderStyle->Hidden;
-
-		foreach my $border_side (qw(top right bottom left)) {
-			my $accessor = "border_style_$border_side";
-			$self->$accessor( $border_side eq $page_side ? $hidden : $style );
-		}
-		$self->border_color( $self->_look('line_color') );
-		$self->focus_border_color( $self->_look('focus_border_color') );
-		$self->disabled_color( $self->_look('disabled_color') );
 
 		# The padding lies along the label; the active tab gets a cell more
 		# toward the page.
@@ -161,20 +181,15 @@ class Term::Fabulous::Widget::Tabs::Button
 		$padding{$page_side} = ( $padding{$page_side} // 0 ) + 1 if $_active;
 		$self->layout( { %{ $self->layout }, layout_direction => $vertical ? CLAY_TOP_TO_BOTTOM : CLAY_LEFT_TO_RIGHT, child_gap => 1, padding => \%padding } );
 
-		my $wrap_mode  = $vertical ? CLAY_TEXT_WRAP_NEWLINES : CLAY_TEXT_WRAP_NONE;
-		my $text_color = $self->_look( $_active ? 'active_text_color' : 'text_color' );
+		my $wrap_mode = $vertical ? CLAY_TEXT_WRAP_NEWLINES : CLAY_TEXT_WRAP_NONE;
 		$_title_text->text( _label_text( $title, $vertical ) );
 		$_icon_text->text( _label_text( $icon // '', $vertical ) );
 		foreach my $text ( $_icon_text, $_title_text ) {
 			$text->wrap_mode($wrap_mode);
-			$text->text_color($text_color);
 			$text->bold( $_active && $self->_look('active_bold') ? 1 : 0 );
 		}
 		$self->clear_children;
 		$self->add_child( ( defined $icon ? $_icon_text : () ), $_title_text );
-
-		my $shows_hover = $self->is_enabled && !$_active && $self->is_hovered;
-		$self->background_color( $shows_hover ? $self->_look('hover_background_color') : undef );
 		return $self;
 	}
 }

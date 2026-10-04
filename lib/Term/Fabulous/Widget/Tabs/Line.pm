@@ -8,7 +8,6 @@ no warnings 'experimental::signatures';
 use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Display;
-use Term::Fabulous::Widget::Tabs::Button;
 
 our $VERSION = '0.01';
 
@@ -20,6 +19,11 @@ class Term::Fabulous::Widget::Tabs::Line
 	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
+
+	# On its own, the line draws with the theme's tabs looks.
+	method theme_family :common () {
+		return 'tabs';
+	}
 
 	# The bar the line belongs to, if any.
 	method bar () {
@@ -62,10 +66,9 @@ class Term::Fabulous::Widget::Tabs::Line
 	method paint () {
 		my $bar        = $self->bar;
 		my $horizontal = $self->_is_horizontal;
-		my $length     = $horizontal ? $self->columns : $self->rows;
-		my %default    = Term::Fabulous::Widget::Tabs::Button->default_look;
-		my $style      = defined $bar ? $bar->line_style : $default{line_style};
-		my $line_attr  = $self->color_attr( defined $bar ? $bar->line_color : $default{line_color} );
+		my $length     = $horizontal  ? $self->columns   : $self->rows;
+		my $style      = defined $bar ? $bar->line_style : $self->look('line.style');
+		my $line_attr  = $self->color_attr( defined $bar ? $bar->line_color : $self->look('line.color') );
 		my ( $start, $end ) = $horizontal ? qw(left right) : qw(up down);
 
 		my @glyphs = ( _joint( $style, $start, $end ) ) x $length;

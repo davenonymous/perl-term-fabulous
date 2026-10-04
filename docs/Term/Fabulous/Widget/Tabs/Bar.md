@@ -113,7 +113,7 @@ are optional; unknown parameters die.
 - `line_color`
 
     The color of the borders and the line, in any format
-    [Term::Fabulous::Color](../../Color.md) accepts. Default: `[90, 96, 110, 255]`, a
+    [Term::Fabulous::Color](../../Color.md) accepts. Default: the theme's `tabs.line.color`, `[90, 96, 110, 255]` in the dark theme, a
     gray.
 
 - `text_color`
