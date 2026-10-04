@@ -25,7 +25,7 @@ class Term::Fabulous::Widget::SegmentedControl
 	# Key name => step through the enabled segments.
 	my %STEP_BY_KEY = ( Left => -1, Up => -1, Right => 1, Down => 1 );
 
-	field @options;     # { label, value, disabled }
+	field @options;    # { label, value, disabled }
 	field $selected;    # index into @options, or undef
 
 	field $vertical               :param = 0;
@@ -39,7 +39,8 @@ class Term::Fabulous::Widget::SegmentedControl
 	field $_hover_index;
 
 	ADJUST :params ( :$options = undef, :$value = undef, :$selected_index = undef ) {
-		die ref($self) . ": give 'value' or 'selected_index', not both" if defined $value && defined $selected_index;
+		die ref($self) . ": give 'value' or 'selected_index', not both"
+			if defined $value && defined $selected_index;
 		$vertical               = boolean( $self, vertical => $vertical );
 		$segment_padding        = non_negative_integer( $self, segment_padding => $segment_padding );
 		$separator              = $self->_checked_separator($separator);
@@ -47,17 +48,17 @@ class Term::Fabulous::Widget::SegmentedControl
 		$separator_color        = cell_color( $self, separator_color        => $separator_color );
 		$hover_background_color = cell_color( $self, hover_background_color => $hover_background_color );
 
-		$self->options($options)               if defined $options;
-		$self->value($value)                   if defined $value;
+		$self->options($options) if defined $options;
+		$self->value($value) if defined $value;
 		$self->selected_index($selected_index) if defined $selected_index;
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_index_at($event) ) if $weak_self; return $continue } );
+		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_index_at($event) ) if $weak_self;                           return $continue } );
 		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
-	}
+		}
 
-	method _checked_separator ($glyph) {
+		method _checked_separator ($glyph) {
 		return undef unless defined $glyph;
 		return Term::Fabulous::Check::glyph( $self, separator => $glyph );
 	}
@@ -65,11 +66,11 @@ class Term::Fabulous::Widget::SegmentedControl
 	# An option is a label (its own value), [ label, value ] or
 	# { label => ..., value => ..., disabled => ... }.
 	method _parse_option ($option) {
-		my ( $label, $value, $disabled ) =
-			  ref $option eq 'ARRAY' && @$option == 2 ? @$option
-			: ref $option eq 'HASH'                  ? @{$option}{qw(label value disabled)}
-			: !ref $option                           ? ( $option, $option )
-			:                                          ();
+		my ( $label, $value, $disabled )
+			= ref $option eq 'ARRAY' && @$option == 2 ? @$option
+			: ref $option eq 'HASH'                   ? @{$option}{qw(label value disabled)}
+			: !ref $option                            ? ( $option, $option )
+			:                                           ();
 		die ref($self) . ": an option must be a label, [ label, value ] or { label => ..., value => ..., disabled => ... }, got " . describe($option)
 			unless defined $label && !ref $label && !ref $value;
 		die ref($self) . ": a hash option takes only the keys 'label', 'value' and 'disabled'"
@@ -153,20 +154,20 @@ class Term::Fabulous::Widget::SegmentedControl
 		return $$field_ref;
 	}
 
-	method vertical (@new)               { return @new ? $self->_set( \$vertical,               boolean( $self, vertical => $new[0] ) ) : $vertical }
-	method segment_padding (@new)        { return @new ? $self->_set( \$segment_padding,        non_negative_integer( $self, segment_padding => $new[0] ) ) : $segment_padding }
-	method separator (@new)              { return @new ? $self->_set( \$separator,              $self->_checked_separator( $new[0] ) ) : $separator }
-	method selected_text_color (@new)    { return @new ? $self->_set( \$selected_text_color,    cell_color( $self, selected_text_color    => $new[0] ) ) : $selected_text_color }
-	method separator_color (@new)        { return @new ? $self->_set( \$separator_color,        cell_color( $self, separator_color        => $new[0] ) ) : $separator_color }
+	method vertical               (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                                : $vertical }
+	method segment_padding        (@new) { return @new ? $self->_set( \$segment_padding, non_negative_integer( $self, segment_padding => $new[0] ) )     : $segment_padding }
+	method separator              (@new) { return @new ? $self->_set( \$separator, $self->_checked_separator( $new[0] ) )                                : $separator }
+	method selected_text_color    (@new) { return @new ? $self->_set( \$selected_text_color, cell_color( $self, selected_text_color => $new[0] ) )       : $selected_text_color }
+	method separator_color        (@new) { return @new ? $self->_set( \$separator_color, cell_color( $self, separator_color => $new[0] ) )               : $separator_color }
 	method hover_background_color (@new) { return @new ? $self->_set( \$hover_background_color, cell_color( $self, hover_background_color => $new[0] ) ) : $hover_background_color }
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			options                => \&_parse_options,
-			option                 => \&_parse_options,
+			options => \&_parse_options,
+			option  => \&_parse_options,
 			( map { $_ => 'scalar' } qw(value selected_index segment_padding separator) ),
-			vertical               => 'boolean',
+			vertical => 'boolean',
 			( map { $_ => 'color' } qw(selected_text_color separator_color hover_background_color) ),
 		);
 	}
@@ -183,7 +184,7 @@ class Term::Fabulous::Widget::SegmentedControl
 			return $self->options( [ $self->options, @labels ] );
 		}
 
-		my %props   = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
+		my %props   = map  { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
 		my @unknown = grep { !/\A(?:value|disabled)\z/ } sort keys %props;
 		die ref($self) . ": layout property 'option' takes one label and optional value=... and disabled=..." if @labels != 1 || @unknown;
 		return $self->options( [ $self->options, { label => $labels[0], value => $props{value} // $labels[0], disabled => $props{disabled} // 0 } ] );
@@ -230,7 +231,7 @@ class Term::Fabulous::Widget::SegmentedControl
 
 	method natural_size () {
 		my @lengths = $self->_natural_lengths;
-		return ( List::Util::max( 1, map { string_columns( $_->{label} ) + 2 * $segment_padding } @options ), List::Util::max( 1, scalar @options ) ) if $vertical;
+		return ( List::Util::max( 1, map { string_columns( $_->{label} ) + 2 * $segment_padding } @options ),   List::Util::max( 1, scalar @options ) ) if $vertical;
 		return ( List::Util::max( 1, sum0(@lengths) + $self->_separator_cells * ( @options ? $#options : 0 ) ), 1 );
 	}
 
@@ -256,7 +257,7 @@ class Term::Fabulous::Widget::SegmentedControl
 	}
 
 	method handle_key ($event) {
-		my $name = $event->main_key_name // return 0;
+		my $name    = $event->main_key_name // return 0;
 		my @enabled = grep { !$options[$_]{disabled} } 0 .. $#options;
 		return 0 unless @enabled;
 
@@ -291,10 +292,10 @@ class Term::Fabulous::Widget::SegmentedControl
 	}
 
 	method paint () {
-		my $bg     = $self->paint_focus_background;
-		my $length = $vertical ? $self->rows : $self->columns;
-		my $across = $vertical ? $self->columns : $self->rows;
-		my @spans  = $self->_spans($length);
+		my $bg      = $self->paint_focus_background;
+		my $length  = $vertical ? $self->rows    : $self->columns;
+		my $across  = $vertical ? $self->columns : $self->rows;
+		my @spans   = $self->_spans($length);
 		my $enabled = $self->is_enabled;
 
 		foreach my $index ( 0 .. $#spans ) {
@@ -302,14 +303,14 @@ class Term::Fabulous::Widget::SegmentedControl
 			my $option      = $options[$index];
 			my $is_selected = defined $selected && $selected == $index;
 			my $is_hovered  = $enabled && !$option->{disabled} && defined $_hover_index && $_hover_index == $index;
-			my $segment_bg  = $is_selected ? $self->accent_attr : $is_hovered ? $self->color_attr($hover_background_color) : $bg;
+			my $segment_bg  = $is_selected ? $self->accent_attr                      : $is_hovered         ? $self->color_attr($hover_background_color) : $bg;
 			my $fg          = $is_selected ? $self->color_attr($selected_text_color) : $option->{disabled} ? $self->color_attr( $self->disabled_color ) : $self->foreground_attr;
 
 			my $label  = $option->{label};
-			my $width  = $vertical ? $across : $segment_length;
+			my $width  = $vertical ? $across         : $segment_length;
 			my $height = $vertical ? $segment_length : $across;
-			my $x0     = $vertical ? 0 : $start;
-			my $y0     = $vertical ? $start : 0;
+			my $x0     = $vertical ? 0               : $start;
+			my $y0     = $vertical ? $start          : 0;
 			$self->fill_attrs( $x0, $y0 + $_, $width, ' ', undef, $segment_bg ) foreach 0 .. $height - 1;
 			my $label_x = $x0 + int( ( $width - string_columns($label) ) / 2 );
 			$self->paint_text( List::Util::max( $x0, $label_x ), $y0 + int( ( $height - 1 ) / 2 ), $label, $fg, $segment_bg, $x0 + $width );

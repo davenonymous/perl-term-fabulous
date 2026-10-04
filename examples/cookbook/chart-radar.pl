@@ -15,7 +15,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
-		padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 2,
 	},
 );
@@ -40,8 +40,8 @@ $root->add_child(
 # Slices of equal angle; their length shows the value.
 $root->add_child(
 	Term::Fabulous::Widget::PolarAreaChart->new(
-		title => 'Rain per season (mm)',
-		data  => [ [ Spring => 170 ], [ Summer => 210 ], [ Autumn => 260 ], [ Winter => 190 ] ],
+		title       => 'Rain per season (mm)',
+		data        => [ [ Spring => 170 ], [ Summer => 210 ], [ Autumn => 260 ], [ Winter => 190 ] ],
 		start_angle => -45,
 	)
 );

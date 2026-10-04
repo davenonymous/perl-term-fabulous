@@ -63,7 +63,11 @@ class Term::Fabulous::Widget::Divider
 	method _checked_style ($style) {
 		return $style if blessed $style && $style->isa('Term::Fabulous::Enum::BorderStyle');
 		my $named = defined $style && !ref $style ? Term::Fabulous::Enum::BorderStyle->from_name($style) : undef;
-		die ref($self) . ": line_style must be a Term::Fabulous::Enum::BorderStyle item or its name, got " . describe($style) . " (known: " . join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")"
+		die ref($self)
+			. ": line_style must be a Term::Fabulous::Enum::BorderStyle item or its name, got "
+			. describe($style)
+			. " (known: "
+			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")"
 			unless defined $named;
 		return $named;
 	}
@@ -82,16 +86,16 @@ class Term::Fabulous::Widget::Divider
 		return $$field_ref;
 	}
 
-	method vertical (@new)      { return @new ? $self->_set( \$vertical,      boolean( $self, vertical => $new[0] ) ) : $vertical }
-	method text (@new)          { return @new ? $self->_set( \$text,          string( $self, text => $new[0] ) ) : $text }
-	method text_position (@new) { return @new ? $self->_set( \$text_position, $self->_checked_position( $new[0] ) ) : $text_position }
-	method text_margin (@new)   { return @new ? $self->_set( \$text_margin,   non_negative_integer( $self, text_margin => $new[0] ) ) : $text_margin }
-	method text_padding (@new)  { return @new ? $self->_set( \$text_padding,  non_negative_integer( $self, text_padding => $new[0] ) ) : $text_padding }
-	method line_style (@new)    { return @new ? $self->_set( \$line_style,    $self->_checked_style( $new[0] ) ) : $line_style }
-	method glyph (@new)         { return @new ? $self->_set( \$glyph,         $self->_checked_glyph( $new[0] ) ) : $glyph }
-	method color (@new)         { return @new ? $self->_set( \$color,         cell_color( $self, color => $new[0] ) ) : $color }
-	method text_color (@new)    { return @new ? $self->_set( \$text_color,    cell_color( $self, text_color => $new[0] ) ) : $text_color }
-	method bold (@new)          { return @new ? $self->_set( \$bold,          boolean( $self, bold => $new[0] ) ) : $bold }
+	method vertical      (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                      : $vertical }
+	method text          (@new) { return @new ? $self->_set( \$text, string( $self, text => $new[0] ) )                               : $text }
+	method text_position (@new) { return @new ? $self->_set( \$text_position, $self->_checked_position( $new[0] ) )                   : $text_position }
+	method text_margin   (@new) { return @new ? $self->_set( \$text_margin, non_negative_integer( $self, text_margin => $new[0] ) )   : $text_margin }
+	method text_padding  (@new) { return @new ? $self->_set( \$text_padding, non_negative_integer( $self, text_padding => $new[0] ) ) : $text_padding }
+	method line_style    (@new) { return @new ? $self->_set( \$line_style, $self->_checked_style( $new[0] ) )                         : $line_style }
+	method glyph         (@new) { return @new ? $self->_set( \$glyph, $self->_checked_glyph( $new[0] ) )                              : $glyph }
+	method color         (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )                         : $color }
+	method text_color    (@new) { return @new ? $self->_set( \$text_color, cell_color( $self, text_color => $new[0] ) )               : $text_color }
+	method bold          (@new) { return @new ? $self->_set( \$bold, boolean( $self, bold => $new[0] ) )                              : $bold }
 
 	method layout_properties :common () {
 		return (
@@ -161,8 +165,8 @@ class Term::Fabulous::Widget::Divider
 			$self->put_attrs( $x, $_, $line, $line_fg, undef ) foreach 0 .. $rows - 1;
 			return unless defined $start;
 			my @clusters = $self->_text_clusters;
-			my $y = $start + $text_padding;
-			$self->put_attrs( $x, $_, ' ', undef, undef ) foreach $start .. $start + $self->_text_length - 1;
+			my $y        = $start + $text_padding;
+			$self->put_attrs( $x, $_,   ' ',     undef,    undef ) foreach $start .. $start + $self->_text_length - 1;
 			$self->put_attrs( $x, $y++, $_->[0], $text_fg, undef ) foreach @clusters;
 			return;
 		}

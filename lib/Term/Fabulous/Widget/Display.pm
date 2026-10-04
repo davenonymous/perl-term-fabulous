@@ -128,7 +128,7 @@ class Term::Fabulous::Widget::Display
 		my $padding = $layout->{padding} // {};
 		my ( $columns, $rows ) = $self->natural_size;
 		my %natural = ( width => $columns, height => $rows );
-		my %inset = (
+		my %inset   = (
 			width  => ( $padding->{left} // 0 ) + ( $padding->{right}  // 0 ),
 			height => ( $padding->{top}  // 0 ) + ( $padding->{bottom} // 0 ),
 		);

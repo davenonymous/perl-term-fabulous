@@ -100,7 +100,7 @@ sub cells_with ( $chart, $test ) {
 sub bar_eighths ( $chart, $x, $color ) {
 	my $eighths = 0;
 	foreach my $y ( 0 .. $chart->rows - 1 ) {
-		my $glyph = glyph_at( $chart, $x, $y ) // next;
+		my $glyph = glyph_at( $chart, $x, $y )                  // next;
 		my $part  = $glyph eq "\x{2580}" ? 4 : $EIGHTHS{$glyph} // 0;
 		$eighths += $part if ( fg_at( $chart, $x, $y ) // -1 ) == $color;
 		$eighths += $part ? 8 - $part : 8 if ( bg_at( $chart, $x, $y ) // -1 ) == $color;

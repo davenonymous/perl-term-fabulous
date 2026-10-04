@@ -38,7 +38,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -60,7 +60,7 @@ my $panel = Term::Fabulous::Widget::Box->new(
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 	background_color => [ 30, 35, 50, 255 ],
 	border_width     => 1,
@@ -75,7 +75,7 @@ my $badge = Term::Fabulous::Widget::Box->new(
 	floating         => {
 		attach_to     => CLAY_ATTACH_TO_PARENT,
 		attach_points => { element => CLAY_ATTACH_POINT_RIGHT_TOP, parent => CLAY_ATTACH_POINT_RIGHT_TOP },
-		offset        => { x => -2, y => 0 },
+		offset        => { x       => -2,                          y      => 0 },
 	},
 );
 $badge->add_child( text( '3 changes', [ 20, 25, 35, 255 ] ) );
@@ -89,7 +89,7 @@ my $message = Term::Fabulous::Widget::Box->new(
 	floating         => {
 		attach_to     => CLAY_ATTACH_TO_ROOT,
 		attach_points => { element => CLAY_ATTACH_POINT_RIGHT_BOTTOM, parent => CLAY_ATTACH_POINT_RIGHT_BOTTOM },
-		offset        => { x => -2, y => 0 },
+		offset        => { x       => -2,                             y      => 0 },
 	},
 );
 $message->add_child( text( 'Saved 09:41', [ 20, 25, 35, 255 ] ) );

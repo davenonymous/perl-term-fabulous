@@ -25,7 +25,7 @@ subtest 'put and cell' => sub {
 	my $canvas = canvas( 4, 2 );
 	ref_is $canvas->put( 1, 0, 'a', 0xFF0000, 0x00FF00 ), $canvas, 'put returns the canvas';
 	is $canvas->cell( 1, 0 ), [ 'a', 0xFF0000, 0x00FF00 ], 'packed integers are the attributes';
-	is $canvas->cell( 0, 0 ), undef, 'an unset cell';
+	is $canvas->cell( 0, 0 ), undef,                       'an unset cell';
 
 	$canvas->put( 2.7, 1.2, 'b', 0, Term::Fabulous::Color->rgb( 1, 2, 3 ) );
 	is $canvas->cell( 2, 1 ), [ 'b', TB_HI_BLACK, 0x010203 ], 'coordinates round down, 0 is opaque black, Color objects work';
@@ -44,11 +44,11 @@ subtest 'writes outside the buffer are dropped' => sub {
 
 subtest 'invalid input dies' => sub {
 	my $canvas = canvas( 3, 1 );
-	like dies { $canvas->put( 0, 0, 'ab' ) },         qr/exactly one grapheme cluster, got 2/, 'two clusters';
-	like dies { $canvas->put( 0, 0, '' ) },           qr/non-empty string/,                    'an empty glyph';
-	like dies { $canvas->put( 'left', 0, 'a' ) },     qr/x must be a finite number/,           'a non-numeric coordinate';
-	like dies { $canvas->put( 0, 0, 'a', 0x1000000 ) }, qr/fg must be a packed 0xRRGGBB/,      'an integer color out of range';
-	like dies { $canvas->put( 0, 0, 'a', undef, 'nope' ) }, qr/unrecognized color string/,     'an invalid color string';
+	like dies { $canvas->put( 0, 0, 'ab' ) },               qr/exactly one grapheme cluster, got 2/, 'two clusters';
+	like dies { $canvas->put( 0, 0, '' ) },                 qr/non-empty string/,                    'an empty glyph';
+	like dies { $canvas->put( 'left', 0, 'a' ) },           qr/x must be a finite number/,           'a non-numeric coordinate';
+	like dies { $canvas->put( 0, 0, 'a', 0x1000000 ) },     qr/fg must be a packed 0xRRGGBB/,        'an integer color out of range';
+	like dies { $canvas->put( 0, 0, 'a', undef, 'nope' ) }, qr/unrecognized color string/,           'an invalid color string';
 };
 
 subtest 'wide glyphs' => sub {
@@ -106,9 +106,9 @@ subtest 'fit_to' => sub {
 	is \@events, [], 'the same size fires nothing';
 
 	$canvas->fit_to( 3, 3 );
-	is \@events, [ [ 3, 3 ] ], 'a new size fires CanvasResize';
+	is \@events,                                 [ [ 3, 3 ] ],            'a new size fires CanvasResize';
 	is [ map { glyphs( $canvas, $_ ) } 0 .. 2 ], [ 'ab.', 'z..', '...' ], 'cells inside are kept, the cut wide glyph is unset';
-	is $canvas->take_changed_spans, [ ( [ 0, 3 ] ) x 3 ], 'everything changed';
+	is $canvas->take_changed_spans,              [ ( [ 0, 3 ] ) x 3 ],    'everything changed';
 	like dies { $canvas->fit_to( -1, 2 ) }, qr/non-negative integer size/, 'a negative size dies';
 };
 

@@ -27,12 +27,12 @@ class Term::Fabulous::Widget::TextArea
 	my %VERTICAL_BY_KEY = (
 		'Up'             => [ -1, 'row',  0 ],
 		'Shift+Up'       => [ -1, 'row',  1 ],
-		'Down'           => [ 1,  'row',  0 ],
-		'Shift+Down'     => [ 1,  'row',  1 ],
+		'Down'           => [  1, 'row',  0 ],
+		'Shift+Down'     => [  1, 'row',  1 ],
 		'PageUp'         => [ -1, 'page', 0 ],
 		'Shift+PageUp'   => [ -1, 'page', 1 ],
-		'PageDown'       => [ 1,  'page', 0 ],
-		'Shift+PageDown' => [ 1,  'page', 1 ],
+		'PageDown'       => [  1, 'page', 0 ],
+		'Shift+PageDown' => [  1, 'page', 1 ],
 	);
 
 	field $preferred_columns :param = 40;
@@ -142,7 +142,7 @@ class Term::Fabulous::Widget::TextArea
 	}
 
 	method _paint_scrollbar () {
-		my $view      = $self->view;
+		my $view = $self->view;
 		my ( $height, $x ) = ( $self->rows, $self->columns - 1 );
 		my $total     = $view->visual_row_count;
 		my $thumb     = max( 1, int( $height * $height / $total + 0.5 ) );

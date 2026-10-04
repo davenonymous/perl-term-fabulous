@@ -16,7 +16,7 @@ class Term::Fabulous::Terminal::Termbox::Cells :does(Term::Fabulous::Render::Tar
 	use Term::Fabulous::Render::Geometry qw(row_spans_outside);
 
 	# In inline mode, the terminal row of row 0 and the rows of the region.
-	field $region_top :reader = undef;
+	field $region_top  :reader = undef;
 	field $region_rows :reader = undef;
 
 	method place_region ( $top, $rows ) {

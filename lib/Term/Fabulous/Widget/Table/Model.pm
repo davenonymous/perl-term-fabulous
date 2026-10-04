@@ -25,7 +25,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	field $row_id       :param :reader = undef;    # a key, a code reference, or undef for ids of our own
 	field $children_key :param :reader = undef;    # the key of nested rows, or undef for flat data
 	field $page_size    :param :reader = 0;
-	field $expand_new   :param = 0;                # whether rows added with children start expanded
+	field $expand_new   :param = 0;    # whether rows added with children start expanded
 
 	# Columns, in order, and the keys of the hidden ones.
 	field @_columns;
@@ -44,30 +44,30 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	field %_raw;
 	field %_display;
 	field %_id_of_copy;    # refaddr of a copy => row id
-	field %_search_text;   # row id => the folded display texts of the visible columns
+	field %_search_text;    # row id => the folded display texts of the visible columns
 
 	# How the rows are shown.
-	field @_sort;              # [ key, 1 or -1 ]
-	field %_filter;            # name => Filter
-	field @_filter_names;      # in the order they were set
+	field @_sort;    # [ key, 1 or -1 ]
+	field %_filter;    # name => Filter
+	field @_filter_names;    # in the order they were set
 	field $_search = '';
-	field @_group_by;          # column keys, outermost first
-	field %_collapsed_group;   # group key => 1
-	field %_expanded;          # row id => 1
+	field @_group_by;    # column keys, outermost first
+	field %_collapsed_group;    # group key => 1
+	field %_expanded;    # row id => 1
 	field $_page = 1;
 
 	# Selection and cursor.
 	field %_selected;
-	field $_cursor;            # a line key, or undef
-	field $_cursor_index;      # the cursor's place in the view before the last change
-	field $_anchor;            # the line key a range selection extends from
+	field $_cursor;    # a line key, or undef
+	field $_cursor_index;    # the cursor's place in the view before the last change
+	field $_anchor;    # the line key a range selection extends from
 
 	# The computed view, undef when anything it depends on changed.
 	field $_view;
 
 	# Counts every change of the data, the columns or the view state, so
 	# the table can tell whether its widgets are up to date.
-	field $revision :reader = 0;
+	field $revision         :reader = 0;
 	field $columns_revision :reader = 0;
 
 	ADJUST {
@@ -189,7 +189,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		_check_index( 'column index', $index, scalar @_columns );
 		splice @_columns, $index, 0, $column;
 		$_column_by_key{ $column->key } = $column;
-		$_hidden{ $column->key } = 1 unless $column->visible;
+		$_hidden{ $column->key }        = 1 unless $column->visible;
 		$self->_columns_changed( [ $column->key ] );
 		return $column;
 	}
@@ -209,7 +209,10 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		delete $_hidden{$key};
 		@_sort     = grep { $_->[0] ne $key } @_sort;
 		@_group_by = grep { $_ ne $key } @_group_by;
-		my @comparing = grep { my $name = $_; any { $_ eq $key } $_filter{$name}->columns } @_filter_names;
+		my @comparing = grep {
+			my $name = $_;
+			any { $_ eq $key } $_filter{$name}->columns
+		} @_filter_names;
 		$self->remove_filter($_) foreach @comparing;
 		$self->_columns_changed( [$key] );
 		return;
@@ -250,7 +253,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method set_visible_columns (@keys) {
 		$self->column($_) foreach @keys;
-		my %shown = map { $_ => 1 } @keys;
+		my %shown  = map { $_ => 1 } @keys;
 		my %hidden = map { $_ => 1 } grep { !$shown{$_} } $self->column_keys;
 		return if join( "\0", sort keys %hidden ) eq join( "\0", sort keys %_hidden );
 		%_hidden = %hidden;
@@ -282,7 +285,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 			my @ids;
 			foreach my $row (@$list) {
 				die "Term::Fabulous::Widget::Table::Model: a row must be a hash reference, got " . _describe($row) unless ref $row eq 'HASH';
-				my %data = %$row;
+				my %data   = %$row;
 				my $nested = defined $children_key ? delete $data{$children_key} : undef;
 				die "Term::Fabulous::Widget::Table::Model: the '$children_key' of a row must be an array reference of rows, got " . _describe($nested)
 					if defined $nested && ref $nested ne 'ARRAY';
@@ -291,7 +294,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 				my $record = { id => $id, data => \%data, parent => $parent_id, children => [], revision => 0 };
 				$by_id{$id} = $record;
 				push @records, $record;
-				push @ids, $id;
+				push @ids,     $id;
 				$record->{children} = $collect->( $nested, $id ) if defined $nested;
 			}
 			return \@ids;
@@ -303,11 +306,11 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method set_rows ($rows) {
 		my ( $top_ids, $by_id ) = $self->_records_for( $rows, undef, {} );    # the new rows replace all
-		%_row = %$by_id;
-		@_roots = @$top_ids;
-		%_copy = %_raw = %_display = %_id_of_copy = %_search_text = ();
+		%_row      = %$by_id;
+		@_roots    = @$top_ids;
+		%_copy     = %_raw = %_display = %_id_of_copy = %_search_text = ();
 		%_expanded = $expand_new ? map { $_->{id} => 1 } grep { @{ $_->{children} } } values %_row : ();
-		%_selected = map { $_ => 1 } grep { exists $_row{$_} } keys %_selected;
+		%_selected = map               { $_       => 1 } grep { exists $_row{$_} } keys %_selected;
 		$self->_changed;
 		return $top_ids;
 	}
@@ -414,7 +417,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	method clear_rows () {
-		%_row = %_copy = %_raw = %_display = %_id_of_copy = %_search_text = %_expanded = %_selected = ();
+		%_row   = %_copy = %_raw = %_display = %_id_of_copy = %_search_text = %_expanded = %_selected = ();
 		@_roots = ();
 		$self->_changed;
 		return;
@@ -451,12 +454,14 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	method rows () {
 		my $nest;
 		$nest = sub ($ids) {
-			return [ map {
-				my $record = $_row{$_};
-				my %data = %{ $record->{data} };
-				$data{$children_key} = $nest->( $record->{children} ) if defined $children_key && @{ $record->{children} };
-				\%data;
-			} @$ids ];
+			return [
+				map {
+					my $record = $_row{$_};
+					my %data   = %{ $record->{data} };
+					$data{$children_key} = $nest->( $record->{children} ) if defined $children_key && @{ $record->{children} };
+					\%data;
+				} @$ids
+			];
 		};
 		my $rows = $nest->( \@_roots );
 		undef $nest;
@@ -548,7 +553,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	sub _same_sort ( $left, $right ) {
-		return join( "\0", map {@$_} @$left ) eq join( "\0", map {@$_} @$right ) ? 1 : 0;
+		return join( "\0", map { @$_ } @$left ) eq join( "\0", map { @$_ } @$right ) ? 1 : 0;
 	}
 
 	# What a click on a header does: ascending, descending, unsorted. With
@@ -557,8 +562,8 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	method cycle_sort ( $key, $add = 0 ) {
 		$self->column($key);
 		my ($current) = grep { $_->[0] eq $key } @_sort;
-		my $next = !defined $current ? 1 : $current->[1] > 0 ? -1 : 0;
-		my @sort = $add ? ( grep { $_->[0] ne $key } @_sort ) : ();
+		my $next      = !defined $current ? 1 : $current->[1] > 0 ? -1 : 0;
+		my @sort      = $add ? ( grep { $_->[0] ne $key } @_sort ) : ();
 		if ($next) {
 			my $position = $add && defined $current ? ( first { $_sort[$_][0] eq $key } 0 .. $#_sort ) : scalar @sort;
 			splice @sort, $position, 0, [ $key, $next ];
@@ -595,8 +600,8 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 					my ( $left, $right ) = ( $what->{$a}, $what->{$b} );
 					$result
 						= !defined $left || !defined $right ? ( defined $left ? -1 : defined $right ? 1 : 0 )
-						: $kind eq 'number'                ? $direction * ( $left <=> $right )
-						:                                    $direction * ( $left cmp $right );
+						: $kind eq 'number'                 ? $direction * ( $left <=> $right )
+						:                                     $direction * ( $left cmp $right );
 				}
 				last if $result;
 			}
@@ -697,7 +702,10 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	method expand_to_matches () {
 		return 0 unless $self->is_filtered && defined $children_key;
 		my $passing = $self->_passing;
-		my @closed  = grep { !$_expanded{$_} && ( any { $passing->{$_} } @{ $_row{$_}{children} } ) } keys %$passing;
+		my @closed  = grep {
+			!$_expanded{$_}
+				&& ( any { $passing->{$_} } @{ $_row{$_}{children} } )
+		} keys %$passing;
 		return 0 unless @closed;
 		$_expanded{$_} = 1 foreach @closed;
 		$self->_changed;
@@ -902,12 +910,10 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 			$group_of{$group_key} //= { column => $key, value => $value, display => $self->display_of( $id, $key ), ids => [], first => $id };
 			push @{ $group_of{$group_key}{ids} }, $id;
 		}
-		my ($sorted) = grep { $_->[0] eq $key } @_sort;
+		my ($sorted)  = grep { $_->[0] eq $key } @_sort;
 		my $direction = defined $sorted ? $sorted->[1] : 1;
 		my @groups    = map { $group_of{$_} } @order;
-		@groups = sort {
-			$column->order( $a->{value}, $b->{value}, $self->data_of( $a->{first} ), $self->data_of( $b->{first} ), $direction )
-		} @groups;
+		@groups = sort { $column->order( $a->{value}, $b->{value}, $self->data_of( $a->{first} ), $self->data_of( $b->{first} ), $direction ) } @groups;
 		delete $_->{first} foreach @groups;
 		return @groups;
 	}
@@ -933,7 +939,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		return @{ $self->_view->{filtered} };
 	}
 
-	sub row_key ($id)   { return ROW_PREFIX . $id }
+	sub row_key   ($id)  { return ROW_PREFIX . $id }
 	sub group_key ($key) { return GROUP_PREFIX . $key }
 
 	sub id_of_key ($key) {
@@ -1025,7 +1031,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# order.
 	method set_selection (@ids) {
 		$self->_record($_) foreach @ids;
-		my %new = map { $_ => 1 } @ids;
+		my %new     = map  { $_ => 1 } @ids;
 		my @added   = grep { !$_selected{$_} } keys %new;
 		my @removed = grep { !$new{$_} } keys %_selected;
 		return ( [], [] ) unless @added || @removed;
@@ -1120,9 +1126,9 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# the lines of the whole view; undef when there is no cursor (the view
 	# is empty).
 	method line_after_cursor ($steps) {
-		my $lines = $self->_view->{lines};
+		my $lines  = $self->_view->{lines};
 		my $cursor = $self->cursor // return undef;
-		my $index = $self->line_index($cursor) + $steps;
+		my $index  = $self->line_index($cursor) + $steps;
 		return $lines->[ max( 0, min( $#$lines, $index ) ) ]{key};
 	}
 

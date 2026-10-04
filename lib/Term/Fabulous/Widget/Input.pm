@@ -47,10 +47,10 @@ class Term::Fabulous::Widget::Input
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		my $own      = sub ($event) { defined $weak_self && refaddr( $event->target ) == refaddr($weak_self) };
 
-		$self->on( OnFocus      => sub ($event) { $weak_self->focus_changed(1) if $own->($event); return $continue } );
-		$self->on( OnBlur       => sub ($event) { $weak_self->focus_changed(0) if $own->($event); return $continue } );
-		$self->on( KeyPress     => sub ($event) { return $weak_self->_dispatch( handle_key => $event ) } );
-		$self->on( Mouse        => sub ($event) { return $weak_self->_dispatch( handle_mouse => $event ) } );
+		$self->on( OnFocus  => sub ($event) { $weak_self->focus_changed(1) if $own->($event); return $continue } );
+		$self->on( OnBlur   => sub ($event) { $weak_self->focus_changed(0) if $own->($event); return $continue } );
+		$self->on( KeyPress => sub ($event) { return $weak_self->_dispatch( handle_key   => $event ) } );
+		$self->on( Mouse    => sub ($event) { return $weak_self->_dispatch( handle_mouse => $event ) } );
 		$self->on(
 			OnRelease => sub ($event) {
 				$weak_self->activate if $own->($event) && $weak_self->is_enabled;

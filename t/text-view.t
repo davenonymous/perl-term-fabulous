@@ -21,20 +21,25 @@ sub view {
 sub shown_rows {
 	my ( $view, @rows ) = @_;
 	@rows = $view->visual_rows unless @rows;
-	return [ map { my ( $line, undef, $to, undef, $shown ) = @$_; join '', map { $_->[1] } $view->clusters( $line, $shown, $to ) } @rows ];
+	return [
+		map {
+			my ( $line, undef, $to, undef, $shown ) = @$_;
+			join '', map { $_->[1] } $view->clusters( $line, $shown, $to )
+		} @rows
+	];
 }
 
 subtest 'wrapping' => sub {
 	skip_all 'the locale has no double-width wcwidth for CJK' unless cluster_columns("\x{5B57}") == 2;
 
 	my @cases = (
-		[ 'the quick brown fox', 10, [ 'the quick ', 'brown fox' ],              'breaks after the last blank that fits; the blank stays' ],
-		[ 'abcdefghijklmnop',    6,  [ 'abcdef', 'ghijkl', 'mnop' ],           'a word wider than the row breaks anywhere' ],
-		[ 'aaaaaaaaaa bbbbbbbbb', 10, [ 'aaaaaaaaaa', 'bbbbbbbbb' ],            'a blank that does not fit hangs: no row starts with it' ],
-		[ "abcdefghi\x{5B57}",   10, [ 'abcdefghi', "\x{5B57}" ],              'a wide character at the edge moves to the next row' ],
-		[ "bbbbbbbbb\x{5B57}cd", 10, [ 'bbbbbbbbb', "\x{5B57}cd" ],            'and the rest of the word follows it' ],
-		[ 'abcdefghij',          10, [ 'abcdefghij', '' ],                     'a full last row gets an empty row for the cursor' ],
-		[ "one\n\ntwo",          10, [ 'one', '', 'two' ],                     'every line starts a row' ],
+		[ 'the quick brown fox',  10, [ 'the quick ', 'brown fox' ],  'breaks after the last blank that fits; the blank stays' ],
+		[ 'abcdefghijklmnop',     6,  [ 'abcdef', 'ghijkl', 'mnop' ], 'a word wider than the row breaks anywhere' ],
+		[ 'aaaaaaaaaa bbbbbbbbb', 10, [ 'aaaaaaaaaa', 'bbbbbbbbb' ],  'a blank that does not fit hangs: no row starts with it' ],
+		[ "abcdefghi\x{5B57}",    10, [ 'abcdefghi', "\x{5B57}" ],    'a wide character at the edge moves to the next row' ],
+		[ "bbbbbbbbb\x{5B57}cd",  10, [ 'bbbbbbbbb', "\x{5B57}cd" ],  'and the rest of the word follows it' ],
+		[ 'abcdefghij',           10, [ 'abcdefghij', '' ],           'a full last row gets an empty row for the cursor' ],
+		[ "one\n\ntwo",           10, [ 'one', '', 'two' ],           'every line starts a row' ],
 	);
 	foreach my $case (@cases) {
 		my ( $text, $width, $expected, $name ) = @$case;
@@ -59,10 +64,10 @@ subtest 'the cursor' => sub {
 	$tall->editor->move_document_start;
 	$tall->follow_cursor;
 	is [ $tall->top_row, $tall->cursor_cell ], [ 0, 0, 0 ], 'and back up';
-	is $tall->scroll_rows(4), 4, 'the wheel scrolls without moving it';
-	is [ $tall->cursor_cell ], [], 'which is then out of view';
+	is $tall->scroll_rows(4),                  4,           'the wheel scrolls without moving it';
+	is [ $tall->cursor_cell ],                 [],          'which is then out of view';
 	$tall->follow_cursor;
-	is $tall->top_row, 4, 'and stays scrolled while nothing changes';
+	is $tall->top_row,                            4,        'and stays scrolled while nothing changes';
 	is [ $tall->scroll_rows(9), $tall->top_row ], [ 3, 7 ], 'up to the last rows';
 };
 
@@ -100,7 +105,7 @@ subtest 'scrolling sideways' => sub {
 subtest 'positions under a cell' => sub {
 	my $wrapped = view( 'the quick brown fox', 10, 3, wrap => 1 );
 	is [ $wrapped->position_at( 1, 1 ) ], [ 0, 11 ], 'a cell of a wrapped row';
-	is [ $wrapped->position_at( 9, 0 ) ], [ 0, 9 ], 'past the end of a wrapped part: before its last cluster';
+	is [ $wrapped->position_at( 9, 0 ) ], [ 0, 9 ],  'past the end of a wrapped part: before its last cluster';
 	is [ $wrapped->position_at( 9, 1 ) ], [ 0, 19 ], 'past the end of the last part: the end of the line';
 	is [ $wrapped->position_at( 0, 7 ) ], [ 0, 10 ], 'below the text: the last row';
 
@@ -140,9 +145,9 @@ subtest 'settings' => sub {
 	is shown_rows($view), ['secret'], 'clusters are shown as they are';
 	$view->set_display( sub { '*' } );
 	is shown_rows($view), ['******'], 'until the display function says otherwise';
-	like dies { Term::Fabulous::TextView->new( editor => 'text' ) }, qr/editor must be a Term::Fabulous::Editor/, 'the editor is checked';
-	like dies { $view->set_size( -1, 2 ) }, qr/set_size needs a non-negative integer size/, 'and the size';
-	like dies { $view->set_display('*') }, qr/display must be a code reference/, 'and the display';
+	like dies { Term::Fabulous::TextView->new( editor => 'text' ) }, qr/editor must be a Term::Fabulous::Editor/,    'the editor is checked';
+	like dies { $view->set_size( -1, 2 ) },                          qr/set_size needs a non-negative integer size/, 'and the size';
+	like dies { $view->set_display('*') },                           qr/display must be a code reference/,           'and the display';
 };
 
 done_testing;

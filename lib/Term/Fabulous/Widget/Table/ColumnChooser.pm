@@ -24,9 +24,9 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 	use constant Z_INDEX => 32767;
 
 	# [ key, title, visible ] per column, in order.
-	field $columns   :param;
-	field $on_toggle :param;    # sub ( $key, $visible )
-	field $on_close  :param;    # sub ()
+	field $columns    :param;
+	field $on_toggle  :param;    # sub ( $key, $visible )
+	field $on_close   :param;    # sub ()
 	field $text_color :param = [ 220, 223, 228, 255 ];
 	field @_boxes;
 
@@ -56,6 +56,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 				return;
 			}
 		);
+
 		# Closes once the focus has left it; the new focus is only known after
 		# the OnBlur, so the check waits for the frame.
 		$self->on(

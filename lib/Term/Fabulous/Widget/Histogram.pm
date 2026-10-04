@@ -44,8 +44,8 @@ class Term::Fabulous::Widget::Histogram
 		$cumulative = boolean( $self, cumulative => $cumulative );
 	}
 
-	method default_series_type ()           { return 'bar' }
-	method series_types :override ()        { return 'bar' }
+	method default_series_type ()    { return 'bar' }
+	method series_types :override () { return 'bar' }
 
 	method _checked_bins ($value) {
 		return 'auto' if defined $value && !ref $value && $value eq 'auto';
@@ -72,10 +72,10 @@ class Term::Fabulous::Widget::Histogram
 		return $value;
 	}
 
-	method bins (@new)       { return @new ? $self->_set( \$bins,       $self->_checked_bins( $new[0] ) )                       : $bins }
-	method bin_width (@new)  { return @new ? $self->_set( \$bin_width,  $self->_checked_bin_width( $new[0] ) )                  : $bin_width }
-	method measure (@new)    { return @new ? $self->_set( \$measure,    $self->_check_choice( measure => $new[0], \%IS_MEASURE ) ) : $measure }
-	method cumulative (@new) { return @new ? $self->_set( \$cumulative, boolean( $self, cumulative => $new[0] ) )              : $cumulative }
+	method bins       (@new) { return @new ? $self->_set( \$bins,       $self->_checked_bins( $new[0] ) )                          : $bins }
+	method bin_width  (@new) { return @new ? $self->_set( \$bin_width,  $self->_checked_bin_width( $new[0] ) )                     : $bin_width }
+	method measure    (@new) { return @new ? $self->_set( \$measure,    $self->_check_choice( measure => $new[0], \%IS_MEASURE ) ) : $measure }
+	method cumulative (@new) { return @new ? $self->_set( \$cumulative, boolean( $self, cumulative => $new[0] ) )                  : $cumulative }
 
 	method range (@new) {
 		return defined $range ? [@$range] : undef unless @new;
@@ -113,7 +113,7 @@ class Term::Fabulous::Widget::Histogram
 
 	# The edges of the bins over all observations.
 	method bin_edges (@samples) {
-		my @all = map {@$_} @samples;
+		my @all = map { @$_ } @samples;
 		my ( $low, $high ) = $range ? @$range : @all ? ( List::Util::min(@all), List::Util::max(@all) ) : ( 0, 1 );
 		$high = $low + 1 if $high <= $low;
 		if ( defined $bin_width || $bins eq 'auto' ) {
@@ -134,7 +134,7 @@ class Term::Fabulous::Widget::Histogram
 		my $count  = @sorted;
 		return ( $high - $low ) / 10 if $count < 2;
 		my $quartile = sub ($p) {
-			my $at = ( $count - 1 ) * $p;
+			my $at    = ( $count - 1 ) * $p;
 			my $below = floor($at);
 			return $sorted[$below] + ( $sorted[ List::Util::min( $below + 1, $#sorted ) ] - $sorted[$below] ) * ( $at - $below );
 		};

@@ -67,13 +67,13 @@ my @tree = with_paths(
 	'',
 	folder(
 		'project', 1,
-		folder( 'lib', 2, file( 'App.pm', 18_420, 2 ), folder( 'App', 3, file( 'Config.pm', 6_210, 3 ), file( 'Util.pm', 9_877, 12 ), file( 'Server.pm', 24_003, 5 ) ) ),
-		folder( 't', 4, file( 'basic.t', 2_310, 4 ), file( 'config.t', 4_512, 30 ), file( 'util.t', 3_904, 12 ) ),
-		folder( 'docs', 40, file( 'manual.pod', 88_115, 40 ), file( 'logo.png', 245_760, 300 ) ),
-		folder( 'vendor', 60, file( 'placeholder', 0, 60 ) ),    # loaded when opened
-		file( 'README.md', 5_120, 9 ),
+		folder( 'lib',    2,  file( 'App.pm',      18_420, 2 ),  folder( 'App', 3, file( 'Config.pm', 6_210, 3 ), file( 'Util.pm', 9_877, 12 ), file( 'Server.pm', 24_003, 5 ) ) ),
+		folder( 't',      4,  file( 'basic.t',     2_310,  4 ),  file( 'config.t', 4_512,   30 ), file( 'util.t', 3_904, 12 ) ),
+		folder( 'docs',   40, file( 'manual.pod',  88_115, 40 ), file( 'logo.png', 245_760, 300 ) ),
+		folder( 'vendor', 60, file( 'placeholder', 0,      60 ) ),    # loaded when opened
+		file( 'README.md',   5_120, 9 ),
 		file( 'Makefile.PL', 1_380, 90 ),
-		file( 'Changes', 3_002, 1 ),
+		file( 'Changes',     3_002, 1 ),
 	),
 );
 total($_) foreach @tree;
@@ -85,7 +85,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -97,20 +97,24 @@ my $table = Term::Fabulous::Widget::Table->new(
 	selection    => 'single',
 	filter_row   => 1,
 	sort         => [ 'kind', 'name' ],
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
 	header_line  => 'none',
 	stripe_color => '#1c2029',
 	columns      => [
-		{ key => 'name',     title => 'Name', width => 'fit(24)', compare => 'natural' },
-		{ key => 'size',     title => 'Size', type => 'number', mutator => bytes() },
-		{ key => 'modified', title => 'Modified', type => 'date', mutator => datetime( '%Y-%m-%d %H:%M', utc => 1 ) },
-		{ key => 'kind',     title => 'Kind', mutator => lookup( { dir => 'folder', pm => 'Perl module', t => 'test', pod => 'documentation', png => 'image', md => 'text', PL => 'Perl script' }, default => 'file' ),
-		  compare => sub ( $left, $right, @rows ) { ( $left eq 'dir' ? 0 : 1 ) <=> ( $right eq 'dir' ? 0 : 1 ) } },
+		{ key => 'name',     title => 'Name',     width => 'fit(24)', compare => 'natural' },
+		{ key => 'size',     title => 'Size',     type  => 'number',  mutator => bytes() },
+		{ key => 'modified', title => 'Modified', type  => 'date',    mutator => datetime( '%Y-%m-%d %H:%M', utc => 1 ) },
+		{
+			key     => 'kind', title => 'Kind',
+			mutator => lookup( { dir => 'folder', pm => 'Perl module', t => 'test', pod => 'documentation', png => 'image', md => 'text', PL => 'Perl script' }, default => 'file' ),
+			compare => sub ( $left, $right, @rows ) { ( $left eq 'dir' ? 0 : 1 ) <=> ( $right eq 'dir' ? 0 : 1 ) }
+		},
 	],
-	row_style    => sub ( $row, $id ) { $row->{kind} eq 'dir' ? { text_color => [ 97, 175, 239, 255 ], bold => 1 } : undef },
-	rows         => \@tree,
+	row_style => sub ( $row, $id ) { $row->{kind} eq 'dir' ? { text_color => [ 97, 175, 239, 255 ], bold => 1 } : undef },
+	rows      => \@tree,
 );
 $table->expand( '/project', '/project/lib' );
 
@@ -123,13 +127,13 @@ $root->add_child(
 # --- Behavior ------------------------------------------------------------------
 
 sub show_status ( $note = '' ) {
-	my $id = $table->cursor // return;
+	my $id  = $table->cursor // return;
 	my $row = $table->row($id);
 	$status->text( sprintf '%s  %s%s', $id, $table->display_value( $id, 'size' ), length $note ? "  - $note" : '' );
 	return;
 }
 
-$table->on( CursorMove  => sub ($event) { show_status(); return } );
+$table->on( CursorMove  => sub ($event) { show_status();                                                                       return } );
 $table->on( RowActivate => sub ($event) { show_status( $event->row->{kind} eq 'dir' ? 'a folder: Right opens it' : 'opened' ); return } );
 
 # The vendor folder holds a placeholder until it is opened for the first time.

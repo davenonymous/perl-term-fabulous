@@ -15,7 +15,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -30,9 +30,9 @@ $root->add_child(
 	Term::Fabulous::Widget::LineChart->new(
 		title  => 'Daily visits',
 		series => [
-			{ name => 'Raw',            data => \@visits, color => '#3a4152' },
+			{ name => 'Raw',            data => \@visits, color     => '#3a4152' },
 			{ name => '7-day average',  data => \@visits, transform => [ [ 'moving_average', 7 ] ] },
-			{ name => 'Smoothed (0.1)', data => \@visits, transform => [ [ 'exponential', 0.1 ] ], line_style => 'dashed' },
+			{ name => 'Smoothed (0.1)', data => \@visits, transform => [ [ 'exponential',    0.1 ] ], line_style => 'dashed' },
 		],
 	)
 );

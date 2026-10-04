@@ -60,7 +60,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 3,
                 line_gap         => 1,
         },
@@ -138,7 +138,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 3,
                 line_gap         => 1,
         },
@@ -148,7 +148,7 @@ my @wave  = map { 5 + 3 * sin( $_ / 3 ) + 1.2 * sin( $_ * 1.3 ) } 0 .. 30;
 my %small = (
         x_axis => { visible => 0 },
         y_axis => { visible => 0, min => 0, max => 10 },
-        layout => { sizing => { width => sizing_percent(0.31), height => sizing_percent(0.31) } },
+        layout => { sizing  => { width => sizing_percent(0.31), height => sizing_percent(0.31) } },
 );
 
 # Lines in each style a line can take...
@@ -160,8 +160,8 @@ foreach my $marker (qw(braille half quadrant sextant box)) {
 $root->add_child( Term::Fabulous::Widget::AreaChart->new( %small, title => 'area: block', series => [ { name => 'block', data => \@wave, color => '#d95926' } ] ) );
 my @bars = map { $wave[ 3 * $_ ] } 0 .. 10;
 $root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: quadrant', marker => 'quadrant', series => [ { name => 'quadrant', data => \@bars, color => '#199e70' } ] ) );
-$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: block', series => [ { name => 'block', data => \@bars, color => '#199e70' } ] ) );
-$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: braille', marker => 'braille', series => [ { name => 'braille', data => \@bars, color => '#199e70' } ] ) );
+$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: block',    series => [ { name => 'block', data => \@bars, color => '#199e70' } ] ) );
+$root->add_child( Term::Fabulous::Widget::BarChart->new( %small, title => 'bars: braille',  marker => 'braille', series => [ { name => 'braille', data => \@bars, color => '#199e70' } ] ) );
 
 Term::Fabulous->new( root => $root, width => 100, height => 32 )->run;
 ```
@@ -221,7 +221,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 2,
         },
 );
@@ -333,7 +333,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 3,
                 line_gap         => 1,
         },
@@ -350,7 +350,7 @@ $root->add_child(
                 title  => 'line_style',
                 series => [
                         { name => 'solid',  data => [ map { $_ + 3 } @wave ] },
-                        { name => 'dashed', data => \@wave,                    line_style => 'dashed' },
+                        { name => 'dashed', data => \@wave,                   line_style => 'dashed' },
                         { name => 'dotted', data => [ map { $_ - 3 } @wave ], line_style => 'dotted' },
                 ],
         )
@@ -363,7 +363,7 @@ $root->add_child(
                 %small,
                 title  => 'gaps and span_gaps',
                 series => [
-                        { name => 'gap',       data => [ map { defined ? $_ + 2 : undef } @holes ] },
+                        { name => 'gap', data => [ map { defined ? $_ + 2 : undef } @holes ] },
                         { name => 'span_gaps', data => [ map { defined ? $_ - 2 : undef } @holes ], span_gaps => 1 },
                 ],
         )
@@ -468,7 +468,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -476,7 +476,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my @teams = qw(Backend Frontend Mobile);
 my $chart = Term::Fabulous::Widget::AreaChart->new(
         title   => 'Closed issues per week',
-        labels  => [ map {"W$_"} 1 .. 12 ],
+        labels  => [ map { "W$_" } 1 .. 12 ],
         stacked => 1,
         series  => [
                 { name => 'Backend',  data => [ 12, 15, 11, 18, 21, 17, 16, 22, 25, 19, 23, 27 ] },
@@ -492,7 +492,7 @@ $chart->on(
         SeriesHover => sub ($event) {
                 my $series = $event->series;
                 $status->text(
-                          !defined $series        ? 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).'
+                          !defined $series       ? 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).'
                         : !defined $event->index ? "$series: " . join( ', ', map { $_ // 0 } $chart->series($series)->{data}->@* )
                         :                          sprintf( '%s closed %d issues in week %s', $series, $event->value, $event->label )
                 );

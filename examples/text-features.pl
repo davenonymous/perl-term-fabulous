@@ -25,14 +25,14 @@ use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NEWLI
 
 my $label_color = [ 150, 160, 180, 255 ];
 my $text_color  = [ 230, 230, 230, 255 ];
-my $panel_color = [ 35, 42, 60, 255 ];
+my $panel_color = [ 35,  42,  60,  255 ];
 
 my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -60,7 +60,7 @@ sub panel ( $text, %options ) {
 
 feature_row(
 	'wrap_mode',
-	panel( "words: breaks at spaces where a line does not fit,\nand at newlines.", width => 24 ),
+	panel( "words: breaks at spaces where a line does not fit,\nand at newlines.",    width     => 24 ),
 	panel( "newlines: breaks only\nat newlines; the box\ngrows to the longest line.", wrap_mode => CLAY_TEXT_WRAP_NEWLINES ),
 );
 
@@ -68,9 +68,9 @@ feature_row( 'line_height 2', panel( "First line\nSecond line", line_height => 2
 
 feature_row(
 	'styles',
-	map { Term::Fabulous::Widget::Text->new( text => $_->[0], text_color => $text_color, $_->[1]->%* ) }
-		[ 'plain', {} ], [ 'bold', { bold => 1 } ], [ 'italic', { italic => 1 } ], [ 'underline', { underline => 1 } ],
-		[ 'all three', { bold => 1, italic => 1, underline => 1 } ],
+	map { Term::Fabulous::Widget::Text->new( text => $_->[0], text_color => $text_color, $_->[1]->%* ) } [ 'plain', {} ], [ 'bold', { bold => 1 } ], [ 'italic', { italic => 1 } ],
+	[ 'underline', { underline => 1 } ],
+	[ 'all three', { bold      => 1, italic => 1, underline => 1 } ],
 );
 
 feature_row( 'wide and emoji', panel("abcdef|\n日本語|\n🙂🎉ok|\ne\x{301}e\x{301}e\x{301}xyz|") );

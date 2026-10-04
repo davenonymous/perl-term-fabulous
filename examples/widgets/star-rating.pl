@@ -30,7 +30,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -45,10 +45,10 @@ sub state_row ( $state, $widget ) {
 }
 
 my $focused = state_row( 'focused', Term::Fabulous::Widget::StarRating->new( value => 3, show_value => 1 ) );
-state_row( 'half stars',  Term::Fabulous::Widget::StarRating->new( value => 3.5, half => 1, show_value => 1, value_format => '%.1f' ) );
-state_row( 'read-only',   Term::Fabulous::Widget::StarRating->new( value => 4, read_only => 1 ) );
-state_row( 'ten, no gap', Term::Fabulous::Widget::StarRating->new( value => 7, max => 10, gap => 0, show_value => 1 ) );
-state_row( 'disabled',    Term::Fabulous::Widget::StarRating->new( value => 2, disabled => 1 ) );
+state_row( 'half stars',  Term::Fabulous::Widget::StarRating->new( value => 3.5, half      => 1, show_value => 1, value_format => '%.1f' ) );
+state_row( 'read-only',   Term::Fabulous::Widget::StarRating->new( value => 4,   read_only => 1 ) );
+state_row( 'ten, no gap', Term::Fabulous::Widget::StarRating->new( value => 7,   max       => 10, gap => 0, show_value => 1 ) );
+state_row( 'disabled',    Term::Fabulous::Widget::StarRating->new( value => 2,   disabled  => 1 ) );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 $ui->interaction->set_focused_widget($focused);

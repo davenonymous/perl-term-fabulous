@@ -34,7 +34,7 @@ class Term::Fabulous::Static
 	}
 
 	sub _checked_options ( $method, $options, @known ) {
-		my %is_known = map { $_ => 1 } @known;
+		my %is_known = map       { $_ => 1 } @known;
 		my @unknown  = sort grep { !$is_known{$_} } keys %$options;
 		die "Term::Fabulous::Static: $method does not accept " . join( ', ', @unknown ) . " (known options: " . join( ', ', @known ) . ")" if @unknown;
 		return;
@@ -48,19 +48,19 @@ class Term::Fabulous::Static
 		return $cell_target->cell( $x, $y );
 	}
 
-	method render_lines ( %options ) {
+	method render_lines (%options) {
 		_checked_options( render_lines => \%options, 'colors' );
 		my %format = ( columns => $self->width, colors => $options{colors} // 1, trim_trailing_whitespace => $trim_trailing_whitespace );
 		$self->draw;
 		return map { $cell_target->row_text( $_, %format ) } 0 .. $cell_target->grid_height - 1;
 	}
 
-	method render_string ( %options ) {
+	method render_string (%options) {
 		_checked_options( render_string => \%options, 'colors' );
 		return join '', map { "$_\n" } $self->render_lines(%options);
 	}
 
-	method print ( %options ) {
+	method print (%options) {
 		_checked_options( print => \%options, qw(fh colors) );
 		my $fh = $options{fh} // \*STDOUT;
 		die "Term::Fabulous::Static: fh must be an open file handle" unless openhandle($fh);

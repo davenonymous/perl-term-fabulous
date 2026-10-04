@@ -64,8 +64,8 @@ class Term::Fabulous::Widget::Tabs::Button
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( Activate => sub ($event) { $weak_self->_activated if $weak_self; return $continue } );
-		$self->on( $_ => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
+		$self->on( Activate => sub ($event) { $weak_self->_activated if $weak_self;   return $continue } );
+		$self->on( $_       => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
 		$self->refresh_look;
 	}
 

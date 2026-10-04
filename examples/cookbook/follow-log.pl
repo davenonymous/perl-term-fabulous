@@ -20,7 +20,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
 $root->add_child(
@@ -70,9 +70,9 @@ $log->on(
 
 my %action_by_key = (
 	Up    => sub { $follow = 0; scroll_by( 0, -1 ) },
-	Down  => sub { scroll_by( 0, 1 ) },
+	Down  => sub { scroll_by( 0,  1 ) },
 	Left  => sub { scroll_by( -4, 0 ) },
-	Right => sub { scroll_by( 4, 0 ) },
+	Right => sub { scroll_by( 4,  0 ) },
 	Home  => sub { $follow = 0; $ui->scroll_to( $log, { x => 0, y => 0 } ) },
 	End   => sub { $follow = 1 },
 );

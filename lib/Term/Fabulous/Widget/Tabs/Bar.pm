@@ -82,9 +82,9 @@ class Term::Fabulous::Widget::Tabs::Bar
 		$tab_margin             = non_negative_integer( $self, tab_margin  => $tab_margin );
 		$tab_padding            = non_negative_integer( $self, tab_padding => $tab_padding );
 		$line_style             = $self->_checked_style($line_style);
-		$line_color             = color( $self, line_color             => $line_color );
-		$text_color             = color( $self, text_color             => $text_color );
-		$active_text_color      = color( $self, active_text_color      => $active_text_color );
+		$line_color             = color( $self, line_color        => $line_color );
+		$text_color             = color( $self, text_color        => $text_color );
+		$active_text_color      = color( $self, active_text_color => $active_text_color );
 		$active_bold            = boolean( $self, active_bold => $active_bold );
 		$hover_background_color = color( $self, hover_background_color => $hover_background_color );
 		$focus_border_color     = $self->_optional_color( focus_border_color => $focus_border_color );
@@ -125,7 +125,11 @@ class Term::Fabulous::Widget::Tabs::Bar
 			= blessed $value && $value->isa('Term::Fabulous::Enum::BorderStyle') ? $value
 			: defined $value && !ref $value                                      ? Term::Fabulous::Enum::BorderStyle->from_name($value)
 			:                                                                      undef;
-		die ref($self) . ": line_style must be a border style with joints or its name (known: " . join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->get_grid_styles ) . "), got " . describe($value)
+		die ref($self)
+			. ": line_style must be a border style with joints or its name (known: "
+			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->get_grid_styles )
+			. "), got "
+			. describe($value)
 			unless defined $style && $style->joints;
 		return $style;
 	}
@@ -161,8 +165,8 @@ class Term::Fabulous::Widget::Tabs::Bar
 
 		my %alignment
 			= $horizontal
-			? ( x => $ALIGN_X{$tab_alignment}, y => $side eq 'top'  ? CLAY_ALIGN_Y_BOTTOM : CLAY_ALIGN_Y_TOP )
-			: ( y => $ALIGN_Y{$tab_alignment}, x => $side eq 'left' ? CLAY_ALIGN_X_RIGHT  : CLAY_ALIGN_X_LEFT );
+			? ( x => $ALIGN_X{$tab_alignment}, y => $side eq 'top' ? CLAY_ALIGN_Y_BOTTOM : CLAY_ALIGN_Y_TOP )
+			: ( y => $ALIGN_Y{$tab_alignment}, x => $side eq 'left' ? CLAY_ALIGN_X_RIGHT : CLAY_ALIGN_X_LEFT );
 		my %margin = $horizontal ? ( left => $tab_margin, right => $tab_margin ) : ( top => $tab_margin, bottom => $tab_margin );
 		$_row->layout(
 			{
@@ -355,21 +359,21 @@ class Term::Fabulous::Widget::Tabs::Bar
 		return $$field_ref;
 	}
 
-	method side (@new)                   { return @new ? $self->_set( \$side,                   $self->_checked_side( $new[0] ),        1 ) : $side }
-	method orientation (@new)            { return @new ? $self->_set( \$orientation,            $self->_checked_orientation( $new[0] ), 1 ) : $orientation }
-	method tab_alignment (@new)          { return @new ? $self->_set( \$tab_alignment,          $self->_checked_alignment( $new[0] ),   1 ) : $tab_alignment }
-	method tab_gap (@new)                { return @new ? $self->_set( \$tab_gap,                non_negative_integer( $self, tab_gap    => $new[0] ), 1 ) : $tab_gap }
-	method tab_margin (@new)             { return @new ? $self->_set( \$tab_margin,             non_negative_integer( $self, tab_margin => $new[0] ), 1 ) : $tab_margin }
-	method tab_padding (@new)            { return @new ? $self->_set( \$tab_padding,            non_negative_integer( $self, tab_padding => $new[0] ) ) : $tab_padding }
-	method line_style (@new)             { return @new ? $self->_set( \$line_style,             $self->_checked_style( $new[0] ) ) : $line_style }
-	method line_color (@new)             { return @new ? $self->_set( \$line_color,             color( $self, line_color => $new[0] ) ) : $line_color }
-	method text_color (@new)             { return @new ? $self->_set( \$text_color,             color( $self, text_color => $new[0] ) ) : $text_color }
-	method active_text_color (@new)      { return @new ? $self->_set( \$active_text_color,      color( $self, active_text_color => $new[0] ) ) : $active_text_color }
-	method active_bold (@new)            { return @new ? $self->_set( \$active_bold,            boolean( $self, active_bold => $new[0] ) ) : $active_bold }
-	method hover_background_color (@new) { return @new ? $self->_set( \$hover_background_color, color( $self, hover_background_color => $new[0] ) ) : $hover_background_color }
-	method focus_border_color (@new)     { return @new ? $self->_set( \$focus_border_color,     $self->_optional_color( focus_border_color => $new[0] ) ) : $focus_border_color }
-	method disabled_color (@new)         { return @new ? $self->_set( \$disabled_color,         color( $self, disabled_color => $new[0] ) ) : $disabled_color }
-	method page_border (@new)            { return @new ? $self->_set( \$page_border,            boolean( $self, page_border => $new[0] ) ) : $page_border }
+	method side                   (@new) { return @new ? $self->_set( \$side, $self->_checked_side( $new[0] ), 1 )                                    : $side }
+	method orientation            (@new) { return @new ? $self->_set( \$orientation, $self->_checked_orientation( $new[0] ), 1 )                      : $orientation }
+	method tab_alignment          (@new) { return @new ? $self->_set( \$tab_alignment, $self->_checked_alignment( $new[0] ), 1 )                      : $tab_alignment }
+	method tab_gap                (@new) { return @new ? $self->_set( \$tab_gap, non_negative_integer( $self, tab_gap => $new[0] ), 1 )               : $tab_gap }
+	method tab_margin             (@new) { return @new ? $self->_set( \$tab_margin, non_negative_integer( $self, tab_margin => $new[0] ), 1 )         : $tab_margin }
+	method tab_padding            (@new) { return @new ? $self->_set( \$tab_padding, non_negative_integer( $self, tab_padding => $new[0] ) )          : $tab_padding }
+	method line_style             (@new) { return @new ? $self->_set( \$line_style, $self->_checked_style( $new[0] ) )                                : $line_style }
+	method line_color             (@new) { return @new ? $self->_set( \$line_color, color( $self, line_color => $new[0] ) )                           : $line_color }
+	method text_color             (@new) { return @new ? $self->_set( \$text_color, color( $self, text_color => $new[0] ) )                           : $text_color }
+	method active_text_color      (@new) { return @new ? $self->_set( \$active_text_color, color( $self, active_text_color => $new[0] ) )             : $active_text_color }
+	method active_bold            (@new) { return @new ? $self->_set( \$active_bold, boolean( $self, active_bold => $new[0] ) )                       : $active_bold }
+	method hover_background_color (@new) { return @new ? $self->_set( \$hover_background_color, color( $self, hover_background_color => $new[0] ) )   : $hover_background_color }
+	method focus_border_color     (@new) { return @new ? $self->_set( \$focus_border_color, $self->_optional_color( focus_border_color => $new[0] ) ) : $focus_border_color }
+	method disabled_color         (@new) { return @new ? $self->_set( \$disabled_color, color( $self, disabled_color => $new[0] ) )                   : $disabled_color }
+	method page_border            (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                       : $page_border }
 
 	# The focus color is not a plain color: #null switches the focus look
 	# off, and the line style may be a name.

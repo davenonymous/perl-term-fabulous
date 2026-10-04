@@ -33,7 +33,7 @@ sub lines ($terminal) {
 
 subtest 'shown toasts stack in their corner' => sub {
 	my ( $ui, $terminal ) = ui();
-	my $saved  = Term::Fabulous::Widget::Toast->new( kind => 'success', title => 'Saved', message => 'Written to disk.' );
+	my $saved  = Term::Fabulous::Widget::Toast->new( kind    => 'success', title => 'Saved', message => 'Written to disk.' );
 	my $second = Term::Fabulous::Widget::Toast->new( message => 'Second' );
 	my @closed;
 	$_->on( Close => sub ($event) { push @closed, $event->target->title; return } ) foreach $saved, $second;
@@ -45,8 +45,8 @@ subtest 'shown toasts stack in their corner' => sub {
 	ref_is $saved->stack, $second->stack, 'in one stack';
 	my @rows = grep { length } lines($terminal)->@*;
 	like $rows[2], qr/\x{2713} Saved\s+\x{2715} \x{2502}\s*\z/, 'the icon, the title and the close mark';
-	like $rows[3], qr/Written to disk\./, 'the message below the title';
-	like $rows[6], qr/i Second\s+\x{2715}/, 'the second toast below, with the info icon';
+	like $rows[3], qr/Written to disk\./,                       'the message below the title';
+	like $rows[6], qr/i Second\s+\x{2715}/,                     'the second toast below, with the info icon';
 	ok $rows[2] =~ /\x{2502}\s*\z/ && length( $rows[2] ) == 59, 'a margin of one cell from the right edge';
 
 	$saved->hide;
@@ -55,12 +55,12 @@ subtest 'shown toasts stack in their corner' => sub {
 	$second->expire;
 	$ui->step;
 	is [ $second->is_shown, \@closed, scalar $ui->root->children->@* ], [ 0, [ 'Saved', '' ], 1 ], 'expire ends the timeout; the empty stack goes';
-	is lines($terminal)->[0], 'Hello', 'the screen is clean again';
+	is lines($terminal)->[0],                                           'Hello',                   'the screen is clean again';
 
 	$saved->show($ui);
 	ok $saved->is_shown, 'a hidden toast can be shown again';
-	like dies { $saved->position('top_left') }, qr/position cannot change while the toast is shown/, 'the position is fixed while shown';
-	like dies { Term::Fabulous::Widget::Toast->new->show($ui->root) }, qr/show needs the Term::Fabulous object/, 'show needs the UI';
+	like dies { $saved->position('top_left') },                          qr/position cannot change while the toast is shown/, 'the position is fixed while shown';
+	like dies { Term::Fabulous::Widget::Toast->new->show( $ui->root ) }, qr/show needs the Term::Fabulous object/,            'show needs the UI';
 };
 
 subtest 'the close mark, positions and looks' => sub {
@@ -86,7 +86,7 @@ subtest 'the close mark, positions and looks' => sub {
 	is $toast->background_color, [ 0, 0, 0, 255 ], 'a background of your own survives a look change';
 	like dies { $toast->kind('fatal') }, qr/kind must be info, success, warning or danger/, 'an unknown kind dies';
 	like dies { Term::Fabulous::Widget::Toast->new( position => 'middle' ) }, qr/position must be one of bottom_center/, 'an unknown position dies';
-	like dies { Term::Fabulous::Widget::Toast->new( timeout => 0 ) }, qr/timeout must be positive/, 'a zero timeout dies';
+	like dies { Term::Fabulous::Widget::Toast->new( timeout  => 0 ) },        qr/timeout must be positive/,              'a zero timeout dies';
 };
 
 subtest 'an alert in the layout, and children below the message' => sub {
@@ -96,11 +96,12 @@ subtest 'an alert in the layout, and children below the message' => sub {
 	is [ map { ref } $alert->body->children->@* ], [ ('Term::Fabulous::Widget::Text') x 2 ], 'the message, then the child';
 	$alert->title('Careful');
 	is scalar $alert->body->children->@*, 3, 'a title appears before them';
-	is scalar $alert->children->@*, 2, 'no close mark';
+	is scalar $alert->children->@*,       2, 'no close mark';
 	$alert->remove_children_with( sub { $_[0] == $note } );
 	is scalar $alert->body->children->@*, 2, 'remove_children_with acts on the children below the message';
 
-	my $built = Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Toast as Toast\nToast { kind \"success\"; title \"Done\"; important #true; timeout 2; position \"top_left\"; }" )->build;
+	my $built
+		= Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Toast as Toast\nToast { kind \"success\"; title \"Done\"; important #true; timeout 2; position \"top_left\"; }" )->build;
 	is [ $built->kind, $built->title, $built->important, $built->timeout, $built->position ], [ 'success', 'Done', 1, 2, 'top_left' ], 'the properties of a layout';
 	my ( $ui, $terminal ) = ui();
 	$ui->root->add_child($built);

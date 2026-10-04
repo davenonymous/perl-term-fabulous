@@ -15,8 +15,8 @@ sub collectProvides {
 			no_chdir => 1,
 			wanted   => sub {
 				return unless /\.pm\z/;
-				my ($package, $version) = readPackageAndVersion($_);
-				$provides{$package} = {file => $_, version => $version};
+				my ( $package, $version ) = readPackageAndVersion($_);
+				$provides{$package} = { file => $_, version => $version };
 			},
 		},
 		'lib'
@@ -26,17 +26,17 @@ sub collectProvides {
 
 sub readPackageAndVersion {
 	my ($file) = @_;
-	open(my $fh, '<', $file) or die sprintf("Cannot read %s: %s\n", $file, $!);
-	my ($package, $version);
-	while (my $line = <$fh>) {
+	open( my $fh, '<', $file ) or die sprintf( "Cannot read %s: %s\n", $file, $! );
+	my ( $package, $version );
+	while ( my $line = <$fh> ) {
 		$package //= $1 if $line =~ /^\s*(?:package|class|role|enum)\s+([\w:]+)/;
 		$version //= $1 if $line =~ /^\s*our\s+\$VERSION\s*=\s*'([^']*)'/;
 		last if defined $package && defined $version;
 	}
 	close($fh);
-	die sprintf("No package or class declaration found in %s\n", $file) unless defined $package;
-	die sprintf("No \$VERSION found in %s\n", $file) unless defined $version;
-	return ($package, $version);
+	die sprintf( "No package or class declaration found in %s\n", $file ) unless defined $package;
+	die sprintf( "No \$VERSION found in %s\n",                    $file ) unless defined $version;
+	return ( $package, $version );
 }
 
 WriteMakefile(

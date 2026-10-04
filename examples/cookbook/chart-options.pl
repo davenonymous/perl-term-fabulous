@@ -17,7 +17,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 3,
 		line_gap         => 1,
 	},
@@ -34,7 +34,7 @@ $root->add_child(
 		title  => 'line_style',
 		series => [
 			{ name => 'solid',  data => [ map { $_ + 3 } @wave ] },
-			{ name => 'dashed', data => \@wave,                    line_style => 'dashed' },
+			{ name => 'dashed', data => \@wave,                   line_style => 'dashed' },
 			{ name => 'dotted', data => [ map { $_ - 3 } @wave ], line_style => 'dotted' },
 		],
 	)
@@ -47,7 +47,7 @@ $root->add_child(
 		%small,
 		title  => 'gaps and span_gaps',
 		series => [
-			{ name => 'gap',       data => [ map { defined ? $_ + 2 : undef } @holes ] },
+			{ name => 'gap', data => [ map { defined ? $_ + 2 : undef } @holes ] },
 			{ name => 'span_gaps', data => [ map { defined ? $_ - 2 : undef } @holes ], span_gaps => 1 },
 		],
 	)

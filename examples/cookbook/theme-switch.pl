@@ -15,24 +15,24 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 # Two themes derived from one base color each.
 sub theme ($base_spec) {
-	my $base = Term::Fabulous::Color->new( color => $base_spec );
+	my $base    = Term::Fabulous::Color->new( color => $base_spec );
 	my $is_dark = ( $base->to_hsl )[2] < 50;
 	return {
 		background => $base,
-		panel      => $is_dark ? $base->lighten(0.06) : $base->darken(0.06),
-		border     => $is_dark ? $base->lighten(0.35) : $base->darken(0.35),
+		panel      => $is_dark ? $base->lighten(0.06)                        : $base->darken(0.06),
+		border     => $is_dark ? $base->lighten(0.35)                        : $base->darken(0.35),
 		text       => $is_dark ? Term::Fabulous::Color->rgb( 230, 230, 230 ) : Term::Fabulous::Color->rgb( 30, 30, 30 ),
 		accent     => Term::Fabulous::Color->hsl( 210, 80, $is_dark ? 65 : 40 ),
 	};
 }
-my @themes = ( theme('#141923'), theme('hsl(40, 30%, 92%)') );
+my @themes  = ( theme('#141923'), theme('hsl(40, 30%, 92%)') );
 my $current = 0;
 
-my $root  = Term::Fabulous::Widget::Box->new(
+my $root = Term::Fabulous::Widget::Box->new(
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 my $panel = Term::Fabulous::Widget::Box->new(
@@ -41,7 +41,7 @@ my $panel = Term::Fabulous::Widget::Box->new(
 	layout       => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1, right => 1 },
 		child_gap        => 1,
 	},
 );

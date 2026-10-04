@@ -54,22 +54,25 @@ subtest 'the picture: tabs along the top' => sub {
 		" \x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
 		" \x{2502} General \x{2502} \x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E} \x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
 		" \x{2502}         \x{2502} \x{2502} Network \x{2502} \x{2502} Users \x{2502}",
-		"\x{256D}\x{256F}         \x{2570}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
+"\x{256D}\x{256F}         \x{2570}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
 		"\x{2502}                                      \x{2502}",
 		"\x{2502} Language: en                         \x{2502}",
 		"\x{2502} field                                \x{2502}",
 		"\x{2502}                                      \x{2502}",
 		"\x{2502}                                      \x{2502}",
 		"\x{2570}" . ( "\x{2500}" x 38 ) . "\x{256F}",
-	], 'the active tab is raised and open toward the page, the others closed by its border';
+		],
+		'the active tab is raised and open toward the page, the others closed by its border';
 	is [ scalar $tabs->pages, $tabs->active_index, $tabs->active->title ], [ 3, 0, 'General' ], 'the first page is the active one';
-	is [ map { $_->is_active } $tabs->bar->buttons ], [ 1, 0, 0 ], 'and its tab';
+	is [ map { $_->is_active } $tabs->bar->buttons ],                      [ 1, 0, 0 ],         'and its tab';
 
 	$tabs->select(1);
 	$ui->step;
-	is lines($terminal)->[3], "\x{256D}\x{2534}" . ( "\x{2500}" x 9 ) . "\x{2534}\x{2500}\x{256F}         \x{2570}\x{2500}\x{2534}" . ( "\x{2500}" x 7 ) . "\x{2534}" . ( "\x{2500}" x 5 ) . "\x{256E}", 'select opens another tab';
-	is lines($terminal)->[5], "\x{2502} Hostname: example.org                \x{2502}", 'and shows its page';
-	is [ $tabs->page(1)->is_active, $tabs->page(0)->is_active, $tabs->page(0)->parent ], [ 1, 0, undef ], 'a page that is not shown has no parent';
+	is lines($terminal)->[3],
+		"\x{256D}\x{2534}" . ( "\x{2500}" x 9 ) . "\x{2534}\x{2500}\x{256F}         \x{2570}\x{2500}\x{2534}" . ( "\x{2500}" x 7 ) . "\x{2534}" . ( "\x{2500}" x 5 ) . "\x{256E}",
+		'select opens another tab';
+	is lines($terminal)->[5],                                                            "\x{2502} Hostname: example.org                \x{2502}", 'and shows its page';
+	is [ $tabs->page(1)->is_active, $tabs->page(0)->is_active, $tabs->page(0)->parent ], [ 1, 0, undef ],                                          'a page that is not shown has no parent';
 	$tabs->select(undef);
 	$ui->step;
 	is [ $tabs->active, lines($terminal)->[4] ], [ undef, '' ], 'undef shows no page';
@@ -86,12 +89,13 @@ subtest 'sides, orientations and styles' => sub {
 		" \x{256D}" . ( "\x{2500}" x 9 ) . "\x{2524}                           \x{2502}",
 		" \x{2502} Network \x{2502}                           \x{2502}",
 		" \x{2570}" . ( "\x{2500}" x 9 ) . "\x{2524}                           \x{2502}",
-	], 'on the left, the tabs stack and the active one is a column wider';
+		],
+		'on the left, the tabs stack and the active one is a column wider';
 
 	$tabs->side('bottom');
 	$ui->step;
 	is lines($terminal)->[-1], " \x{2570}" . ( "\x{2500}" x 9 ) . "\x{256F}", 'the bottom bar hangs below the page';
-	is lines($terminal)->[0],  "\x{256D}" . ( "\x{2500}" x 38 ) . "\x{256E}",  'which has its border on top now';
+	is lines($terminal)->[0],  "\x{256D}" . ( "\x{2500}" x 38 ) . "\x{256E}", 'which has its border on top now';
 
 	( $tabs, $terminal, $ui ) = tabs( orientation => 'vertical', height => 18 );
 	is [ @{ lines($terminal) }[ 0 .. 3 ] ], [
@@ -99,7 +103,8 @@ subtest 'sides, orientations and styles' => sub {
 		" \x{2502} \x{2502} \x{256D}\x{2500}\x{256E}",
 		" \x{2502}G\x{2502} \x{2502} \x{2502}",
 		" \x{2502}e\x{2502} \x{2502}N\x{2502} \x{256D}\x{2500}\x{256E}",
-	], 'vertical labels are written downwards, the tabs aligned toward the page';
+		],
+		'vertical labels are written downwards, the tabs aligned toward the page';
 
 	$tabs->orientation('horizontal');
 	$tabs->line_style('Heavy');
@@ -110,11 +115,12 @@ subtest 'sides, orientations and styles' => sub {
 		( "\x{2501}" x 6 ) . "\x{251B}         \x{2517}\x{2501}\x{253B}" . ( "\x{2501}" x 9 ) . "\x{253B}\x{2501}\x{253B}" . ( "\x{2501}" x 7 ) . "\x{253B}\x{2501}",
 		'',
 		' Language: en',
-	], 'another style, tabs at the end, no border around the page';
+		],
+		'another style, tabs at the end, no border around the page';
 	is $tabs->line_style->name, 'Heavy', 'the style is an item';
 	like dies { $tabs->line_style('Block') }, qr/line_style must be a border style with joints/, 'a style without joints dies';
-	like dies { $tabs->side('middle') },      qr/side must be top, right, bottom or left/,        'an unknown side dies';
-	like dies { $tabs->orientation('up') },   qr/orientation must be horizontal or vertical/,     'an unknown orientation dies';
+	like dies { $tabs->side('middle') },      qr/side must be top, right, bottom or left/,       'an unknown side dies';
+	like dies { $tabs->orientation('up') },   qr/orientation must be horizontal or vertical/,    'an unknown orientation dies';
 };
 
 subtest 'keys and clicks' => sub {
@@ -182,7 +188,7 @@ subtest 'pages' => sub {
 	is [ scalar $tabs->pages, $tabs->active_index, $page->tabs, $events ], [ 2, 0, undef, [] ], 'removing the active page shows the first enabled one, without an event';
 	$tabs->add_child( Term::Fabulous::Widget::Tabs::Page->new( title => 'Audit', active => 1 ) );
 	is $tabs->active->title, 'Audit', 'a page added with active => 1 is shown';
-	like dies { $tabs->add_child( $tabs->page(0) ) }, qr/part of a Tabs already/, 'a page cannot join twice';
+	like dies { $tabs->add_child( $tabs->page(0) ) },                                   qr/part of a Tabs already/,                        'a page cannot join twice';
 	like dies { $tabs->add_child( Term::Fabulous::Widget::Text->new( text => 'x' ) ) }, qr/holds only Term::Fabulous::Widget::Tabs::Page/, 'only pages';
 	$tabs->clear_children;
 	is [ scalar $tabs->pages, $tabs->active, scalar $tabs->bar->buttons ], [ 0, undef, 0 ], 'clear_children takes the pages and their tabs away';
@@ -206,7 +212,8 @@ subtest 'a bar on its own' => sub {
 		"\x{2502}      \x{2502}\x{2502} Grid \x{2502}",
 		"\x{256F}      \x{2570}\x{2534}" . ( "\x{2500}" x 6 ) . "\x{2534}" . ( "\x{2500}" x 4 ),
 		'',
-	], 'without a page border, the line ends straight';
+		],
+		'without a page border, the line ends straight';
 	$bar->choose(1);
 	is [ $bar->active_index, \@chosen ], [ 1, [ [ 1, 'Grid' ] ] ], 'choose fires Select with the tab';
 	like dies { $bar->add_child( Term::Fabulous::Widget::Box->new ) }, qr/holds only Term::Fabulous::Widget::Tabs::Button/, 'only tabs';
@@ -228,8 +235,10 @@ Tabs "settings" {
 	Page "users" { title "Users"; disabled #true; Text { text "c"; } }
 }
 KDL
-	is [ $built->side, $built->orientation, $built->line_style->name, $built->active_bold, $built->page_border, $built->active_index ], [ 'left', 'vertical', 'Double', 1, 0, 1 ], 'the look and the active page';
-	is [ map { [ $_->title, $_->icon, $_->disabled, scalar $_->children->@* ] } $built->pages ], [ [ 'General', undef, 0, 1 ], [ 'Network', '#', 0, 1 ], [ 'Users', undef, 1, 1 ] ], 'the pages with their content';
+	is [ $built->side, $built->orientation, $built->line_style->name, $built->active_bold, $built->page_border, $built->active_index ], [ 'left', 'vertical', 'Double', 1, 0, 1 ],
+		'the look and the active page';
+	is [ map { [ $_->title, $_->icon, $_->disabled, scalar $_->children->@* ] } $built->pages ], [ [ 'General', undef, 0, 1 ], [ 'Network', '#', 0, 1 ], [ 'Users', undef, 1, 1 ] ],
+		'the pages with their content';
 };
 
 done_testing;

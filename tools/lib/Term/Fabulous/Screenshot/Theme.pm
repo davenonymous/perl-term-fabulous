@@ -15,7 +15,7 @@ class Term::Fabulous::Screenshot::Theme :strict(params) {
 	field $cell_height    :param :reader = 18;
 	field $font_size      :param :reader = 15;
 	field $baseline       :param :reader = 14;    # from the top of a cell
-	field $line_thickness :param :reader = 1;     # of light box drawing lines
+	field $line_thickness :param :reader = 1;    # of light box drawing lines
 
 	# The colors the terminal shows where a program sets none.
 	field $default_foreground :param :reader = 0xD4D8E0;

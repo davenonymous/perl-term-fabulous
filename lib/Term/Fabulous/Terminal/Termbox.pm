@@ -48,28 +48,28 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	use constant OPEN_OPTIONS => qw(inline mouse kitty_keyboard);
 
 	# Handles of another terminal to use instead of the controlling one.
-	field $input :param = undef;
+	field $input  :param = undef;
 	field $output :param = undef;
 
-	field $cell_target :reader = Term::Fabulous::Terminal::Termbox::Cells->new;
-	field $is_open :reader = 0;
+	field $cell_target           :reader = Term::Fabulous::Terminal::Termbox::Cells->new;
+	field $is_open               :reader = 0;
 	field $kitty_keyboard_active :reader = 0;
 	field $inline;    # the rows asked for, or undef for the full screen
 	field $mouse = 0;
-	field @_size;           # the layout's [columns, rows]
-	field @_read_handles;   # duplicates of termbox's input descriptors
+	field @_size;    # the layout's [columns, rows]
+	field @_read_handles;    # duplicates of termbox's input descriptors
 
 	ADJUST {
 		die "Term::Fabulous::Terminal::Termbox: input and output go together; pass both or neither"
 			if defined $input != defined $output;
-		foreach my $handle ( grep {defined} $input, $output ) {
+		foreach my $handle ( grep { defined } $input, $output ) {
 			die "Term::Fabulous::Terminal::Termbox: input and output must be open file handles" unless openhandle($handle);
 		}
 	}
 
 	method open (%options) {
 		die "Term::Fabulous::Terminal::Termbox: the terminal is open already" if $is_open;
-		my %known   = map { $_ => 1 } OPEN_OPTIONS;
+		my %known   = map  { $_ => 1 } OPEN_OPTIONS;
 		my @unknown = grep { !$known{$_} } sort keys %options;
 		die "Term::Fabulous::Terminal::Termbox: open does not accept @unknown (known options: " . join( ', ', OPEN_OPTIONS ) . ")" if @unknown;
 		die "Term::Fabulous::Terminal::Termbox: inline must be a whole number of rows of at least 1, got '$options{inline}'"
@@ -96,10 +96,10 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	}
 
 	method _prepare ($kitty_keyboard) {
-		_check_termbox( 'tb_set_output_mode', tb_set_output_mode(TB_OUTPUT_TRUECOLOR) );
-		_check_termbox( 'tb_set_input_mode',  tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
+		_check_termbox( 'tb_set_output_mode',      tb_set_output_mode(TB_OUTPUT_TRUECOLOR) );
+		_check_termbox( 'tb_set_input_mode',       tb_set_input_mode( TB_INPUT_ESC | ( $mouse ? TB_INPUT_MOUSE : 0 ) ) );
 		_check_termbox( 'tf_install_input_parser', tf_install_input_parser() );
-		_check_termbox( 'tb_send', tb_send(REPORT_MOUSE_MOTION) ) if $mouse;
+		_check_termbox( 'tb_send',                 tb_send(REPORT_MOUSE_MOTION) ) if $mouse;
 		$self->_use_kitty_keyboard if $kitty_keyboard;
 		_check_termbox( 'tb_hide_cursor', tb_hide_cursor() );
 
@@ -116,8 +116,8 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	method close () {
 		return unless $is_open;
 		$is_open = 0;
-		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;                # termbox2 switches off only the modes it switched on
-		tb_send(POP_KITTY_KEYBOARD)       if $kitty_keyboard_active; # before termbox2 leaves the alternate screen, which has a stack of its own
+		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
+		tb_send(POP_KITTY_KEYBOARD) if $kitty_keyboard_active;    # before termbox2 leaves the alternate screen, which has a stack of its own
 		$kitty_keyboard_active = 0;
 		$self->_leave_inline_region if defined $cell_target->region_top;
 		CORE::close($_) foreach @_read_handles;
@@ -194,14 +194,14 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		_check_termbox( 'tf_cursor_position', $rc );
 
 		my $rows     = $inline < $screen_height ? $inline : $screen_height;
-		my $top      = $column == 0 ? $row : $row + 1;
+		my $top      = $column == 0             ? $row    : $row + 1;
 		my $overflow = $top + $rows - $screen_height;
 		_check_termbox( 'tf_reset_attrs', tf_reset_attrs() );    # scrolled-in and erased rows take the current background
 		if ( $overflow > 0 ) {
 			_check_termbox( 'tb_send', tb_send( _cursor_to_row( $screen_height - 1 ) . "\n" x $overflow ) );
 			$top -= $overflow;
 		}
-		_check_termbox( 'tb_send', tb_send( _cursor_to_row($top) . ERASE_BELOW ) );
+		_check_termbox( 'tb_send',  tb_send( _cursor_to_row($top) . ERASE_BELOW ) );
 		_check_termbox( 'tb_clear', tb_clear() );    # cells of an earlier region must not come back at their old rows
 		$cell_target->place_region( $top, $rows );
 		return $rows;

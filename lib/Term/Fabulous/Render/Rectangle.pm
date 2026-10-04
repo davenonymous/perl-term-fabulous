@@ -17,6 +17,7 @@ role Term::Fabulous::Render::Rectangle {
 
 	# The cells the command being painted may touch (Term::Fabulous::Render).
 	method clip_rect;
+
 	# The cell target the frame is painted into (Term::Fabulous::Render).
 	method cell_target;
 

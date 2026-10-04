@@ -59,7 +59,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing  => { width => sizing_grow(), height => sizing_grow() },
-                padding => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding => { left  => 2, right => 2, top => 1, bottom => 1 },
         },
 );
 
@@ -78,8 +78,8 @@ foreach my $hour ( 0 .. 4 * 24 ) {
 my $chart = Term::Fabulous::Widget::LineChart->new(
         title  => 'Temperature in Lisbon',
         curve  => 'monotone',
-        x_axis => { type => 'time', utc => 1, min => '2026-06-01 00:00Z', max => '2026-06-05 00:00Z' },
-        y_axis => { title => '°C', format => '%d°' },
+        x_axis => { type  => 'time', utc    => 1, min => '2026-06-01 00:00Z', max => '2026-06-05 00:00Z' },
+        y_axis => { title => '°C',   format => '%d°' },
         series => [
                 { name => 'Measured', data => \@measured },
                 { name => 'Forecast', data => \@forecast, line_style => 'dashed' },
@@ -157,7 +157,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -167,7 +167,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my $chart = Term::Fabulous::Widget::LineChart->new(
         title      => 'Network traffic',
         x_axis     => { type => 'time', span => 60, format => '%H:%M:%S' },
-        y_axis     => { min => 0, title => 'Mbit/s' },
+        y_axis     => { min  => 0, title => 'Mbit/s' },
         max_points => 240,
         series     => [ { name => 'Received', type => 'area', line => 1 }, { name => 'Sent' } ],
 );
@@ -176,6 +176,7 @@ $root->add_child( $chart, $status );
 
 # Made-up measurements, four per second.
 my $tick = 0;
+
 sub measure () {
         $tick++;
         return ( 65 + 20 * sin( $tick / 23 ) + 8 * sin( $tick / 3.1 ) + 4 * sin( $tick * 1.7 ), 18 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ) );
@@ -252,7 +253,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 4,
         },
 );
@@ -324,7 +325,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -339,9 +340,9 @@ $root->add_child(
         Term::Fabulous::Widget::LineChart->new(
                 title  => 'Daily visits',
                 series => [
-                        { name => 'Raw',            data => \@visits, color => '#3a4152' },
+                        { name => 'Raw',            data => \@visits, color     => '#3a4152' },
                         { name => '7-day average',  data => \@visits, transform => [ [ 'moving_average', 7 ] ] },
-                        { name => 'Smoothed (0.1)', data => \@visits, transform => [ [ 'exponential', 0.1 ] ], line_style => 'dashed' },
+                        { name => 'Smoothed (0.1)', data => \@visits, transform => [ [ 'exponential',    0.1 ] ], line_style => 'dashed' },
                 ],
         )
 );

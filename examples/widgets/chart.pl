@@ -30,7 +30,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -42,7 +42,15 @@ my @series = (
 );
 
 sub chart (%options) {
-	return Term::Fabulous::Widget::BarChart->new( labels => [qw(Q1 Q2 Q3 Q4)], series => [ map { {%$_} } @series ], %options );
+	return Term::Fabulous::Widget::BarChart->new(
+		labels => [qw(Q1 Q2 Q3 Q4)],
+		series => [
+			map {
+				{ %$_ }
+			} @series
+		],
+		%options
+	);
 }
 
 sub chart_row (@children) {

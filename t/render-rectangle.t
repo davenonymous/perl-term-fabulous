@@ -61,21 +61,21 @@ my %half_black = ( r => 0, g => 0, b => 0, a => 128 );
 subtest 'negative origin is clipped' => sub {
 	my $buffer = [];
 	my $rows   = fill( $buffer, x => -3, y => -2, width => 6, height => 4 );
-	is $rows, [ [ 0, 0, 3 ], [ 0, 1, 3 ] ], 'only the visible cells are printed';
-	is scalar(@$buffer), 2, 'shadow buffer has only visible rows';
-	is $buffer->[0], [ (0x010203) x 3 ], 'shadow buffer has only visible cells';
+	is $rows,            [ [ 0, 0, 3 ], [ 0, 1, 3 ] ], 'only the visible cells are printed';
+	is scalar(@$buffer), 2,                            'shadow buffer has only visible rows';
+	is $buffer->[0],     [ (0x010203) x 3 ],           'shadow buffer has only visible cells';
 };
 
 subtest 'oversized box is clipped to the viewport' => sub {
 	my $buffer = [];
 	is fill( $buffer, x => 8, y => 3, width => 10, height => 10 ), [ [ 8, 3, 2 ], [ 8, 4, 2 ] ], 'right and bottom clipped';
-	is scalar( @{ $buffer->[3] } ), 10, 'shadow row ends at the viewport edge';
+	is scalar( @{ $buffer->[3] } ),                                10,                           'shadow row ends at the viewport edge';
 };
 
 subtest 'invisible boxes draw nothing' => sub {
-	is fill( [], x => -10, y => 0, width => 5, height => 2 ), [], 'left of the viewport';
-	is fill( [], x => 0,   y => 7, width => 5, height => 2 ), [], 'below the viewport';
-	is fill( [], x => 2,   y => 2, width => 0.5, height => 2 ), [], 'narrower than a cell';
+	is fill( [], x => -10, y => 0, width => 5,   height => 2 ), [], 'left of the viewport';
+	is fill( [], x =>  0,  y => 7, width => 5,   height => 2 ), [], 'below the viewport';
+	is fill( [], x =>  2,  y => 2, width => 0.5, height => 2 ), [], 'narrower than a cell';
 };
 
 subtest 'background attributes' => sub {
@@ -88,33 +88,33 @@ subtest 'background attributes' => sub {
 subtest 'translucent background covers the glyphs below' => sub {
 	my $buffer = [ [ (0xFFFFFF) x 3 ] ];
 	fill( $buffer, x => 0, y => 0, width => 5, height => 1, color => \%half_black );
-	is \@prints, [ [ 0, 0, 3, 0x7F7F7F ], [ 3, 0, 2, TB_HI_BLACK ] ], 'one fill per run of equal blended color; the default background is drawn opaque';
-	is $buffer->[0], [ (0x7F7F7F) x 3, (TB_HI_BLACK) x 2 ], 'the shadow buffer holds the blended backgrounds';
-	is \@cells, [], 'no cell is read back or set';
+	is \@prints,     [ [ 0, 0, 3, 0x7F7F7F ], [ 3, 0, 2, TB_HI_BLACK ] ], 'one fill per run of equal blended color; the default background is drawn opaque';
+	is $buffer->[0], [ (0x7F7F7F) x 3, (TB_HI_BLACK) x 2 ],               'the shadow buffer holds the blended backgrounds';
+	is \@cells,      [],                                                  'no cell is read back or set';
 };
 
 subtest 'translucent background with glyphs showing through' => sub {
 	my $widget = Term::Fabulous::Widget::Box->new( glyphs_show_through => 1 );
 	%painted = (
-		'0,0' => [ 'A',           0xFFFFFF,             0xFFFFFF ],
-		'1,0' => [ '中',          0xFF0000 | TB_REVERSE, 0xFFFFFF ],
-		'2,0' => [ ' ',           TB_DEFAULT,           0xFFFFFF ],
-		'3,0' => [ ' ',           TB_DEFAULT,           0xFFFFFF ],
-		'4,0' => [ "e\x{301}",    TB_DEFAULT,           0xFFFFFF ],
+		'0,0' => [ 'A',        0xFFFFFF,              0xFFFFFF ],
+		'1,0' => [ '中',        0xFF0000 | TB_REVERSE, 0xFFFFFF ],
+		'2,0' => [ ' ',        TB_DEFAULT,            0xFFFFFF ],
+		'3,0' => [ ' ',        TB_DEFAULT,            0xFFFFFF ],
+		'4,0' => [ "e\x{301}", TB_DEFAULT,            0xFFFFFF ],
 	);
 	my $buffer = [ [ (0xFFFFFF) x 5 ] ];
 	fill( $buffer, x => 0, y => 0, width => 6, height => 1, color => \%half_black, widget => $widget );
 	is \@cells,
 		[
-			[ 0, 0, 'A',        0x7F7F7F,              0x7F7F7F ],
-			[ 1, 0, '中',       0x7F0000 | TB_REVERSE, 0x7F7F7F ],
-			[ 3, 0, ' ',        TB_DEFAULT,            0x7F7F7F ],
-			[ 4, 0, "e\x{301}", TB_DEFAULT,            0x7F7F7F ],
-			[ 5, 0, ' ',        TB_DEFAULT,            TB_HI_BLACK ],
+		[ 0, 0, 'A',        0x7F7F7F,              0x7F7F7F ],
+		[ 1, 0, '中',        0x7F0000 | TB_REVERSE, 0x7F7F7F ],
+		[ 3, 0, ' ',        TB_DEFAULT,            0x7F7F7F ],
+		[ 4, 0, "e\x{301}", TB_DEFAULT,            0x7F7F7F ],
+		[ 5, 0, ' ',        TB_DEFAULT,            TB_HI_BLACK ],
 		],
 		'glyphs are repainted with tinted foregrounds, the cell a wide glyph covers is skipped, a default foreground stays, an unpainted cell becomes a space';
 	is $buffer->[0], [ (0x7F7F7F) x 5, TB_HI_BLACK ], 'the shadow buffer holds the blended backgrounds, also under the wide glyph';
-	is \@prints, [], 'no row fill';
+	is \@prints,     [],                              'no row fill';
 
 	$widget->glyphs_show_through(0);
 	fill( $buffer, x => 0, y => 0, width => 1, height => 1, color => \%half_black, widget => $widget );
@@ -122,14 +122,15 @@ subtest 'translucent background with glyphs showing through' => sub {
 };
 
 subtest 'reverse video' => sub {
+
 	class ReversedBox :isa(Term::Fabulous::Widget::Box) {
 		method reverse_video :override () { return 1 }
 	}
 	my $widget = ReversedBox->new( glyphs_show_through => 1 );
 	my $buffer = [ [ (0xFFFFFF) x 2 ] ];
 	fill( $buffer, x => 0, y => 0, width => 2, height => 1, widget => $widget );
-	is $prints[0][3], 0x010203 | TB_REVERSE, 'an opaque fill carries TB_REVERSE';
-	is $buffer->[0], [ ( 0x010203 | TB_REVERSE ) x 2 ], 'so does the shadow buffer, for the text drawn on top';
+	is $prints[0][3], 0x010203 | TB_REVERSE,             'an opaque fill carries TB_REVERSE';
+	is $buffer->[0],  [ ( 0x010203 | TB_REVERSE ) x 2 ], 'so does the shadow buffer, for the text drawn on top';
 
 	%painted = ( '0,0' => [ 'A', 0xFFFFFF, 0xFFFFFF ] );
 	$buffer  = [ [0xFFFFFF] ];

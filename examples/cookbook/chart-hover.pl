@@ -16,7 +16,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -24,7 +24,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my @teams = qw(Backend Frontend Mobile);
 my $chart = Term::Fabulous::Widget::AreaChart->new(
 	title   => 'Closed issues per week',
-	labels  => [ map {"W$_"} 1 .. 12 ],
+	labels  => [ map { "W$_" } 1 .. 12 ],
 	stacked => 1,
 	series  => [
 		{ name => 'Backend',  data => [ 12, 15, 11, 18, 21, 17, 16, 22, 25, 19, 23, 27 ] },
@@ -40,7 +40,7 @@ $chart->on(
 	SeriesHover => sub ($event) {
 		my $series = $event->series;
 		$status->text(
-			  !defined $series        ? 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).'
+			  !defined $series       ? 'Point at the chart, or press 1-3 to emphasize a team (0: none, q: quit).'
 			: !defined $event->index ? "$series: " . join( ', ', map { $_ // 0 } $chart->series($series)->{data}->@* )
 			:                          sprintf( '%s closed %d issues in week %s', $series, $event->value, $event->label )
 		);

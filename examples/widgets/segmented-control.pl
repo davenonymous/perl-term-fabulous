@@ -29,7 +29,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -44,10 +44,10 @@ sub state_row ( $state, $widget ) {
 }
 
 my $focused = state_row( 'focused', Term::Fabulous::Widget::SegmentedControl->new( options => [qw(Day Week Month Year)], value => 'Week' ) );
-state_row( 'full width', Term::Fabulous::Widget::SegmentedControl->new( options => [qw(List Grid Map)], value => 'List', layout => { sizing => { width => sizing_grow() } } ) );
+state_row( 'full width',   Term::Fabulous::Widget::SegmentedControl->new( options => [qw(List Grid Map)], value => 'List', layout => { sizing => { width => sizing_grow() } } ) );
 state_row( 'one disabled', Term::Fabulous::Widget::SegmentedControl->new( options => [ 'Free', 'Pro', { label => 'Enterprise', disabled => 1 } ], value => 'Pro' ) );
-state_row( 'vertical',   Term::Fabulous::Widget::SegmentedControl->new( options => [qw(General Network Users)], value => 'Network', vertical => 1, segment_padding => 2 ) );
-state_row( 'disabled',   Term::Fabulous::Widget::SegmentedControl->new( options => [qw(Light Dark)], value => 'Dark', disabled => 1 ) );
+state_row( 'vertical',     Term::Fabulous::Widget::SegmentedControl->new( options => [qw(General Network Users)], value => 'Network', vertical => 1, segment_padding => 2 ) );
+state_row( 'disabled',     Term::Fabulous::Widget::SegmentedControl->new( options => [qw(Light Dark)],            value => 'Dark',    disabled => 1 ) );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 $ui->interaction->set_focused_widget($focused);

@@ -27,7 +27,7 @@ sub radio_group {
 
 subtest 'the group selects one button' => sub {
 	my ( $group, $buttons, $ui ) = radio_group( value => 'm' );
-	is [ map { $_->label } $group->buttons ], [qw(Small Medium Large)], 'buttons in nested boxes belong to the group';
+	is [ map { $_->label } $group->buttons ],   [qw(Small Medium Large)],                          'buttons in nested boxes belong to the group';
 	is [ map { row_text( $_, 0 ) } @$buttons ], [ '( ) Small', "(\x{2022}) Medium", '( ) Large' ], 'the selected button shows its mark';
 	ok !$buttons->[0]->can_focus, 'buttons do not take the focus';
 	my ($unfocusable) = radio_group( can_focus => 0 );
@@ -75,7 +75,7 @@ subtest 'focus is shown on the cursor button' => sub {
 	is [ map { shown($_)->cell( 0, 0 )->[2] } @$buttons ], [ undef, $focus, undef ], 'the selected button shows the focus';
 
 	$group->disabled(1);
-	ok !$group->is_focused, 'disabling the group removes its focus';
+	ok !$group->is_focused,        'disabling the group removes its focus';
 	ok !$buttons->[0]->is_enabled, 'its buttons are disabled with it';
 };
 

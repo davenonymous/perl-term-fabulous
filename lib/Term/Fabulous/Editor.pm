@@ -37,7 +37,7 @@ class Term::Fabulous::Editor :strict(params) {
 	# Count changes, so views can cache what they derive: of the text, and
 	# of the text, the cursor or the selection.
 	field $text_revision :reader = 0;
-	field $revision :reader      = 0;
+	field $revision      :reader = 0;
 
 	# Undo steps, oldest first: { changes, cursor, anchor, cursor_after }.
 	# A change { row, offset, old, new } says that the text $old at
@@ -57,9 +57,9 @@ class Term::Fabulous::Editor :strict(params) {
 	ADJUST :params ( :$text = '' ) {
 		$self->set_max_length($max_length);
 		$self->set_text($text);
-	}
+		}
 
-	sub _describe ($value) {
+		sub _describe ($value) {
 		return defined $value ? "'$value'" : 'undef';
 	}
 
@@ -103,10 +103,10 @@ class Term::Fabulous::Editor :strict(params) {
 		die "Term::Fabulous::Editor: the text has $length characters, more than max_length $max_length"
 			if defined $max_length && $length > $max_length;
 
-		@lines = split /\n/, $text, -1;
-		@lines = ('') unless @lines;
-		@cursor = ( $#lines, length $lines[-1] );
-		@anchor = ();
+		@lines      = split /\n/, $text, -1;
+		@lines      = ('') unless @lines;
+		@cursor     = ( $#lines, length $lines[-1] );
+		@anchor     = ();
 		@undo_stack = @redo_stack = ();
 		$typing_run = undef;
 		$text_revision++;
@@ -250,19 +250,19 @@ class Term::Fabulous::Editor :strict(params) {
 		my ( $first, $last ) = ( $index, $index );
 		if ( $is_word[$index] ) {
 			$first-- while $first > 0 && $is_word[ $first - 1 ];
-			$last++  while $last < $#is_word && $is_word[ $last + 1 ];
+			$last++ while $last < $#is_word && $is_word[ $last + 1 ];
 		}
 		return $self->set_selection( $row, $boundaries[$first], $row, $boundaries[ $last + 1 ] );
 	}
 
 	method _position_left_of ( $row, $offset ) {
 		return ( $row - 1, length $lines[ $row - 1 ] ) if $offset == 0 && $row > 0;
-		return ( $row, $self->_snap( $row, $offset - 1, -1 ) );
+		return ( $row,     $self->_snap( $row, $offset - 1, -1 ) );
 	}
 
 	method _position_right_of ( $row, $offset ) {
 		return ( $row + 1, 0 ) if $offset == length( $lines[$row] ) && $row < $#lines;
-		return ( $row, $self->_snap( $row, $offset + 1, 1 ) );
+		return ( $row,     $self->_snap( $row, $offset + 1, 1 ) );
 	}
 
 	# Start of the word before the position, crossing to the previous line
@@ -380,7 +380,7 @@ class Term::Fabulous::Editor :strict(params) {
 	# The position after $text written at ($row, $offset).
 	sub _end_of ( $row, $offset, $text ) {
 		my @segments = split /\n/, $text, -1;
-		return ( $row, $offset + length $text ) if @segments <= 1;
+		return ( $row,              $offset + length $text ) if @segments <= 1;
 		return ( $row + $#segments, length $segments[-1] );
 	}
 
@@ -401,7 +401,7 @@ class Term::Fabulous::Editor :strict(params) {
 
 		my ( $taken, $length ) = ( 0, 0 );
 		foreach my $line ( split /(\n)/, $text ) {
-			my @offsets = @{ _boundaries($line) };
+			my @offsets  = @{ _boundaries($line) };
 			my $clusters = $line eq "\n" ? 1 : $#offsets;
 			if ( $taken + $clusters > $room ) {
 				$length += $offsets[ $room - $taken ] if $line ne "\n";

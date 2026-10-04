@@ -50,7 +50,7 @@ my $report = Term::Fabulous::Widget::Box->new(
         layout       => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_fit() },
-                padding          => { left => 1, right => 1 },
+                padding          => { left  => 1,             right  => 1 },
         },
 );
 $report->add_child( Term::Fabulous::Widget::Text->new( text => 'Sales per region (in EUR)', text_color => [ 255, 200, 80, 255 ] ) );
@@ -153,7 +153,7 @@ $ui->step;    # opens the terminal and draws the first frame
 $terminal->press_key('Tab')->type_text('hello')->press_key('Left')->type_text('X');
 $ui->step;
 is $field->value, 'hellXo', 'typing and cursor movement';
-is $changes[-1], 'hellXo', 'Change carries the new text';
+is $changes[-1],  'hellXo', 'Change carries the new text';
 
 $terminal->type_text('abcdef');
 $ui->step;

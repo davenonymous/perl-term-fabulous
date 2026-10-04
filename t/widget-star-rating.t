@@ -26,17 +26,17 @@ sub rating (%args) {
 subtest 'painting' => sub {
 	my ( $rating, $ui ) = rating( value => 3, show_value => 1 );
 	is [ $rating->columns, row_text( $rating, 0 ) ], [ 13, "\x{2605} \x{2605} \x{2605} \x{2606} \x{2606} 3/5" ], 'stars with gaps and the value';
-	is shown($rating)->cell( 0, 0 )->[1], $rating->color_attr( $rating->accent_color ),   'a filled star has the accent color';
-	is shown($rating)->cell( 6, 0 )->[1], $rating->color_attr( $rating->inactive_color ), 'an empty star the inactive color';
-	is $rating->accent_color, [ 229, 192, 123, 255 ], 'the accent defaults to yellow';
+	is shown($rating)->cell( 0, 0 )->[1],            $rating->color_attr( $rating->accent_color ),               'a filled star has the accent color';
+	is shown($rating)->cell( 6, 0 )->[1],            $rating->color_attr( $rating->inactive_color ),             'an empty star the inactive color';
+	is $rating->accent_color,                        [ 229, 192, 123, 255 ],                                     'the accent defaults to yellow';
 
 	$rating->show_value(0);
 	$rating->gap(0);
 	is [ row_text( $rating, 0 ), $rating->columns ], [ "\x{2605}\x{2605}\x{2605}\x{2606}\x{2606}", 5 ], 'no gaps, no label';
 
 	my ( $half, $half_ui ) = rating( value => 3.5, half => 1, show_value => 1, half_color => '#ff0000' );
-	is row_text( $half, 0 ), "\x{2605} \x{2605} \x{2605} \x{2605} \x{2606} 3.5/5", 'a half star is drawn with the full glyph';
-	is shown($half)->cell( 6, 0 )->[1], $half->color_attr('#ff0000'), 'in the half color';
+	is row_text( $half, 0 ),            "\x{2605} \x{2605} \x{2605} \x{2605} \x{2606} 3.5/5", 'a half star is drawn with the full glyph';
+	is shown($half)->cell( 6, 0 )->[1], $half->color_attr('#ff0000'),                         'in the half color';
 	$half->half_glyph("\x{2BEA}");
 	like row_text( $half, 0 ), qr/\x{2605} \x{2BEA} \x{2606}/, 'or with a half glyph';
 
@@ -67,14 +67,14 @@ subtest 'mouse' => sub {
 	is $changes, [ 3, 3.5, 4 ], 'a click sets the star, Shift+click a half less, a gap does nothing, the wheel steps';
 
 	$rating->value(5);
-	ok !click( $rating, 0, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used, 'a notch past the end is left to a scroll box';
-	ok click( $rating, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch that moves the value is used';
+	ok !click( $rating, 0, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used,   'a notch past the end is left to a scroll box';
+	ok click( $rating,  0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch that moves the value is used';
 
 	$rating->value(1);
 	my ( $x, $y ) = $rating->content_origin;
 	$rating->fire_event( Term::Fabulous::Event::MouseMove->new( x => $x + 6, y => $y ) );
 	is row_text( $rating, 0 ), "\x{2605} \x{2605} \x{2605} \x{2605} \x{2606}", 'hovering a star previews the stars up to it';
-	is $rating->value, 1, 'without changing the value';
+	is $rating->value,         1,                                              'without changing the value';
 	$rating->fire_event( Clay::UI::Events::OnHoverStopped->new );
 	is row_text( $rating, 0 ), "\x{2605} \x{2606} \x{2606} \x{2606} \x{2606}", 'the preview goes with the pointer';
 };
@@ -85,7 +85,7 @@ subtest 'values and layouts' => sub {
 	$rating->max(2);
 	is $rating->value, 2, 'and moves into a smaller range';
 	like dies { $rating->value(3) }, qr/value must be in 0\.\.2/, 'a value outside the range dies';
-	like dies { Term::Fabulous::Widget::StarRating->new( max => 0 ) },          qr/max must be a positive integer/,   'no stars';
+	like dies { Term::Fabulous::Widget::StarRating->new( max        => 0 ) },    qr/max must be a positive integer/,        'no stars';
 	like dies { Term::Fabulous::Widget::StarRating->new( full_glyph => 'ab' ) }, qr/full_glyph must be a single character/, 'a glyph of two characters';
 
 	my $built = Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::StarRating as StarRating\nStarRating { value 7.5; half #true; max 10; show_value #true; }" )->build;

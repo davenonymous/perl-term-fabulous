@@ -71,7 +71,7 @@ class Term::Fabulous::Widget
 	}
 
 	method get_classes () {
-		return (@$classes, map { 'state_' . lc($_) } $self->states);
+		return ( @$classes, map { 'state_' . lc($_) } $self->states );
 	}
 
 	method glyphs_show_through (@new) {

@@ -20,7 +20,7 @@ my $report = Term::Fabulous::Widget::Box->new(
 	layout       => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_fit() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
 $report->add_child( Term::Fabulous::Widget::Text->new( text => 'Sales per region (in EUR)', text_color => [ 255, 200, 80, 255 ] ) );

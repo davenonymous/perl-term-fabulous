@@ -55,7 +55,7 @@ sub number (%options) {
 	my $settings = _options( number => { decimals => undef, separator => ',', point => '.', prefix => '', suffix => '' }, %options );
 	$settings->{decimals} = _non_negative_integer( number => decimals => $settings->{decimals} ) if defined $settings->{decimals};
 	return sub ( $value, $row = undef ) {
-		my $number = number_of($value) // return is_blank($value) ? '' : "$value";
+		my $number   = number_of($value)     // return is_blank($value) ? '' : "$value";
 		my $decimals = $settings->{decimals} // ( "$number" =~ /\.([0-9]+)\z/ ? length $1 : 0 );
 		return $settings->{prefix} . _format_number( $number, $decimals, $settings->{separator}, $settings->{point} ) . $settings->{suffix};
 	};
@@ -89,12 +89,12 @@ sub bytes (%options) {
 
 sub duration (%options) {
 	my $settings = _options( duration => { parts => 2 }, %options );
-	my $parts = _non_negative_integer( duration => parts => $settings->{parts} );
+	my $parts    = _non_negative_integer( duration => parts => $settings->{parts} );
 	croak "Term::Fabulous::Widget::Table::Mutator: duration parts must be at least 1" unless $parts >= 1;
 	my @units = ( [ d => 86400 ], [ h => 3600 ], [ m => 60 ], [ s => 1 ] );
 	return sub ( $value, $row = undef ) {
 		my $number = number_of($value) // return is_blank($value) ? '' : "$value";
-		my $left = int abs $number;
+		my $left   = int abs $number;
 		my @shown;
 		foreach my $unit (@units) {
 			my ( $name, $seconds ) = @$unit;

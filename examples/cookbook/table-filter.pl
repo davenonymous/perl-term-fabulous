@@ -33,7 +33,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -45,11 +45,12 @@ my $search = Term::Fabulous::Widget::TextField->new(
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'staff',
-	row_id       => 'id',
-	filter_row   => 1,
-	sort         => ['name'],
-	layout       => { sizing => { width => sizing_grow() } },
+	id         => 'staff',
+	row_id     => 'id',
+	filter_row => 1,
+	sort       => ['name'],
+	layout     => { sizing => { width => sizing_grow() } },
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -61,10 +62,10 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'started', title => 'Started', width => 'fixed(16)', type => 'date',   mutator => date('%d %b %Y') },
 		{ key => 'salary',  title => 'Salary',  width => 'fixed(14)', type => 'number', mutator => number( decimals => 0 ) },
 	],
-	rows         => \@staff,
+	rows => \@staff,
 );
 
-my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => '',                                                                  text_color => [ 229, 192, 123, 255 ] );
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Tab: next field. Try "core", ">=80000", ">=2020" or "2019..2021".', text_color => [ 150, 160, 180, 255 ] );
 $root->add_child( $search, $table, $status, $help );
 

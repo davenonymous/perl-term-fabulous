@@ -32,7 +32,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -51,14 +51,14 @@ my $form = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1, right => 1 },
 	},
 );
 $root->add_child($form);
 
 # One row of the form: a label of fixed width, then the input.
 sub row ( $label, $input ) {
-	my $row = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 } );
+	my $row  = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 } );
 	my $cell = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(LABEL_COLUMNS) } } );
 	$cell->add_child( text( $label, [ 150, 160, 180, 255 ] ) );
 	$row->add_child( $cell, $input );
@@ -66,8 +66,8 @@ sub row ( $label, $input ) {
 	return $input;
 }
 
-my $name     = row( 'Name',     Term::Fabulous::Widget::TextField->new( id => 'name', placeholder => 'Your name', preferred_columns => 30 ) );
-my $password = row( 'Password', Term::Fabulous::Widget::TextField->new( id => 'password', mask => '*', preferred_columns => 30 ) );
+my $name     = row( 'Name',     Term::Fabulous::Widget::TextField->new( id => 'name',     placeholder => 'Your name', preferred_columns => 30 ) );
+my $password = row( 'Password', Term::Fabulous::Widget::TextField->new( id => 'password', mask        => '*',         preferred_columns => 30 ) );
 my $notes    = row(
 	'Notes',
 	Term::Fabulous::Widget::TextArea->new(
@@ -89,9 +89,9 @@ my $size = Term::Fabulous::Widget::RadioGroup->new( id => 'size', value => 'm', 
 $size->add_child( Term::Fabulous::Widget::RadioButton->new( label => $_->[0], value => $_->[1] ) ) foreach [ Small => 's' ], [ Medium => 'm' ], [ Large => 'l' ];
 row( 'Size', $size );
 
-my $volume = row( 'Volume', Term::Fabulous::Widget::Slider->new( id => 'volume', value => 30, step => 5, value_format => '%d%%', preferred_columns => 30 ) );
+my $volume = row( 'Volume',     Term::Fabulous::Widget::Slider->new( id => 'volume', value => 30, step => 5, value_format => '%d%%', preferred_columns => 30 ) );
 my $news   = row( 'Newsletter', Term::Fabulous::Widget::Checkbox->new( id => 'newsletter', label => 'Send me the newsletter' ) );
-my $terms  = row( 'Terms', Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms (enables the password field)', checked => 1 ) );
+my $terms  = row( 'Terms',      Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms (enables the password field)', checked => 1 ) );
 
 $terms->on( Change => sub ($event) { $password->disabled( !$event->value ); return Clay::UI::Enum::Result->CONTINUE } );
 

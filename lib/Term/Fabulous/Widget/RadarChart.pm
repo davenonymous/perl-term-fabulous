@@ -37,8 +37,8 @@ class Term::Fabulous::Widget::RadarChart
 		LEGEND_POINT => "\x{25CF}",
 	};
 
-	my %IS_GRID   = map { $_ => 1 } qw(polygon circle none);
-	my @DEFAULTS  = qw(marker line_style points point fill_opacity transform);
+	my %IS_GRID  = map { $_ => 1 } qw(polygon circle none);
+	my @DEFAULTS = qw(marker line_style points point fill_opacity transform);
 
 	field $initial_series :param(series) = [];
 	field $labels         :param         = [];
@@ -62,11 +62,11 @@ class Term::Fabulous::Widget::RadarChart
 		croak ref($self) . ": series must be an array reference of series hashes" unless ref $initial_series eq 'ARRAY';
 		$self->add_series($_) foreach @$initial_series;
 		$initial_series = undef;
-	}
+		}
 
-	method default_series_type ()  { return 'area' }
-	method series_types ()         { return qw(area line) }
-	method series_default_names () { return @DEFAULTS }
+		method default_series_type () { return 'area' }
+	method series_types ()                    { return qw(area line) }
+	method series_default_names ()            { return @DEFAULTS }
 	method check_series_type ( $name, $type ) { return }
 
 	# A point given by label needs an axis of that name.
@@ -86,7 +86,7 @@ class Term::Fabulous::Widget::RadarChart
 
 	method _checked_labels ($value) {
 		croak ref($self) . ": labels must be an array reference of strings" unless ref $value eq 'ARRAY' && !grep { !defined || ref } @$value;
-		return [ map {"$_"} @$value ];
+		return [ map { "$_" } @$value ];
 	}
 
 	method _checked_end ( $name, $value ) {
@@ -104,14 +104,14 @@ class Term::Fabulous::Widget::RadarChart
 		return $value;
 	}
 
-	method min (@new)         { return @new ? $self->_set( \$min, $self->_checked_end( min => $new[0] ) ) : $min }
-	method max (@new)         { return @new ? $self->_set( \$max, $self->_checked_end( max => $new[0] ) ) : $max }
-	method grid (@new)        { return @new ? $self->_set( \$grid, $self->_check_choice( grid => $new[0], \%IS_GRID ) ) : $grid }
-	method format (@new)      { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) ) : $format }
-	method marker (@new)       { return $self->series_default( marker       => @new ) }
-	method line_style (@new)   { return $self->series_default( line_style   => @new ) }
-	method points (@new)       { return $self->series_default( points       => @new ) }
-	method point (@new)        { return $self->series_default( point        => @new ) }
+	method min          (@new) { return @new ? $self->_set( \$min, $self->_checked_end( min => $new[0] ) ) : $min }
+	method max          (@new) { return @new ? $self->_set( \$max, $self->_checked_end( max => $new[0] ) ) : $max }
+	method grid         (@new) { return @new ? $self->_set( \$grid, $self->_check_choice( grid => $new[0], \%IS_GRID ) ) : $grid }
+	method format       (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) ) : $format }
+	method marker       (@new) { return $self->series_default( marker       => @new ) }
+	method line_style   (@new) { return $self->series_default( line_style   => @new ) }
+	method points       (@new) { return $self->series_default( points       => @new ) }
+	method point        (@new) { return $self->series_default( point        => @new ) }
 	method fill_opacity (@new) { return $self->series_default( fill_opacity => @new ) }
 
 	# New labels must still give every value its axis.
@@ -176,9 +176,7 @@ class Term::Fabulous::Widget::RadarChart
 	}
 
 	method legend_entries ($look) {
-		return map {
-			{ series => $_->name, label => $_->name, color => $_->color // $self->slot_color( $look, $_->slot ), symbol => $_->type eq 'line' ? 'line' : 'fill' }
-		} $self->visible_series;
+		return map { { series => $_->name, label => $_->name, color => $_->color // $self->slot_color( $look, $_->slot ), symbol => $_->type eq 'line' ? 'line' : 'fill' } } $self->visible_series;
 	}
 
 	method draw_plot ( $surface, $x, $y, $width, $height, $look ) {
@@ -190,15 +188,15 @@ class Term::Fabulous::Widget::RadarChart
 		# Room for the axis labels around the circle: their width at the
 		# sides, a row above and below.
 		my $label_columns = List::Util::max( map { $measure->($_) } @$labels ) + 1;
-		my $circle = circle_frame( $label_columns, 1, $width - 2 * $label_columns, $height - 2 );
+		my $circle        = circle_frame( $label_columns, 1, $width - 2 * $label_columns, $height - 2 );
 		return if $circle->{radius} < 2;
 		my $radius = $circle->{radius};
 		my $start  = $start_angle / 360;
 
-		my @all = grep { defined } map { $_->{values}->@* } @prepared;
+		my @all   = grep { defined } map { $_->{values}->@* } @prepared;
 		my $scale = Term::Fabulous::Chart::Scale::Linear->fit(
-			extent => @all ? [ List::Util::min(@all), List::Util::max(@all) ] : undef,
-			cells  => List::Util::max( 2, floor( $radius / 2 ) + 1 ),
+			extent  => @all ? [ List::Util::min(@all), List::Util::max(@all) ] : undef,
+			cells   => List::Util::max( 2, floor( $radius / 2 ) + 1 ),
 			zero    => 1,
 			align   => 0,
 			integer => !grep( { $_ != int } @all ) ? 1 : 0,
@@ -208,7 +206,7 @@ class Term::Fabulous::Widget::RadarChart
 			( defined $ticks ? ( ticks => $ticks ) : () ),
 		);
 		my $distance_of = sub ($value) { List::Util::max( 0, $scale->position($value) ) * $radius };
-		my $vertex = sub ( $axis, $distance ) { [ point_at( $circle, $distance, $axis / $count, $start ) ] };
+		my $vertex      = sub ( $axis, $distance ) { [ point_at( $circle, $distance, $axis / $count, $start ) ] };
 
 		# The web: rings at the ticks and a spoke to every axis.
 		my $web = Term::Fabulous::Chart::Raster->new( marker => Term::Fabulous::Chart::Marker->named('braille'), columns => $width, rows => $height );
@@ -258,8 +256,8 @@ class Term::Fabulous::Widget::RadarChart
 			$lines->start_pattern( $series->dash_pattern( $self->series_option( $series, 'line_style' ) // 'solid' ) );
 			foreach my $axis ( 0 .. $count - 1 ) {
 				my ( $from, $middle, $to ) = ( $corners[$axis], $midpoints[$axis], $corners[ ( $axis + 1 ) % $count ] );
-				$lines->line( $from->[0] * 2, $from->[1] * 4, $middle->[0] * 2, $middle->[1] * 4, $color, $targets[$axis] );
-				$lines->line( $middle->[0] * 2, $middle->[1] * 4, $to->[0] * 2, $to->[1] * 4, $color, $targets[ ( $axis + 1 ) % $count ] );
+				$lines->line( $from->[0] * 2,   $from->[1] * 4,   $middle->[0] * 2, $middle->[1] * 4, $color, $targets[$axis] );
+				$lines->line( $middle->[0] * 2, $middle->[1] * 4, $to->[0] * 2,     $to->[1] * 4,     $color, $targets[ ( $axis + 1 ) % $count ] );
 			}
 			$lines->start_pattern(undef);
 			if ( $self->series_option( $series, 'points' ) ) {
@@ -267,9 +265,9 @@ class Term::Fabulous::Widget::RadarChart
 				push @points, map { [ floor( $corners[$_][0] ), floor( $corners[$_][1] ), $glyph, $color, $targets[$_] ] } grep { defined $entry->{values}[$_] } 0 .. $count - 1;
 			}
 		}
-		$surface->composite( $fills{$_}, 'fill', $x, $y ) foreach @fill_order;
-		$surface->composite( $web, 'stroke', $x, $y );
-		$surface->composite( $lines, 'stroke', $x, $y );
+		$surface->composite( $fills{$_}, 'fill',   $x, $y ) foreach @fill_order;
+		$surface->composite( $web,       'stroke', $x, $y );
+		$surface->composite( $lines,     'stroke', $x, $y );
 		foreach my $point (@points) {
 			my ( $column, $row, $glyph, $color, $owner ) = @$point;
 			next if $glyph eq 'dot' || $glyph eq 'square';
@@ -284,7 +282,7 @@ class Term::Fabulous::Widget::RadarChart
 		foreach my $axis ( 0 .. $count - 1 ) {
 			my $text = $labels->[$axis];
 			my ( $at_x, $at_y ) = point_at( $circle, $radius + 1, $axis / $count, $start );
-			my $dx    = $at_x - $circle->{center_x};
+			my $dx            = $at_x - $circle->{center_x};
 			my $width_of_text = $measure->($text);
 			my $column
 				= abs($dx) < 1 ? floor( $at_x - $width_of_text / 2 + 0.5 )
@@ -296,6 +294,7 @@ class Term::Fabulous::Widget::RadarChart
 		}
 		my ( $end_x, $end_y ) = point_at( $circle, $radius, 0, $start );
 		my $spoke_is_flat = abs( $end_x - $circle->{center_x} ) > abs( $end_y - $circle->{center_y} ) * CELL_ASPECT;
+
 		# A ring label needs a free column around it; axis labels and the
 		# ring labels placed before it take their cells.
 		foreach my $tick ( reverse $scale->ticks ) {
@@ -370,7 +369,7 @@ class Term::Fabulous::Widget::RadarChart
 		foreach my $child ( $kid->children->@* ) {
 			my $name   = $child->name;
 			my @values = map { $_->as_perl } $child->args->@*;
-			croak ref($self) . ": a series node holds 'data' and 'point' nodes, got '$name'" unless $name eq 'data' || $name eq 'point';
+			croak ref($self) . ": a series node holds 'data' and 'point' nodes, got '$name'" unless $name eq 'data'  || $name eq 'point';
 			croak ref($self) . ": '$name' in series '$args[0]' takes no properties or children" if $child->props->@* || $child->children->@*;
 			if ( $name eq 'point' ) {
 				croak ref($self) . ": 'point' in series '$args[0]' takes a label and a value" unless @values == 2 && defined $values[0] && !ref $values[0];

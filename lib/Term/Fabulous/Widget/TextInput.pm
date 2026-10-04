@@ -102,12 +102,12 @@ class Term::Fabulous::Widget::TextInput
 		$selection_color   = cell_color( $self, selection_color   => $selection_color );
 		$self->background_color( [ @{ +DEFAULT_BACKGROUND } ] ) unless defined $self->background_color;
 		$self->max_length($max_length) if defined $max_length;
-		$self->value($value)           if defined $value;
-	}
+		$self->value($value) if defined $value;
+		}
 
-	# Runs an editor call for a public method; the editor's errors are
-	# reworded to name this widget, which is the class the caller used.
-	method _in_editor ($code) {
+		# Runs an editor call for a public method; the editor's errors are
+		# reworded to name this widget, which is the class the caller used.
+		method _in_editor ($code) {
 		try {
 			return $code->();
 		}
@@ -325,13 +325,13 @@ class Term::Fabulous::Widget::TextInput
 	# row unseen; a cursor on it is shown at $from. Returns the column after
 	# the text.
 	method _paint_part ( $y, $row, $from, $to, $cursor_at_end, $hidden_from, $width ) {
-		my @selection  = $editor->selection;
+		my @selection = $editor->selection;
 		my ( $cursor_row, $cursor_offset ) = $editor->cursor;
 		my $has_cursor = $self->is_focused && $cursor_row == $row;
 		$cursor_offset = $from if $cursor_offset >= $hidden_from && $cursor_offset < $from;
-		my $fg         = $self->foreground_attr;
-		my $bg         = $self->focus_background_attr;
-		my $selected   = $self->color_attr($selection_color);
+		my $fg       = $self->foreground_attr;
+		my $bg       = $self->focus_background_attr;
+		my $selected = $self->color_attr($selection_color);
 
 		my $x = -$view->left_column;
 		foreach my $cluster ( $view->clusters( $row, $from, $to ) ) {

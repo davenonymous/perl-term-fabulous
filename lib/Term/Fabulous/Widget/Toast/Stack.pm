@@ -45,9 +45,9 @@ class Term::Fabulous::Widget::Toast::Stack
 				attach_points => { element => $point, parent => $point },
 				offset        => {
 					x => $horizontal eq 'left' ? $margin : $horizontal eq 'right' ? -$margin : 0,
-					y => $vertical eq 'top'    ? $margin : -$margin,
+					y => $vertical eq 'top' ? $margin : -$margin,
 				},
-				z_index       => $z_index,
+				z_index => $z_index,
 			}
 		);
 		$self->layout( { layout_direction => CLAY_TOP_TO_BOTTOM, child_gap => 1 } );

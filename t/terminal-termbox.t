@@ -46,13 +46,13 @@ subtest 'a full-screen session' => sub {
 	catch ($error) { skip_all "termbox2 cannot start on a pty here: $error" }
 
 	is [ $terminal->is_open, $terminal->size, $terminal->kitty_keyboard_active ], [ 1, 10, 3, 1 ], 'open, with the size of the terminal and the kitty keyboard protocol';
-	is scalar( () = $terminal->read_handles ), 2, 'the input and resize descriptors to watch';
+	is scalar( () = $terminal->read_handles ),                                    2,               'the input and resize descriptors to watch';
 	like dies { $terminal->open( inline => undef, mouse => 1, kitty_keyboard => 1 ) }, qr/the terminal is open already/, 'a second open dies';
 
 	print {$answers} 'a';
 	my $event = $terminal->next_event;
 	is [ $event->ch, $terminal->next_event ], [ ord 'a', undef ], 'next_event returns what was typed, then nothing';
-	is $terminal->input_ended, 0, 'the input goes on';
+	is $terminal->input_ended,                0,                  'the input goes on';
 
 	$terminal->close;
 	ok lives { $terminal->close }, 'closing twice does nothing';
@@ -73,9 +73,9 @@ subtest 'an inline session' => sub {
 	is $terminal->cell_target->region_top, undef, 'the region is forgotten when it closes';
 
 	my $written = written($pty);
-	like $written, qr/\e\[6n.*\e\[6;1H\n\n\e\[4;1H\e\[J/s, 'the terminal scrolls up and the region is erased';
-	like $written, qr/\e\[2;1H\e\[J.*\e\[4;1H\n/s, 'after the resize too; the shell goes on below its last row';
-	unlike $written, qr/\e\[\?1049h|\e\[\?1003h/, 'neither the alternate screen nor the mouse';
+	like $written,   qr/\e\[6n.*\e\[6;1H\n\n\e\[4;1H\e\[J/s, 'the terminal scrolls up and the region is erased';
+	like $written,   qr/\e\[2;1H\e\[J.*\e\[4;1H\n/s,         'after the resize too; the shell goes on below its last row';
+	unlike $written, qr/\e\[\?1049h|\e\[\?1003h/,            'neither the alternate screen nor the mouse';
 
 	like dies { $terminal->open( inline => 3, mouse => 0, kitty_keyboard => 0 ) }, qr/^Term::Fabulous::Terminal::Termbox: the terminal did not report its cursor position/,
 		'a terminal that does not report the cursor cannot open inline';
@@ -116,9 +116,9 @@ subtest 'errors' => sub {
 	like dies { $unwritable->open( inline => undef, mouse => 0, kitty_keyboard => 0 ) }, qr/^Term::Fabulous::Terminal::Termbox: tb_init_rwfd failed/, 'termbox2 cannot start';
 	is $unwritable->is_open, 0, 'and nothing is open';
 
-	like dies { Term::Fabulous::Terminal::Termbox->new( input => $input ) }, qr/input and output go together/, 'input needs output';
-	like dies { $unwritable->open( inline => 3, mouse => 0, kitty_keyboard => 0, cursor => 1 ) }, qr/open does not accept cursor/, 'unknown open options die';
-	like dies { $unwritable->size }, qr/the terminal is not open/, 'size needs an open terminal';
+	like dies { Term::Fabulous::Terminal::Termbox->new( input => $input ) },                      qr/input and output go together/, 'input needs output';
+	like dies { $unwritable->open( inline => 3, mouse => 0, kitty_keyboard => 0, cursor => 1 ) }, qr/open does not accept cursor/,  'unknown open options die';
+	like dies { $unwritable->size },                                                              qr/the terminal is not open/,     'size needs an open terminal';
 };
 
 subtest 'Term::Fabulous runs on it' => sub {

@@ -32,14 +32,15 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'staff',
-	row_id       => 'email',
+	id     => 'staff',
+	row_id => 'email',
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -52,10 +53,10 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'city',    title => 'City' },
 		{ key => 'email',   title => 'E-mail',  visible => 0 },
 		{ key => 'phone',   title => 'Phone',   visible => 0 },
-		{ key => 'started', title => 'Started', type => 'date', mutator => date('%b %Y') },
-		{ key => 'salary',  title => 'Salary',  type => 'number', mutator => number( decimals => 0 ), visible => 0 },
+		{ key => 'started', title => 'Started', type    => 'date',   mutator => date('%b %Y') },
+		{ key => 'salary',  title => 'Salary',  type    => 'number', mutator => number( decimals => 0 ), visible => 0 },
 	],
-	rows         => \@rows,
+	rows => \@rows,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );

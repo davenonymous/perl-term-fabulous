@@ -18,6 +18,7 @@ role Term::Fabulous::Render::Border {
 
 	# The cells the command being painted may touch (Term::Fabulous::Render).
 	method clip_rect;
+
 	# The cell target the frame is painted into (Term::Fabulous::Render).
 	method cell_target;
 
@@ -34,8 +35,8 @@ role Term::Fabulous::Render::Border {
 	}
 
 	sub _location_attrs ( $location, $border, $inner, $outer ) {
-		return ( $border, $inner ) if $location == 0;
-		return ( $border, $outer ) if $location == 1;
+		return ( $border,              $inner ) if $location == 0;
+		return ( $border,              $outer ) if $location == 1;
 		return ( $border | TB_REVERSE, $outer ) if $location == 2;
 		return ( $border | TB_REVERSE, $inner ) if $location == 3;
 		die "Term::Fabulous::Render::Border: invalid border location code '$location'";
@@ -85,9 +86,9 @@ role Term::Fabulous::Render::Border {
 		my $paint_row = sub ( $y, $outer_y, $glyphs, $locations, $edge ) {
 			my @corners = map { $widget->border_corner_glyph("${edge}_$_") } qw(left right);
 			foreach my $x ( max( $x0, $clip_x0 ) .. min( $last_x, $clip_x1 - 1 ) ) {
-				my $slot     = $x == $x0 && $left ? 0 : $x == $last_x && $right ? 2 : 1;
-				my $glyph    = $slot == 1 ? $glyphs->[1] : $corners[ $slot / 2 ] // $glyphs->[$slot];
-				my $side     = $slot == 0 ? 'left' : $slot == 2 ? 'right' : undef;
+				my $slot     = $x == $x0 && $left ? 0            : $x == $last_x && $right ? 2 : 1;
+				my $glyph    = $slot == 1         ? $glyphs->[1] : $corners[ $slot / 2 ] // $glyphs->[$slot];
+				my $side     = $slot == 0         ? 'left'       : $slot == 2 ? 'right' : undef;
 				my $location = $locations->[$slot];
 				if ( defined $side && $outer{$side} ) {
 					$paint->( $x, $y, $glyph, _on_outer($location), $slot == 0 ? $x - 1 : $x + 1, $y );

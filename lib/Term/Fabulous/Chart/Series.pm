@@ -34,12 +34,12 @@ class Term::Fabulous::Chart::Series :strict(params) {
 	# means "the chart's setting".
 	my @OPTIONS = qw(marker curve tension line line_style points point fill_opacity stack from to transform span_gaps visible max_points trend value_labels);
 
-	field $owner        :param;            # the chart class, for messages
+	field $owner        :param;    # the chart class, for messages
 	field $described_as :param = undef;    # how messages name the series; undef: series 'NAME', '': not at all
 	field $check_points :param = undef;    # called with the series and its new points before they are stored
-	field $name  :param :reader;
-	field $type  :param :reader;
-	field $slot  :param :reader;    # the palette slot, kept for life
+	field $name         :param :reader;
+	field $type         :param :reader;
+	field $slot         :param :reader;    # the palette slot, kept for life
 
 	field $color;
 	field $color_opacity = 1;
@@ -48,16 +48,17 @@ class Term::Fabulous::Chart::Series :strict(params) {
 	field $revision = 0;
 
 	ADJUST :params (%options) {
-		croak "$owner: a series name must be a non-empty string, got " . describe($name) unless defined $name && !ref $name && length $name;
+		croak "$owner: a series name must be a non-empty string, got " . describe($name)
+			unless defined $name && !ref $name && length $name;
 		croak "$owner: series '$name' has an unknown type " . describe($type) . " (known: line, area, bar, scatter)" unless defined $type && !ref $type && $IS_TYPE{$type};
 		my ( $data, $given_color ) = ( delete $options{data} // [], delete $options{color} );
 		$self->set_color($given_color);
 		$self->set_option( $_ => delete $options{$_} ) foreach grep { exists $options{$_} } @OPTIONS;
 		croak "$owner: series '$name' does not take " . join( ', ', sort keys %options ) . " (known: name, type, data, color, " . join( ', ', @OPTIONS ) . ")" if %options;
 		$self->set_data($data);
-	}
+		}
 
-	sub _is_number ($value) {
+		sub _is_number ($value) {
 		return defined $value && !ref $value && looks_like_number($value) && $value == $value && $value - $value == 0;
 	}
 

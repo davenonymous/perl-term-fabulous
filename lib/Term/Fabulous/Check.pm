@@ -89,7 +89,7 @@ sub color ( $owner, $name, $value ) {    ## no critic (Subroutines::RequireFinal
 	}
 }
 
-my $DECIMAL = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
+my $DECIMAL            = qr/(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)/;
 my %SIZING_WITH_LIMITS = ( grow => \&sizing_grow, fit => \&sizing_fit );
 
 # One axis of a Clay sizing: a spec string (grow, fit, grow(MIN, MAX),
@@ -109,7 +109,7 @@ sub sizing ( $owner, $name, $value ) {
 	croak _owner_name($owner) . ": invalid $name " . describe($value) . " (expected grow, fit, grow(MIN), grow(MIN, MAX), fit(MIN), fit(MIN, MAX), percent(0..100), fixed(N) or a sizing_* hash)"
 		if ref $spec;
 	return sizing_grow() if $spec eq 'grow';
-	return sizing_fit()  if $spec eq 'fit';
+	return sizing_fit() if $spec eq 'fit';
 	if ( my ( $kind, $min, $max ) = $spec =~ /\A(grow|fit)\(\s*([0-9]+)\s*(?:,\s*([0-9]+)\s*)?\)\z/ ) {
 		croak _owner_name($owner) . ": $name minimum $min is greater than maximum $max in '$spec'" if defined $max && $min > $max;
 		return $SIZING_WITH_LIMITS{$kind}->( $min + 0, defined $max ? $max + 0 : undef );

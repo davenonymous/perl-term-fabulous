@@ -29,8 +29,8 @@ sub circle_frame ( $x, $y, $width, $height, $margin = 0 ) {
 # center in cell widths and the angle in turns (0 to 1) clockwise from
 # $start (in turns; 0 is 12 o'clock).
 sub polar_of ( $frame, $x, $y, $start = 0 ) {
-	my $dx = $x - $frame->{center_x};
-	my $dy = ( $y - $frame->{center_y} ) * CELL_ASPECT;
+	my $dx    = $x - $frame->{center_x};
+	my $dy    = ( $y - $frame->{center_y} ) * CELL_ASPECT;
 	my $angle = atan2( $dx, -$dy ) / TAU - $start;
 	$angle -= int($angle);
 	$angle += 1 if $angle < 0;

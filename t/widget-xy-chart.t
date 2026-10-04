@@ -22,7 +22,7 @@ my ( $RED, $GREEN, $BLUE ) = map { rgb($_) } '#ff0000', '#00ff00', '#0000ff';
 my $EIGHTH_BLOCKS = qr/[\x{2581}-\x{2588}]/;
 
 sub line_chart (%args) { return sized( 'Term::Fabulous::Widget::LineChart', 30, 10, %args ) }
-sub bar_chart (%args)  { return sized( 'Term::Fabulous::Widget::BarChart',  30, 10, %args ) }
+sub bar_chart  (%args) { return sized( 'Term::Fabulous::Widget::BarChart',  30, 10, %args ) }
 
 # The rows whose text matches.
 sub rows_like ( $lines, $pattern ) {
@@ -33,8 +33,8 @@ subtest 'each chart draws its own series type' => sub {
 	my %type_of = ( LineChart => 'line', AreaChart => 'area', BarChart => 'bar', ScatterPlot => 'scatter' );
 	foreach my $class ( sort keys %type_of ) {
 		my $chart = "Term::Fabulous::Widget::$class"->new( series => [ { data => [1] }, { data => [2] } ] );
-		is [ $chart->series_names ], [ 'Series 1', 'Series 2' ], "$class names unnamed series";
-		is $chart->series('Series 1')->{type}, $type_of{$class}, "$class makes $type_of{$class} series";
+		is [ $chart->series_names ],           [ 'Series 1', 'Series 2' ], "$class names unnamed series";
+		is $chart->series('Series 1')->{type}, $type_of{$class},           "$class makes $type_of{$class} series";
 	}
 	my $mixed = Term::Fabulous::Widget::BarChart->new( series => [ { name => 'trend', type => 'line', data => [1] } ] );
 	is $mixed->series('trend')->{type}, 'line', 'a series may have a type of its own';
@@ -49,9 +49,19 @@ subtest 'title, legend and axis titles' => sub {
 
 	@lines = draw( line_chart( legend => 'bottom', series => [@series] ) );
 	is [ @lines[ -2, -1 ] ], [ '', $legend ], 'at the bottom';
-	@lines = draw( sized( 'Term::Fabulous::Widget::BarChart', 30, 14, legend => 'bottom', labels => [qw(A B)], y_axis => { max => 3 }, series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ] ) );
+	@lines = draw(
+		sized(
+			'Term::Fabulous::Widget::BarChart', 30, 14, legend => 'bottom', labels => [qw(A B)], y_axis => { max => 3 },
+			series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ]
+		)
+	);
 	is [ @lines[ 10 .. 13 ] ], [ match qr/\A +A +B\z/, '', "\x{25A0} one   \x{25A0} two", '' ], 'right below the plot when the ticks leave rows free';
-	@lines = draw( sized( 'Term::Fabulous::Widget::BarChart', 30, 16, legend => 'bottom', labels => [qw(A B)], x_axis => { title => 'quarter' }, y_axis => { max => 3, title => 'units' }, series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ] ) );
+	@lines = draw(
+		sized(
+			'Term::Fabulous::Widget::BarChart', 30, 16, legend => 'bottom', labels => [qw(A B)], x_axis => { title => 'quarter' }, y_axis => { max => 3, title => 'units' },
+			series => [ { name => 'one', data => [ 1, 2 ] }, { name => 'two', data => [ 3, 1 ] } ]
+		)
+	);
 	is [ $lines[0], @lines[ 11 .. 14 ] ], [ 'units', match qr/\A +A +B\z/, match qr/\A +quarter\z/, '', "\x{25A0} one   \x{25A0} two" ], 'below the x axis title when both axes have one';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 30, 6, series => [ map { { name => "Series number $_", data => [ 1, 2 ] } } 1 .. 6 ] ) );
 	is [ @lines[ 0, 1 ] ], [ "\x{2501}\x{2501} Series number 1", "\x{2501}\x{2501} Series number 2   +4 more" ], 'entries that do not fit are counted';
@@ -59,12 +69,17 @@ subtest 'title, legend and axis titles' => sub {
 	like $lines[1], qr/\A\x{2501}\x{2501} Series\S*   \+1 more\z/, 'a lone entry is cut short before the count';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 14, 8, series => [ map { { name => "Series number $_", data => [ 1, 2 ] } } 1 .. 3 ] ) );
 	unlike join( '', @lines ), qr/\x{2501}|more/, 'a chart too narrow for a letter of the entry beside the count has no legend';
-	like $lines[0], qr/\A2 /, 'and the plot takes its rows';
+	like $lines[0],            qr/\A2 /,          'and the plot takes its rows';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 40, 2, legend => 'left', series => [ map { { name => "s$_", data => [ 1, 2 ] } } 1 .. 4 ] ) );
 	like $lines[1], qr/\A\+3 more /, 'a legend beside the plot has room for the count';
 	@lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 30, 1, legend => 'bottom', series => [@series] ) );
 	is $lines[0], $legend, 'a bottom legend is drawn also when no plot fits';
-	@lines = draw( sized( 'Term::Fabulous::Widget::BarChart', 30, 4, horizontal => 1, legend => 'bottom', labels => [qw(A B)], x_axis => { title => 'x' }, y_axis => { title => 'y' }, series => [ { name => 's', data => [ 1, 2 ] }, { name => 't', data => [ 3, 1 ] } ] ) );
+	@lines = draw(
+		sized(
+			'Term::Fabulous::Widget::BarChart', 30, 4, horizontal => 1, legend => 'bottom', labels => [qw(A B)], x_axis => { title => 'x' }, y_axis => { title => 'y' },
+			series => [ { name => 's', data => [ 1, 2 ] }, { name => 't', data => [ 3, 1 ] } ]
+		)
+	);
 	is $lines[3], "\x{25A0} s   \x{25A0} t", 'a horizontal chart in little room drops its axis titles and keeps the legend row to itself';
 	@lines = draw( line_chart( legend => 'left', series => [@series] ) );
 	is [ @lines[ 4, 5 ] ], [ match qr/\A\x{2501}\x{2501} one  2 \x{2500}/, match qr/\A\x{2501}\x{2501} two  / ], 'on the left, beside the plot';
@@ -89,7 +104,7 @@ subtest 'size and colors' => sub {
 	my $page = Term::Fabulous::Static->new( root => $root, width => 30 );
 	$page->render_lines;
 	is [ $chart->columns, $chart->rows ], [ 30, 8 ], 'a chart without a size takes the room it gets';
-	is $chart->effective_background, 0xFAFAFA, 'and is drawn on the background of its parent';
+	is $chart->effective_background,      0xFAFAFA,  'and is drawn on the background of its parent';
 
 	my $revision = $chart->revision;
 	$chart->theme('dark');
@@ -108,18 +123,21 @@ subtest 'tick labels sit on the rows of their grid lines' => sub {
 	my $chart = sized( 'Term::Fabulous::Widget::BarChart', 20, 10, labels => [qw(A B C D)], y_axis => { max => 8 }, series => [ { name => 's', data => [ 8, 7.5, 6.25, 3.125 ] } ] );
 	my @lines = draw($chart);
 	is rows_like( \@lines, qr/\A\d\.\d / ), [ 1, 3, 6, 8 ], 'the value labels';
-	is rows_like( \@lines, qr/\x{2500}/ ), [ 1, 3, 6, 8 ], 'are on the rows of the grid lines';
-	like $lines[8], qr/\A0\.0 \x{2500}/, 'the baseline is the grid line of 0';
+	is rows_like( \@lines, qr/\x{2500}/ ),  [ 1, 3, 6, 8 ], 'are on the rows of the grid lines';
+	like $lines[8], qr/\A0\.0 \x{2500}/,          'the baseline is the grid line of 0';
 	like $lines[9], qr/\A {6}A {3}B {3}C {3}D\z/, 'the categories below their bars';
 };
 
 subtest 'bars grow from the baseline with eighth-block tops' => sub {
-	my $chart = sized( 'Term::Fabulous::Widget::BarChart', 20, 10, labels => [qw(A B C D)], bar_width => 0.5, y_axis => { max => 8 }, series => [ { name => 's', data => [ 8, 7.5, 6.25, 3.125 ], color => '#ff0000' } ] );
+	my $chart = sized(
+		'Term::Fabulous::Widget::BarChart', 20, 10, labels => [qw(A B C D)], bar_width => 0.5, y_axis => { max => 8 },
+		series => [ { name => 's', data => [ 8, 7.5, 6.25, 3.125 ], color => '#ff0000' } ]
+	);
 	draw($chart);
-	is [ map { bar_eighths( $chart, $_, $RED ) } 5, 9, 13, 17 ], [ 64, 60, 50, 25 ], 'eight units on eight cells: each unit is an eighth of a cell';
+	is [ map { bar_eighths( $chart, $_, $RED ) } 5, 9, 13, 17 ],                        [ 64, 60, 50, 25 ],                     'eight units on eight cells: each unit is an eighth of a cell';
 	is [ map { glyph_at( $chart, $_->[0], $_->[1] ) } [ 5, 0 ], [ 13, 2 ], [ 17, 5 ] ], [ "\x{2584}", "\x{2586}", "\x{2585}" ], 'the tops are eighth blocks';
-	is glyph_at( $chart, 5, 8 ), "\x{2580}", 'a bar starts at the middle of the baseline row';
-	is glyph_at( $chart, 7, 4 ), undef, 'the gap between the bars is empty';
+	is glyph_at( $chart, 5, 8 ),                                                        "\x{2580}",                             'a bar starts at the middle of the baseline row';
+	is glyph_at( $chart, 7, 4 ),                                                        undef,                                  'the gap between the bars is empty';
 
 	$chart->set_data( s => [ 8, 7.5, 6.25, 6.25 ] );
 	draw($chart);
@@ -128,7 +146,7 @@ subtest 'bars grow from the baseline with eighth-block tops' => sub {
 
 subtest 'grouped, stacked and stack groups' => sub {
 	my @series = ( { name => 'a', data => [ 1, 2 ], color => '#ff0000' }, { name => 'b', data => [ 3, 1 ], color => '#00ff00' } );
-	my $chart = bar_chart( labels => [qw(A B)], series => [@series] );
+	my $chart  = bar_chart( labels => [qw(A B)], series => [@series] );
 	draw($chart);
 	is [ bar_eighths( $chart, 5, $RED ), bar_eighths( $chart, 9, $GREEN ) ], [ 16, 48 ], 'grouped bars stand side by side';
 
@@ -137,7 +155,14 @@ subtest 'grouped, stacked and stack groups' => sub {
 	is [ map { bg_at( $chart, 6, $_ ) } 3 .. 7 ], [ ($GREEN) x 4, $RED ], 'stacked bars: the first series at the bottom, the next on top of it';
 	is [ bar_eighths( $chart, 6, $RED ), bar_eighths( $chart, 6, $GREEN ) ], [ 12, 36 ], 'each as high as its value';
 
-	my $groups = bar_chart( labels => [qw(A B)], series => [ map { { %$_, stack => 'g1' } } @series ], );
+	my $groups = bar_chart(
+		labels => [qw(A B)],
+		series => [
+			map {
+				{ %$_, stack => 'g1' }
+			} @series
+		],
+	);
 	$groups->add_series( name => 'c', data => [ 2, 1 ], stack => 'g2', color => '#0000ff' );
 	draw($groups);
 	is [ bar_eighths( $groups, 6, $RED ), bar_eighths( $groups, 6, $GREEN ), bar_eighths( $groups, 10, $BLUE ) ], [ 12, 36, 24 ], 'each stack group is a bar of its own';
@@ -157,10 +182,15 @@ subtest 'horizontal bars' => sub {
 	my $chart = bar_chart( horizontal => 1, labels => [qw(A B)], series => [ { name => 's', data => [ 2, 4 ], color => '#ff0000' } ] );
 	my @lines = draw($chart);
 	like $lines[-1], qr/\A  0 +2 +4\z/, 'the values along the bottom';
-	is [ map { substr $_, 0, 1 } @lines[ 0 .. 8 ] ], [ ' ', 'A', ( ' ' ) x 3, 'B', ( ' ' ) x 3 ], 'the categories down the left';
+	is [ map { substr $_, 0, 1 } @lines[ 0 .. 8 ] ], [ ' ', 'A', (' ') x 3, 'B', (' ') x 3 ], 'the categories down the left';
 	my @red = cells_with( $chart, sub ( $c, $x, $y ) { ( bg_at( $c, $x, $y ) // -1 ) == $RED } );
-	is { map { $_->[1] => 1 } @red }, { 1 => 1, 2 => 1, 5 => 1, 6 => 1 }, 'each bar takes the rows of its category';
-	my %longest = map { my $y = $_; $y => scalar grep { $_->[1] == $y } @red } 1, 5;
+	is {
+		map { $_->[1] => 1 } @red
+	}, { 1 => 1, 2 => 1, 5 => 1, 6 => 1 }, 'each bar takes the rows of its category';
+	my %longest = map {
+		my $y = $_;
+		$y => scalar grep { $_->[1] == $y } @red
+	} 1, 5;
 	ok $longest{5} > $longest{1} * 1.8, 'and is as long as its value';
 	like glyph_row( $chart, 1 ), qr/\x{2590}/, 'bars start with a block at the baseline';
 
@@ -169,7 +199,7 @@ subtest 'horizontal bars' => sub {
 	like dies { $vertical->horizontal(1) }, qr/'l' is a line series/, 'turning a chart with a line series horizontal dies';
 	is $vertical->horizontal, 0, 'and leaves it vertical';
 	like dies { $chart->add_series( name => 'late', type => 'line' ) }, qr/'late' is a line series/, 'adding a line series to a horizontal chart dies';
-	like dies { $chart->set_series( s => ( type => 'line' ) ) }, qr/'s' is a line series/, 'so does changing a series to a line';
+	like dies { $chart->set_series( s => ( type => 'line' ) ) },        qr/'s' is a line series/,    'so does changing a series to a line';
 	is [ $chart->series_names, $chart->series('s')->{type} ], [ 's', 'bar' ], 'and nothing changed';
 };
 
@@ -211,18 +241,18 @@ subtest 'lines, points and markers' => sub {
 subtest 'scatter points and trend lines' => sub {
 	my $chart = sized( 'Term::Fabulous::Widget::ScatterPlot', 30, 8, series => [ { name => 'p', data => [ [ 1, 1 ], [ 2, 4 ], [ 3, 2 ] ] } ] );
 	draw($chart);
-	is scalar( cells_with( $chart, sub ( $c, $x, $y ) { ( glyph_at( $c, $x, $y ) // '' ) eq "\x{2836}" } ) ), 3, 'a point is a square of four dots';
-	is braille_dots($chart), 12, 'and nothing joins them';
+	is scalar( cells_with( $chart, sub ( $c, $x, $y ) { ( glyph_at( $c, $x, $y ) // '' ) eq "\x{2836}" } ) ), 3,  'a point is a square of four dots';
+	is braille_dots($chart),                                                                                  12, 'and nothing joins them';
 	$chart->set_series( p => ( trend => 1 ) );
 	draw($chart);
 	ok braille_dots($chart) > 20, 'a trend line runs through them';
 };
 
 subtest 'areas fill down to the baseline' => sub {
-	my $chart = sized( 'Term::Fabulous::Widget::AreaChart', 30, 8, series => [ { name => 'p', data => [ 1, 4, 2 ], color => '#ff0000' } ] );
-	my @lines = draw($chart);
+	my $chart  = sized( 'Term::Fabulous::Widget::AreaChart', 30, 8, series => [ { name => 'p', data => [ 1, 4, 2 ], color => '#ff0000' } ] );
+	my @lines  = draw($chart);
 	my @filled = cells_with( $chart, sub ( $c, $x, $y ) { defined bg_at( $c, $x, $y ) } );
-	ok @filled > 40, 'the area is filled';
+	ok @filled > 40,                                       'the area is filled';
 	ok !( grep { bg_at( $chart, @$_ ) == $RED } @filled ), 'translucent, blended with the background';
 	like $lines[0], $EIGHTH_BLOCKS, 'its top edge in eighth blocks';
 	is braille_dots($chart), 0, 'without a line';
@@ -233,16 +263,17 @@ subtest 'areas fill down to the baseline' => sub {
 
 subtest 'x values decide the kind of axis' => sub {
 	my $kind = sub (%args) { ( Term::Fabulous::Widget::LineChart->new(%args)->prepare_series )[0] };
-	is $kind->( series => [ { data => [ 1, 2 ] } ] ),                                        'linear',   'plain values: their index on a linear axis';
-	is $kind->( series => [ { data => [ [ 1.5, 2 ], [ 3, 1 ] ] } ] ),                      'linear',   'numbers';
+	is $kind->( series => [ { data => [ 1, 2 ] } ] ),                                     'linear',   'plain values: their index on a linear axis';
+	is $kind->( series => [ { data => [ [ 1.5, 2 ], [ 3, 1 ] ] } ] ),                     'linear',   'numbers';
 	is $kind->( series => [ { data => [ [ '2026-06-10', 2 ], [ '2026-06-12', 1 ] ] } ] ), 'time',     'dates';
-	is $kind->( series => [ { data => [ [ 'mon', 2 ], [ 'tue', 1 ] ] } ] ),                'category', 'labels';
-	is $kind->( labels => [qw(a b)], series => [ { data => [ 1, 2 ] } ] ),                 'category', 'the labels parameter';
+	is $kind->( series => [ { data => [ [ 'mon', 2 ], [ 'tue', 1 ] ] } ] ),               'category', 'labels';
+	is $kind->( labels => [qw(a b)], series => [ { data => [ 1, 2 ] } ] ),                'category', 'the labels parameter';
 	is( ( Term::Fabulous::Widget::BarChart->new( series => [ { data => [ 1, 2 ] } ] )->prepare_series )[0], 'category', 'bars without x values' );
 	is $kind->( x_axis => { type => 'log' }, series => [ { data => [ [ 1, 1 ] ] } ] ), 'log', 'the axis type wins';
 
 	like dies { $kind->( x_axis => { type => 'time' }, series => [ { name => 's', data => [ 1, 2 ] } ] ) }, qr/series 's' needs x values for a time axis/, 'a time axis needs x values';
-	like dies { $kind->( x_axis => { type => 'linear' }, series => [ { name => 's', data => [ [ 'mon', 1 ] ] } ] ) }, qr/the x value 'mon' of series 's' is not a number/, 'a linear axis needs numbers';
+	like dies { $kind->( x_axis => { type => 'linear' }, series => [ { name => 's', data => [ [ 'mon', 1 ] ] } ] ) }, qr/the x value 'mon' of series 's' is not a number/,
+		'a linear axis needs numbers';
 
 	my @lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 40, 6, series => [ { data => [ [ 'mon', 1 ], [ 'tue', 3 ], [ 'wed', 2 ] ] } ] ) );
 	like $lines[-1], qr/\A mon +tue +wed\z/, 'categories in the order they come';
@@ -283,7 +314,7 @@ subtest 'transforms' => sub {
 	my @lines = draw( line_chart( transform => 'cumulative', series => [ { data => [ 1, 1, 1, 1 ] } ] ) );
 	like $lines[0], qr/\A4 /, 'the chart transforms all series';
 	@lines = draw( line_chart( series => [ { data => [ 2, 4, 6 ], transform => [ [ 'index', 10 ] ] } ] ) );
-	like $lines[0], qr/\A30 /, 'a series transforms its own data';
+	like $lines[0],  qr/\A30 /, 'a series transforms its own data';
 	like $lines[-2], qr/\A10 /, 'from its first value';
 };
 
@@ -291,8 +322,8 @@ subtest 'series management' => sub {
 	my $chart = line_chart( palette => [ '#ff0000', '#00ff00', '#0000ff' ] );
 	ref_is $chart->add_series( name => 'a', data => [ 1, 2 ] ), $chart, 'add_series returns the chart';
 	$chart->add_series( { name => 'b', data => [ 3, 4 ], curve => 'monotone' } );
-	is [ $chart->series_names ], [qw(a b)], 'in order';
-	is [ $chart->has_series('b'), $chart->has_series('c') ], [ 1, 0 ], 'has_series';
+	is [ $chart->series_names ],                             [qw(a b)], 'in order';
+	is [ $chart->has_series('b'), $chart->has_series('c') ], [ 1, 0 ],  'has_series';
 	is $chart->series('b'), { name => 'b', type => 'line', curve => 'monotone', data => [ 3, 4 ] }, 'series describes a series';
 	like dies { $chart->set_series( b => ( type => 'area', curve => 'wiggly' ) ) }, qr/curve of series 'b' must be/, 'set_series checks every option first';
 	is $chart->series('b')->{type}, 'line', 'and changes nothing when one fails';
@@ -322,7 +353,7 @@ subtest 'hidden series' => sub {
 	$chart->hide_series('b');
 	is $chart->is_series_visible('b'), 0, 'is_series_visible';
 	my @lines = draw($chart);
-	like $lines[0], qr/\A2 /, 'a hidden series does not count for the axes';
+	like $lines[0],            qr/\A2 /,     'a hidden series does not count for the axes';
 	unlike join( '', @lines ), qr/\x{2501}/, 'and has no legend entry';
 	$chart->show_series('b');
 	@lines = draw($chart);
@@ -350,37 +381,40 @@ subtest 'invalid input dies' => sub {
 	my $chart = line_chart( series => [ { name => 'a' } ] );
 	my @cases = (
 		[ sub { line_chart( series => [ { name => 'a', colour => '#ff0000' } ] ) }, qr/series 'a' does not take colour \(known: name, type, data, color, marker/, 'an unknown series option' ],
-		[ sub { $chart->add_series( name => 'a' ) },                                 qr/a series named 'a' exists already/,                                   'a duplicate name' ],
-		[ sub { line_chart( series => [ { type => 'pie' } ] ) },                     qr/draws series of the types line, area, bar, scatter, not 'pie'/,       'an unknown type' ],
-		[ sub { line_chart( series => [ { name => 'a', marker => 'block' } ] ) },    qr/marker of series 'a' must be one of braille, half, quadrant, sextant, box for a line series/, 'a marker the type cannot draw' ],
-		[ sub { $chart->set_data( a => { 1 => 2 } ) },                               qr/the data of series 'a' must be an array reference, got a HASH reference/, 'data that is no array' ],
-		[ sub { $chart->set_data( a => [ [ 1, 2, 3 ] ] ) },                          qr/data point 0 of series 'a' must be \[ x, y \], got an array of 3 values/, 'a point of three values' ],
-		[ sub { $chart->set_data( a => [ 1, { x => 1, z => 2 } ] ) },                qr/data point 1 of series 'a' takes only the keys x and y, got z/,       'a point hash with other keys' ],
-		[ sub { $chart->set_data( a => ['abc'] ) },                                  qr/the y value of data point 0 of series 'a' must be a finite number or undef, got 'abc'/, 'a y value that is no number' ],
-		[ sub { $chart->add_points( b => 1 ) },                                      qr/no series named 'b'/,                                                 'an unknown series' ],
-		[ sub { $chart->set_series( a => ( name => 'b' ) ) },                        qr/set_series cannot rename a series/,                                   'renaming' ],
-		[ sub { $chart->append( 1, [1] ) },                                          qr/append needs a hash reference of values by series name/,             'append without a hash' ],
-		[ sub { $chart->series_default( stack => 'x' ) },                            qr/unknown series default 'stack'/,                                      'an unknown series default' ],
-		[ sub { line_chart( x_axis => { kind => 'time' } ) },                        qr/x_axis does not take kind \(known: type min max/,                    'an unknown axis key' ],
-		[ sub { line_chart( x_axis => [] ) },                                        qr/x_axis must be a hash reference, got an ARRAY reference/,                'an axis that is no hash' ],
-		[ sub { line_chart( y_axis => { type => 'time' } ) },                        qr/the type of y_axis must be one of linear, log, got 'time'/,           'a y axis of time' ],
-		[ sub { line_chart( y_axis => { grid => 'wavy' } ) },                        qr/the grid of y_axis must be 0, 1, solid, dashed or dotted, got 'wavy'/, 'an unknown grid style' ],
-		[ sub { line_chart( y_axis => { ticks => 0 } ) },                            qr/the ticks of y_axis must be a positive integer, got '0'/,             'zero ticks' ],
-		[ sub { line_chart( y_axis => { min => 'low' } ) },                          qr/the min of y_axis must be a number, got 'low'/,                       'a y minimum that is no number' ],
-		[ sub { line_chart( x_axis => { base => 1 } ) },                             qr/the base of x_axis must be a number greater than 1/,                  'a log base of 1' ],
-		[ sub { line_chart( stacked => [] ) },                                       qr/stacked must be 0, 1 or 'percent', got an ARRAY reference/,                   'stacked as an array' ],
-		[ sub { line_chart( stacked => 'percents' ) },                               qr/stacked must be 0, 1 or 'percent', got 'percents'/,                        'stacked as a misspelled percent' ],
-		[ sub { line_chart( stacked => '1.0' ) },                                    qr/stacked must be 0, 1 or 'percent', got '1.0'/,                             'stacked as 1.0' ],
-		[ sub { line_chart( curve => 'wiggly' ) },                                   qr/LineChart: curve must be /,                                                'a chart-wide option names no series' ],
-		[ sub { line_chart( bar_width => 1.5 ) },                                    qr/bar_width must be a number from 0 to 1, got '1\.5'/,                  'a bar width above 1' ],
-		[ sub { line_chart( labels => [undef] ) },                                   qr/every label must be a string, got undef/,                             'an undefined label' ],
-		[ sub { line_chart( series => 'a' ) },                                       qr/series must be an array reference of series hashes/,                  'series that are no array' ],
-		[ sub { line_chart( legend => 'middle' ) },                                  qr/legend must be auto, bottom, left, none, right, top, got 'middle'/,   'an unknown legend position' ],
-		[ sub { line_chart( title_align => 'top' ) },                                qr/title_align must be center, left, right, got 'top'/,                  'an unknown title alignment' ],
-		[ sub { line_chart( theme => 'blue' ) },                                     qr/theme must be auto, dark, light, got 'blue'/,                         'an unknown theme' ],
-		[ sub { line_chart( palette => 'nope' ) },                                   qr/palette must be a palette name \(classic, default, pastel, vivid\) or an array reference of colors, got 'nope'/, 'an unknown palette' ],
-		[ sub { line_chart( hover_fade => 2 ) },                                     qr/hover_fade must be a number from 0 to 1, got '2'/,                    'a fade above 1' ],
-		[ sub { line_chart( title => [] ) },                                         qr/title must be a string or undef, got an ARRAY reference/,                'a title that is no string' ],
+		[ sub { $chart->add_series( name => 'a' ) },                                qr/a series named 'a' exists already/,                                        'a duplicate name' ],
+		[ sub { line_chart( series => [ { type => 'pie' } ] ) },                    qr/draws series of the types line, area, bar, scatter, not 'pie'/,            'an unknown type' ],
+		[
+			sub { line_chart( series => [ { name => 'a', marker => 'block' } ] ) }, qr/marker of series 'a' must be one of braille, half, quadrant, sextant, box for a line series/,
+			'a marker the type cannot draw'
+		],
+		[ sub { $chart->set_data( a => { 1 => 2 } ) },                qr/the data of series 'a' must be an array reference, got a HASH reference/,               'data that is no array' ],
+		[ sub { $chart->set_data( a => [ [ 1, 2, 3 ] ] ) },           qr/data point 0 of series 'a' must be \[ x, y \], got an array of 3 values/,               'a point of three values' ],
+		[ sub { $chart->set_data( a => [ 1, { x => 1, z => 2 } ] ) }, qr/data point 1 of series 'a' takes only the keys x and y, got z/,                         'a point hash with other keys' ],
+		[ sub { $chart->set_data( a => ['abc'] ) },                   qr/the y value of data point 0 of series 'a' must be a finite number or undef, got 'abc'/, 'a y value that is no number' ],
+		[ sub { $chart->add_points( b => 1 ) },                       qr/no series named 'b'/,                                                                   'an unknown series' ],
+		[ sub { $chart->set_series( a => ( name => 'b' ) ) },         qr/set_series cannot rename a series/,                                                     'renaming' ],
+		[ sub { $chart->append( 1, [1] ) },                           qr/append needs a hash reference of values by series name/,                                'append without a hash' ],
+		[ sub { $chart->series_default( stack => 'x' ) },             qr/unknown series default 'stack'/,                                                        'an unknown series default' ],
+		[ sub { line_chart( x_axis      => { kind => 'time' } ) }, qr/x_axis does not take kind \(known: type min max/,                      'an unknown axis key' ],
+		[ sub { line_chart( x_axis      => [] ) },                 qr/x_axis must be a hash reference, got an ARRAY reference/,              'an axis that is no hash' ],
+		[ sub { line_chart( y_axis      => { type => 'time' } ) }, qr/the type of y_axis must be one of linear, log, got 'time'/,            'a y axis of time' ],
+		[ sub { line_chart( y_axis      => { grid => 'wavy' } ) }, qr/the grid of y_axis must be 0, 1, solid, dashed or dotted, got 'wavy'/, 'an unknown grid style' ],
+		[ sub { line_chart( y_axis      => { ticks => 0 } ) },     qr/the ticks of y_axis must be a positive integer, got '0'/,              'zero ticks' ],
+		[ sub { line_chart( y_axis      => { min => 'low' } ) },   qr/the min of y_axis must be a number, got 'low'/,                        'a y minimum that is no number' ],
+		[ sub { line_chart( x_axis      => { base => 1 } ) },      qr/the base of x_axis must be a number greater than 1/,                   'a log base of 1' ],
+		[ sub { line_chart( stacked     => [] ) },                 qr/stacked must be 0, 1 or 'percent', got an ARRAY reference/,            'stacked as an array' ],
+		[ sub { line_chart( stacked     => 'percents' ) },         qr/stacked must be 0, 1 or 'percent', got 'percents'/,                    'stacked as a misspelled percent' ],
+		[ sub { line_chart( stacked     => '1.0' ) },              qr/stacked must be 0, 1 or 'percent', got '1.0'/,                         'stacked as 1.0' ],
+		[ sub { line_chart( curve       => 'wiggly' ) },           qr/LineChart: curve must be /,                                            'a chart-wide option names no series' ],
+		[ sub { line_chart( bar_width   => 1.5 ) },                qr/bar_width must be a number from 0 to 1, got '1\.5'/,                   'a bar width above 1' ],
+		[ sub { line_chart( labels      => [undef] ) },            qr/every label must be a string, got undef/,                              'an undefined label' ],
+		[ sub { line_chart( series      => 'a' ) },                qr/series must be an array reference of series hashes/,                   'series that are no array' ],
+		[ sub { line_chart( legend      => 'middle' ) },           qr/legend must be auto, bottom, left, none, right, top, got 'middle'/,    'an unknown legend position' ],
+		[ sub { line_chart( title_align => 'top' ) },              qr/title_align must be center, left, right, got 'top'/,                   'an unknown title alignment' ],
+		[ sub { line_chart( theme       => 'blue' ) },             qr/theme must be auto, dark, light, got 'blue'/,                          'an unknown theme' ],
+		[ sub { line_chart( palette    => 'nope' ) }, qr/palette must be a palette name \(classic, default, pastel, vivid\) or an array reference of colors, got 'nope'/, 'an unknown palette' ],
+		[ sub { line_chart( hover_fade => 2 ) },      qr/hover_fade must be a number from 0 to 1, got '2'/,                                                               'a fade above 1' ],
+		[ sub { line_chart( title      => [] ) },     qr/title must be a string or undef, got an ARRAY reference/,                                                        'a title that is no string' ],
 	);
 	foreach my $case (@cases) {
 		like dies { $case->[0]->() }, $case->[1], $case->[2];

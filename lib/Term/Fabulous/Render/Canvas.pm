@@ -51,7 +51,7 @@ role Term::Fabulous::Render::Canvas {
 		die "Term::Fabulous::Render::Canvas: a custom render command needs a Term::Fabulous::Widget::Canvas, got " . ( ref $canvas || 'no widget' )
 			unless defined $canvas && $canvas->isa('Term::Fabulous::Widget::Canvas');
 
-		my ( $x0, $y0, $x1, $y1 ) = cell_rect( $command->{boundingBox} );
+		my ( $x0,   $y0,  $x1,    $y1 )     = cell_rect( $command->{boundingBox} );
 		my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 		my @content = ( $x0 + $left, $y0 + $top );
 		push @content, max( $content[0], $x1 - $right ), max( $content[1], $y1 - $bottom );
@@ -73,11 +73,11 @@ role Term::Fabulous::Render::Canvas {
 
 		my @commands = $frame->commands;
 		foreach my $index ( grep { $commands[$_]{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM } 0 .. $#commands ) {
-			my $plan = $self->_plan_canvas( $commands[$index], $frame->clip_rect($index) ) // next;
+			my $plan   = $self->_plan_canvas( $commands[$index], $frame->clip_rect($index) ) // next;
 			my $before = $painted{ refaddr $plan->{canvas} };
 
-			$plan->{covered} = $frame->painted_after( $index, $plan->{visible} );
-			$plan->{intact}  = !$plan->{covered} && defined $before && !$before->{covered} && _same_place( $before, $plan );
+			$plan->{covered}                            = $frame->painted_after( $index, $plan->{visible} );
+			$plan->{intact}                             = !$plan->{covered} && defined $before && !$before->{covered} && _same_place( $before, $plan );
 			$_plan_by_canvas{ refaddr $plan->{canvas} } = $plan;
 		}
 		return map { $_->{visible} } grep { $_->{intact} } values %_plan_by_canvas;
@@ -96,7 +96,7 @@ role Term::Fabulous::Render::Canvas {
 	}
 
 	method render_custom ( $command, $widget, $buffer ) {
-		my $plan = $_plan_by_canvas{ refaddr $widget } // return;
+		my $plan   = $_plan_by_canvas{ refaddr $widget } // return;
 		my $target = $self->cell_target;
 		$target->release_rect( $plan->{visible} ) if $plan->{intact};
 

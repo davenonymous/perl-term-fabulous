@@ -29,7 +29,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -40,11 +40,11 @@ sub text ( $string, $color = [ 220, 223, 228, 255 ] ) {
 $root->add_child(
 	Term::Fabulous::Widget::Divider->new,
 	Term::Fabulous::Widget::Divider->new( text => 'Settings' ),
-	Term::Fabulous::Widget::Divider->new( text => 'Files', text_position => 'start', bold => 1, text_color => [ 255, 255, 255, 255 ] ),
-	Term::Fabulous::Widget::Divider->new( text => 'end of list', text_position => 'end', text_margin => 2 ),
-	Term::Fabulous::Widget::Divider->new( text => 'Double', line_style => Term::Fabulous::Enum::BorderStyle->Double, color => [ 97, 175, 239, 255 ] ),
-	Term::Fabulous::Widget::Divider->new( text => 'Heavy', line_style => 'Heavy', color => [ 152, 195, 121, 255 ], text_color => [ 152, 195, 121, 255 ] ),
-	Term::Fabulous::Widget::Divider->new( text => 'glyph', glyph => '~', color => [ 229, 192, 123, 255 ] ),
+	Term::Fabulous::Widget::Divider->new( text => 'Files',       text_position => 'start',                                   bold        => 1, text_color => [ 255, 255, 255, 255 ] ),
+	Term::Fabulous::Widget::Divider->new( text => 'end of list', text_position => 'end',                                     text_margin => 2 ),
+	Term::Fabulous::Widget::Divider->new( text => 'Double',      line_style    => Term::Fabulous::Enum::BorderStyle->Double, color       => [ 97, 175, 239, 255 ] ),
+	Term::Fabulous::Widget::Divider->new( text => 'Heavy',       line_style    => 'Heavy',                                   color => [ 152, 195, 121, 255 ], text_color => [ 152, 195, 121, 255 ] ),
+	Term::Fabulous::Widget::Divider->new( text => 'glyph',       glyph         => '~',                                       color => [ 229, 192, 123, 255 ] ),
 );
 
 # Two columns with a vertical divider between them, its text written

@@ -20,7 +20,12 @@ sub image {
 # One line per pixel row: '#' for a set pixel, '.' for an unset one.
 sub pixels {
 	my ($image) = @_;
-	return [ map { my $y = $_; join '', map { defined $image->pixel( $_, $y ) ? '#' : '.' } 0 .. $image->pixel_width - 1 } 0 .. $image->pixel_height - 1 ];
+	return [
+		map {
+			my $y = $_;
+			join '', map { defined $image->pixel( $_, $y ) ? '#' : '.' } 0 .. $image->pixel_width - 1
+		} 0 .. $image->pixel_height - 1
+	];
 }
 
 subtest 'two pixels per cell' => sub {
@@ -71,8 +76,8 @@ subtest 'shapes' => sub {
 	is pixels($image), [ ('......') x 2, '######', ('......') x 3 ], 'so does a circle far larger than the canvas';
 	$image->clear->draw_circle( -50, 3, 40, 1 );
 	is pixels($image), [ ('......') x 6 ], 'a circle beside the canvas draws nothing';
-	like dies { $image->draw_circle( 1, 1, -1, 1 ) }, qr/radius must not be negative/, 'a negative radius dies';
-	like dies { $image->draw_line( 0, 0, 9**9**9, 0, 1 ) }, qr/x must be a finite number/, 'an infinite end point dies';
+	like dies { $image->draw_circle( 1, 1, -1, 1 ) },       qr/radius must not be negative/, 'a negative radius dies';
+	like dies { $image->draw_line( 0, 0, 9**9**9, 0, 1 ) }, qr/x must be a finite number/,   'an infinite end point dies';
 };
 
 subtest 'pixel_at maps the pointer to the pixels of its cell' => sub {
@@ -85,11 +90,11 @@ subtest 'pixel_at maps the pointer to the pixels of its cell' => sub {
 	is [ $image->pixel_at( $mouse->( 3, 2 ) ) ], [], 'nothing before the first frame';
 
 	$ui->draw;
-	is [ $image->content_origin ], [ 3, 2 ], 'the content box starts inside the border';
+	is [ $image->content_origin ],               [ 3, 2 ], 'the content box starts inside the border';
 	is [ $image->pixel_at( $mouse->( 3, 2 ) ) ], [ 0, 0 ], 'the first cell';
 	is [ $image->pixel_at( $mouse->( 6, 3 ) ) ], [ 3, 2 ], 'the upper pixel of the cell';
-	is [ $image->pixel_at( $mouse->( 2, 2 ) ) ], [], 'on the border';
-	is [ $image->pixel_at( $mouse->( 7, 2 ) ) ], [], 'right of the image';
+	is [ $image->pixel_at( $mouse->( 2, 2 ) ) ], [],       'on the border';
+	is [ $image->pixel_at( $mouse->( 7, 2 ) ) ], [],       'right of the image';
 };
 
 done_testing;

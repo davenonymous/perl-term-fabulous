@@ -37,12 +37,12 @@ use Term::Fabulous::Widget::Text;
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM);
 
-use constant CELL_WIDTH    => 22;    # the longest name, LightGoldenRodYellow, plus a margin
-use constant CELL_HEIGHT   => 3;     # two rows of swatch, one row of name
-use constant COLUMN_GAP    => 2;
-use constant ROW_GAP       => 1;
-use constant PAGE_PADDING  => 2;
-use constant HEADER_ROWS   => 2;     # the heading and the gap below it
+use constant CELL_WIDTH   => 22;    # the longest name, LightGoldenRodYellow, plus a margin
+use constant CELL_HEIGHT  => 3;    # two rows of swatch, one row of name
+use constant COLUMN_GAP   => 2;
+use constant ROW_GAP      => 1;
+use constant PAGE_PADDING => 2;
+use constant HEADER_ROWS  => 2;    # the heading and the gap below it
 
 my @colors = Term::Fabulous::Enum::WebColor->values;
 
@@ -100,7 +100,7 @@ my $grid = Term::Fabulous::Widget::ScrollBox->new(
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => PAGE_PADDING, right => PAGE_PADDING, top => 1, bottom => 1 },
+		padding          => { left  => PAGE_PADDING,  right  => PAGE_PADDING, top => 1, bottom => 1 },
 		child_gap        => ROW_GAP,
 	},
 );
@@ -110,7 +110,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { top => 1 },
+		padding          => { top   => 1 },
 		child_gap        => 1,
 	},
 );
@@ -122,7 +122,7 @@ my $sort_by = Term::Fabulous::Widget::Dropdown->new(
 my $heading = Term::Fabulous::Widget::Box->new( layout => { padding => { left => PAGE_PADDING }, child_gap => 2 } );
 $heading->add_child(
 	text( scalar(@colors) . ' web colors. Wheel or arrow keys scroll, q quits.', [ 220, 220, 220, 255 ] ),
-	text( 'Sort by', [ 160, 170, 190, 255 ] ),
+	text( 'Sort by',                                                             [ 160, 170, 190, 255 ] ),
 	$sort_by,
 );
 $root->add_child( $heading, $grid );
@@ -134,7 +134,7 @@ my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 my $row_count = 1;
 
 sub build_grid ($width) {
-	my $usable  = $width - 2 * PAGE_PADDING;    # the grid's padding
+	my $usable = $width - 2 * PAGE_PADDING;    # the grid's padding
 	my $columns = max( 1, int( ( $usable + COLUMN_GAP ) / ( CELL_WIDTH + COLUMN_GAP ) ) );
 	$row_count = ceil( @colors / $columns );
 

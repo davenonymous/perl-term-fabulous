@@ -82,29 +82,29 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'tickets',
-        row_id       => 'ticket',
-        sort         => [ 'priority', [ opened => 'desc' ] ],    # highest priority first, newest first within each
-        # The look: a block frame, and colors instead of grid lines.
+        id     => 'tickets',
+        row_id => 'ticket',
+        sort   => [ 'priority', [ opened => 'desc' ] ],    # highest priority first, newest first within each
+                # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
         header_line  => 'none',
         stripe_color => '#1c2029',
         columns      => [
-                { key => 'ticket',   title => 'Ticket',   compare => 'natural' },    # T-2 before T-10
+                { key => 'ticket',   title => 'Ticket', compare => 'natural' },    # T-2 before T-10
                 { key => 'title',    title => 'Title' },
-                { key => 'priority', title => 'Priority', compare => \&by_priority },
-                { key => 'version',  title => 'Version',  compare => 'natural' },    # 2.9.3 before 2.10
-                { key => 'opened',   title => 'Opened',   type    => 'date' },
+                { key => 'priority', title => 'Priority', compare  => \&by_priority },
+                { key => 'version',  title => 'Version',  compare  => 'natural' },    # 2.9.3 before 2.10
+                { key => 'opened',   title => 'Opened',   type     => 'date' },
                 { key => 'note',     title => 'Note',     sortable => 0 },
         ],
-        rows         => \@tickets,
+        rows => \@tickets,
 );
 
 sub describe_sort ($spec) {
@@ -113,7 +113,7 @@ sub describe_sort ($spec) {
 }
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Click a title to sort, Ctrl+click adds it. Keys: Up into the titles, then Enter or Space.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => describe_sort( $table->sort_spec ), text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => describe_sort( $table->sort_spec ),                                                          text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(
@@ -217,7 +217,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -229,11 +229,12 @@ my $search = Term::Fabulous::Widget::TextField->new(
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'staff',
-        row_id       => 'id',
-        filter_row   => 1,
-        sort         => ['name'],
-        layout       => { sizing => { width => sizing_grow() } },
+        id         => 'staff',
+        row_id     => 'id',
+        filter_row => 1,
+        sort       => ['name'],
+        layout     => { sizing => { width => sizing_grow() } },
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -245,10 +246,10 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'started', title => 'Started', width => 'fixed(16)', type => 'date',   mutator => date('%d %b %Y') },
                 { key => 'salary',  title => 'Salary',  width => 'fixed(14)', type => 'number', mutator => number( decimals => 0 ) },
         ],
-        rows         => \@staff,
+        rows => \@staff,
 );
 
-my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => '',                                                                  text_color => [ 229, 192, 123, 255 ] );
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Tab: next field. Try "core", ">=80000", ">=2020" or "2019..2021".', text_color => [ 150, 160, 180, 255 ] );
 $root->add_child( $search, $table, $status, $help );
 
@@ -370,14 +371,16 @@ my @invoices = (
 # Key 1 to 5 sets one of these filters under the name 'chosen'; key 0
 # removes it.
 my @choices = (
-        [ 'Totals of 1,000 or more' => $F->new( column => 'total', op => '>=', value => 1000 ) ],
-        [ 'Placed in May 2026'      => $F->new( column => 'placed', op => '=', value => '2026-05' ) ],
-        [   'Open or overdue, totals from 100 to 2,000' => $F->all(
-                        $F->new( column => 'status', op => 'in',      value => [ 'open', 'overdue' ], on => 'display' ),
+        [ 'Totals of 1,000 or more' => $F->new( column => 'total',  op => '>=', value => 1000 ) ],
+        [ 'Placed in May 2026'      => $F->new( column => 'placed', op => '=',  value => '2026-05' ) ],
+        [
+                'Open or overdue, totals from 100 to 2,000' => $F->all(
+                        $F->new( column => 'status', op => 'in', value => [ 'open', 'overdue' ], on => 'display' ),
                         $F->new( column => 'total',  op => 'between', value => [ 100, 2000 ] ),
                 )
         ],
-        [   'Starts with B or is a Ltd, and is not paid' => $F->all(
+        [
+                'Starts with B or is a Ltd, and is not paid' => $F->all(
                         $F->any(
                                 $F->new( column => 'customer', op => 'starts_with', value => 'B' ),
                                 $F->new( column => 'customer', op => 'matches',     value => qr/\bLtd\z/ ),
@@ -393,14 +396,15 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'invoices',
-        row_id       => 'invoice',
+        id     => 'invoices',
+        row_id => 'invoice',
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -409,16 +413,16 @@ my $table = Term::Fabulous::Widget::Table->new(
         columns      => [
                 { key => 'invoice',  title => 'Invoice' },
                 { key => 'customer', title => 'Customer' },
-                { key => 'placed',   title => 'Placed', type => 'date',   mutator => date('%d %b %Y') },
+                { key => 'placed',   title => 'Placed', type    => 'date', mutator => date('%d %b %Y') },
                 { key => 'status',   title => 'Status', mutator => lookup( { o => 'open', p => 'paid', d => 'overdue' } ) },
-                { key => 'total',    title => 'Total',  type => 'number', mutator => number( decimals => 2 ) },
-                { key => 'paid',     title => 'Paid',   type => 'number', mutator => number( decimals => 2 ) },
+                { key => 'total',    title => 'Total',  type    => 'number', mutator => number( decimals => 2 ) },
+                { key => 'paid',     title => 'Paid',   type    => 'number', mutator => number( decimals => 2 ) },
         ],
-        rows         => \@invoices,
+        rows => \@invoices,
 );
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Keys 1 to 5 choose a filter, 0 shows all rows. Ctrl+C quits.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => '',                                                             text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 sub choose_filter ($number) {
@@ -547,19 +551,19 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'staff',
-        row_id       => 'id',
-        group_by     => 'team',
-        group_label  => \&team_label,
-        group_style  => { background_color => [ 40, 45, 58, 255 ], text_color => [ 229, 192, 123, 255 ] },
-        sort         => [ [ salary => 'desc' ] ],    # within each group
-        # The look: a block frame, and colors instead of grid lines.
+        id          => 'staff',
+        row_id      => 'id',
+        group_by    => 'team',
+        group_label => \&team_label,
+        group_style => { background_color => [ 40, 45, 58, 255 ], text_color => [ 229, 192, 123, 255 ] },
+        sort        => [ [ salary => 'desc' ] ],    # within each group
+                # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
         header_line  => 'none',
@@ -571,11 +575,11 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'started', title => 'Started', type => 'date',   mutator => date('%d %b %Y') },
                 { key => 'salary',  title => 'Salary',  type => 'number', mutator => $money },
         ],
-        rows         => \@staff,
+        rows => \@staff,
 );
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'On a group header, Left closes it, Right opens it, Enter or a click toggles it.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => 'All groups are open.', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => 'All groups are open.',                                                            text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(
@@ -693,6 +697,7 @@ my $table = Term::Fabulous::Widget::Table->new(
         row_id       => 'path',
         children_key => 'children',
         tree_column  => 'name',
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -703,7 +708,7 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'size',     title => 'Size',     type => 'number', mutator => bytes() },
                 { key => 'modified', title => 'Modified', type => 'date',   mutator => datetime( '%Y-%m-%d %H:%M', utc => 1 ) },
         ],
-        rows         => [
+        rows => [
                 folder(
                         '/project', 1780310460,
                         folder(
@@ -729,12 +734,12 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Right opens a folder, Left closes it. Click a marker to toggle.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => 'Open releases/ to load its files.', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => 'Open releases/ to load its files.',                               text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(
@@ -843,16 +848,17 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'orders',
-        row_id       => 'number',
-        page_size    => 10,
-        page_sizes   => [ 10, 20, 50 ],
+        id         => 'orders',
+        row_id     => 'number',
+        page_size  => 10,
+        page_sizes => [ 10, 20, 50 ],
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -863,9 +869,9 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'placed',   title => 'Placed', type => 'date', mutator => datetime( '%d %b %Y %H:%M', utc => 1 ) },
                 { key => 'customer', title => 'Customer' },
                 { key => 'state',    title => 'State' },
-                { key => 'total',    title => 'Total',  type => 'number', mutator => number( decimals => 2, prefix => '$' ) },
+                { key => 'total',    title => 'Total', type => 'number', mutator => number( decimals => 2, prefix => '$' ) },
         ],
-        rows         => \@orders,
+        rows => \@orders,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );

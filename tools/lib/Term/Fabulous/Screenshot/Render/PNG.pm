@@ -74,13 +74,16 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 
 		my $shadow = Imager->new( xsize => $image->getwidth, ysize => $image->getheight, channels => 4 );
 		$shadow->box( filled => 1, color => Imager::Color->new( 0, 0, 0, 0 ) );
-		$shadow->polygon( points => _rounded_rect( $x, $y + $theme->shadow_offset * $scale, $width, $height, $radius ), color => Imager::Color->new( 0, 0, 0, int( 255 * $theme->shadow_opacity + 0.5 ) ), aa => 1 );
+		$shadow->polygon(
+			points => _rounded_rect( $x, $y + $theme->shadow_offset * $scale, $width, $height, $radius ),
+			color  => Imager::Color->new( 0, 0, 0, int( 255 * $theme->shadow_opacity + 0.5 ) ), aa => 1
+		);
 		$shadow->filter( type => 'gaussian', stddev => $theme->shadow_blur * $scale ) or croak 'Term::Fabulous::Screenshot::Render::PNG: ' . $shadow->errstr;
 		$image->compose( src => $shadow ) or croak 'Term::Fabulous::Screenshot::Render::PNG: ' . $image->errstr;
 
 		my $outline = Term::Fabulous::Screenshot::Scene::mix_colors( $theme->default_background, $theme->outline_color, $theme->outline_opacity );
 		my $inset   = $scale;
-		$image->polygon( points => _rounded_rect( $x, $y, $width, $height, $radius ), color => _color($outline), aa => 1 );
+		$image->polygon( points => _rounded_rect( $x,          $y,          $width,              $height,              $radius ),          color => _color($outline),                     aa => 1 );
 		$image->polygon( points => _rounded_rect( $x + $inset, $y + $inset, $width - 2 * $inset, $height - 2 * $inset, $radius - $inset ), color => _color( $theme->default_background ), aa => 1 );
 
 		my $bar_height = $theme->title_bar_height * $scale;
@@ -188,8 +191,7 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 	}
 
 	method _font ($file) {
-		return $font_by_file{$file} //= Imager::Font->new( file => $file, type => 'ft2' )
-			// croak "Term::Fabulous::Screenshot::Render::PNG: cannot load the font $file: " . Imager->errstr;
+		return $font_by_file{$file} //= Imager::Font->new( file => $file, type => 'ft2' ) // croak "Term::Fabulous::Screenshot::Render::PNG: cannot load the font $file: " . Imager->errstr;
 	}
 
 	method _main_font_file ($style) {
@@ -214,7 +216,8 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 			next unless _font_has( $self->_font($file), $glyph );
 			return $fallback_file_by_character{$glyph} = $file;
 		}
-		croak "Term::Fabulous::Screenshot::Render::PNG: no installed font can draw " . _describe($glyph)
+		croak "Term::Fabulous::Screenshot::Render::PNG: no installed font can draw "
+			. _describe($glyph)
 			. "; install one that can (for example from the Noto family, or a monochrome emoji font for emoji), or render SVG instead";
 	}
 

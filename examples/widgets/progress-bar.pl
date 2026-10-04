@@ -32,7 +32,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -46,25 +46,33 @@ sub state_row ( $state, $widget ) {
 	return $widget;
 }
 
-my $grow = { sizing => { width => sizing_grow() } };
+my $grow    = { sizing => { width => sizing_grow() } };
 my @filling = (
-	state_row( 'block',   Term::Fabulous::Widget::ProgressBar->new( value => 42, layout => $grow ) ),
-	state_row( 'inside',  Term::Fabulous::Widget::ProgressBar->new( value => 42, value_position => 'inside', layout => $grow ) ),
-	state_row( 'line',    Term::Fabulous::Widget::ProgressBar->new( max => 2048, value => 860, style => 'line', color => [ 152, 195, 121, 255 ], value_format => sub ( $kb, $fraction ) { sprintf '%d of %d KB', $kb, 2048 }, layout => $grow ) ),
+	state_row( 'block',  Term::Fabulous::Widget::ProgressBar->new( value => 42, layout => $grow ) ),
+	state_row( 'inside', Term::Fabulous::Widget::ProgressBar->new( value => 42, value_position => 'inside', layout => $grow ) ),
+	state_row(
+		'line',
+		Term::Fabulous::Widget::ProgressBar->new(
+			max => 2048, value => 860, style => 'line', color => [ 152, 195, 121, 255 ], value_format => sub ( $kb, $fraction ) { sprintf '%d of %d KB', $kb, 2048 }, layout => $grow
+		)
+	),
 	state_row( 'striped', Term::Fabulous::Widget::ProgressBar->new( value => 65, striped => 1, animated => 1, color => [ 229, 192, 123, 255 ], layout => $grow ) ),
 );
 state_row(
 	'segments',
 	Term::Fabulous::Widget::ProgressBar->new(
-		max       => 500,
-		segments  => [ { value => 210, color => [ 152, 195, 121, 255 ] }, { value => 90, color => [ 229, 192, 123, 255 ] }, { value => 40, color => [ 224, 108, 117, 255 ] } ],
-		separated => 1,
+		max          => 500,
+		segments     => [ { value => 210, color => [ 152, 195, 121, 255 ] }, { value => 90, color => [ 229, 192, 123, 255 ] }, { value => 40, color => [ 224, 108, 117, 255 ] } ],
+		separated    => 1,
 		value_format => sub ( $gb, $fraction ) { sprintf '%d of 500 GB', $gb },
-		layout    => $grow,
+		layout       => $grow,
 	)
 );
 state_row( 'indeterminate', Term::Fabulous::Widget::ProgressBar->new( indeterminate => 1, layout => $grow ) );
-state_row( 'ascii, 2 rows', Term::Fabulous::Widget::ProgressBar->new( value => 42, style => 'ascii', value_position => 'left', layout => { sizing => { width => sizing_grow(), height => sizing_fixed(2) } } ) );
+state_row(
+	'ascii, 2 rows',
+	Term::Fabulous::Widget::ProgressBar->new( value => 42, style => 'ascii', value_position => 'left', layout => { sizing => { width => sizing_grow(), height => sizing_fixed(2) } } )
+);
 
 # The bars fill up a little every tenth of a second and start over.
 my $timer = IO::Async::Timer::Periodic->new(

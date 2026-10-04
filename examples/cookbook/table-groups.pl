@@ -39,19 +39,19 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'staff',
-	row_id       => 'id',
-	group_by     => 'team',
-	group_label  => \&team_label,
-	group_style  => { background_color => [ 40, 45, 58, 255 ], text_color => [ 229, 192, 123, 255 ] },
-	sort         => [ [ salary => 'desc' ] ],    # within each group
-	# The look: a block frame, and colors instead of grid lines.
+	id          => 'staff',
+	row_id      => 'id',
+	group_by    => 'team',
+	group_label => \&team_label,
+	group_style => { background_color => [ 40, 45, 58, 255 ], text_color => [ 229, 192, 123, 255 ] },
+	sort        => [ [ salary => 'desc' ] ],    # within each group
+		# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
 	header_line  => 'none',
@@ -63,11 +63,11 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'started', title => 'Started', type => 'date',   mutator => date('%d %b %Y') },
 		{ key => 'salary',  title => 'Salary',  type => 'number', mutator => $money },
 	],
-	rows         => \@staff,
+	rows => \@staff,
 );
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'On a group header, Left closes it, Right opens it, Enter or a click toggles it.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => 'All groups are open.', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => 'All groups are open.',                                                            text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(

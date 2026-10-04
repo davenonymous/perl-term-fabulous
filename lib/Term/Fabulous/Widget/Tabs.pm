@@ -44,7 +44,7 @@ class Term::Fabulous::Widget::Tabs
 	field $_slot;
 	field @_pages;
 
-	ADJUSTPARAMS ($params) {
+	ADJUSTPARAMS($params) {
 		my %look = ( page_border => 1, map { $_ => delete $params->{$_} } grep { exists $params->{$_} } @BAR_PARAMS );
 		$_bar  = Term::Fabulous::Widget::Tabs::Bar->new(%look);
 		$_slot = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
@@ -55,7 +55,7 @@ class Term::Fabulous::Widget::Tabs
 		$self->_arrange;
 
 		weaken( my $weak_self = $self );
-		$_bar->on( Select => sub ($event) { $weak_self->_tab_chosen($event) if $weak_self; return } );
+		$_bar->on( Select   => sub ($event) { $weak_self->_tab_chosen($event) if $weak_self; return } );
 		$self->on( KeyPress => sub ($event) { return $weak_self && $weak_self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
 	}
 
@@ -237,26 +237,26 @@ class Term::Fabulous::Widget::Tabs
 	method _forward ( $name, $arranges, $restyles_pages, @new ) {
 		my $value = $_bar->$name(@new);
 		return $value unless @new;
-		$self->_arrange        if $arranges;
-		$self->_restyle_pages  if $restyles_pages;
+		$self->_arrange if $arranges;
+		$self->_restyle_pages if $restyles_pages;
 		return $value;
 	}
 
-	method side (@new)                   { return $self->_forward( side                   => 1, 1, @new ) }
-	method orientation (@new)            { return $self->_forward( orientation            => 0, 0, @new ) }
-	method tab_alignment (@new)          { return $self->_forward( tab_alignment          => 0, 0, @new ) }
-	method tab_gap (@new)                { return $self->_forward( tab_gap                => 0, 0, @new ) }
-	method tab_margin (@new)             { return $self->_forward( tab_margin             => 0, 0, @new ) }
-	method tab_padding (@new)            { return $self->_forward( tab_padding            => 0, 0, @new ) }
-	method line_style (@new)             { return $self->_forward( line_style             => 0, 1, @new ) }
-	method line_color (@new)             { return $self->_forward( line_color             => 0, 1, @new ) }
-	method text_color (@new)             { return $self->_forward( text_color             => 0, 0, @new ) }
-	method active_text_color (@new)      { return $self->_forward( active_text_color      => 0, 0, @new ) }
-	method active_bold (@new)            { return $self->_forward( active_bold            => 0, 0, @new ) }
+	method side                   (@new) { return $self->_forward( side                   => 1, 1, @new ) }
+	method orientation            (@new) { return $self->_forward( orientation            => 0, 0, @new ) }
+	method tab_alignment          (@new) { return $self->_forward( tab_alignment          => 0, 0, @new ) }
+	method tab_gap                (@new) { return $self->_forward( tab_gap                => 0, 0, @new ) }
+	method tab_margin             (@new) { return $self->_forward( tab_margin             => 0, 0, @new ) }
+	method tab_padding            (@new) { return $self->_forward( tab_padding            => 0, 0, @new ) }
+	method line_style             (@new) { return $self->_forward( line_style             => 0, 1, @new ) }
+	method line_color             (@new) { return $self->_forward( line_color             => 0, 1, @new ) }
+	method text_color             (@new) { return $self->_forward( text_color             => 0, 0, @new ) }
+	method active_text_color      (@new) { return $self->_forward( active_text_color      => 0, 0, @new ) }
+	method active_bold            (@new) { return $self->_forward( active_bold            => 0, 0, @new ) }
 	method hover_background_color (@new) { return $self->_forward( hover_background_color => 0, 0, @new ) }
-	method focus_border_color (@new)     { return $self->_forward( focus_border_color     => 0, 0, @new ) }
-	method disabled_color (@new)         { return $self->_forward( disabled_color         => 0, 0, @new ) }
-	method page_border (@new)            { return $self->_forward( page_border            => 0, 1, @new ) }
+	method focus_border_color     (@new) { return $self->_forward( focus_border_color     => 0, 0, @new ) }
+	method disabled_color         (@new) { return $self->_forward( disabled_color         => 0, 0, @new ) }
+	method page_border            (@new) { return $self->_forward( page_border            => 0, 1, @new ) }
 
 	method layout_properties :common () {
 		return (
@@ -273,10 +273,10 @@ class Term::Fabulous::Widget::Tabs
 	# ---------------------------------------------------------------------
 
 	method _handle_key ($event) {
-		my $step = $STEP_BY_KEY{ $event->main_key_name // '' } // return 0;
+		my $step    = $STEP_BY_KEY{ $event->main_key_name // '' } // return 0;
 		my @enabled = grep { $_->is_enabled } @_pages or return 0;
-		my $active = $self->active;
-		my ($at) = defined $active ? grep { refaddr( $enabled[$_] ) == refaddr($active) } 0 .. $#enabled : ();
+		my $active  = $self->active;
+		my ($at)    = defined $active ? grep { refaddr( $enabled[$_] ) == refaddr($active) } 0 .. $#enabled : ();
 		$self->choose( defined $at ? $enabled[ ( $at + $step ) % @enabled ] : $step > 0 ? $enabled[0] : $enabled[-1] );
 		return 1;
 	}

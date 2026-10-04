@@ -13,9 +13,8 @@ use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::FilterChange :isa(Clay::UI::Events::Event) :strict(params) {
 	field $column :param :reader;
-	field $text :param :reader;
-	field $error :param :reader = undef;
-
+	field $text   :param :reader;
+	field $error  :param :reader = undef;
 
 	method event_name :common { 'FilterChange' }
 }

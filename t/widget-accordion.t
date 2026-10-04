@@ -51,9 +51,9 @@ subtest 'items open and close' => sub {
 
 	$accordion->open(0);
 	$ui->step;
-	is lines($terminal), [ "\x{25BE} General", '  Language: en', '  field', "\x{25B8} Network", "\x{25B8} Users" ], 'an open item shows its body, indented';
-	is $accordion->open(1)->selected->title, 'Network', 'opening another closes the first';
-	is [ map { $_->is_open } $accordion->items ], [ 0, 1, 0 ], 'one open item at a time';
+	is lines($terminal),                          [ "\x{25BE} General", '  Language: en', '  field', "\x{25B8} Network", "\x{25B8} Users" ], 'an open item shows its body, indented';
+	is $accordion->open(1)->selected->title,      'Network',                                                                                 'opening another closes the first';
+	is [ map { $_->is_open } $accordion->items ], [ 0, 1, 0 ],                                                                               'one open item at a time';
 	$accordion->close(1);
 	is [ $accordion->open_items ], [], 'close';
 	like dies { $accordion->open_all }, qr/open_all needs multiple/, 'open_all needs multiple';
@@ -88,8 +88,8 @@ subtest 'keys and clicks' => sub {
 	$accordion->item(1)->focus;
 	$terminal->press_key('Space');
 	$ui->step;
-	is [ map { $_->is_open } $accordion->items ], [ 0, 1, 0 ], 'Space opens the second and closes the first';
-	is $events->[-1], [ 1, 1, 'Network' ], 'only the item acted on fires';
+	is [ map { $_->is_open } $accordion->items ], [ 0, 1, 0 ],         'Space opens the second and closes the first';
+	is $events->[-1],                             [ 1, 1, 'Network' ], 'only the item acted on fires';
 	$terminal->press_key('Space');
 	$ui->step;
 	is [ $accordion->item(1)->is_open, $events->[-1] ], [ 0, [ 1, 0, 'Network' ] ], 'Space again closes it';
@@ -123,13 +123,14 @@ subtest 'looks' => sub {
 	is lines($terminal), [
 		"\x{256D}" . ( "\x{2500}" x 28 ) . "\x{256E}",
 		"\x{2502}General" . ( ' ' x 20 ) . "+\x{2502}",
-		"\x{2570}" . ( "\x{2500}" x 28 ) . "\x{256F}",
-		"\x{256D}" . ( "\x{2500}" x 28 ) . "\x{256E}",
+		"\x{2570}" .        ( "\x{2500}" x 28 ) . "\x{256F}",
+		"\x{256D}" .        ( "\x{2500}" x 28 ) . "\x{256E}",
 		"\x{2502}Network" . ( ' ' x 20 ) . "-\x{2502}",
 		"\x{2502}Hostname: example.org       \x{2502}",
 		"\x{2570}" . ( "\x{2500}" x 28 ) . "\x{256F}",
 		"\x{256D}" . ( "\x{2500}" x 28 ) . "\x{256E}",
-	], 'borders, the toggles at the end, no indent (the terminal cuts the last item off)';
+		],
+		'borders, the toggles at the end, no indent (the terminal cuts the last item off)';
 	$accordion->bordered(0);
 	$accordion->toggle_position('start');
 	$ui->step;

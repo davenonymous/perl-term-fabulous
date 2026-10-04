@@ -40,8 +40,8 @@ class Term::Fabulous::Widget::Text
 		return $$field_ref;
 	}
 
-	method bold (@new)      { return $self->_set_style( bold      => \$bold,      @new ) }
-	method italic (@new)    { return $self->_set_style( italic    => \$italic,    @new ) }
+	method bold      (@new) { return $self->_set_style( bold      => \$bold,      @new ) }
+	method italic    (@new) { return $self->_set_style( italic    => \$italic,    @new ) }
 	method underline (@new) { return $self->_set_style( underline => \$underline, @new ) }
 
 	# The termbox2 style bits the renderer adds to the text color.

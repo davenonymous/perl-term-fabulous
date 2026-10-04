@@ -28,20 +28,22 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $notes = Term::Fabulous::Widget::TextArea->new(
 	placeholder => 'Notes',
-	value       => join( "\n",
+	value       => join(
+		"\n",
 		'Shopping list for the weekend:',
 		'- bread, butter and a big wheel of cheese for the party on Saturday evening',
 		'- coffee',
 		'- apples',
 		'- birthday card for Ada',
-		'- batteries for the remote' ),
+		'- batteries for the remote'
+	),
 	layout => { sizing => { width => sizing_grow(), height => sizing_fixed(6) } },
 );
 my $status = Term::Fabulous::Widget::Text->new( text => 'Long lines wrap at spaces; the scrollbar shows the position.', text_color => [ 150, 160, 180, 255 ] );

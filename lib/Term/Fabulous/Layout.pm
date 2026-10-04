@@ -17,13 +17,14 @@ class Term::Fabulous::Layout :strict(params) {
 	my $ALIAS       = qr/\A[A-Z]\w*\z/a;
 	my $LAYOUT_ROLE = 'Term::Fabulous::Role::CanParseLayout';
 
-	field $raw :reader;
+	field $raw         :reader;
 	field $root_widget :reader;
 	field $required_modules :reader = {};
 	field $_root_node;
 
 	ADJUST :params ( :$string = undef, :$file = undef ) {
-		die "Term::Fabulous::Layout: provide either 'string' or 'file'" if !defined $string && !defined $file;
+		die "Term::Fabulous::Layout: provide either 'string' or 'file'"
+			if !defined $string && !defined $file;
 		die "Term::Fabulous::Layout: provide 'string' or 'file', not both" if defined $string && defined $file;
 
 		my $source = $string // _open_file($file);
@@ -37,10 +38,10 @@ class Term::Fabulous::Layout :strict(params) {
 		$required_modules = _use_instructions($raw);
 		_load_widget_class( $_, $required_modules->{$_} ) foreach sort keys %$required_modules;
 		$_root_node = _root_node( $raw, $required_modules );
-	}
+		}
 
-	# Text::KDL::XS reads a filehandle as UTF-8 bytes, a string as characters
-	sub _open_file ($path) {
+		# Text::KDL::XS reads a filehandle as UTF-8 bytes, a string as characters
+		sub _open_file ($path) {
 		open my $handle, '<:raw', $path or die "Term::Fabulous::Layout: cannot open '$path': $!";
 		return $handle;
 	}
@@ -58,7 +59,7 @@ class Term::Fabulous::Layout :strict(params) {
 	}
 
 	sub _parse_use ($node) {
-		my @args = map { $_->is_string ? $_->value : undef } $node->args->@*;
+		my @args        = map                                                { $_->is_string ? $_->value : undef } $node->args->@*;
 		my $well_formed = !$node->props->@* && !$node->children->@* && !grep { !defined } @args;
 
 		if ( $well_formed && @args == 1 ) {
@@ -124,9 +125,8 @@ class Term::Fabulous::Layout :strict(params) {
 
 	method _build_widget ($node) {
 		my $name  = $node->name;
-		my $class = $required_modules->{$name}
-			// die "Term::Fabulous::Layout: unknown widget '$name'; declare it with 'use Module::Name as $name'";
-		my $id = _widget_id($node);
+		my $class = $required_modules->{$name} // die "Term::Fabulous::Layout: unknown widget '$name'; declare it with 'use Module::Name as $name'";
+		my $id    = _widget_id($node);
 
 		my $widget;
 		try {

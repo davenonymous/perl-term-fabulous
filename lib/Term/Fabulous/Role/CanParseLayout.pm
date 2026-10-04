@@ -25,7 +25,7 @@ role Term::Fabulous::Role::CanParseLayout {
 	}
 
 	method apply_layout_node ($node) {
-		my %kind_of = $self->_checked_layout_properties;
+		my %kind_of  = $self->_checked_layout_properties;
 		my @settings = map { $self->_layout_setting( $_, \%kind_of ) } grep { !is_widget_node_name( $_->name ) } $node->children->@*;
 		$self->apply_layout_settings(@settings);
 		return $self;
@@ -36,8 +36,10 @@ role Term::Fabulous::Role::CanParseLayout {
 		foreach my $name ( sort keys %kind_of ) {
 			my $kind = $kind_of{$name};
 			next if ref $kind eq 'CODE' || ( defined $kind && $IS_SIMPLE_KIND{$kind} );
-			die sprintf( "%s: layout property '%s' is declared as %s; use 'scalar', 'boolean', 'color' or a code reference",
-				ref $self, $name, defined $kind ? "'$kind'" : 'undef' );
+			die sprintf(
+				"%s: layout property '%s' is declared as %s; use 'scalar', 'boolean', 'color' or a code reference",
+				ref $self, $name, defined $kind ? "'$kind'" : 'undef'
+			);
 		}
 		return %kind_of;
 	}
@@ -46,10 +48,9 @@ role Term::Fabulous::Role::CanParseLayout {
 	# property the node itself, for its handler.
 	method _layout_setting ( $kid, $kind_of ) {
 		my $name = $kid->name;
-		my $kind = $kind_of->{$name}
-			// die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort keys %$kind_of ) );
-		return [ $name, $kid ]                                            if ref $kind eq 'CODE';
-		return [ $name, $self->kdl_boolean($kid) ]                        if $kind eq 'boolean';
+		my $kind = $kind_of->{$name} // die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort keys %$kind_of ) );
+		return [ $name, $kid ] if ref $kind eq 'CODE';
+		return [ $name, $self->kdl_boolean($kid) ] if $kind eq 'boolean';
 		return [ $name, color( $self, $name, $self->kdl_value($kid) ) ] if $kind eq 'color';
 		return [ $name, $self->kdl_value($kid) ];
 	}
@@ -97,8 +98,8 @@ role Term::Fabulous::Role::CanParseLayout {
 		die sprintf( "%s: layout property '%s' takes key=value properties only", ref $self, $name )
 			if $kid->args->@* || $kid->children->@* || !$kid->props->@*;
 
-		my %properties = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
-		my %is_allowed = map { $_ => 1 } @allowed;
+		my %properties = map  { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
+		my %is_allowed = map  { $_      => 1 } @allowed;
 		my @unknown    = grep { !$is_allowed{$_} } sort keys %properties;
 		die sprintf( "%s: layout property '%s' does not accept %s (allowed: %s)", ref $self, $name, join( ', ', @unknown ), join( ', ', @allowed ) )
 			if @unknown;

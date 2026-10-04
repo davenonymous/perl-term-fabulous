@@ -12,9 +12,8 @@ use Object::Pad 0.825;
 use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::PageChange :isa(Clay::UI::Events::Event) :strict(params) {
-	field $page :param :reader;
+	field $page      :param :reader;
 	field $page_size :param :reader;
-
 
 	method event_name :common { 'PageChange' }
 }

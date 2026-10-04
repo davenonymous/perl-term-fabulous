@@ -76,8 +76,11 @@ sub main () {
 	push @stale, check_references( \@pod_files, \@scenarios );
 	push @stale, point_screenshots_to_release( \@pod_files, $check );
 
-	my %wanted = map { $_ => 1 } @ARGV;
-	my @unknown = grep { my $name = $_; !grep { $_->name eq $name } @scenarios } @ARGV;
+	my %wanted  = map { $_ => 1 } @ARGV;
+	my @unknown = grep {
+		my $name = $_;
+		!grep { $_->name eq $name } @scenarios
+	} @ARGV;
 	die "update-docs: no screenshot named " . join( ', ', @unknown ) . " in " . SCENARIO_FILE . "\n" if @unknown;
 	my @selected = @ARGV ? grep { $wanted{ $_->name } } @scenarios : @scenarios;
 	push @stale, take_screenshots( \@selected, $jobs, $check );
@@ -113,7 +116,7 @@ sub sync_all_code_blocks ( $pod_files, $check ) {
 	foreach my $pod_file (@$pod_files) {
 		my ( $pod, @changed ) = sync_code_blocks( read_text($pod_file), \&read_text );
 		next unless @changed;
-		push @stale, map {"$pod_file: the code block of $_"} @changed;
+		push @stale, map { "$pod_file: the code block of $_" } @changed;
 		next if $check;
 		write_text( $pod_file, $pod );
 		say "code   $pod_file: updated the code of ", join( ', ', @changed );
@@ -127,12 +130,15 @@ sub check_references ( $pod_files, $scenarios ) {
 	my ( %shown_in, @foreign );
 	foreach my $pod_file (@$pod_files) {
 		my $pod = read_text($pod_file);
-		push @foreign, map {"$pod_file: $_ is not a screenshot URL (see tools/README.md)"} foreign_images($pod);
+		push @foreign,           map { "$pod_file: $_ is not a screenshot URL (see tools/README.md)" } foreign_images($pod);
 		push @{ $shown_in{$_} }, $pod_file foreach referenced_screenshots($pod);
 	}
 	die join( "\n", 'update-docs:', @foreign ) . "\n" if @foreign;
 	my %defined = map { $_->name => 1 } @$scenarios;
-	my @missing = map { my $name = $_; map {"$_: shows screenshots/$name.svg, which " . SCENARIO_FILE . " does not define"} @{ $shown_in{$name} } }
+	my @missing = map {
+		my $name = $_;
+		map { "$_: shows screenshots/$name.svg, which " . SCENARIO_FILE . " does not define" } @{ $shown_in{$name} }
+		}
 		grep { !$defined{$_} } sort keys %shown_in;
 	die join( "\n", 'update-docs:', @missing ) . "\n" if @missing;
 

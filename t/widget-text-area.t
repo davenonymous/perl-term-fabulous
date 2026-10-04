@@ -45,8 +45,8 @@ subtest 'Enter, vertical movement and the goal column' => sub {
 	type_text( $area, 'abcdef' );
 	press( $area, 'Enter' );
 	type_text( $area, 'ab' );
-	is $area->value, "abcdef\nab", 'Enter starts a new line';
-	is scalar @changes, 9, 'every edit fires Change';
+	is $area->value,    "abcdef\nab", 'Enter starts a new line';
+	is scalar @changes, 9,            'every edit fires Change';
 
 	press( $area, 'Up' );
 	is [ $area->editor->cursor ], [ 0, 2 ], 'Up keeps the column';
@@ -78,7 +78,7 @@ subtest 'scrolling follows the cursor' => sub {
 	click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN ) foreach 1 .. 3;
 	is $area->top_row, 7, 'down to the last rows';
 	ok !click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_DOWN )->wheel_used, 'a notch past the end is left to a scroll box around it';
-	ok click( $area, 0, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used, 'one back is not';
+	ok click( $area,  0, 0, key => TB_KEY_MOUSE_WHEEL_UP )->wheel_used,   'one back is not';
 };
 
 subtest 'wrapping wide characters and blanks' => sub {

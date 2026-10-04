@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -44,8 +44,8 @@ sub state_row ( $state, $widget ) {
 
 my $name = state_row( 'focused', Term::Fabulous::Widget::TextField->new( placeholder => 'Your name', preferred_columns => 32 ) );
 state_row( 'placeholder', Term::Fabulous::Widget::TextField->new( placeholder => 'name@example.com', preferred_columns => 32 ) );
-state_row( 'masked',      Term::Fabulous::Widget::TextField->new( value => 'correct horse', mask => '*', preferred_columns => 32 ) );
-state_row( 'disabled',    Term::Fabulous::Widget::TextField->new( value => 'Not editable', disabled => 1, preferred_columns => 32 ) );
+state_row( 'masked',      Term::Fabulous::Widget::TextField->new( value       => 'correct horse',    mask     => '*', preferred_columns => 32 ) );
+state_row( 'disabled',    Term::Fabulous::Widget::TextField->new( value       => 'Not editable',     disabled => 1,   preferred_columns => 32 ) );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 $ui->interaction->set_focused_widget($name);

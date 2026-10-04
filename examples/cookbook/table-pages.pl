@@ -32,16 +32,17 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'orders',
-	row_id       => 'number',
-	page_size    => 10,
-	page_sizes   => [ 10, 20, 50 ],
+	id         => 'orders',
+	row_id     => 'number',
+	page_size  => 10,
+	page_sizes => [ 10, 20, 50 ],
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -52,9 +53,9 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'placed',   title => 'Placed', type => 'date', mutator => datetime( '%d %b %Y %H:%M', utc => 1 ) },
 		{ key => 'customer', title => 'Customer' },
 		{ key => 'state',    title => 'State' },
-		{ key => 'total',    title => 'Total',  type => 'number', mutator => number( decimals => 2, prefix => '$' ) },
+		{ key => 'total',    title => 'Total', type => 'number', mutator => number( decimals => 2, prefix => '$' ) },
 	],
-	rows         => \@orders,
+	rows => \@orders,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );

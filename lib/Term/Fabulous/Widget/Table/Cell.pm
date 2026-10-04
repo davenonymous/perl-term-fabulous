@@ -17,6 +17,7 @@ class Term::Fabulous::Widget::Table::Cell
 	:does(Clay::UI::Role::Layout::GridCell)
 	:strict(params)
 {
+
 	# Which part of the table the cell belongs to ('header', 'filter',
 	# 'body'), the line it shows (a line key of the table's model; undef in
 	# the header) and its column (a column key, '' for the selection column,

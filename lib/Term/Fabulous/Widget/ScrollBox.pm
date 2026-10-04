@@ -39,7 +39,7 @@ class Term::Fabulous::Widget::ScrollBox
 	);
 	my %BAR_LAYOUT = (
 		vertical   => { sizing => { width => sizing_fixed(1), height => sizing_grow() } },
-		horizontal => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
+		horizontal => { sizing => { width => sizing_grow(),   height => sizing_fixed(1) } },
 	);
 	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
 
@@ -60,7 +60,7 @@ class Term::Fabulous::Widget::ScrollBox
 		my %colors;
 		$colors{track_color} = color( $self, track_color => $track_color ) if defined $track_color;
 		$colors{thumb_color} = color( $self, thumb_color => $thumb_color ) if defined $thumb_color;
-		%_bar_by_axis = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, %colors, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
+		%_bar_by_axis        = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, %colors, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
 
 		my $column = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_alignment => { y => CLAY_ALIGN_Y_BOTTOM } } );
 		$column->add_child( $_bar_by_axis{horizontal} );
@@ -87,7 +87,7 @@ class Term::Fabulous::Widget::ScrollBox
 		my @sides = map { $SIDE_OF_AXIS{$_} } grep { $self->_shows_bar($_) } sort keys %SIDE_OF_AXIS;
 		return unless @sides;
 		my %padding = %{ $config->{layout}{padding} // {} };
-		$padding{$_} = ( $padding{$_} // 0 ) + 1 foreach @sides;
+		$padding{$_}      = ( $padding{$_} // 0 ) + 1 foreach @sides;
 		$config->{layout} = { %{ $config->{layout} // {} }, padding => \%padding };
 		return;
 	}
@@ -109,7 +109,7 @@ class Term::Fabulous::Widget::ScrollBox
 		return $scrollbar unless @new;
 		$scrollbar = boolean( $self, scrollbar => $new[0] );
 		my $attached = defined $_gutter->parent ? 1 : 0;
-		$self->add_internal_children($_gutter)    if $scrollbar && !$attached;
+		$self->add_internal_children($_gutter) if $scrollbar     && !$attached;
 		$self->remove_internal_children($_gutter) if !$scrollbar && $attached;
 		return $scrollbar;
 	}

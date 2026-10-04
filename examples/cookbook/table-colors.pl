@@ -16,7 +16,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -35,16 +35,16 @@ my $table = Term::Fabulous::Widget::Table->new(
 	cell_padding            => 2,
 	columns                 => [
 		{ key => 'name',   title => 'Planet' },
-		{ key => 'moons',  title => 'Moons', type => 'number' },
+		{ key => 'moons',  title => 'Moons',       type => 'number' },
 		{ key => 'radius', title => 'Radius (km)', type => 'number', mutator => number( decimals => 0 ) },
 		{ key => 'day',    title => 'Day (hours)', type => 'number', mutator => number( decimals => 1 ) },
 	],
 	rows => [
-		{ name => 'Mercury', moons => 0,  radius => 2439.7,  day => 4222.6 },
-		{ name => 'Venus',   moons => 0,  radius => 6051.8,  day => 2802.0 },
-		{ name => 'Earth',   moons => 1,  radius => 6371.0,  day => 24.0 },
-		{ name => 'Mars',    moons => 2,  radius => 3389.5,  day => 24.7 },
-		{ name => 'Jupiter', moons => 95, radius => 69911.0, day => 9.9 },
+		{ name => 'Mercury', moons => 0,   radius => 2439.7,  day => 4222.6 },
+		{ name => 'Venus',   moons => 0,   radius => 6051.8,  day => 2802.0 },
+		{ name => 'Earth',   moons => 1,   radius => 6371.0,  day => 24.0 },
+		{ name => 'Mars',    moons => 2,   radius => 3389.5,  day => 24.7 },
+		{ name => 'Jupiter', moons => 95,  radius => 69911.0, day => 9.9 },
 		{ name => 'Saturn',  moons => 146, radius => 58232.0, day => 10.7 },
 	],
 );

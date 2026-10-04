@@ -36,7 +36,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -60,10 +60,10 @@ $root->add_child( $form, text( '1 to 4: show a toast of each kind, i: an importa
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 
 my %toast = (
-	1 => [ info    => 'Update available',  'Version 2.1 can be installed.' ],
-	2 => [ success => 'Saved',             'Your changes were written to disk.' ],
-	3 => [ warning => 'Disk almost full',  '93% of the volume is in use.' ],
-	4 => [ danger  => 'Upload failed',     'The server did not answer in time.' ],
+	1 => [ info    => 'Update available', 'Version 2.1 can be installed.' ],
+	2 => [ success => 'Saved',            'Your changes were written to disk.' ],
+	3 => [ warning => 'Disk almost full', '93% of the volume is in use.' ],
+	4 => [ danger  => 'Upload failed',    'The server did not answer in time.' ],
 );
 $root->on(
 	KeyPress => sub ($event) {
@@ -73,7 +73,10 @@ $root->on(
 			Term::Fabulous::Widget::Toast->new( kind => $kind, title => $title, message => $message )->show($ui);
 		}
 		elsif ( $key eq 'i' ) {
-			Term::Fabulous::Widget::Toast->new( kind => 'danger', title => 'Connection lost', message => 'Reconnecting in the background.', important => 1, position => 'bottom_right', timeout => undef )->show($ui);
+			Term::Fabulous::Widget::Toast->new(
+				kind    => 'danger', title => 'Connection lost', message => 'Reconnecting in the background.', important => 1, position => 'bottom_right',
+				timeout => undef
+			)->show($ui);
 		}
 		return;
 	}

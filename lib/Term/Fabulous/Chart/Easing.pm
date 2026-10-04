@@ -17,14 +17,14 @@ use constant PI => 4 * atan2( 1, 1 );
 # The "in" form of each family; "out" and "in-out" are derived from it,
 # except where the classic formulas differ (back, elastic, bounce).
 my %IN = (
-	sine  => sub ($t) { 1 - cos( $t * PI / 2 ) },
-	quad  => sub ($t) { $t**2 },
-	cubic => sub ($t) { $t**3 },
-	quart => sub ($t) { $t**4 },
-	quint => sub ($t) { $t**5 },
-	expo  => sub ($t) { $t <= 0 ? 0 : 2**( 10 * $t - 10 ) },
-	circ  => sub ($t) { 1 - sqrt( 1 - $t**2 ) },
-	back  => sub ($t) { 2.70158 * $t**3 - 1.70158 * $t**2 },
+	sine    => sub ($t) { 1 - cos( $t * PI / 2 ) },
+	quad    => sub ($t) { $t**2 },
+	cubic   => sub ($t) { $t**3 },
+	quart   => sub ($t) { $t**4 },
+	quint   => sub ($t) { $t**5 },
+	expo    => sub ($t) { $t <= 0 ? 0 : 2**( 10 * $t - 10 ) },
+	circ    => sub ($t) { 1 - sqrt( 1 - $t**2 ) },
+	back    => sub ($t) { 2.70158 * $t**3 - 1.70158 * $t**2 },
 	elastic => sub ($t) {
 		return $t if $t <= 0 || $t >= 1;
 		return -( 2**( 10 * $t - 10 ) ) * sin( ( $t * 10 - 10.75 ) * ( 2 * PI ) / 3 );

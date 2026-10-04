@@ -86,16 +86,17 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'users',
-        row_id       => 'login',
-        selection    => 'multiple',
-        sort         => ['name'],
+        id        => 'users',
+        row_id    => 'login',
+        selection => 'multiple',
+        sort      => ['name'],
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -107,12 +108,12 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'uid',        title => 'UID',        type => 'number' },
                 { key => 'last_login', title => 'Last login', type => 'date' },
         ],
-        rows         => \@users,
+        rows => \@users,
 );
 
 my $help      = Term::Fabulous::Widget::Text->new( text => 'Space selects, Enter opens, a click on a title sorts. q quits.', text_color => [ 150, 160, 180, 255 ] );
-my $selected  = Term::Fabulous::Widget::Text->new( text => 'Selected: nothing', text_color => [ 230, 230, 230, 255 ] );
-my $activated = Term::Fabulous::Widget::Text->new( text => 'Opened: nothing yet', text_color => [ 229, 192, 123, 255 ] );
+my $selected  = Term::Fabulous::Widget::Text->new( text => 'Selected: nothing',                                              text_color => [ 230, 230, 230, 255 ] );
+my $activated = Term::Fabulous::Widget::Text->new( text => 'Opened: nothing yet',                                            text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $selected, $activated );
 
 $table->on(
@@ -220,11 +221,11 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 # Raw data, as a backup tool would report it: epoch seconds, byte counts,
 # seconds, fractions, flags and short state codes.
 my @backups = (
-        { id => 1, job => 'home directories', state => 'ok',   started => 1780266600, seconds => 3725, size => 48_318_382_080, files => 182_340, changed => 0.153,  encrypted => 1 },
-        { id => 2, job => 'mail',             state => 'ok',   started => 1780268400, seconds => 845,  size => 9_663_676_416,  files => 96_112,  changed => 0.021,  encrypted => 1 },
-        { id => 3, job => 'database dumps',   state => 'fail', started => 1780270200, seconds => 61,   size => 524_288_000,    files => 12,      changed => 1,      encrypted => 0 },
-        { id => 4, job => 'photos',           state => 'run',  started => 1780295400, seconds => 7290, size => 214_748_364_800, files => 51_207, changed => 0.0042, encrypted => 0 },
-        { id => 5, job => 'wiki',             state => 'ok',   started => 1780272900, seconds => 42,   size => 157_286_400,    files => 2_311,   changed => 0.087,  encrypted => 1 },
+        { id => 1, job => 'home directories', state => 'ok',   started => 1780266600, seconds => 3725, size => 48_318_382_080,  files => 182_340, changed => 0.153,  encrypted => 1 },
+        { id => 2, job => 'mail',             state => 'ok',   started => 1780268400, seconds => 845,  size => 9_663_676_416,   files => 96_112,  changed => 0.021,  encrypted => 1 },
+        { id => 3, job => 'database dumps',   state => 'fail', started => 1780270200, seconds => 61,   size => 524_288_000,     files => 12,      changed => 1,      encrypted => 0 },
+        { id => 4, job => 'photos',           state => 'run',  started => 1780295400, seconds => 7290, size => 214_748_364_800, files => 51_207,  changed => 0.0042, encrypted => 0 },
+        { id => 5, job => 'wiki',             state => 'ok',   started => 1780272900, seconds => 42,   size => 157_286_400,     files => 2_311,   changed => 0.087,  encrypted => 1 },
 );
 
 # A mutator of your own: any code reference that gets a value and a copy
@@ -238,15 +239,16 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'backups',
-        row_id       => 'id',
-        sort         => [ [ size => 'desc' ] ],
+        id     => 'backups',
+        row_id => 'id',
+        sort   => [ [ size => 'desc' ] ],
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -255,15 +257,16 @@ my $table = Term::Fabulous::Widget::Table->new(
         columns      => [
                 { key => 'job',     title => 'Job',     mutator => truncate(9) },
                 { key => 'state',   title => 'State',   mutator => lookup( { ok => 'done', fail => 'failed', run => 'running' }, default => 'unknown' ) },
-                { key => 'started', title => 'Started', type => 'date',   mutator => datetime( '%a %H:%M', utc => 1 ) },
-                { key => 'seconds', title => 'Took',    type => 'number', mutator => duration() },
-                { key => 'size',    title => 'Size',    type => 'number', mutator => bytes() },
-                { key => 'files',   title => 'Files',   type => 'number', mutator => number( decimals => 0 ) },
-                { key => 'changed', title => 'Changed', type => 'number', mutator => percent( decimals => 1 ) },
+                { key => 'started', title => 'Started', type    => 'date',   mutator => datetime( '%a %H:%M', utc => 1 ) },
+                { key => 'seconds', title => 'Took',    type    => 'number', mutator => duration() },
+                { key => 'size',    title => 'Size',    type    => 'number', mutator => bytes() },
+                { key => 'files',   title => 'Files',   type    => 'number', mutator => number( decimals => 0 ) },
+                { key => 'changed', title => 'Changed', type    => 'number', mutator => percent( decimals => 1 ) },
 
                 # A computed column: its raw value is bytes per second, shown with
                 # two mutators in a row, bytes() and then $per_second.
-                {   key     => 'rate',
+                {
+                        key     => 'rate',
                         title   => 'Rate',
                         type    => 'number',
                         value   => sub ($row) { $row->{size} / $row->{seconds} },
@@ -271,11 +274,11 @@ my $table = Term::Fabulous::Widget::Table->new(
                 },
                 { key => 'encrypted', title => 'Enc', align => 'center', mutator => boolean( "\x{2714}", '' ) },
         ],
-        rows         => \@backups,
+        rows => \@backups,
 );
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Sorted by size. Up, then Left/Right and Enter on a title sorts by another column.', text_color => [ 150, 160, 180, 255 ] );
-my $detail = Term::Fabulous::Widget::Text->new( text => 'Move the cursor to see a raw value.', text_color => [ 229, 192, 123, 255 ] );
+my $detail = Term::Fabulous::Widget::Text->new( text => 'Move the cursor to see a raw value.',                                               text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $detail );
 
 # The cursor's row: the raw value and the display text of its size.
@@ -387,7 +390,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -432,9 +435,10 @@ my $delete_column = {
 my $note_column = { key => 'note', title => 'Note' };
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'tasks',
-        row_id       => 'id',
-        selection    => 'multiple',
+        id        => 'tasks',
+        row_id    => 'id',
+        selection => 'multiple',
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -447,7 +451,7 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'hours', title => 'Hours', type => 'number' },
                 $delete_column,
         ],
-        rows         => \@tasks,
+        rows => \@tasks,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );
@@ -598,14 +602,15 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-        id           => 'staff',
-        row_id       => 'email',
+        id     => 'staff',
+        row_id => 'email',
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -618,10 +623,10 @@ my $table = Term::Fabulous::Widget::Table->new(
                 { key => 'city',    title => 'City' },
                 { key => 'email',   title => 'E-mail',  visible => 0 },
                 { key => 'phone',   title => 'Phone',   visible => 0 },
-                { key => 'started', title => 'Started', type => 'date', mutator => date('%b %Y') },
-                { key => 'salary',  title => 'Salary',  type => 'number', mutator => number( decimals => 0 ), visible => 0 },
+                { key => 'started', title => 'Started', type    => 'date',   mutator => date('%b %Y') },
+                { key => 'salary',  title => 'Salary',  type    => 'number', mutator => number( decimals => 0 ), visible => 0 },
         ],
-        rows         => \@rows,
+        rows => \@rows,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );
@@ -755,14 +760,14 @@ my $status = $root->find_by_id('status');
 # The data and every code reference come from Perl.
 $table->rows(
         [
-                { sku => 'CAB-001', name => 'USB-C cable 1 m',   category => 'Cables',   qty => 140, price => 9.9,   updated => '2026-05-28' },
-                { sku => 'CAB-002', name => 'USB-C cable 2 m',   category => 'Cables',   qty => 35,  price => 12.5,  updated => '2026-05-30' },
-                { sku => 'CAB-010', name => 'HDMI cable 2 m',    category => 'Cables',   qty => 62,  price => 14,    updated => '2026-05-12' },
-                { sku => 'KEY-001', name => 'Keyboard DE',       category => 'Input',    qty => 18,  price => 49,    updated => '2026-05-21' },
-                { sku => 'KEY-002', name => 'Keyboard US',       category => 'Input',    qty => 24,  price => 49,    updated => '2026-05-21' },
-                { sku => 'MOU-001', name => 'Mouse, wireless',   category => 'Input',    qty => 51,  price => 29.9,  updated => '2026-05-31' },
-                { sku => 'MON-024', name => 'Monitor 24 inch',   category => 'Displays', qty => 7,   price => 189,   updated => '2026-05-02' },
-                { sku => 'MON-027', name => 'Monitor 27 inch',   category => 'Displays', qty => 12,  price => 279,   updated => '2026-05-19' },
+                { sku => 'CAB-001', name => 'USB-C cable 1 m', category => 'Cables',   qty => 140, price => 9.9,  updated => '2026-05-28' },
+                { sku => 'CAB-002', name => 'USB-C cable 2 m', category => 'Cables',   qty => 35,  price => 12.5, updated => '2026-05-30' },
+                { sku => 'CAB-010', name => 'HDMI cable 2 m',  category => 'Cables',   qty => 62,  price => 14,   updated => '2026-05-12' },
+                { sku => 'KEY-001', name => 'Keyboard DE',     category => 'Input',    qty => 18,  price => 49,   updated => '2026-05-21' },
+                { sku => 'KEY-002', name => 'Keyboard US',     category => 'Input',    qty => 24,  price => 49,   updated => '2026-05-21' },
+                { sku => 'MOU-001', name => 'Mouse, wireless', category => 'Input',    qty => 51,  price => 29.9, updated => '2026-05-31' },
+                { sku => 'MON-024', name => 'Monitor 24 inch', category => 'Displays', qty => 7,   price => 189,  updated => '2026-05-02' },
+                { sku => 'MON-027', name => 'Monitor 27 inch', category => 'Displays', qty => 12,  price => 279,  updated => '2026-05-19' },
         ]
 );
 $table->update_column( price   => mutator => number( decimals => 2, suffix => ' EUR' ) );
@@ -847,7 +852,11 @@ my @sales = (
 );
 my $total_revenue = sum( map { $_->{revenue} } @sales );
 my @rows          = (
-        ( map { { %$_, section => 0 } } @sales ),
+        (
+                map {
+                        { %$_, section => 0 }
+                } @sales
+        ),
         { product => 'Total', units => sum( map { $_->{units} } @sales ), revenue => $total_revenue, section => 1 },
 );
 
@@ -865,6 +874,7 @@ my $table = Term::Fabulous::Widget::Table->new(
         scrollbar    => 0,    # nothing scrolls on paper
         hover        => 0,
         header_style => { text_color => '#e5c07b' },
+
         # The look: a block frame, and colors instead of grid lines.
         border       => 'Outer',
         column_lines => 'none',
@@ -872,9 +882,9 @@ my $table = Term::Fabulous::Widget::Table->new(
         stripe_color => '#1c2029',
         columns      => [
                 { key => 'section', visible => 0 },    # 0 for products, 1 for the totals row
-                { key => 'product', title => 'Product' },
-                { key => 'units',   title => 'Units',   type => 'number', mutator => number() },
-                { key => 'revenue', title => 'Revenue', type => 'number', mutator => number( decimals => 2, suffix => ' EUR' ) },
+                { key => 'product', title   => 'Product' },
+                { key => 'units',   title   => 'Units',   type => 'number', mutator => number() },
+                { key => 'revenue', title   => 'Revenue', type => 'number', mutator => number( decimals => 2, suffix => ' EUR' ) },
                 {
                         key     => 'share',
                         title   => 'Share',
@@ -883,8 +893,8 @@ my $table = Term::Fabulous::Widget::Table->new(
                         mutator => percent( decimals => 1 ),
                 },
         ],
-        rows         => \@rows,
-        sort         => [ 'section', [ revenue => 'desc' ] ],    # the totals row last, the products by revenue
+        rows => \@rows,
+        sort => [ 'section', [ revenue => 'desc' ] ],    # the totals row last, the products by revenue
 );
 $table->set_row_style( Total => { border_top => 'Double', bold => 1 } );
 

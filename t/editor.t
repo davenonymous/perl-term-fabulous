@@ -13,17 +13,17 @@ sub editor {
 
 subtest 'text and lines' => sub {
 	my $editor = editor( text => "one\r\ntwo\rthree" );
-	is [ $editor->lines ], [ 'one', 'two', 'three' ], 'line breaks are normalized';
-	is [ $editor->cursor ], [ 2, 5 ], 'the cursor starts at the end';
-	is editor( text => "a\nb", multi_line => 0 )->text, 'a b', 'a single-line editor turns line breaks into spaces';
-	is editor()->line_count, 1, 'an empty text has one line';
+	is [ $editor->lines ],                              [ 'one', 'two', 'three' ], 'line breaks are normalized';
+	is [ $editor->cursor ],                             [ 2, 5 ],                  'the cursor starts at the end';
+	is editor( text => "a\nb", multi_line => 0 )->text, 'a b',                     'a single-line editor turns line breaks into spaces';
+	is editor()->line_count,                            1,                         'an empty text has one line';
 	like dies { editor( text => [] ) }, qr/text must be a string/, 'a non-string dies';
 };
 
 subtest 'grapheme clusters' => sub {
 	my $editor = editor( text => "e\x{301}x\x{1F1E9}\x{1F1EA}" );
 	is [ $editor->boundaries(0) ], [ 0, 2, 3, 5 ], 'a combining accent and a flag are one cluster each';
-	is $editor->character_count, 3, 'clusters are counted';
+	is $editor->character_count,   3,              'clusters are counted';
 
 	$editor->move_left;
 	is [ $editor->cursor ], [ 0, 3 ], 'the cursor moves over a whole flag';
@@ -54,7 +54,7 @@ subtest 'selection' => sub {
 	is [ $editor->cursor, $editor->has_selection ], [ 0, 0, 0 ], 'left without Shift collapses to the start';
 
 	$editor->move_to( 0, 4 )->move_document_end(1);
-	is $editor->selected_text, "two\nthree", 'a selection spans lines';
+	is $editor->selected_text, "two\nthree",   'a selection spans lines';
 	is [ $editor->selection ], [ 0, 4, 1, 5 ], 'selection is ordered';
 	$editor->select_word_at( 1, 2 );
 	is $editor->selected_text, 'three', 'select_word_at';
@@ -87,7 +87,7 @@ subtest 'editing' => sub {
 	ok !$editor->delete_forward, 'deleting at the end changes nothing';
 	$editor->select_all;
 	ok $editor->type(''), 'typing an empty string with a selection is an edit';
-	is $editor->text, '', 'it deletes the selection';
+	is $editor->text,     '',    'it deletes the selection';
 	is $editor->line(-1), undef, 'a negative row has no line';
 };
 
@@ -98,9 +98,9 @@ subtest 'max_length' => sub {
 	$editor->move_to( 0, 1 )->move_right(1);
 	$editor->type('XYZ');
 	is $editor->text, 'aXcd', 'a replaced selection makes room';
-	like dies { $editor->set_text('abcde') },   qr/more than max_length 4/, 'a longer text dies';
-	like dies { $editor->set_max_length(2) },   qr/more than max_length 2/, 'a limit below the length dies';
-	like dies { editor( max_length => -1 ) },  qr/non-negative integer/,  'an invalid limit dies';
+	like dies { $editor->set_text('abcde') }, qr/more than max_length 4/, 'a longer text dies';
+	like dies { $editor->set_max_length(2) }, qr/more than max_length 2/, 'a limit below the length dies';
+	like dies { editor( max_length => -1 ) }, qr/non-negative integer/,   'an invalid limit dies';
 };
 
 subtest 'undo and redo' => sub {
@@ -129,22 +129,27 @@ subtest 'undo and redo across lines' => sub {
 	my $record = sub { push @texts, $editor->text };
 
 	$editor->move_to( 1, 1 )->move_to( 2, 2, 1 );
-	$editor->insert("X\nY\nZ");             $record->();
+	$editor->insert("X\nY\nZ");
+	$record->();
 	$editor->move_document_start->move_line_end(1);
-	$editor->cut;                           $record->();
+	$editor->cut;
+	$record->();
 	$editor->move_document_end;
-	$editor->insert(" end\nmore");          $record->();
+	$editor->insert(" end\nmore");
+	$record->();
 	$editor->move_to( 1, 0 );
-	$editor->delete_backward;               $record->();
-	$editor->paste;                         $record->();
+	$editor->delete_backward;
+	$record->();
+	$editor->paste;
+	$record->();
 
 	my @undone;
 	unshift @undone, $editor->text while $editor->undo;
 	is \@undone, [ @texts[ 0 .. $#texts - 1 ] ], 'undo walks back through every step';
 	my @redone;
 	push @redone, $editor->text while $editor->redo;
-	is $redone[-1], $texts[-1], 'redo walks forward to the last text';
-	is [ $editor->cursor ], [ 0, 3 ], 'with the cursor after the last edit';
+	is $redone[-1],         $texts[-1], 'redo walks forward to the last text';
+	is [ $editor->cursor ], [ 0, 3 ],   'with the cursor after the last edit';
 };
 
 subtest 'clipboard' => sub {
@@ -159,8 +164,8 @@ subtest 'clipboard' => sub {
 	ok !$other->copy, 'copy needs a selection';
 	Term::Fabulous::Editor->clipboard('set');
 	$other->paste;
-	is $other->text, 'xcutset', 'the clipboard can be set';
-	is $other->clipboard, 'set', 'the clipboard can be read through an editor';
+	is $other->text,      'xcutset', 'the clipboard can be set';
+	is $other->clipboard, 'set',     'the clipboard can be read through an editor';
 };
 
 done_testing;

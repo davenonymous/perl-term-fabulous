@@ -66,8 +66,8 @@ class Term::Fabulous::Widget::Box
 		right_bottom  => CLAY_ATTACH_POINT_RIGHT_BOTTOM,
 	);
 
-	my %POINTER_CAPTURE_BY_NAME = ( capture => CLAY_POINTER_CAPTURE_MODE_CAPTURE, passthrough => CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH );
-	my %CLIP_TO_BY_NAME         = ( none => CLAY_CLIP_TO_NONE, attached_parent => CLAY_CLIP_TO_ATTACHED_PARENT );
+	my %POINTER_CAPTURE_BY_NAME = ( capture => CLAY_POINTER_CAPTURE_MODE_CAPTURE, passthrough     => CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH );
+	my %CLIP_TO_BY_NAME         = ( none    => CLAY_CLIP_TO_NONE,                 attached_parent => CLAY_CLIP_TO_ATTACHED_PARENT );
 
 	# Each key of a floating node: where its value goes in the
 	# Clay_FloatingElementConfig hash (a key, or a key and a subkey), and
@@ -108,8 +108,7 @@ class Term::Fabulous::Widget::Box
 
 	sub _border_style ($name) {
 		return Term::Fabulous::Enum::BorderStyle->from_name( $name // '' )
-			// die "Term::Fabulous::Widget::Box: invalid border style " . _describe($name) . " (known: "
-			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")";
+			// die "Term::Fabulous::Widget::Box: invalid border style " . _describe($name) . " (known: " . join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")";
 	}
 
 	method layout_properties :common () {
@@ -151,7 +150,7 @@ class Term::Fabulous::Widget::Box
 
 	method _parse_border ($kid) {
 		my @sides = qw(top right bottom left);
-		my $props = $self->kdl_properties( $kid, 'style', ( map {"style-$_"} @sides ), 'color' );
+		my $props = $self->kdl_properties( $kid, 'style', ( map { "style-$_" } @sides ), 'color' );
 
 		foreach my $side (@sides) {
 			my ($style_key) = grep { exists $props->{$_} } ( "style-$side", 'style' );    # the side key wins
@@ -192,7 +191,7 @@ class Term::Fabulous::Widget::Box
 		my $props    = $self->kdl_properties( $kid, qw(attach_to parent_id element parent offset_x offset_y z_index pointer_capture clip_to) );
 		my %floating = %{ $self->floating // {} };
 		foreach my $key ( sort keys %$props ) {
-			my ( $slot, $parse ) = $FLOATING_KEY{$key}->@*;
+			my ( $slot,  $parse )    = $FLOATING_KEY{$key}->@*;
 			my ( $field, $subfield ) = @$slot;
 			my $value = $parse->( $self, $props->{$key} );
 			$floating{$field} = defined $subfield ? { %{ $floating{$field} // {} }, $subfield => $value } : $value;

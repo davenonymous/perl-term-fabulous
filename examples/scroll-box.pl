@@ -18,19 +18,21 @@ use Term::Fabulous::Enum::BorderStyle;
 use Clay::XS qw(:all);
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [20, 25, 35, 255],
-	layout => {
+	background_color => [ 20, 25, 35, 255 ],
+	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
-$root->add_child(Term::Fabulous::Widget::Text->new(
-	text       => 'Scroll the boxes with the mouse wheel  (Ctrl+C to quit)',
-	text_color => [220, 220, 220, 255],
-));
+$root->add_child(
+	Term::Fabulous::Widget::Text->new(
+		text       => 'Scroll the boxes with the mouse wheel  (Ctrl+C to quit)',
+		text_color => [ 220, 220, 220, 255 ],
+	)
+);
 
 my $panels = Term::Fabulous::Widget::Box->new(
 	layout => {
@@ -40,25 +42,27 @@ my $panels = Term::Fabulous::Widget::Box->new(
 );
 $root->add_child($panels);
 
-for my $panel (['numbers', 200, sub ($n) { sprintf 'Line %3d', $n }], ['squares', 60, sub ($n) { sprintf '%2d^2 = %4d', $n, $n * $n }]) {
-	my ($id, $count, $format) = @$panel;
+for my $panel ( [ 'numbers', 200, sub ($n) { sprintf 'Line %3d', $n } ], [ 'squares', 60, sub ($n) { sprintf '%2d^2 = %4d', $n, $n * $n } ] ) {
+	my ( $id, $count, $format ) = @$panel;
 	my $box = Term::Fabulous::Widget::ScrollBox->new(
 		id     => $id,
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
-		background_color => [30, 35, 50, 255],
+		background_color => [ 30, 35, 50, 255 ],
 		border_width     => 1,
-		border_color     => [120, 160, 220, 255],
+		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);
-	$box->add_child(Term::Fabulous::Widget::Text->new(
-		text       => $format->($_),
-		text_color => [200, 210, 230, 255],
-	)) for 1 .. $count;
+	$box->add_child(
+		Term::Fabulous::Widget::Text->new(
+			text       => $format->($_),
+			text_color => [ 200, 210, 230, 255 ],
+		)
+	) for 1 .. $count;
 	$panels->add_child($box);
 }
 
-Term::Fabulous->new(width => 80, height => 24, root => $root)->run;
+Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

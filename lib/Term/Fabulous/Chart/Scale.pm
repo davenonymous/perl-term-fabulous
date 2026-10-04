@@ -12,9 +12,9 @@ use Object::Pad 0.825;
 class Term::Fabulous::Chart::Scale :abstract {
 	field $min   :param :reader;
 	field $max   :param :reader;
-	field $cells :param :reader;           # the cells the axis was fitted to
-	field $used  :param :reader;           # the cells its ticks span (at most cells)
-	field $ticks :param = [];              # [ { value, label } ], in order
+	field $cells :param :reader;    # the cells the axis was fitted to
+	field $used  :param :reader;    # the cells its ticks span (at most cells)
+	field $ticks :param = [];    # [ { value, label } ], in order
 
 	# Where a value lies on the axis: 0 at min, 1 at max (outside for
 	# values outside), undef for values the scale cannot show.
@@ -25,7 +25,9 @@ class Term::Fabulous::Chart::Scale :abstract {
 	method value_at;
 
 	method ticks () {
-		return map { { %$_, position => $self->position( $_->{value} ) } } @$ticks;
+		return map {
+			{ %$_, position => $self->position( $_->{value} ) }
+		} @$ticks;
 	}
 
 	method tick_count () {

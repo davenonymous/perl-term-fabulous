@@ -16,7 +16,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing  => { width => sizing_grow(), height => sizing_grow() },
-		padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
@@ -35,8 +35,8 @@ foreach my $hour ( 0 .. 4 * 24 ) {
 my $chart = Term::Fabulous::Widget::LineChart->new(
 	title  => 'Temperature in Lisbon',
 	curve  => 'monotone',
-	x_axis => { type => 'time', utc => 1, min => '2026-06-01 00:00Z', max => '2026-06-05 00:00Z' },
-	y_axis => { title => '°C', format => '%d°' },
+	x_axis => { type  => 'time', utc    => 1, min => '2026-06-01 00:00Z', max => '2026-06-05 00:00Z' },
+	y_axis => { title => '°C',   format => '%d°' },
 	series => [
 		{ name => 'Measured', data => \@measured },
 		{ name => 'Forecast', data => \@forecast, line_style => 'dashed' },

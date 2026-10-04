@@ -57,7 +57,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	# Scrolls the highlighted option into view.
 	method show_highlight () {
 		my $highlighted = $dropdown->highlighted_index // 0;
-		$top = $highlighted                     if $highlighted < $top;
+		$top = $highlighted if $highlighted < $top;
 		$top = $highlighted - $visible_rows + 1 if $highlighted >= $top + $visible_rows;
 		$top = min( max( $top, 0 ), $self->_max_top );
 		return $self->mark_changed;
@@ -104,9 +104,9 @@ class Term::Fabulous::Widget::Dropdown::List
 	# again when what the rows would show changed.
 	method refresh :override () {
 		return unless $self->columns > 0 && $self->rows > 0 && defined $dropdown;
-		my @rows = map { [ $dropdown->option_label($_), $dropdown->option_attrs($_) ] } grep {defined} map { $self->option_at_row($_) } 0 .. $self->rows - 1;
+		my @rows      = map { [ $dropdown->option_label($_), $dropdown->option_attrs($_) ] } grep { defined } map { $self->option_at_row($_) } 0 .. $self->rows - 1;
 		my @scrollbar = $self->_scrolls ? ( $dropdown->option_count, $dropdown->color_attr( $dropdown->disabled_color ), $dropdown->accent_attr ) : ();
-		my $key = join "\x{1F}", map { $_ // "\x{0}" } $self->columns, $self->rows, $top, @scrollbar, map {@$_} @rows;
+		my $key       = join "\x{1F}", map { $_ // "\x{0}" } $self->columns, $self->rows, $top, @scrollbar, map { @$_ } @rows;
 		return if defined $_painted_key && $key eq $_painted_key;
 		$_painted_key = $key;
 

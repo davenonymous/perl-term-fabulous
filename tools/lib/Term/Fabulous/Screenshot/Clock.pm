@@ -13,7 +13,7 @@ use Time::HiRes ();
 # the screenshot harness advances it, so every timer, every animation and
 # every displayed time is the same on every run.
 
-my $epoch;          # the wall-clock time the clock started at, in seconds
+my $epoch;    # the wall-clock time the clock started at, in seconds
 my $elapsed = 0;    # virtual seconds since then
 
 sub is_installed () {
@@ -46,19 +46,19 @@ sub install ($start_epoch) {
 	no warnings qw(once redefine);
 	*CORE::GLOBAL::time      = sub :prototype() { int now() };
 	*CORE::GLOBAL::localtime = sub :prototype(;$) { CORE::localtime( @_ ? $_[0] : int now() ) };
-	*CORE::GLOBAL::gmtime    = sub :prototype(;$) { CORE::gmtime( @_ ? $_[0] : int now() ) };
+	*CORE::GLOBAL::gmtime    = sub :prototype(;$) { CORE::gmtime( @_    ? $_[0] : int now() ) };
 	*CORE::GLOBAL::sleep     = sub :prototype(;$) { my $seconds = $_[0] // 0; advance($seconds); $seconds };
 
 	*Time::HiRes::time          = sub :prototype() { now() };
 	*Time::HiRes::clock_gettime = sub :prototype(;$) { now() };
 	*Time::HiRes::gettimeofday  = sub :prototype() {
-		my $now = now();
+		my $now     = now();
 		my $seconds = int $now;
 		return wantarray ? ( $seconds, int( ( $now - $seconds ) * 1_000_000 ) ) : $now;
 	};
-	*Time::HiRes::sleep     = sub :prototype(;@) { my $seconds = $_[0] // 0; advance($seconds); $seconds };
-	*Time::HiRes::usleep    = sub :prototype($)  { advance( $_[0] / 1_000_000 ); $_[0] };
-	*Time::HiRes::nanosleep = sub :prototype($)  { advance( $_[0] / 1_000_000_000 ); $_[0] };
+	*Time::HiRes::sleep     = sub :prototype(;@) { my $seconds = $_[0] // 0;        advance($seconds); $seconds };
+	*Time::HiRes::usleep    = sub :prototype($) { advance( $_[0] / 1_000_000 );     $_[0] };
+	*Time::HiRes::nanosleep = sub :prototype($) { advance( $_[0] / 1_000_000_000 ); $_[0] };
 	return;
 }
 

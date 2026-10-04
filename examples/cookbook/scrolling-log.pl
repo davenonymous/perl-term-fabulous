@@ -22,7 +22,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
 
@@ -36,7 +36,7 @@ my $log = Term::Fabulous::Widget::ScrollBox->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
 $root->add_child($log);

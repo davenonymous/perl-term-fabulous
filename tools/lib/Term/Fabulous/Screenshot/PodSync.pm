@@ -55,7 +55,7 @@ sub sync_code_blocks ( $pod, $read_file ) {
 		my @old_block;
 		push @old_block, shift @lines while @lines && ( $lines[0] =~ /\A\s*\z/ || $lines[0] =~ /\A[ \t]/ );
 		my @new_block = ( "\n", _verbatim( $read_file->($file), $file ), "\n" );
-		push @output, @new_block;
+		push @output,  @new_block;
 		push @changed, $file if join( '', @old_block ) ne join( '', @new_block );
 	}
 	return ( join( '', @output ), @changed );

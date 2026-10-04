@@ -15,7 +15,7 @@ subtest 'text and color' => sub {
 	$text->text('Hallo');
 	is $text->text, 'Hallo', 'the text can change';
 	like dies { Term::Fabulous::Widget::Text->new( text => 'x', text_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Text: text_color must be a color, got 'nope'/, 'an invalid color dies';
-	like dies { $text->text_color('nope') }, qr/\ATerm::Fabulous::Widget::Text: text_color must be a color, got 'nope'/, 'also when set later';
+	like dies { $text->text_color('nope') },                                              qr/\ATerm::Fabulous::Widget::Text: text_color must be a color, got 'nope'/, 'also when set later';
 	is $text->text_color, [ 1, 2, 3, 255 ], 'and leaves the color as it was';
 };
 
@@ -23,8 +23,8 @@ subtest 'bold, italic and underline' => sub {
 	require Term::Fabulous::Static;
 	require Term::Fabulous::Widget::Box;
 	my $text = Term::Fabulous::Widget::Text->new( text => 'Bold', text_color => '#ffffff', bold => 1 );
-	is [ $text->bold, $text->italic, $text->underline ], [ 1, 0, 0 ], 'readers';
-	is $text->style_attrs, Term::Fabulous::Termbox::TB_BOLD(), 'style_attrs of bold text';
+	is [ $text->bold, $text->italic, $text->underline ], [ 1, 0, 0 ],                        'readers';
+	is $text->style_attrs,                               Term::Fabulous::Termbox::TB_BOLD(), 'style_attrs of bold text';
 	$text->italic('yes');
 	$text->underline(1);
 	is $text->style_attrs, Term::Fabulous::Termbox::TB_BOLD() | Term::Fabulous::Termbox::TB_ITALIC() | Term::Fabulous::Termbox::TB_UNDERLINE(), 'all three';

@@ -164,7 +164,7 @@ subtest 'Mouse targets a canvas without a background' => sub {
 subtest 'a left press focuses the widget under the pointer' => sub {
 	my $focus_root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my @buttons    = map { Term::Fabulous::Widget::Button->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } ) } 1 .. 2;
-	my $inner = Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } } );
+	my $inner      = Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } } );
 	$buttons[1]->add_child($inner);
 	$focus_root->add_child(@buttons);
 	my ($focus_ui) = memory_ui( root => $focus_root );
@@ -189,8 +189,9 @@ subtest 'a left press focuses the widget under the pointer' => sub {
 };
 
 subtest 'a click where stacked buttons overlap goes to the one on top' => sub {
-	my $stack   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_BACK_TO_FRONT } );
-	my @buttons = map { Term::Fabulous::Widget::Button->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed( 6 - 2 * $_ ), height => sizing_fixed(1) } } ) } 1 .. 2;
+	my $stack = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_BACK_TO_FRONT } );
+	my @buttons
+		= map { Term::Fabulous::Widget::Button->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_fixed( 6 - 2 * $_ ), height => sizing_fixed(1) } } ) } 1 .. 2;
 	$stack->add_child(@buttons);
 	my ($stack_ui) = memory_ui( root => $stack );
 	my ( @pressed, @mouse_targets );
@@ -199,7 +200,7 @@ subtest 'a click where stacked buttons overlap goes to the one on top' => sub {
 	$stack_ui->step;
 
 	mouse( $stack_ui, key => TB_KEY_MOUSE_LEFT, x => 0, y => 0 );
-	ref_is $mouse_targets[0], $buttons[1], 'Mouse goes to the later child, drawn on top';
+	ref_is $mouse_targets[0],                          $buttons[1], 'Mouse goes to the later child, drawn on top';
 	ref_is $stack_ui->interaction->get_focused_widget, $buttons[1], 'the press focuses it';
 	is [ map { refaddr $_ } @pressed ], [ refaddr $buttons[1] ], 'and only it is pressed';
 
@@ -231,7 +232,7 @@ subtest 'only a release of the left button ends a press' => sub {
 	is $press_ui->pointer_state->{down}, 1, 'a right release keeps the left button down';
 	mouse( $press_ui, key => TB_KEY_MOUSE_RELEASE, ch => TB_KEY_MOUSE_LEFT, x => 2, y => 1 );
 	is $press_ui->pointer_state->{down}, 0, 'a left release ends it';
-	mouse( $press_ui, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1 );
+	mouse( $press_ui, key => TB_KEY_MOUSE_LEFT,    x => 1, y => 1 );
 	mouse( $press_ui, key => TB_KEY_MOUSE_RELEASE, x => 2, y => 1 );
 	is $press_ui->pointer_state->{down}, 0, 'so does a release that names no button';
 
@@ -248,10 +249,10 @@ subtest 'only a release of the left button ends a press' => sub {
 
 subtest 'key names' => sub {
 	my $name = sub { Term::Fabulous::Event::KeyPress->new( key => $_[0], char => $_[1], modifiers => $_[2] // 0 ) };
-	is $name->( 0, ord 'a' )->key_name, 'a', 'a character';
-	is [ $name->( 0, ord 'a' )->text, $name->( 0, ord 'a', TB_MOD_ALT )->text ], [ 'a', undef ], 'text without Ctrl or Alt only';
-	is $name->( TB_KEY_ARROW_LEFT, 0, TB_MOD_CTRL | TB_MOD_SHIFT )->key_name, 'Ctrl+Shift+Left', 'modifiers in a fixed order';
-	is $name->( 0x17, 0 )->key_name, 'Ctrl+W', 'a control byte is Ctrl and a letter';
+	is $name->( 0, ord 'a' )->key_name,                                          'a',               'a character';
+	is [ $name->( 0, ord 'a' )->text, $name->( 0, ord 'a', TB_MOD_ALT )->text ], [ 'a', undef ],    'text without Ctrl or Alt only';
+	is $name->( TB_KEY_ARROW_LEFT, 0, TB_MOD_CTRL | TB_MOD_SHIFT )->key_name,    'Ctrl+Shift+Left', 'modifiers in a fixed order';
+	is $name->( 0x17, 0 )->key_name,                                             'Ctrl+W',          'a control byte is Ctrl and a letter';
 	is [ map { $name->( $_, 0, TB_MOD_CTRL )->key_name } 0x7F, 0x0D, 0x1B, 0x09 ], [qw(Backspace Enter Escape Tab)],
 		'named control keys, without the Ctrl bit termbox2 sets on them';
 	is [ $name->( 0x20, 0 )->key_name, $name->( 0, 0x20 )->key_name, $name->( 0x20, 0 )->text ], [ 'Space', 'Space', ' ' ], 'Space either way';
@@ -262,12 +263,12 @@ subtest 'key names of the kitty keyboard protocol' => sub {
 	my $name = sub { Term::Fabulous::Event::KeyPress->new( key => $_[0], char => $_[1], modifiers => $_[2] // 0 ) };
 	is [ map { $_->key_name } $name->( 0, ord 'i', TB_MOD_CTRL ), $name->( 0, ord '1', TB_MOD_CTRL | TB_MOD_SHIFT ) ], [ 'Ctrl+I', 'Ctrl+Shift+1' ],
 		'a Ctrl combination in char is named in upper case';
-	is $name->( 0, 0x0D, TB_MOD_CTRL )->key_name, 'Ctrl+Enter', 'a named control key in char takes the Ctrl bit as it is';
-	is $name->( 0x17, 0, TB_MOD_CTRL | TB_MOD_SHIFT )->key_name, 'Ctrl+Shift+W', 'Shift with a control byte';
+	is $name->( 0,    0x0D, TB_MOD_CTRL )->key_name,                'Ctrl+Enter',   'a named control key in char takes the Ctrl bit as it is';
+	is $name->( 0x17, 0,    TB_MOD_CTRL | TB_MOD_SHIFT )->key_name, 'Ctrl+Shift+W', 'Shift with a control byte';
 	is $name->( TB_KEY_ARROW_LEFT, 0, TB_MOD_CTRL | TB_MOD_SHIFT | TF_MOD_SUPER | TF_MOD_HYPER | TF_MOD_META )->key_name, 'Ctrl+Shift+Super+Hyper+Meta+Left',
 		'Super, Hyper and Meta after Shift';
 	is [ $name->( 0, ord 'a', TF_MOD_SUPER )->key_name, $name->( 0, ord 'a', TF_MOD_SUPER )->text ], [ 'Super+a', undef ], 'Super types nothing';
-	is $name->( TF_KEY_F13, 0 )->key_name, 'F13', 'keys without a legacy encoding';
+	is $name->( TF_KEY_F13, 0 )->key_name,                                                           'F13',                'keys without a legacy encoding';
 	is [ map { [ $_->key_name, $_->main_key_name ] } $name->( TF_KEY_KP_LEFT, 0, TB_MOD_CTRL ), $name->( TF_KEY_KP_7, 0, TB_MOD_ALT ), $name->( TF_KEY_KP_BEGIN, 0 ) ],
 		[ [ 'Ctrl+KeypadLeft', 'Ctrl+Left' ], [ 'Alt+Keypad7', 'Alt+7' ], [ 'KeypadBegin', 'KeypadBegin' ] ],
 		'main_key_name names the keypad keys after the main keyboard keys';
@@ -276,18 +277,22 @@ subtest 'key names of the kitty keyboard protocol' => sub {
 subtest 'key names back to termbox events' => sub {
 	my $fields = sub { my %fields = Term::Fabulous::Event::KeyPress->fields_for_name( $_[0] ); [ @fields{qw(key ch mod)} ] };
 	is [ map { $fields->($_) } 'a', 'Ctrl+W', 'Ctrl+I', 'Enter', 'Ctrl+Enter', 'Tab', 'Ctrl+C' ], [
-		[ 0, ord 'a', 0 ],
-		[ TB_KEY_CTRL_W, 0, TB_MOD_CTRL ],         # a control byte
-		[ 0, ord 'i', TB_MOD_CTRL ],               # the control byte would be Tab
-		[ TB_KEY_ENTER, 0, TB_MOD_CTRL ],          # termbox2 sets Ctrl on every control byte
-		[ 0, TB_KEY_ENTER, TB_MOD_CTRL ],
-		[ TB_KEY_TAB, 0, TB_MOD_CTRL ],
-		[ TB_KEY_CTRL_C, 0, TB_MOD_CTRL ],
-	], 'what termbox2 reports for them';
+		[ 0,             ord 'a',      0 ],
+		[ TB_KEY_CTRL_W, 0,            TB_MOD_CTRL ],    # a control byte
+		[ 0,             ord 'i',      TB_MOD_CTRL ],    # the control byte would be Tab
+		[ TB_KEY_ENTER,  0,            TB_MOD_CTRL ],    # termbox2 sets Ctrl on every control byte
+		[ 0,             TB_KEY_ENTER, TB_MOD_CTRL ],
+		[ TB_KEY_TAB,    0,            TB_MOD_CTRL ],
+		[ TB_KEY_CTRL_C, 0,            TB_MOD_CTRL ],
+		],
+		'what termbox2 reports for them';
 	my @names = ( 'a', 'A', 'Space', 'Ctrl+Space', 'Alt+x', 'Shift+Enter', 'Ctrl+Shift+W', 'BackTab', 'Ctrl+Shift+Super+Hyper+Meta+Left', 'F13', 'KeypadLeft', 'Ctrl++', "\x{E9}" );
-	is [ map { my %fields = Term::Fabulous::Event::KeyPress->fields_for_name($_); Term::Fabulous::Event::KeyPress->new( key => $fields{key}, char => $fields{ch}, modifiers => $fields{mod} )->key_name } @names ],
+	is [
+		map { my %fields = Term::Fabulous::Event::KeyPress->fields_for_name($_); Term::Fabulous::Event::KeyPress->new( key => $fields{key}, char => $fields{ch}, modifiers => $fields{mod} )->key_name }
+			@names
+		],
 		\@names, 'every name comes back as it went in';
-	like dies { Term::Fabulous::Event::KeyPress->fields_for_name('Ctrl+w') }, qr/no key is named 'Ctrl\+w'/, 'a name key_name never returns dies';
+	like dies { Term::Fabulous::Event::KeyPress->fields_for_name('Ctrl+w') },     qr/no key is named 'Ctrl\+w'/,    'a name key_name never returns dies';
 	like dies { Term::Fabulous::Event::KeyPress->fields_for_name('Hyperspace') }, qr/no key is named 'Hyperspace'/, 'so does an unknown key';
 };
 
@@ -301,7 +306,7 @@ subtest 'Tab and Shift-Tab move focus' => sub {
 	my $press = sub { $focus_terminal->press_key( $_[0] ); $focus_ui->step; return };
 
 	$press->('Tab');
-	ref_is $key_targets[0], $focus_root, 'the KeyPress goes to the widget focused before the move';
+	ref_is $key_targets[0],                            $focus_root, 'the KeyPress goes to the widget focused before the move';
 	ref_is $focus_ui->interaction->get_focused_widget, $buttons[0], 'Tab focuses the first button';
 
 	$press->('Tab');
@@ -314,22 +319,21 @@ subtest 'Tab and Shift-Tab move focus' => sub {
 
 subtest 'scroll boxes' => sub {
 	my $scroll_root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-	my $header = Term::Fabulous::Widget::Box->new( background_color => [ 3, 3, 3, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(2) } } );
-	my $log    = Term::Fabulous::Widget::ScrollBox->new(
+	my $header      = Term::Fabulous::Widget::Box->new( background_color => [ 3, 3, 3, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(2) } } );
+	my $log         = Term::Fabulous::Widget::ScrollBox->new(
 		id     => 'log',
 		layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },
 	);
 	my @rows = map { Term::Fabulous::Widget::Box->new( background_color => [ $_, $_, $_, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } ) } 10 .. 19;
-	$log->add_child($_)         foreach @rows;
+	$log->add_child($_) foreach @rows;
 	$scroll_root->add_child($_) foreach $header, $log;
 	my ($scroll_ui) = memory_ui( root => $scroll_root );
 	my @mouse_targets;
 	$scroll_root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return Clay::UI::Enum::Result->CONTINUE } );
 
 	my $row_top = sub {
-		my ($row) = @_;
-		my ($command) = grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $scroll_ui->widget_for( $_->{userData} ) // 0 ) == refaddr($row) }
-			$scroll_ui->last_frame->commands;
+		my ($row)     = @_;
+		my ($command) = grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $scroll_ui->widget_for( $_->{userData} ) // 0 ) == refaddr($row) } $scroll_ui->last_frame->commands;
 		return $command->{boundingBox}{y};
 	};
 
@@ -370,11 +374,12 @@ subtest 'scroll boxes' => sub {
 	my ($sideways_ui) = memory_ui( root => $sideways_root );
 	$sideways_ui->step;
 	mouse( $sideways_ui, key => TF_KEY_MOUSE_WHEEL_RIGHT, x => 1, y => 0 );
-	my ($first) = grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $sideways_ui->widget_for( $_->{userData} ) // 0 ) == refaddr( $columns[1] ) } $sideways_ui->last_frame->commands;
+	my ($first)
+		= grep { $_->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE && refaddr( $sideways_ui->widget_for( $_->{userData} ) // 0 ) == refaddr( $columns[1] ) } $sideways_ui->last_frame->commands;
 	is $first->{boundingBox}{x}, -1, 'a horizontal wheel notch scrolls the box under the pointer by three columns';
 
-	like dies { $scroll_ui->draw( scroll_cells => 3 ) }, qr/scroll_cells must be \[columns, rows\]/, 'scroll_cells must be a pair';
-	like dies { $scroll_ui->draw( scroll => [ 0, 1 ] ) },  qr/unknown argument\(s\): scroll/,       'unknown draw arguments die';
+	like dies { $scroll_ui->draw( scroll_cells => 3 ) },        qr/scroll_cells must be \[columns, rows\]/, 'scroll_cells must be a pair';
+	like dies { $scroll_ui->draw( scroll       => [ 0, 1 ] ) }, qr/unknown argument\(s\): scroll/,          'unknown draw arguments die';
 };
 
 subtest 'a text area in a scroll box passes on the notches it cannot use' => sub {
@@ -402,7 +407,7 @@ subtest 'a text area in a scroll box passes on the notches it cannot use' => sub
 };
 
 subtest 'a click within one frame toggles a check box' => sub {
-	my $box     = Term::Fabulous::Widget::Checkbox->new( label => 'Fast' );
+	my $box      = Term::Fabulous::Widget::Checkbox->new( label => 'Fast' );
 	my $tap_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	$tap_root->add_child($box);
 	my ( $tap_ui, $tap_terminal ) = memory_ui( root => $tap_root );

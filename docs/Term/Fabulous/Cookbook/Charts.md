@@ -76,7 +76,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing  => { width => sizing_grow(), height => sizing_grow() },
-                padding => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding => { left  => 2, right => 2, top => 1, bottom => 1 },
         },
 );
 
@@ -88,7 +88,7 @@ my $chart = Term::Fabulous::Widget::LineChart->new(
         y_axis => { title => '°C', format => '%d°' },
         series => [
                 { name => 'Lisbon', data => [ 11.6, 12.6, 14.9, 16.2, 18.6, 21.9, 23.8, 24.2, 22.6, 19.4, 15.2, 12.6 ] },
-                { name => 'Berlin', data => [ 0.6,  2.3,  5.1,  10.2, 14.8, 17.9, 20.3, 19.7, 15.3, 10.5, 5.2,  1.8 ] },
+                { name => 'Berlin', data => [  0.6,  2.3, 5.1,  10.2, 14.8, 17.9, 20.3, 19.7, 15.3, 10.5, 5.2,   1.8 ] },
                 { name => 'Oslo',   data => [ -2.9, -2.6, 1.0,  5.6,  11.0, 15.0, 17.6, 16.2, 11.6, 6.1,  1.4,  -2.3 ] },
         ],
 );
@@ -158,7 +158,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -266,7 +266,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 4,
         },
 );
@@ -354,12 +354,13 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing  => { width => sizing_grow(), height => sizing_grow() },
-                padding => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding => { left  => 2, right => 2, top => 1, bottom => 1 },
         },
 );
 
 # Measurements of three species: [ x, y ] pairs, both numbers.
 srand 11;
+
 sub flowers ( $count, $length, $width, $slope ) {
         return map {
                 my $petal = $length + ( rand() - 0.5 ) * 2;
@@ -434,7 +435,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 4,
         },
 );
@@ -525,7 +526,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 4,
         },
 );
@@ -614,7 +615,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
                 sizing    => { width => sizing_grow(), height => sizing_grow() },
-                padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap => 2,
         },
 );
@@ -639,8 +640,8 @@ $root->add_child(
 # Slices of equal angle; their length shows the value.
 $root->add_child(
         Term::Fabulous::Widget::PolarAreaChart->new(
-                title => 'Rain per season (mm)',
-                data  => [ [ Spring => 170 ], [ Summer => 210 ], [ Autumn => 260 ], [ Winter => 190 ] ],
+                title       => 'Rain per season (mm)',
+                data        => [ [ Spring => 170 ], [ Summer => 210 ], [ Autumn => 260 ], [ Winter => 190 ] ],
                 start_angle => -45,
         )
 );
@@ -701,17 +702,18 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 # Daily closing prices of four stocks over 30 days.
 srand 9;
+
 sub prices ( $start, $drift ) {
         my $price = $start;
         return [ map { $price *= 1 + $drift + ( rand() - 0.5 ) * 0.04 } 1 .. 30 ];
 }
 my @stocks = (
-        { symbol => 'ACME', name => 'Acme Corp.',       prices => prices( 112, 0.004 ) },
+        { symbol => 'ACME', name => 'Acme Corp.',       prices => prices( 112,  0.004 ) },
         { symbol => 'GLBX', name => 'Globex',           prices => prices( 48,  -0.003 ) },
-        { symbol => 'INIT', name => 'Initech',          prices => prices( 230, 0.001 ) },
-        { symbol => 'UMBR', name => 'Umbrella Holding', prices => prices( 75,  0.006 ) },
+        { symbol => 'INIT', name => 'Initech',          prices => prices( 230,  0.001 ) },
+        { symbol => 'UMBR', name => 'Umbrella Holding', prices => prices( 75,   0.006 ) },
 );
-$_->{last} = $_->{prices}[-1] foreach @stocks;
+$_->{last}   = $_->{prices}[-1]                                 foreach @stocks;
 $_->{change} = ( $_->{prices}[-1] / $_->{prices}[0] - 1 ) * 100 foreach @stocks;
 
 my $root = Term::Fabulous::Widget::Box->new(
@@ -719,7 +721,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
         },
 );
 
@@ -737,7 +739,7 @@ my $table = Term::Fabulous::Widget::Table->new(
         columns      => [
                 { key => 'symbol', title => 'Symbol' },
                 { key => 'name',   title => 'Name' },
-                { key => 'last',   title => 'Last',   type => 'number', mutator => sprintf_format('%.2f') },
+                { key => 'last',   title => 'Last',    type => 'number', mutator => sprintf_format('%.2f') },
                 { key => 'change', title => '30 days', type => 'number', mutator => sprintf_format('%+.1f%%') },
                 {
                         key        => 'prices',

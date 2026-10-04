@@ -103,16 +103,16 @@ subtest 'corner glyphs of the widget' => sub {
 	is $box->border_corners, { top_left => "\x{251C}", bottom_right => "\x{253C}" }, 'the reader returns them';
 	$box->border_corners(undef);
 	is draw_border( widget => $box )->{'1,1'}, "\x{250C}", 'undef brings the style back';
-	like dies { $box->border_corners( { middle => '+' } ) },      qr/border_corners does not know middle/,          'an unknown corner dies';
-	like dies { $box->border_corners( { top_left => '++' } ) },    qr/border_corners top_left must be a single character/, 'a glyph must be one character';
+	like dies { $box->border_corners( { middle   => '+' } ) },  qr/border_corners does not know middle/,                'an unknown corner dies';
+	like dies { $box->border_corners( { top_left => '++' } ) }, qr/border_corners top_left must be a single character/, 'a glyph must be one character';
 	like dies { Term::Fabulous::Widget::Box->new( border_corners => 'x' ) }, qr/border_corners must be undef or a hash reference/, 'so must the parameter';
 };
 
 subtest 'sides on the outer background' => sub {
 	my $buffer = [];
-	$buffer->[$_] = [ (0x0A0B0C) x 6 ] for 0 .. 4;    # the widget's background ...
-	$buffer->[$_][0] = 0x010101 for 0 .. 4;           # ... and the parent's, left of the box
-	$buffer->[0] = [ (0x020202) x 6 ];                # and above it
+	$buffer->[$_]    = [ (0x0A0B0C) x 6 ] for 0 .. 4;    # the widget's background ...
+	$buffer->[$_][0] = 0x010101 for 0 .. 4;    # ... and the parent's, left of the box
+	$buffer->[0]     = [ (0x020202) x 6 ];    # and above it
 	my $box = Term::Fabulous::Widget::Box->new( border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, outer_border_sides => ['left'] );
 	draw_border( widget => $box, buffer => $buffer );
 	is $cells{'1,2'}[2], 0x010101, 'an outer side is drawn on the background beside the box';
@@ -129,7 +129,7 @@ subtest 'sides on the outer background' => sub {
 subtest 'location colors' => sub {
 	my $buffer = [];
 	$buffer->[$_] = [ (0x0A0B0C) x 6 ] for 1 .. 3;    # widget background inside the box
-	$buffer->[0] = [ (0x010101) x 6 ];                 # parent background above it
+	$buffer->[0] = [ (0x010101) x 6 ];    # parent background above it
 
 	draw_border( style => 'Wide', width => { right => 1, top => 1 }, buffer => $buffer );
 	is $cells{'4,2'}, [ "\x{258A}", 0xC80000 | TB_REVERSE, 0x0A0B0C ], 'location 3: reverse video over the widget background';
@@ -140,7 +140,7 @@ subtest 'location colors' => sub {
 
 	draw_border( style => 'Panel', width => { top => 1, left => 1 } );
 	is $cells{'1,1'}[1], 0xC80000 | TB_REVERSE, 'location 2 is reverse video';
-	is $cells{'1,1'}[2], TB_DEFAULT, 'location 2 background is the unpainted parent cell (terminal default)';
+	is $cells{'1,1'}[2], TB_DEFAULT,            'location 2 background is the unpainted parent cell (terminal default)';
 };
 
 done_testing;

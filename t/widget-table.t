@@ -43,7 +43,7 @@ sub table_ui (%args) {
 	$root->add_child($table);
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => $size->[0], height => $size->[1] );
 	my $ui       = Term::Fabulous->new( root => $root, width => $size->[0], height => $size->[1], terminal => $terminal );
-	my %h = ( terminal => $terminal, ui => $ui, events => [] );
+	my %h        = ( terminal => $terminal, ui => $ui, events => [] );
 	foreach my $name (@EVENTS) {
 		$table->on( $name => sub ($event) { push @{ $h{events} }, [ $name, $event ]; return } );
 	}
@@ -95,27 +95,29 @@ sub static_lines ( $table, $width = 40, $height = 12 ) {
 }
 
 subtest 'construction' => sub {
-	like dies { Term::Fabulous::Widget::Table->new( columns => [] ) },                     qr/a table needs an id/,                               'an id is required';
-	like dies { Term::Fabulous::Widget::Table->new( id => 't', selection => 'some' ) },     qr/selection must be 'none', 'single' or 'multiple'/, 'selection';
-	like dies { Term::Fabulous::Widget::Table->new( id => 't', column_lines => 'Dots' ) },  qr/column_lines must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got 'Dots'/, 'line styles';
-	like dies { Term::Fabulous::Widget::Table->new( id => 't', header_style => { size => 2 } ) }, qr/header_style does not know size/,       'style hashes';
-	like dies { Term::Fabulous::Widget::Table->new( id => 't', page_sizes => [0] ) },       qr/page_sizes must be an array reference of positive integers/, 'page sizes';
-	like dies { Term::Fabulous::Widget::Table->new( id => 't', colour => 1 ) },             qr/Unrecognised parameters/,                           'unknown parameters';
+	like dies { Term::Fabulous::Widget::Table->new( columns => [] ) }, qr/a table needs an id/, 'an id is required';
+	like dies { Term::Fabulous::Widget::Table->new( id      => 't', selection    => 'some' ) }, qr/selection must be 'none', 'single' or 'multiple'/, 'selection';
+	like dies { Term::Fabulous::Widget::Table->new( id      => 't', column_lines => 'Dots' ) }, qr/column_lines must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got 'Dots'/,
+		'line styles';
+	like dies { Term::Fabulous::Widget::Table->new( id => 't', header_style => { size => 2 } ) }, qr/header_style does not know size/,                            'style hashes';
+	like dies { Term::Fabulous::Widget::Table->new( id => 't', page_sizes   => [0] ) },           qr/page_sizes must be an array reference of positive integers/, 'page sizes';
+	like dies { Term::Fabulous::Widget::Table->new( id => 't', colour       => 1 ) },             qr/Unrecognised parameters/,                                    'unknown parameters';
 };
 
 subtest 'drawing' => sub {
 	my $table = Term::Fabulous::Widget::Table->new( id => 't', row_id => 'id', columns => [@COLUMNS], rows => [@PEOPLE], sort => [ [ age => 'desc' ] ] );
 	is static_lines($table), [
-		"\x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{252C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{252C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
+"\x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{252C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{252C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256E}",
 		"\x{2502} Name \x{2502} Dept  \x{2502} Age \x{25BE} \x{2502}",
-		"\x{251C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2524}",
+"\x{251C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2524}",
 		"\x{2502} Dan  \x{2502} HR    \x{2502}    50 \x{2502}",
 		"\x{2502} Ann  \x{2502} Sales \x{2502}    34 \x{2502}",
 		"\x{2502} Eve  \x{2502} IT    \x{2502}    23 \x{2502}",
 		"\x{2502} Bob  \x{2502} IT    \x{2502}    17 \x{2502}",
 		"\x{2502} Cid  \x{2502} Sales \x{2502}       \x{2502}",
-		"\x{2570}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256F}",
-	], 'a frame, column lines joined to it, the header line, the sort marker, numbers on the right';
+"\x{2570}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{2500}\x{256F}",
+		],
+		'a frame, column lines joined to it, the header line, the sort marker, numbers on the right';
 
 	my $empty = Term::Fabulous::Widget::Table->new( id => 'e', columns => [@COLUMNS] );
 	like static_lines($empty)->[3], qr/\x{2502} No rows\s+\x{2502}/, 'an empty table says so, as wide as its columns';
@@ -133,15 +135,16 @@ subtest 'drawing' => sub {
 		"\x{251C}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}",
 		"\x{2502} xx \x{2502} yy",
 		"\x{2570}\x{2500}\x{2500}\x{2500}\x{2500}\x{2534}\x{2500}\x{2500}\x{2500}\x{2500}",
-	], 'a table too narrow for its columns clips the header and the rows alike';
+		],
+		'a table too narrow for its columns clips the header and the rows alike';
 };
 
 subtest 'groups and trees' => sub {
 	my $grouped = Term::Fabulous::Widget::Table->new( id => 'g', row_id => 'id', columns => [@COLUMNS], rows => [@PEOPLE], group_by => 'dept' );
 	my $lines   = static_lines( $grouped, 40, 14 );
 	like $lines->[2], qr/\x{251C}\x{2500}+\x{2534}\x{2500}+\x{2534}\x{2500}+\x{2524}/, 'the column lines end above a group header';
-	like $lines->[3], qr/\x{2502} \x{25BE} Dept: HR \(1\)\s+\x{2502}\z/, 'a group header spans the columns';
-	like $lines->[4], qr/\x{2502} Dan\s+\x{2502}/, 'its rows follow';
+	like $lines->[3], qr/\x{2502} \x{25BE} Dept: HR \(1\)\s+\x{2502}\z/,               'a group header spans the columns';
+	like $lines->[4], qr/\x{2502} Dan\s+\x{2502}/,                                     'its rows follow';
 	$grouped->collapse_group('HR');
 	$grouped->group_label( sub ($group) { uc( $group->{display} ) . " x$group->{count}" } );
 	like static_lines( $grouped, 40, 14 )->[3], qr/\x{25B8} HR x1/, 'a collapsed group, and a group label of your own';
@@ -151,7 +154,7 @@ subtest 'groups and trees' => sub {
 		row_id       => 'name',
 		children_key => 'kids',
 		columns      => [ { key => 'name', title => 'Name' }, { key => 'size', title => 'Size', type => 'number' } ],
-		rows         => [ { name => 'src', size => 3, kids => [ { name => 'a.c', size => 1 }, { name => 'lib', size => 2, kids => [ { name => 'x.pm', size => 2 } ] } ] }, { name => 'README', size => 1 } ],
+		rows => [ { name => 'src', size => 3, kids => [ { name => 'a.c', size => 1 }, { name => 'lib', size => 2, kids => [ { name => 'x.pm', size => 2 } ] } ] }, { name => 'README', size => 1 } ],
 	);
 	$tree->expand('src');
 	my @names = map { /\x{2502}(.*?)\x{2502}/ ? $1 : () } @{ static_lines($tree) }[ 3 .. 6 ];
@@ -162,8 +165,8 @@ subtest 'keyboard' => sub {
 	my ( $table, $h ) = table_ui( selection => 'multiple' );
 	is $table->cursor, 1, 'the cursor starts on the first row';
 	keys_to( $h, qw(Down Down) );
-	is [ $table->cursor, fired($h) ], [ 3, [qw(CursorMove CursorMove)] ], 'Down moves the cursor';
-	is last_event( $h, 'CursorMove' ), undef, 'fired() forgets the events';
+	is [ $table->cursor, fired($h) ],  [ 3, [qw(CursorMove CursorMove)] ], 'Down moves the cursor';
+	is last_event( $h, 'CursorMove' ), undef,                              'fired() forgets the events';
 	keys_to( $h, 'Space', 'Shift+Down', 'Shift+Down' );
 	is [ $table->selected_ids ], [ 3, 4, 5 ], 'Space selects, Shift+Down extends from there';
 	keys_to( $h, 'Space' );
@@ -206,6 +209,7 @@ subtest 'header keys' => sub {
 
 subtest 'mouse' => sub {
 	my ( $table, $h ) = table_ui( selection => 'multiple' );
+
 	# The selection column is 5 cells wide, the rows start on screen row 3.
 	click( $h, 8, 4 );
 	is [ [ $table->selected_ids ], $table->cursor, fired($h) ], [ [2], 2, [qw(CursorMove SelectionChange)] ], 'a click selects the row alone';
@@ -234,7 +238,7 @@ subtest 'mouse on trees and groups' => sub {
 	my ( $table, $h ) = table_ui( group_by => 'dept' );
 	click( $h, 4, 3 );
 	is [ $table->is_group_expanded('HR'), fired($h) ], [ 0, ['Collapse'] ], 'a click on a group header closes it (the cursor was on it)';
-	is last_event( $h, 'Collapse' ), undef, 'fired() forgot it';
+	is last_event( $h, 'Collapse' ),                   undef,               'fired() forgot it';
 	click( $h, 4, 3 );
 	ok $table->is_group_expanded('HR'), 'and opens it again';
 
@@ -303,7 +307,7 @@ subtest 'clicks on a button without a background in a cell' => sub {
 	);
 	my @lines = @{ screen($h) };
 	my ($row) = grep { $lines[$_] =~ /Bob/ } 0 .. $#lines;
-	my $x = index( $lines[$row], 'go' );
+	my $x     = index( $lines[$row], 'go' );
 	click( $h, $x, $row );
 	click( $h, $x, $row );
 	is [ $table->cursor, [ $table->selected_ids ], [ grep { $_ eq 'RowActivate' } @{ fired($h) } ] ], [ 2, [], [] ], 'move the cursor only';
@@ -374,8 +378,8 @@ subtest 'pages' => sub {
 	keys_to( $h, 'Down', 'Down', 'Down' );
 	is [ $table->page, $table->cursor ], [ 2, 4 ], 'the cursor stays on the page';
 	my ($last) = grep { /\x{00BB}/ } @{ screen($h) };
-	my $x = index $last, "\x{00BB}";
-	my ($y) = grep { screen($h)->[$_] =~ /\x{00BB}/ } 0 .. $#{ screen($h) };
+	my $x      = index $last, "\x{00BB}";
+	my ($y)    = grep { screen($h)->[$_] =~ /\x{00BB}/ } 0 .. $#{ screen($h) };
 	click( $h, $x, $y );
 	is [ $table->page, last_event( $h, 'PageChange' )->page ], [ 3, 3 ], 'the pager buttons';
 	$table->page_size(10);
@@ -417,19 +421,22 @@ subtest 'cells of your own' => sub {
 				cell        => sub ($cell) { my $box = Term::Fabulous::Widget::Checkbox->new( checked => $cell->{value} ? 1 : 0 ); push @made, $box; $box },
 				update_cell => sub ( $box, $cell ) { $box->checked( $cell->{value} ? 1 : 0 ) },
 			},
-			{ key => 'age', title => 'Age', type => 'number', mutator => Term::Fabulous::Widget::Table::Mutator::number( decimals => 1 ), cell_style => sub ($cell) { ( $cell->{value} // 0 ) > 30 ? { text_color => '#ff0000' } : undef } },
+			{
+				key        => 'age', title => 'Age', type => 'number', mutator => Term::Fabulous::Widget::Table::Mutator::number( decimals => 1 ),
+				cell_style => sub ($cell) { ( $cell->{value} // 0 ) > 30 ? { text_color => '#ff0000' } : undef }
+			},
 		],
 	);
 	is scalar @made, 5, 'a cell widget per row';
 	my $box = $table->cell_widget( 1, 'done' );
 	$table->set_value( 1, done => 1 );
-	$table->set_value( 1, age => 35 );
+	$table->set_value( 1, age  => 35 );
 	$h->{ui}->step;
 	is [ scalar @made, $box->checked ], [ 5, 1 ], 'update_cell keeps the widget';
 	like join( "\n", @{ screen($h) } ), qr/35\.0/, 'default cells show the new value';
 	my @lines = $h->{terminal}->lines;
 	my ($row) = grep { $lines[$_] =~ /Ann/ } 0 .. $#lines;
-	my $x = index( $lines[$row], '35.0' );
+	my $x     = index( $lines[$row], '35.0' );
 	is $h->{terminal}->cell( $x, $row )->[1] & 0xFFFFFF, 0xFF0000, 'cell_style colors the cell';
 };
 
@@ -439,7 +446,7 @@ subtest 'styles and borders' => sub {
 	$table->set_cell_style( 1, 'dept', { border_left => 'Heavy' } );
 	my $lines = static_lines($table);
 	like $lines->[3], qr/\x{2502} Ann  \x{2503} Sales/, 'a cell border';
-	like $lines->[4], qr/\x{255E}\x{2550}+\x{256A}/, 'a row border, joined with the column lines';
+	like $lines->[4], qr/\x{255E}\x{2550}+\x{256A}/,    'a row border, joined with the column lines';
 	is $table->row_style_of(2), { border_top => Term::Fabulous::Enum::BorderStyle->Double }, 'row_style_of';
 	like dies { $table->set_row_style( 1, { colour => 'red' } ) }, qr/row style does not know colour/, 'style keys are checked';
 
@@ -447,11 +454,11 @@ subtest 'styles and borders' => sub {
 		header_style => { background_color => '#ff0000', text_color => '#00ff00' },
 		columns      => [ { key => 'name', title => 'Name', header_style => { background_color => '#0000ff' } }, { key => 'dept', title => 'Dept' } ],
 	);
-	my @lines = $h->{terminal}->lines;
-	my ($at) = grep { $lines[$_] =~ /Name/ } 0 .. $#lines;
+	my @lines   = $h->{terminal}->lines;
+	my ($at)    = grep { $lines[$_] =~ /Name/ } 0 .. $#lines;
 	my $cell_of = sub ($title) { $h->{terminal}->cell( index( $lines[$at], $title ), $at ) };
 	is [ map { $_ & 0xFFFFFF } @{ $cell_of->('Dept') }[ 1, 2 ] ], [ 0x00FF00, 0xFF0000 ], 'the table header_style colors header cells';
-	is $cell_of->('Name')->[2] & 0xFFFFFF, 0x0000FF, 'a column header_style wins over the table one';
+	is $cell_of->('Name')->[2] & 0xFFFFFF,                        0x0000FF,               'a column header_style wins over the table one';
 };
 
 subtest 'scrolling' => sub {
@@ -470,7 +477,7 @@ subtest 'hover and scrollbar' => sub {
 	my $plain = $h->{terminal}->cell( 3, 5 )->[2];
 	mouse( $h, key => TF_KEY_MOUSE_MOVE, x => 3, y => 5 );
 	isnt $h->{terminal}->cell( 3, 5 )->[2], $plain, 'the row under the pointer is highlighted';
-	is $h->{terminal}->cell( 3, 6 )->[2], $plain, 'only that row';
+	is $h->{terminal}->cell( 3, 6 )->[2],   $plain, 'only that row';
 
 	my ($bar_x) = grep { ( $h->{terminal}->cell( $_, 3 ) // [''] )->[0] eq "\x{2503}" } 0 .. 39;
 	ok defined $bar_x, 'a scrollbar shows the thumb';
@@ -527,8 +534,8 @@ subtest 'columns' => sub {
 	$table->add_column( { key => 'dept', title => 'Dept' } ) for ();
 	$table->remove_column('age');
 	$h->{ui}->step;
-	like screen($h)->[1], qr/\x{2502} Who \x{2502}\z/, 'remove a column';
-	like dies { $table->update_column( name => key => 'x' ) }, qr/cannot change the key/, 'keys stay';
+	like screen($h)->[1],                                      qr/\x{2502} Who \x{2502}\z/, 'remove a column';
+	like dies { $table->update_column( name => key => 'x' ) }, qr/cannot change the key/,   'keys stay';
 };
 
 subtest 'KDL' => sub {

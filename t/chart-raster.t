@@ -15,17 +15,22 @@ sub raster {
 # One line per subpixel row: '#' for a drawn subpixel, '.' for an empty one.
 sub pixels {
 	my ($raster) = @_;
-	return [ map { my $y = $_; join '', map { defined $raster->color_at( $_, $y ) ? '#' : '.' } 0 .. $raster->width - 1 } 0 .. $raster->height - 1 ];
+	return [
+		map {
+			my $y = $_;
+			join '', map { defined $raster->color_at( $_, $y ) ? '#' : '.' } 0 .. $raster->width - 1
+		} 0 .. $raster->height - 1
+	];
 }
 
 subtest 'construction' => sub {
 	my $raster = raster( braille => 3, 2 );
 	is [ $raster->columns, $raster->rows, $raster->width, $raster->height ], [ 3, 2, 6, 8 ], 'cells and subpixels';
-	is $raster->marker->name, 'braille', 'the marker';
+	is $raster->marker->name,                                                'braille',      'the marker';
 	ok $raster->is_empty, 'nothing drawn yet';
 	like dies { Term::Fabulous::Chart::Raster->new( marker => 'braille', columns => 1, rows => 1 ) }, qr/marker must be a Term::Fabulous::Chart::Marker/, 'a marker name is not a marker';
-	like dies { raster( half => -1, 1 ) }, qr/columns must be a non-negative integer, got -1/, 'negative columns';
-	like dies { raster( half => 1, undef ) }, qr/rows must be a non-negative integer, got undef/, 'no rows';
+	like dies { raster( half => -1, 1 ) },     qr/columns must be a non-negative integer, got -1/, 'negative columns';
+	like dies { raster( half =>  1, undef ) }, qr/rows must be a non-negative integer, got undef/, 'no rows';
 };
 
 subtest 'set and blend' => sub {
@@ -34,8 +39,8 @@ subtest 'set and blend' => sub {
 	is [ $raster->color_at( 1, 0 ), $raster->owner_at( 1, 0 ) ], [ 0x102030, 'a' ], 'set colors a subpixel and tags its owner';
 	ok !$raster->is_empty, 'no longer empty';
 	$raster->set( $_->[0], $_->[1], 1 ) foreach [ -1, 0 ], [ 4, 0 ], [ 0, 2 ];
-	is pixels($raster), [ '.#..', '....' ], 'outside the raster nothing happens';
-	is [ $raster->color_at( -1, 0 ), $raster->owner_at( 0, 9 ) ], [ undef, undef ], 'reading outside gives undef';
+	is pixels($raster),                                           [ '.#..', '....' ], 'outside the raster nothing happens';
+	is [ $raster->color_at( -1, 0 ), $raster->owner_at( 0, 9 ) ], [ undef,  undef ],  'reading outside gives undef';
 
 	$raster->set( 0, 0, 0x000000 );
 	$raster->blend( 0, 0, 0xFFFFFF, 0.5, 0xFF0000, 'b' );
@@ -55,8 +60,8 @@ subtest 'lines' => sub {
 	is pixels($raster), [ '...#..', '...#..', '....#.', '....#.', '.....#', '.....#' ], 'continuous coordinates, in either direction';
 
 	$raster = raster( quadrant => 3, 3 )->line( -1e6, -1e6 + 2, 1e6, 1e6 + 2, 1, 'far' );
-	is pixels($raster), [ '......', '......', '#.....', '.#....', '..#...', '...#..' ], 'a line far longer than the raster draws the part inside it';
-	is $raster->owner_at( 0, 2 ), 'far', 'with its owner';
+	is pixels($raster),           [ '......', '......', '#.....', '.#....', '..#...', '...#..' ], 'a line far longer than the raster draws the part inside it';
+	is $raster->owner_at( 0, 2 ), 'far',                                                          'with its owner';
 
 	$raster = raster( quadrant => 2, 1 )->line( 0, 0, 3, 0, 0xFFFFFF, undef, 0.5, 0x000000 );
 	is [ map { $raster->color_at( $_, 0 ) } 0 .. 3 ], [ (0x808080) x 4 ], 'a translucent line blends into the base';
@@ -91,8 +96,8 @@ subtest 'fills take the subpixels whose centers lie inside' => sub {
 	my $raster = raster( quadrant => 3, 2 );
 	ref_is $raster->fill_rect( 0, 0, 2.5, 1, 1, 'left' ), $raster, 'fill_rect returns the raster';
 	$raster->fill_rect( 6, 1, 2.5, 0, 2, 'right' );
-	is pixels($raster), [ '######', '......', '......', '......' ], 'two rectangles sharing an edge';
-	is [ map { $raster->owner_at( $_, 0 ) } 0 .. 5 ], [ ('left') x 2, ('right') x 4 ], 'do not overlap';
+	is pixels($raster),                               [ '######', '......', '......', '......' ], 'two rectangles sharing an edge';
+	is [ map { $raster->owner_at( $_, 0 ) } 0 .. 5 ], [ ('left') x 2, ('right') x 4 ],            'do not overlap';
 
 	$raster = raster( quadrant => 3, 2 )->fill_rect( 1.5, 0.5, 3.5, 2.5, 1 );
 	is pixels($raster), [ '.##...', '.##...', '......', '......' ], 'a center on the near edge is inside, on the far edge outside';
@@ -124,9 +129,9 @@ subtest 'paint_area' => sub {
 	my $raster = raster( quadrant => 2, 1 );
 	my @asked;
 	ref_is $raster->paint_area( -1, -1, 3, 9, sub { my ( $x, $y ) = @_; push @asked, "$x,$y"; return ( $x + $y ) % 2 ? () : ( 1, "$x$y" ) } ), $raster, 'paint_area returns the raster';
-	is \@asked, [ '0,0', '1,0', '2,0', '0,1', '1,1', '2,1' ], 'every subpixel of the clipped area, row by row';
-	is pixels($raster), [ '#.#.', '.#..' ], 'the empty list leaves a subpixel';
-	is $raster->owner_at( 1, 1 ), '11', 'with the owner returned';
+	is \@asked,                   [ '0,0', '1,0', '2,0', '0,1', '1,1', '2,1' ], 'every subpixel of the clipped area, row by row';
+	is pixels($raster),           [ '#.#.', '.#..' ],                           'the empty list leaves a subpixel';
+	is $raster->owner_at( 1, 1 ), '11',                                         'with the owner returned';
 };
 
 subtest 'each_cell' => sub {
@@ -140,15 +145,20 @@ subtest 'each_cell' => sub {
 	is \@visits, [
 		[ 1, 0, [ undef, 0xAA, (undef) x 4, 0xDD, undef ], [ undef, 'x', (undef) x 4, 'z', undef ], [ undef, 1, (undef) x 4, 4, undef ] ],
 		[ 0, 0, [ undef, 0xCC, 0xBB, (undef) x 5 ], [ (undef) x 2, 'y', (undef) x 5 ], [ undef, 3, 2, (undef) x 5 ] ],
-	], 'the drawn cells in the order first drawn, their subpixels row by row, with when each was drawn';
+		],
+		'the drawn cells in the order first drawn, their subpixels row by row, with when each was drawn';
 };
 
 subtest 'the dot drawn last colors a Braille cell' => sub {
 	my $raster = raster( braille => 1, 1 );
 	$raster->set( $_, 0, 0x111111 ) foreach 0, 1;
-	$raster->set( 0, 1, 0x111111 );
-	$raster->set( 1, 3, 0x222222 );
-	my ($cell) = do { my @cells; $raster->each_cell( sub { push @cells, [@_] } ); @cells };
+	$raster->set( 0,  1, 0x111111 );
+	$raster->set( 1,  3, 0x222222 );
+	my ($cell) = do {
+		my @cells;
+		$raster->each_cell( sub { push @cells, [@_] } );
+		@cells;
+	};
 	my ( undef, $fg ) = $raster->marker->cell( $cell->[2], undef, $cell->[4] );
 	is $fg, 0x222222, 'with the drawing order, the later color wins over the more frequent one';
 	( undef, $fg ) = $raster->marker->cell( $cell->[2], undef );

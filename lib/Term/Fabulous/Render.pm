@@ -134,7 +134,7 @@ role Term::Fabulous::Render
 
 		my $pointer  = $self->pointer_state;
 		my $commands = $self->render(
-			( defined $pointer            ? ( pointer_state => _clay_pointer($pointer) )                     : () ),
+			( defined $pointer            ? ( pointer_state => _clay_pointer($pointer) )                   : () ),
 			( defined $args{scroll_cells} ? ( scroll_delta  => _clay_scroll_delta( $args{scroll_cells} ) ) : () ),
 		);
 
@@ -160,9 +160,9 @@ role Term::Fabulous::Render
 		push @_after_draw, $callback;
 		return $self;
 	}
-}
+	}
 
-1;
+	1;
 
 __END__
 

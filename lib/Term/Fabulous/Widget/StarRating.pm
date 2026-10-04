@@ -27,10 +27,10 @@ class Term::Fabulous::Widget::StarRating
 	my %MOVE_BY_KEY = (
 		Left  => [ step => -1 ],
 		Down  => [ step => -1 ],
-		Right => [ step => 1 ],
-		Up    => [ step => 1 ],
-		Home  => [ end  => 0 ],
-		End   => [ end  => 1 ],
+		Right => [ step =>  1 ],
+		Up    => [ step =>  1 ],
+		Home  => [ end  =>  0 ],
+		End   => [ end  =>  1 ],
 	);
 
 	field $max            :param = 5;
@@ -72,11 +72,11 @@ class Term::Fabulous::Widget::StarRating
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_star_at($event) ) if $weak_self; return $continue } );
+		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_star_at($event) ) if $weak_self;                            return $continue } );
 		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
-	}
+		}
 
-	method _checked_format ($format) {
+		method _checked_format ($format) {
 		return undef unless defined $format;
 		die ref($self) . ": value_format must be a sprintf format string or a code reference, got " . describe($format) unless ref $format eq 'CODE' || !ref $format;
 		return $format;
@@ -162,14 +162,14 @@ class Term::Fabulous::Widget::StarRating
 		return $read_only;
 	}
 
-	method show_value (@new)     { return @new ? $self->_set( \$show_value,     boolean( $self, show_value => $new[0] ) ) : $show_value }
-	method value_format (@new)   { return @new ? $self->_set( \$value_format,   $self->_checked_format( $new[0] ) ) : $value_format }
-	method gap (@new)            { return @new ? $self->_set( \$gap,            non_negative_integer( $self, gap => $new[0] ) ) : $gap }
-	method full_glyph (@new)     { return @new ? $self->_set( \$full_glyph,     Term::Fabulous::Check::glyph( $self, full_glyph => $new[0] ) ) : $full_glyph }
-	method empty_glyph (@new)    { return @new ? $self->_set( \$empty_glyph,    Term::Fabulous::Check::glyph( $self, empty_glyph => $new[0] ) ) : $empty_glyph }
-	method half_glyph (@new)     { return @new ? $self->_set( \$half_glyph,     $self->_checked_half_glyph( $new[0] ) ) : $half_glyph }
-	method inactive_color (@new) { return @new ? $self->_set( \$inactive_color, cell_color( $self, inactive_color => $new[0] ) ) : $inactive_color }
-	method half_color (@new)     { return @new ? $self->_set( \$half_color,     $self->_checked_half_color( $new[0] ) ) : $half_color }
+	method show_value     (@new) { return @new ? $self->_set( \$show_value, boolean( $self, show_value => $new[0] ) )                        : $show_value }
+	method value_format   (@new) { return @new ? $self->_set( \$value_format, $self->_checked_format( $new[0] ) )                            : $value_format }
+	method gap            (@new) { return @new ? $self->_set( \$gap, non_negative_integer( $self, gap => $new[0] ) )                         : $gap }
+	method full_glyph     (@new) { return @new ? $self->_set( \$full_glyph, Term::Fabulous::Check::glyph( $self, full_glyph => $new[0] ) )   : $full_glyph }
+	method empty_glyph    (@new) { return @new ? $self->_set( \$empty_glyph, Term::Fabulous::Check::glyph( $self, empty_glyph => $new[0] ) ) : $empty_glyph }
+	method half_glyph     (@new) { return @new ? $self->_set( \$half_glyph, $self->_checked_half_glyph( $new[0] ) )                          : $half_glyph }
+	method inactive_color (@new) { return @new ? $self->_set( \$inactive_color, cell_color( $self, inactive_color => $new[0] ) )             : $inactive_color }
+	method half_color     (@new) { return @new ? $self->_set( \$half_color, $self->_checked_half_color( $new[0] ) )                          : $half_color }
 
 	# A read-only rating never takes the focus.
 	method accepts_focus :override () {
@@ -232,6 +232,7 @@ class Term::Fabulous::Widget::StarRating
 		return 0 if $read_only;
 		my $key = $event->key;
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
+
 			# At 0 or max the notch is left to a scroll box.
 			return 0 unless $self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? 1 : -1 ) * $self->step );
 			$event->use_wheel;
@@ -284,7 +285,7 @@ class Term::Fabulous::Widget::StarRating
 		foreach my $star ( 1 .. $max ) {
 			my $x = ( $star - 1 ) * ( 1 + $gap );
 			my ( $glyph, $fg )
-				= $star <= $shown        ? ( $full_glyph, $full_fg )
+				= $star <= $shown       ? ( $full_glyph, $full_fg )
 				: $star - 0.5 == $shown ? ( $half_glyph // $full_glyph, $half_fg )
 				:                         ( $empty_glyph, $empty_fg );
 			$self->put_attrs( $x, 0, $glyph, $fg, $bg );

@@ -30,13 +30,13 @@ subtest 'one row high, as wide as its parent lets it be' => sub {
 	$root->add_child($sparkline);
 	my @lines = Term::Fabulous::Static->new( root => $root, width => 12 )->render_lines( colors => 0 );
 	is [ $sparkline->columns, $sparkline->rows ], [ 12, 1 ], 'the natural size';
-	is scalar(@lines), 1, 'nothing below it';
+	is scalar(@lines),                            1,         'nothing below it';
 	unlike $lines[0], qr/[0-9]/, 'no axes, no labels';
 };
 
 subtest 'bars in eighths of the row' => sub {
 	my $sparkline = sparkline( 8, values => [ 1 .. 8 ], type => 'bar', color => '#ff0000' );
-	is shown($sparkline), $RISING, 'from 0 to the largest value';
+	is shown($sparkline),                                        $RISING,                            'from 0 to the largest value';
 	is [ fg_at( $sparkline, 0, 0 ), bg_at( $sparkline, 7, 0 ) ], [ rgb('#ff0000'), rgb('#ff0000') ], 'in the color';
 
 	$sparkline->values( [ (8) x 4, 1 .. 8 ] );
@@ -57,14 +57,14 @@ subtest 'lines and areas' => sub {
 	$sparkline->type('area');
 	is shown($sparkline), $RISING, 'an area fills from 0';
 
-	my $high = "\x{2585}\x{2585}\x{2586}\x{2586}\x{2587}\x{2587}  ";
+	my $high  = "\x{2585}\x{2585}\x{2586}\x{2586}\x{2587}\x{2587}  ";
 	my $spent = " \x{2581}\x{2582}\x{2583}\x{2585}\x{2586}\x{2587} ";
 	$sparkline->values( [ 9 .. 16 ] );
-	is shown($sparkline), $high, 'values far from 0 use little of the row';
-	is $sparkline->zero(0), 0, 'zero returns the setting';
-	is shown($sparkline), $spent, 'zero 0 spends the row on the values';
+	is shown($sparkline),   $high,  'values far from 0 use little of the row';
+	is $sparkline->zero(0), 0,      'zero returns the setting';
+	is shown($sparkline),   $spent, 'zero 0 spends the row on the values';
 	$sparkline->zero(undef);
-	is shown($sparkline), $high, 'undef returns to the default of the type';
+	is shown($sparkline),                                                        $high,  'undef returns to the default of the type';
 	is shown( sparkline( 8, type => 'bar', values => [ 9 .. 16 ], zero => 0 ) ), $spent, 'bars with zero 0 grow from the smallest value';
 };
 
@@ -88,10 +88,10 @@ subtest 'values' => sub {
 subtest 'invalid input dies' => sub {
 	like dies { sparkline( 8, type => 'scatter' ) }, qr/type must be line, area or bar, got scatter/, 'an unknown type';
 	my $sparkline = sparkline( 8, values => [ 1, 2 ] );
-	like dies { $sparkline->type('pie') }, qr/type must be line, area or bar, got pie/, 'an unknown type later';
-	like dies { $sparkline->values( [ [ 1, 2, 3 ] ] ) }, qr/data point 0 of series 'values' must be \[ x, y \]/, 'a wrong value';
-	like dies { $sparkline->min('low') }, qr/the min of y_axis must be a number, got 'low'/, 'a min that is no number';
-	like dies { $sparkline->zero( [] ) }, qr/zero must be a plain boolean value, got an ARRAY reference/, 'a zero that is no boolean';
+	like dies { $sparkline->type('pie') },               qr/type must be line, area or bar, got pie/,                    'an unknown type later';
+	like dies { $sparkline->values( [ [ 1, 2, 3 ] ] ) }, qr/data point 0 of series 'values' must be \[ x, y \]/,         'a wrong value';
+	like dies { $sparkline->min('low') },                qr/the min of y_axis must be a number, got 'low'/,              'a min that is no number';
+	like dies { $sparkline->zero( [] ) },                qr/zero must be a plain boolean value, got an ARRAY reference/, 'a zero that is no boolean';
 	is $sparkline->min, undef, 'the min is unchanged';
 	ok lives { $sparkline->type('bar') }, 'and the sparkline can still change its type';
 };

@@ -52,9 +52,9 @@ class Term::Fabulous::Widget::Chart
 
 	field $_revision = 0;
 	field $_painted_key;
-	field $_surface;      # the last frame's surface, for the mouse
-	field @_targets;      # owner id => { key, series, index, label, value, x }
-	field $_hovered;      # the target under the pointer, or undef
+	field $_surface;    # the last frame's surface, for the mouse
+	field @_targets;    # owner id => { key, series, index, label, value, x }
+	field $_hovered;    # the target under the pointer, or undef
 
 	# What the chart draws, from its own state; see SUBCLASS INTERFACE.
 	method legend_entries;
@@ -65,12 +65,13 @@ class Term::Fabulous::Widget::Chart
 		my %given = ( title_color => $title_color, text_color => $text_color, label_color => $label_color, axis_color => $axis_color, grid_color => $grid_color );
 		$self->_check_title( title => $title );
 		$self->_check_choice( title_align => $title_align, \%IS_ALIGN );
-		$self->_check_choice( legend => $legend, \%IS_LEGEND );
-		$self->_check_choice( theme => $theme, \%IS_THEME );
+		$self->_check_choice( legend      => $legend,      \%IS_LEGEND );
+		$self->_check_choice( theme       => $theme,       \%IS_THEME );
 		$palette    = $self->_checked_palette($palette);
 		$hover      = boolean( $self, hover => $hover );
 		$hover_fade = $self->_checked_fraction( hover_fade => $hover_fade );
 		$self->_check_title( highlight => $highlight );
+
 		foreach my $name (@INK_COLORS) {
 			( $_ink{$name} ) = chart_color( $self, $name, $given{$name} ) if defined $given{$name};
 		}
@@ -85,9 +86,9 @@ class Term::Fabulous::Widget::Chart
 				return $continue;
 			}
 		);
-	}
+		}
 
-	method _fail ( $name, $expected, $value ) {
+		method _fail ( $name, $expected, $value ) {
 		croak ref($self) . ": $name must be $expected, got " . describe($value);
 	}
 
@@ -152,7 +153,7 @@ class Term::Fabulous::Widget::Chart
 		my ( $columns, $rows ) = ( $self->columns, $self->rows );
 		return unless $columns > 0 && $rows > 0;
 		my $background = $self->effective_background;
-		my $key = join "\x{1F}", $columns, $rows, $_revision, $background // 'none', defined $_hovered ? $_hovered->{key} : '';
+		my $key        = join "\x{1F}", $columns, $rows, $_revision, $background // 'none', defined $_hovered ? $_hovered->{key} : '';
 		return if defined $_painted_key && $key eq $_painted_key;
 		$_painted_key = $key;
 
@@ -166,10 +167,10 @@ class Term::Fabulous::Widget::Chart
 
 	# Everything a frame is drawn with: colors and the emphasized series.
 	method _look ($background) {
-		my $mode = $theme ne 'auto' ? $theme : defined $background && is_light_rgb($background) ? 'light' : 'dark';
-		my $base = $background // ( $mode eq 'light' ? LIGHT_SURFACE : DARK_SURFACE );
-		my $ink  = ink_colors( $base, $mode );
-		my %color = map { my $short = s/_color\z//r; $short => $_ink{$_} // $ink->{$short} } @INK_COLORS;
+		my $mode     = $theme ne 'auto' ? $theme : defined $background && is_light_rgb($background) ? 'light' : 'dark';
+		my $base     = $background // ( $mode eq 'light' ? LIGHT_SURFACE : DARK_SURFACE );
+		my $ink      = ink_colors( $base, $mode );
+		my %color    = map { my $short = s/_color\z//r; $short => $_ink{$_} // $ink->{$short} } @INK_COLORS;
 		my $emphasis = $hover && defined $_hovered ? $_hovered->{series} : $highlight;
 		return {
 			mode       => $mode,
@@ -213,7 +214,7 @@ class Term::Fabulous::Widget::Chart
 
 		if ( defined $title && length $title && $rows >= 3 ) {
 			my $width = Term::Fabulous::Chart::Surface->text_columns($title);
-			my $x = $title_align eq 'center' ? max( 0, int( ( $columns - $width ) / 2 ) ) : $title_align eq 'right' ? max( 0, $columns - $width ) : 0;
+			my $x     = $title_align eq 'center' ? max( 0, int( ( $columns - $width ) / 2 ) ) : $title_align eq 'right' ? max( 0, $columns - $width ) : 0;
 			$surface->text( $x, 0, $title, $look->{title}, flags => TB_BOLD, max => $columns );
 			$top = $rows >= 12 ? 2 : 1;
 		}
@@ -262,7 +263,8 @@ class Term::Fabulous::Widget::Chart
 				my $entry = $_;
 				!ref $entry->{value} ? $entry : {
 					%$entry,
-					value => join '  ', map {
+					value => join '  ',
+					map {
 						my $text = $entry->{value}[$_];
 						$in_columns ? ( ' ' x ( $widths[$_] - Term::Fabulous::Chart::Surface->text_columns($text) ) ) . $text : $text
 					} 0 .. $entry->{value}->$#*
@@ -316,7 +318,7 @@ class Term::Fabulous::Widget::Chart
 					my $item    = $last->{items}[0];
 					my $columns = $width - LEGEND_GAP - length _more_text($hidden);
 					return undef if $columns < $SYMBOL_COLUMNS{ $item->[0]{symbol} } + 3;
-					$item->[1]    = $columns;
+					$item->[1] = $columns;
 					$last->{used} = $columns;
 				}
 				$more = { text => _more_text($hidden), x => $left + $last->{used} + LEGEND_GAP };
@@ -338,17 +340,17 @@ class Term::Fabulous::Widget::Chart
 		my $room   = $bottom - $top;
 		my $hidden = max( 0, @$entries - $room );
 		my @shown  = @$entries[ 0 .. $#$entries - $hidden - ( $hidden ? 1 : 0 ) ];
-		$hidden    = @$entries - @shown;
-		my $lines  = @shown + ( $hidden ? 1 : 0 );
+		$hidden = @$entries - @shown;
+		my $lines         = @shown + ( $hidden ? 1 : 0 );
 		my $label_columns = max( map { Term::Fabulous::Chart::Surface->text_columns( $_->{label} ) } @$entries );
 		my $value_columns = max( 0, map { Term::Fabulous::Chart::Surface->text_columns( $_->{value} // '' ) } @$entries );
-		my $wanted  = max( map { $SYMBOL_COLUMNS{ $_->{symbol} } } @$entries ) + 1 + $label_columns + ( $value_columns ? 2 + $value_columns : 0 );
-		my $columns = min( max( $wanted, $hidden ? length _more_text($hidden) : 0 ), int( $width / 2 ) );
+		my $wanted        = max( map { $SYMBOL_COLUMNS{ $_->{symbol} } } @$entries ) + 1 + $label_columns + ( $value_columns ? 2 + $value_columns : 0 );
+		my $columns       = min( max( $wanted, $hidden ? length _more_text($hidden) : 0 ), int( $width / 2 ) );
 		return {
 			kind          => 'column',
 			entries       => \@shown,
-			more          => $hidden ? { text => _more_text($hidden) } : undef,
-			x             => $position eq 'right' ? $right - $columns : $left,
+			more          => $hidden              ? { text => _more_text($hidden) } : undef,
+			x             => $position eq 'right' ? $right - $columns               : $left,
 			y             => $top + max( 0, int( ( $room - $lines ) / 2 ) ),
 			columns       => $columns,
 			value_columns => $value_columns,
@@ -492,10 +494,10 @@ class Term::Fabulous::Widget::Chart
 	}
 
 	method title_color (@new) { return $self->_ink_color( title_color => @new ) }
-	method text_color (@new)  { return $self->_ink_color( text_color  => @new ) }
+	method text_color  (@new) { return $self->_ink_color( text_color  => @new ) }
 	method label_color (@new) { return $self->_ink_color( label_color => @new ) }
-	method axis_color (@new)  { return $self->_ink_color( axis_color  => @new ) }
-	method grid_color (@new)  { return $self->_ink_color( grid_color  => @new ) }
+	method axis_color  (@new) { return $self->_ink_color( axis_color  => @new ) }
+	method grid_color  (@new) { return $self->_ink_color( grid_color  => @new ) }
 
 	# ---------------------------------------------------------------------
 	# KDL

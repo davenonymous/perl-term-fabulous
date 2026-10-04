@@ -62,8 +62,9 @@ class Term::Fabulous::Widget::ProgressBar
 	field @segments;    # { value, color }, or empty for a single value
 
 	ADJUST :params ( :$value = undef, :$segments = undef ) {
-		die ref($self) . ": give 'value' or 'segments', not both" if defined $value && defined $segments;
-		( $min, $max )     = $self->_checked_range( min => $min, max => $max );
+		die ref($self) . ": give 'value' or 'segments', not both"
+			if defined $value && defined $segments;
+		( $min, $max ) = $self->_checked_range( min => $min, max => $max );
 		$indeterminate     = boolean( $self, indeterminate => $indeterminate );
 		$show_value        = boolean( $self, show_value    => $show_value );
 		$value_position    = $self->_checked_position($value_position);
@@ -82,11 +83,11 @@ class Term::Fabulous::Widget::ProgressBar
 		$text_color        = cell_color( $self, text_color        => $text_color );
 		$inside_text_color = cell_color( $self, inside_text_color => $inside_text_color );
 		$current           = $min;
-		$self->value($value)       if defined $value;
+		$self->value($value) if defined $value;
 		$self->segments($segments) if defined $segments;
-	}
+		}
 
-	method _checked_range (%range) {
+		method _checked_range (%range) {
 		my ( $low, $high ) = map { number( $self, $_ => $range{$_} ) } qw(min max);
 		die ref($self) . ": min ($low) must be less than max ($high)" unless $low < $high;
 		return ( $low, $high );
@@ -204,23 +205,23 @@ class Term::Fabulous::Widget::ProgressBar
 		return $$field_ref;
 	}
 
-	method indeterminate (@new)     { return @new ? $self->_set( \$indeterminate,     boolean( $self, indeterminate => $new[0] ) ) : $indeterminate }
-	method show_value (@new)        { return @new ? $self->_set( \$show_value,        boolean( $self, show_value => $new[0] ) ) : $show_value }
-	method value_position (@new)    { return @new ? $self->_set( \$value_position,    $self->_checked_position( $new[0] ) ) : $value_position }
-	method value_format (@new)      { return @new ? $self->_set( \$value_format,      $self->_checked_format( $new[0] ) ) : $value_format }
+	method indeterminate     (@new) { return @new ? $self->_set( \$indeterminate, boolean( $self, indeterminate => $new[0] ) )                  : $indeterminate }
+	method show_value        (@new) { return @new ? $self->_set( \$show_value, boolean( $self, show_value => $new[0] ) )                        : $show_value }
+	method value_position    (@new) { return @new ? $self->_set( \$value_position, $self->_checked_position( $new[0] ) )                        : $value_position }
+	method value_format      (@new) { return @new ? $self->_set( \$value_format, $self->_checked_format( $new[0] ) )                            : $value_format }
 	method preferred_columns (@new) { return @new ? $self->_set( \$preferred_columns, positive_integer( $self, preferred_columns => $new[0] ) ) : $preferred_columns }
-	method style (@new)             { return @new ? $self->_set( \$style,             $self->_checked_style( $new[0] ) ) : $style }
-	method fill_glyph (@new)        { return @new ? $self->_set( \$fill_glyph,        $self->_checked_glyph( fill_glyph => $new[0] ) ) : $fill_glyph }
-	method track_glyph (@new)       { return @new ? $self->_set( \$track_glyph,       $self->_checked_glyph( track_glyph => $new[0] ) ) : $track_glyph }
-	method stripe_glyph (@new)      { return @new ? $self->_set( \$stripe_glyph,      $self->_checked_glyph( stripe_glyph => $new[0] ) ) : $stripe_glyph }
-	method fractional (@new)        { return @new ? $self->_set( \$fractional,        boolean( $self, fractional => $new[0] ) ) : $fractional }
-	method striped (@new)           { return @new ? $self->_set( \$striped,           boolean( $self, striped => $new[0] ) ) : $striped }
-	method animated (@new)          { return @new ? $self->_set( \$animated,          boolean( $self, animated => $new[0] ) ) : $animated }
-	method separated (@new)         { return @new ? $self->_set( \$separated,         boolean( $self, separated => $new[0] ) ) : $separated }
-	method color (@new)             { return @new ? $self->_set( \$color,             cell_color( $self, color => $new[0] ) ) : $color }
-	method track_color (@new)       { return @new ? $self->_set( \$track_color,       cell_color( $self, track_color => $new[0] ) ) : $track_color }
-	method text_color (@new)        { return @new ? $self->_set( \$text_color,        cell_color( $self, text_color => $new[0] ) ) : $text_color }
-	method inside_text_color (@new) { return @new ? $self->_set( \$inside_text_color, cell_color( $self, inside_text_color => $new[0] ) ) : $inside_text_color }
+	method style             (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                                    : $style }
+	method fill_glyph        (@new) { return @new ? $self->_set( \$fill_glyph, $self->_checked_glyph( fill_glyph => $new[0] ) )                 : $fill_glyph }
+	method track_glyph       (@new) { return @new ? $self->_set( \$track_glyph, $self->_checked_glyph( track_glyph => $new[0] ) )               : $track_glyph }
+	method stripe_glyph      (@new) { return @new ? $self->_set( \$stripe_glyph, $self->_checked_glyph( stripe_glyph => $new[0] ) )             : $stripe_glyph }
+	method fractional        (@new) { return @new ? $self->_set( \$fractional, boolean( $self, fractional => $new[0] ) )                        : $fractional }
+	method striped           (@new) { return @new ? $self->_set( \$striped, boolean( $self, striped => $new[0] ) )                              : $striped }
+	method animated          (@new) { return @new ? $self->_set( \$animated, boolean( $self, animated => $new[0] ) )                            : $animated }
+	method separated         (@new) { return @new ? $self->_set( \$separated, boolean( $self, separated => $new[0] ) )                          : $separated }
+	method color             (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )                               : $color }
+	method track_color       (@new) { return @new ? $self->_set( \$track_color, cell_color( $self, track_color => $new[0] ) )                   : $track_color }
+	method text_color        (@new) { return @new ? $self->_set( \$text_color, cell_color( $self, text_color => $new[0] ) )                     : $text_color }
+	method inside_text_color (@new) { return @new ? $self->_set( \$inside_text_color, cell_color( $self, inside_text_color => $new[0] ) )       : $inside_text_color }
 
 	# The glyphs in use: the style's, unless given one by one.
 	method glyphs () {

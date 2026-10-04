@@ -72,7 +72,7 @@ This program is shipped as F<examples/cookbook/minimal-program.pl>.
 		layout           => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 			child_gap        => 1,
 		},
 	);
@@ -211,9 +211,9 @@ This program is shipped as F<examples/cookbook/non-ascii-text.pl>.
 
 	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
 	$root->add_child(
-		text("Gr\x{fc}\x{df}e aus M\x{fc}nchen"),                          # German umlauts and sharp s
+		text("Gr\x{fc}\x{df}e aus M\x{fc}nchen"),    # German umlauts and sharp s
 		text("\x{3044}\x{308d}\x{306f}\x{306b}\x{307b}\x{3078}\x{3068}|"),    # Japanese, two columns each
-		text("e\x{301} is one character|"),                                  # e and a combining acute accent
+		text("e\x{301} is one character|"),    # e and a combining acute accent
 	);
 
 	Term::Fabulous::Static->new( root => $root, width => 30 )->print( colors => 0 );
@@ -302,8 +302,8 @@ This program is shipped as F<examples/cookbook/wrap-and-align-text.pl>.
 			layout       => $box_layout,
 		);
 		$box->add_child(
-			Term::Fabulous::Widget::Text->new( text => $caption, text_color => [ 255, 200, 80, 255 ] ),
-			Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 230, 230, 230, 255 ], %options ),
+			Term::Fabulous::Widget::Text->new( text => $caption, text_color => [ 255, 200, 80,  255 ] ),
+			Term::Fabulous::Widget::Text->new( text => $text,    text_color => [ 230, 230, 230, 255 ], %options ),
 		);
 		return $box;
 	}

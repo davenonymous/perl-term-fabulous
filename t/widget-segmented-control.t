@@ -27,7 +27,7 @@ subtest 'painting' => sub {
 	my ( $control, $ui ) = control( value => 'Week' );
 	is [ $control->columns, $control->rows, row_text( $control, 0 ) ], [ 20, 1, " Day \x{2502} Week \x{2502} Month " ], 'labels with padding and separators';
 	is shown($control)->cell( 7, 0 )->[2], $control->color_attr( $control->accent_color ), 'the selected segment sits on the accent color';
-	is shown($control)->cell( 1, 0 )->[2], undef, 'the others on the widget background';
+	is shown($control)->cell( 1, 0 )->[2], undef,                                          'the others on the widget background';
 
 	my ( $wide, $wide_ui ) = control( value => 'Day', layout => { sizing => { width => sizing_fixed(32) } } );
 	is row_text( $wide, 0 ), "   Day   \x{2502}   Week   \x{2502}   Month   ", 'extra width is shared out, labels centered';
@@ -56,8 +56,8 @@ subtest 'keys' => sub {
 
 subtest 'mouse' => sub {
 	my ( $control, $ui, $changes ) = control( value => 'Day' );
-	click( $control, 8, 0 );
-	click( $control, 5, 0 );
+	click( $control, 8,  0 );
+	click( $control, 5,  0 );
 	click( $control, 16, 0 );
 	is $changes, [ 'Week', 'Month' ], 'a click chooses the segment, a separator nothing';
 
@@ -70,12 +70,13 @@ subtest 'mouse' => sub {
 
 subtest 'options, values and layouts' => sub {
 	my ( $control, $ui ) = control( options => [ 'List', [ Grid => 'g' ], { label => 'Map', value => 'm', disabled => 1 } ], value => 'g' );
-	is [ $control->options ], [ { label => 'List', value => 'List', disabled => 0 }, { label => 'Grid', value => 'g', disabled => 0 }, { label => 'Map', value => 'm', disabled => 1 } ], 'the three option forms';
+	is [ $control->options ], [ { label => 'List', value => 'List', disabled => 0 }, { label => 'Grid', value => 'g', disabled => 0 }, { label => 'Map', value => 'm', disabled => 1 } ],
+		'the three option forms';
 	$control->options( [ 'Map', [ Grid => 'g' ] ] );
 	is [ $control->value, $control->selected_index ], [ 'g', 1 ], 'new options keep the selected value';
-	like dies { $control->value('x') },      qr/no option has the value 'x'/,           'an unknown value dies';
-	like dies { $control->choose(5) },       qr/choose needs an option index in 0\.\.1/, 'an index outside the options dies';
-	like dies { $control->options( ['a'] ); $control->options( [ {} ] ) }, qr/an option must be a label/, 'an option without a label dies';
+	like dies { $control->value('x') },                                                               qr/no option has the value 'x'/,                'an unknown value dies';
+	like dies { $control->choose(5) },                                                                qr/choose needs an option index in 0\.\.1/,     'an index outside the options dies';
+	like dies { $control->options( ['a'] ); $control->options( [ {} ] ) },                            qr/an option must be a label/,                  'an option without a label dies';
 	like dies { Term::Fabulous::Widget::SegmentedControl->new( value => 'a', selected_index => 0 ) }, qr/give 'value' or 'selected_index', not both/, 'value and index together die';
 
 	my $built = Term::Fabulous::Layout->new( string => <<'KDL' )->build;

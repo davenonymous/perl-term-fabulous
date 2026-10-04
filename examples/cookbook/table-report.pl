@@ -22,7 +22,11 @@ my @sales = (
 );
 my $total_revenue = sum( map { $_->{revenue} } @sales );
 my @rows          = (
-	( map { { %$_, section => 0 } } @sales ),
+	(
+		map {
+			{ %$_, section => 0 }
+		} @sales
+	),
 	{ product => 'Total', units => sum( map { $_->{units} } @sales ), revenue => $total_revenue, section => 1 },
 );
 
@@ -40,6 +44,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 	scrollbar    => 0,    # nothing scrolls on paper
 	hover        => 0,
 	header_style => { text_color => '#e5c07b' },
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -47,9 +52,9 @@ my $table = Term::Fabulous::Widget::Table->new(
 	stripe_color => '#1c2029',
 	columns      => [
 		{ key => 'section', visible => 0 },    # 0 for products, 1 for the totals row
-		{ key => 'product', title => 'Product' },
-		{ key => 'units',   title => 'Units',   type => 'number', mutator => number() },
-		{ key => 'revenue', title => 'Revenue', type => 'number', mutator => number( decimals => 2, suffix => ' EUR' ) },
+		{ key => 'product', title   => 'Product' },
+		{ key => 'units',   title   => 'Units',   type => 'number', mutator => number() },
+		{ key => 'revenue', title   => 'Revenue', type => 'number', mutator => number( decimals => 2, suffix => ' EUR' ) },
 		{
 			key     => 'share',
 			title   => 'Share',
@@ -58,8 +63,8 @@ my $table = Term::Fabulous::Widget::Table->new(
 			mutator => percent( decimals => 1 ),
 		},
 	],
-	rows         => \@rows,
-	sort         => [ 'section', [ revenue => 'desc' ] ],    # the totals row last, the products by revenue
+	rows => \@rows,
+	sort => [ 'section', [ revenue => 'desc' ] ],    # the totals row last, the products by revenue
 );
 $table->set_row_style( Total => { border_top => 'Double', bold => 1 } );
 

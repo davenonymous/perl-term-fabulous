@@ -45,17 +45,17 @@ use Clay::XS qw(
 
 # The palette, a dark theme.
 my %color = (
-	screen  => [ 20,  25,  35,  255 ],
-	panel   => [ 28,  33,  45,  255 ],
-	header  => [ 33,  44,  70,  255 ],
-	border  => [ 70,  85,  110, 255 ],
-	accent  => [ 97,  175, 239, 255 ],
-	text    => [ 220, 223, 228, 255 ],
-	muted   => [ 140, 150, 170, 255 ],
-	green   => [ 152, 195, 121, 255 ],
-	yellow  => [ 229, 192, 123, 255 ],
-	red     => [ 224, 108, 117, 255 ],
-	button  => [ 43,  58,  85,  255 ],
+	screen => [ 20,  25,  35,  255 ],
+	panel  => [ 28,  33,  45,  255 ],
+	header => [ 33,  44,  70,  255 ],
+	border => [ 70,  85,  110, 255 ],
+	accent => [ 97,  175, 239, 255 ],
+	text   => [ 220, 223, 228, 255 ],
+	muted  => [ 140, 150, 170, 255 ],
+	green  => [ 152, 195, 121, 255 ],
+	yellow => [ 229, 192, 123, 255 ],
+	red    => [ 224, 108, 117, 255 ],
+	button => [ 43,  58,  85,  255 ],
 );
 
 sub text ( $string, $text_color = $color{text} ) {
@@ -78,14 +78,14 @@ sub panel ( $title, $sizing, @children ) {
 # --- The form ------------------------------------------------------------
 
 sub form_row ( $label, $input ) {
-	my $row  = Term::Fabulous::Widget::Box->new( layout => { child_gap => 1, sizing => { width => sizing_grow() } } );
+	my $row  = Term::Fabulous::Widget::Box->new( layout      => { child_gap => 1, sizing => { width => sizing_grow() } } );
 	my $cell = Term::Fabulous::Widget::Box->new( width_group => 1 );
 	$cell->add_child( text( $label, $color{muted} ) );
 	$row->add_child( $cell, $input );
 	return $row;
 }
 
-my $name  = Term::Fabulous::Widget::TextField->new( id => 'name',  placeholder => 'Your name',     layout => { sizing => { width => sizing_grow() } } );
+my $name  = Term::Fabulous::Widget::TextField->new( id => 'name',  placeholder => 'Your name',       layout => { sizing => { width => sizing_grow() } } );
 my $email = Term::Fabulous::Widget::TextField->new( id => 'email', placeholder => 'you@example.com', layout => { sizing => { width => sizing_grow() } } );
 my $plan  = Term::Fabulous::Widget::RadioGroup->new( id => 'plan', value => 'pro', layout => { layout_direction => CLAY_LEFT_TO_RIGHT, child_gap => 2 } );
 $plan->add_child( Term::Fabulous::Widget::RadioButton->new( label => $_->[0], value => $_->[1] ) ) foreach [ Free => 'free' ], [ Pro => 'pro' ], [ Team => 'team' ];
@@ -99,10 +99,10 @@ my $newsletter = Term::Fabulous::Widget::Checkbox->new( id => 'newsletter', labe
 
 sub button ( $caption, $border_color ) {
 	my $button = Term::Fabulous::Widget::Button->new(
-		border_width     => 1,
-		border_color     => $border_color,
-		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
-		layout           => { padding => { left => 2, right => 2 } },
+		border_width => 1,
+		border_color => $border_color,
+		border_style => Term::Fabulous::Enum::BorderStyle->Round,
+		layout       => { padding => { left => 2, right => 2 } },
 	);
 	$button->add_child( text( $caption, [ 255, 255, 255, 255 ] ) );
 	return $button;
@@ -132,7 +132,7 @@ my $chart = Term::Fabulous::Widget::AreaChart->new(
 	curve        => 'monotone',
 	fill_opacity => 0.85,
 	x_axis       => { visible => 0, nice => 0 },
-	y_axis       => { min => 0, grid => 'dotted' },
+	y_axis       => { min     => 0, grid => 'dotted' },
 	max_points   => 60,
 	series       => [ { name => 'api', color => '#61afef' }, { name => 'workers', color => '#c678dd' } ],
 );
@@ -169,7 +169,7 @@ my $toast      = Term::Fabulous::Widget::Box->new(
 	floating            => {
 		attach_to     => CLAY_ATTACH_TO_PARENT,
 		attach_points => { element => CLAY_ATTACH_POINT_RIGHT_BOTTOM, parent => CLAY_ATTACH_POINT_RIGHT_BOTTOM },
-		offset        => { x => -2, y => -1 },
+		offset        => { x       => -2,                             y      => -1 },
 	},
 );
 $toast->add_child($toast_text);
@@ -299,8 +299,8 @@ $loop->add(
 		on_tick        => sub { $clock->text( strftime( '%H:%M:%S', localtime ) ); log_event(); return },
 	)->start
 );
-$loop->add( IO::Async::Timer::Periodic->new( interval => 0.25,  on_tick => sub { sample_requests(); return } )->start );
-$loop->add( IO::Async::Timer::Periodic->new( interval => 1 / 30, on_tick => sub { follow_log(); return } )->start );
+$loop->add( IO::Async::Timer::Periodic->new( interval => 0.25,   on_tick => sub { sample_requests(); return } )->start );
+$loop->add( IO::Async::Timer::Periodic->new( interval => 1 / 30, on_tick => sub { follow_log();      return } )->start );
 
 $ui->interaction->set_focused_widget($name);
 $ui->run;

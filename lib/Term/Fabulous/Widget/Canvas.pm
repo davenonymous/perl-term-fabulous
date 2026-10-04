@@ -108,7 +108,7 @@ class Term::Fabulous::Widget::Canvas
 
 	method put_text ( $x, $y, $text, $fg = undef, $bg = undef ) {
 		die "Term::Fabulous::Widget::Canvas: text must be a string, got " . _describe($text) unless defined $text && !ref $text;
-		my ( $column, $row ) = ( cell_coordinate( x => $x ), cell_coordinate( y => $y ) );
+		my ( $column,  $row )     = ( cell_coordinate( x => $x ),   cell_coordinate( y => $y ) );
 		my ( $fg_attr, $bg_attr ) = ( cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
 
 		foreach my $cluster ( grapheme_clusters($text) ) {
@@ -233,9 +233,9 @@ class Term::Fabulous::Widget::Canvas
 	# changing its first cell, so a span never starts in an unchanged one.
 	method _changed_span_of ($y) {
 		my $written = $written_spans[$y] // return undef;
-		my ( $glyphs, $fgs, $bgs ) = ( $glyph_rows[$y], $fg_rows[$y], $bg_rows[$y] );
+		my ( $glyphs,       $fgs, $bgs )             = ( $glyph_rows[$y], $fg_rows[$y], $bg_rows[$y] );
 		my ( $taken_glyphs, $taken_fgs, $taken_bgs ) = ( $taken_glyph_rows[$y] // [], $taken_fg_rows[$y] // [], $taken_bg_rows[$y] // [] );
-		my ( $first, $last );
+		my ( $first,        $last );
 		foreach my $x ( $written->[0] .. $written->[1] - 1 ) {
 			next if _same_glyph( $glyphs->[$x], $taken_glyphs->[$x] ) && _same_attr( $fgs->[$x], $taken_fgs->[$x] ) && _same_attr( $bgs->[$x], $taken_bgs->[$x] );
 			$first //= $x;
@@ -246,11 +246,11 @@ class Term::Fabulous::Widget::Canvas
 
 	method _remember_taken (@spans) {
 		foreach my $y ( 0 .. $#spans ) {
-			my $span = $spans[$y] // next;
+			my $span    = $spans[$y] // next;
 			my @columns = $span->[0] .. $span->[1] - 1;
 			@{ $taken_glyph_rows[$y] //= [] }[@columns] = @{ $glyph_rows[$y] }[@columns];
-			@{ $taken_fg_rows[$y]    //= [] }[@columns] = @{ $fg_rows[$y] }[@columns];
-			@{ $taken_bg_rows[$y]    //= [] }[@columns] = @{ $bg_rows[$y] }[@columns];
+			@{ $taken_fg_rows[$y] //= [] }[@columns]    = @{ $fg_rows[$y] }[@columns];
+			@{ $taken_bg_rows[$y] //= [] }[@columns]    = @{ $bg_rows[$y] }[@columns];
 		}
 		return;
 	}
@@ -325,7 +325,7 @@ class Term::Fabulous::Widget::Canvas
 			return;
 		}
 		$span->[0] = $from if $from < $span->[0];
-		$span->[1] = $to   if $to > $span->[1];
+		$span->[1] = $to if $to > $span->[1];
 		return;
 	}
 }

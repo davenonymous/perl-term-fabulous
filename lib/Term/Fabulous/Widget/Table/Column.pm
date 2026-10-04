@@ -24,12 +24,13 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 		number  => sub ( $left, $right ) { compare_values( number => $left, $right ) },
 		date    => sub ( $left, $right ) { compare_values( date   => $left, $right ) },
 	);
+
 	# Whether a raw value can be ordered by a named comparator; the others
 	# sort last.
 	my %READABLE = (
-		string  => sub ($value) { is_blank($value) ? 0 : 1 },
-		natural => sub ($value) { is_blank($value) ? 0 : 1 },
-		number  => sub ($value) { defined number_of($value) ? 1 : 0 },
+		string  => sub ($value) { is_blank($value)           ? 0 : 1 },
+		natural => sub ($value) { is_blank($value)           ? 0 : 1 },
+		number  => sub ($value) { defined number_of($value)  ? 1 : 0 },
 		date    => sub ($value) { defined date_epoch($value) ? 1 : 0 },
 	);
 
@@ -56,24 +57,24 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 
 	field @_mutators;
 	field $_comparator;    # code reference for a named comparator, undef for one of the user's
-	field %_params;        # what the column was made with, for with()
+	field %_params;    # what the column was made with, for with()
 
 	ADJUST {
 		%_params = (
-			key          => $key,          title       => $title,       type         => $type,
-			value        => $value,        mutator     => $mutator,     align        => $align,
-			header_align => $header_align, width       => $width,       wrap         => $wrap,
-			sortable     => $sortable,     compare     => $compare,     filterable   => $filterable,
-			filter_on    => $filter_on,    cell        => $cell,        update_cell  => $update_cell,
-			header       => $header,       cell_style  => $cell_style,  style        => $style,
-			header_style => $header_style, visible     => $visible,
+			key          => $key,          title      => $title,      type        => $type,
+			value        => $value,        mutator    => $mutator,    align       => $align,
+			header_align => $header_align, width      => $width,      wrap        => $wrap,
+			sortable     => $sortable,     compare    => $compare,    filterable  => $filterable,
+			filter_on    => $filter_on,    cell       => $cell,       update_cell => $update_cell,
+			header       => $header,       cell_style => $cell_style, style       => $style,
+			header_style => $header_style, visible    => $visible,
 		);
 
 		die "Term::Fabulous::Widget::Table::Column: key must be a non-empty string, got " . _describe($key)
 			unless defined $key && !ref $key && length $key;
 		$title = string( $self, title => $title // $key );
 		die "Term::Fabulous::Widget::Table::Column '$key': type must be 'string', 'number' or 'date', got " . _describe($type) unless defined $type && $IS_TYPE{$type};
-		$align //= $type eq 'number' ? 'right' : 'left';
+		$align        //= $type eq 'number' ? 'right' : 'left';
 		$header_align //= $align;
 		foreach my $setting ( [ align => $align ], [ header_align => $header_align ] ) {
 			die "Term::Fabulous::Widget::Table::Column '$key': $setting->[0] must be 'left', 'center' or 'right', got " . _describe( $setting->[1] )
@@ -179,7 +180,7 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 	method sort_key ($raw) {
 		die "Term::Fabulous::Widget::Table::Column '$key': a column with a compare code reference has no sort keys" unless defined $_comparator;
 		return undef unless $READABLE{$_comparator}->($raw);
-		return number_of($raw)  if $_comparator eq 'number';
+		return number_of($raw) if $_comparator eq 'number';
 		return date_epoch($raw) if $_comparator eq 'date';
 		my $text = fc "$raw";
 		return $text if $_comparator eq 'string';

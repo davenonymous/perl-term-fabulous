@@ -33,7 +33,7 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Canvas) :st
 
 	field $follows     :param;
 	field $axis        :param = 'vertical';
-	field $track_color :param = [ 70, 76, 90, 255 ];
+	field $track_color :param = [ 70, 76,  90,  255 ];
 	field $thumb_color :param = [ 97, 175, 239, 255 ];
 	field $_painted_key;
 
@@ -114,6 +114,7 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Canvas) :st
 		return unless defined $thumb;
 		my $spec = $AXIS{$axis};
 		my ( $track, $bar ) = ( cell_color_attr( fg => $track_color ), cell_color_attr( fg => $thumb_color ) );
+
 		foreach my $cell ( 0 .. $length - 1 ) {
 			my $on_thumb = $cell >= $thumb->[0] && $cell < $thumb->[0] + $thumb->[1];
 			my ( $x, $y ) = $axis eq 'vertical' ? ( 0, $cell ) : ( $cell, 0 );

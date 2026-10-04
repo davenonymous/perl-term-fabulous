@@ -25,12 +25,12 @@ class Term::Fabulous::Widget::Slider
 	my %MOVE_BY_KEY = (
 		Left     => [ step => -1 ],
 		Down     => [ step => -1 ],
-		Right    => [ step => 1 ],
-		Up       => [ step => 1 ],
+		Right    => [ step =>  1 ],
+		Up       => [ step =>  1 ],
 		PageDown => [ page => -1 ],
-		PageUp   => [ page => 1 ],
+		PageUp   => [ page =>  1 ],
 		Home     => [ end  => -1 ],
-		End      => [ end  => 1 ],
+		End      => [ end  =>  1 ],
 	);
 
 	field $min               :param = 0;
@@ -59,13 +59,13 @@ class Term::Fabulous::Widget::Slider
 		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step );
 		$current = $min;
 		$self->value( $value // $min );
-	}
+		}
 
-	# The range with the given parts changed, checked as a whole.
-	method _checked_range (%range) {
+		# The range with the given parts changed, checked as a whole.
+		method _checked_range (%range) {
 		my ( $low, $high, $increment ) = map { number( $self, $_ => $range{$_} ) } qw(min max step);
 		die "Term::Fabulous::Widget::Slider: min ($low) must be less than max ($high)" unless $low < $high;
-		die "Term::Fabulous::Widget::Slider: step must be positive, got $increment"    unless $increment > 0;
+		die "Term::Fabulous::Widget::Slider: step must be positive, got $increment" unless $increment > 0;
 		return ( $low, $high, $increment );
 	}
 
@@ -180,7 +180,7 @@ class Term::Fabulous::Widget::Slider
 		return $preferred_columns;
 	}
 
-	method fill_glyph (@new)  { return @new ? $self->_set_glyph( fill_glyph  => \$fill_glyph,  @new ) : $fill_glyph }
+	method fill_glyph  (@new) { return @new ? $self->_set_glyph( fill_glyph  => \$fill_glyph,  @new ) : $fill_glyph }
 	method track_glyph (@new) { return @new ? $self->_set_glyph( track_glyph => \$track_glyph, @new ) : $track_glyph }
 	method thumb_glyph (@new) { return @new ? $self->_set_glyph( thumb_glyph => \$thumb_glyph, @new ) : $thumb_glyph }
 
@@ -235,7 +235,7 @@ class Term::Fabulous::Widget::Slider
 
 	method handle_key ($event) {
 		my $name = $event->main_key_name // return 0;
-		my $move = $MOVE_BY_KEY{$name} // return 0;
+		my $move = $MOVE_BY_KEY{$name}   // return 0;
 		my ( $unit, $direction ) = @$move;
 		$self->_move_to(
 			  $unit eq 'step' ? $current + $direction * $step
@@ -249,6 +249,7 @@ class Term::Fabulous::Widget::Slider
 	method handle_mouse ($event) {
 		my $key = $event->key;
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
+
 			# At min or max the notch is left to a scroll box.
 			return 0 unless $self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? $step : -$step ) );
 			$event->use_wheel;
@@ -289,7 +290,7 @@ class Term::Fabulous::Widget::Slider
 		my $track = $self->_track_columns;
 		my $thumb = int( ( $track - 1 ) * ( $current - $min ) / ( $max - $min ) + 0.5 );
 
-		$self->fill_attrs( 0, 0, $thumb, $fill_glyph, $self->accent_attr, $bg );
+		$self->fill_attrs( 0,          0, $thumb,              $fill_glyph,  $self->accent_attr,                                                            $bg );
 		$self->fill_attrs( $thumb + 1, 0, $track - $thumb - 1, $track_glyph, $self->color_attr( $self->is_enabled ? $track_color : $self->disabled_color ), $bg );
 		$self->put_attrs( $thumb, 0, $thumb_glyph, $self->is_focused ? $self->foreground_attr : $self->accent_attr, $bg );
 		return unless $show_value;

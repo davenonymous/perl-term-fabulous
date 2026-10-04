@@ -26,7 +26,7 @@ use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
 my $style        = 'Term::Fabulous::Enum::BorderStyle';
 my $border_color = [ 140, 180, 230, 255 ];
-my $panel_color  = [ 35, 42, 60, 255 ];
+my $panel_color  = [ 35,  42,  60,  255 ];
 my $text_color   = [ 230, 230, 230, 255 ];
 
 my $root = Term::Fabulous::Widget::Box->new(
@@ -34,7 +34,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -79,7 +79,7 @@ row(
 my $solid  = $style->Solid;
 my $joined = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
 $joined->add_child(
-	sample( "Title box",     border_width => { left => 1, right => 1, top => 1 }, border_style => $solid ),
+	sample( "Title box", border_width => { left => 1, right => 1, top => 1 }, border_style => $solid ),
 	sample(
 		"Body box joined\nby border_corners",
 		border_width   => 1,

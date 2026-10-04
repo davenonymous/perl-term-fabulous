@@ -26,12 +26,13 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing  => { width => sizing_grow(), height => sizing_grow() },
-		padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
 # Made-up measurements: fuel use grows with the power, less for hybrids.
 srand 42;
+
 sub cars ( $count, $base, $per_kw, $spread ) {
 	return map {
 		my $power = 50 + rand 150;

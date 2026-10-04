@@ -17,7 +17,7 @@ use Term::Fabulous::Enum::BorderStyle;
 # What each kind of style may hold. Borders name the lines around a cell,
 # a row or a column; 'column_lines' are the lines between the cells of a
 # row, 'row_lines' those between the cells of a column.
-my @LOOK = qw(text_color background_color bold italic underline border_color);
+my @LOOK    = qw(text_color background_color bold italic underline border_color);
 my %KEYS_OF = (
 	cell   => [ @LOOK, qw(border_top border_right border_bottom border_left) ],
 	row    => [ @LOOK, qw(border_top border_right border_bottom border_left column_lines) ],
@@ -44,8 +44,9 @@ sub border_style_of ( $owner, $name, $value ) {
 		my $style = Term::Fabulous::Enum::BorderStyle->from_name($value);
 		return $style if defined $style;
 	}
-	die( ( ref $owner || $owner ) . ": $name must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got "
-		. ( defined $value ? ( ref $value ? ref($value) . ' reference' : "'$value'" ) : 'undef' ) );
+	die(  ( ref $owner || $owner )
+		. ": $name must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got "
+			. ( defined $value ? ( ref $value ? ref($value) . ' reference' : "'$value'" ) : 'undef' ) );
 }
 
 # A validated copy of a style hash of the given kind: colors as
@@ -56,7 +57,7 @@ sub style_hash ( $owner, $name, $kind, $style ) {
 	return {} unless defined $style;
 	die( ( ref $owner || $owner ) . ": $name must be a hash reference, got " . ( ref $style ? ref($style) . ' reference' : "'$style'" ) )
 		unless ref $style eq 'HASH';
-	my %allowed = map { $_ => 1 } @$keys;
+	my %allowed = map  { $_ => 1 } @$keys;
 	my @unknown = grep { !$allowed{$_} } sort keys %$style;
 	die( ( ref $owner || $owner ) . ": $name does not know @unknown (known: " . join( ', ', sort @$keys ) . ")" ) if @unknown;
 

@@ -11,7 +11,7 @@ use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
 subtest 'border width is added to the padding' => sub {
-	my $box = Term::Fabulous::Widget::Box->new( border_width => 1, layout => { padding => { left => 2 }, child_gap => 1 } );
+	my $box    = Term::Fabulous::Widget::Box->new( border_width => 1, layout => { padding => { left => 2 }, child_gap => 1 } );
 	my $config = $box->to_config;
 	is $config->{layout}{padding}, { left => 3, right => 1, top => 1, bottom => 1 }, 'scalar width on every side';
 	is $config->{layout}{child_gap}, 1, 'other layout keys are kept';
@@ -33,8 +33,8 @@ subtest 'Hidden sides take no space and draw nothing' => sub {
 	my $box    = Term::Fabulous::Widget::Box->new( border_width => { left => 1, right => 1, top => 2, bottom => 1 }, border_style_top => $hidden, border_style_left => $hidden );
 	my $config = $box->to_config;
 	is $config->{layout}{padding}, { left => 0, right => 1, top => 0, bottom => 1 }, 'only the other sides add an inset';
-	is $config->{border}{width}, { left => 0, right => 1, top => 0, bottom => 1 }, 'Clay sees a width of 0 on the Hidden sides';
-	is $box->border_width, { left => 1, right => 1, top => 2, bottom => 1 }, 'the widget border_width is unchanged';
+	is $config->{border}{width},   { left => 0, right => 1, top => 0, bottom => 1 }, 'Clay sees a width of 0 on the Hidden sides';
+	is $box->border_width,         { left => 1, right => 1, top => 2, bottom => 1 }, 'the widget border_width is unchanged';
 };
 
 subtest 'the stored layout is never modified' => sub {

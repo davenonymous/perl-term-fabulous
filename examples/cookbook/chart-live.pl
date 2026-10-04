@@ -19,7 +19,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -29,7 +29,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my $chart = Term::Fabulous::Widget::LineChart->new(
 	title      => 'Network traffic',
 	x_axis     => { type => 'time', span => 60, format => '%H:%M:%S' },
-	y_axis     => { min => 0, title => 'Mbit/s' },
+	y_axis     => { min  => 0, title => 'Mbit/s' },
 	max_points => 240,
 	series     => [ { name => 'Received', type => 'area', line => 1 }, { name => 'Sent' } ],
 );
@@ -38,6 +38,7 @@ $root->add_child( $chart, $status );
 
 # Made-up measurements, four per second.
 my $tick = 0;
+
 sub measure () {
 	$tick++;
 	return ( 65 + 20 * sin( $tick / 23 ) + 8 * sin( $tick / 3.1 ) + 4 * sin( $tick * 1.7 ), 18 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ) );

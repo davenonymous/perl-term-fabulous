@@ -30,7 +30,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -51,7 +51,7 @@ sub button ( $caption, $background, $border ) {
 }
 
 my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-my $save    = button( 'Save',   [ 40, 60, 90, 255 ],  [ 90, 110, 140, 255 ] );
+my $save    = button( 'Save',    [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] );
 my $archive = button( 'Archive', [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] );
 $archive->disabled(1);
 $buttons->add_child( $save, button( 'Cancel', [ 40, 60, 90, 255 ], [ 90, 110, 140, 255 ] ), button( 'Delete', [ 110, 40, 45, 255 ], [ 170, 80, 85, 255 ] ), $archive );

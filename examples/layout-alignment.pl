@@ -36,7 +36,7 @@ sub cell ( $x, $y ) {
 		background_color => [ 40, 46, 64, 255 ],
 		layout           => {
 			sizing          => { width => sizing_fixed(24), height => sizing_fixed(5) },
-			child_alignment => { x => $x_value, y => $y_value },
+			child_alignment => { x     => $x_value,         y      => $y_value },
 		},
 	);
 	my $child = Term::Fabulous::Widget::Box->new( background_color => [ 97, 175, 239, 255 ], layout => { padding => { left => 1, right => 1 } } );
@@ -49,7 +49,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );

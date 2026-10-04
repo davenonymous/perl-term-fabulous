@@ -28,7 +28,7 @@ sub dropdown {
 
 sub list_rows {
 	my ($dropdown) = @_;
-	my ($list) = @{ $dropdown->children };
+	my ($list)     = @{ $dropdown->children };
 	return [ map { row_text( $list, $_ ) } 0 .. $list->rows - 1 ];
 }
 
@@ -42,11 +42,11 @@ subtest 'options and value' => sub {
 	$dropdown->options( ['Red'] );
 	is $dropdown->value, undef, 'and drop it when it is gone';
 
-	like dies { $dropdown->value('nope') },                                                            qr/no option has the value 'nope'/, 'an unknown value dies';
-	like dies { $dropdown->choose(1) },                                                                qr/choose needs an option index in 0\.\.0/, 'choosing an index out of range dies';
-	like dies { $dropdown->selected_index(5) },                                                        qr/selected_index must be/,         'an index out of range dies';
-	like dies { Term::Fabulous::Widget::Dropdown->new( options => [ [ 1, 2, 3 ] ] ) },                 qr/an option must be/,              'an invalid option dies';
-	like dies { Term::Fabulous::Widget::Dropdown->new( options => ['a'], value => 'a', selected_index => 0 ) }, qr/not both/,                 'value and selected_index together die';
+	like dies { $dropdown->value('nope') },                                                                     qr/no option has the value 'nope'/,         'an unknown value dies';
+	like dies { $dropdown->choose(1) },                                                                         qr/choose needs an option index in 0\.\.0/, 'choosing an index out of range dies';
+	like dies { $dropdown->selected_index(5) },                                                                 qr/selected_index must be/,                 'an index out of range dies';
+	like dies { Term::Fabulous::Widget::Dropdown->new( options => [ [ 1, 2, 3 ] ] ) },                          qr/an option must be/,                      'an invalid option dies';
+	like dies { Term::Fabulous::Widget::Dropdown->new( options => ['a'], value => 'a', selected_index => 0 ) }, qr/not both/,                               'value and selected_index together die';
 };
 
 subtest 'painting' => sub {
@@ -71,8 +71,8 @@ subtest 'the open list' => sub {
 	press( $dropdown, 'Enter' );
 	$ui->draw;
 	ok $dropdown->is_open, 'Enter opens the list';
-	is $dropdown->highlighted_index, 1, 'the selected option is highlighted';
-	is list_rows($dropdown), [ " Red     \x{2503}", " Green   \x{2503}", " Blue    \x{2503}", " Cyan    \x{2502}" ], 'four options and a scrollbar';
+	is $dropdown->highlighted_index, 1,                                                                                      'the selected option is highlighted';
+	is list_rows($dropdown),         [ " Red     \x{2503}", " Green   \x{2503}", " Blue    \x{2503}", " Cyan    \x{2502}" ], 'four options and a scrollbar';
 
 	press( $dropdown, $_ ) foreach qw(Down Down Down);
 	is list_rows($dropdown)->[3], " Magenta \x{2503}", 'moving the highlight scrolls the list';
@@ -113,7 +113,7 @@ subtest 'losing the focus closes the list' => sub {
 };
 
 subtest 'the list opens upwards without room below' => sub {
-	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, padding => { top => 8 } } );
+	my $root     = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, padding => { top => 8 } } );
 	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [@COLORS] );
 	$root->add_child($dropdown);
 	my $ui = Term::Fabulous::Static->new( root => $root, width => 20, height => 10, trim_trailing_whitespace => 1 );

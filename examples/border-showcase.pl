@@ -20,24 +20,24 @@ my @styles  = Term::Fabulous::Enum::BorderStyle->values;
 my $columns = 4;
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [20, 25, 35, 255],
-	layout => {
+	background_color => [ 20, 25, 35, 255 ],
+	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $title = Term::Fabulous::Widget::Text->new(
 	text       => 'Term::Fabulous border styles  (Ctrl+C to quit)',
-	text_color => [220, 220, 220, 255],
+	text_color => [ 220, 220, 220, 255 ],
 );
 $root->add_child($title);
 
 my $row;
-for my $i (0 .. $#styles) {
-	if ($i % $columns == 0) {
+for my $i ( 0 .. $#styles ) {
+	if ( $i % $columns == 0 ) {
 		$row = Term::Fabulous::Widget::Box->new(
 			layout => {
 				sizing    => { width => sizing_grow(), height => sizing_grow() },
@@ -53,17 +53,17 @@ for my $i (0 .. $#styles) {
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1, top => 1, bottom => 1 },
+			padding          => { left  => 1, right => 1, top => 1, bottom => 1 },
 		},
-		background_color => [35, 40, 55, 255],
-		border_color     => [180, 200, 220, 255],
+		background_color => [ 35,  40,  55,  255 ],
+		border_color     => [ 180, 200, 220, 255 ],
 		border_width     => 1,
 		border_style     => $style,
 	);
 
 	my $label = Term::Fabulous::Widget::Text->new(
 		text       => $style->name,
-		text_color => [255, 255, 255, 255],
+		text_color => [ 255, 255, 255, 255 ],
 	);
 
 	$cell->add_child($label);

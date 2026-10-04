@@ -70,8 +70,8 @@ This program is shipped as F<examples/cookbook/clock.pl>.
 	my $root  = Term::Fabulous::Widget::Box->new(
 		background_color => [ 20, 25, 35, 255 ],
 		layout           => {
-			sizing          => { width => sizing_grow(), height => sizing_grow() },
-			child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+			sizing          => { width => sizing_grow(),       height => sizing_grow() },
+			child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 		},
 	);
 	$root->add_child($clock);
@@ -151,7 +151,7 @@ This program is shipped as F<examples/cookbook/scrolling-log.pl>.
 		layout           => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
 	);
 
@@ -165,7 +165,7 @@ This program is shipped as F<examples/cookbook/scrolling-log.pl>.
 		layout           => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
 	);
 	$root->add_child($log);
@@ -257,7 +257,7 @@ This program is shipped as F<examples/cookbook/follow-log.pl>.
 		layout           => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
 	);
 	$root->add_child(
@@ -307,9 +307,9 @@ This program is shipped as F<examples/cookbook/follow-log.pl>.
 
 	my %action_by_key = (
 		Up    => sub { $follow = 0; scroll_by( 0, -1 ) },
-		Down  => sub { scroll_by( 0, 1 ) },
+		Down  => sub { scroll_by( 0,  1 ) },
 		Left  => sub { scroll_by( -4, 0 ) },
-		Right => sub { scroll_by( 4, 0 ) },
+		Right => sub { scroll_by( 4,  0 ) },
 		Home  => sub { $follow = 0; $ui->scroll_to( $log, { x => 0, y => 0 } ) },
 		End   => sub { $follow = 1 },
 	);
@@ -448,11 +448,12 @@ This program is shipped as F<examples/cookbook/show-output.pl>.
 		layout           => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
 	);
+
 	# The arguments are bytes, like the command's output.
-	my $title = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+	my $title  = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
 	my $output = Term::Fabulous::Widget::ScrollBox->new(
 		id               => 'output',
 		background_color => [ 30, 35, 50, 255 ],
@@ -489,15 +490,16 @@ This program is shipped as F<examples/cookbook/show-output.pl>.
 
 	my $loop    = IO::Async::Loop->new;
 	my $process = IO::Async::Process->new(
-		command => \@command,
-		stdin   => { from => '' },    # the command must not read the terminal
-		stdout  => { on_read => line_reader( [ 200, 210, 230, 255 ] ) },
-		stderr  => { on_read => line_reader( [ 255, 110, 110, 255 ] ) },
+		command   => \@command,
+		stdin     => { from    => '' },    # the command must not read the terminal
+		stdout    => { on_read => line_reader( [ 200, 210, 230, 255 ] ) },
+		stderr    => { on_read => line_reader( [ 255, 110, 110, 255 ] ) },
 		on_finish => sub ( $process, $exit_code ) {
 			add_line( sprintf( 'Finished with exit status %d. Press Ctrl+C to quit.', $exit_code >> 8 ), [ 255, 200, 80, 255 ] );
 			return;
 		},
 		on_exception => sub ( $process, $exception, $errno, $exit_code ) {
+
 			# A failed exec leaves $exception empty and the reason in $errno.
 			my $reason = length( $exception // '' ) ? $exception : "$errno";
 			add_line( "Could not run the command: $reason", [ 255, 110, 110, 255 ] );
@@ -514,7 +516,7 @@ This program is shipped as F<examples/cookbook/show-output.pl>.
 		IO::Async::Timer::Periodic->new(
 			interval => 1 / 30,
 			on_tick  => sub {
-				my $state = $ui->scroll_state($output) or return;
+				my $state  = $ui->scroll_state($output) or return;
 				my $lowest = min( 0, $state->{viewport}{height} - $state->{content}{height} );
 				$ui->scroll_to( $output, { y => $lowest } ) if $state->{position}{y} != $lowest;
 				return;

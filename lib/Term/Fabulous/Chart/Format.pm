@@ -14,7 +14,7 @@ use Carp qw(croak);
 use POSIX qw(floor strftime);
 use Scalar::Util qw(looks_like_number);
 
-my @SI_PREFIXES = ( [ 1e12, 'T' ], [ 1e9, 'G' ], [ 1e6, 'M' ], [ 1e3, 'k' ] );
+my @SI_PREFIXES    = ( [ 1e12, 'T' ], [ 1e9, 'G' ], [ 1e6, 'M' ], [ 1e3, 'k' ] );
 my %NUMBER_FORMATS = map { $_ => 1 } qw(auto si integer percent);
 
 # The decimals a number needs to be written to six significant digits,
@@ -58,14 +58,18 @@ sub check_number_format ( $owner, $name, $format ) {
 sub number_formatter ( $format, $step, $largest ) {
 	$format //= 'auto';
 	return $format if ref $format eq 'CODE';
-	return sub ($value) { sprintf $format, $value } if $format =~ /%/;
+	return sub ($value) { sprintf $format, $value }
+		if $format =~ /%/;
 
 	my $step_decimals = decimals_of( $step || 1 );
-	return sub ($value) { _fixed( $value, 0 ) } if $format eq 'integer';
-	return sub ($value) { _fixed( $value * 100, decimals_of( ( $step || 1 ) * 100 ) ) . '%' } if $format eq 'percent';
+	return sub ($value) { _fixed( $value, 0 ) }
+		if $format eq 'integer';
+	return sub ($value) { _fixed( $value * 100, decimals_of( ( $step || 1 ) * 100 ) ) . '%' }
+		if $format eq 'percent';
 
 	my $decimals_of_unit = sub ($unit) { decimals_of( ( $step || 1 ) / $unit ) };
-	return sub ($value) { _si( $value, $decimals_of_unit ) } if $format eq 'si' || abs($largest) >= 1e4;
+	return sub ($value) { _si( $value, $decimals_of_unit ) }
+		if $format eq 'si' || abs($largest) >= 1e4;
 	return sub ($value) { _fixed( $value, $step_decimals ) };
 }
 
@@ -77,7 +81,7 @@ sub format_value ( $value, $format = undef ) {
 	return $format->($value) if ref $format eq 'CODE';
 	return sprintf $format, $value if defined $format && $format =~ /%/;
 	return _fixed( $value * 100, abs( $value * 100 ) < 10 ? 1 : 0 ) . '%' if defined $format && $format eq 'percent';
-	return _fixed( $value, 0 ) if defined $format && $format eq 'integer';
+	return _fixed( $value,       0 ) if defined $format                                      && $format eq 'integer';
 	my $magnitude = abs $value;
 	if ( $magnitude >= 1e6 || ( defined $format && $format eq 'si' && $magnitude >= 1e3 ) ) {
 		my $text = _si( $value, sub ($unit) { $magnitude / $unit >= 100 ? 0 : 1 } );

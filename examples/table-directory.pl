@@ -39,11 +39,11 @@ my $TEXT  = [ 220, 223, 228, 255 ];
 
 # --- The data: fixed, so every run shows the same ---------------------------
 
-my @FIRST = qw(Ada Grace Linus Margaret Ken Barbara Dennis Radia Tim Frances John Hedy Edsger Katherine Alan Joan Donald Sophie Guido Anita);
-my @LAST  = qw(Lovelace Hopper Torvalds Hamilton Thompson Liskov Ritchie Perlman Berners-Lee Allen McCarthy Lamarr Dijkstra Johnson Turing Clarke Knuth Wilson Rossum Borg);
-my @TEAMS = qw(Core Web Platform Research Network);
-my @ROLES = qw(Engineer Engineer Engineer Lead Architect Fellow);
-my %OFFICE = ( BER => 'Berlin', LON => 'London', NYC => 'New York', REM => 'Remote' );
+my @FIRST   = qw(Ada Grace Linus Margaret Ken Barbara Dennis Radia Tim Frances John Hedy Edsger Katherine Alan Joan Donald Sophie Guido Anita);
+my @LAST    = qw(Lovelace Hopper Torvalds Hamilton Thompson Liskov Ritchie Perlman Berners-Lee Allen McCarthy Lamarr Dijkstra Johnson Turing Clarke Knuth Wilson Rossum Borg);
+my @TEAMS   = qw(Core Web Platform Research Network);
+my @ROLES   = qw(Engineer Engineer Engineer Lead Architect Fellow);
+my %OFFICE  = ( BER => 'Berlin', LON => 'London', NYC => 'New York', REM => 'Remote' );
 my @OFFICES = sort keys %OFFICE;
 
 my @people;
@@ -68,7 +68,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -86,14 +86,15 @@ my $top = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 $top->add_child( text( 'Staff directory', [ 97, 175, 239, 255 ], bold => 1 ), $search, text( 'F2 columns  F3 grouping  Esc quit', $MUTED ) );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'staff',
-	row_id       => 'id',
-	selection    => 'multiple',
-	group_by     => 'team',
-	sort         => [ 'name' ],
-	page_size    => 15,
-	page_sizes   => [ 10, 15, 30 ],
-	layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+	id         => 'staff',
+	row_id     => 'id',
+	selection  => 'multiple',
+	group_by   => 'team',
+	sort       => ['name'],
+	page_size  => 15,
+	page_sizes => [ 10, 15, 30 ],
+	layout     => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -103,21 +104,23 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'name',    title => 'Name', width => 'grow' },
 		{ key => 'team',    title => 'Team' },
 		{ key => 'role',    title => 'Role' },
-		{ key => 'office',  title => 'Office', mutator => lookup( \%OFFICE ) },
-		{ key => 'started', title => 'Started', type => 'date', mutator => date('%b %Y') },
-		{ key => 'salary',  title => 'Salary', type => 'number', mutator => number( decimals => 0 ),
-		  cell_style => sub ($cell) { $cell->{value} >= 100000 ? { text_color => [ 229, 192, 123, 255 ] } : undef } },
-		{ key => 'id',       title => 'Id', visible => 0 },
-		{ key => 'email',    title => 'E-mail', visible => 0 },
+		{ key => 'office',  title => 'Office',  mutator => lookup( \%OFFICE ) },
+		{ key => 'started', title => 'Started', type    => 'date', mutator => date('%b %Y') },
+		{
+			key        => 'salary', title => 'Salary', type => 'number', mutator => number( decimals => 0 ),
+			cell_style => sub ($cell) { $cell->{value} >= 100000 ? { text_color => [ 229, 192, 123, 255 ] } : undef }
+		},
+		{ key => 'id',       title => 'Id',       visible => 0 },
+		{ key => 'email',    title => 'E-mail',   visible => 0 },
 		{ key => 'on_leave', title => 'On leave', visible => 0, mutator => boolean( 'yes', '' ) },
 	],
-	row_style    => sub ( $row, $id ) { $row->{on_leave} ? { text_color => $MUTED, italic => 1 } : undef },
-	group_label  => sub ($group) {
+	row_style   => sub ( $row, $id ) { $row->{on_leave} ? { text_color => $MUTED, italic => 1 } : undef },
+	group_label => sub ($group) {
 		my $payroll = 0;
 		$payroll += $group->{table}->value( $_, 'salary' ) foreach @{ $group->{ids} };
 		return sprintf '%s  -  %d people, payroll %s', $group->{display}, $group->{count}, number( decimals => 0 )->( $payroll, {} );
 	},
-	rows         => \@people,
+	rows => \@people,
 );
 
 my $details = Term::Fabulous::Widget::Box->new(
@@ -127,7 +130,7 @@ my $details = Term::Fabulous::Widget::Box->new(
 	layout       => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_fixed(28), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,                right  => 1 },
 	},
 );
 my $details_text = text('');
@@ -149,7 +152,8 @@ sub show_details () {
 		return;
 	}
 	my $person = $table->row($id);
-	$details_text->text( join "\n",
+	$details_text->text(
+		join "\n",
 		$person->{name}, '',
 		"Id      $person->{id}",
 		"Team    $person->{team}",
@@ -158,21 +162,24 @@ sub show_details () {
 		"Since   " . $table->display_value( $id, 'started' ),
 		"Salary  " . $table->display_value( $id, 'salary' ),
 		"E-mail  $person->{email}",
-		$person->{on_leave} ? "\nOn leave" : () );
+		$person->{on_leave} ? "\nOn leave" : ()
+	);
 	return;
 }
 
 sub show_status () {
 	my @selected = $table->selected_ids;
-	$status->text( sprintf '%d of %d people shown, %d selected%s',
+	$status->text(
+		sprintf '%d of %d people shown, %d selected%s',
 		scalar $table->filtered_row_ids, $table->row_count, scalar @selected,
-		@selected ? ': ' . join( ', ', map { $table->row($_)->{name} } @selected ) : '' );
+		@selected ? ': ' . join( ', ', map { $table->row($_)->{name} } @selected ) : ''
+	);
 	return;
 }
 
 $search->on( Change => sub ($event) { $table->search( $event->value ); show_status(); show_details(); return } );
-$table->on( CursorMove      => sub ($event) { show_details(); return } );
-$table->on( SelectionChange => sub ($event) { show_status(); return } );
+$table->on( CursorMove      => sub ($event) { show_details();                                                                               return } );
+$table->on( SelectionChange => sub ($event) { show_status();                                                                                return } );
 $table->on( RowActivate     => sub ($event) { $details_text->text( $details_text->text . "\n\n(Enter: open " . $event->row->{name} . ')' ); return } );
 
 my $ui = Term::Fabulous->new( root => $root, width => 120, height => 32 );
@@ -181,8 +188,8 @@ my $ui = Term::Fabulous->new( root => $root, width => 120, height => 32 );
 $root->on(
 	KeyPress => sub ($event) {
 		my $key = $event->key_name // return;
-		if ( $key eq 'F2' ) { $table->open_column_chooser }
-		elsif ( $key eq 'F3' ) { $table->group_by ? $table->ungroup : $table->group_by('team') }
+		if    ( $key eq 'F2' )     { $table->open_column_chooser }
+		elsif ( $key eq 'F3' )     { $table->group_by ? $table->ungroup : $table->group_by('team') }
 		elsif ( $key eq 'Escape' ) { $ui->loop->stop }
 		return;
 	}

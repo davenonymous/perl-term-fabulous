@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -40,7 +40,7 @@ my $card = Term::Fabulous::Widget::Box->new(
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_fit() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 		child_gap        => 1,
 	},
 	background_color => [ 30, 35, 50, 255 ],
@@ -49,7 +49,7 @@ my $card = Term::Fabulous::Widget::Box->new(
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 );
 $card->add_child(
-	Term::Fabulous::Widget::Text->new( text => 'Title',                                            text_color => [ 255, 255, 255, 255 ] ),
+	Term::Fabulous::Widget::Text->new( text => 'Title',                                                   text_color => [ 255, 255, 255, 255 ] ),
 	Term::Fabulous::Widget::Text->new( text => 'Body text: a Box holds other widgets and lays them out.', text_color => [ 200, 205, 215, 255 ] ),
 );
 

@@ -21,7 +21,9 @@ sub render_svg ($scene) {
 	my ( $width, $height ) = @$layout{qw(image_width image_height)};
 
 	my @svg = (
-		sprintf( '<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s" role="img" aria-label="%s">', _n($width), _n($height), _n($width), _n($height), _escape( $scene->title ) ),
+		sprintf(
+			'<svg xmlns="http://www.w3.org/2000/svg" width="%s" height="%s" viewBox="0 0 %s %s" role="img" aria-label="%s">', _n($width), _n($height), _n($width), _n($height), _escape( $scene->title )
+		),
 		sprintf( '<title>%s</title>', _escape( $scene->title ) ),
 		_style($scene),
 		_definitions($scene),
@@ -61,12 +63,12 @@ sub _definitions ($scene) {
 	return join "\n",
 		'<defs>',
 		sprintf(
-			'<filter id="shadow" x="-10%%" y="-10%%" width="120%%" height="130%%"><feDropShadow dx="0" dy="%s" stdDeviation="%s" flood-color="#000000" flood-opacity="%s"/></filter>',
-			_n( $theme->shadow_offset * $scale ), _n( $theme->shadow_blur * $scale ), _n( $theme->shadow_opacity )
+		'<filter id="shadow" x="-10%%" y="-10%%" width="120%%" height="130%%"><feDropShadow dx="0" dy="%s" stdDeviation="%s" flood-color="#000000" flood-opacity="%s"/></filter>',
+		_n( $theme->shadow_offset * $scale ), _n( $theme->shadow_blur * $scale ), _n( $theme->shadow_opacity )
 		),
 		sprintf(
-			'<clipPath id="window"><rect x="%s" y="%s" width="%s" height="%s" rx="%s"/></clipPath>',
-			map { _n($_) } @$layout{qw(window_x window_y window_width window_height)}, $theme->corner_radius * $scale
+		'<clipPath id="window"><rect x="%s" y="%s" width="%s" height="%s" rx="%s"/></clipPath>',
+		map { _n($_) } @$layout{qw(window_x window_y window_width window_height)}, $theme->corner_radius * $scale
 		),
 		'</defs>';
 }
@@ -93,14 +95,14 @@ sub _window ($scene) {
 	}
 	push @parts,
 		sprintf(
-			'<text class="title" x="%s" y="%s" text-anchor="middle" dominant-baseline="central" fill="%s">%s</text>',
-			_n( $x + $width / 2 ), _n($center_y), _color( $theme->title_color ), _escape( $scene->shown_title )
+		'<text class="title" x="%s" y="%s" text-anchor="middle" dominant-baseline="central" fill="%s">%s</text>',
+		_n( $x + $width / 2 ), _n($center_y), _color( $theme->title_color ), _escape( $scene->shown_title )
 		) if length $scene->shown_title;
 	push @parts,
 		sprintf(
-			'<rect x="%s" y="%s" width="%s" height="%s" rx="%s" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="%s"/>',
-			map( { _n($_) } $x + 0.5 * $scale, $y + 0.5 * $scale, $width - $scale, $height - $scale, $radius ),
-			_color( $theme->outline_color ), _n( $theme->outline_opacity ), _n($scale)
+		'<rect x="%s" y="%s" width="%s" height="%s" rx="%s" fill="none" stroke="%s" stroke-opacity="%s" stroke-width="%s"/>',
+		map( { _n($_) } $x + 0.5 * $scale, $y + 0.5 * $scale, $width - $scale, $height - $scale, $radius ),
+		_color( $theme->outline_color ), _n( $theme->outline_opacity ), _n($scale)
 		);
 	return join "\n", @parts;
 }

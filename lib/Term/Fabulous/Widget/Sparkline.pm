@@ -58,7 +58,7 @@ class Term::Fabulous::Widget::Sparkline
 		return ( $kind, [ @$categories[ @$categories - $shown .. $#$categories ] ], $prepared );
 	}
 	method value_axis_edges :override () { return 1 }
-	method draws_baseline :override ()   { return 0 }
+	method draws_baseline   :override () { return 0 }
 
 	method _checked_zero ($value) {
 		return defined $value ? boolean( $self, zero => $value ) : undef;

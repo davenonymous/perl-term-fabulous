@@ -23,7 +23,7 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 
 	field $width  :reader;    # in subpixels
 	field $height :reader;
-	field $_cell_columns;     # subpixels per cell
+	field $_cell_columns;    # subpixels per cell
 	field $_cell_rows;
 
 	field @_color;    # by subpixel index y * width + x: packed 0xRRGGBB or undef
@@ -122,7 +122,7 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 	# there (or $base).
 	method line ( $x0, $y0, $x1, $y1, $color, $owner = undef, $opacity = 1, $base = undef ) {
 		my ( $from_x, $from_y, $to_x, $to_y ) = map { floor($_) } $x0, $y0, $x1, $y1;
-		my ( $dx, $dy ) = ( abs( $to_x - $from_x ), abs( $to_y - $from_y ) );
+		my ( $dx,     $dy )     = ( abs( $to_x - $from_x ), abs( $to_y - $from_y ) );
 		my ( $step_x, $step_y ) = ( $from_x < $to_x ? 1 : -1, $from_y < $to_y ? 1 : -1 );
 		my $steps = max( $dx, $dy );
 
@@ -170,7 +170,7 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 		( $x0, $x1 ) = ( $x1, $x0 ) if $x1 < $x0;
 		( $y0, $y1 ) = ( $y1, $y0 ) if $y1 < $y0;
 		my ( $left, $right ) = _covered( $x0, $x1, $width ) or return $self;
-		my ( $top,  $bottom ) = _covered( $y0, $y1, $height ) or return $self;
+		my ( $top, $bottom ) = _covered( $y0, $y1, $height ) or return $self;
 		foreach my $y ( $top .. $bottom ) {
 			foreach my $x ( $left .. $right ) {
 				$opacity >= 1 ? $self->set( $x, $y, $color, $owner ) : $self->blend( $x, $y, $color, $opacity, $base, $owner );
@@ -200,8 +200,8 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 			my $center = $y + 0.5;
 			my @crossings;
 			foreach my $index ( 0 .. $#$corners ) {
-				my ( $from, $to ) = ( $corners->[$index], $corners->[ ( $index + 1 ) % @$corners ] );
-				my ( $low, $high ) = $from->[1] <= $to->[1] ? ( $from, $to ) : ( $to, $from );
+				my ( $from, $to )   = ( $corners->[$index], $corners->[ ( $index + 1 ) % @$corners ] );
+				my ( $low,  $high ) = $from->[1] <= $to->[1] ? ( $from, $to ) : ( $to, $from );
 				next unless $center >= $low->[1] && $center < $high->[1];
 				push @crossings, $low->[0] + ( $center - $low->[1] ) * ( $high->[0] - $low->[0] ) / ( $high->[1] - $low->[1] );
 			}

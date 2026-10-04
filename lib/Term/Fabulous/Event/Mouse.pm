@@ -21,7 +21,7 @@ class Term::Fabulous::Event::Mouse :isa(Clay::UI::Events::Event) :strict(params)
 	field $y               :param :reader;
 	field $modifiers       :param :reader = 0;
 	field $released_button :param :reader = undef;
-	field $wheel_used      :reader        = 0;
+	field $wheel_used      :reader = 0;
 
 	ADJUST {
 		_check_released_button( $key, $released_button ) if defined $released_button;

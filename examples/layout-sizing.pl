@@ -53,20 +53,20 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 $root->add_child(
-	row( 'sizing_fit()',         sample( 'as wide as this text', sizing_fit(),         $COLORS[0] ) ),
-	row( 'sizing_fit(30)',       sample( 'at least 30',          sizing_fit(30),       $COLORS[0] ) ),
-	row( 'sizing_fixed(20)',     sample( '20 columns',           sizing_fixed(20),     $COLORS[1] ) ),
-	row( 'sizing_percent(0.5)',  sample( 'half of the track',    sizing_percent(0.5),  $COLORS[1] ) ),
-	row( 'sizing_grow()',        sample( 'the whole track',      sizing_grow(),        $COLORS[2] ) ),
-	row( 'sizing_grow(0, 30)',   sample( 'grows up to 30',       sizing_grow( 0, 30 ), $COLORS[2] ) ),
-	row( 'fixed(20) + grow()',   sample( '20 columns', sizing_fixed(20), $COLORS[1] ), sample( 'the rest', sizing_grow(), $COLORS[2] ) ),
-	row( 'grow() + grow()',      sample( 'one half', sizing_grow(), $COLORS[2] ), sample( 'other half', sizing_grow(), $COLORS[0] ) ),
+	row( 'sizing_fit()',        sample( 'as wide as this text', sizing_fit(),         $COLORS[0] ) ),
+	row( 'sizing_fit(30)',      sample( 'at least 30',          sizing_fit(30),       $COLORS[0] ) ),
+	row( 'sizing_fixed(20)',    sample( '20 columns',           sizing_fixed(20),     $COLORS[1] ) ),
+	row( 'sizing_percent(0.5)', sample( 'half of the track',    sizing_percent(0.5),  $COLORS[1] ) ),
+	row( 'sizing_grow()',       sample( 'the whole track',      sizing_grow(),        $COLORS[2] ) ),
+	row( 'sizing_grow(0, 30)',  sample( 'grows up to 30',       sizing_grow( 0, 30 ), $COLORS[2] ) ),
+	row( 'fixed(20) + grow()',  sample( '20 columns',           sizing_fixed(20),     $COLORS[1] ), sample( 'the rest',   sizing_grow(), $COLORS[2] ) ),
+	row( 'grow() + grow()',     sample( 'one half',             sizing_grow(),        $COLORS[2] ), sample( 'other half', sizing_grow(), $COLORS[0] ) ),
 );
 
 Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

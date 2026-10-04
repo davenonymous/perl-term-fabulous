@@ -59,25 +59,26 @@ subtest 'clip rects replay nested scissors' => sub {
 		scissor_end(),
 	);
 	is [ map { $frame->clip_rect($_) } 0 .. 10 ], [
-		[ 0, 0, 10, 5 ],    # no scissor: the viewport
-		[ 0, 0, 10, 5 ],    # a scissor start is outside its own scissor
-		[ 2, 1, 8,  5 ],    # cut to the viewport
-		[ 2, 1, 8,  5 ],
-		[ 5, 1, 8,  2 ],    # a nested scissor is cut to the one around it
-		[ 5, 1, 8,  2 ],
-		[ 2, 1, 8,  5 ],    # the end restores the outer scissor
-		[ 2, 1, 8,  5 ],
-		[ 0, 0, 10, 5 ],
-		[ 0, 0, 10, 5 ],
-		[ 20, 0, 20, 5 ],   # a scissor outside the viewport leaves an empty rect
-	], 'one clip rect per command';
-	is [ $frame->painted_rects(1) ], [], 'a scissor paints nothing';
-	is [ $frame->painted_rects(4) ], [ [ 5, 1, 8, 2 ] ], 'a rectangle paints its clipped box';
-	is [ $frame->painted_rects(10) ], [], 'nothing outside an empty clip rect';
+		[ 0,  0, 10, 5 ],    # no scissor: the viewport
+		[ 0,  0, 10, 5 ],    # a scissor start is outside its own scissor
+		[ 2,  1, 8,  5 ],    # cut to the viewport
+		[ 2,  1, 8,  5 ],
+		[ 5,  1, 8,  2 ],    # a nested scissor is cut to the one around it
+		[ 5,  1, 8,  2 ],
+		[ 2,  1, 8,  5 ],    # the end restores the outer scissor
+		[ 2,  1, 8,  5 ],
+		[ 0,  0, 10, 5 ],
+		[ 0,  0, 10, 5 ],
+		[ 20, 0, 20, 5 ],    # a scissor outside the viewport leaves an empty rect
+		],
+		'one clip rect per command';
+	is [ $frame->painted_rects(1) ],  [],                 'a scissor paints nothing';
+	is [ $frame->painted_rects(4) ],  [ [ 5, 1, 8, 2 ] ], 'a rectangle paints its clipped box';
+	is [ $frame->painted_rects(10) ], [],                 'nothing outside an empty clip rect';
 
-	like dies { frame( scissor_end() ) }, qr/\ATerm::Fabulous::Render::Frame: scissor end without an open scissor/, 'an unmatched end dies';
-	like dies { frame( command( CLAY_RENDER_COMMAND_TYPE_IMAGE, 0, 0, 1, 1 ) ) }, qr/unhandled render command type IMAGE/, 'an unpainted command type dies';
-	like dies { $frame->clip_rect(12) }, qr/no command at index '12'; the frame has 12 commands/, 'an index past the end dies';
+	like dies { frame( scissor_end() ) },                                         qr/\ATerm::Fabulous::Render::Frame: scissor end without an open scissor/, 'an unmatched end dies';
+	like dies { frame( command( CLAY_RENDER_COMMAND_TYPE_IMAGE, 0, 0, 1, 1 ) ) }, qr/unhandled render command type IMAGE/,                                  'an unpainted command type dies';
+	like dies { $frame->clip_rect(12) },                                          qr/no command at index '12'; the frame has 12 commands/,                  'an index past the end dies';
 };
 
 subtest 'a border paints the edges of its sides with a width' => sub {
@@ -86,7 +87,8 @@ subtest 'a border paints the edges of its sides with a width' => sub {
 		[ 1, 3, 5, 4 ],    # bottom: one cell thick whatever its width
 		[ 1, 1, 2, 4 ],    # left
 		[ 1, 1, 5, 2 ],    # top
-	], 'no right edge, and nothing inside';
+		],
+		'no right edge, and nothing inside';
 	is [ $frame->topmost_at( 2, 2 ) ], [], 'the inside is not painted';
 };
 
@@ -105,13 +107,13 @@ subtest 'paint order, painted_after and topmost_at' => sub {
 	is $frame->painted_after( 2, [ 1, 1, 3, 2 ] ), 0, 'nothing is painted over the top row of the canvas';
 	is $frame->painted_after( 2, [ 1, 1, 5, 3 ] ), 1, 'the text is painted over its bottom row';
 
-	is [ $frame->topmost_at( 3, 2 ) ], [ 3, 2, 1, 0 ], 'every command painting the cell, the topmost first';
-	is [ $frame->topmost_at( 9, 0 ) ], [0], 'only the root';
-	is [ $frame->topmost_at( 10, 0 ) ], [], 'outside the viewport';
+	is [ $frame->topmost_at( 3,  2 ) ], [ 3, 2, 1, 0 ], 'every command painting the cell, the topmost first';
+	is [ $frame->topmost_at( 9,  0 ) ], [0],            'only the root';
+	is [ $frame->topmost_at( 10, 0 ) ], [],             'outside the viewport';
 
 	my $empty = Term::Fabulous::Render::Frame->new( commands => [], width => 3, height => 2 );
 	is [ $empty->command_count, [ $empty->topmost_at( 0, 0 ) ] ], [ 0, [] ], 'an empty frame';
-	like dies { Term::Fabulous::Render::Frame->new( commands => {}, width => 3, height => 2 ) }, qr/commands must be an array reference/, 'commands are checked';
+	like dies { Term::Fabulous::Render::Frame->new( commands => {}, width =>  3, height => 2 ) }, qr/commands must be an array reference/,            'commands are checked';
 	like dies { Term::Fabulous::Render::Frame->new( commands => [], width => -1, height => 2 ) }, qr/width must be a number of at least 0, got '-1'/, 'the size is checked';
 };
 

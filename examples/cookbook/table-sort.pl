@@ -33,29 +33,29 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'tickets',
-	row_id       => 'ticket',
-	sort         => [ 'priority', [ opened => 'desc' ] ],    # highest priority first, newest first within each
-	# The look: a block frame, and colors instead of grid lines.
+	id     => 'tickets',
+	row_id => 'ticket',
+	sort   => [ 'priority', [ opened => 'desc' ] ],    # highest priority first, newest first within each
+		# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
 	header_line  => 'none',
 	stripe_color => '#1c2029',
 	columns      => [
-		{ key => 'ticket',   title => 'Ticket',   compare => 'natural' },    # T-2 before T-10
+		{ key => 'ticket',   title => 'Ticket', compare => 'natural' },    # T-2 before T-10
 		{ key => 'title',    title => 'Title' },
-		{ key => 'priority', title => 'Priority', compare => \&by_priority },
-		{ key => 'version',  title => 'Version',  compare => 'natural' },    # 2.9.3 before 2.10
-		{ key => 'opened',   title => 'Opened',   type    => 'date' },
+		{ key => 'priority', title => 'Priority', compare  => \&by_priority },
+		{ key => 'version',  title => 'Version',  compare  => 'natural' },    # 2.9.3 before 2.10
+		{ key => 'opened',   title => 'Opened',   type     => 'date' },
 		{ key => 'note',     title => 'Note',     sortable => 0 },
 	],
-	rows         => \@tickets,
+	rows => \@tickets,
 );
 
 sub describe_sort ($spec) {
@@ -64,7 +64,7 @@ sub describe_sort ($spec) {
 }
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Click a title to sort, Ctrl+click adds it. Keys: Up into the titles, then Enter or Space.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => describe_sort( $table->sort_spec ), text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => describe_sort( $table->sort_spec ),                                                          text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(

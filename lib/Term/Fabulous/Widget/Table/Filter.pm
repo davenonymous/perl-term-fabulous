@@ -33,7 +33,7 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	field $case_sensitive :param :reader = 0;
 	field $test           :param :reader = undef;
 	field $combine        :param :reader = undef;    # all, any or not
-	field $filters        :param = undef;            # the filters combine joins
+	field $filters        :param = undef;    # the filters combine joins
 
 	# What the comparison operand turned into: a number, [ first, after )
 	# epoch spans, a compiled pattern or folded text; built on first use
@@ -44,8 +44,8 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 		die "Term::Fabulous::Widget::Table::Filter: give 'op', 'test' or a combination ('all', 'any', 'not'), not several"
 			if 1 < grep { defined } $op, $test, $combine;
 		$self->_check_combination if defined $combine;
-		$self->_check_test        if defined $test;
-		$self->_check_condition   if defined $op;
+		$self->_check_test if defined $test;
+		$self->_check_condition if defined $op;
 		die "Term::Fabulous::Widget::Table::Filter: a filter needs 'op' (with 'column'), 'test' or a combination"
 			unless defined $op || defined $test || defined $combine;
 		die "Term::Fabulous::Widget::Table::Filter: on must be 'value' or 'display', got " . _describe($on) unless defined $on && $IS_ON{$on};
@@ -78,8 +78,7 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 
 	method _check_condition () {
 		$op = $ALIAS{$op} // $op;
-		die "Term::Fabulous::Widget::Table::Filter: unknown op " . _describe($op) . " (known: "
-			. join( ', ', sort( keys %TEXT_OP, keys %BLANK_OP, keys %COMPARE_OP ) ) . ")"
+		die "Term::Fabulous::Widget::Table::Filter: unknown op " . _describe($op) . " (known: " . join( ', ', sort( keys %TEXT_OP, keys %BLANK_OP, keys %COMPARE_OP ) ) . ")"
 			unless $TEXT_OP{$op} || $BLANK_OP{$op} || $COMPARE_OP{$op};
 		die "Term::Fabulous::Widget::Table::Filter: op '$op' needs a column" unless defined $column && !ref $column && length $column;
 		return if $BLANK_OP{$op};
@@ -173,8 +172,8 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	method matches ( $row, $source ) {
 		return ( List::Util::all { $_->matches( $row, $source ) } @$filters ) ? 1 : 0 if defined $combine && $combine eq 'all';
 		return ( List::Util::any { $_->matches( $row, $source ) } @$filters ) ? 1 : 0 if defined $combine && $combine eq 'any';
-		return $filters->[0]->matches( $row, $source ) ? 0 : 1 if defined $combine;
-		return $test->($row) ? 1 : 0 if defined $test && !defined $column;
+		return $filters->[0]->matches( $row, $source )                        ? 0 : 1 if defined $combine;
+		return $test->($row)                                                  ? 1 : 0 if defined $test && !defined $column;
 
 		my $cell = $on eq 'display' ? $source->display_of( $row, $column ) : $source->value_of( $row, $column );
 		return $test->( $cell, $row ) ? 1 : 0 if defined $test;
@@ -195,10 +194,10 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	method _matches_text ($cell) {
 		return "$cell" =~ _compile_pattern( $value, $case_sensitive ) ? 1 : 0 if $op eq 'matches';
 		my ( $text, $wanted ) = $case_sensitive ? ( "$cell", $value ) : ( fc("$cell"), fc($value) );
-		return index( $text, $wanted ) >= 0 ? 1 : 0       if $op eq 'contains';
-		return index( $text, $wanted ) < 0 ? 1 : 0        if $op eq 'not_contains';
-		return $text eq $wanted ? 1 : 0                   if $op eq 'equals';
-		return $text ne $wanted ? 1 : 0                   if $op eq 'not_equals';
+		return index( $text, $wanted ) >= 0                  ? 1 : 0 if $op eq 'contains';
+		return index( $text, $wanted ) < 0                   ? 1 : 0 if $op eq 'not_contains';
+		return $text eq $wanted                              ? 1 : 0 if $op eq 'equals';
+		return $text ne $wanted                              ? 1 : 0 if $op eq 'not_equals';
 		return substr( $text, 0, length $wanted ) eq $wanted ? 1 : 0 if $op eq 'starts_with';
 		return 1 if $wanted eq '';    # ends_with
 		return length($wanted) <= length($text) && substr( $text, -length($wanted) ) eq $wanted ? 1 : 0;
@@ -211,8 +210,9 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 			my @values = ref $value eq 'ARRAY' ? @$value : ($value);
 			my $read
 				= $cell_type eq 'number' ? sub ($item) { number_of($item) // die "Term::Fabulous::Widget::Table::Filter: op '$op' on a number column needs numbers, got '$item'\n" }
-				: $cell_type eq 'date'   ? sub ($item) { _date_span($item) // die "Term::Fabulous::Widget::Table::Filter: op '$op' on a date column needs dates (2024-05-03, 2024-05-03 14:30, epoch seconds), got '$item'\n" }
-				:                          sub ($item) { $case_sensitive ? "$item" : fc("$item") };
+				: $cell_type eq 'date'
+				? sub ($item) { _date_span($item) // die "Term::Fabulous::Widget::Table::Filter: op '$op' on a date column needs dates (2024-05-03, 2024-05-03 14:30, epoch seconds), got '$item'\n" }
+				: sub ($item) { $case_sensitive ? "$item" : fc("$item") };
 			[ map { $read->($_) } @values ];
 		};
 	}
@@ -229,14 +229,14 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	method _matches_string ( $cell, $operand ) {
 		return 0 if is_blank($cell);
 		my $text = $case_sensitive ? "$cell" : fc("$cell");
-		return ( List::Util::any { $text eq $_ } @$operand ) ? 1 : 0 if $op eq 'in';
+		return ( List::Util::any { $text eq $_ } @$operand )    ? 1 : 0 if $op eq 'in';
 		return $operand->[0] le $text && $text le $operand->[1] ? 1 : 0 if $op eq 'between';
 		return _compare( $text cmp $operand->[0], $op );
 	}
 
 	method _matches_number ( $number, $operand ) {
 		return 0 unless defined $number;
-		return ( List::Util::any { $number == $_ } @$operand ) ? 1 : 0 if $op eq 'in';
+		return ( List::Util::any { $number == $_ } @$operand )      ? 1 : 0 if $op eq 'in';
 		return $operand->[0] <= $number && $number <= $operand->[1] ? 1 : 0 if $op eq 'between';
 		return _compare( $number <=> $operand->[0], $op );
 	}
@@ -246,18 +246,18 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	method _matches_date ( $epoch, $spans ) {
 		return 0 unless defined $epoch;
 		my $inside = sub ($span) { $span->[0] <= $epoch && $epoch < $span->[1] };
-		return ( List::Util::any { $inside->($_) } @$spans ) ? 1 : 0 if $op eq 'in';
+		return ( List::Util::any { $inside->($_) } @$spans )       ? 1 : 0 if $op eq 'in';
 		return $spans->[0][0] <= $epoch && $epoch < $spans->[1][1] ? 1 : 0 if $op eq 'between';
 		my $span = $spans->[0];
 		return _compare( $epoch < $span->[0] ? -1 : $epoch >= $span->[1] ? 1 : 0, $op );
 	}
 
 	sub _compare ( $order, $op ) {
-		return $order == 0 ? 1 : 0  if $op eq '=';
-		return $order != 0 ? 1 : 0  if $op eq '!=';
-		return $order < 0 ? 1 : 0   if $op eq '<';
-		return $order <= 0 ? 1 : 0  if $op eq '<=';
-		return $order > 0 ? 1 : 0   if $op eq '>';
+		return $order == 0 ? 1 : 0 if $op eq '=';
+		return $order != 0 ? 1 : 0 if $op eq '!=';
+		return $order < 0  ? 1 : 0 if $op eq '<';
+		return $order <= 0 ? 1 : 0 if $op eq '<=';
+		return $order > 0  ? 1 : 0 if $op eq '>';
 		return $order >= 0 ? 1 : 0;    # >=
 	}
 
@@ -276,21 +276,21 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 		my $text = $expression =~ s/\A\s+|\s+\z//gr;
 		return undef unless length $text;
 		my %common = ( column => $options{column}, type => $type, on => $options{on} // 'value', case_sensitive => $options{case_sensitive} // 0 );
-		return $class->new( %common, op => 'empty' )     if $text eq '=';
+		return $class->new( %common, op => 'empty' ) if $text eq '=';
 		return $class->new( %common, op => 'not_empty' ) if $text eq '!=';
 		my ( $op, $value ) = $type eq 'string' ? _parse_text($text) : _parse_ordered( $type, $text );
 		return $class->new( %common, op => $op, value => $value );
 	}
 
 	sub _parse_text ($text) {
-		return ( matches     => $1 ) if $text =~ m{\A/(.+)/\z}s;
-		return ( not_equals  => $1 ) if $text =~ /\A!=\s*(.+)\z/s;
-		return ( equals      => $1 ) if $text =~ /\A=\s*(.+)\z/s;
+		return ( matches      => $1 ) if $text =~ m{\A/(.+)/\z}s;
+		return ( not_equals   => $1 ) if $text =~ /\A!=\s*(.+)\z/s;
+		return ( equals       => $1 ) if $text =~ /\A=\s*(.+)\z/s;
 		return ( not_contains => $1 ) if $text =~ /\A!\s*(.+)\z/s;
-		return ( equals      => $1 ) if $text =~ /\A\^(.+)\$\z/s;
-		return ( starts_with => $1 ) if $text =~ /\A\^(.+)\z/s;
-		return ( ends_with   => $1 ) if $text =~ /\A(.+)\$\z/s;
-		return ( contains    => $text );
+		return ( equals       => $1 ) if $text =~ /\A\^(.+)\$\z/s;
+		return ( starts_with  => $1 ) if $text =~ /\A\^(.+)\z/s;
+		return ( ends_with    => $1 ) if $text =~ /\A(.+)\$\z/s;
+		return ( contains     => $text );
 	}
 
 	sub _parse_ordered ( $type, $text ) {

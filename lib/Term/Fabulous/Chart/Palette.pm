@@ -71,7 +71,7 @@ sub chart_color ( $owner, $name, $value ) {
 # $from mixed with $amount (0 to 1) of $to.
 sub mix_rgb ( $from, $to, $amount ) {
 	return $from if $amount <= 0;
-	return $to   if $amount >= 1;
+	return $to if $amount >= 1;
 	my $mixed = 0;
 	foreach my $shift ( 16, 8, 0 ) {
 		my ( $start, $end ) = ( ( $from >> $shift ) & 0xFF, ( $to >> $shift ) & 0xFF );

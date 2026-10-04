@@ -14,7 +14,7 @@ my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLA
 
 foreach my $pair ( [ 'Name', 'Ada Lovelace' ], [ 'Occupation', 'Mathematician' ], [ 'Born', '1815' ] ) {
 	my ( $name, $value ) = @$pair;
-	my $row   = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+	my $row   = Term::Fabulous::Widget::Box->new( layout      => { child_gap => 2 } );
 	my $label = Term::Fabulous::Widget::Box->new( width_group => 1 );    # all labels: one group
 	$label->add_child( Term::Fabulous::Widget::Text->new( text => "$name:", text_color => [ 150, 160, 180, 255 ] ) );
 	$row->add_child( $label, Term::Fabulous::Widget::Text->new( text => $value, text_color => [ 255, 255, 255, 255 ] ) );

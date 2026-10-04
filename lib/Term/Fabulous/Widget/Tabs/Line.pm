@@ -40,7 +40,7 @@ class Term::Fabulous::Widget::Tabs::Line
 	# The first and the last cell of a tab along the line, as the frame
 	# being drawn lays it out; nothing when the tab is not laid out.
 	method _span ($tab) {
-		my $ui  = $self->ui // return ();
+		my $ui  = $self->ui               // return ();
 		my $box = $ui->bounding_box($tab) // return ();
 		my ( $x0, $y0, $x1, $y1 ) = cell_rect($box);
 		my ( $origin_x, $origin_y ) = $self->content_origin;

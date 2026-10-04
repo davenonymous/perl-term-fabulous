@@ -69,9 +69,9 @@ class Term::Fabulous::Widget::Toast
 	# A toast looks like a toast unless told otherwise.
 	sub BUILDARGS ( $class, %params ) {
 		$params{background_color} //= [ 28, 33, 45, 255 ];
-		$params{border_width} //= 1;
-		$params{border_style} //= Term::Fabulous::Enum::BorderStyle->Round;
-		$params{layout} = { padding => { left => 1, right => 1 }, child_gap => 1, %{ $params{layout} // {} } };
+		$params{border_width}     //= 1;
+		$params{border_style}     //= Term::Fabulous::Enum::BorderStyle->Round;
+		$params{layout}         = { padding => { left => 1, right => 1 }, child_gap => 1, %{ $params{layout} // {} } };
 		$params{layout}{sizing} = { %DEFAULT_SIZING, %{ $params{layout}{sizing} // {} } };
 		return $class->SUPER::BUILDARGS(%params);
 	}
@@ -81,7 +81,7 @@ class Term::Fabulous::Widget::Toast
 		$title      = string( $self, title   => $title );
 		$message    = string( $self, message => $message );
 		$icon       = defined $icon ? string( $self, icon => $icon ) : undef;
-		$closable   = boolean( $self, closable  => $closable );
+		$closable   = boolean( $self, closable => $closable );
 		$timeout    = $self->_checked_timeout($timeout);
 		$important  = boolean( $self, important => $important );
 		$position   = $self->_checked_position($position);
@@ -92,7 +92,7 @@ class Term::Fabulous::Widget::Toast
 
 		weaken( my $weak_self = $self );
 		$_icon_text    = Term::Fabulous::Widget::Text->new( text => '' );
-		$_title_text   = Term::Fabulous::Widget::Text->new( text => '', bold => 1 );
+		$_title_text   = Term::Fabulous::Widget::Text->new( text => '', bold      => 1 );
 		$_message_text = Term::Fabulous::Widget::Text->new( text => '', wrap_mode => CLAY_TEXT_WRAP_WORDS );
 		$_body         = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
 		$_close_button = Term::Fabulous::Widget::Button->new( can_focus => 0, pressed_background_color => undef );
@@ -177,7 +177,7 @@ class Term::Fabulous::Widget::Toast
 		$_title_text->text($title);
 		$_title_text->text_color( $important ? $dark : $accent );
 		$_message_text->text($message);
-		$_message_text->text_color( $important ? $dark : $text_color );
+		$_message_text->text_color( $important                ? $dark : $text_color );
 		$_close_button->children->[0]->text_color( $important ? $dark : $text_color );
 
 		$self->_order_body( ( length $title ? $_title_text : () ), ( length $message ? $_message_text : () ) );
@@ -189,7 +189,7 @@ class Term::Fabulous::Widget::Toast
 	# The title and the message that have a text come first in the body,
 	# then whatever the program added.
 	method _order_body (@texts) {
-		my %is_text = map { refaddr($_) => 1 } $_title_text, $_message_text;
+		my %is_text = map  { refaddr($_) => 1 } $_title_text, $_message_text;
 		my @others  = grep { !$is_text{ refaddr($_) } } $_body->children->@*;
 		$_body->clear_children;
 		$_body->add_child( @texts, @others );
@@ -206,14 +206,14 @@ class Term::Fabulous::Widget::Toast
 		return $$field_ref;
 	}
 
-	method kind (@new)       { return @new ? $self->_set( \$kind,       $self->_checked_kind( $new[0] ) ) : $kind }
-	method title (@new)      { return @new ? $self->_set( \$title,      string( $self, title => $new[0] ) ) : $title }
-	method message (@new)    { return @new ? $self->_set( \$message,    string( $self, message => $new[0] ) ) : $message }
-	method icon (@new)       { return @new ? $self->_set( \$icon,       defined $new[0] ? string( $self, icon => $new[0] ) : undef ) : $icon }
-	method closable (@new)   { return @new ? $self->_set( \$closable,   boolean( $self, closable => $new[0] ) ) : $closable }
-	method important (@new)  { return @new ? $self->_set( \$important,  boolean( $self, important => $new[0] ) ) : $important }
-	method color (@new)      { return @new ? $self->_set( \$color,      defined $new[0] ? Term::Fabulous::Check::color( $self, color => $new[0] ) : undef ) : $color }
-	method text_color (@new) { return @new ? $self->_set( \$text_color, Term::Fabulous::Check::color( $self, text_color => $new[0] ) ) : $text_color }
+	method kind       (@new) { return @new ? $self->_set( \$kind, $self->_checked_kind( $new[0] ) )                                                    : $kind }
+	method title      (@new) { return @new ? $self->_set( \$title, string( $self, title => $new[0] ) )                                                 : $title }
+	method message    (@new) { return @new ? $self->_set( \$message, string( $self, message => $new[0] ) )                                             : $message }
+	method icon       (@new) { return @new ? $self->_set( \$icon, defined $new[0] ? string( $self, icon => $new[0] ) : undef )                         : $icon }
+	method closable   (@new) { return @new ? $self->_set( \$closable, boolean( $self, closable => $new[0] ) )                                          : $closable }
+	method important  (@new) { return @new ? $self->_set( \$important, boolean( $self, important => $new[0] ) )                                        : $important }
+	method color      (@new) { return @new ? $self->_set( \$color, defined $new[0] ? Term::Fabulous::Check::color( $self, color => $new[0] ) : undef ) : $color }
+	method text_color (@new) { return @new ? $self->_set( \$text_color, Term::Fabulous::Check::color( $self, text_color => $new[0] ) )                 : $text_color }
 
 	method timeout (@new) {
 		return $timeout unless @new;

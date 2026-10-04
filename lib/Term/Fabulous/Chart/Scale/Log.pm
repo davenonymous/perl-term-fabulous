@@ -48,11 +48,11 @@ class Term::Fabulous::Chart::Scale::Log :isa(Term::Fabulous::Chart::Scale) {
 			croak "$class: $end->[0] of a logarithmic axis must be greater than 0, got $end->[1]" if defined $end->[1] && $end->[1] <= 0;
 		}
 		croak "$class: min ($fixed_low) must be less than max ($fixed_high)" if defined $fixed_low && defined $fixed_high && $fixed_low >= $fixed_high;
-		my $vertical = ( $options{orientation} // 'vertical' ) eq 'vertical';
+		my $vertical  = ( $options{orientation} // 'vertical' ) eq 'vertical';
 		my $logarithm = sub ($value) { log($value) / log($base) };
 
 		my ( $low, $high ) = $options{extent} ? $options{extent}->@* : ( 1, $base );
-		$low  = $fixed_low  if defined $fixed_low;
+		$low  = $fixed_low if defined $fixed_low;
 		$high = $fixed_high if defined $fixed_high;
 		$high = $low * $base if $high <= $low;
 
@@ -61,11 +61,11 @@ class Term::Fabulous::Chart::Scale::Log :isa(Term::Fabulous::Chart::Scale) {
 		$last = $first + 1 if $last <= $first;
 		my ( $domain_low, $domain_high ) = ( $base**$first, $base**$last );
 
-		my @powers = grep { $_ >= $first - EPSILON && $_ <= $last + EPSILON } ceil( $first - EPSILON ) .. floor( $last + EPSILON );
-		my $decades = @powers - 1;
+		my @powers       = grep { $_ >= $first - EPSILON && $_ <= $last + EPSILON } ceil( $first - EPSILON ) .. floor( $last + EPSILON );
+		my $decades      = @powers - 1;
 		my $spans_domain = @powers && abs( $powers[0] - $first ) < EPSILON && abs( $powers[-1] - $last ) < EPSILON && $decades > 0;
-		my $per_decade = $spans_domain ? floor( ( $cells - 1 ) / $decades ) : 0;
-		my $used = $spans_domain && $per_decade >= 1 ? $decades * $per_decade + 1 : $cells;
+		my $per_decade   = $spans_domain                     ? floor( ( $cells - 1 ) / $decades ) : 0;
+		my $used         = $spans_domain && $per_decade >= 1 ? $decades * $per_decade + 1         : $cells;
 
 		# Label every power when there is room, else every second or third.
 		my $format  = $options{format};

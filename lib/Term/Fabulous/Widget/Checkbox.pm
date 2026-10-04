@@ -31,8 +31,8 @@ class Term::Fabulous::Widget::Checkbox
 		$checked_mark       = string( $self, checked_mark       => $checked_mark );
 		$unchecked_mark     = string( $self, unchecked_mark     => $unchecked_mark );
 		$indeterminate_mark = string( $self, indeterminate_mark => $indeterminate_mark );
-		$checked            = boolean( $self, checked           => $checked );
-		$indeterminate      = boolean( $self, indeterminate     => $indeterminate );
+		$checked            = boolean( $self, checked       => $checked );
+		$indeterminate      = boolean( $self, indeterminate => $indeterminate );
 	}
 
 	method _set_string ( $name, $field_ref, @new ) {
@@ -42,9 +42,9 @@ class Term::Fabulous::Widget::Checkbox
 		return $$field_ref;
 	}
 
-	method label (@new)              { return $self->_set_string( label              => \$label,              @new ) }
-	method checked_mark (@new)       { return $self->_set_string( checked_mark       => \$checked_mark,       @new ) }
-	method unchecked_mark (@new)     { return $self->_set_string( unchecked_mark     => \$unchecked_mark,     @new ) }
+	method label              (@new) { return $self->_set_string( label              => \$label,              @new ) }
+	method checked_mark       (@new) { return $self->_set_string( checked_mark       => \$checked_mark,       @new ) }
+	method unchecked_mark     (@new) { return $self->_set_string( unchecked_mark     => \$unchecked_mark,     @new ) }
 	method indeterminate_mark (@new) { return $self->_set_string( indeterminate_mark => \$indeterminate_mark, @new ) }
 
 	method checked (@new) {
@@ -93,10 +93,10 @@ class Term::Fabulous::Widget::Checkbox
 	}
 
 	method paint () {
-		my $bg = $self->paint_focus_background;
+		my $bg      = $self->paint_focus_background;
 		my $mark_fg = $checked || $indeterminate ? $self->accent_attr : $self->foreground_attr;
-		$self->paint_text( 0, 0, $self->_mark, $mark_fg, $bg );
-		$self->paint_text( $self->_mark_columns + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
+		$self->paint_text( 0,                        0, $self->_mark, $mark_fg,               $bg );
+		$self->paint_text( $self->_mark_columns + 1, 0, $label,       $self->foreground_attr, $bg ) if length $label;
 		return;
 	}
 

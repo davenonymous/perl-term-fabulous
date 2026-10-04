@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -43,9 +43,10 @@ sub state_row ( $state, $widget ) {
 }
 
 my $words = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-$words->add_child( map { Term::Fabulous::Widget::Text->new( text => $_->[0], text_color => $_->[1] ) }
-		[ 'Red', [ 224, 108, 117, 255 ] ], [ 'Orange', [ 209, 154, 102, 255 ] ], [ 'Yellow', [ 229, 192, 123, 255 ] ],
-		[ 'Green', [ 152, 195, 121, 255 ] ], [ 'Cyan', [ 86, 182, 194, 255 ] ], [ 'Blue', [ 97, 175, 239, 255 ] ], [ 'Violet', [ 198, 120, 221, 255 ] ] );
+$words->add_child(
+	map { Term::Fabulous::Widget::Text->new( text => $_->[0], text_color => $_->[1] ) } [ 'Red', [ 224, 108, 117, 255 ] ], [ 'Orange', [ 209, 154, 102, 255 ] ], [ 'Yellow', [ 229, 192, 123, 255 ] ],
+	[ 'Green', [ 152, 195, 121, 255 ] ], [ 'Cyan', [ 86, 182, 194, 255 ] ], [ 'Blue', [ 97, 175, 239, 255 ] ], [ 'Violet', [ 198, 120, 221, 255 ] ]
+);
 state_row( 'colors', $words );
 
 my $sentence = 'Text wraps at spaces to the width of its box, and each line can be aligned.';

@@ -19,10 +19,10 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 	use Time::HiRes ();
 	use Term::Fabulous::Screenshot::Screen;
 
-	use constant HARNESS        => 'Term::Fabulous::Screenshot::Harness';
+	use constant HARNESS         => 'Term::Fabulous::Screenshot::Harness';
 	use constant CONFIG_VARIABLE => 'TF_SCREENSHOT_HARNESS';
-	use constant READ_SIZE      => 65536;
-	use constant POLL_SECONDS   => 0.05;
+	use constant READ_SIZE       => 65536;
+	use constant POLL_SECONDS    => 0.05;
 
 	# The library directories the program is run with; the harness must be
 	# found in one of them. Relative directories are made absolute, since
@@ -60,7 +60,7 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 			input_fd     => fileno($pty),
 			capture_file => $capture_file,
 		};
-		my @command = ( $^X, ( map {"-I$_"} @$include_dirs ), '-M' . HARNESS, $script, @{ $job{arguments} // [] } );
+		my @command = ( $^X, ( map { "-I$_" } @$include_dirs ), '-M' . HARNESS, $script, @{ $job{arguments} // [] } );
 
 		my $pid = fork // croak "Term::Fabulous::Screenshot::Runner: fork failed: $!";
 		if ( $pid == 0 ) {
@@ -101,6 +101,7 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 	# STDIN and STDOUT, keep its master side open for the harness, and run
 	# the program in a clean, fixed environment. Never returns.
 	sub _start_program ( $pty, $error_writer, $work_dir, $config, $command ) {
+
 		# _exit flushes no Perl buffers, so the message is written directly.
 		my $failed = sub ($message) {
 			syswrite $error_writer, "Term::Fabulous::Screenshot::Runner: $message\n";
@@ -112,8 +113,8 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		my $slave = $pty->slave;
 		open( STDIN,  '<&', $slave ) or $failed->("cannot attach STDIN to the terminal: $!");
 		open( STDOUT, '>&', $slave ) or $failed->("cannot attach STDOUT to the terminal: $!");
-		fcntl( $pty, F_SETFD, 0 )           or $failed->("cannot keep the terminal's master side open: $!");
-		chdir $work_dir                     or $failed->("cannot change to $work_dir: $!");
+		fcntl( $pty, F_SETFD, 0 ) or $failed->("cannot keep the terminal's master side open: $!");
+		chdir $work_dir or $failed->("cannot change to $work_dir: $!");
 
 		%ENV = (
 			PATH              => $ENV{PATH} // '/usr/bin:/bin',
@@ -127,7 +128,7 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 			PERL_PERTURB_KEYS => 0,
 			CONFIG_VARIABLE() => JSON::PP->new->utf8->canonical->encode($config),
 		);
-		exec {$command->[0]} @$command or $failed->("cannot run $command->[0]: $!");
+		exec { $command->[0] } @$command or $failed->("cannot run $command->[0]: $!");
 	}
 
 	# Reads the terminal's output and the program's STDERR until the

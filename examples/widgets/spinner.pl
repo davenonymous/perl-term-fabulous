@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
-		padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 4,
 	},
 );
@@ -52,7 +52,7 @@ $root->add_child(
 		spinner( 'bounce', color => $color{yellow} ),
 		spinner( 'wave',   color => $color{red} ),
 		spinner( 'ring',   color => $color{green} ),
-		Term::Fabulous::Widget::Spinner->new( style => 'line', label => 'stopped', running => 0 ),
+		Term::Fabulous::Widget::Spinner->new( style  => 'line', label => 'stopped', running => 0 ),
 		Term::Fabulous::Widget::Spinner->new( frames => [ map { ".oO\@Oo" =~ s/\A(.{$_})(.*)\z/$2$1/r } 0 .. 5 ], interval => 0.12, label => 'own frames', color => $color{yellow} ),
 	),
 );

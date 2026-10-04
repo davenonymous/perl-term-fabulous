@@ -36,7 +36,7 @@ role Term::Fabulous::Role::HasBorderStyle {
 	sub _side_names ( $owner, $sides ) {
 		die ref($owner) . ": outer_border_sides must be an array reference of side names, got " . ( defined $sides ? ( ref $sides ? ref($sides) . ' reference' : "'$sides'" ) : 'undef' )
 			unless ref $sides eq 'ARRAY';
-		my %is_side = map { $_ => 1 } @SIDES;
+		my %is_side = map  { $_ => 1 } @SIDES;
 		my @unknown = grep { !defined || ref || !$is_side{$_} } @$sides;
 		die ref($owner) . ": outer_border_sides knows only the sides @SIDES, got " . join( ', ', map { defined $_ ? "'$_'" : 'undef' } @unknown ) if @unknown;
 		my %wanted = map { $_ => 1 } @$sides;
@@ -59,8 +59,7 @@ role Term::Fabulous::Role::HasBorderStyle {
 	# border_style fills the sides that have no style of their own.
 	ADJUST :params ( :$border_style = undef ) {
 		if ( defined $border_style ) {
-			die "Term::Fabulous::Role::HasBorderStyle: border_style must be a Term::Fabulous::Enum::BorderStyle, got "
-				. ( ref $border_style || "'$border_style'" )
+			die "Term::Fabulous::Role::HasBorderStyle: border_style must be a Term::Fabulous::Enum::BorderStyle, got " . ( ref $border_style || "'$border_style'" )
 				unless blessed $border_style && $border_style->isa('Term::Fabulous::Enum::BorderStyle');
 
 			foreach my $side (@SIDES) {
@@ -68,14 +67,14 @@ role Term::Fabulous::Role::HasBorderStyle {
 				$self->$accessor($border_style) unless defined $self->$accessor;
 			}
 		}
-	}
+		}
 
-	# Hand-written accessors rather than :accessor ones, so that writing a
-	# style marks the widget changed.
-	method border_style_top (@new)    { return $self->_set_border_style( top    => \$border_style_top,    @new ) }
-	method border_style_right (@new)  { return $self->_set_border_style( right  => \$border_style_right,  @new ) }
+		# Hand-written accessors rather than :accessor ones, so that writing a
+		# style marks the widget changed.
+		method border_style_top (@new) { return $self->_set_border_style( top => \$border_style_top, @new ) }
+	method border_style_right  (@new) { return $self->_set_border_style( right  => \$border_style_right,  @new ) }
 	method border_style_bottom (@new) { return $self->_set_border_style( bottom => \$border_style_bottom, @new ) }
-	method border_style_left (@new)   { return $self->_set_border_style( left   => \$border_style_left,   @new ) }
+	method border_style_left   (@new) { return $self->_set_border_style( left   => \$border_style_left,   @new ) }
 
 	method _set_border_style ( $side, $field_ref, @new ) {
 		return $$field_ref unless @new;
@@ -93,17 +92,17 @@ role Term::Fabulous::Role::HasBorderStyle {
 		return undef unless defined $corners;
 		die ref($owner) . ": border_corners must be undef or a hash reference of corner glyphs, got " . ( ref $corners ? ref($corners) . ' reference' : "'$corners'" )
 			unless ref $corners eq 'HASH';
-		my %is_corner = map { $_ => 1 } @CORNERS;
+		my %is_corner = map  { $_ => 1 } @CORNERS;
 		my @unknown   = grep { !$is_corner{$_} } sort keys %$corners;
 		die ref($owner) . ": border_corners does not know @unknown (known: @CORNERS)" if @unknown;
 		return { map { $_ => glyph( $owner, "border_corners $_", $corners->{$_} ) } grep { defined $corners->{$_} } sort keys %$corners };
 	}
 
 	method border_corners (@new) {
-		return defined $border_corners ? { %$border_corners } : undef unless @new;
+		return defined $border_corners ? {%$border_corners} : undef unless @new;
 		$border_corners = _corner_glyphs( $self, $new[0] );
 		$self->mark_changed;
-		return defined $border_corners ? { %$border_corners } : undef;
+		return defined $border_corners ? {%$border_corners} : undef;
 	}
 
 	# The glyph drawn at a corner instead of the style's corner glyph, or
@@ -167,7 +166,7 @@ role Term::Fabulous::Role::HasBorderStyle {
 		my $insets = _border_insets( $self->border_width, $self->_hidden_border_sides );
 		return unless defined $insets;
 
-		my $layout  = $config->{layout} // {};
+		my $layout  = $config->{layout}  // {};
 		my $padding = $layout->{padding} // {};
 		die "Term::Fabulous::Role::HasBorderStyle: layout padding must be a hash reference"
 			unless ref $padding eq 'HASH';

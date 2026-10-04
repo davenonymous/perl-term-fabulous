@@ -25,11 +25,12 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
+
 # The arguments are bytes, like the command's output.
-my $title = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+my $title  = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
 my $output = Term::Fabulous::Widget::ScrollBox->new(
 	id               => 'output',
 	background_color => [ 30, 35, 50, 255 ],
@@ -66,15 +67,16 @@ sub line_reader ($color) {
 
 my $loop    = IO::Async::Loop->new;
 my $process = IO::Async::Process->new(
-	command => \@command,
-	stdin   => { from => '' },    # the command must not read the terminal
-	stdout  => { on_read => line_reader( [ 200, 210, 230, 255 ] ) },
-	stderr  => { on_read => line_reader( [ 255, 110, 110, 255 ] ) },
+	command   => \@command,
+	stdin     => { from    => '' },    # the command must not read the terminal
+	stdout    => { on_read => line_reader( [ 200, 210, 230, 255 ] ) },
+	stderr    => { on_read => line_reader( [ 255, 110, 110, 255 ] ) },
 	on_finish => sub ( $process, $exit_code ) {
 		add_line( sprintf( 'Finished with exit status %d. Press Ctrl+C to quit.', $exit_code >> 8 ), [ 255, 200, 80, 255 ] );
 		return;
 	},
 	on_exception => sub ( $process, $exception, $errno, $exit_code ) {
+
 		# A failed exec leaves $exception empty and the reason in $errno.
 		my $reason = length( $exception // '' ) ? $exception : "$errno";
 		add_line( "Could not run the command: $reason", [ 255, 110, 110, 255 ] );
@@ -91,7 +93,7 @@ $loop->add(
 	IO::Async::Timer::Periodic->new(
 		interval => 1 / 30,
 		on_tick  => sub {
-			my $state = $ui->scroll_state($output) or return;
+			my $state  = $ui->scroll_state($output) or return;
 			my $lowest = min( 0, $state->{viewport}{height} - $state->{content}{height} );
 			$ui->scroll_to( $output, { y => $lowest } ) if $state->{position}{y} != $lowest;
 			return;

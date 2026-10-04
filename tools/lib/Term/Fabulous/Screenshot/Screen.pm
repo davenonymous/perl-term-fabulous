@@ -76,7 +76,7 @@ class Term::Fabulous::Screenshot::Screen :strict(params) {
 	# lines ending in CR LF (the terminal turns LF into CR LF). Each line
 	# is one row; trailing empty lines are dropped.
 	sub from_output ( $class, $bytes, $width ) {
-		my $text = decode( 'UTF-8', $bytes, Encode::FB_CROAK | Encode::LEAVE_SRC );
+		my $text  = decode( 'UTF-8', $bytes, Encode::FB_CROAK | Encode::LEAVE_SRC );
 		my @lines = split /\r\n/, $text, -1;
 		pop @lines while @lines && $lines[-1] eq '';
 		croak 'Term::Fabulous::Screenshot::Screen: the program printed nothing' unless @lines;
@@ -130,7 +130,7 @@ class Term::Fabulous::Screenshot::Screen :strict(params) {
 	}
 
 	sub _apply_sgr ( $style, $parameters, $line_number ) {
-		my @codes = length $parameters ? split( /;/, $parameters, -1 ) : (0);
+		my @codes        = length $parameters ? split( /;/, $parameters, -1 ) : (0);
 		my %style_by_sgr = STYLE_BY_SGR;
 		while (@codes) {
 			my $code = shift @codes;

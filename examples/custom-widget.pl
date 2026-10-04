@@ -81,7 +81,7 @@ class My::ToggleSwitch :isa(Term::Fabulous::Widget::Input) :strict(params) {
 	# Return true for keys the widget uses; they stop bubbling. Others
 	# (Tab, Escape, ...) bubble on to the ancestors.
 	method handle_key ($event) {
-		my $name = $event->key_name // return 0;
+		my $name             = $event->key_name // return 0;
 		my %new_state_by_key = ( Space => !$on, Enter => !$on, Left => 0, Right => 1 );
 		return 0 unless exists $new_state_by_key{$name};
 		$self->_switch( $new_state_by_key{$name} ? 1 : 0 );

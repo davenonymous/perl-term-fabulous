@@ -26,16 +26,17 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'users',
-	row_id       => 'login',
-	selection    => 'multiple',
-	sort         => ['name'],
+	id        => 'users',
+	row_id    => 'login',
+	selection => 'multiple',
+	sort      => ['name'],
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -47,12 +48,12 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'uid',        title => 'UID',        type => 'number' },
 		{ key => 'last_login', title => 'Last login', type => 'date' },
 	],
-	rows         => \@users,
+	rows => \@users,
 );
 
 my $help      = Term::Fabulous::Widget::Text->new( text => 'Space selects, Enter opens, a click on a title sorts. q quits.', text_color => [ 150, 160, 180, 255 ] );
-my $selected  = Term::Fabulous::Widget::Text->new( text => 'Selected: nothing', text_color => [ 230, 230, 230, 255 ] );
-my $activated = Term::Fabulous::Widget::Text->new( text => 'Opened: nothing yet', text_color => [ 229, 192, 123, 255 ] );
+my $selected  = Term::Fabulous::Widget::Text->new( text => 'Selected: nothing',                                              text_color => [ 230, 230, 230, 255 ] );
+my $activated = Term::Fabulous::Widget::Text->new( text => 'Opened: nothing yet',                                            text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $selected, $activated );
 
 $table->on(

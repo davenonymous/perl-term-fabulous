@@ -25,17 +25,17 @@ class Term::Fabulous::Widget::PolarAreaChart
 	use Term::Fabulous::Chart::Scale::Linear;
 	use Term::Fabulous::Chart::Surface;
 
-	field $max :param = undef;    # the value at the outer ring; undef: from the data
-	field $ticks :param = undef;  # the number of rings wanted
-	field $_scale;                # the scale of the frame being drawn
+	field $max   :param = undef;    # the value at the outer ring; undef: from the data
+	field $ticks :param = undef;    # the number of rings wanted
+	field $_scale;    # the scale of the frame being drawn
 
 	ADJUST {
-		$self->_fail( 'max', 'a positive number or undef', $max ) if defined $max && !( !ref $max && $max =~ /\A[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?\z/ && $max > 0 );
+		$self->_fail( 'max',   'a positive number or undef',  $max ) if defined $max     && !( !ref $max && $max   =~ /\A[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?\z/ && $max > 0 );
 		$self->_fail( 'ticks', 'a positive integer or undef', $ticks ) if defined $ticks && ( ref $ticks || $ticks !~ /\A[1-9][0-9]*\z/ );
 	}
 
 	# The rings show the values; the legend repeats them.
-	method default_slice_labels :override ()  { return 'none' }
+	method default_slice_labels  :override () { return 'none' }
 	method default_legend_values :override () { return 'value' }
 
 	method max (@new) {
@@ -64,6 +64,7 @@ class Term::Fabulous::Widget::PolarAreaChart
 
 	# Rings at the ticks of the value scale, behind the slices.
 	method draw_background_grid :override ( $surface, $x, $y, $width, $height, $circle, $look, $slices ) {
+
 		# Rings about every three rows (six cell widths) apart.
 		my $rows = List::Util::max( 2, floor( $circle->{radius} / 1.5 ) + 1 );
 		$_scale = Term::Fabulous::Chart::Scale::Linear->fit(
@@ -92,8 +93,8 @@ class Term::Fabulous::Widget::PolarAreaChart
 		my $last_row;
 		foreach my $tick ( reverse $_scale->ticks ) {
 			next unless $tick->{value} > 0;
-			my ( $at_x, $at_y ) = point_at( $circle, $tick->{position} * $circle->{radius}, 0 );
-			my ( $column, $row ) = ( floor($at_x) + 1, floor($at_y) );
+			my ( $at_x,   $at_y ) = point_at( $circle, $tick->{position} * $circle->{radius}, 0 );
+			my ( $column, $row )  = ( floor($at_x) + 1, floor($at_y) );
 			next if defined $last_row && $row <= $last_row;
 			my $under = $surface->bg_at( $x + $column, $y + $row );
 			my $color = defined $under && ( !defined $look->{background} || $under != $look->{background} ) ? contrast_rgb($under) : $look->{label};

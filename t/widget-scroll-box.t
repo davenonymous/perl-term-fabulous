@@ -45,8 +45,8 @@ sub column ( $h, $x ) {
 }
 
 sub click ( $h, $x, $y, $mod = 0 ) {
-	$h->{terminal}->mouse( key => TB_KEY_MOUSE_LEFT, x => $x, y => $y, mod => $mod );
-	$h->{terminal}->mouse( key => TB_KEY_MOUSE_RELEASE, x => $x, y => $y, ch => TB_KEY_MOUSE_LEFT ) unless $mod & TB_MOD_MOTION;
+	$h->{terminal}->mouse( key => TB_KEY_MOUSE_LEFT,    x => $x, y => $y, mod => $mod );
+	$h->{terminal}->mouse( key => TB_KEY_MOUSE_RELEASE, x => $x, y => $y, ch  => TB_KEY_MOUSE_LEFT ) unless $mod & TB_MOD_MOTION;
 	$h->{ui}->step;
 	return;
 }
@@ -73,10 +73,10 @@ KDL
 
 subtest 'vertical scrollbar' => sub {
 	my ( $box, $h ) = box_ui(30);
-	is column( $h, 28 ), "─\x{2503}\x{2503}││││─", 'the last content column shows the track with the thumb at the top';
-	is scalar @{ $box->children }, 30, 'the scrollbar is not among the children';
+	is column( $h, 28 ),           "─\x{2503}\x{2503}││││─", 'the last content column shows the track with the thumb at the top';
+	is scalar @{ $box->children }, 30,                       'the scrollbar is not among the children';
 	click( $h, 28, 6 );
-	like row( $h, 6 ), qr/Line 30/, 'a click at the end of the scrollbar shows the end';
+	like row( $h, 6 ),     qr/Line 30/,     'a click at the end of the scrollbar shows the end';
 	like column( $h, 28 ), qr/\x{2503}─\z/, 'and the thumb is at the bottom';
 	click( $h, 28, 1, TB_MOD_MOTION );
 	like row( $h, 1 ), qr/Line 1 /, 'dragging to the top shows the start';
@@ -94,15 +94,15 @@ subtest 'horizontal scrollbar' => sub {
 	like row( $h, 6 ), qr/\A│\x{2501}+─+ │\z/, 'the last content row shows the horizontal track with the thumb at the left';
 	is substr( column( $h, 28 ), 1, 6 ), ' ' x 6, 'the vertical scrollbar column is empty: nothing to scroll down';
 	click( $h, 20, 6 );
-	like row( $h, 6 ), qr/\A│─+\x{2501}+ │\z/, 'a click at the right of the track scrolls sideways';
-	unlike row( $h, 1 ), qr/Line 1/, 'and the start of the lines is out of view';
+	like row( $h, 6 ),   qr/\A│─+\x{2501}+ │\z/, 'a click at the right of the track scrolls sideways';
+	unlike row( $h, 1 ), qr/Line 1/,             'and the start of the lines is out of view';
 };
 
 subtest 'scrollbar parameters' => sub {
 	my $box = Term::Fabulous::Widget::ScrollBox->new( id => 'log', scrollbar => '', track_color => '#464c5a', thumb_color => [ 1, 2, 3, 255 ] );
 	is [ $box->scrollbar, $box->track_color, $box->thumb_color ], [ 0, [ 70, 76, 90, 255 ], [ 1, 2, 3, 255 ] ], 'scrollbar is a boolean, the colors are stored as [r, g, b, a]';
 	is $box->thumb_color('#ff0000'), [ 255, 0, 0, 255 ], 'the color accessors set and return the color';
-	like dies { $box->track_color('no') }, qr/track_color/, 'an invalid color dies';
+	like dies { $box->track_color('no') },                                                  qr/track_color/, 'an invalid color dies';
 	like dies { Term::Fabulous::Widget::ScrollBox->new( id => 'x', thumb_color => 'no' ) }, qr/thumb_color/, 'also in the constructor';
 	my $built = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 use Term::Fabulous::Widget::ScrollBox as ScrollBox

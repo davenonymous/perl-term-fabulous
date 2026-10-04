@@ -27,7 +27,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 	use List::Util qw(any first);
 	use Scalar::Util qw(refaddr weaken);
 
-	field $dialog  :param :weak :reader;
+	field $dialog :param :weak :reader;
 	field $z_index :param;
 
 	ADJUST {
@@ -40,8 +40,8 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		);
 		$self->layout(
 			{
-				sizing          => { width => sizing_grow(), height => sizing_grow() },
-				child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+				sizing          => { width => sizing_grow(),       height => sizing_grow() },
+				child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 			}
 		);
 		$self->glyphs_show_through(1);
@@ -61,7 +61,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 	method _handle_key ($event) {
 		my $owner = $dialog;
 		return Clay::UI::Enum::Result->CONTINUE unless defined $owner && $owner->is_open;
-		$owner->close if ( $event->main_key_name // '' ) eq 'Escape' && $owner->close_on_escape;
+		$owner->close if ( $event->main_key_name // '' ) eq 'Escape'  && $owner->close_on_escape;
 		return Clay::UI::Enum::Result->HANDLED;
 	}
 

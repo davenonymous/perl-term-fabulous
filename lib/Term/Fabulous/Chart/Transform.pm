@@ -46,7 +46,7 @@ my %TRANSFORM = (
 	zscore => {
 		arguments => [ 0, 0, [] ],
 		apply     => sub ( $xs, $ys ) {
-			my @values = _defined_ys($ys) or return ( $xs, $ys );
+			my @values    = _defined_ys($ys) or return ( $xs, $ys );
 			my $mean      = sum0(@values) / @values;
 			my $deviation = sqrt( sum0( map { ( $_ - $mean )**2 } @values ) / @values );
 			return ( $xs, [ map { defined ? ( $deviation ? ( $_ - $mean ) / $deviation : 0 ) : undef } @$ys ] );
@@ -144,23 +144,33 @@ my %TRANSFORM = (
 	scale => {
 		arguments => [ 1, 1, [] ],
 		check     => sub ($factor) { _is_number($factor) ? undef : "a number to multiply by" },
-		apply     => sub ( $xs, $ys, $factor ) { ( $xs, [ map { defined ? $_ * $factor : undef } @$ys ] ) },
+		apply     => sub ( $xs, $ys, $factor ) {
+			( $xs, [ map { defined ? $_ * $factor : undef } @$ys ] )
+		},
 	},
 	offset => {
 		arguments => [ 1, 1, [] ],
 		check     => sub ($amount) { _is_number($amount) ? undef : "a number to add" },
-		apply     => sub ( $xs, $ys, $amount ) { ( $xs, [ map { defined ? $_ + $amount : undef } @$ys ] ) },
+		apply     => sub ( $xs, $ys, $amount ) {
+			( $xs, [ map { defined ? $_ + $amount : undef } @$ys ] )
+		},
 	},
 	clip => {
 		arguments => [ 2, 2, [] ],
-		check     => sub ( $low, $high ) { ( !defined $low || _is_number($low) ) && ( !defined $high || _is_number($high) ) && ( !defined $low || !defined $high || $low <= $high ) ? undef : "a lowest and a highest value (undef for none)" },
-		apply     => sub ( $xs, $ys, $low, $high ) {
+		check     => sub ( $low, $high ) {
+			( !defined $low || _is_number($low) )
+				&& ( !defined $high || _is_number($high) )
+				&& ( !defined $low || !defined $high || $low <= $high ) ? undef : "a lowest and a highest value (undef for none)";
+		},
+		apply => sub ( $xs, $ys, $low, $high ) {
 			return ( $xs, [ map { !defined ? undef : defined $low && $_ < $low ? $low : defined $high && $_ > $high ? $high : $_ } @$ys ] );
 		},
 	},
 	abs => {
 		arguments => [ 0, 0, [] ],
-		apply     => sub ( $xs, $ys ) { ( $xs, [ map { defined ? abs : undef } @$ys ] ) },
+		apply     => sub ( $xs, $ys ) {
+			( $xs, [ map { defined ? abs : undef } @$ys ] )
+		},
 	},
 	sort => {
 		arguments => [ 0, 0, [] ],
@@ -180,7 +190,7 @@ my %TRANSFORM = (
 			my ( %bucket, @starts );
 			foreach my $index ( 0 .. $#$xs ) {
 				my $start = floor( $xs->[$index] / $interval ) * $interval;
-				push @starts, $start unless $bucket{$start};
+				push @starts,              $start unless $bucket{$start};
 				push @{ $bucket{$start} }, $ys->[$index] if defined $ys->[$index];
 				$bucket{$start} //= [];
 			}
@@ -228,15 +238,15 @@ sub _aggregate ( $aggregate, $values ) {
 sub _largest_triangles ( $xs, $ys, $count ) {
 	my @points = map { [ $xs->[$_], $ys->[$_] ] } grep { defined $ys->[$_] } 0 .. $#$xs;
 	return ( [ map { $_->[0] } @points ], [ map { $_->[1] } @points ] ) if @points <= $count;
-	my @kept = ( $points[0] );
-	my $size = ( @points - 2 ) / ( $count - 2 );
+	my @kept   = ( $points[0] );
+	my $size   = ( @points - 2 ) / ( $count - 2 );
 	my $chosen = 0;
 	foreach my $bucket ( 0 .. $count - 3 ) {
-		my ( $from, $to ) = ( int( $bucket * $size ) + 1, int( ( $bucket + 1 ) * $size ) + 1 );
+		my ( $from, $to )           = ( int( $bucket * $size ) + 1, int( ( $bucket + 1 ) * $size ) + 1 );
 		my ( $next_from, $next_to ) = ( $to, min( int( ( $bucket + 2 ) * $size ) + 1, scalar @points ) );
 		my @next = @points[ $next_from .. $next_to - 1 ];
 		my ( $average_x, $average_y ) = ( sum0( map { $_->[0] } @next ) / @next, sum0( map { $_->[1] } @next ) / @next );
-		my ( $best, $largest ) = ( $from, -1 );
+		my ( $best, $largest )        = ( $from, -1 );
 		foreach my $index ( $from .. $to - 1 ) {
 			my $area = abs( ( $points[$chosen][0] - $average_x ) * ( $points[$index][1] - $points[$chosen][1] ) - ( $points[$chosen][0] - $points[$index][0] ) * ( $average_y - $points[$chosen][1] ) );
 			( $best, $largest ) = ( $index, $area ) if $area > $largest;

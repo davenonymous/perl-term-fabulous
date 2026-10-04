@@ -67,14 +67,15 @@ class Term::Fabulous::Chart::Scale::Linear :isa(Term::Fabulous::Chart::Scale) {
 
 		my ( $low, $high ) = $options{extent} ? $options{extent}->@* : ( 0, 1 );
 		( $low, $high ) = ( List::Util::min( $low, 0 ), List::Util::max( $high, 0 ) ) if $options{zero};
-		$low  = $fixed_low  if defined $fixed_low;
+		$low  = $fixed_low if defined $fixed_low;
 		$high = $fixed_high if defined $fixed_high;
 		( $low, $high ) = _widened( $low, $high, $fixed_low, $fixed_high ) if $high <= $low;
 
 		my $measure = $options{measure} // sub ($label) { length $label };
 		my @steps
-			= defined $options{step} ? ( $options{step} )
-			:                          _nice_steps( ( $high - $low ) / List::Util::max( 1, $cells - 1 ), $high - $low, $options{integer} );
+			= defined $options{step}
+			? ( $options{step} )
+			: _nice_steps( ( $high - $low ) / List::Util::max( 1, $cells - 1 ), $high - $low, $options{integer} );
 		my $wanted_ticks = $options{ticks};
 
 		my $best;
@@ -124,7 +125,7 @@ class Term::Fabulous::Chart::Scale::Linear :isa(Term::Fabulous::Chart::Scale) {
 
 	sub _widened ( $low, $high, $fixed_low, $fixed_high ) {
 		my $margin = $low == 0 ? 1 : abs($low) / 10;
-		return ( $low, $low + $margin ) if defined $fixed_low;
+		return ( $low,            $low + $margin ) if defined $fixed_low;
 		return ( $high - $margin, $high ) if defined $fixed_high;
 		return $low == 0 ? ( 0, 1 ) : ( $low - $margin, $high + $margin );
 	}

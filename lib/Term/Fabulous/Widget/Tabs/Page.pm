@@ -34,7 +34,7 @@ class Term::Fabulous::Widget::Tabs::Page
 		$title         = string( $self, title => $title );
 		$icon          = defined $icon ? string( $self, icon => $icon ) : undef;
 		$disabled      = boolean( $self, disabled => $disabled );
-		$_wants_active = boolean( $self, active => $active );
+		$_wants_active = boolean( $self, active   => $active );
 
 		my $layout = $self->layout;
 		$self->layout(
@@ -45,9 +45,9 @@ class Term::Fabulous::Widget::Tabs::Page
 				sizing => { width => sizing_grow(), height => sizing_grow(), %{ $layout->{sizing} // {} } },
 			}
 		);
-	}
+		}
 
-	method tabs () {
+		method tabs () {
 		return $_tabs;
 	}
 

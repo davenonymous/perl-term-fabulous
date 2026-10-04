@@ -42,11 +42,11 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
         },
 );
 my $help = Term::Fabulous::Widget::Text->new( text => 'Try F1, Ctrl+R, Alt+Down, Ctrl+Shift+Left or any letter.', text_color => [ 230, 230, 230, 255 ] );
-my $last = Term::Fabulous::Widget::Text->new( text => 'No key yet.', text_color => [ 150, 200, 255, 255 ] );
+my $last = Term::Fabulous::Widget::Text->new( text => 'No key yet.',                                              text_color => [ 150, 200, 255, 255 ] );
 $root->add_child( $help, $last );
 
 my %action_by_key = (
@@ -152,7 +152,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -193,7 +193,7 @@ sub button ( $id, $caption, $action ) {
 
         $button->on( OnHoverStart   => sub ($event) { $button->background_color($hover_color);  return } );
         $button->on( OnHoverStopped => sub ($event) { $button->background_color($button_color); return } );
-        $button->on( Activate       => sub ($event) { $action->(); return } );
+        $button->on( Activate       => sub ($event) { $action->();                              return } );
         return $button;
 }
 

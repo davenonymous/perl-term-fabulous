@@ -35,7 +35,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 $root->add_child( text( 'Selected files (d asks to delete them):', [ 150, 160, 180, 255 ] ) );
@@ -63,7 +63,7 @@ sub button ( $caption, $background, $action ) {
 my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 $buttons->add_child(
 	button( 'Delete', [ 140, 45, 50, 255 ], sub { $status->text('3 files deleted.'); $dialog->close } ),
-	button( 'Cancel', [ 43, 58, 85, 255 ],  sub { $dialog->close } ),
+	button( 'Cancel', [ 43,  58, 85, 255 ], sub { $dialog->close } ),
 );
 $dialog->add_child( text( 'Delete 3 files?', [ 255, 255, 255, 255 ] ), text('They take 9.2 GB. This cannot be undone.'), $buttons );
 $dialog->on( Close => sub ($event) { $status->text('Nothing was deleted.') unless length $status->text; return } );

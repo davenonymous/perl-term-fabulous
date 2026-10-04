@@ -40,7 +40,7 @@ my $notifiers_before = scalar $loop->notifiers;
 sub memory_ui {
 	my (%params) = @_;
 	my $terminal = delete $params{terminal} // Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 );
-	my $root     = delete $params{root} // Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $root     = delete $params{root}     // Term::Fabulous::Widget::Box->new( background_color => [ 9, 9, 9, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	return ( Term::Fabulous->new( width => 20, height => 5, root => $root, terminal => $terminal, %params ), $terminal );
 }
 
@@ -58,8 +58,8 @@ my ( $ui, $terminal ) = memory_ui( root => $canvas_root );
 
 subtest 'a draw that dies' => sub {
 	like dies { $ui->run }, qr/^draw failed/, 'the exception propagates out of run';
-	is [ $terminal->is_open, $terminal->session_count ], [ 0, 1 ], 'the terminal is restored';
-	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
+	is [ $terminal->is_open, $terminal->session_count ], [ 0, 1 ],          'the terminal is restored';
+	is scalar( $loop->notifiers ),                       $notifiers_before, 'no notifier is left on the loop';
 };
 
 subtest 'a second run works' => sub {
@@ -75,10 +75,10 @@ subtest 'a second run works' => sub {
 	$terminal->press_key('Ctrl+C');
 
 	ok lives { $ui->run }, 'run returns after Ctrl+C';
-	is \@blocking, [1], 'the watched terminal handles stay blocking';
-	is \@starts, [ [ 20, 5, 20 ] ], 'Start fires once, with the terminal size already applied';
-	is [ $terminal->is_open, $terminal->session_count ], [ 0, 2 ], 'the terminal is restored again';
-	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
+	is \@blocking,                                       [1],               'the watched terminal handles stay blocking';
+	is \@starts,                                         [ [ 20, 5, 20 ] ], 'Start fires once, with the terminal size already applied';
+	is [ $terminal->is_open, $terminal->session_count ], [ 0, 2 ],          'the terminal is restored again';
+	is scalar( $loop->notifiers ),                       $notifiers_before, 'no notifier is left on the loop';
 };
 
 subtest 'Start fires inside the running loop' => sub {
@@ -93,13 +93,13 @@ subtest 'Start fires inside the running loop' => sub {
 	ref_is $loop_in_start, $loop, 'and sees it';
 	ok $blank_at_start, 'no frame is drawn before Start';
 	ref_is $SIG{INT}, $handler, 'run gives back the INT handler it found';
-	is $SIG{HUP}, 'IGNORE', 'and the HUP setting';
+	is $SIG{HUP},                  'IGNORE',          'and the HUP setting';
 	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
 };
 
 subtest 'a signal watcher of the program outlives run' => sub {
-	my $received = 0;
-	my $watcher  = IO::Async::Signal->new( name => 'TERM', on_receipt => sub { $received++ } );
+	my $received   = 0;
+	my $watcher    = IO::Async::Signal->new( name => 'TERM', on_receipt => sub { $received++ } );
 	my ($watching) = memory_ui();
 	$watching->root->on( Start => sub { $watching->loop->add($watcher); $watching->loop->stop; return } );
 	$watching->run;
@@ -180,9 +180,9 @@ subtest 'inline mode' => sub {
 		}
 	);
 	ok lives { $inline->run }, 'run returns';
-	is \@seen, [ [ 3, 3, 0 ] ], 'Start reports the rows of the region; the terminal reports no mouse';
-	is [ $inline_terminal->lines ], [ 'done', '', '' ], 'the state the loop stopped in is drawn before run returns';
-	is $inline_terminal->inline_rows, undef, 'the region is given back after run';
+	is \@seen,                        [ [ 3, 3, 0 ] ],    'Start reports the rows of the region; the terminal reports no mouse';
+	is [ $inline_terminal->lines ],   [ 'done', '', '' ], 'the state the loop stopped in is drawn before run returns';
+	is $inline_terminal->inline_rows, undef,              'the region is given back after run';
 
 	my ( $resizing, $resizing_terminal ) = memory_ui( root => $box->(), inline => 3 );
 	$resizing->root->on( Start => sub { $resizing_terminal->resize( 30, 8 ); return } );
@@ -204,8 +204,8 @@ subtest 'kitty keyboard protocol' => sub {
 	my ($kitty) = memory_ui( terminal => $speaking, mouse => 0 );
 	$kitty->root->on( Start => sub { push @active_at_start, $kitty->kitty_keyboard_active; $kitty->loop->stop; return } );
 	ok lives { $kitty->run }, 'run returns';
-	is \@active_at_start, [1], 'a terminal that speaks the protocol gets it';
-	is $kitty->kitty_keyboard_active, 0, 'and run no longer uses it';
+	is \@active_at_start,             [1], 'a terminal that speaks the protocol gets it';
+	is $kitty->kitty_keyboard_active, 0,   'and run no longer uses it';
 
 	my $also_speaking = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5, kitty_keyboard => 1 );
 	my ($legacy) = memory_ui( terminal => $also_speaking, kitty_keyboard => 0 );

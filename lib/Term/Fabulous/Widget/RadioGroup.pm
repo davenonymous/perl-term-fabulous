@@ -102,8 +102,8 @@ class Term::Fabulous::Widget::RadioGroup
 	}
 
 	method handle_key ($event) {
-		my $name = $event->main_key_name // return 0;
-		my $cursor = $self->cursor_button // return 0;
+		my $name   = $event->main_key_name // return 0;
+		my $cursor = $self->cursor_button  // return 0;
 
 		if ( $name eq 'Space' || $name eq 'Enter' ) {
 			$self->choose($cursor);

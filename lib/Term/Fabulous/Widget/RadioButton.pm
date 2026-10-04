@@ -29,7 +29,7 @@ class Term::Fabulous::Widget::RadioButton
 		$label           = string( $self, label           => $label );
 		$selected_mark   = string( $self, selected_mark   => $selected_mark );
 		$unselected_mark = string( $self, unselected_mark => $unselected_mark );
-		$value           = string( $self, value => $value ) if defined $value;
+		$value           = string( $self, value           => $value ) if defined $value;
 	}
 
 	method _set_string ( $name, $field_ref, @new ) {
@@ -39,8 +39,8 @@ class Term::Fabulous::Widget::RadioButton
 		return $$field_ref;
 	}
 
-	method label (@new)           { return $self->_set_string( label           => \$label,           @new ) }
-	method selected_mark (@new)   { return $self->_set_string( selected_mark   => \$selected_mark,   @new ) }
+	method label           (@new) { return $self->_set_string( label           => \$label,           @new ) }
+	method selected_mark   (@new) { return $self->_set_string( selected_mark   => \$selected_mark,   @new ) }
 	method unselected_mark (@new) { return $self->_set_string( unselected_mark => \$unselected_mark, @new ) }
 
 	# The value defaults to the label.
@@ -80,7 +80,7 @@ class Term::Fabulous::Widget::RadioButton
 	# The group decides the look as well: which button is selected, which
 	# one shows the focus, and whether the buttons are enabled.
 	method paint_key :override () {
-		my $group = $self->group;
+		my $group  = $self->group;
 		my $cursor = defined $group ? $group->cursor_button : undef;
 		return (
 			$self->SUPER::paint_key,
@@ -109,8 +109,8 @@ class Term::Fabulous::Widget::RadioButton
 	method paint () {
 		my $bg       = $self->paint_focus_background;
 		my $selected = $self->is_selected;
-		$self->paint_text( 0, 0, $selected ? $selected_mark : $unselected_mark, $selected ? $self->accent_attr : $self->foreground_attr, $bg );
-		$self->paint_text( $self->_mark_columns + 1, 0, $label, $self->foreground_attr, $bg ) if length $label;
+		$self->paint_text( 0,                        0, $selected ? $selected_mark : $unselected_mark, $selected ? $self->accent_attr : $self->foreground_attr, $bg );
+		$self->paint_text( $self->_mark_columns + 1, 0, $label,                                        $self->foreground_attr,                                  $bg ) if length $label;
 		return;
 	}
 

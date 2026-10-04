@@ -34,7 +34,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
-		padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 3,
 	},
 );
@@ -66,9 +66,21 @@ sub column (@tabs) {
 # the focus, the Licenses tab is disabled.
 my $settings = Term::Fabulous::Widget::Tabs->new( id => 'settings', layout => { sizing => { width => sizing_grow(), height => sizing_fixed(12) } } );
 $settings->add_child(
-	page( 'General',  content => [ row( 'Language ', Term::Fabulous::Widget::TextField->new( value => 'en', preferred_columns => 8 ) ), Term::Fabulous::Widget::Checkbox->new( label => 'Check for updates', checked => 1 ) ] ),
-	page( 'Network',  active  => 1, content => [ row( 'Hostname ', Term::Fabulous::Widget::TextField->new( value => 'example.org', preferred_columns => 14 ) ), row( 'Port     ', Term::Fabulous::Widget::TextField->new( value => '443', preferred_columns => 6 ) ) ] ),
-	page( 'Users',    content => [ text('Three accounts, two groups.') ] ),
+	page(
+		'General',
+		content => [
+			row( 'Language ', Term::Fabulous::Widget::TextField->new( value => 'en', preferred_columns => 8 ) ), Term::Fabulous::Widget::Checkbox->new( label => 'Check for updates', checked => 1 )
+		]
+	),
+	page(
+		'Network',
+		active  => 1,
+		content => [
+			row( 'Hostname ', Term::Fabulous::Widget::TextField->new( value => 'example.org', preferred_columns => 14 ) ),
+			row( 'Port     ', Term::Fabulous::Widget::TextField->new( value => '443',         preferred_columns => 6 ) )
+		]
+	),
+	page( 'Users',    content  => [ text('Three accounts, two groups.') ] ),
 	page( 'Licenses', disabled => 1, content => [ text('Not available in this edition.') ] ),
 );
 

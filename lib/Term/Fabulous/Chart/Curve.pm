@@ -27,7 +27,9 @@ sub is_curve ($curve) {
 }
 
 sub check_curve ( $owner, $name, $curve ) {
-	croak "$owner: $name must be a curve name (" . join( ', ', sort keys %SHAPES ) . ", or an easing such as ease-in-out-sine) or a code reference, got "
+	croak "$owner: $name must be a curve name ("
+		. join( ', ', sort keys %SHAPES )
+		. ", or an easing such as ease-in-out-sine) or a code reference, got "
 		. ( defined $curve ? ( ref $curve ? ref($curve) . ' reference' : "'$curve'" ) : 'undef' )
 		unless is_curve($curve);
 	return $curve;
@@ -43,12 +45,12 @@ sub curve_points ( $points, $curve, %options ) {
 	return _steps( $points, $curve ) if !ref $curve && $curve =~ /\Astep/;
 
 	my $segment
-		= ref $curve eq 'CODE'     ? _eased($curve)
-		: is_easing_name($curve)   ? _eased( easing($curve) )
-		: $curve eq 'monotone'     ? _hermite( $points, _monotone_tangents($points) )
-		: $curve eq 'catmull-rom'  ? _hermite( $points, _cardinal_tangents( $points, $options{tension} // 0 ) )
-		: $curve eq 'natural'      ? _natural($points)
-		:                            croak "Term::Fabulous::Chart::Curve: unknown curve '$curve'";
+		= ref $curve eq 'CODE'    ? _eased($curve)
+		: is_easing_name($curve)  ? _eased( easing($curve) )
+		: $curve eq 'monotone'    ? _hermite( $points, _monotone_tangents($points) )
+		: $curve eq 'catmull-rom' ? _hermite( $points, _cardinal_tangents( $points, $options{tension} // 0 ) )
+		: $curve eq 'natural'     ? _natural($points)
+		:                           croak "Term::Fabulous::Chart::Curve: unknown curve '$curve'";
 
 	my @polyline = ( [ @{ $points->[0] } ] );
 	foreach my $index ( 0 .. $#$points - 1 ) {
@@ -93,10 +95,7 @@ sub _hermite ( $points, $slopes ) {
 	return sub ( $index, $t, $from, $to ) {
 		my $width = $to->[0] - $from->[0];
 		my ( $t2, $t3 ) = ( $t**2, $t**3 );
-		return ( 2 * $t3 - 3 * $t2 + 1 ) * $from->[1]
-			+ ( $t3 - 2 * $t2 + $t ) * $width * $slopes->[$index]
-			+ ( -2 * $t3 + 3 * $t2 ) * $to->[1]
-			+ ( $t3 - $t2 ) * $width * $slopes->[ $index + 1 ];
+		return ( 2 * $t3 - 3 * $t2 + 1 ) * $from->[1] + ( $t3 - 2 * $t2 + $t ) * $width * $slopes->[$index] + ( -2 * $t3 + 3 * $t2 ) * $to->[1] + ( $t3 - $t2 ) * $width * $slopes->[ $index + 1 ];
 	};
 }
 
@@ -142,16 +141,17 @@ sub _cardinal_tangents ( $points, $tension ) {
 # The natural cubic spline: smooth second derivatives, straight at the
 # ends. It may overshoot between points.
 sub _natural ($points) {
-	my $last = $#$points;
+	my $last  = $#$points;
 	my @width = map { $points->[ $_ + 1 ][0] - $points->[$_][0] } 0 .. $last - 1;
 	my ( @lower, @diagonal, @upper, @right );
 	@diagonal[ 0, $last ] = ( 1, 1 );
-	@right[ 0, $last ]    = ( 0, 0 );
+	@right[ 0, $last ] = ( 0, 0 );
 	foreach my $index ( 1 .. $last - 1 ) {
 		my ( $before, $after ) = ( $width[ $index - 1 ], $width[$index] );
 		( $lower[$index], $diagonal[$index], $upper[$index] ) = ( $before, 2 * ( $before + $after ), $after );
 		$right[$index] = 6 * ( ( $points->[ $index + 1 ][1] - $points->[$index][1] ) / ( $after || 1 ) - ( $points->[$index][1] - $points->[ $index - 1 ][1] ) / ( $before || 1 ) );
 	}
+
 	# Thomas algorithm for the second derivatives.
 	my ( @c, @d );
 	( $c[0], $d[0] ) = ( 0, 0 );

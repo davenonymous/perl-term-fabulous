@@ -16,10 +16,10 @@ our @EXPORT_OK = qw(key_bytes text_bytes mouse_bytes);
 # reports (ESC [ < button ; column ; row M, or m for a release).
 
 # Keys that a modifier changes by a parameter: ESC [ 1 ; m X or ESC [ n ; m ~.
-my %CSI_FINAL_BY_KEY = ( Up => 'A', Down => 'B', Right => 'C', Left => 'D', Home => 'H', End => 'F' );
+my %CSI_FINAL_BY_KEY  = ( Up => 'A', Down => 'B', Right => 'C', Left => 'D', Home => 'H', End => 'F' );
 my %CSI_NUMBER_BY_KEY = (
-	Insert => 2, Delete => 3, PageUp => 5, PageDown => 6,
-	F5 => 15, F6 => 17, F7 => 18, F8 => 19, F9 => 20, F10 => 21, F11 => 23, F12 => 24,
+	Insert => 2,  Delete => 3,  PageUp => 5,  PageDown => 6,
+	F5     => 15, F6     => 17, F7     => 18, F8       => 19, F9 => 20, F10 => 21, F11 => 23, F12 => 24,
 );
 my %SS3_FINAL_BY_KEY = ( F1 => 'P', F2 => 'Q', F3 => 'R', F4 => 'S' );
 
@@ -62,8 +62,8 @@ sub key_bytes ($name) {
 
 	if ( exists $PLAIN_BYTES_BY_KEY{$key} ) {
 		return $PLAIN_BYTES_BY_KEY{$key} unless $has_modifiers;
-		return "\e[Z"  if $key eq 'Tab'   && join( ',', keys %$held ) eq 'Shift';
-		return "\x00" if $key eq 'Space' && join( ',', keys %$held ) eq 'Ctrl';
+		return "\e[Z" if $key eq 'Tab'                              && join( ',', keys %$held ) eq 'Shift';
+		return "\x00" if $key eq 'Space'                            && join( ',', keys %$held ) eq 'Ctrl';
 		return "\e" . $PLAIN_BYTES_BY_KEY{$key} if $key ne 'Escape' && join( ',', keys %$held ) eq 'Alt';
 		croak "Term::Fabulous::Screenshot::Input: '$name' cannot be sent by a terminal";
 	}

@@ -30,7 +30,7 @@ sub grapheme_clusters ($text) {
 	return @$clusters if defined $clusters;
 
 	%clusters_by_text = () if keys(%clusters_by_text) >= CACHE_LIMIT;
-	$clusters = $clusters_by_text{$text} = [ map { $_->as_string } @{ Unicode::GCString->new( sanitize_text($text) )->as_arrayref } ];
+	$clusters         = $clusters_by_text{$text} = [ map { $_->as_string } @{ Unicode::GCString->new( sanitize_text($text) )->as_arrayref } ];
 	return @$clusters;
 }
 
@@ -48,7 +48,7 @@ sub string_columns ($text) {
 	return $columns if defined $columns;
 
 	%columns_by_text = () if keys(%columns_by_text) >= CACHE_LIMIT;
-	$columns = 0;
+	$columns         = 0;
 	$columns += cluster_columns($_) foreach grapheme_clusters($text);
 	return $columns_by_text{$text} = $columns;
 }

@@ -36,7 +36,8 @@ subtest 'names and sizes' => sub {
 		half               => [ 1, 2, 2 ],
 		quadrant           => [ 2, 2, 4 ],
 		sextant            => [ 2, 3, 6 ],
-	}, 'subpixels across and down';
+		},
+		'subpixels across and down';
 };
 
 subtest 'empty cells' => sub {
@@ -48,11 +49,11 @@ subtest 'empty cells' => sub {
 
 subtest 'braille' => sub {
 	my $braille = $Marker->named('braille');
-	is [ $braille->cell( [ RED, undef, undef, RED, (undef) x 4 ], 0x141923 ) ], [ "\x{2811}", RED, undef ], 'dots 1 and 5, background kept';
-	is [ map { glyph_of( $braille, 1 << $_ ) } 0 .. 7 ], [ map { chr( 0x2800 + $_ ) } 0x01, 0x08, 0x02, 0x10, 0x04, 0x20, 0x40, 0x80 ], 'the dot bit of each subpixel';
-	is glyph_of( $braille, 0xFF ), "\x{28FF}", 'all eight dots';
-	is [ $braille->cell( [ RED, GREEN, GREEN, (undef) x 5 ], undef ) ], [ "\x{280B}", GREEN, undef ], 'the color most dots have';
-	is [ $braille->cell( [ RED, GREEN, (undef) x 6 ], undef ) ], [ "\x{2809}", RED, undef ], 'on a tie, the color drawn first';
+	is [ $braille->cell( [ RED, undef, undef, RED, (undef) x 4 ], 0x141923 ) ], [ "\x{2811}", RED, undef ],                                                    'dots 1 and 5, background kept';
+	is [ map { glyph_of( $braille, 1 << $_ ) } 0 .. 7 ],                        [ map { chr( 0x2800 + $_ ) } 0x01, 0x08, 0x02, 0x10, 0x04, 0x20, 0x40, 0x80 ], 'the dot bit of each subpixel';
+	is glyph_of( $braille, 0xFF ),                                              "\x{28FF}",                                                                    'all eight dots';
+	is [ $braille->cell( [ RED, GREEN, GREEN, (undef) x 5 ], undef ) ],         [ "\x{280B}", GREEN, undef ],                                                  'the color most dots have';
+	is [ $braille->cell( [ RED, GREEN, (undef) x 6 ], undef ) ],                [ "\x{2809}", RED, undef ],                                                    'on a tie, the color drawn first';
 };
 
 subtest 'half and quadrant' => sub {
@@ -90,21 +91,21 @@ subtest 'sextant' => sub {
 subtest 'vertical eighths' => sub {
 	my $block = $Marker->named('block');
 	is [ map { glyph_of( $block, ( ( 1 << $_ ) - 1 ) << ( 8 - $_ ) ) } 1 .. 7 ], [ map { chr( 0x2580 + $_ ) } 1 .. 7 ], 'the lower eighths fill from the bottom';
-	is glyph_of( $block, 0x0F ), "\x{2580}", 'the upper half';
-	is glyph_of( $block, 0x01 ), "\x{2594}", 'the upper eighth';
-	is [ $block->cell( drawn( $block, 0xC0, RED ), undef ) ], [ "\x{2582}", RED, undef, undef ], 'a low bar: mostly the cell background';
-	is [ $block->cell( drawn( $block, 0x3F, RED ), BLUE ) ], [ "\x{2582}", BLUE, RED, RED ], 'an upper shape without a glyph: the inverted lower one';
-	is [ $block->cell( drawn( $block, 0x07, RED ), undef ) ], [ "\x{2580}", RED, undef, undef ], 'three upper eighths: the nearest shape, the upper half';
-	is [ $block->cell( drawn( $block, 0x05, RED ), BLUE ) ], [ "\x{2594}", RED, BLUE, BLUE ], 'the nearest shape in either orientation';
-	is [ $block->cell( drawn( $block, 0x02, RED ), undef ) ], [ ' ', undef, undef, undef ], 'a single subpixel nearest to nothing';
+	is glyph_of( $block, 0x0F ),                                                 "\x{2580}",                            'the upper half';
+	is glyph_of( $block, 0x01 ),                                                 "\x{2594}",                            'the upper eighth';
+	is [ $block->cell( drawn( $block, 0xC0, RED ), undef ) ],                    [ "\x{2582}", RED, undef, undef ],     'a low bar: mostly the cell background';
+	is [ $block->cell( drawn( $block, 0x3F, RED ), BLUE ) ],                     [ "\x{2582}", BLUE, RED, RED ],        'an upper shape without a glyph: the inverted lower one';
+	is [ $block->cell( drawn( $block, 0x07, RED ), undef ) ],                    [ "\x{2580}", RED, undef, undef ],     'three upper eighths: the nearest shape, the upper half';
+	is [ $block->cell( drawn( $block, 0x05, RED ), BLUE ) ],                     [ "\x{2594}", RED, BLUE, BLUE ],       'the nearest shape in either orientation';
+	is [ $block->cell( drawn( $block, 0x02, RED ), undef ) ],                    [ ' ', undef, undef, undef ],          'a single subpixel nearest to nothing';
 };
 
 subtest 'horizontal eighths' => sub {
 	my $block = $Marker->named('block-horizontal');
 	is [ map { glyph_of( $block, ( 1 << $_ ) - 1 ) } 1 .. 7 ], [ map { chr( 0x2590 - $_ ) } 1 .. 7 ], 'the left eighths fill from the left';
-	is glyph_of( $block, 0xF0 ), "\x{2590}", 'the right half';
-	is glyph_of( $block, 0x80 ), "\x{2595}", 'the right eighth';
-	is [ $block->cell( drawn( $block, 0xFC, RED ), BLUE ) ], [ "\x{258E}", BLUE, RED, RED ], 'a right part without a glyph: the inverted left one';
+	is glyph_of( $block, 0xF0 ),                               "\x{2590}",                            'the right half';
+	is glyph_of( $block, 0x80 ),                               "\x{2595}",                            'the right eighth';
+	is [ $block->cell( drawn( $block, 0xFC, RED ), BLUE ) ],   [ "\x{258E}", BLUE, RED, RED ],        'a right part without a glyph: the inverted left one';
 };
 
 done_testing;

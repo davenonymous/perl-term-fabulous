@@ -68,8 +68,8 @@ use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER 
 my $root = Term::Fabulous::Widget::Box->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => {
-                sizing          => { width => sizing_grow(), height => sizing_grow() },
-                child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+                sizing          => { width => sizing_grow(),       height => sizing_grow() },
+                child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
         },
 );
 
@@ -81,7 +81,7 @@ my $dialog = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_fixed(44) },
-                padding          => { left => 1, right => 1, top => 1, bottom => 1 },
+                padding          => { left  => 1, right => 1, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -91,8 +91,8 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
         return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 }
 
-my $user     = Term::Fabulous::Widget::TextField->new( id => 'user',     placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
-my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password',  layout => { sizing => { width => sizing_grow() } }, mask => '*' );
+my $user     = Term::Fabulous::Widget::TextField->new( id => 'user', placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
+my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password', layout => { sizing => { width => sizing_grow() } }, mask => '*' );
 my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
 my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );
 $dialog->add_child( text('Log in'), $user, $password, $remember, $message );
@@ -170,7 +170,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -267,7 +267,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 1, right => 1 },
+                padding          => { left  => 1,             right  => 1 },
         },
 );
 my $name = Term::Fabulous::Widget::TextField->new( id => 'name', placeholder => 'Your name', layout => { sizing => { width => sizing_grow() } } );
@@ -344,7 +344,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -677,7 +677,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -747,7 +747,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -826,7 +826,7 @@ class My::OrderedBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Int
 }
 
 my %field = map { $_ => Term::Fabulous::Widget::TextField->new( id => $_, placeholder => ucfirst, preferred_columns => 12 ) } qw(street city zip);
-my $root = My::OrderedBox->new(
+my $root  = My::OrderedBox->new(
         background_color => [ 20, 25, 35, 255 ],
         layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
 );

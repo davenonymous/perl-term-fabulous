@@ -13,8 +13,8 @@ use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::SelectionChange :isa(Clay::UI::Events::Event) :strict(params) {
 	field $selected_ids :param;
-	field $added_ids :param;
-	field $removed_ids :param;
+	field $added_ids    :param;
+	field $removed_ids  :param;
 
 	ADJUST {
 		die "Term::Fabulous::Event::SelectionChange: selected_ids must be an array reference" unless ref $selected_ids eq 'ARRAY';
@@ -28,8 +28,8 @@ class Term::Fabulous::Event::SelectionChange :isa(Clay::UI::Events::Event) :stri
 	method event_name :common { 'SelectionChange' }
 
 	method selected_ids () { return [@$selected_ids] }
-	method added_ids () { return [@$added_ids] }
-	method removed_ids () { return [@$removed_ids] }
+	method added_ids ()    { return [@$added_ids] }
+	method removed_ids ()  { return [@$removed_ids] }
 }
 
 1;

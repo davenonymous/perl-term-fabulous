@@ -29,9 +29,9 @@ class Term::Fabulous::Widget::PieChart
 	use Term::Fabulous::Termbox qw(TB_BOLD);
 
 	use constant {
-		GAP_WIDTH     => 0.3,    # cell widths between two slices, at least a subpixel
-		OTHER         => "\0other",
-		LABEL_ROOM    => 1,      # columns free around a slice label
+		GAP_WIDTH               => 0.3,    # cell widths between two slices, at least a subpixel
+		OTHER                   => "\0other",
+		LABEL_ROOM              => 1,    # columns free around a slice label
 		LEGEND_PERCENT_DECIMALS => 0,
 	};
 
@@ -43,17 +43,17 @@ class Term::Fabulous::Widget::PieChart
 	field $initial_data   :param(data)   = [];
 	field $initial_labels :param(labels) = undef;
 	field $initial_colors :param(colors) = undef;
-	field $hole           :param = undef;
-	field $start_angle    :param = 0;
-	field $sort           :param = 'none';
-	field $slice_labels   :param = undef;
-	field $legend_values  :param = undef;
-	field $center_text    :param = undef;
-	field $marker         :param = 'quadrant';
-	field $other          :param = 0;
-	field $other_label    :param = 'Other';
-	field $gap            :param = 0;
-	field $format         :param = undef;
+	field $hole           :param         = undef;
+	field $start_angle    :param         = 0;
+	field $sort           :param         = 'none';
+	field $slice_labels   :param         = undef;
+	field $legend_values  :param         = undef;
+	field $center_text    :param         = undef;
+	field $marker         :param         = 'quadrant';
+	field $other          :param         = 0;
+	field $other_label    :param         = 'Other';
+	field $gap            :param         = 0;
+	field $format         :param         = undef;
 
 	field @_slices;    # { label, value, color, opacity, slot }
 	field %_slice_by_label;
@@ -65,8 +65,8 @@ class Term::Fabulous::Widget::PieChart
 		$legend_values //= $self->default_legend_values;
 		$hole          = $self->_checked_hole($hole);
 		$start_angle   = $self->_checked_angle($start_angle);
-		$sort          = $self->_check_choice( sort => $sort, \%IS_SORT );
-		$slice_labels  = $self->_check_choice( slice_labels => $slice_labels, \%IS_SLICE_LABELS );
+		$sort          = $self->_check_choice( sort          => $sort,          \%IS_SORT );
+		$slice_labels  = $self->_check_choice( slice_labels  => $slice_labels,  \%IS_SLICE_LABELS );
 		$legend_values = $self->_check_choice( legend_values => $legend_values, \%IS_LEGEND_VALUES );
 		$marker        = $self->_checked_marker($marker);
 		$other         = $self->_checked_fraction( other => $other );
@@ -182,7 +182,7 @@ class Term::Fabulous::Widget::PieChart
 	}
 
 	method clear_slices () {
-		@_slices = ();
+		@_slices         = ();
 		%_slice_by_label = ();
 		$self->mark_changed;
 		return $self;
@@ -216,7 +216,9 @@ class Term::Fabulous::Widget::PieChart
 		@slices = sort { $a->{value} <=> $b->{value} } @slices if $sort eq 'asc';
 		my $total = sum0 map { $_->{value} } @slices;
 		return () unless $total > 0;
-		my @shown = map { { %$_, share => $_->{value} / $total } } @slices;
+		my @shown = map {
+			{ %$_, share => $_->{value} / $total }
+		} @slices;
 		if ( $other > 0 ) {
 			my @small = grep { $_->{share} < $other } @shown;
 			if ( @small >= 2 ) {
@@ -228,7 +230,7 @@ class Term::Fabulous::Widget::PieChart
 		}
 		foreach my $slice (@shown) {
 			my $color = $slice->{color} // $self->slot_color( $look, $slice->{slot} );
-			$color = mix_rgb( $look->{base}, $color, $slice->{opacity} ) if $slice->{opacity} < 1;
+			$color               = mix_rgb( $look->{base}, $color, $slice->{opacity} ) if $slice->{opacity} < 1;
 			$slice->{base_color} = $color;
 			$slice->{shown}      = $self->shown_color( $look, $slice->{label}, $color );
 		}
@@ -290,6 +292,7 @@ class Term::Fabulous::Widget::PieChart
 		my $raster = Term::Fabulous::Chart::Raster->new( marker => Term::Fabulous::Chart::Marker->named($marker), columns => $width, rows => $height );
 		my ( $sx, $sy ) = ( $raster->marker->columns, $raster->marker->rows );
 		my $gaps = $gap && @slices > 1;
+
 		# At least a subpixel wide in both directions, so it shows at any
 		# resolution: a subpixel whose center lies on the gap's edge is out.
 		my $gap_width = max( GAP_WIDTH, 1 / $sx, CELL_ASPECT / $sy );
@@ -338,7 +341,7 @@ class Term::Fabulous::Widget::PieChart
 			my $width    = Term::Fabulous::Chart::Surface->text_columns($text);
 			my $distance = $inner + ( $outer - $inner ) * ( $inner ? 0.5 : 0.6 );
 			my ( $center_x, $center_y ) = point_at( $circle, $distance, ( $from + $to ) / 2, $start );
-			my ( $column, $row ) = ( floor( $center_x - $width / 2 + 0.5 ), floor($center_y) );
+			my ( $column, $row )        = ( floor( $center_x - $width / 2 + 0.5 ), floor($center_y) );
 
 			# Only where the text and a cell around it lie inside the slice.
 			my $fits = 1;
@@ -383,17 +386,17 @@ class Term::Fabulous::Widget::PieChart
 		return $value;
 	}
 
-	method hole (@new)          { return @new ? $self->_set( \$hole,          $self->_checked_hole( $new[0] ) )                                    : $hole }
-	method start_angle (@new)   { return @new ? $self->_set( \$start_angle,   $self->_checked_angle( $new[0] ) )                                   : $start_angle }
-	method sort (@new)          { return @new ? $self->_set( \$sort,          $self->_check_choice( sort => $new[0], \%IS_SORT ) )                 : $sort }
-	method slice_labels (@new)  { return @new ? $self->_set( \$slice_labels,  $self->_check_choice( slice_labels => $new[0], \%IS_SLICE_LABELS ) ) : $slice_labels }
+	method hole          (@new) { return @new ? $self->_set( \$hole, $self->_checked_hole( $new[0] ) )                                               : $hole }
+	method start_angle   (@new) { return @new ? $self->_set( \$start_angle, $self->_checked_angle( $new[0] ) )                                       : $start_angle }
+	method sort          (@new) { return @new ? $self->_set( \$sort, $self->_check_choice( sort => $new[0], \%IS_SORT ) )                            : $sort }
+	method slice_labels  (@new) { return @new ? $self->_set( \$slice_labels, $self->_check_choice( slice_labels => $new[0], \%IS_SLICE_LABELS ) )    : $slice_labels }
 	method legend_values (@new) { return @new ? $self->_set( \$legend_values, $self->_check_choice( legend_values => $new[0], \%IS_LEGEND_VALUES ) ) : $legend_values }
-	method center_text (@new)   { return @new ? $self->_set( \$center_text,   $self->_check_title( center_text => $new[0] ) )                      : $center_text }
-	method marker (@new)        { return @new ? $self->_set( \$marker,        $self->_checked_marker( $new[0] ) )                                  : $marker }
-	method other (@new)         { return @new ? $self->_set( \$other,         $self->_checked_fraction( other => $new[0] ) )                       : $other }
-	method other_label (@new)   { return @new ? $self->_set( \$other_label,   $self->_check_title( other_label => $new[0] ) // 'Other' )           : $other_label }
-	method gap (@new)           { return @new ? $self->_set( \$gap,           boolean( $self, gap => $new[0] ) )                                   : $gap }
-	method format (@new)        { return @new ? $self->_set( \$format,        check_number_format( ref $self, 'format', $new[0] ) )                 : $format }
+	method center_text   (@new) { return @new ? $self->_set( \$center_text, $self->_check_title( center_text => $new[0] ) )                          : $center_text }
+	method marker        (@new) { return @new ? $self->_set( \$marker, $self->_checked_marker( $new[0] ) )                                           : $marker }
+	method other         (@new) { return @new ? $self->_set( \$other, $self->_checked_fraction( other => $new[0] ) )                                 : $other }
+	method other_label   (@new) { return @new ? $self->_set( \$other_label, $self->_check_title( other_label => $new[0] ) // 'Other' )               : $other_label }
+	method gap           (@new) { return @new ? $self->_set( \$gap, boolean( $self, gap => $new[0] ) )                                               : $gap }
+	method format        (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) )                         : $format }
 
 	# ---------------------------------------------------------------------
 	# KDL

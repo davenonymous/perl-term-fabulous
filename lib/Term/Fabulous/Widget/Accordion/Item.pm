@@ -24,17 +24,17 @@ class Term::Fabulous::Widget::Accordion::Item
 
 	# The look an item shows while it has no accordion to take it from.
 	my %DEFAULT_LOOK = (
-		toggle_position        => 'start',
-		open_glyph             => "\x{25BE}",
-		closed_glyph           => "\x{25B8}",
-		title_color            => [ 220, 223, 228, 255 ],
-		title_bold             => 0,
-		accent_color           => [ 97,  175, 239, 255 ],
+		toggle_position         => 'start',
+		open_glyph              => "\x{25BE}",
+		closed_glyph            => "\x{25B8}",
+		title_color             => [ 220, 223, 228, 255 ],
+		title_bold              => 0,
+		accent_color            => [ 97, 175, 239, 255 ],
 		header_background_color => undef,
-		focus_background_color => [ 52, 58, 72, 255 ],
-		hover_background_color => [ 40, 45, 58, 255 ],
-		disabled_color         => [ 108, 112, 120, 255 ],
-		body_indent            => 2,
+		focus_background_color  => [ 52,  58,  72,  255 ],
+		hover_background_color  => [ 40,  45,  58,  255 ],
+		disabled_color          => [ 108, 112, 120, 255 ],
+		body_indent             => 2,
 	);
 
 	field $title :param = '';
@@ -58,9 +58,9 @@ class Term::Fabulous::Widget::Accordion::Item
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$_header = Term::Fabulous::Widget::Button->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 }, pressed_background_color => undef );
-		$_header->on( Activate => sub ($event) { $weak_self->_activated if $weak_self; return } );
-		$_header->on( $_ => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
-		$_body = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
+		$_header->on( Activate => sub ($event) { $weak_self->_activated if $weak_self;   return } );
+		$_header->on( $_       => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
+		$_body        = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
 		$_toggle_text = Term::Fabulous::Widget::Text->new( text => '' );
 		$_icon_text   = Term::Fabulous::Widget::Text->new( text => $icon // '' );
 		$_title_text  = Term::Fabulous::Widget::Text->new( text => $title );
@@ -70,10 +70,10 @@ class Term::Fabulous::Widget::Accordion::Item
 		$_header->disabled( boolean( $self, disabled => $disabled ) );
 		$self->open( boolean( $self, open => $open ) );
 		$self->refresh_look;
-	}
+		}
 
-	# The accordion the item belongs to, if any.
-	method accordion () {
+		# The accordion the item belongs to, if any.
+		method accordion () {
 		my $parent = $self->parent;
 		return blessed $parent && $parent->isa('Term::Fabulous::Widget::Accordion') ? $parent : undef;
 	}
@@ -201,7 +201,7 @@ class Term::Fabulous::Widget::Accordion::Item
 		my $enabled = $_header->is_enabled;
 		my $at_end  = $self->_look('toggle_position') eq 'end';
 
-		$_toggle_text->text( $_is_open ? $self->_look('open_glyph') : $self->_look('closed_glyph') );
+		$_toggle_text->text( $_is_open      ? $self->_look('open_glyph')                                                 : $self->_look('closed_glyph') );
 		$_toggle_text->text_color( $enabled ? ( $_is_open ? $self->_look('accent_color') : $self->_look('title_color') ) : $self->_look('disabled_color') );
 		$_title_text->text_color( $self->_look('title_color') );
 		$_title_text->bold( $self->_look('title_bold') );
@@ -214,10 +214,10 @@ class Term::Fabulous::Widget::Accordion::Item
 		$_header->add_child(@order);
 
 		my $background
-			= !$enabled                   ? $self->_look('header_background_color')
-			: $_header->is_focused        ? $self->_look('focus_background_color')
-			: $_header->is_hovered        ? $self->_look('hover_background_color')
-			:                               $self->_look('header_background_color');
+			= !$enabled            ? $self->_look('header_background_color')
+			: $_header->is_focused ? $self->_look('focus_background_color')
+			: $_header->is_hovered ? $self->_look('hover_background_color')
+			:                        $self->_look('header_background_color');
 		$_header->background_color($background);
 
 		my $indent = $self->_look('body_indent');

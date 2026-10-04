@@ -25,7 +25,7 @@ use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
 my $label_color = [ 150, 160, 180, 255 ];
-my $dark_text   = [ 20, 20, 20, 255 ];
+my $dark_text   = [ 20,  20,  20,  255 ];
 my $light_text  = [ 240, 240, 240, 255 ];
 
 my $root = Term::Fabulous::Widget::Box->new(
@@ -33,7 +33,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -60,11 +60,11 @@ sub swatch ( $color, $caption, $caption_color = $dark_text ) {
 
 color_row(
 	'formats',
-	swatch( '#ff8800',            "'#ff8800'" ),
-	swatch( 'rgb(255, 136, 0)',   'rgb()' ),
-	swatch( 'hsl(32, 100%, 50%)', 'hsl()' ),
-	swatch( [ 255, 136, 0 ],      '[r, g, b]' ),
-	swatch( 0xFF8800,             '0xFF8800' ),
+	swatch( '#ff8800',                                  "'#ff8800'" ),
+	swatch( 'rgb(255, 136, 0)',                         'rgb()' ),
+	swatch( 'hsl(32, 100%, 50%)',                       'hsl()' ),
+	swatch( [ 255, 136, 0 ],                            '[r, g, b]' ),
+	swatch( 0xFF8800,                                   '0xFF8800' ),
 	swatch( Term::Fabulous::Enum::WebColor->DarkOrange, 'DarkOrange' ),
 );
 

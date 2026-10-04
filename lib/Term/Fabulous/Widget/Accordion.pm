@@ -38,7 +38,7 @@ class Term::Fabulous::Widget::Accordion
 	field $closed_glyph            :param = "\x{25B8}";
 	field $title_color             :param = [ 220, 223, 228, 255 ];
 	field $title_bold              :param = 0;
-	field $accent_color            :param = [ 97,  175, 239, 255 ];
+	field $accent_color            :param = [ 97, 175, 239, 255 ];
 	field $header_background_color :param = undef;
 	field $focus_background_color  :param = [ 52,  58,  72,  255 ];
 	field $hover_background_color  :param = [ 40,  45,  58,  255 ];
@@ -57,7 +57,7 @@ class Term::Fabulous::Widget::Accordion
 		$header_background_color = defined $header_background_color ? color( $self, header_background_color => $header_background_color ) : undef;
 		$focus_background_color  = color( $self, focus_background_color => $focus_background_color );
 		$hover_background_color  = color( $self, hover_background_color => $hover_background_color );
-		$disabled_color          = color( $self, disabled_color => $disabled_color );
+		$disabled_color          = color( $self, disabled_color         => $disabled_color );
 		$body_indent             = non_negative_integer( $self, body_indent => $body_indent );
 
 		my $layout = $self->layout;
@@ -209,18 +209,18 @@ class Term::Fabulous::Widget::Accordion
 		return $multiple;
 	}
 
-	method bordered (@new)                { return @new ? $self->_set( \$bordered,                boolean( $self, bordered => $new[0] ) ) : $bordered }
-	method toggle_position (@new)         { return @new ? $self->_set( \$toggle_position,         $self->_checked_position( $new[0] ) ) : $toggle_position }
-	method open_glyph (@new)              { return @new ? $self->_set( \$open_glyph,              string( $self, open_glyph => $new[0] ) ) : $open_glyph }
-	method closed_glyph (@new)            { return @new ? $self->_set( \$closed_glyph,            string( $self, closed_glyph => $new[0] ) ) : $closed_glyph }
-	method title_color (@new)             { return @new ? $self->_set( \$title_color,             color( $self, title_color => $new[0] ) ) : $title_color }
-	method title_bold (@new)              { return @new ? $self->_set( \$title_bold,              boolean( $self, title_bold => $new[0] ) ) : $title_bold }
-	method accent_color (@new)            { return @new ? $self->_set( \$accent_color,            color( $self, accent_color => $new[0] ) ) : $accent_color }
+	method bordered                (@new) { return @new ? $self->_set( \$bordered, boolean( $self, bordered => $new[0] ) )                                       : $bordered }
+	method toggle_position         (@new) { return @new ? $self->_set( \$toggle_position, $self->_checked_position( $new[0] ) )                                  : $toggle_position }
+	method open_glyph              (@new) { return @new ? $self->_set( \$open_glyph, string( $self, open_glyph => $new[0] ) )                                    : $open_glyph }
+	method closed_glyph            (@new) { return @new ? $self->_set( \$closed_glyph, string( $self, closed_glyph => $new[0] ) )                                : $closed_glyph }
+	method title_color             (@new) { return @new ? $self->_set( \$title_color, color( $self, title_color => $new[0] ) )                                   : $title_color }
+	method title_bold              (@new) { return @new ? $self->_set( \$title_bold, boolean( $self, title_bold => $new[0] ) )                                   : $title_bold }
+	method accent_color            (@new) { return @new ? $self->_set( \$accent_color, color( $self, accent_color => $new[0] ) )                                 : $accent_color }
 	method header_background_color (@new) { return @new ? $self->_set( \$header_background_color, $self->_optional_color( header_background_color => $new[0] ) ) : $header_background_color }
-	method focus_background_color (@new)  { return @new ? $self->_set( \$focus_background_color,  color( $self, focus_background_color => $new[0] ) ) : $focus_background_color }
-	method hover_background_color (@new)  { return @new ? $self->_set( \$hover_background_color,  color( $self, hover_background_color => $new[0] ) ) : $hover_background_color }
-	method disabled_color (@new)          { return @new ? $self->_set( \$disabled_color,          color( $self, disabled_color => $new[0] ) ) : $disabled_color }
-	method body_indent (@new)             { return @new ? $self->_set( \$body_indent,             non_negative_integer( $self, body_indent => $new[0] ) ) : $body_indent }
+	method focus_background_color  (@new) { return @new ? $self->_set( \$focus_background_color, color( $self, focus_background_color => $new[0] ) )             : $focus_background_color }
+	method hover_background_color  (@new) { return @new ? $self->_set( \$hover_background_color, color( $self, hover_background_color => $new[0] ) )             : $hover_background_color }
+	method disabled_color          (@new) { return @new ? $self->_set( \$disabled_color, color( $self, disabled_color => $new[0] ) )                             : $disabled_color }
+	method body_indent             (@new) { return @new ? $self->_set( \$body_indent, non_negative_integer( $self, body_indent => $new[0] ) )                    : $body_indent }
 
 	method layout_properties :common () {
 		return (
@@ -236,10 +236,10 @@ class Term::Fabulous::Widget::Accordion
 	# ---------------------------------------------------------------------
 
 	method _handle_key ($event) {
-		my $name = $event->main_key_name // return 0;
-		my $move = $MOVE_BY_KEY{$name} // return 0;
+		my $name  = $event->main_key_name // return 0;
+		my $move  = $MOVE_BY_KEY{$name}   // return 0;
 		my @items = grep { $_->is_enabled } $self->items or return 0;
-		my ($at) = grep { $items[$_]->is_focused } 0 .. $#items;
+		my ($at)  = grep { $items[$_]->is_focused } 0 .. $#items;
 		return 0 unless defined $at;
 
 		my ( $unit, $where ) = @$move;

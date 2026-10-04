@@ -28,19 +28,20 @@ class Term::Fabulous::Widget::Dropdown
 	use constant ARROW_DOWN        => "\x{25BE}";
 	use constant ARROW_UP          => "\x{25B4}";
 	use constant TYPEAHEAD_SECONDS => 1;
+
 	# The highest z_index Clay has (int16): an open list belongs to the
 	# focused widget, so it floats over everything, a dialog it is in
 	# included.
-	use constant LIST_Z_INDEX      => 32767;
+	use constant LIST_Z_INDEX => 32767;
 
 	field @options;
 	field $selected;    # index into @options, or undef
 
-	field $placeholder            :param = '';
-	field $max_visible_options    :param = 8;
-	field $placeholder_color      :param = [ 120, 126, 138, 255 ];
-	field $list_background_color  :param = [ 30,  33,  40,  255 ];
-	field $highlight_text_color   :param = [ 16,  18,  22,  255 ];
+	field $placeholder           :param = '';
+	field $max_visible_options   :param = 8;
+	field $placeholder_color     :param = [ 120, 126, 138, 255 ];
+	field $list_background_color :param = [ 30,  33,  40,  255 ];
+	field $highlight_text_color  :param = [ 16,  18,  22,  255 ];
 
 	# The open list, the option it highlights and whether it opened upwards.
 	field $list;
@@ -48,11 +49,12 @@ class Term::Fabulous::Widget::Dropdown
 	field $opens_upwards = 0;
 
 	# Typed characters that search the labels, and when the last one came.
-	field $typed = '';
+	field $typed    = '';
 	field $typed_at = 0;
 
 	ADJUST :params ( :$options = undef, :$value = undef, :$selected_index = undef ) {
-		die "Term::Fabulous::Widget::Dropdown: give 'value' or 'selected_index', not both" if defined $value && defined $selected_index;
+		die "Term::Fabulous::Widget::Dropdown: give 'value' or 'selected_index', not both"
+			if defined $value && defined $selected_index;
 		$placeholder           = string( $self, placeholder => $placeholder );
 		$max_visible_options   = positive_integer( $self, max_visible_options => $max_visible_options );
 		$placeholder_color     = cell_color( $self, placeholder_color     => $placeholder_color );
@@ -60,21 +62,20 @@ class Term::Fabulous::Widget::Dropdown
 		$highlight_text_color  = cell_color( $self, highlight_text_color  => $highlight_text_color );
 		$self->background_color( [ 36, 40, 48, 255 ] ) unless defined $self->background_color;
 
-		$self->options($options)               if defined $options;
-		$self->value($value)                   if defined $value;
+		$self->options($options) if defined $options;
+		$self->value($value) if defined $value;
 		$self->selected_index($selected_index) if defined $selected_index;
-	}
+		}
 
-	# An option is a label (its own value), [ label, value ] or
-	# { label => ..., value => ... }.
-	method _parse_option ($option) {
-		my ( $label, $value ) =
-			  ref $option eq 'ARRAY' && @$option == 2 ? @$option
-			: ref $option eq 'HASH'                  ? @{$option}{qw(label value)}
-			: !ref $option                           ? ( $option, $option )
-			:                                          ();
-		die "Term::Fabulous::Widget::Dropdown: an option must be a label, [ label, value ] or { label => ..., value => ... }, got "
-			. ( defined $option ? ( ref $option || "'$option'" ) : 'undef' )
+		# An option is a label (its own value), [ label, value ] or
+		# { label => ..., value => ... }.
+		method _parse_option ($option) {
+		my ( $label, $value )
+			= ref $option eq 'ARRAY' && @$option == 2 ? @$option
+			: ref $option eq 'HASH'                   ? @{$option}{qw(label value)}
+			: !ref $option                            ? ( $option, $option )
+			:                                           ();
+		die "Term::Fabulous::Widget::Dropdown: an option must be a label, [ label, value ] or { label => ..., value => ... }, got " . ( defined $option ? ( ref $option || "'$option'" ) : 'undef' )
 			unless defined $label && !ref $label && !ref $value;
 		die "Term::Fabulous::Widget::Dropdown: a hash option takes only the keys 'label' and 'value'"
 			if ref $option eq 'HASH' && grep { $_ ne 'label' && $_ ne 'value' } keys %$option;
@@ -195,7 +196,7 @@ class Term::Fabulous::Widget::Dropdown
 			return $self->options( [ $self->options, @labels ] );
 		}
 
-		my %props   = map { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
+		my %props   = map  { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
 		my @unknown = grep { $_ ne 'value' } sort keys %props;
 		die "Term::Fabulous::Widget::Dropdown: layout property 'option' takes one label and an optional value=..."
 			if @labels != 1 || @unknown;
@@ -324,7 +325,7 @@ class Term::Fabulous::Widget::Dropdown
 		my $last = $#options;
 		return 0 if $last < 0;
 		my %target = (
-			Up   => defined $selected ? max( $selected - 1, 0 ) : $last,
+			Up   => defined $selected ? max( $selected - 1, 0 )     : $last,
 			Down => defined $selected ? min( $selected + 1, $last ) : 0,
 			Home => 0,
 			End  => $last,
@@ -372,8 +373,8 @@ class Term::Fabulous::Widget::Dropdown
 		$typed    = $now - $typed_at <= TYPEAHEAD_SECONDS ? $typed . $character : $character;
 		$typed_at = $now;
 
-		my $current = $self->is_open ? $highlighted : $selected // -1;
-		my $start   = length $typed > 1 ? $current : $current + 1;
+		my $current = $self->is_open    ? $highlighted : $selected // -1;
+		my $start   = length $typed > 1 ? $current     : $current + 1;
 		my $wanted  = fc $typed;
 		my ($match) = grep { fc( substr( $options[$_]{label}, 0, length $typed ) ) eq $wanted } map { ( $start + $_ ) % @options } 0 .. $#options;
 		return 1 unless defined $match;
@@ -404,8 +405,8 @@ class Term::Fabulous::Widget::Dropdown
 	# ( $fg, $bg ) for the highlighted, the selected and the other options.
 	method option_attrs ($index) {
 		return ( $self->color_attr($highlight_text_color), $self->accent_attr ) if defined $highlighted && $index == $highlighted;
-		return ( $self->accent_attr, undef ) if defined $selected && $index == $selected;
-		return ( $self->foreground_attr, undef );
+		return ( $self->accent_attr,                       undef ) if defined $selected                 && $index == $selected;
+		return ( $self->foreground_attr,                   undef );
 	}
 
 	method option_label ($index) {

@@ -27,7 +27,7 @@ class Term::Fabulous::Widget::Table::Pager :isa(Term::Fabulous::Widget::Box) :st
 
 	field $text_color   :param = [ 220, 223, 228, 255 ];
 	field $muted_color  :param = [ 140, 146, 158, 255 ];
-	field $button_color :param = [ 44, 49, 60, 255 ];
+	field $button_color :param = [ 44,  49,  60,  255 ];
 	field $page_sizes   :param;
 
 	ADJUST {
@@ -38,12 +38,14 @@ class Term::Fabulous::Widget::Table::Pager :isa(Term::Fabulous::Widget::Box) :st
 			unless ref $page_sizes eq 'ARRAY' && @$page_sizes && !grep { !defined || ref || !/\A[1-9][0-9]*\z/ } @$page_sizes;
 
 		# Three groups that flow onto a second line when the table is narrow.
-		$self->layout( {
-			layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
-			line_sizing      => CLAY_LINE_SIZING_FIT,
-			child_gap        => 3,
-			sizing           => { width => sizing_grow(), height => sizing_fit() },
-		} );
+		$self->layout(
+			{
+				layout_direction => CLAY_LEFT_TO_RIGHT_WRAP,
+				line_sizing      => CLAY_LINE_SIZING_FIT,
+				child_gap        => 3,
+				sizing           => { width => sizing_grow(), height => sizing_fit() },
+			}
+		);
 		my %glyph = ( first => "\x{00AB}", previous => "\x{2039}", next => "\x{203A}", last => "\x{00BB}" );
 		foreach my $name (qw(first previous next last)) {
 			my $button = Term::Fabulous::Widget::Button->new(
@@ -57,8 +59,8 @@ class Term::Fabulous::Widget::Table::Pager :isa(Term::Fabulous::Widget::Box) :st
 			$button{$name} = $button;
 		}
 		my $text = sub ( $value, $color ) { Term::Fabulous::Widget::Text->new( text => $value, text_color => $color, wrap_mode => CLAY_TEXT_WRAP_NONE ) };
-		$page_text  = $text->( '', $text_color );
-		$count_text = $text->( '', $muted_color );
+		$page_text  = $text->( '',              $text_color );
+		$count_text = $text->( '',              $muted_color );
 		$size_label = $text->( 'Rows per page', $muted_color );
 		$size_list  = Term::Fabulous::Widget::Dropdown->new( options => [ map { [ "$_" => $_ + 0 ] } @$page_sizes ], text_color => $text_color );
 		my $group = sub (@children) {
@@ -77,9 +79,9 @@ class Term::Fabulous::Widget::Table::Pager :isa(Term::Fabulous::Widget::Box) :st
 	# last, total }, first and last counting lines from 1.
 	method show (%state) {
 		my ( $page, $pages ) = @state{qw(page page_count)};
-		_set( $page_text, text => "Page $page of $pages" );
-		_set( $count_text, text => $state{total} ? "$state{first}\x{2013}$state{last} of $state{total}" : '0 of 0' );
-		_set( $button{$_}, disabled => $page <= 1 ? 1 : 0 ) foreach qw(first previous);
+		_set( $page_text,  text     => "Page $page of $pages" );
+		_set( $count_text, text     => $state{total}   ? "$state{first}\x{2013}$state{last} of $state{total}" : '0 of 0' );
+		_set( $button{$_}, disabled => $page <= 1      ? 1 : 0 ) foreach qw(first previous);
 		_set( $button{$_}, disabled => $page >= $pages ? 1 : 0 ) foreach qw(next last);
 		my $listed = grep { $_ == $state{page_size} } map { $_->{value} } $size_list->options;
 		$size_list->options( [ map { [ "$_" => $_ + 0 ] } sort { $a <=> $b } @$page_sizes, $state{page_size} ] ) unless $listed;

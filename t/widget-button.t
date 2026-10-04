@@ -19,7 +19,7 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
-my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+my $root   = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 my $button = Term::Fabulous::Widget::Button->new(
 	background_color => [ 2, 2, 2, 255 ],
 	border_width     => 1,
@@ -62,7 +62,8 @@ subtest 'a click activates and shows the pressed look' => sub {
 
 subtest 'a disabled button' => sub {
 	my $label = Term::Fabulous::Widget::Text->new( text => 'Go', text_color => [ 255, 255, 255, 255 ] );
-	my $off   = Term::Fabulous::Widget::Button->new( disabled => 1, border_width => 1, border_color => [ 5, 5, 5, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } } );
+	my $off
+		= Term::Fabulous::Widget::Button->new( disabled => 1, border_width => 1, border_color => [ 5, 5, 5, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } } );
 	$off->add_child($label);
 	my $off_root = Term::Fabulous::Widget::Box->new;
 	$off_root->add_child($off);
@@ -91,13 +92,14 @@ subtest 'a disabled button' => sub {
 subtest 'the pressed look can be a color or nothing' => sub {
 	my $colored = Term::Fabulous::Widget::Button->new( background_color => [ 2, 2, 2, 255 ], pressed_background_color => '#ff0000' );
 	is $colored->pressed_background_color, [ 255, 0, 0, 255 ], 'a color is stored as rgba';
-	is $colored->reverse_video, 0, 'a colored press is not reverse video';
+	is $colored->reverse_video,            0,                  'a colored press is not reverse video';
 
 	my $plain = Term::Fabulous::Widget::Button->new( pressed_background_color => undef );
-	is $plain->pressed_background_color, undef, 'undef switches the pressed look off';
-	is $button->pressed_background_color, 'reverse', 'the default is reverse video';
+	is $plain->pressed_background_color,            undef,     'undef switches the pressed look off';
+	is $button->pressed_background_color,           'reverse', 'the default is reverse video';
 	is $plain->pressed_background_color('reverse'), 'reverse', 'and can be set back';
-	like dies { Term::Fabulous::Widget::Button->new( pressed_background_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Button: pressed_background_color must be a color, got 'nope'/, 'an invalid color dies';
+	like dies { Term::Fabulous::Widget::Button->new( pressed_background_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Button: pressed_background_color must be a color, got 'nope'/,
+		'an invalid color dies';
 };
 
 subtest 'the focused button draws its border in the focus color' => sub {

@@ -27,8 +27,8 @@ sub sample ( $caption, $text, %options ) {
 		layout       => $box_layout,
 	);
 	$box->add_child(
-		Term::Fabulous::Widget::Text->new( text => $caption, text_color => [ 255, 200, 80, 255 ] ),
-		Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 230, 230, 230, 255 ], %options ),
+		Term::Fabulous::Widget::Text->new( text => $caption, text_color => [ 255, 200, 80,  255 ] ),
+		Term::Fabulous::Widget::Text->new( text => $text,    text_color => [ 230, 230, 230, 255 ], %options ),
 	);
 	return $box;
 }

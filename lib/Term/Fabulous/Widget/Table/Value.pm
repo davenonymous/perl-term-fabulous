@@ -45,7 +45,7 @@ sub date_interval ($text) {    ## no critic (Subroutines::RequireFinalReturn) PP
 	}x or return undef;
 	return undef if defined $utc && !defined $hour;
 
-	my @start = ( $second // 0, $minute // 0, $hour // 0, $day // 1, ( $month // 1 ) - 1, $year - 1900 );
+	my @start    = ( $second // 0, $minute // 0, $hour // 0, $day // 1, ( $month // 1 ) - 1, $year - 1900 );
 	my $to_epoch = defined $utc ? \&timegm_posix : \&timelocal_posix;
 	try {
 		my $first = $to_epoch->(@start);
@@ -111,7 +111,7 @@ sub natural_compare ( $left, $right ) {
 # caller reverses only the result for known values).
 sub compare_values ( $type, $left, $right ) {
 	die "Term::Fabulous::Widget::Table::Value: unknown column type '$type'" unless $IS_TYPE{$type};
-	return fc( "$left" ) cmp fc( "$right" ) if $type eq 'string';
+	return fc("$left") cmp fc("$right") if $type eq 'string';
 	my $of = $type eq 'number' ? \&number_of : \&date_epoch;
 	return $of->($left) <=> $of->($right);
 }

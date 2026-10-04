@@ -13,16 +13,16 @@ use Term::Fabulous::Widget::Checkbox;
 subtest 'painting and size' => sub {
 	my $box = Term::Fabulous::Widget::Checkbox->new( label => 'Accept' );
 	my $ui  = layout_ui($box);
-	is [ $box->columns, $box->rows ], [ 10, 1 ], 'the mark, a space and the label';
-	is row_text( $box, 0 ), '[ ] Accept', 'unchecked';
+	is [ $box->columns, $box->rows ], [ 10, 1 ],    'the mark, a space and the label';
+	is row_text( $box, 0 ),           '[ ] Accept', 'unchecked';
 
 	$box->checked(1);
-	is row_text( $box, 0 ), '[x] Accept', 'checked';
+	is row_text( $box, 0 ),            '[x] Accept',                           'checked';
 	is shown($box)->cell( 1, 0 )->[1], $box->color_attr( $box->accent_color ), 'the checked mark has the accent color';
 	$box->indeterminate(1);
 	is row_text( $box, 0 ), '[-] Accept', 'indeterminate';
 
-	my $wide = Term::Fabulous::Widget::Checkbox->new( label => 'Go', checked_mark => '[yes]', unchecked_mark => '[]', checked => 'yes' );
+	my $wide    = Term::Fabulous::Widget::Checkbox->new( label => 'Go', checked_mark => '[yes]', unchecked_mark => '[]', checked => 'yes' );
 	my $wide_ui = layout_ui($wide);
 	is [ $wide->checked, row_text( $wide, 0 ) ], [ 1, '[yes] Go' ], 'checked is stored as 1; the label follows the widest mark';
 	$wide->checked(0);
@@ -50,9 +50,9 @@ subtest 'Space, Enter and clicks toggle' => sub {
 };
 
 subtest 'invalid parameters die' => sub {
-	like dies { Term::Fabulous::Widget::Checkbox->new( label => [] ) },          qr/label must be a string/, 'a non-string label';
-	like dies { Term::Fabulous::Widget::Checkbox->new( text_color => 'nope' ) }, qr/unrecognized color/,     'an invalid color';
-	like dies { Term::Fabulous::Widget::Checkbox->new( checkd => 1 ) },          qr/Unrecognised parameters/, 'an unknown parameter';
+	like dies { Term::Fabulous::Widget::Checkbox->new( label      => [] ) },     qr/label must be a string/,  'a non-string label';
+	like dies { Term::Fabulous::Widget::Checkbox->new( text_color => 'nope' ) }, qr/unrecognized color/,      'an invalid color';
+	like dies { Term::Fabulous::Widget::Checkbox->new( checkd     => 1 ) },      qr/Unrecognised parameters/, 'an unknown parameter';
 };
 
 done_testing;

@@ -29,14 +29,14 @@ sub events {
 
 subtest 'size and value' => sub {
 	my ( $field, $ui ) = text_field( value => 'hi' );
-	is [ $field->columns, $field->rows ], [ 8, 1 ], 'preferred_columns and one row without a layout size';
-	is row_text( $field, 0 ), 'hi      ', 'the value is painted';
+	is [ $field->columns, $field->rows ], [ 8, 1 ],   'preferred_columns and one row without a layout size';
+	is row_text( $field, 0 ),             'hi      ', 'the value is painted';
 	$field->value("a\nb");
 	is $field->value, 'a b', 'line breaks become spaces';
-	like dies { Term::Fabulous::Widget::TextField->new( mask => '**' ) },             qr/mask must be a single character/, 'an invalid mask dies';
-	like dies { $field->max_length(1) }, qr/^Term::Fabulous::Widget::TextField: the text has 3 characters, more than max_length 1/, 'editor errors name the widget';
+	like dies { Term::Fabulous::Widget::TextField->new( mask => '**' ) }, qr/mask must be a single character/,                                                       'an invalid mask dies';
+	like dies { $field->max_length(1) },                                  qr/^Term::Fabulous::Widget::TextField: the text has 3 characters, more than max_length 1/, 'editor errors name the widget';
 	is( Term::Fabulous::Widget::TextField->new( read_only => 'yes', disabled => 'no' )->read_only, 1, 'read_only is stored as 1 or 0' );
-	like dies { Term::Fabulous::Widget::TextField->new( preferred_columns => 0 ) }, qr/positive integer/,                'an invalid width dies';
+	like dies { Term::Fabulous::Widget::TextField->new( preferred_columns => 0 ) }, qr/positive integer/, 'an invalid width dies';
 };
 
 subtest 'edits through the editor scroll the view' => sub {
@@ -55,7 +55,7 @@ subtest 'typing fires Change, Enter fires Submit' => sub {
 	press( $field, 'Backspace' );
 	press( $field, 'Enter' );
 	is $changes, [ 'a', 'ab', 'abc', 'ab' ], 'one Change per edit';
-	is $submits, ['ab'], 'Submit with the text';
+	is $submits, ['ab'],                     'Submit with the text';
 
 	$field->value('quiet');
 	is scalar @$changes, 4, 'setting the value fires nothing';
@@ -68,9 +68,9 @@ subtest 'cursor, selection and focus painting' => sub {
 	$ui->interaction->set_focused_widget($field);
 	ok shown($field)->cell( 3, 0 )->[1] & TB_REVERSE, 'the focused field shows the cursor after the text';
 	press( $field, 'Shift+Left' );
-	is $field->editor->selected_text, 'c', 'Shift extends the selection';
-	is shown($field)->cell( 2, 0 )->[2], $field->color_attr( $field->selection_color ), 'the selection is painted';
-	is $field->cell( 0, 0 )->[2], $field->color_attr( $field->focus_background_color ), 'the rest has the focus background';
+	is $field->editor->selected_text,    'c',                                                  'Shift extends the selection';
+	is shown($field)->cell( 2, 0 )->[2], $field->color_attr( $field->selection_color ),        'the selection is painted';
+	is $field->cell( 0, 0 )->[2],        $field->color_attr( $field->focus_background_color ), 'the rest has the focus background';
 };
 
 subtest 'horizontal scrolling' => sub {
@@ -96,13 +96,13 @@ subtest 'keys that are not used bubble' => sub {
 
 subtest 'placeholder and mask' => sub {
 	my ( $field, $ui ) = text_field( placeholder => 'Name' );
-	is row_text( $field, 0 ), 'Name    ', 'the placeholder shows while empty';
+	is row_text( $field, 0 ),     'Name    ',                                      'the placeholder shows while empty';
 	is $field->cell( 0, 0 )->[1], $field->color_attr( $field->placeholder_color ), 'in its color';
 
 	$field->mask('*');
 	$field->value('secret');
 	is row_text( $field, 0 ), '******  ', 'masked';
-	is $field->value, 'secret', 'the value is not';
+	is $field->value,         'secret',   'the value is not';
 };
 
 subtest 'mouse' => sub {
@@ -148,9 +148,9 @@ subtest 'disabled' => sub {
 	$ui->interaction->set_focused_widget($field);
 	$field->disabled(1);
 	ok !$field->is_focused, 'disabling removes the focus';
-	ok !$field->can_focus, 'and keeps it away';
+	ok !$field->can_focus,  'and keeps it away';
 	press( $field, 'y' );
-	is $field->value, 'x', 'keys are ignored';
+	is $field->value,                    'x',                                          'keys are ignored';
 	is shown($field)->cell( 0, 0 )->[1], $field->color_attr( $field->disabled_color ), 'painted in the disabled color';
 	$field->disabled(0);
 	ok $field->can_focus, 'enabling lets it take the focus again';
@@ -167,8 +167,8 @@ subtest 'disabled' => sub {
 	ok !$toggled->can_focus, 'can_focus(0) while disabled counts once enabled';
 	$toggled->disabled(1);
 	is $toggled->can_focus(1), 0, 'can_focus(1) while disabled does not make it focusable';
-	like dies { $toggled->can_focus( {} ) }, qr/\AClay::UI: 'can_focus' must be a plain boolean value/, 'a reference dies';
-	like dies { $toggled->can_focus( 1, 0 ) }, qr/\AClay::UI: 'can_focus' takes one value/, 'so do two values';
+	like dies { $toggled->can_focus( {} ) },   qr/\AClay::UI: 'can_focus' must be a plain boolean value/, 'a reference dies';
+	like dies { $toggled->can_focus( 1, 0 ) }, qr/\AClay::UI: 'can_focus' takes one value/,               'so do two values';
 	$toggled->disabled(0);
 	ok $toggled->can_focus, 'but counts once enabled';
 };

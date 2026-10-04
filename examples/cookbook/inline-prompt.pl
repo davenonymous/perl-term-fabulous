@@ -16,7 +16,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 	},
 );
 my $name = Term::Fabulous::Widget::TextField->new( id => 'name', placeholder => 'Your name', layout => { sizing => { width => sizing_grow() } } );

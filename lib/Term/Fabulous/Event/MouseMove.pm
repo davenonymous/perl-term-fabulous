@@ -12,16 +12,16 @@ use Object::Pad 0.825;
 use Clay::UI::Events::Event;
 
 class Term::Fabulous::Event::MouseMove :isa(Clay::UI::Events::Event) :strict(params) {
-	field $x         :param :reader;
-	field $y         :param :reader;
+	field $x :param :reader;
+	field $y :param :reader;
 	field $modifiers :param :reader = 0;
 
 	method event_name :common { 'MouseMove' }
 
 	method of :common ($ev) {
 		return $class->new(
-			x => $ev->x,
-			y => $ev->y,
+			x         => $ev->x,
+			y         => $ev->y,
 			modifiers => $ev->mod,
 		);
 	}

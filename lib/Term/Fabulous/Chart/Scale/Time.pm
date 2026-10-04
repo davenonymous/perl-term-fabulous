@@ -24,14 +24,14 @@ class Term::Fabulous::Chart::Scale::Time :isa(Term::Fabulous::Chart::Scale) {
 	my @INTERVALS = (
 		( map { [ second => $_, $_ ] } 1, 2, 5, 10, 15, 30 ),
 		( map { [ minute => $_, $_ * MINUTE ] } 1, 2, 5, 10, 15, 30 ),
-		( map { [ hour   => $_, $_ * HOUR ] } 1, 2, 3, 6, 12 ),
-		( map { [ day    => $_, $_ * DAY ] } 1, 2 ),
+		( map { [ hour   => $_, $_ * HOUR ] } 1,   2, 3, 6,  12 ),
+		( map { [ day    => $_, $_ * DAY ] } 1,    2 ),
 		[ week => 1, 7 * DAY ],
-		( map { [ month => $_, $_ * 30.44 * DAY ] } 1, 2, 3, 6 ),
+		( map { [ month => $_, $_ * 30.44 * DAY ] } 1,  2, 3, 6 ),
 		( map { [ year  => $_, $_ * 365.25 * DAY ] } 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000 ),
 	);
 
-	field $utc      :param :reader = 0;
+	field $utc :param :reader = 0;
 	field $interval :param :reader;    # [ unit, count ]
 
 	method kind () { return 'time' }
@@ -50,12 +50,12 @@ class Term::Fabulous::Chart::Scale::Time :isa(Term::Fabulous::Chart::Scale) {
 		croak "$class: cells must be a positive integer, got $cells" unless $cells =~ /\A[1-9][0-9]*\z/;
 		my ( $fixed_low, $fixed_high ) = @options{qw(min max)};
 		croak "$class: min ($fixed_low) must be before max ($fixed_high)" if defined $fixed_low && defined $fixed_high && $fixed_low >= $fixed_high;
-		my $utc     = $options{utc} ? 1 : 0;
-		my $measure = $options{measure} // sub ($label) { length $label };
+		my $utc      = $options{utc} ? 1 : 0;
+		my $measure  = $options{measure} // sub ($label) { length $label };
 		my $vertical = ( $options{orientation} // 'horizontal' ) eq 'vertical';
 
 		my ( $low, $high ) = $options{extent} ? $options{extent}->@* : ( 0, DAY );
-		$low  = $fixed_low  if defined $fixed_low;
+		$low  = $fixed_low if defined $fixed_low;
 		$high = $fixed_high if defined $fixed_high;
 		if ( $high <= $low ) {
 			( $low, $high )
@@ -106,13 +106,13 @@ class Term::Fabulous::Chart::Scale::Time :isa(Term::Fabulous::Chart::Scale) {
 	# The boundary of $unit (a multiple of $count) at or before $epoch.
 	sub _floor ( $epoch, $unit, $count, $utc ) {
 		my ( $sec, $min, $hour, $mday, $mon, $year, $wday ) = _parts( $epoch, $utc );
-		return _epoch( $utc, floor( $sec / $count ) * $count, $min, $hour, $mday, $mon, $year ) if $unit eq 'second';
-		return _epoch( $utc, 0, floor( $min / $count ) * $count, $hour, $mday, $mon, $year ) if $unit eq 'minute';
-		return _epoch( $utc, 0, 0, floor( $hour / $count ) * $count, $mday, $mon, $year ) if $unit eq 'hour';
-		return _epoch( $utc, 0, 0, 0, 1 + floor( ( $mday - 1 ) / $count ) * $count, $mon, $year ) if $unit eq 'day';
-		return _epoch( $utc, 0, 0, 0, _add_days( $mday, $mon, $year, -( ( $wday + 6 ) % 7 ) ) ) if $unit eq 'week';
-		return _epoch( $utc, 0, 0, 0, 1, floor( $mon / $count ) * $count, $year ) if $unit eq 'month';
-		return _epoch( $utc, 0, 0, 0, 1, 0, floor( ( $year + 1900 ) / $count ) * $count - 1900 );
+		return _epoch( $utc, floor( $sec / $count ) * $count, $min,                            $hour,                            $mday,         $mon, $year ) if $unit eq 'second';
+		return _epoch( $utc, 0,                               floor( $min / $count ) * $count, $hour,                            $mday,         $mon, $year ) if $unit eq 'minute';
+		return _epoch( $utc, 0,                               0,                               floor( $hour / $count ) * $count, $mday,         $mon, $year ) if $unit eq 'hour';
+		return _epoch( $utc, 0,                               0,                               0, 1 + floor( ( $mday - 1 ) / $count ) * $count, $mon, $year ) if $unit eq 'day';
+		return _epoch( $utc, 0,                               0,                               0, _add_days( $mday, $mon, $year, -( ( $wday + 6 ) % 7 ) ) ) if $unit eq 'week';
+		return _epoch( $utc, 0,                               0,                               0, 1, floor( $mon / $count ) * $count, $year ) if $unit eq 'month';
+		return _epoch( $utc, 0,                               0,                               0, 1, 0,                               floor( ( $year + 1900 ) / $count ) * $count - 1900 );
 	}
 
 	# The next boundary after the boundary $epoch.
@@ -160,7 +160,7 @@ class Term::Fabulous::Chart::Scale::Time :isa(Term::Fabulous::Chart::Scale) {
 		my $day_label = sub () { strftime( '%b ', @parts ) . $mday };
 		return strftime( '%Y', @parts ) if $unit eq 'year' || ( !$sec && !$min && !$hour && $mday == 1 && !$mon && $unit ne 'second' );
 		return strftime( '%b', @parts ) if $unit eq 'month';
-		return $day_label->() if $unit eq 'day' || $unit eq 'week';
+		return $day_label->() if $unit eq 'day'       || $unit eq 'week';
 		return strftime( '%H:%M:%S', @parts ) if $sec || $unit eq 'second';
 		return $day_label->() if !$min && !$hour;
 		return strftime( '%H:%M', @parts );

@@ -25,8 +25,7 @@ class Term::Fabulous::Widget::Element
 	:does(Clay::UI::Role::Style::HasStates)
 
 	:does(Clay::UI::Role::Style::HasBorder)
-	:abstract
-{
+	:abstract {
 }
 
 1;

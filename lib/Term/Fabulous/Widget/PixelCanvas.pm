@@ -35,10 +35,10 @@ class Term::Fabulous::Widget::PixelCanvas
 	method _pixels_of_cell ( $x, $row ) {
 		my ( $glyphs, $fgs, $bgs ) = $self->cell_row($row);
 		my $glyph = $glyphs->[$x];
-		return ( undef, undef ) unless ref $glyph;
+		return ( undef,      undef ) unless ref $glyph;
 		return ( $fgs->[$x], $bgs->[$x] ) if $glyph->[0] eq UPPER_HALF;
 		return ( $bgs->[$x], $fgs->[$x] ) if $glyph->[0] eq LOWER_HALF;
-		return ( undef, undef );
+		return ( undef,      undef );
 	}
 
 	# Sets one pixel of whole coordinates to an attribute (undef unsets
@@ -51,9 +51,9 @@ class Term::Fabulous::Widget::PixelCanvas
 		if   ( $y % 2 ) { $bottom = $attr }
 		else            { $top    = $attr }
 
-		return $self->put_attrs( $x, $row, undef, undef, undef ) if !defined $top && !defined $bottom;
+		return $self->put_attrs( $x, $row, undef,      undef,   undef ) if !defined $top && !defined $bottom;
 		return $self->put_attrs( $x, $row, LOWER_HALF, $bottom, undef ) if !defined $top;
-		return $self->put_attrs( $x, $row, UPPER_HALF, $top, $bottom );
+		return $self->put_attrs( $x, $row, UPPER_HALF, $top,    $bottom );
 	}
 
 	method set_pixel ( $x, $y, $color ) {

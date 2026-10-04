@@ -34,19 +34,19 @@ subtest 'counts per bin, from edge to edge' => sub {
 
 subtest 'bin edges' => sub {
 	my $chart = Term::Fabulous::Widget::Histogram->new;
-	is [ $chart->bin_edges( [ 0 .. 100 ] ) ],        [ 0, 20, 40, 60, 80, 100 ], 'automatic bins have a nice width';
-	is [ $chart->bin_edges( [ 0.1, 0.35, 0.8 ] ) ],  [ 0, 0.5, 1 ],              'that covers the values';
-	is [ $chart->bin_edges ],                        [ map { $_ / 10 } 0 .. 10 ], 'from 0 to 1 without values';
-	is [ $chart->bin_edges( [ 1, 1.5 ], [ 9 ] ) ],   [ 0, 5, 10 ],              'over the values of all series';
+	is [ $chart->bin_edges( [ 0 .. 100 ] ) ],       [ 0, 20, 40, 60, 80, 100 ],  'automatic bins have a nice width';
+	is [ $chart->bin_edges( [ 0.1, 0.35, 0.8 ] ) ], [ 0, 0.5, 1 ],               'that covers the values';
+	is [ $chart->bin_edges ],                       [ map { $_ / 10 } 0 .. 10 ], 'from 0 to 1 without values';
+	is [ $chart->bin_edges( [ 1, 1.5 ], [9] ) ],    [ 0, 5, 10 ],                'over the values of all series';
 	$chart->bins(4);
-	is [ $chart->bin_edges( [ 1, 2, 4 ] ) ],         [ 1, 1.75, 2.5, 3.25, 4 ],  'a number of bins divides the values evenly';
+	is [ $chart->bin_edges( [ 1, 2, 4 ] ) ], [ 1, 1.75, 2.5, 3.25, 4 ], 'a number of bins divides the values evenly';
 	$chart->bin_width(25);
-	is [ $chart->bin_edges( [ 3, 90 ] ) ],           [ 0, 25, 50, 75, 100 ],     'bin_width wins over bins';
+	is [ $chart->bin_edges( [ 3, 90 ] ) ], [ 0, 25, 50, 75, 100 ], 'bin_width wins over bins';
 	$chart->range( [ 0, 60 ] );
-	is [ $chart->bin_edges( [ 3, 90 ] ) ],           [ 0, 25, 50, 60 ],          'a range ends the last bin';
+	is [ $chart->bin_edges( [ 3, 90 ] ) ], [ 0, 25, 50, 60 ], 'a range ends the last bin';
 	$chart->bin_width(undef);
 	$chart->bins(3);
-	is [ $chart->bin_edges( [ 3, 90 ] ) ],           [ 0, 20, 40, 60 ],          'bins divide the range';
+	is [ $chart->bin_edges( [ 3, 90 ] ) ], [ 0, 20, 40, 60 ], 'bins divide the range';
 };
 
 subtest 'a range drops values outside it' => sub {
@@ -71,7 +71,11 @@ subtest 'several series' => sub {
 	my @lines  = draw($chart);
 	like $lines[0], qr/\A\x{25A0} a +\x{25A0} b/, 'have a legend';
 	my @colored = cells_with( $chart, sub ( $c, $x, $y ) { defined bg_at( $c, $x, $y ) } );
-	ok @colored && !grep( { my $bg = bg_at( $chart, @$_ ); $bg == $RED || $bg == $BLUE } @colored ), 'overlap and show through each other';
+	ok @colored && !grep( {
+			my $bg = bg_at( $chart, @$_ );
+			$bg == $RED || $bg == $BLUE
+	} @colored ),
+		'overlap and show through each other';
 
 	$chart->stacked(1);
 	draw($chart);
@@ -81,13 +85,13 @@ subtest 'several series' => sub {
 subtest 'invalid input dies' => sub {
 	my $chart = histogram( series => [ { name => 'xy', data => [ [ 1, 2 ] ] } ] );
 	like dies { $chart->prepare_series }, qr/series 'xy' of a histogram takes plain numbers, not \[ x, y \] points/, 'points';
-	like dies { histogram( series => [ { type => 'line' } ] ) }, qr/draws series of the types bar, not 'line'/, 'a line series';
-	like dies { histogram( bins => 0 ) },            qr/bins must be 'auto' or a positive integer, got '0'/,      'zero bins';
-	like dies { histogram( bin_width => -1 ) },      qr/bin_width must be a positive number or undef, got '-1'/,  'a negative bin width';
-	like dies { histogram( range => [ 5, 1 ] ) },    qr/range must be an array reference \[ low, high \] with low below high/, 'a reversed range';
-	like dies { histogram( range => [1] ) },         qr/range must be an array reference/,                        'a range of one value';
-	like dies { histogram( measure => 'sum' ) },     qr/measure must be count, density, percent, got 'sum'/,      'an unknown measure';
-	like dies { $chart->cumulative( [] ) },          qr/cumulative/,                                              'cumulative as an array';
+	like dies { histogram( series    => [ { type => 'line' } ] ) }, qr/draws series of the types bar, not 'line'/,                            'a line series';
+	like dies { histogram( bins      =>  0 ) },                     qr/bins must be 'auto' or a positive integer, got '0'/,                   'zero bins';
+	like dies { histogram( bin_width => -1 ) },                     qr/bin_width must be a positive number or undef, got '-1'/,               'a negative bin width';
+	like dies { histogram( range     => [ 5, 1 ] ) },               qr/range must be an array reference \[ low, high \] with low below high/, 'a reversed range';
+	like dies { histogram( range     => [1] ) },                    qr/range must be an array reference/,                                     'a range of one value';
+	like dies { histogram( measure   => 'sum' ) },                  qr/measure must be count, density, percent, got 'sum'/,                   'an unknown measure';
+	like dies { $chart->cumulative( [] ) }, qr/cumulative/, 'cumulative as an array';
 };
 
 done_testing;

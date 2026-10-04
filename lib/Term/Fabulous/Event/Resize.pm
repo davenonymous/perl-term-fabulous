@@ -24,8 +24,8 @@ class Term::Fabulous::Event::Resize :isa(Clay::UI::Events::Event) :strict(params
 
 	method of :common ($ev, $is_post_event = 0) {
 		return $class->new(
-			width => $ev->w,
-			height => $ev->h,
+			width         => $ev->w,
+			height        => $ev->h,
 			is_post_event => $is_post_event,
 		);
 	}

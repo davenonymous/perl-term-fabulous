@@ -38,13 +38,13 @@ class Term::Fabulous::Widget::XYChart
 	use Term::Fabulous::Widget::Table::Value qw(date_epoch number_of);
 
 	use constant {
-		DOT_POINT         => 'dot',
-		SQUARE_POINT      => 'square',
-		LINE_POINT        => "\x{2022}",    # bullet
-		LEGEND_POINT      => "\x{25CF}",    # black circle
+		DOT_POINT            => 'dot',
+		SQUARE_POINT         => 'square',
+		LINE_POINT           => "\x{2022}",    # bullet
+		LEGEND_POINT         => "\x{25CF}",    # black circle
 		AREA_FILL_OPACITY    => 0.6,
 		STACKED_FILL_OPACITY => 0.8,
-		TREND_PATTERN     => [ 4, 2 ],
+		TREND_PATTERN        => [ 4, 2 ],
 	};
 
 	my %GRID_GLYPHS = (
@@ -52,9 +52,9 @@ class Term::Fabulous::Widget::XYChart
 		dashed => [ "\x{254C}", "\x{254E}" ],
 		dotted => [ "\x{2508}", "\x{250A}" ],
 	);
-	my %IS_X_TYPE  = map { $_ => 1 } qw(auto linear log time category);
-	my %IS_Y_TYPE  = map { $_ => 1 } qw(linear log);
-	my @AXIS_KEYS  = qw(type min max title format ticks step grid visible zero utc span base nice);
+	my %IS_X_TYPE       = map { $_ => 1 } qw(auto linear log time category);
+	my %IS_Y_TYPE       = map { $_ => 1 } qw(linear log);
+	my @AXIS_KEYS       = qw(type min max title format ticks step grid visible zero utc span base nice);
 	my @SERIES_DEFAULTS = qw(marker curve tension line line_style points point fill_opacity transform max_points span_gaps value_labels);
 
 	field $initial_series :param(series) = [];
@@ -73,11 +73,11 @@ class Term::Fabulous::Widget::XYChart
 	ADJUST :params (
 		:$marker = undef, :$curve = undef, :$tension = undef, :$line = undef, :$line_style = undef, :$points = undef, :$point = undef,
 		:$fill_opacity = undef, :$transform = undef, :$max_points = undef, :$span_gaps = undef, :$value_labels = undef
-	) {
+		) {
 		my %given = (
-			marker     => $marker,     curve      => $curve,      tension      => $tension,      line      => $line,
-			line_style => $line_style, points     => $points,     point        => $point,        fill_opacity => $fill_opacity,
-			transform  => $transform,  max_points => $max_points, span_gaps    => $span_gaps,   value_labels => $value_labels,
+			marker     => $marker,     curve      => $curve,      tension   => $tension,   line         => $line,
+			line_style => $line_style, points     => $points,     point     => $point,     fill_opacity => $fill_opacity,
+			transform  => $transform,  max_points => $max_points, span_gaps => $span_gaps, value_labels => $value_labels,
 		);
 		$self->_set_default( $_ => $given{$_} ) foreach grep { defined $given{$_} } @SERIES_DEFAULTS;
 		$labels     = $self->_checked_labels($labels) if defined $labels;
@@ -89,13 +89,13 @@ class Term::Fabulous::Widget::XYChart
 		croak ref($self) . ": series must be an array reference of series hashes, got " . describe($initial_series) unless ref $initial_series eq 'ARRAY';
 		$self->add_series($_) foreach @$initial_series;
 		$initial_series = undef;
-	}
+		}
 
-	# ---------------------------------------------------------------------
-	# Checks
-	# ---------------------------------------------------------------------
+		# ---------------------------------------------------------------------
+		# Checks
+		# ---------------------------------------------------------------------
 
-	method _checked_labels ($value) {
+		method _checked_labels ($value) {
 		croak ref($self) . ": labels must be an array reference of strings, got " . describe($value) unless ref $value eq 'ARRAY';
 		foreach my $label (@$value) {
 			croak ref($self) . ": every label must be a string, got " . describe($label) unless defined $label && !ref $label;
@@ -113,7 +113,7 @@ class Term::Fabulous::Widget::XYChart
 		my $owner = ref $self;
 		croak "$owner: $which must be a hash reference, got " . describe($spec) unless ref $spec eq 'HASH';
 		my %axis    = %$spec;
-		my %allowed = map { $_ => 1 } @AXIS_KEYS;
+		my %allowed = map  { $_ => 1 } @AXIS_KEYS;
 		my @unknown = grep { !$allowed{$_} } sort keys %axis;
 		croak "$owner: $which does not take @unknown (known: @AXIS_KEYS)" if @unknown;
 		my $types = $which eq 'x_axis' ? \%IS_X_TYPE : \%IS_Y_TYPE;
@@ -128,9 +128,9 @@ class Term::Fabulous::Widget::XYChart
 			my $grid = $axis{grid};
 			$axis{grid}
 				= !defined $grid || ( !ref $grid && $grid =~ /\A(?:0|)\z/ ) ? 0
-				: !ref $grid && $grid eq '1' ? 'solid'
-				: !ref $grid && $GRID_GLYPHS{$grid} ? $grid
-				: croak "$owner: the grid of $which must be 0, 1, solid, dashed or dotted, got " . describe($grid);
+				: !ref $grid && $grid eq '1'                                ? 'solid'
+				: !ref $grid && $GRID_GLYPHS{$grid}                         ? $grid
+				:                                                             croak "$owner: the grid of $which must be 0, 1, solid, dashed or dotted, got " . describe($grid);
 		}
 		croak "$owner: the title of $which must be a string, got " . describe( $axis{title} ) if ref $axis{title};
 		foreach my $key (qw(ticks)) {
@@ -214,16 +214,16 @@ class Term::Fabulous::Widget::XYChart
 		return $bar_width;
 	}
 
-	method marker (@new)       { return $self->series_default( marker       => @new ) }
-	method line (@new)         { return $self->series_default( line         => @new ) }
-	method curve (@new)        { return $self->series_default( curve        => @new ) }
-	method tension (@new)      { return $self->series_default( tension      => @new ) }
-	method line_style (@new)   { return $self->series_default( line_style   => @new ) }
-	method points (@new)       { return $self->series_default( points       => @new ) }
-	method point (@new)        { return $self->series_default( point        => @new ) }
+	method marker       (@new) { return $self->series_default( marker       => @new ) }
+	method line         (@new) { return $self->series_default( line         => @new ) }
+	method curve        (@new) { return $self->series_default( curve        => @new ) }
+	method tension      (@new) { return $self->series_default( tension      => @new ) }
+	method line_style   (@new) { return $self->series_default( line_style   => @new ) }
+	method points       (@new) { return $self->series_default( points       => @new ) }
+	method point        (@new) { return $self->series_default( point        => @new ) }
 	method fill_opacity (@new) { return $self->series_default( fill_opacity => @new ) }
-	method max_points (@new)   { return $self->series_default( max_points   => @new ) }
-	method span_gaps (@new)    { return $self->series_default( span_gaps    => @new ) }
+	method max_points   (@new) { return $self->series_default( max_points   => @new ) }
+	method span_gaps    (@new) { return $self->series_default( span_gaps    => @new ) }
 	method value_labels (@new) { return $self->series_default( value_labels => @new ) }
 
 	method transform (@new) {
@@ -240,12 +240,15 @@ class Term::Fabulous::Widget::XYChart
 		my $type = $x_axis->{type};
 		return $type unless $type eq 'auto';
 		return 'category' if defined $labels;
-		my @xs = grep { defined } map { map { $_->[0] } $_->points->@* } $self->all_series;
+		my @xs = grep { defined } map {
+			map { $_->[0] }
+				$_->points->@*
+		} $self->all_series;
 		if ( !@xs ) {
 			return ( any { $_->type eq 'bar' } $self->all_series ) ? 'category' : 'linear';
 		}
 		return 'linear' if !grep { !defined number_of($_) } @xs;
-		return 'time'   if !grep { !defined date_epoch($_) } @xs;
+		return 'time' if !grep   { !defined date_epoch($_) } @xs;
 		return 'category';
 	}
 
@@ -385,7 +388,7 @@ class Term::Fabulous::Widget::XYChart
 				series => $series->name,
 				label  => $series->name,
 				color  => $self->_series_color( $look, $series ),
-				symbol => $type eq 'line' ? 'line' : $type eq 'scatter' ? 'point' : 'fill',
+				symbol => $type eq 'line'    ? 'line' : $type eq 'scatter' ? 'point' : 'fill',
 				glyph  => $type eq 'scatter' ? $self->_legend_point($series) : undef,
 			}
 		} $self->visible_series;
@@ -443,7 +446,7 @@ class Term::Fabulous::Widget::XYChart
 				my $x = $entry->{xs}[$index];
 				next if defined $entry->{from} && $x < $entry->{from};
 				next if defined $entry->{to}   && $x > $entry->{to};
-				push @xs, $x, ( $entry->{edges} ? $entry->{edges}[$index]->@* : () );
+				push @xs,      $x, ( $entry->{edges} ? $entry->{edges}[$index]->@* : () );
 				push @samples, [ $x, $y, $entry->{lows}[$index] ];
 			}
 		}
@@ -456,7 +459,7 @@ class Term::Fabulous::Widget::XYChart
 		my $span = $x_axis->{span};
 		if ( defined $span && $x_extent && $kind ne 'category' ) {
 			$x_extent = [ $x_extent->[1] - $span, $x_extent->[1] ];
-			@samples = grep { $_->[0] >= $x_extent->[0] } @samples;
+			@samples  = grep { $_->[0] >= $x_extent->[0] } @samples;
 		}
 		my @ys = map { ( $_->[1], $_->[2] // () ) } @samples;
 		@ys = grep { $_ > 0 } @ys if $y_axis->{type} eq 'log';
@@ -505,7 +508,7 @@ class Term::Fabulous::Widget::XYChart
 				map { defined $value_axis->{$_} ? ( $_ => $value_axis->{$_} ) : () } qw(min max ticks step nice),
 			);
 		};
-		my $band = $kind eq 'category' && ( any { $_->{type} eq 'bar' } @$prepared ) ? 1 : 0;
+		my $band      = $kind eq 'category' && ( any { $_->{type} eq 'bar' } @$prepared ) ? 1 : 0;
 		my $fit_index = sub ( $cells, $orientation ) {
 			my %common = ( cells => $cells, orientation => $orientation, measure => $measure, format => $index_axis->{format} );
 			return Term::Fabulous::Chart::Scale::Category->fit( %common, labels => $categories, band => $band ) if $kind eq 'category';
@@ -515,15 +518,20 @@ class Term::Fabulous::Widget::XYChart
 			return Term::Fabulous::Chart::Scale::Linear->fit(
 				%common,
 				align   => $index_axis->{grid} ? 1 : 0,
-				integer => ( !grep { $_ != int } map { $_->{xs}->@*, map { @$_ } ( $_->{edges} // [] )->@* } @$prepared ) ? 1 : 0,
-				extent  => $x_extent,
+				integer => (
+					!grep { $_ != int } map {
+						$_->{xs}->@*,
+							map { @$_ } ( $_->{edges} // [] )->@*
+					} @$prepared
+				) ? 1 : 0,
+				extent => $x_extent,
 				nice   => $index_axis->{nice} // ( ( grep { $_->{edges} } @$prepared ) ? 0 : 1 ),
 				%ends,
 				map { defined $index_axis->{$_} ? ( $_ => $index_axis->{$_} ) : () } qw(ticks step),
 			);
 		};
 
-		my $frame = { kind => $kind, band => $band, edges => ( grep { $_->{edges} } @$prepared ) ? 1 : 0 };
+		my $frame            = { kind => $kind, band => $band, edges => ( grep { $_->{edges} } @$prepared ) ? 1 : 0 };
 		my $title_rows_below = defined $x_axis->{title} && length $x_axis->{title} ? 1 : 0;
 		my $title_row_above  = defined $y_axis->{title} && length $y_axis->{title} ? 1 : 0;
 
@@ -531,7 +539,7 @@ class Term::Fabulous::Widget::XYChart
 			my $plot_rows = $height - ( $index_shown ? 1 : 0 ) - $title_rows_below - $title_row_above;
 			if ( $plot_rows < 2 ) {
 				( $title_rows_below, $title_row_above ) = ( 0, 0 );
-				$plot_rows = $height - ( $index_shown && $height > 3 ? 1 : 0 );
+				$plot_rows   = $height - ( $index_shown && $height > 3 ? 1 : 0 );
 				$index_shown = 0 if $plot_rows == $height;
 			}
 			return undef if $plot_rows < 1;
@@ -555,8 +563,8 @@ class Term::Fabulous::Widget::XYChart
 				return undef if $plot_columns < 2;
 				$index_scale = $fit_index->( $plot_columns, 'horizontal' );
 				last if $band || $frame->{edges} || !$index_shown;
-				my @ticks = $index_scale->ticks;
-				my $last  = $ticks[-1] // last;
+				my @ticks  = $index_scale->ticks;
+				my $last   = $ticks[-1] // last;
 				my $wanted = max( 0, ceil( $measure->( $last->{label} ) / 2 - ( 1 - $last->{position} ) * ( $index_scale->used - 1 ) - ( $plot_columns - $index_scale->used ) - 1e-9 ) );
 				last if $wanted <= $margin;
 				$margin = $wanted;
@@ -586,17 +594,18 @@ class Term::Fabulous::Widget::XYChart
 		my $plot_rows = $height - ( $value_shown ? 1 : 0 ) - $title_rows_below - $title_row_above;
 		if ( $plot_rows < 2 ) {
 			( $title_rows_below, $title_row_above ) = ( 0, 0 );
-			$plot_rows = $height - ( $value_shown && $height > 3 ? 1 : 0 );
+			$plot_rows   = $height - ( $value_shown && $height > 3 ? 1 : 0 );
 			$value_shown = 0 if $plot_rows == $height;
 		}
 		return undef if $plot_rows < 1;
-		my $index_scale = $fit_index->( $plot_rows, 'vertical' );
-		my $gutter = $index_shown ? min( max( 0, map { $measure->( $_->{label} ) } $index_scale->ticks ) + 1, int( $width / 3 ) ) : 0;
+		my $index_scale  = $fit_index->( $plot_rows, 'vertical' );
+		my $gutter       = $index_shown ? min( max( 0, map { $measure->( $_->{label} ) } $index_scale->ticks ) + 1, int( $width / 3 ) ) : 0;
 		my $plot_columns = $width - $gutter;
 		return undef if $plot_columns < 2;
 		my $value_scale = $fit_value->( $plot_columns, 'horizontal' );
-		my @ticks  = $value_scale->ticks;
-		my $margin = @ticks ? max( 0, ceil( $measure->( $ticks[-1]{label} ) / 2 ) - ( $plot_columns - $value_scale->used ) ) : 0;
+		my @ticks       = $value_scale->ticks;
+		my $margin      = @ticks ? max( 0, ceil( $measure->( $ticks[-1]{label} ) / 2 ) - ( $plot_columns - $value_scale->used ) ) : 0;
+
 		if ( $margin && $plot_columns - $margin >= 2 ) {
 			$value_scale = $fit_value->( $plot_columns - $margin, 'horizontal' );
 		}
@@ -669,7 +678,7 @@ class Term::Fabulous::Widget::XYChart
 
 	method _draw_grid ( $surface, $frame, $look ) {
 		my ( $left, $top, $columns, $rows ) = @$frame{qw(left top columns rows)};
-		my $vertical = $frame->{orientation} eq 'vertical';
+		my $vertical   = $frame->{orientation} eq 'vertical';
 		my $value_grid = exists $y_axis->{grid} ? $y_axis->{grid} : 'solid';
 		my $index_grid = exists $x_axis->{grid} ? $x_axis->{grid} : 0;
 
@@ -729,7 +738,7 @@ class Term::Fabulous::Widget::XYChart
 				Term::Fabulous::Chart::Raster->new( marker => Term::Fabulous::Chart::Marker->named($name), columns => $frame->{columns}, rows => $frame->{rows} );
 			};
 		};
-		my @box_lines;       # drawn in cells, over the rasters
+		my @box_lines;    # drawn in cells, over the rasters
 		my @glyph_points;    # [ column, row, glyph, color, owner ], over everything
 
 		# Each point is a target the pointer can find.
@@ -804,8 +813,8 @@ class Term::Fabulous::Widget::XYChart
 		my ( @runs, @run );
 		foreach my $index ( 0 .. $entry->{xs}->$#* ) {
 			my $value = $values->[$index];
-			my $x = $self->_index_position( $frame, $entry->{xs}[$index] );
-			my $y = defined $value ? $self->_value_position( $frame, $value ) : undef;
+			my $x     = $self->_index_position( $frame, $entry->{xs}[$index] );
+			my $y     = defined $value ? $self->_value_position( $frame, $value ) : undef;
 			if ( !defined $x || !defined $y ) {
 				next if $span;
 				push @runs, [@run] if @run;
@@ -879,7 +888,7 @@ class Term::Fabulous::Widget::XYChart
 		foreach my $run ( $self->_runs( $frame, $entry, $entry->{highs} ) ) {
 			my $top = $self->_run_polyline( $frame, $entry, $run, 1 / $sx );
 			next if @$top < 2;
-			my $low = first { $_->[0][0] <= $run->[0][0] && $_->[-1][0] >= $run->[-1][0] } @lows;
+			my $low    = first { $_->[0][0] <= $run->[0][0] && $_->[-1][0] >= $run->[-1][0] } @lows;
 			my $bottom = defined $entry->{group} && $low ? $self->_run_polyline( $frame, $entry, $low, 1 / $sx ) : undef;
 			foreach my $column ( floor( $top->[0][0] * $sx ) .. ceil( $top->[-1][0] * $sx ) ) {
 				my $center = ( $column + 0.5 ) / $sx;
@@ -898,16 +907,16 @@ class Term::Fabulous::Widget::XYChart
 		my $vertical = $frame->{orientation} eq 'vertical';
 
 		# The slots in series order, whatever order the bars are drawn in.
-		my @columns = uniq map { $_->{group} // "\0" . $_->{name} } sort { $a->{series}->slot <=> $b->{series}->slot } @$bars;
+		my @columns   = uniq map { $_->{group} // "\0" . $_->{name} } sort { $a->{series}->slot <=> $b->{series}->slot } @$bars;
 		my %column_of = map { $columns[$_] => $_ } 0 .. $#columns;
-		my $length = $vertical ? $frame->{columns} : $frame->{rows};
+		my $length    = $vertical ? $frame->{columns} : $frame->{rows};
 		my $slot
-			= $frame->{band} ? $frame->{index_scale}->slot_cells
+			= $frame->{band}  ? $frame->{index_scale}->slot_cells
 			: $frame->{edges} ? undef
 			: do {
-				my $spacing = $self->_bar_spacing($bars);
-				my $first   = $self->_index_position( $frame, 0 ) // 0;
-				abs( ( $self->_index_position( $frame, $spacing ) // $first ) - $first ) || 1;
+			my $spacing = $self->_bar_spacing($bars);
+			my $first   = $self->_index_position( $frame, 0 ) // 0;
+			abs( ( $self->_index_position( $frame, $spacing ) // $first ) - $first ) || 1;
 			};
 		my $base = $self->_baseline($frame);
 
@@ -920,7 +929,7 @@ class Term::Fabulous::Widget::XYChart
 			my $opacity = ( $self->series_option( $entry->{series}, 'fill_opacity' ) // $self->default_bar_opacity($bars) ) * $entry->{series}->color_opacity;
 			foreach my $index ( 0 .. $entry->{xs}->$#* ) {
 				my $high = $entry->{highs}[$index] // next;
-				my $low  = $entry->{lows}[$index] // $base;
+				my $low  = $entry->{lows}[$index]  // $base;
 				my ( $start, $end );
 				if ( $entry->{edges} ) {
 					( $start, $end ) = map { $self->_index_position( $frame, $_ ) } $entry->{edges}[$index]->@*;
@@ -1016,7 +1025,7 @@ class Term::Fabulous::Widget::XYChart
 	method _draw_trend ( $raster, $frame, $entry ) {
 		my @known = grep { defined $entry->{highs}[$_] } 0 .. $entry->{xs}->$#*;
 		return if @known < 2;
-		my ( $xs, $ys ) = apply_transforms( parse_transforms( ref $self, 'trend', 'regression' ), [ @{ $entry->{xs} }[@known] ], [ @{ $entry->{highs} }[@known] ] );
+		my ( $xs,    $ys )   = apply_transforms( parse_transforms( ref $self, 'trend', 'regression' ), [ @{ $entry->{xs} }[@known] ], [ @{ $entry->{highs} }[@known] ] );
 		my ( $first, $last ) = ( sort { $xs->[$a] <=> $xs->[$b] } 0 .. $#$xs )[ 0, -1 ];
 		my @ends = map { [ $self->_index_position( $frame, $xs->[$_] ), $self->_value_position( $frame, $ys->[$_] ) ] } $first, $last;
 		return if grep { !defined $_->[0] || !defined $_->[1] } @ends;
@@ -1036,7 +1045,7 @@ class Term::Fabulous::Widget::XYChart
 			next unless @$polyline;
 			my $previous;
 			foreach my $column ( floor( $polyline->[0][0] ) .. floor( $polyline->[-1][0] ) ) {
-				my $y = y_at( $polyline, $column + 0.5 ) // y_at( $polyline, $polyline->[0][0] ) // next;
+				my $y     = y_at( $polyline, $column + 0.5 ) // y_at( $polyline, $polyline->[0][0] ) // next;
 				my $row   = min( $frame->{rows} - 1, max( 0, floor($y) ) );
 				my $owner = _nearest_target( $run, $column + 0.5 );
 				my @cells;
@@ -1067,10 +1076,13 @@ class Term::Fabulous::Widget::XYChart
 		foreach my $entry ( grep { $self->series_option( $_->{series}, 'value_labels' ) } @$bars ) {
 			foreach my $index ( 0 .. $entry->{xs}->$#* ) {
 				my $end = $entry->{bar_ends}[$index] // next;
-				my $key = defined $entry->{group} ? join( "\0", $entry->{group}, $entry->{xs}[$index], $entry->{highs}[$index] < ( $entry->{lows}[$index] // 0 ) ? '-' : '+' ) : join( "\0", $entry->{name}, $index );
+				my $key
+					= defined $entry->{group}
+					? join( "\0", $entry->{group}, $entry->{xs}[$index], $entry->{highs}[$index] < ( $entry->{lows}[$index] // 0 ) ? '-' : '+' )
+					: join( "\0", $entry->{name}, $index );
 				my $value = defined $entry->{group} ? $entry->{highs}[$index] : $entry->{ys}[$index];
 				my $known = $stack_end{$key};
-				$stack_end{$key} = [ @$end, $value, $entry->{highs}[$index] >= ( $entry->{lows}[$index] // $self->_baseline($frame) ) ] if !$known || abs( $value ) >= abs( $known->[2] );
+				$stack_end{$key} = [ @$end, $value, $entry->{highs}[$index] >= ( $entry->{lows}[$index] // $self->_baseline($frame) ) ] if !$known || abs($value) >= abs( $known->[2] );
 			}
 		}
 		my $format = $self->value_format;
@@ -1099,7 +1111,7 @@ class Term::Fabulous::Widget::XYChart
 				$surface->text( $frame->{left} + $column, $frame->{top} + $row, $text, $look->{text} );
 			}
 			else {
-				my $row = ceil($middle) - 1;
+				my $row    = ceil($middle) - 1;
 				my $column = $positive ? ceil($tip) + 1 : floor($tip) - $width;
 				next if $column < 0 || $column + $width > $frame->{columns} || !$place->( $row, $column, $width );
 				$surface->text( $frame->{left} + $column, $frame->{top} + $row, $text, $look->{text} );
@@ -1112,7 +1124,7 @@ class Term::Fabulous::Widget::XYChart
 	method _draw_axes ( $surface, $frame, $look ) {
 		my ( $left, $top, $columns, $rows ) = @$frame{qw(left top columns rows)};
 		my $vertical = $frame->{orientation} eq 'vertical';
-		my $measure = sub ($label) { Term::Fabulous::Chart::Surface->text_columns($label) };
+		my $measure  = sub ($label) { Term::Fabulous::Chart::Surface->text_columns($label) };
 
 		# The axis along the left: values (vertical) or categories (horizontal).
 		my ( $left_scale, $bottom_scale ) = $vertical ? @$frame{qw(value_scale index_scale)} : @$frame{qw(index_scale value_scale)};
@@ -1122,7 +1134,7 @@ class Term::Fabulous::Widget::XYChart
 			my $last_row;
 			foreach my $tick ( $left_scale->ticks ) {
 				my $position = $vertical ? $self->_value_position( $frame, $tick->{value} ) : $self->_index_position( $frame, $tick->{value} );
-				my $row = $vertical ? floor( $position // next ) : $self->_category_cell( $frame, $position // next );
+				my $row      = $vertical ? floor( $position // next )                       : $self->_category_cell( $frame, $position // next );
 				next if $row < 0 || $row >= $rows || ( defined $last_row && $row == $last_row );
 				my $text_width = min( $measure->( $tick->{label} ), $width );
 				$surface->text( $frame->{area_left} + $width - $text_width, $top + $row, $tick->{label}, $look->{label}, max => $width );
@@ -1133,7 +1145,7 @@ class Term::Fabulous::Widget::XYChart
 		# The axis along the bottom, below the plot.
 		my $label_row = $top + $rows;
 		if ($bottom_shown) {
-			my $slot = $bottom_scale->can('slot_cells') && $frame->{band} ? $bottom_scale->slot_cells : undef;
+			my $slot      = $bottom_scale->can('slot_cells') && $frame->{band} ? $bottom_scale->slot_cells : undef;
 			my $free_from = $frame->{area_left};
 			foreach my $tick ( $bottom_scale->ticks ) {
 				my $position = $vertical ? $self->_index_position( $frame, $tick->{value} ) : $self->_value_position( $frame, $tick->{value} );
@@ -1165,6 +1177,7 @@ class Term::Fabulous::Widget::XYChart
 			my $width = $measure->($title);
 			$surface->text( $left + max( 0, int( ( $columns - $width ) / 2 ) ), $label_row, $title, $look->{label}, max => $frame->{area_width} );
 		}
+
 		# The y title sits right above the highest tick, also when the ticks
 		# leave rows free at the top.
 		if ( $frame->{title_above} ) {
@@ -1206,7 +1219,7 @@ class Term::Fabulous::Widget::XYChart
 	# Axes and labels before the series, so the series' x values are read
 	# the way the axis says.
 	method apply_layout_settings :override (@settings) {
-		my %rank = ( labels => 0, x_axis => 0, y_axis => 0, transform => 1, series => 2 );
+		my %rank    = ( labels => 0, x_axis => 0, y_axis => 0, transform => 1, series => 2 );
 		my @ordered = map { $_->[1] } sort { $a->[0] <=> $b->[0] } map { [ $rank{ $_->[0] } // 1, $_ ] } @settings;
 		return $self->SUPER::apply_layout_settings(@ordered);
 	}

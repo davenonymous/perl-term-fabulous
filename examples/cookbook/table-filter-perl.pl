@@ -28,14 +28,16 @@ my @invoices = (
 # Key 1 to 5 sets one of these filters under the name 'chosen'; key 0
 # removes it.
 my @choices = (
-	[ 'Totals of 1,000 or more' => $F->new( column => 'total', op => '>=', value => 1000 ) ],
-	[ 'Placed in May 2026'      => $F->new( column => 'placed', op => '=', value => '2026-05' ) ],
-	[   'Open or overdue, totals from 100 to 2,000' => $F->all(
-			$F->new( column => 'status', op => 'in',      value => [ 'open', 'overdue' ], on => 'display' ),
+	[ 'Totals of 1,000 or more' => $F->new( column => 'total',  op => '>=', value => 1000 ) ],
+	[ 'Placed in May 2026'      => $F->new( column => 'placed', op => '=',  value => '2026-05' ) ],
+	[
+		'Open or overdue, totals from 100 to 2,000' => $F->all(
+			$F->new( column => 'status', op => 'in', value => [ 'open', 'overdue' ], on => 'display' ),
 			$F->new( column => 'total',  op => 'between', value => [ 100, 2000 ] ),
 		)
 	],
-	[   'Starts with B or is a Ltd, and is not paid' => $F->all(
+	[
+		'Starts with B or is a Ltd, and is not paid' => $F->all(
 			$F->any(
 				$F->new( column => 'customer', op => 'starts_with', value => 'B' ),
 				$F->new( column => 'customer', op => 'matches',     value => qr/\bLtd\z/ ),
@@ -51,14 +53,15 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'invoices',
-	row_id       => 'invoice',
+	id     => 'invoices',
+	row_id => 'invoice',
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -67,16 +70,16 @@ my $table = Term::Fabulous::Widget::Table->new(
 	columns      => [
 		{ key => 'invoice',  title => 'Invoice' },
 		{ key => 'customer', title => 'Customer' },
-		{ key => 'placed',   title => 'Placed', type => 'date',   mutator => date('%d %b %Y') },
+		{ key => 'placed',   title => 'Placed', type    => 'date', mutator => date('%d %b %Y') },
 		{ key => 'status',   title => 'Status', mutator => lookup( { o => 'open', p => 'paid', d => 'overdue' } ) },
-		{ key => 'total',    title => 'Total',  type => 'number', mutator => number( decimals => 2 ) },
-		{ key => 'paid',     title => 'Paid',   type => 'number', mutator => number( decimals => 2 ) },
+		{ key => 'total',    title => 'Total',  type    => 'number', mutator => number( decimals => 2 ) },
+		{ key => 'paid',     title => 'Paid',   type    => 'number', mutator => number( decimals => 2 ) },
 	],
-	rows         => \@invoices,
+	rows => \@invoices,
 );
 
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Keys 1 to 5 choose a filter, 0 shows all rows. Ctrl+C quits.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => '',                                                             text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 sub choose_filter ($number) {

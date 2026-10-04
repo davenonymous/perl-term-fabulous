@@ -19,10 +19,11 @@ class Term::Fabulous::Chart::Marker :strict(params) {
 	# Braille dots by subpixel (two columns, four rows).
 	my @BRAILLE_BIT = ( 0x01, 0x08, 0x02, 0x10, 0x04, 0x20, 0x40, 0x80 );
 
-	my @QUADRANT = ( ' ', "\x{2598}", "\x{259D}", "\x{2580}", "\x{2596}", "\x{258C}", "\x{259E}", "\x{259B}", "\x{2597}", "\x{259A}", "\x{2590}", "\x{259C}", "\x{2584}", "\x{2599}", "\x{259F}", "\x{2588}" );
+	my @QUADRANT
+		= ( ' ', "\x{2598}", "\x{259D}", "\x{2580}", "\x{2596}", "\x{258C}", "\x{259E}", "\x{259B}", "\x{2597}", "\x{259A}", "\x{2590}", "\x{259C}", "\x{2584}", "\x{2599}", "\x{259F}", "\x{2588}" );
 
 	sub _sextant_glyph ($mask) {
-		return ' '        if $mask == 0;
+		return ' ' if $mask == 0;
 		return "\x{2588}" if $mask == 63;
 		return "\x{258C}" if $mask == 21;
 		return "\x{2590}" if $mask == 42;
@@ -45,7 +46,7 @@ class Term::Fabulous::Chart::Marker :strict(params) {
 	}
 
 	my %SPEC = (
-		braille            => { columns => 2, rows => 4, dots => 1 },
+		braille            => { columns => 2, rows => 4, dots   => 1 },
 		half               => { columns => 1, rows => 2, glyphs => { 0 => ' ', 1 => "\x{2580}", 2 => "\x{2584}", 3 => "\x{2588}" } },
 		quadrant           => { columns => 2, rows => 2, glyphs => { map { $_ => $QUADRANT[$_] } 0 .. 15 } },
 		sextant            => { columns => 2, rows => 3, glyphs => { map { $_ => _sextant_glyph($_) } 0 .. 63 } },
@@ -145,7 +146,7 @@ class Term::Fabulous::Chart::Marker :strict(params) {
 
 		# What most of the cell shows; on a tie the background below, so a
 		# fill never looks larger than it is.
-		my $under_key = $under // 'none';
+		my $under_key = $under                                                                                                      // 'none';
 		my $dominant  = $is_drawn{$first} && $count{$first} == ( $count{$under_key} // 0 ) && !$is_drawn{$under_key} ? $under : $fg // $under;
 		( $mask, $fg, $bg ) = ( $_full_mask & ~$mask, $bg, $fg ) unless defined $fg;
 		return ( $self->_glyph_cell( $mask, $fg, $bg ), $dominant );

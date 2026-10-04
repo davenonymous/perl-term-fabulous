@@ -41,7 +41,7 @@ foreach my $style ( sort keys %panels ) {
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_fit() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 		},
 		border_width => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->from_name($style),

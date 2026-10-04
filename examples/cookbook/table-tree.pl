@@ -42,6 +42,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 	row_id       => 'path',
 	children_key => 'children',
 	tree_column  => 'name',
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -52,7 +53,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'size',     title => 'Size',     type => 'number', mutator => bytes() },
 		{ key => 'modified', title => 'Modified', type => 'date',   mutator => datetime( '%Y-%m-%d %H:%M', utc => 1 ) },
 	],
-	rows         => [
+	rows => [
 		folder(
 			'/project', 1780310460,
 			folder(
@@ -78,12 +79,12 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Right opens a folder, Left closes it. Click a marker to toggle.', text_color => [ 150, 160, 180, 255 ] );
-my $status = Term::Fabulous::Widget::Text->new( text => 'Open releases/ to load its files.', text_color => [ 229, 192, 123, 255 ] );
+my $status = Term::Fabulous::Widget::Text->new( text => 'Open releases/ to load its files.',                               text_color => [ 229, 192, 123, 255 ] );
 $root->add_child( $help, $table, $status );
 
 $table->on(

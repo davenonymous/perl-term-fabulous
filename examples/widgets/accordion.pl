@@ -33,7 +33,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
-		padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 3,
 	},
 );
@@ -57,8 +57,14 @@ sub item ( $title, @body ) {
 # One section at a time; the third cannot be opened.
 my $settings = Term::Fabulous::Widget::Accordion->new( layout => { sizing => { width => sizing_fixed(34) } }, title_bold => 1 );
 $settings->add_child(
-	item( 'General',  row( 'Language ', Term::Fabulous::Widget::TextField->new( value => 'en', preferred_columns => 8 ) ), Term::Fabulous::Widget::Checkbox->new( label => 'Check for updates', checked => 1 ) ),
-	item( 'Network',  row( 'Hostname ', Term::Fabulous::Widget::TextField->new( value => 'example.org', preferred_columns => 14 ) ), row( 'Port     ', Term::Fabulous::Widget::TextField->new( value => '443', preferred_columns => 6 ) ) ),
+	item(
+		'General', row( 'Language ', Term::Fabulous::Widget::TextField->new( value => 'en', preferred_columns => 8 ) ),
+		Term::Fabulous::Widget::Checkbox->new( label => 'Check for updates', checked => 1 )
+	),
+	item(
+		'Network', row( 'Hostname ', Term::Fabulous::Widget::TextField->new( value => 'example.org', preferred_columns => 14 ) ),
+		row( 'Port     ', Term::Fabulous::Widget::TextField->new( value => '443', preferred_columns => 6 ) )
+	),
 	item( 'Users',    text('Three accounts, two groups.') ),
 	item( 'Licenses', text('Not available in this edition.') ),
 );

@@ -30,6 +30,7 @@ foreach my $name (qw(Open Save Quit)) {
 	push @items, $item;
 }
 $menu->add_child(@items);
+
 # The derived states (hovered, pressed, focused) need a UI that owns the
 # tree; a Static one is enough here.
 my $page = Term::Fabulous::Static->new( root => $menu, width => 20 );

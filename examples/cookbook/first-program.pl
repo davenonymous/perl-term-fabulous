@@ -15,8 +15,8 @@ use Term::Fabulous::Widget::Text;
 my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 45, 255 ],
 	layout           => {
-		sizing          => { width => sizing_grow(), height => sizing_grow() },
-		child_alignment => { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_CENTER },
+		sizing          => { width => sizing_grow(),       height => sizing_grow() },
+		child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 	},
 );
 

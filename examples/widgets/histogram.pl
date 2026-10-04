@@ -26,12 +26,13 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing  => { width => sizing_grow(), height => sizing_grow() },
-		padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 
 # Made-up response times in milliseconds: a bell curve around $typical.
 srand 7;
+
 sub durations ( $count, $typical, $spread ) {
 	return map { $typical + $spread * ( rand() + rand() + rand() + rand() - 2 ) } 1 .. $count;
 }

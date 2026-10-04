@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -73,9 +73,10 @@ my $delete_column = {
 my $note_column = { key => 'note', title => 'Note' };
 
 my $table = Term::Fabulous::Widget::Table->new(
-	id           => 'tasks',
-	row_id       => 'id',
-	selection    => 'multiple',
+	id        => 'tasks',
+	row_id    => 'id',
+	selection => 'multiple',
+
 	# The look: a block frame, and colors instead of grid lines.
 	border       => 'Outer',
 	column_lines => 'none',
@@ -88,7 +89,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 		{ key => 'hours', title => 'Hours', type => 'number' },
 		$delete_column,
 	],
-	rows         => \@tasks,
+	rows => \@tasks,
 );
 
 my $status = Term::Fabulous::Widget::Text->new( text => '', text_color => [ 150, 160, 180, 255 ] );

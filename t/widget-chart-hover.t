@@ -37,11 +37,11 @@ subtest 'the pointer on a bar' => sub {
 	is [ bg_at( $chart, 6, 7 ), bg_at( $chart, 10, 4 ) ], [ $RED, $BLUE ], 'nothing is faded at first';
 
 	pointer_to( $h, 10, 4 );
-	is hovers($h), [ { series => 'two', index => 0, label => 'A', value => 3, x => 0 } ], 'fires SeriesHover with the point';
+	is hovers($h),                                                                         [ { series => 'two', index => 0, label => 'A', value => 3, x => 0 } ], 'fires SeriesHover with the point';
 	is $chart->hovered, { series => 'two', index => 0, label => 'A', value => 3, x => 0 }, 'hovered tells the same';
-	isnt bg_at( $chart, 6, 7 ), $RED, 'the other series fades';
-	is bg_at( $chart, 10, 4 ), $BLUE, 'the series under the pointer keeps its color';
-	is [ is_bold( $chart, 10, 0 ), is_bold( $chart, 2, 0 ) ], [ 1, 0 ], 'its legend entry is bold';
+	isnt bg_at( $chart, 6, 7 ),                                                            $RED,     'the other series fades';
+	is bg_at( $chart, 10, 4 ),                                                             $BLUE,    'the series under the pointer keeps its color';
+	is [ is_bold( $chart, 10, 0 ), is_bold( $chart, 2, 0 ) ],                              [ 1, 0 ], 'its legend entry is bold';
 
 	pointer_to( $h, 11, 5 );
 	is hovers($h), [], 'moving within the same bar fires nothing';
@@ -49,7 +49,7 @@ subtest 'the pointer on a bar' => sub {
 	is hovers($h), [ { series => 'one', index => 0, label => 'A', value => 1, x => 0 } ], 'another bar';
 	pointer_to( $h, 20, 3 );
 	is [ hovers($h), $chart->hovered ], [ [ {} ], undef ], 'off the series: an empty event';
-	is bg_at( $chart, 6, 7 ), $RED, 'and nothing faded';
+	is bg_at( $chart, 6, 7 ),           $RED,              'and nothing faded';
 
 	pointer_to( $h, 10, 4 );
 	hovers($h);
@@ -60,8 +60,8 @@ subtest 'the pointer on a bar' => sub {
 subtest 'the pointer on a legend entry' => sub {
 	my $h = hover_ui( bars() );
 	pointer_to( $h, 1, 0 );
-	is hovers($h), [ { series => 'one', label => 'one' } ], 'names the series, no point';
-	isnt bg_at( $h->{chart}, 10, 4 ), $BLUE, 'and emphasizes it';
+	is hovers($h),                    [ { series => 'one', label => 'one' } ], 'names the series, no point';
+	isnt bg_at( $h->{chart}, 10, 4 ), $BLUE,                                   'and emphasizes it';
 };
 
 subtest 'thin lines can be hit from the next cell' => sub {
@@ -73,7 +73,9 @@ subtest 'thin lines can be hit from the next cell' => sub {
 subtest 'highlight' => sub {
 	my $h       = hover_ui( bars( highlight => 'two' ) );
 	my $chart   = $h->{chart};
-	my $colored = sub ($color) { scalar cells_with( $chart, sub ( $c, $x, $y ) { ( bg_at( $c, $x, $y ) // -1 ) == $color } ) };
+	my $colored = sub ($color) {
+		scalar cells_with( $chart, sub ( $c, $x, $y ) { ( bg_at( $c, $x, $y ) // -1 ) == $color } );
+	};
 	is [ $colored->($RED), $colored->($BLUE) > 0 ], [ 0, 1 ], 'emphasizes a series without the pointer';
 	pointer_to( $h, 1, 0 );
 	is [ $colored->($RED) > 0, $colored->($BLUE) ], [ 1, 0 ], 'the pointer wins';
@@ -110,8 +112,8 @@ subtest 'slices' => sub {
 	my $chart = $h->{chart};
 	like glyph_row( $chart, 6 ), qr/ 100 /, 'a donut shows the total';
 	pointer_to( $h, 25, 6 );
-	is hovers($h), [ { series => 'A', index => 0, label => 'A', value => 50 } ], 'a slice: its label and value';
-	is [ glyph_row( $chart, 6 ), glyph_row( $chart, 7 ) ], [ match qr/ 50% /, match qr/ A / ], 'and its share in the hole';
+	is hovers($h),                                         [ { series => 'A', index => 0, label => 'A', value => 50 } ], 'a slice: its label and value';
+	is [ glyph_row( $chart, 6 ), glyph_row( $chart, 7 ) ], [ match qr/ 50% /, match qr/ A / ],                           'and its share in the hole';
 	pointer_to( $h, 33, 6 );
 	is hovers($h), [ { series => 'B', label => 'B', value => 30 } ], 'a legend entry';
 };

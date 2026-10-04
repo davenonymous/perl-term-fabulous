@@ -43,7 +43,7 @@ sub panel ( $caption, $layout, @items ) {
 		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
-			padding          => { left => 1, right => 1 },
+			padding          => { left  => 1,             right  => 1 },
 			child_gap        => 1,
 		},
 		background_color => [ 30, 35, 50, 255 ],
@@ -63,7 +63,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 1, right => 1 },
+		padding          => { left  => 1,             right  => 1 },
 		child_gap        => 1,
 	},
 );
@@ -79,6 +79,7 @@ $bottom->add_child(
 	panel( 'CLAY_LEFT_TO_RIGHT_WRAP (wrap)', { layout_direction => CLAY_LEFT_TO_RIGHT_WRAP }, map { item( "item $_", $COLORS[ ( $_ - 1 ) % @COLORS ] ) } 1 .. 7 ),
 	panel(
 		'CLAY_BACK_TO_FRONT (stack)',
+
 		# Aligned to the bottom right, so the label of every box stays visible.
 		{ layout_direction => CLAY_BACK_TO_FRONT, child_alignment => { x => CLAY_ALIGN_X_RIGHT, y => CLAY_ALIGN_Y_BOTTOM } },
 		item( '1', $COLORS[0], { width => sizing_fixed(24), height => sizing_fixed(4) } ),

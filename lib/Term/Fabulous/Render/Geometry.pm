@@ -22,8 +22,8 @@ sub cell_rect ($bbox) {
 sub intersect_cell_rects ( $first, $second ) {
 	my $x0 = max( $first->[0], $second->[0] );
 	my $y0 = max( $first->[1], $second->[1] );
-	my $x1 = max( $x0, min( $first->[2], $second->[2] ) );
-	my $y1 = max( $y0, min( $first->[3], $second->[3] ) );
+	my $x1 = max( $x0,         min( $first->[2], $second->[2] ) );
+	my $y1 = max( $y0,         min( $first->[3], $second->[3] ) );
 	return [ $x0, $y0, $x1, $y1 ];
 }
 

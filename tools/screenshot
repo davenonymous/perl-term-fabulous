@@ -87,7 +87,7 @@ sub main () {
 # The command line as a scenario, so it is parsed and checked like the
 # scenario file.
 sub scenario_kdl ( $script, $arguments, $columns, $rows, $option ) {
-	my $quote = sub ($text) { '"' . ( $text =~ s/(["\\])/\\$1/gr =~ s/([\x00-\x1f\x7f])/sprintf '\\u{%x}', ord $1/ger ) . '"' };
+	my $quote    = sub ($text) { '"' . ( $text =~ s/(["\\])/\\$1/gr =~ s/([\x00-\x1f\x7f])/sprintf '\\u{%x}', ord $1/ger ) . '"' };
 	my @settings = ( 'script ' . $quote->($script), "size $columns $rows" );
 	push @settings, 'args ' . join( ' ', map { $quote->($_) } @$arguments ) if @$arguments;
 	push @settings, 'title ' . $quote->( $option->{title} ) if defined $option->{title};

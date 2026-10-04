@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );
@@ -45,8 +45,8 @@ sub state_row ( $state, $widget ) {
 my @countries = ( [ Germany => 'DE' ], [ France => 'FR' ], [ Italy => 'IT' ], [ Spain => 'ES' ], [ 'United Kingdom' => 'GB' ] );
 
 state_row( 'placeholder', Term::Fabulous::Widget::Dropdown->new( placeholder => 'Choose a country', options => \@countries ) );
-state_row( 'selected',    Term::Fabulous::Widget::Dropdown->new( options => \@countries, value => 'FR' ) );
-my $open = state_row( 'open', Term::Fabulous::Widget::Dropdown->new( options => [ qw(Red Orange Yellow Green Blue Violet) ], value => 'Green' ) );
+state_row( 'selected',    Term::Fabulous::Widget::Dropdown->new( options     => \@countries,        value   => 'FR' ) );
+my $open = state_row( 'open', Term::Fabulous::Widget::Dropdown->new( options => [qw(Red Orange Yellow Green Blue Violet)], value => 'Green' ) );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 $ui->interaction->set_focused_widget($open);

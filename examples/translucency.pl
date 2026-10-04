@@ -35,12 +35,12 @@ use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
 use Clay::XS qw(sizing_grow sizing_fit sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP);
 
-use constant PI                   => 4 * atan2( 1, 1 );
-use constant FRAMES_PER_SECOND    => 30;
-use constant SECONDS_PER_ORBIT    => 20;
-use constant WORDS_IN_THE_TEXT    => 1500;
-use constant BOX_WIDTH            => 30;
-use constant BOX_HEIGHT           => 6;
+use constant PI                => 4 * atan2( 1, 1 );
+use constant FRAMES_PER_SECOND => 30;
+use constant SECONDS_PER_ORBIT => 20;
+use constant WORDS_IN_THE_TEXT => 1500;
+use constant BOX_WIDTH         => 30;
+use constant BOX_HEIGHT        => 6;
 
 # Random text with a few wide words (two columns each) mixed in.
 my @words = qw(
@@ -56,7 +56,7 @@ my $page = Term::Fabulous::Widget::ScrollBox->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing  => { width => sizing_grow(), height => sizing_grow() },
-		padding => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding => { left  => 2, right => 2, top => 1, bottom => 1 },
 	},
 );
 $page->add_child( Term::Fabulous::Widget::Text->new( text => $text, text_color => [ 190, 200, 215, 255 ] ) );
@@ -91,7 +91,7 @@ foreach my $box (@orbit) {
 		layout              => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_fixed(BOX_WIDTH), height => sizing_fixed(BOX_HEIGHT) },
-			padding          => { left => 1, right => 1, top => 1 },
+			padding          => { left  => 1, right => 1, top => 1 },
 		},
 		floating => {
 			attach_to     => CLAY_ATTACH_TO_PARENT,
@@ -133,7 +133,7 @@ sub place_boxes () {
 	return;
 }
 
-my $paused = 0;
+my $paused        = 0;
 my %action_by_key = (
 	'Space'  => sub { $paused = !$paused },
 	'g'      => sub { $_->{widget}->glyphs_show_through( !$_->{widget}->glyphs_show_through ) foreach @orbit; show_titles() },

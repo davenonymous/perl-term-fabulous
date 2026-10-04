@@ -46,9 +46,9 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 		foreach my $y ( 0 .. $screen->rows - 1 ) {
 			my @cells = map { $self->_resolve($_) } $screen->row($y);
 			push @backgrounds, $self->_background_runs( $y, \@cells );
-			push @shapes, $self->_cell_shapes( $y, $_ ) foreach grep { is_drawn_glyph( $_->{glyph} ) } @cells;
-			push @texts, $self->_text_runs( $y, \@cells );
-			push @lines, $self->_decorations( $y, $_ ) foreach @cells;
+			push @shapes,      $self->_cell_shapes( $y, $_ ) foreach grep { is_drawn_glyph( $_->{glyph} ) } @cells;
+			push @texts,       $self->_text_runs( $y, \@cells );
+			push @lines,       $self->_decorations( $y, $_ ) foreach @cells;
 		}
 		@backgrounds = _merge_rects(@backgrounds);
 		@shapes      = ( _merge_rects( grep { $_->{type} eq 'rect' } @shapes ), grep { $_->{type} ne 'rect' } @shapes );
@@ -189,10 +189,10 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 		my $underline = $top + ( $theme->baseline + 1 ) * $scale;    # a second line fits below it in the cell
 
 		my @offsets;
-		push @offsets, $underline                                if $styles->{underline} || $styles->{double_underline};
-		push @offsets, $underline + 2 * $thickness               if $styles->{double_underline};
-		push @offsets, $top + int( $self->cell_height * 0.55 )  if $styles->{strikeout};
-		push @offsets, $top                                      if $styles->{overline};
+		push @offsets, $underline if $styles->{underline} || $styles->{double_underline};
+		push @offsets, $underline + 2 * $thickness if $styles->{double_underline};
+		push @offsets, $top + int( $self->cell_height * 0.55 ) if $styles->{strikeout};
+		push @offsets, $top if $styles->{overline};
 		return map { { x => $left, y => $_, width => $width, height => $thickness, color => $cell->{fg} } } @offsets;
 	}
 
@@ -230,7 +230,7 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 
 	# $over mixed over $under: 0 is $under, 1 is $over.
 	sub mix_colors ( $under, $over, $amount ) {
-		return $over  if $amount >= 1;
+		return $over if $amount >= 1;
 		return $under if $amount <= 0;
 		my $mixed = 0;
 		foreach my $shift ( 16, 8, 0 ) {

@@ -34,7 +34,8 @@ subtest 'input is queued as termbox2 reports it' => sub {
 		[ TB_EVENT_MOUSE,  TB_KEY_MOUSE_LEFT,    0,                 0,            2, 1, 0,  0 ],
 		[ TB_EVENT_MOUSE,  TB_KEY_MOUSE_RELEASE, TB_KEY_MOUSE_LEFT, 0,            2, 1, 0,  0 ],
 		[ TB_EVENT_RESIZE, 0,                    0,                 0,            0, 0, 12, 4 ],
-	], 'characters, a named key, a click and a resize';
+		],
+		'characters, a named key, a click and a resize';
 
 	vec( my $readable = '', fileno( ( $terminal->read_handles )[0] ), 1 ) = 1;
 	is select( my $ready = $readable, undef, undef, 0 ), 0, 'the read handle is quiet once everything was read';
@@ -42,10 +43,10 @@ subtest 'input is queued as termbox2 reports it' => sub {
 	is select( $ready = $readable, undef, undef, 0 ), 1, 'and readable while input waits';
 	events($terminal);
 
-	like dies { $terminal->press_key('Ctrl+w') }, qr/no key is named 'Ctrl\+w'/, 'press_key takes the names key_name gives';
-	like dies { $terminal->push_event( type => 99 ) }, qr/unknown event type '99'/, 'push_event takes the three event types';
-	like dies { $terminal->resize( 0, 4 ) }, qr/width must be a whole number of at least 1, got '0'/, 'resize takes usable sizes';
-	like dies { $terminal->mouse( key => TB_KEY_MOUSE_LEFT, button => 1 ) }, qr/button/, 'unknown event fields die';
+	like dies { $terminal->press_key('Ctrl+w') },                            qr/no key is named 'Ctrl\+w'/,                           'press_key takes the names key_name gives';
+	like dies { $terminal->push_event( type => 99 ) },                       qr/unknown event type '99'/,                             'push_event takes the three event types';
+	like dies { $terminal->resize( 0, 4 ) },                                 qr/width must be a whole number of at least 1, got '0'/, 'resize takes usable sizes';
+	like dies { $terminal->mouse( key => TB_KEY_MOUSE_LEFT, button => 1 ) }, qr/button/,                                              'unknown event fields die';
 
 	$terminal->end_input;
 	is [ events($terminal), $terminal->input_ended ], [ [], 1 ], 'end_input ends the input';
@@ -58,32 +59,32 @@ subtest 'the session' => sub {
 	is [ $terminal->size, $terminal->inline_rows, $terminal->mouse_enabled, $terminal->kitty_keyboard_active ], [ 10, 3, 3, 0, 1 ],
 		'an inline region no higher than the screen, no mouse, the kitty keyboard protocol';
 	$terminal->click( 1, 1 );
-	is events($terminal), [], 'a terminal that does not report the mouse sends no clicks';
+	is events($terminal),                                                        [],             'a terminal that does not report the mouse sends no clicks';
 	is [ $terminal->apply_resize( 8, 2 ), $terminal->width, $terminal->height ], [ 8, 2, 8, 2 ], 'a resize applies the new size';
 	like dies { $terminal->open( inline => undef, mouse => 1, kitty_keyboard => 0 ) }, qr/the terminal is open already/, 'one session at a time';
 
 	$terminal->close;
 	is [ $terminal->is_open, $terminal->inline_rows, $terminal->kitty_keyboard_active, $terminal->session_count ], [ 0, undef, 0, 1 ], 'closed';
-	like dies { $terminal->size }, qr/the terminal is not open/, 'size needs an open session';
+	like dies { $terminal->size },                                      qr/the terminal is not open/,    'size needs an open session';
 	like dies { Term::Fabulous::Terminal::Memory->new( width => 10 ) }, qr/Required parameter 'height'/, 'the size is required';
 };
 
 subtest 'the screen' => sub {
-	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $root   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my $field  = Term::Fabulous::Widget::TextField->new( preferred_columns => 6 );
 	my $button = Term::Fabulous::Widget::Button->new( background_color => [ 0, 0, 200, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
 	$button->add_child( Term::Fabulous::Widget::Text->new( text => 'OK', text_color => [ 255, 255, 255, 255 ] ) );
 	$root->add_child( $field, $button );
-	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 10, height => 3 );
-	my $ui       = Term::Fabulous->new( root => $root, width => 1, height => 1, terminal => $terminal );
+	my $terminal  = Term::Fabulous::Terminal::Memory->new( width => 10, height => 3 );
+	my $ui        = Term::Fabulous->new( root => $root, width => 1, height => 1, terminal => $terminal );
 	my $activated = 0;
 	$button->on( Activate => sub { $activated++; return } );
 
 	$ui->step;
 	$terminal->press_key('Tab')->type_text('héllo');
 	$ui->step;
-	is [ $terminal->lines ], [ 'héllo ', 'OK  ', '' ], 'the rows of the screen, without trailing blanks';
-	is $terminal->cell( 0, 1 ), [ 'O', 0xFFFFFF, 0x0000C8 ], 'one cell';
+	is [ $terminal->lines ],    [ 'héllo ', 'OK  ',   '' ],       'the rows of the screen, without trailing blanks';
+	is $terminal->cell( 0, 1 ), [ 'O',      0xFFFFFF, 0x0000C8 ], 'one cell';
 	is [ $terminal->lines( colors => 1 ) ]->[1], "\e[38;2;255;255;255;48;2;0;0;200mOK\e[0m\e[48;2;0;0;200m  \e[0m", 'with colors';
 
 	$terminal->click( 1, 1 );

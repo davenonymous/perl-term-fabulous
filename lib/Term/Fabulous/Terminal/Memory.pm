@@ -22,19 +22,19 @@ class Term::Fabulous::Terminal::Memory :does(Term::Fabulous::Role::Terminal) :st
 
 	use constant OPEN_OPTIONS => qw(inline mouse kitty_keyboard);
 
-	field $width :param :reader;
+	field $width  :param :reader;
 	field $height :param :reader;
 	field $kitty_keyboard :param :reader = 0;    # whether the terminal speaks the protocol
 
-	field $cell_target :reader = Term::Fabulous::Render::Target::Grid->new;
-	field $is_open :reader               = 0;
-	field $session_count :reader         = 0;
-	field $mouse_enabled :reader         = 0;
-	field $inline_rows :reader           = undef;
+	field $cell_target           :reader = Term::Fabulous::Render::Target::Grid->new;
+	field $is_open               :reader = 0;
+	field $session_count         :reader = 0;
+	field $mouse_enabled         :reader = 0;
+	field $inline_rows           :reader = undef;
 	field $kitty_keyboard_active :reader = 0;
-	field $_inline;          # the rows the session asked for
-	field $_rows;            # the rows of the layout, kept after close for reading the screen
-	field @_queue;           # Term::Fabulous::Termbox::Event objects
+	field $_inline;    # the rows the session asked for
+	field $_rows;    # the rows of the layout, kept after close for reading the screen
+	field @_queue;    # Term::Fabulous::Termbox::Event objects
 	field $_input_has_ended = 0;
 
 	# A byte in the pipe makes the read end readable while input waits, so
@@ -59,7 +59,7 @@ class Term::Fabulous::Terminal::Memory :does(Term::Fabulous::Role::Terminal) :st
 
 	method open (%options) {
 		die "Term::Fabulous::Terminal::Memory: the terminal is open already" if $is_open;
-		my %known   = map { $_ => 1 } OPEN_OPTIONS;
+		my %known   = map  { $_ => 1 } OPEN_OPTIONS;
 		my @unknown = grep { !$known{$_} } sort keys %options;
 		die "Term::Fabulous::Terminal::Memory: open does not accept @unknown (known options: " . join( ', ', OPEN_OPTIONS ) . ")" if @unknown;
 		die "Term::Fabulous::Terminal::Memory: inline must be a whole number of rows of at least 1, got '$options{inline}'"
@@ -68,7 +68,7 @@ class Term::Fabulous::Terminal::Memory :does(Term::Fabulous::Role::Terminal) :st
 		$is_open = 1;
 		$session_count++;
 		$_inline               = $options{inline};
-		$mouse_enabled         = $options{mouse} ? 1 : 0;
+		$mouse_enabled         = $options{mouse}                             ? 1 : 0;
 		$kitty_keyboard_active = $options{kitty_keyboard} && $kitty_keyboard ? 1 : 0;
 		$_rows                 = $self->_layout_rows($height);
 		$inline_rows           = defined $_inline ? $_rows : undef;
@@ -148,7 +148,7 @@ class Term::Fabulous::Terminal::Memory :does(Term::Fabulous::Role::Terminal) :st
 
 	# A release names its button, as the input parser reports it.
 	method click ( $x, $y ) {
-		$self->mouse( key => TB_KEY_MOUSE_LEFT,    x => $x, y => $y );
+		$self->mouse( key => TB_KEY_MOUSE_LEFT, x => $x, y => $y );
 		$self->mouse( key => TB_KEY_MOUSE_RELEASE, x => $x, y => $y, ch => TB_KEY_MOUSE_LEFT );
 		return $self;
 	}

@@ -78,8 +78,8 @@ my %ARC_BY_CODEPOINT = (
 # shades). Quadrants split the cell at its middle.
 my %BLOCKS_BY_CODEPOINT = (
 	0x2580 => [ [ 0, 0, 8, 4 ] ],
-	( map { ( 0x2580 + $_ => [ [ 0, 8 - $_, 8, 8 ] ] ) } 1 .. 8 ),    # lower one eighth .. full block
-	( map { ( 0x2588 + $_ => [ [ 0, 0, 8 - $_, 8 ] ] ) } 1 .. 7 ),    # left seven eighths .. left one eighth
+	( map { ( 0x2580 + $_ => [ [ 0, 8 - $_, 8,      8 ] ] ) } 1 .. 8 ),    # lower one eighth .. full block
+	( map { ( 0x2588 + $_ => [ [ 0, 0,      8 - $_, 8 ] ] ) } 1 .. 7 ),    # left seven eighths .. left one eighth
 	0x2590 => [ [ 4, 0, 8, 8 ] ],
 	0x2591 => [ [ 0, 0, 8, 8, 0.25 ] ],
 	0x2592 => [ [ 0, 0, 8, 8, 0.5 ] ],
@@ -113,7 +113,7 @@ my @BRAILLE_DOTS = ( [ 0, 0, 0x01 ], [ 0, 1, 0x02 ], [ 0, 2, 0x04 ], [ 1, 0, 0x0
 sub is_drawn_glyph ($glyph) {
 	return 0 unless length($glyph) == 1;
 	my $codepoint = ord $glyph;
-	return 1 if $codepoint >= 0x2500 && $codepoint <= 0x259F;
+	return 1 if $codepoint >= 0x2500        && $codepoint <= 0x259F;
 	return 1 if $codepoint >= BRAILLE_FIRST && $codepoint <= BRAILLE_LAST;
 	return 1 if $codepoint >= SEXTANT_FIRST && $codepoint <= SEXTANT_LAST;
 	return 0;
@@ -136,7 +136,7 @@ sub _sextant_shapes ( $codepoint, $cell ) {
 	my $mask = $codepoint - SEXTANT_FIRST + 1;
 	$mask++ if $mask >= 21;
 	$mask++ if $mask >= 42;
-	my @x = ( 0, int( $width / 2 + 0.5 ), $width );
+	my @x = ( 0, int( $width / 2 + 0.5 ),  $width );
 	my @y = ( 0, int( $height / 3 + 0.5 ), int( 2 * $height / 3 + 0.5 ), $height );
 	return map { _rect( $x[ $_ % 2 ], $y[ int( $_ / 2 ) ], $x[ $_ % 2 + 1 ], $y[ int( $_ / 2 ) + 1 ] ) } grep { $mask & ( 1 << $_ ) } 0 .. 5;
 }
@@ -211,8 +211,8 @@ sub _line_shapes ( $arms, $cell ) {
 	my ( $up, $right, $down, $left ) = @$arms;
 	my ( $width, $height, $thickness, $x0, $y0 ) = @$cell{qw(width height thickness x0 y0)};
 
-	my %vertical   = ( up   => _strokes( $up,   $x0, $thickness ), down  => _strokes( $down,  $x0, $thickness ) );
-	my %horizontal = ( left => _strokes( $left, $y0, $thickness ), right => _strokes( $right, $y0, $thickness ) );
+	my %vertical           = ( up   => _strokes( $up,   $x0, $thickness ), down  => _strokes( $down,  $x0, $thickness ) );
+	my %horizontal         = ( left => _strokes( $left, $y0, $thickness ), right => _strokes( $right, $y0, $thickness ) );
 	my @vertical_strokes   = map { @$_ } values %vertical;
 	my @horizontal_strokes = map { @$_ } values %horizontal;
 
@@ -251,8 +251,8 @@ sub _line_shapes ( $arms, $cell ) {
 			my $middle = $is_horizontal ? [ $x0, $x0 + $thickness ] : [ $y0, $y0 + $thickness ];
 			my @rails  = @$strokes;
 			@spans = (
-				[ $rails[0], _rail_extent( $side_before, $side_after, $towards_end, $length, $middle ) ],
-				[ $rails[1], _rail_extent( $side_after, $side_before, $towards_end, $length, $middle ) ],
+				[ $rails[0], _rail_extent( $side_before, $side_after,  $towards_end, $length, $middle ) ],
+				[ $rails[1], _rail_extent( $side_after,  $side_before, $towards_end, $length, $middle ) ],
 			);
 		}
 
@@ -306,10 +306,10 @@ sub _arc_shapes ( $vertical, $horizontal, $cell ) {
 	my ( $center_x, $center_y ) = ( $x0 + $thickness / 2, $y0 + $thickness / 2 );
 	my $radius = min( $center_x, $width - $center_x, $center_y, $height - $center_y );
 
-	my $edge_y      = $vertical eq 'down'    ? $height : 0;
-	my $edge_x      = $horizontal eq 'right' ? $width  : 0;
-	my $sign_x      = $horizontal eq 'right' ? 1       : -1;
-	my $sign_y      = $vertical eq 'down'    ? 1       : -1;
+	my $edge_y = $vertical eq 'down'    ? $height : 0;
+	my $edge_x = $horizontal eq 'right' ? $width  : 0;
+	my $sign_x = $horizontal eq 'right' ? 1       : -1;
+	my $sign_y = $vertical eq 'down'    ? 1       : -1;
 	my ( $pivot_x, $pivot_y ) = ( $center_x + $sign_x * $radius, $center_y + $sign_y * $radius );
 
 	my @points = ( $center_x, $edge_y );
@@ -325,8 +325,8 @@ sub _diagonal_shapes ( $codepoint, $cell ) {
 	my ( $width, $height, $thickness ) = @$cell{qw(width height thickness)};
 	my $rising  = { type => 'polyline', points => [ $width, 0, 0, $height ], width => $thickness };
 	my $falling = { type => 'polyline', points => [ 0, 0, $width, $height ], width => $thickness };
-	return $rising           if $codepoint == 0x2571;
-	return $falling          if $codepoint == 0x2572;
+	return $rising if $codepoint == 0x2571;
+	return $falling if $codepoint == 0x2572;
 	return ( $rising, $falling ) if $codepoint == 0x2573;
 	croak sprintf 'Term::Fabulous::Screenshot::BoxDrawing: no shapes for U+%04X', $codepoint;
 }

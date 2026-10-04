@@ -37,17 +37,27 @@ class Term::Fabulous::Widget::Spinner
 	# The ready-made styles: frames and how long each one shows.
 	my %STYLE = (
 		dots   => { interval => 0.08, frames => [ map { chr } 0x280B, 0x2819, 0x2839, 0x2838, 0x283C, 0x2834, 0x2826, 0x2827, 0x2807, 0x280F ] },
-		line   => { interval => 0.13, frames => [ '-', '\\', '|', '/' ] },
-		arc    => { interval => 0.10, frames => [ map { chr } 0x25DC, 0x25E0, 0x25DD, 0x25DE, 0x25E1, 0x25DF ] },
-		circle => { interval => 0.12, frames => [ map { chr } 0x25D0, 0x25D3, 0x25D1, 0x25D2 ] },
-		arrow  => { interval => 0.10, frames => [ map { chr } 0x2190, 0x2196, 0x2191, 0x2197, 0x2192, 0x2198, 0x2193, 0x2199 ] },
-		box    => { interval => 0.12, frames => [ map { chr } 0x2596, 0x2598, 0x259D, 0x2597 ] },
-		pulse  => { interval => 0.15, frames => [ map { chr } 0x00B7, 0x2022, 0x25CF, 0x2022 ] },
-		bar    => { interval => 0.08, frames => [ map { chr } 0x2581, 0x2583, 0x2584, 0x2585, 0x2586, 0x2587, 0x2588, 0x2587, 0x2586, 0x2585, 0x2584, 0x2583 ] },
-		dots3  => { interval => 0.30, frames => [ '   ', '.  ', '.. ', '...' ] },
-		bounce => { interval => 0.12, frames => [ '[=   ]', '[ =  ]', '[  = ]', '[   =]', '[  = ]', '[ =  ]' ] },
-		wave   => { interval => 0.10, frames => [ map { my $i = $_; join '', map { chr( $_ == $i ? 0x2588 : abs( $_ - $i ) == 1 ? 0x2593 : 0x2591 ) } 0 .. 4 } 0 .. 4, 3, 2, 1 ] },
-		ring   => { interval => 0.10, frames => _ring_frames() },
+		line   => { interval => 0.13, frames => [ '-',                '\\',     '|',      '/' ] },
+		arc    => { interval => 0.10, frames => [ map { chr } 0x25DC, 0x25E0,   0x25DD,   0x25DE, 0x25E1, 0x25DF ] },
+		circle => { interval => 0.12, frames => [ map { chr } 0x25D0, 0x25D3,   0x25D1,   0x25D2 ] },
+		arrow  => { interval => 0.10, frames => [ map { chr } 0x2190, 0x2196,   0x2191,   0x2197, 0x2192, 0x2198, 0x2193, 0x2199 ] },
+		box    => { interval => 0.12, frames => [ map { chr } 0x2596, 0x2598,   0x259D,   0x2597 ] },
+		pulse  => { interval => 0.15, frames => [ map { chr } 0x00B7, 0x2022,   0x25CF,   0x2022 ] },
+		bar    => { interval => 0.08, frames => [ map { chr } 0x2581, 0x2583,   0x2584,   0x2585, 0x2586, 0x2587, 0x2588, 0x2587, 0x2586, 0x2585, 0x2584, 0x2583 ] },
+		dots3  => { interval => 0.30, frames => [ '   ',              '.  ',    '.. ',    '...' ] },
+		bounce => { interval => 0.12, frames => [ '[=   ]',           '[ =  ]', '[  = ]', '[   =]', '[  = ]', '[ =  ]' ] },
+		wave   => {
+			interval => 0.10,
+			frames   => [
+				map {
+					my $i = $_;
+					join '', map { chr( $_ == $i ? 0x2588 : abs( $_ - $i ) == 1 ? 0x2593 : 0x2591 ) } 0 .. 4
+				} 0 .. 4,
+				3, 2,
+				1
+			]
+		},
+		ring => { interval => 0.10, frames => _ring_frames() },
 	);
 
 	my %IS_POSITION = map { $_ => 1 } qw(left right);
@@ -109,13 +119,13 @@ class Term::Fabulous::Widget::Spinner
 		return $$field_ref;
 	}
 
-	method style (@new)          { return @new ? $self->_set( \$style,          $self->_checked_style( $new[0] ) ) : $style }
-	method interval (@new)       { return @new ? $self->_set( \$interval,       $self->_checked_interval( $new[0] ) ) : $interval // $STYLE{$style}{interval} }
-	method label (@new)          { return @new ? $self->_set( \$label,          string( $self, label => $new[0] ) ) : $label }
-	method label_position (@new) { return @new ? $self->_set( \$label_position, $self->_checked_position( $new[0] ) ) : $label_position }
-	method running (@new)        { return @new ? $self->_set( \$running,        boolean( $self, running => $new[0] ) ) : $running }
-	method color (@new)          { return @new ? $self->_set( \$color,          cell_color( $self, color => $new[0] ) ) : $color }
-	method label_color (@new)    { return @new ? $self->_set( \$label_color,    cell_color( $self, label_color => $new[0] ) ) : $label_color }
+	method style          (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                  : $style }
+	method interval       (@new) { return @new ? $self->_set( \$interval, $self->_checked_interval( $new[0] ) )            : $interval // $STYLE{$style}{interval} }
+	method label          (@new) { return @new ? $self->_set( \$label, string( $self, label => $new[0] ) )                 : $label }
+	method label_position (@new) { return @new ? $self->_set( \$label_position, $self->_checked_position( $new[0] ) )      : $label_position }
+	method running        (@new) { return @new ? $self->_set( \$running, boolean( $self, running => $new[0] ) )            : $running }
+	method color          (@new) { return @new ? $self->_set( \$color, cell_color( $self, color => $new[0] ) )             : $color }
+	method label_color    (@new) { return @new ? $self->_set( \$label_color, cell_color( $self, label_color => $new[0] ) ) : $label_color }
 
 	method frames (@new) {
 		return [ ( $frames // $STYLE{$style}{frames} )->@* ] unless @new;
@@ -145,7 +155,7 @@ class Term::Fabulous::Widget::Spinner
 			( map { $_ => 'scalar' } qw(style interval label label_position) ),
 			running => 'boolean',
 			( map { $_ => 'color' } qw(color label_color) ),
-			frames  => \&_parse_frames,
+			frames => \&_parse_frames,
 		);
 	}
 
@@ -162,7 +172,7 @@ class Term::Fabulous::Widget::Spinner
 	method _frame_size () {
 		my @all = map { [ _rows_of($_) ] } $self->frames->@*;
 		return (
-			List::Util::max( 1, map { string_columns($_) } map {@$_} @all ),
+			List::Util::max( 1, map { string_columns($_) } map { @$_ } @all ),
 			List::Util::max( 1, map { scalar @$_ } @all ),
 		);
 	}

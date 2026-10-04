@@ -14,18 +14,18 @@ class Term::Fabulous::TextView :strict(params) {
 	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Unicode qw(sanitize_text cluster_columns);
 
-	field $editor :param :reader;
-	field $display :param = \&sanitize_text;
-	field $wrap :param :reader      = 0;
+	field $editor    :param :reader;
+	field $display   :param = \&sanitize_text;
+	field $wrap      :param :reader = 0;
 	field $scrollbar :param :reader = 0;
 
 	field $columns :reader = 0;
-	field $rows :reader    = 0;
+	field $rows    :reader = 0;
 
 	# The first visual row shown, and (without wrapping) the columns
 	# scrolled out on the left: always where a cluster of the cursor's
 	# line starts.
-	field $top :reader(top_row)      = 0;
+	field $top  :reader(top_row)     = 0;
 	field $left :reader(left_column) = 0;
 
 	# Grows when the display function changes, which changes the widths.
@@ -67,8 +67,7 @@ class Term::Fabulous::TextView :strict(params) {
 	# ---------------------------------------------------------------------
 
 	method set_size ( $new_columns, $new_rows ) {
-		die "Term::Fabulous::TextView: set_size needs a non-negative integer size, got "
-			. join( ' x ', map { defined ? "'$_'" : 'undef' } $new_columns, $new_rows )
+		die "Term::Fabulous::TextView: set_size needs a non-negative integer size, got " . join( ' x ', map { defined ? "'$_'" : 'undef' } $new_columns, $new_rows )
 			unless 2 == grep { defined && !ref && /\A[0-9]+\z/ } $new_columns, $new_rows;
 		( $columns, $rows ) = ( $new_columns + 0, $new_rows + 0 );
 		return $self;
@@ -148,9 +147,11 @@ class Term::Fabulous::TextView :strict(params) {
 		my $end = length $editor->line($line);
 		return [ 0, $end, 0 ] unless $wrap;
 
-		my @clusters = $self->clusters( $line, 0, $end );
+		my @clusters  = $self->clusters( $line, 0, $end );
 		my $offset_of = sub ($index) { $index < @clusters ? $clusters[$index][0] : $end };
-		my $part      = sub ( $start, $shown, $stop ) { [ map { $offset_of->($_) } $start, $stop, $shown ] };
+		my $part      = sub ( $start, $shown, $stop ) {
+			[ map { $offset_of->($_) } $start, $stop, $shown ]
+		};
 
 		my ( @parts, $break );
 		my ( $start, $shown, $used ) = ( 0, 0, 0 );
@@ -204,7 +205,7 @@ class Term::Fabulous::TextView :strict(params) {
 
 		my ( @visual_rows, @first );
 		foreach my $line ( 0 .. $#$parts ) {
-			push @first, scalar @visual_rows;
+			push @first,       scalar @visual_rows;
 			push @visual_rows, map { [ $line, @$_ ] } @{ $parts->[$line] };
 		}
 		return $layout_cache = { key => $key, width => $width, scrollbar => $has_scrollbar, rows => \@visual_rows, first => \@first };
@@ -282,7 +283,7 @@ class Term::Fabulous::TextView :strict(params) {
 		return $self if $columns < 1 || $rows < 1;
 		my ( $line, $offset ) = $editor->cursor;
 		my $visual = $self->visual_row_of( $line, $offset );
-		$top = $visual             if $visual < $top;
+		$top = $visual if $visual < $top;
 		$top = $visual - $rows + 1 if $visual >= $top + $rows;
 		$top = min( max( $top, 0 ), $self->max_top );
 		$self->_scroll_sideways_to( $line, $offset ) unless $wrap;
@@ -303,9 +304,9 @@ class Term::Fabulous::TextView :strict(params) {
 		$cursor_x //= $end_x;
 
 		$left = min( $left, max( 0, $end_x + 1 - $width ) );
-		$left = $cursor_x                            if $cursor_x < $left;
+		$left = $cursor_x if $cursor_x < $left;
 		$left = $cursor_x + $cursor_columns - $width if $cursor_x + $cursor_columns > $left + $width;
-		$left = 0                                    if $left < 0;
+		$left = 0 if $left < 0;
 
 		my $start = 0;
 		foreach my $cluster (@clusters) {
@@ -358,7 +359,7 @@ class Term::Fabulous::TextView :strict(params) {
 	method move_vertically ( $count, $extend = 0 ) {
 		my $all = $self->_layout->{rows};
 		my ( $line, $offset ) = $editor->cursor;
-		my $visual = $self->visual_row_of( $line, $offset );
+		my $visual      = $self->visual_row_of( $line, $offset );
 		my $goal_column = @goal && $goal[1] == $line && $goal[2] == $offset ? $goal[0] : $self->_columns_to( $line, $all->[$visual][4], max( $offset, $all->[$visual][4] ) );
 
 		my $target = $visual + $count;

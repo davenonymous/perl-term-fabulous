@@ -54,7 +54,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	background_color => [ 20, 25, 35, 255 ],
 	layout           => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
-		padding   => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 3,
 	},
 );
@@ -107,7 +107,7 @@ sub mouse_details ($event) {
 
 # Every listener returns CONTINUE, so logging changes nothing about how
 # the events travel; the root has no ancestors anyway.
-my $continue = Clay::UI::Enum::Result->CONTINUE;
+my $continue   = Clay::UI::Enum::Result->CONTINUE;
 my %details_of = (
 	KeyPress  => \&key_details,
 	Mouse     => \&mouse_details,

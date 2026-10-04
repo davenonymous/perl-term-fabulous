@@ -23,7 +23,7 @@ sub spinner (%args) {
 	my $spinner = Term::Fabulous::Widget::Spinner->new(%args);
 	my $root    = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	$root->add_child($spinner);
-	my $ui = Term::Fabulous->new( root => $root, width => 40, height => 10, terminal => Term::Fabulous::Terminal::Memory->new( width => 40, height => 10 ), clock => sub {$now} );
+	my $ui = Term::Fabulous->new( root => $root, width => 40, height => 10, terminal => Term::Fabulous::Terminal::Memory->new( width => 40, height => 10 ), clock => sub { $now } );
 	$ui->step;
 	return ( $spinner, $ui, \$now );
 }
@@ -47,7 +47,7 @@ subtest 'frames, labels and sizes' => sub {
 	is [ $own->columns, $own->rows, $own->frames, $own->interval ], [ 4, 2, [ 'tick', "to\nck" ], 1 ], 'frames of your own, sized by the largest';
 	$own->frames(undef);
 	$own->interval(undef);
-	is [ scalar $own->frames->@*, $own->interval ], [ 10, 0.08 ], 'back to the style';
+	is [ scalar $own->frames->@*, $own->interval ], [ 10, 0.08 ],                                                          'back to the style';
 	is [ Term::Fabulous::Widget::Spinner->styles ], [qw(arc arrow bar bounce box circle dots dots3 line pulse ring wave)], 'the style names';
 };
 
@@ -68,12 +68,14 @@ subtest 'running and stopped' => sub {
 };
 
 subtest 'invalid values and layouts' => sub {
-	like dies { Term::Fabulous::Widget::Spinner->new( style => 'twirl' ) },         qr/style must be one of arc, arrow/,           'an unknown style';
-	like dies { Term::Fabulous::Widget::Spinner->new( frames => [] ) },             qr/frames must be an array reference of one/,  'no frames';
-	like dies { Term::Fabulous::Widget::Spinner->new( interval => 0 ) },            qr/interval must be positive/,                 'a zero interval';
+	like dies { Term::Fabulous::Widget::Spinner->new( style          => 'twirl' ) }, qr/style must be one of arc, arrow/,          'an unknown style';
+	like dies { Term::Fabulous::Widget::Spinner->new( frames         => [] ) },      qr/frames must be an array reference of one/, 'no frames';
+	like dies { Term::Fabulous::Widget::Spinner->new( interval       => 0 ) },       qr/interval must be positive/,                'a zero interval';
 	like dies { Term::Fabulous::Widget::Spinner->new( label_position => 'below' ) }, qr/label_position must be left or right/,     'an unknown position';
 
-	my $built = Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Spinner as Spinner\nSpinner { style \"arc\"; label \"Loading\"; running #false; frames \"a\" \"b\"; interval 0.5; }" )->build;
+	my $built
+		= Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Spinner as Spinner\nSpinner { style \"arc\"; label \"Loading\"; running #false; frames \"a\" \"b\"; interval 0.5; }" )
+		->build;
 	is [ $built->style, $built->label, $built->running, $built->frames, $built->interval ], [ 'arc', 'Loading', 0, [ 'a', 'b' ], 0.5 ], 'the properties of a layout';
 };
 

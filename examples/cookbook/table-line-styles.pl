@@ -13,15 +13,15 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 # The same small table with the lines of each example.
 my @examples = (
-	[ 'The default'           => {} ],
-	[ 'A grid'                => { border => 'Solid', row_lines => 'Solid' } ],
-	[ 'No lines'              => { border => 'none', column_lines => 'none', header_line => 'none' } ],
-	[ 'Double, Heavy title'   => { border => 'Double', header_line => 'Heavy' } ],
-	[ 'Heavy, Dashed rows'    => { border => 'Heavy', row_lines => 'Dashed' } ],
-	[ 'Ascii'                 => { border => 'Ascii', column_lines => 'Ascii', header_line => 'Ascii' } ],
-	[ 'Outer block frame'     => { border => 'Outer', column_lines => 'none', header_line => 'none', header_background_color => '#2c3340' } ],
-	[ 'Inner block frame'     => { border => 'Inner', column_lines => 'none', header_line => 'none', header_background_color => '#2c3340' } ],
-	[ 'Thick, padding 2'      => { border => 'Thick', column_lines => 'none', cell_padding => 2 } ],
+	[ 'The default'         => {} ],
+	[ 'A grid'              => { border => 'Solid',  row_lines    => 'Solid' } ],
+	[ 'No lines'            => { border => 'none',   column_lines => 'none', header_line => 'none' } ],
+	[ 'Double, Heavy title' => { border => 'Double', header_line  => 'Heavy' } ],
+	[ 'Heavy, Dashed rows'  => { border => 'Heavy',  row_lines    => 'Dashed' } ],
+	[ 'Ascii'               => { border => 'Ascii',  column_lines => 'Ascii', header_line  => 'Ascii' } ],
+	[ 'Outer block frame'   => { border => 'Outer',  column_lines => 'none',  header_line  => 'none', header_background_color => '#2c3340' } ],
+	[ 'Inner block frame'   => { border => 'Inner',  column_lines => 'none',  header_line  => 'none', header_background_color => '#2c3340' } ],
+	[ 'Thick, padding 2'    => { border => 'Thick',  column_lines => 'none',  cell_padding => 2 } ],
 );
 
 sub example ( $index, $caption, $lines ) {
@@ -44,7 +44,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	layout           => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
-		padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap        => 1,
 	},
 );

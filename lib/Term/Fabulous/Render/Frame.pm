@@ -39,7 +39,7 @@ class Term::Fabulous::Render::Frame :strict(params) {
 		CLAY_RENDER_COMMAND_TYPE_CUSTOM()              => 'CUSTOM',
 	);
 
-	field $width :param :reader;
+	field $width  :param :reader;
 	field $height :param :reader;
 
 	# In paint order; for each command, the cells it may paint into and the
@@ -56,11 +56,11 @@ class Term::Fabulous::Render::Frame :strict(params) {
 		_check_size( width  => $width );
 		_check_size( height => $height );
 
-		@_commands = _backgrounds_first(@$commands);
+		@_commands   = _backgrounds_first(@$commands);
 		@_clip_rects = $self->_replay_scissors;
-	}
+		}
 
-	method _all_painted_rects () {
+		method _all_painted_rects () {
 		return $_painted_rects //= [ map { [ _painted_rects( $_commands[$_], $_clip_rects[$_] ) ] } 0 .. $#_commands ];
 	}
 
@@ -75,7 +75,8 @@ class Term::Fabulous::Render::Frame :strict(params) {
 	sub _backgrounds_first (@commands) {
 		foreach my $index ( 0 .. $#commands - 1 ) {
 			my ( $custom, $next ) = @commands[ $index, $index + 1 ];
-			next unless $custom->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM
+			next
+				unless $custom->{commandType} == CLAY_RENDER_COMMAND_TYPE_CUSTOM
 				&& $next->{commandType} == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
 				&& $next->{id} == $custom->{id};
 			@commands[ $index, $index + 1 ] = ( $next, $custom );
@@ -93,7 +94,7 @@ class Term::Fabulous::Render::Frame :strict(params) {
 			die sprintf( "Term::Fabulous::Render::Frame: unhandled render command type %s", $command_type_name{$type} // $type )
 				unless _is_handled($type);
 			push @clip_rects, $open[-1];
-			push @open, intersect_cell_rects( $open[-1], [ cell_rect( $command->{boundingBox} ) ] ) if $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
+			push @open,       intersect_cell_rects( $open[-1], [ cell_rect( $command->{boundingBox} ) ] ) if $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_START;
 			next unless $type == CLAY_RENDER_COMMAND_TYPE_SCISSOR_END;
 			die "Term::Fabulous::Render::Frame: scissor end without an open scissor" if @open == 1;
 			pop @open;
@@ -102,7 +103,8 @@ class Term::Fabulous::Render::Frame :strict(params) {
 	}
 
 	sub _is_handled ($type) {
-		return $type == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
+		return
+			   $type == CLAY_RENDER_COMMAND_TYPE_RECTANGLE
 			|| $type == CLAY_RENDER_COMMAND_TYPE_BORDER
 			|| $type == CLAY_RENDER_COMMAND_TYPE_TEXT
 			|| $type == CLAY_RENDER_COMMAND_TYPE_CUSTOM
@@ -178,7 +180,8 @@ class Term::Fabulous::Render::Frame :strict(params) {
 	method topmost_at ( $x, $y ) {
 		my $painted = $self->_all_painted_rects;
 		return grep {
-			any { $x >= $_->[0] && $x < $_->[2] && $y >= $_->[1] && $y < $_->[3] } @{ $painted->[$_] }
+			any { $x >= $_->[0] && $x < $_->[2] && $y >= $_->[1] && $y < $_->[3] }
+				@{ $painted->[$_] }
 		} reverse 0 .. $#_commands;
 	}
 }

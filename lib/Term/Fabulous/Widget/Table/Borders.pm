@@ -72,8 +72,8 @@ sub _first_style (@levels) {
 # corner that does not keep the glyph of its style) }.
 sub resolve_borders (%args) {
 	my ( $columns, $lines ) = @args{qw(columns lines)};
-	my $header_lines = $args{header} // 0;
-	my $table        = $args{table} // {};
+	my $header_lines = $args{header}        // 0;
+	my $table        = $args{table}         // {};
 	my $column_style = $args{column_styles} // [];
 	my $last_line    = $#$lines;
 	my $line_count   = scalar @$lines;
@@ -88,15 +88,15 @@ sub resolve_borders (%args) {
 	# last line) in a column.
 	my $horizontal = sub ( $boundary, $column ) {
 		my ( $above, $below ) = ( $boundary - 1, $boundary );
-		my @cells = ( ( $above >= 0 ? $cell_style->( $above, $column )->{border_bottom} : undef ), ( $below < $line_count ? $cell_style->( $below, $column )->{border_top} : undef ) );
-		my @rows  = ( ( $above >= 0 ? $row_style->($above)->{border_bottom} : undef ), ( $below < $line_count ? $row_style->($below)->{border_top} : undef ) );
-		my $inner = $boundary > 0 && $boundary < $line_count;
-		my @columns = $inner && $boundary != $header_lines ? ( ( $column_style->[$column] // {} )->{row_lines} ) : ();
+		my @cells   = ( ( $above >= 0 ? $cell_style->( $above, $column )->{border_bottom} : undef ), ( $below < $line_count ? $cell_style->( $below, $column )->{border_top} : undef ) );
+		my @rows    = ( ( $above >= 0 ? $row_style->($above)->{border_bottom}             : undef ), ( $below < $line_count ? $row_style->($below)->{border_top}             : undef ) );
+		my $inner   = $boundary > 0 && $boundary < $line_count;
+		my @columns = $inner        && $boundary != $header_lines ? ( ( $column_style->[$column] // {} )->{row_lines} ) : ();
 		my $table_line
-			= $boundary == 0                                        ? $table->{border_top}
-			: $boundary == $line_count                              ? $table->{border_bottom}
-			: $boundary == $header_lines                            ? $table->{header_line} // $table->{row_lines}
-			:                                                         $table->{row_lines};
+			= $boundary == 0             ? $table->{border_top}
+			: $boundary == $line_count   ? $table->{border_bottom}
+			: $boundary == $header_lines ? $table->{header_line} // $table->{row_lines}
+			:                              $table->{row_lines};
 		return _first_style( \@cells, \@rows, \@columns, [$table_line] );
 	};
 
@@ -117,7 +117,7 @@ sub resolve_borders (%args) {
 			:                         ( $row->{column_lines} );
 		my @column_levels = (
 			( $boundary > 0        ? ( $column_style->[ $boundary - 1 ] // {} )->{border_right} : undef ),
-			( $boundary < $columns ? ( $column_style->[$boundary] // {} )->{border_left}        : undef ),
+			( $boundary < $columns ? ( $column_style->[$boundary]       // {} )->{border_left}  : undef ),
 		);
 		my $table_line = $boundary == 0 ? $table->{border_left} : $boundary == $columns ? $table->{border_right} : $table->{column_lines};
 		return _first_style( \@cells, \@rows, \@column_levels, [$table_line] );
@@ -130,8 +130,14 @@ sub resolve_borders (%args) {
 	foreach my $line ( 0 .. $last_line ) {
 		$v[$line] = [ map { $vertical->( $line, $_ ) } 0 .. $columns ];
 	}
-	my @row_line_exists    = map { my $boundary = $_; ( any { defined } @{ $h[$boundary] } ) ? 1 : 0 } 0 .. $line_count;
-	my @column_line_exists = map { my $boundary = $_; ( any { defined $v[$_][$boundary] } 0 .. $last_line ) ? 1 : 0 } 0 .. $columns;
+	my @row_line_exists = map {
+		my $boundary = $_;
+		( any { defined } @{ $h[$boundary] } ) ? 1 : 0
+	} 0 .. $line_count;
+	my @column_line_exists = map {
+		my $boundary = $_;
+		( any { defined $v[$_][$boundary] } 0 .. $last_line ) ? 1 : 0
+	} 0 .. $columns;
 
 	# Who draws a horizontal boundary: the line below it, except that a
 	# boundary above a spanning line is drawn by the (non-spanning) line
@@ -152,6 +158,7 @@ sub resolve_borders (%args) {
 		return undef if $column < 0 || $column >= $columns;
 		return $h[$boundary][$column];
 	};
+
 	# The glyph of a point of the outer frame when the frame's style has no
 	# joints (Outer, Inner, Thick, ...): the frame runs on with its straight
 	# edge glyph where an inner line meets it, and keeps its own corner
@@ -167,14 +174,14 @@ sub resolve_borders (%args) {
 			:                         undef;
 		return () unless defined $edge && !_joins($edge);
 		return ( 1, undef ) if ( $on_top || $on_bottom ) && $on_side;
-		return ( 1, ( $edge->get_top_glyphs )[1] )    if $on_top;
+		return ( 1, ( $edge->get_top_glyphs )[1] ) if $on_top;
 		return ( 1, ( $edge->get_bottom_glyphs )[1] ) if $on_bottom;
 		return ( 1, ( $grid_line == 0 ? $edge->get_left_glyphs : $edge->get_right_glyphs ) );
 	};
 	my $corner = sub ( $boundary, $grid_line ) {
 		my %arms = (
 			up    => $vertical_arm->( $boundary - 1, $grid_line ),
-			down  => $vertical_arm->( $boundary, $grid_line ),
+			down  => $vertical_arm->( $boundary,     $grid_line ),
 			left  => $horizontal_arm->( $boundary, $grid_line - 1 ),
 			right => $horizontal_arm->( $boundary, $grid_line ),
 		);
@@ -189,24 +196,24 @@ sub resolve_borders (%args) {
 
 	my @result;
 	foreach my $line ( 0 .. $last_line ) {
-		my $spanning = $lines->[$line]{spanning};
+		my $spanning     = $lines->[$line]{spanning};
 		my @cell_columns = $spanning ? ( [ 0, $columns - 1 ] ) : map { [ $_, $_ ] } 0 .. $columns - 1;
-		my $top_drawn    = $row_line_exists[$line] && !$drawn_as_bottom->($line);
+		my $top_drawn    = $row_line_exists[$line]       && !$drawn_as_bottom->($line);
 		my $bottom_drawn = $row_line_exists[ $line + 1 ] && $drawn_as_bottom->( $line + 1 );
 		my @cells;
 		foreach my $span (@cell_columns) {
 			my ( $first, $last ) = @$span;
 			my %sides = (
 				left   => $side_style->( $column_line_exists[$first], $v[$line][$first] ),
-				right  => ( $last == $columns - 1 ? $side_style->( $column_line_exists[$columns], $v[$line][$columns] ) : undef ),
-				top    => ( $top_drawn    ? $side_style->( 1, first { defined } @{ $h[$line] }[ $first .. $last ] ) : undef ),
-				bottom => ( $bottom_drawn ? $side_style->( 1, first { defined } @{ $h[ $line + 1 ] }[ $first .. $last ] ) : undef ),
+				right  => ( $last == $columns - 1 ? $side_style->( $column_line_exists[$columns], $v[$line][$columns] )                                       : undef ),
+				top    => ( $top_drawn            ? $side_style->( 1,                             first { defined } @{ $h[$line] }[ $first .. $last ] )       : undef ),
+				bottom => ( $bottom_drawn         ? $side_style->( 1,                             first { defined } @{ $h[ $line + 1 ] }[ $first .. $last ] ) : undef ),
 			);
 			my %corners;
-			$corners{top_left}     = $corner->( $line,     $first )       if $sides{top}    && $sides{left};
-			$corners{top_right}    = $corner->( $line,     $columns )     if $sides{top}    && $sides{right};
-			$corners{bottom_left}  = $corner->( $line + 1, $first )       if $sides{bottom} && $sides{left};
-			$corners{bottom_right} = $corner->( $line + 1, $columns )     if $sides{bottom} && $sides{right};
+			$corners{top_left}     = $corner->( $line,     $first ) if $sides{top}      && $sides{left};
+			$corners{top_right}    = $corner->( $line,     $columns ) if $sides{top}    && $sides{right};
+			$corners{bottom_left}  = $corner->( $line + 1, $first ) if $sides{bottom}   && $sides{left};
+			$corners{bottom_right} = $corner->( $line + 1, $columns ) if $sides{bottom} && $sides{right};
 			delete @corners{ grep { !defined $corners{$_} } keys %corners };
 			my %on_frame = (
 				left   => $first == 0,

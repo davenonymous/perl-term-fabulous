@@ -47,10 +47,10 @@ subtest 'open puts the dialog over the root and focuses inside' => sub {
 	$ui->interaction->set_focused_widget($behind);
 	$dialog->open($ui);
 	ok $dialog->is_open, 'open';
-	ref_is $dialog->parent, $dialog->backdrop, 'the dialog sits in its backdrop';
-	ref_is $dialog->backdrop->parent, $root, 'which is a child of the root';
-	ref_is $ui->interaction->get_focused_widget, $inside[0], 'the first focusable widget inside has the focus';
-	ref_is $dialog->open($ui), $dialog, 'opening again is a no-op that returns the dialog';
+	ref_is $dialog->parent,                      $dialog->backdrop, 'the dialog sits in its backdrop';
+	ref_is $dialog->backdrop->parent,            $root,             'which is a child of the root';
+	ref_is $ui->interaction->get_focused_widget, $inside[0],        'the first focusable widget inside has the focus';
+	ref_is $dialog->open($ui),                   $dialog,           'opening again is a no-op that returns the dialog';
 };
 
 subtest 'Tab stays inside the dialog' => sub {
@@ -66,7 +66,7 @@ subtest 'the backdrop takes clicks outside the dialog' => sub {
 	$root->on( Mouse => sub { push @mouse_targets, $_[0]->target; return } );
 	$terminal->mouse( key => TB_KEY_MOUSE_LEFT, x => 1, y => 0 );
 	$ui->step;
-	ref_is $mouse_targets[0], $dialog->backdrop, 'the button behind the dialog does not get the click';
+	ref_is $mouse_targets[0],                    $dialog->backdrop, 'the button behind the dialog does not get the click';
 	ref_is $ui->interaction->get_focused_widget, $dialog->backdrop, 'the backdrop takes the focus';
 	is $dialog->backdrop->layout->{sizing}, { width => sizing_grow(), height => sizing_grow() }, 'the backdrop fills the screen';
 
@@ -80,7 +80,7 @@ subtest 'the backdrop takes clicks outside the dialog' => sub {
 subtest 'keys stay inside the open dialog' => sub {
 	my @root_keys;
 	$root->on( KeyPress => sub { push @root_keys, $_[0]->key_name; return } );
-	press( $inside[0], 'd' );
+	press( $inside[0],        'd' );
 	press( $dialog->backdrop, 'q' );
 	is \@root_keys, [], 'the key bindings behind the dialog do not see them';
 	ok $dialog->is_open, 'and the dialog stays open';
@@ -89,11 +89,11 @@ subtest 'keys stay inside the open dialog' => sub {
 subtest 'Escape closes and the focus goes back' => sub {
 	press( $inside[0], 'Escape' );
 	ok !$dialog->is_open, 'closed';
-	is $dialog->parent, undef, 'the dialog has no parent any more';
-	is scalar( grep { $_->isa('Term::Fabulous::Widget::Dialog::Backdrop') } $root->children->@* ), 0, 'the backdrop is gone from the root';
+	is $dialog->parent,                                                                            undef, 'the dialog has no parent any more';
+	is scalar( grep { $_->isa('Term::Fabulous::Widget::Dialog::Backdrop') } $root->children->@* ), 0,     'the backdrop is gone from the root';
 	ref_is $ui->interaction->get_focused_widget, $behind, 'the focus is back where it was';
 	is scalar @closes, 1, 'Close fired once';
-	ref_is $closes[0], $dialog, 'on the dialog';
+	ref_is $closes[0],     $dialog, 'on the dialog';
 	ref_is $dialog->close, $dialog, 'closing again does nothing';
 	is scalar @closes, 1, 'and fires nothing';
 };
@@ -157,7 +157,7 @@ subtest 'close after the program removed the dialog' => sub {
 	$removed->open($screen_ui);
 
 	$box->clear_children;
-	ok $removed->is_open, 'the dialog counts as open until it is closed';
+	ok $removed->is_open,         'the dialog counts as open until it is closed';
 	ok lives { $removed->close }, 'close does not die';
 	is [ $removed->is_open, $closed, $removed->parent ], [ 0, 1, undef ], 'it is closed, Close fired, it can be opened again';
 	ok lives { $removed->open($screen_ui)->close }, 'and it does';
@@ -175,13 +175,13 @@ subtest 'an open dialog does not keep a dropped UI alive' => sub {
 };
 
 subtest 'defaults and errors' => sub {
-	is $dialog->border_width, 1, 'a border by default';
+	is $dialog->border_width,                                                        1, 'a border by default';
 	is $dialog->layout->{padding}, { left => 1, right => 1, top => 1, bottom => 1 }, 'padding by default';
-	is $dialog->layout->{sizing}{width}, sizing_fixed(12), 'the given layout keys win';
+	is $dialog->layout->{sizing}{width},                                             sizing_fixed(12), 'the given layout keys win';
 	my $fresh = Term::Fabulous::Widget::Dialog->new;
 	is [ $fresh->backdrop_color, $fresh->z_index, $fresh->close_on_escape ], [ [ 0, 0, 0, 128 ], 1000, 1 ], 'the dialog parameters';
 	like dies { $dialog->open('nope') }, qr/open needs the Term::Fabulous object/, 'open wants the UI';
-	like dies { Term::Fabulous::Widget::Dialog->new( z_index => 'top' ) }, qr/z_index must be an integer/, 'z_index is checked';
+	like dies { Term::Fabulous::Widget::Dialog->new( z_index        => 'top' ) },  qr/z_index must be an integer/,                                                   'z_index is checked';
 	like dies { Term::Fabulous::Widget::Dialog->new( backdrop_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Dialog: backdrop_color must be a color, got 'nope'/, 'backdrop_color is checked';
 
 	my $child  = Term::Fabulous::Widget::Dialog->new;

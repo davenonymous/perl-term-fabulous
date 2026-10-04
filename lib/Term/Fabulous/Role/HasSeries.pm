@@ -19,7 +19,7 @@ role Term::Fabulous::Role::HasSeries {
 	field @_series;
 	field %_series_by_name;
 	field $_next_slot = 0;
-	field %_defaults;       # the series options given to the chart
+	field %_defaults;    # the series options given to the chart
 	field $_point_check;    # what every series checks its new points with
 
 	# The type a series has when it gives none.

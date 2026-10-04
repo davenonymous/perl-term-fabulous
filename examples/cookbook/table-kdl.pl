@@ -54,14 +54,14 @@ my $status = $root->find_by_id('status');
 # The data and every code reference come from Perl.
 $table->rows(
 	[
-		{ sku => 'CAB-001', name => 'USB-C cable 1 m',   category => 'Cables',   qty => 140, price => 9.9,   updated => '2026-05-28' },
-		{ sku => 'CAB-002', name => 'USB-C cable 2 m',   category => 'Cables',   qty => 35,  price => 12.5,  updated => '2026-05-30' },
-		{ sku => 'CAB-010', name => 'HDMI cable 2 m',    category => 'Cables',   qty => 62,  price => 14,    updated => '2026-05-12' },
-		{ sku => 'KEY-001', name => 'Keyboard DE',       category => 'Input',    qty => 18,  price => 49,    updated => '2026-05-21' },
-		{ sku => 'KEY-002', name => 'Keyboard US',       category => 'Input',    qty => 24,  price => 49,    updated => '2026-05-21' },
-		{ sku => 'MOU-001', name => 'Mouse, wireless',   category => 'Input',    qty => 51,  price => 29.9,  updated => '2026-05-31' },
-		{ sku => 'MON-024', name => 'Monitor 24 inch',   category => 'Displays', qty => 7,   price => 189,   updated => '2026-05-02' },
-		{ sku => 'MON-027', name => 'Monitor 27 inch',   category => 'Displays', qty => 12,  price => 279,   updated => '2026-05-19' },
+		{ sku => 'CAB-001', name => 'USB-C cable 1 m', category => 'Cables',   qty => 140, price => 9.9,  updated => '2026-05-28' },
+		{ sku => 'CAB-002', name => 'USB-C cable 2 m', category => 'Cables',   qty => 35,  price => 12.5, updated => '2026-05-30' },
+		{ sku => 'CAB-010', name => 'HDMI cable 2 m',  category => 'Cables',   qty => 62,  price => 14,   updated => '2026-05-12' },
+		{ sku => 'KEY-001', name => 'Keyboard DE',     category => 'Input',    qty => 18,  price => 49,   updated => '2026-05-21' },
+		{ sku => 'KEY-002', name => 'Keyboard US',     category => 'Input',    qty => 24,  price => 49,   updated => '2026-05-21' },
+		{ sku => 'MOU-001', name => 'Mouse, wireless', category => 'Input',    qty => 51,  price => 29.9, updated => '2026-05-31' },
+		{ sku => 'MON-024', name => 'Monitor 24 inch', category => 'Displays', qty => 7,   price => 189,  updated => '2026-05-02' },
+		{ sku => 'MON-027', name => 'Monitor 27 inch', category => 'Displays', qty => 12,  price => 279,  updated => '2026-05-19' },
 	]
 );
 $table->update_column( price   => mutator => number( decimals => 2, suffix => ' EUR' ) );

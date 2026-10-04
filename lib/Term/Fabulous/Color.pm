@@ -42,9 +42,9 @@ class Term::Fabulous::Color :strict(params) {
 	ADJUST :params ( :$color ) {
 		my @channels = _channels_from_input($color);
 		( $red, $green, $blue, $alpha ) = map { _checked_channel( $CHANNEL_NAMES[$_], $channels[$_] ) } 0 .. 3;
-	}
+		}
 
-	sub _describe ($value) {
+		sub _describe ($value) {
 		return 'undef' unless defined $value;
 		return ref($value) . ' reference' if ref $value;
 		return "'$value'";
@@ -53,7 +53,7 @@ class Term::Fabulous::Color :strict(params) {
 	sub _is_finite_number ($value) {
 		return 0 unless defined $value && !ref $value && looks_like_number($value);
 		return 0 if $value != $value;    # NaN
-		return abs($value) != 9**9**9;   # +/- Inf
+		return abs($value) != 9**9**9;    # +/- Inf
 	}
 
 	sub _round ($value) {
@@ -76,16 +76,15 @@ class Term::Fabulous::Color :strict(params) {
 
 	sub _channels_from_input ($color) {
 		return $color->to_rgba if blessed $color && $color->isa('Term::Fabulous::Color');
-		return _channels_from_hash($color)   if ref $color eq 'HASH';
-		return _channels_from_array($color)  if ref $color eq 'ARRAY';
+		return _channels_from_hash($color) if ref $color eq 'HASH';
+		return _channels_from_array($color) if ref $color eq 'ARRAY';
 		return _channels_from_string($color) if defined $color && !ref $color;
 		die "Term::Fabulous::Color: invalid color input " . _describe($color);
 	}
 
 	sub _channels_from_hash ($hash) {
-		my $shape = join ' ', sort keys %$hash;
-		my $keys  = $CHANNEL_KEYS_BY_HASH_SHAPE{$shape}
-			// die "Term::Fabulous::Color: a color hash needs exactly the keys r, g, b[, a] or red, green, blue[, alpha], got {$shape}";
+		my $shape    = join ' ', sort keys %$hash;
+		my $keys     = $CHANNEL_KEYS_BY_HASH_SHAPE{$shape} // die "Term::Fabulous::Color: a color hash needs exactly the keys r, g, b[, a] or red, green, blue[, alpha], got {$shape}";
 		my @channels = @{$hash}{@$keys};
 		return @channels == 3 ? ( @channels, 255 ) : @channels;
 	}
@@ -206,7 +205,7 @@ class Term::Fabulous::Color :strict(params) {
 		);
 	}
 
-	method with_alpha ( $new_alpha ) {
+	method with_alpha ($new_alpha) {
 		return Term::Fabulous::Color->new( color => [ $red, $green, $blue, $new_alpha ], );
 	}
 
@@ -256,18 +255,18 @@ class Term::Fabulous::Color :strict(params) {
 
 	# Alpha-0 emits the terminal default-fg reset (\e[39m) instead of literal black.
 	method fg_sgr () {
-		return $_fg_sgr_cache //=
-		  $alpha == 0
-		  ? "\e[39m"
-		  : sprintf( "\e[38;2;%d;%d;%dm", $red, $green, $blue );
+		return $_fg_sgr_cache
+			//= $alpha == 0
+			? "\e[39m"
+			: sprintf( "\e[38;2;%d;%d;%dm", $red, $green, $blue );
 	}
 
 	# Alpha-0 emits the terminal default-bg reset (\e[49m); see fg_sgr.
 	method bg_sgr () {
-		return $_bg_sgr_cache //=
-		  $alpha == 0
-		  ? "\e[49m"
-		  : sprintf( "\e[48;2;%d;%d;%dm", $red, $green, $blue );
+		return $_bg_sgr_cache
+			//= $alpha == 0
+			? "\e[49m"
+			: sprintf( "\e[48;2;%d;%d;%dm", $red, $green, $blue );
 	}
 
 	method rgb_int () {

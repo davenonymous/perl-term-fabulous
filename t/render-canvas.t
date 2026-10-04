@@ -40,11 +40,11 @@ subtest 'the buffer is painted into the content box' => sub {
 	$canvas->on( CanvasResize => sub { push @sizes, [ $_[0]->columns, $_[0]->rows ]; $canvas->put( 0, 0, 'a', 0x0000FF, 0xFF0000 )->put( 1, 0, 'b' ); return } );
 	$ui->draw;
 
-	is \@sizes, [ [ 3, 1 ] ], 'CanvasResize reports the content size before the frame is painted';
-	is glyphs_at( $ui, 2, 2, 8 ), ' ab   ', 'the cells start inside border and padding';
-	is $ui->cell( 3, 2 ), [ 'a', 0x0000FF, 0xFF0000 ], 'a cell with its own colors';
-	is $ui->cell( 4, 2 ), [ 'b', TB_DEFAULT, 0x020202 ], 'a cell without colors: terminal foreground, canvas background';
-	is $ui->cell( 5, 2 ), [ ' ', TB_DEFAULT, 0x020202 ], 'an unset cell: a space in the canvas background';
+	is \@sizes,                   [ [ 3, 1 ] ],                  'CanvasResize reports the content size before the frame is painted';
+	is glyphs_at( $ui, 2, 2, 8 ), ' ab   ',                      'the cells start inside border and padding';
+	is $ui->cell( 3, 2 ),         [ 'a', 0x0000FF, 0xFF0000 ],   'a cell with its own colors';
+	is $ui->cell( 4, 2 ),         [ 'b', TB_DEFAULT, 0x020202 ], 'a cell without colors: terminal foreground, canvas background';
+	is $ui->cell( 5, 2 ),         [ ' ', TB_DEFAULT, 0x020202 ], 'an unset cell: a space in the canvas background';
 };
 
 subtest 'without a background of its own the canvas shows the nearest ancestor background' => sub {
@@ -109,7 +109,7 @@ subtest 'a canvas is painted in full when it cannot keep its cells' => sub {
 };
 
 subtest 'a wide glyph crossing the visible edge is painted as spaces' => sub {
-	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $root   = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my $canvas = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(5), height => sizing_fixed(1) } } );
 	$root->add_child($canvas);
 	my $ui = Term::Fabulous::Static->new( root => $root, width => 4, height => 1 );

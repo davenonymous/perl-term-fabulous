@@ -29,13 +29,13 @@ package Moment {    ## no critic (Modules::RequireFilenameMatchesPackage) a stan
 subtest 'construction' => sub {
 	my $series = series( slot => 3, data => [ 1, 2 ] );
 	is [ $series->name, $series->type, $series->slot, $series->count ], [ 'CPU', 'line', 3, 2 ], 'name, type, slot and data';
-	is [ $series->color, $series->color_opacity, $series->is_visible ], [ undef, 1, 1 ], 'no color of its own, visible';
-	is [ $series->option('curve'), $series->option('marker') ], [ undef, undef ], 'options default to the chart settings';
-	is [ series()->points ], [ [] ], 'no data';
+	is [ $series->color, $series->color_opacity, $series->is_visible ], [ undef, 1, 1 ],         'no color of its own, visible';
+	is [ $series->option('curve'), $series->option('marker') ],         [ undef, undef ],        'options default to the chart settings';
+	is [ series()->points ],                                            [ [] ],                  'no data';
 
-	like dies { series( name => '' ) },      qr/\AChart: a series name must be a non-empty string, got ''/, 'an empty name dies';
-	like dies { series( name => [] ) },      qr/a series name must be a non-empty string, got an ARRAY reference/, 'so does a reference';
-	like dies { series( type => 'pie' ) },   qr/series 'CPU' has an unknown type 'pie' \(known: line, area, bar, scatter\)/, 'an unknown type dies';
+	like dies { series( name  => '' ) },      qr/\AChart: a series name must be a non-empty string, got ''/,                          'an empty name dies';
+	like dies { series( name  => [] ) },      qr/a series name must be a non-empty string, got an ARRAY reference/,                   'so does a reference';
+	like dies { series( type  => 'pie' ) },   qr/series 'CPU' has an unknown type 'pie' \(known: line, area, bar, scatter\)/,         'an unknown type dies';
 	like dies { series( shape => 'round' ) }, qr/series 'CPU' does not take shape \(known: name, type, data, color, marker, curve, /, 'an unknown option dies';
 };
 
@@ -49,7 +49,7 @@ subtest 'color' => sub {
 };
 
 subtest 'options' => sub {
-	my $series = series();
+	my $series   = series();
 	my $revision = $series->revision;
 	ref_is $series->set_option( curve => 'monotone' ), $series, 'set_option returns the series';
 	is [ $series->option('curve'), $series->revision ], [ 'monotone', $revision + 1 ], 'and counts as a change';
@@ -69,22 +69,22 @@ subtest 'options' => sub {
 	is [ $series->option('visible'), $series->option('trend'), $series->is_visible ], [ 0, 1, 0 ], 'switches are 0 or 1';
 
 	is [ $Series->marker_names('bar') ], [qw(block braille half quadrant sextant)], 'the markers of a type';
-	is [ $Series->marker_names('pie') ], [], 'none for an unknown type';
+	is [ $Series->marker_names('pie') ], [],                                        'none for an unknown type';
 	is [ $Series->option_names ], [qw(marker curve tension line line_style points point fill_opacity stack from to transform span_gaps visible max_points trend value_labels)], 'the option names';
 	ok series( type => 'bar', marker => 'block' ), 'a bar series takes block';
 
 	my @cases = (
-		[ 'a marker the type cannot draw with', [ marker       => 'block' ],     qr/\AChart: marker of series 'CPU' must be one of braille, half, quadrant, sextant, box for a line series, got 'block'/ ],
-		[ 'an unknown curve',                   [ curve        => 'smooth' ],    qr/curve of series 'CPU' must be a curve name/ ],
-		[ 'an unknown line style',              [ line_style   => 'wavy' ],      qr/line_style of series 'CPU' must be solid, dashed or dotted, got 'wavy'/ ],
-		[ 'a tension above 1',                  [ tension      => 1.5 ],         qr/tension of series 'CPU' must be a number from 0 to 1, got '1.5'/ ],
-		[ 'a word as fill_opacity',             [ fill_opacity => 'half' ],      qr/fill_opacity of series 'CPU' must be a number from 0 to 1/ ],
-		[ 'a wide point glyph',                 [ point        => "\x{65E5}" ],  qr/point of series 'CPU' must be a single character one column wide/ ],
-		[ 'a reference as stack',               [ stack        => [] ],          qr/stack of series 'CPU' must be a group name, got an ARRAY reference/ ],
-		[ 'a reference as from',                [ from         => {} ],          qr/from of series 'CPU' must be an x value, got a HASH reference/ ],
-		[ 'an invalid transform',               [ transform    => 'blur' ],      qr/every step of transform of series 'CPU' must be a transform name/ ],
-		[ 'max_points 0',                       [ max_points   => 0 ],           qr/max_points of series 'CPU' must be a positive integer, got '0'/ ],
-		[ 'a reference as switch',              [ visible      => [] ],          qr/visible of series 'CPU' must be a plain true or false value, got an ARRAY reference/ ],
+		[ 'a marker the type cannot draw with', [ marker       => 'block' ],  qr/\AChart: marker of series 'CPU' must be one of braille, half, quadrant, sextant, box for a line series, got 'block'/ ],
+		[ 'an unknown curve',                   [ curve        => 'smooth' ], qr/curve of series 'CPU' must be a curve name/ ],
+		[ 'an unknown line style',              [ line_style   => 'wavy' ],   qr/line_style of series 'CPU' must be solid, dashed or dotted, got 'wavy'/ ],
+		[ 'a tension above 1',                  [ tension      => 1.5 ],      qr/tension of series 'CPU' must be a number from 0 to 1, got '1.5'/ ],
+		[ 'a word as fill_opacity',             [ fill_opacity => 'half' ],   qr/fill_opacity of series 'CPU' must be a number from 0 to 1/ ],
+		[ 'a wide point glyph',                 [ point        => "\x{65E5}" ], qr/point of series 'CPU' must be a single character one column wide/ ],
+		[ 'a reference as stack',               [ stack        => [] ],         qr/stack of series 'CPU' must be a group name, got an ARRAY reference/ ],
+		[ 'a reference as from',                [ from         => {} ],         qr/from of series 'CPU' must be an x value, got a HASH reference/ ],
+		[ 'an invalid transform',               [ transform    => 'blur' ],     qr/every step of transform of series 'CPU' must be a transform name/ ],
+		[ 'max_points 0',                       [ max_points   => 0 ],          qr/max_points of series 'CPU' must be a positive integer, got '0'/ ],
+		[ 'a reference as switch',              [ visible      => [] ],         qr/visible of series 'CPU' must be a plain true or false value, got an ARRAY reference/ ],
 	);
 	foreach my $case (@cases) {
 		my ( $name, $option, $error ) = @$case;
@@ -99,13 +99,13 @@ subtest 'data points' => sub {
 	isa_ok series( data => [ [ Moment->new(1), 2 ] ] )->points->[0][0], 'Moment';
 
 	my @cases = (
-		[ 'not an array',          {},                       qr/\AChart: the data of series 'CPU' must be an array reference, got a HASH reference/ ],
-		[ 'three values',          [ 1, [ 1, 2, 3 ] ],       qr/data point 1 of series 'CPU' must be \[ x, y \], got an array of 3 values/ ],
-		[ 'unknown keys',          [ { x => 1, z => 2 } ],   qr/data point 0 of series 'CPU' takes only the keys x and y, got z/ ],
-		[ 'a scalar reference',    [ \'5' ],                 qr/data point 0 of series 'CPU' must be a number, \[ x, y \] or \{ x, y \}, got a SCALAR reference/ ],
-		[ 'a word as y',           [ 'abc' ],                qr/the y value of data point 0 of series 'CPU' must be a finite number or undef, got 'abc'/ ],
-		[ 'an infinite y',         [ [ 1, 'inf' ] ],         qr/the y value of data point 0 .* must be a finite number or undef, got 'inf'/ ],
-		[ 'a reference as x',      [ [ [1], 2 ] ],           qr/the x value of data point 0 of series 'CPU' must be a number, a label or a date, got an ARRAY reference/ ],
+		[ 'not an array',       {},                     qr/\AChart: the data of series 'CPU' must be an array reference, got a HASH reference/ ],
+		[ 'three values',       [ 1, [ 1, 2, 3 ] ],     qr/data point 1 of series 'CPU' must be \[ x, y \], got an array of 3 values/ ],
+		[ 'unknown keys',       [ { x => 1, z => 2 } ], qr/data point 0 of series 'CPU' takes only the keys x and y, got z/ ],
+		[ 'a scalar reference', [ \'5' ],               qr/data point 0 of series 'CPU' must be a number, \[ x, y \] or \{ x, y \}, got a SCALAR reference/ ],
+		[ 'a word as y',        ['abc'],                qr/the y value of data point 0 of series 'CPU' must be a finite number or undef, got 'abc'/ ],
+		[ 'an infinite y',      [ [ 1, 'inf' ] ],       qr/the y value of data point 0 .* must be a finite number or undef, got 'inf'/ ],
+		[ 'a reference as x',   [ [ [1], 2 ] ],         qr/the x value of data point 0 of series 'CPU' must be a number, a label or a date, got an ARRAY reference/ ],
 	);
 	foreach my $case (@cases) {
 		my ( $name, $data, $error ) = @$case;

@@ -49,13 +49,13 @@ class Term::Fabulous
 	# frame would never settle.
 	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
-	field $inline :param :reader = undef;    # the rows of the inline region, or undef for the full screen
-	field $mouse :param :reader  = undef;
+	field $inline         :param :reader = undef;    # the rows of the inline region, or undef for the full screen
+	field $mouse          :param :reader = undef;
 	field $kitty_keyboard :param :reader = 1;
-	field $terminal :param :reader //= Term::Fabulous::Terminal::Termbox->new;
-	field $clock :param = sub { Time::HiRes::time() };
-	field $loop :reader;
-	field $termbox_draw_interval :reader            = 1 / 30;
+	field $terminal       :param :reader //= Term::Fabulous::Terminal::Termbox->new;
+	field $clock          :param = sub { Time::HiRes::time() };
+	field $loop           :reader;
+	field $termbox_draw_interval            :reader = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
 
 	field $_running = 0;    # whether run's loop is active
@@ -64,16 +64,16 @@ class Term::Fabulous
 	field $_draw_timer;
 	field %_signals_before;    # the caller's %SIG entries for the signals run watches
 	field $_pending_resize;
-	field $_pointer;             # the pointer state as last reported
-	field @_pointer_queue;       # pointer states no frame has shown to Clay yet
-	field $_wheel_rows    = 0;   # wheel scrolling since the last frame
-	field $_wheel_columns = 0;
+	field $_pointer;    # the pointer state as last reported
+	field @_pointer_queue;    # pointer states no frame has shown to Clay yet
+	field $_wheel_rows      = 0;    # wheel scrolling since the last frame
+	field $_wheel_columns   = 0;
 	field $_frame_requested = 1;    # invalidate() or input since the last frame
-	field $_frame_due_at;           # the earliest time a widget asked for a frame at, on the clock
-	field $_drawn_revision  = -1;   # the Clay::UI revision the last frame showed
-	field $_shown_down      = 0;    # the button state the last frame showed Clay
-	field $_frame_seconds   = 0;    # how long the last frame took to draw
-	field $_frame_ended_at  = 0;    # when it was drawn, on the clock
+	field $_frame_due_at;    # the earliest time a widget asked for a frame at, on the clock
+	field $_drawn_revision = -1;    # the Clay::UI revision the last frame showed
+	field $_shown_down     = 0;    # the button state the last frame showed Clay
+	field $_frame_seconds  = 0;    # how long the last frame took to draw
+	field $_frame_ended_at = 0;    # when it was drawn, on the clock
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -151,6 +151,7 @@ class Term::Fabulous
 			$self->_draw_frame if defined $inline && $_draw_timer->is_running;
 		}
 		catch ($error) {
+
 			# Perl reports an uncaught exception before unwinding into
 			# finally; restore the terminal first so the message stays visible.
 			$self->_end_run;
@@ -247,7 +248,9 @@ class Term::Fabulous
 	}
 
 	method _watch_terminal_input () {
-		my @input_watchers = map { IO::Async::Handle->new( read_handle => $_, on_read_ready => sub { $self->_read_input } ) } $terminal->read_handles;
+		my @input_watchers = map {
+			IO::Async::Handle->new( read_handle => $_, on_read_ready => sub { $self->_read_input } )
+		} $terminal->read_handles;
 		$self->_add_notifiers(@input_watchers);
 
 		# IO::Async switches watched handles to non-blocking mode. A handle
@@ -349,8 +352,8 @@ class Term::Fabulous
 
 	method _dispatch_event ($event) {
 		my $type = $event->type;
-		return $self->_on_key($event)    if $type == TB_EVENT_KEY;
-		return $self->_on_mouse($event)  if $type == TB_EVENT_MOUSE;
+		return $self->_on_key($event) if $type == TB_EVENT_KEY;
+		return $self->_on_mouse($event) if $type == TB_EVENT_MOUSE;
 		return $self->_on_resize($event) if $type == TB_EVENT_RESIZE;
 		die "Term::Fabulous: unknown terminal event type '$type'";
 	}
@@ -361,12 +364,11 @@ class Term::Fabulous
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 
 		my ( $key, $is_special_key ) = ( $event->key, $event->ch == 0 );
-		$self->_stop_run                   if $is_special_key && $key == TB_KEY_CTRL_C;
-		$self->interaction->focus_next     if $is_special_key && $key == TB_KEY_TAB;
+		$self->_stop_run if $is_special_key                   && $key == TB_KEY_CTRL_C;
+		$self->interaction->focus_next if $is_special_key     && $key == TB_KEY_TAB;
 		$self->interaction->focus_previous if $is_special_key && $key == TB_KEY_BACK_TAB;
 		return;
 	}
-
 
 	# The pointer motion a MouseMove reports makes no frame due by itself
 	# (see _frame_is_due); listeners that change a widget make one due.
@@ -374,9 +376,9 @@ class Term::Fabulous
 		my ( $x, $y, $key ) = ( $event->x, $event->y, $event->key );
 		my $newest = @_pointer_queue ? $_pointer_queue[-1] : $_pointer;
 		my $down
-			= $key == TB_KEY_MOUSE_LEFT ? 1
+			= $key == TB_KEY_MOUSE_LEFT     ? 1
 			: _releases_left_button($event) ? 0
-			:                                 ( defined $newest ? $newest->{down} : 0 );
+			: ( defined $newest ? $newest->{down} : 0 );
 		$_pointer = { x => $x, y => $y, down => $down };
 		$self->_queue_pointer($_pointer);
 
@@ -394,8 +396,8 @@ class Term::Fabulous
 
 		# A widget that scrolled itself has used the wheel notch.
 		return if $mouse_event->wheel_used;
-		$_wheel_rows    += WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_UP;
-		$_wheel_rows    -= WHEEL_NOTCH_ROWS    if $key == TB_KEY_MOUSE_WHEEL_DOWN;
+		$_wheel_rows    += WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_UP;
+		$_wheel_rows    -= WHEEL_NOTCH_ROWS if $key == TB_KEY_MOUSE_WHEEL_DOWN;
 		$_wheel_columns += WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_LEFT;
 		$_wheel_columns -= WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_RIGHT;
 		return;

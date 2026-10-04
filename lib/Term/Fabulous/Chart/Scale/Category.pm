@@ -20,8 +20,8 @@ class Term::Fabulous::Chart::Scale::Category :isa(Term::Fabulous::Chart::Scale) 
 
 	field $labels :param;
 	field $band   :param = 1;
-	field $offset :param = 0;     # cells before the first slot
-	field $pitch  :param = undef; # cells per slot; undef: the cells shared evenly
+	field $offset :param = 0;    # cells before the first slot
+	field $pitch  :param = undef;    # cells per slot; undef: the cells shared evenly
 
 	method kind () { return 'category' }
 
@@ -64,12 +64,12 @@ class Term::Fabulous::Chart::Scale::Category :isa(Term::Fabulous::Chart::Scale) 
 		my $cells = $options{cells} // croak "$class: fit needs cells";
 		croak "$class: cells must be a positive integer, got $cells" unless $cells =~ /\A[1-9][0-9]*\z/;
 		my @labels   = ( $options{labels} // [] )->@*;
-		my $band     = $options{band} // 1;
+		my $band     = $options{band}    // 1;
 		my $measure  = $options{measure} // sub ($label) { length $label };
 		my $vertical = ( $options{orientation} // 'horizontal' ) eq 'vertical';
 
-		my $count  = @labels || 1;
-		my $slot   = $band ? $cells / $count : ( $count > 1 ? ( $cells - 1 ) / ( $count - 1 ) : $cells );
+		my $count = @labels || 1;
+		my $slot  = $band ? $cells / $count : ( $count > 1 ? ( $cells - 1 ) / ( $count - 1 ) : $cells );
 
 		# Slots of whole cells keep the gaps between bars equal; the cells
 		# left over go to both ends, unless that wastes too much room.

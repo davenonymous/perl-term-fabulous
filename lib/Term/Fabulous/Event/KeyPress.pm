@@ -162,7 +162,7 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	my %KEY_BY_NAME = ( reverse(%NAME_BY_KEY), Backspace => TB_KEY_BACKSPACE2 );
 
 	# The modifiers in the order key_name writes them.
-	my @MODIFIER_NAMES = qw(Ctrl Alt Shift Super Hyper Meta);
+	my @MODIFIER_NAMES   = qw(Ctrl Alt Shift Super Hyper Meta);
 	my %MODIFIER_BY_NAME = (
 		Ctrl  => TB_MOD_CTRL,
 		Alt   => TB_MOD_ALT,
@@ -177,8 +177,8 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 
 	method of :common ($ev) {
 		return $class->new(
-			key => $ev->key,
-			char => $ev->ch,
+			key       => $ev->key,
+			char      => $ev->ch,
 			modifiers => $ev->mod,
 		);
 	}
@@ -212,8 +212,8 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 		}
 		if ( exists $KEY_BY_NAME{$base} ) {
 			my $code = $KEY_BY_NAME{$base};
-			return ( key => 0, ch => $code, mod => $modifiers ) if $ctrl && _is_control_byte($code);
-			return ( key => $code, ch => 0, mod => _is_control_byte($code) ? $modifiers | TB_MOD_CTRL : $modifiers );
+			return ( key => 0,     ch => $code, mod => $modifiers ) if $ctrl && _is_control_byte($code);
+			return ( key => $code, ch => 0,     mod => _is_control_byte($code) ? $modifiers | TB_MOD_CTRL : $modifiers );
 		}
 		return () unless length $base == 1;
 
@@ -226,13 +226,13 @@ class Term::Fabulous::Event::KeyPress :isa(Clay::UI::Events::Event) :strict(para
 	# The key without its modifiers, and whether it implies Ctrl: the
 	# unnamed bytes of the control range are Ctrl plus a letter or symbol.
 	method _base_key () {
-		return ( 'Space', 0 ) if $char == 0x20;
-		return ( undef, 0 ) if $char >= 0x80 && $char <= 0x9F;    # C1 control characters have no name
+		return ( 'Space',              0 ) if $char == 0x20;
+		return ( undef,                0 ) if $char >= 0x80 && $char <= 0x9F;    # C1 control characters have no name
 		return ( $self->_base_of_char, 0 ) if $char != 0;
-		return ( $NAME_BY_KEY{$key}, 0 ) if exists $NAME_BY_KEY{$key};
-		return ( 'Space', 1 ) if $key == 0x00;
-		return ( chr( $key + 0x40 ), 1 ) if $key < 0x20;
-		return ( undef, 0 );
+		return ( $NAME_BY_KEY{$key},   0 ) if exists $NAME_BY_KEY{$key};
+		return ( 'Space',              1 ) if $key == 0x00;
+		return ( chr( $key + 0x40 ),   1 ) if $key < 0x20;
+		return ( undef,                0 );
 	}
 
 	# The kitty keyboard protocol puts the key of a Ctrl combination the

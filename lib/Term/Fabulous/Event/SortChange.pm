@@ -21,7 +21,9 @@ class Term::Fabulous::Event::SortChange :isa(Clay::UI::Events::Event) :strict(pa
 
 	method event_name :common { 'SortChange' }
 
-	method sort () { return [ map { [@$_] } @$sort ] }
+	method sort () {
+		return [ map { [@$_] } @$sort ];
+	}
 }
 
 1;

@@ -45,11 +45,11 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
-my $help = Term::Fabulous::Widget::Text->new( text => 'Left button draws, right button erases. Drag to draw lines.', text_color => [ 230, 230, 230, 255 ] );
+my $help   = Term::Fabulous::Widget::Text->new( text => 'Left button draws, right button erases. Drag to draw lines.', text_color => [ 230, 230, 230, 255 ] );
 my $canvas = Term::Fabulous::Widget::Canvas->new(
         background_color => [ 10, 12, 20, 255 ],
         border_width     => 1,
@@ -133,7 +133,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         layout           => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
-                padding          => { left => 2, right => 2, top => 1, bottom => 1 },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
                 child_gap        => 1,
         },
 );
@@ -167,8 +167,8 @@ $plot->on(
                         $plot->draw_line( @$previous, @point, $value > 20 ? '#ff6e6e' : '#6ec8ff' ) if $previous;
                         $previous = \@point;
                 }
-                $plot->put_text( 1, 0, "$high C", 0x9098B0 );
-                $plot->put_text( 1, $plot->rows - 1, "$low C", 0x9098B0 );
+                $plot->put_text( 1, 0,               "$high C", 0x9098B0 );
+                $plot->put_text( 1, $plot->rows - 1, "$low C",  0x9098B0 );
                 return;
         }
 );
