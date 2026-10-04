@@ -1,0 +1,337 @@
+package Term::Fabulous::Widget::Tabs::Button;
+
+use v5.24;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Object::Pad 0.825;
+
+use Term::Fabulous::Widget::Button;
+use Term::Fabulous::Widget::Text;
+
+our $VERSION = '0.01';
+
+class Term::Fabulous::Widget::Tabs::Button
+	:isa(Term::Fabulous::Widget::Button)
+	:strict(params)
+{
+	use Clay::UI::Enum::Result;
+	use Clay::XS qw(CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE CLAY_TEXT_WRAP_NEWLINES);
+	use Scalar::Util qw(weaken);
+	use Term::Fabulous::Check qw(string);
+	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Unicode qw(grapheme_clusters);
+
+	# The look a tab shows while it has no bar to take it from; the bar's
+	# defaults are these as well.
+	my %DEFAULT_LOOK = (
+		side                   => 'top',
+		orientation            => 'horizontal',
+		tab_padding            => 1,
+		line_style             => Term::Fabulous::Enum::BorderStyle->Round,
+		line_color             => [ 90,  96,  110, 255 ],
+		text_color             => [ 150, 160, 180, 255 ],
+		active_text_color      => [ 220, 223, 228, 255 ],
+		active_bold            => 0,
+		hover_background_color => [ 40,  45,  58,  255 ],
+		focus_border_color     => [ 97,  175, 239, 255 ],
+		disabled_color         => [ 108, 112, 120, 255 ],
+	);
+
+	# The side of a tab that faces the page, by the side of the bar.
+	my %PAGE_SIDE = ( top => 'bottom', bottom => 'top', left => 'right', right => 'left' );
+
+	field $title :param = '';
+	field $icon  :param = undef;
+
+	field $_icon_text;
+	field $_title_text;
+	field $_active = 0;
+
+	method default_look :common () {
+		return %DEFAULT_LOOK;
+	}
+
+	ADJUST {
+		$title = string( $self, title => $title );
+		$icon  = defined $icon ? string( $self, icon => $icon ) : undef;
+
+		$self->border_width(1);
+		$self->pressed_background_color(undef);
+		$_icon_text  = Term::Fabulous::Widget::Text->new( text => '' );
+		$_title_text = Term::Fabulous::Widget::Text->new( text => '' );
+
+		weaken( my $weak_self = $self );
+		my $continue = Clay::UI::Enum::Result->CONTINUE;
+		$self->on( Activate => sub ($event) { $weak_self->_activated if $weak_self; return $continue } );
+		$self->on( $_ => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
+		$self->refresh_look;
+	}
+
+	# The bar the tab belongs to, if any: the tab's parent is the bar's row.
+	method bar () {
+		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
+			return $node if $node->isa('Term::Fabulous::Widget::Tabs::Bar');
+		}
+		return undef;
+	}
+
+	method is_active () {
+		return $_active;
+	}
+
+	# Set by the bar: the active tab is one cell larger toward the page.
+	method _set_active ($flag) {
+		$_active = $flag ? 1 : 0;
+		$self->refresh_look;
+		return;
+	}
+
+	method title (@new) {
+		return $title unless @new;
+		$title = string( $self, title => $new[0] );
+		$self->refresh_look;
+		return $title;
+	}
+
+	method icon (@new) {
+		return $icon unless @new;
+		$icon = defined $new[0] ? string( $self, icon => $new[0] ) : undef;
+		$self->refresh_look;
+		return $icon;
+	}
+
+	method focus () {
+		my $ui = $self->ui // die ref($self) . ": the tab is not part of a Term::Fabulous, so nothing can focus it";
+		$ui->interaction->set_focused_widget($self);
+		return $self;
+	}
+
+	method layout_properties :common () {
+		return ( $class->SUPER::layout_properties, title => 'scalar', icon => 'scalar' );
+	}
+
+	# The user activated the tab: the bar makes it the active one and fires
+	# Select. A tab on its own does nothing.
+	method _activated () {
+		my $bar = $self->bar;
+		$bar->_button_activated($self) if defined $bar;
+		return;
+	}
+
+	# ---------------------------------------------------------------------
+	# Look
+	# ---------------------------------------------------------------------
+
+	# One setting of the look: the bar's, or the default.
+	method _look ($name) {
+		my $bar = $self->bar;
+		return defined $bar ? $bar->$name : $DEFAULT_LOOK{$name};
+	}
+
+	# A label as a Text shows it: as it is, or one cluster per line for a
+	# vertical label.
+	sub _label_text ( $text, $vertical ) {
+		return $vertical ? join( "\n", grapheme_clusters($text) ) : $text;
+	}
+
+	# Updates the borders, the padding, the label and the colors from the
+	# tab's state and the bar's settings. Called by the bar when they
+	# change.
+	method refresh_look () {
+		my $side      = $self->_look('side');
+		my $vertical  = $self->_look('orientation') eq 'vertical';
+		my $style     = $self->_look('line_style');
+		my $page_side = $PAGE_SIDE{$side};
+		my $hidden    = Term::Fabulous::Enum::BorderStyle->Hidden;
+
+		foreach my $border_side (qw(top right bottom left)) {
+			my $accessor = "border_style_$border_side";
+			$self->$accessor( $border_side eq $page_side ? $hidden : $style );
+		}
+		$self->border_color( $self->_look('line_color') );
+		$self->focus_border_color( $self->_look('focus_border_color') );
+		$self->disabled_color( $self->_look('disabled_color') );
+
+		# The padding lies along the label; the active tab gets a cell more
+		# toward the page.
+		my $padding = $self->_look('tab_padding');
+		my %padding = $vertical ? ( top => $padding, bottom => $padding ) : ( left => $padding, right => $padding );
+		$padding{$page_side} = ( $padding{$page_side} // 0 ) + 1 if $_active;
+		$self->layout( { %{ $self->layout }, layout_direction => $vertical ? CLAY_TOP_TO_BOTTOM : CLAY_LEFT_TO_RIGHT, child_gap => 1, padding => \%padding } );
+
+		my $wrap_mode  = $vertical ? CLAY_TEXT_WRAP_NEWLINES : CLAY_TEXT_WRAP_NONE;
+		my $text_color = $self->_look( $_active ? 'active_text_color' : 'text_color' );
+		$_title_text->text( _label_text( $title, $vertical ) );
+		$_icon_text->text( _label_text( $icon // '', $vertical ) );
+		foreach my $text ( $_icon_text, $_title_text ) {
+			$text->wrap_mode($wrap_mode);
+			$text->text_color($text_color);
+			$text->bold( $_active && $self->_look('active_bold') ? 1 : 0 );
+		}
+		$self->clear_children;
+		$self->add_child( ( defined $icon ? $_icon_text : () ), $_title_text );
+
+		my $shows_hover = $self->is_enabled && !$_active && $self->is_hovered;
+		$self->background_color( $shows_hover ? $self->_look('hover_background_color') : undef );
+		return $self;
+	}
+}
+
+1;
+
+__END__
+
+=encoding UTF-8
+
+=head1 NAME
+
+Term::Fabulous::Widget::Tabs::Button - The button of one tab in a tab
+bar
+
+=head1 SYNOPSIS
+
+	use Term::Fabulous::Widget::Tabs::Bar;
+	use Term::Fabulous::Widget::Tabs::Button;
+
+	my $bar = Term::Fabulous::Widget::Tabs::Bar->new;
+	$bar->add_child(
+		Term::Fabulous::Widget::Tabs::Button->new( title => 'General' ),
+		Term::Fabulous::Widget::Tabs::Button->new( title => 'Network', icon => "\x{2601}" ),
+		Term::Fabulous::Widget::Tabs::Button->new( title => 'Licenses', disabled => 1 ),
+	);
+
+=head1 DESCRIPTION
+
+A tab button is one tab of a L<Term::Fabulous::Widget::Tabs::Bar>: a
+L<Term::Fabulous::Widget::Button> with a border on three sides, open
+toward the page, that shows a title and an optional icon. The bar
+makes one tab the I<active> one: it is drawn one cell larger toward
+the page, so that it joins the page's border, and its label is drawn
+in the bar's C<active_text_color>. The other tabs are closed by the
+line of the bar and show their labels in C<text_color>.
+
+The look (the side the bar is on, whether the label is written
+horizontally or downwards, the padding, the line style and the
+colors) comes from the bar, see
+L<Term::Fabulous::Widget::Tabs::Bar/CONSTRUCTOR>. As a Button, a tab
+takes the focus (only the active tab does, see
+L<Term::Fabulous::Widget::Tabs::Bar/KEYS>), reacts to clicks and
+C<Enter> and C<Space>, shows the focus with its border color, the
+pointer with C<hover_background_color> and can be disabled; a pressed
+tab shows no pressed look.
+
+A L<Term::Fabulous::Widget::Tabs> makes the tab buttons for its pages
+itself; you create them only for a bar of your own.
+
+=head1 CONSTRUCTOR
+
+=head2 new
+
+	my $tab = Term::Fabulous::Widget::Tabs::Button->new(%parameters);
+
+Accepts the parameters of L<Term::Fabulous::Widget::Button/CONSTRUCTOR>
+(C<id>, C<layout>, C<disabled>, C<can_focus>, ...), of which the
+border, the padding, the layout direction, the colors and
+C<pressed_background_color> are set by the look, and the ones below.
+Unknown parameters die.
+
+=over
+
+=item C<title>
+
+A character string. Default: C<''>. The text of the tab.
+
+=item C<icon>
+
+A character string, or C<undef>. Default: C<undef>. A short text, for
+example a symbol, shown before the title with a cell between them;
+above the title in a tab with a vertical label.
+
+=back
+
+=head1 METHODS
+
+The methods of L<Term::Fabulous::Widget::Button> (C<disabled>,
+C<is_enabled>, C<is_focused>, C<is_hovered>, C<activate>, ...), plus:
+
+=head2 title
+
+	$tab->title('Advanced');
+
+Accessor for the title; the new text shows in the next frame.
+
+=head2 icon
+
+	$tab->icon("\x{2699}");
+	$tab->icon(undef);
+
+Accessor for the icon.
+
+=head2 is_active
+
+	if ( $tab->is_active ) { ... }
+
+1 while the tab is the active one of its bar. The bar sets it: see
+L<Term::Fabulous::Widget::Tabs::Bar/select>.
+
+=head2 focus
+
+	$tab->focus;
+
+Gives the keyboard focus to the tab. Dies when the tab is not part of
+a L<Term::Fabulous>, or cannot take the focus (an inactive or
+disabled tab).
+
+=head2 bar
+
+	my $bar = $tab->bar;
+
+The L<Term::Fabulous::Widget::Tabs::Bar> the tab is in, or C<undef>.
+
+=head2 refresh_look
+
+	$tab->refresh_look;
+
+Updates the borders, the padding, the label and the colors from the
+tab's state and the bar's settings. The bar calls it when its
+settings change; call it yourself after changing the tab's look
+behind its back. Returns the tab.
+
+=head2 default_look
+
+	my %look = Term::Fabulous::Widget::Tabs::Button->default_look;
+
+Class method: the look a tab shows outside a bar, as a hash of the
+bar's look parameters (C<side>, C<orientation>, C<tab_padding>,
+C<line_style>, C<line_color>, C<text_color>, C<active_text_color>,
+C<active_bold>, C<hover_background_color>, C<focus_border_color>,
+C<disabled_color>) and their defaults.
+
+=head1 EVENTS
+
+A tab fires the events of a Button: C<Activate> for a click or
+C<Enter> or C<Space>, C<OnFocus>, C<OnBlur>, C<OnHoverStart>, ... The
+bar fires L<Term::Fabulous::Event::Select> when a tab is chosen.
+
+=head1 KDL PROPERTIES
+
+The properties of L<Term::Fabulous::Widget::Button/KDL PROPERTIES>,
+plus C<title> and C<icon> (strings):
+
+	use Term::Fabulous::Widget::Tabs::Button as Tab
+
+	Tab "network" {
+		title "Network"
+		icon "#"
+		disabled #true
+	}
+
+=head1 SEE ALSO
+
+L<Term::Fabulous::Widget::Tabs::Bar>, L<Term::Fabulous::Widget::Tabs>,
+L<Term::Fabulous::Widget::Button>,
+L<Term::Fabulous::Manual::Layout/TABS>.
+
+=cut

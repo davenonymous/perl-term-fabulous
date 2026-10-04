@@ -87,7 +87,9 @@ bindings (`Ctrl+S`, `Shift+Left`), the kitty keyboard protocol for
 keys older terminals cannot tell apart, mouse wheel scrolling.
 - Dialogs that open over the screen and keep the keyboard focus inside.
 - Dividers between widgets, horizontal or vertical, with a text on the
-line; accordions whose sections open and close under their headers.
+line; accordions whose sections open and close under their headers;
+tabs on any side of a page, with horizontal or downward labels, whose
+active tab joins the page's border.
 - Progress bars in several styles, with labels, stripes, stacked
 segments and an indeterminate runner, and spinners in twelve styles,
 animated on the application's clock without timers; toasts that
@@ -880,6 +882,14 @@ Term::Fabulous, and programs do not use them directly.
     Sections with headers that open and close, one at a time or several,
     with the keyboard and the mouse.
 
+- [Term::Fabulous::Widget::Tabs](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATabs), [Term::Fabulous::Widget::Tabs::Page](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATabs%3A%3APage)
+
+    Pages behind a row of tabs on any side, with horizontal or downward
+    labels; the active tab joins the page's border.
+    [Term::Fabulous::Widget::Tabs::Bar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATabs%3A%3ABar) and
+    [Term::Fabulous::Widget::Tabs::Button](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATabs%3A%3AButton) are the bar and its tabs, also
+    usable on their own.
+
 - [Term::Fabulous::Widget::Canvas](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ACanvas)
 
     A box with a grid of character cells that you draw into.
@@ -1139,7 +1149,7 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Event::Select](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASelect)
 
-    The user opened or closed an item of an accordion.
+    The user opened or closed an item of an accordion, or chose a tab.
 
 - [Term::Fabulous::Event::SeriesHover](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AEvent%3A%3ASeriesHover)
 

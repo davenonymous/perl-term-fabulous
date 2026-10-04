@@ -102,8 +102,8 @@ the L</FEATURE INDEX>.
 The widgets and the widget tree, widget ids, and how the layout engine
 sizes and places widgets: direction, sizing, padding, gaps, alignment,
 flow and stack layouts, floating widgets and equal sizes across the
-tree. Dividers between widgets, and accordions whose sections open
-and close.
+tree. Dividers between widgets, accordions whose sections open and
+close, and tabs.
 
 =item L<Term::Fabulous::Manual::Looks>
 
@@ -562,6 +562,11 @@ L<Term::Fabulous::Manual::Layout/DIVIDERS>, L<Term::Fabulous::Widget::Divider>.
 
 L<Term::Fabulous::Manual::Layout/ACCORDIONS>,
 L<Term::Fabulous::Widget::Accordion>, L<Term::Fabulous::Event::Select>.
+
+=item Pages behind a row of tabs, on any side of the page
+
+L<Term::Fabulous::Manual::Layout/TABS>, L<Term::Fabulous::Widget::Tabs>,
+L<Term::Fabulous::Widget::Tabs::Page>, L<Term::Fabulous::Event::Select>.
 
 =back
 

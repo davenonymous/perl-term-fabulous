@@ -16,7 +16,7 @@ where each widget goes and how big it is. Every layout option is shown
 with a picture, with the Perl code and with the form it takes in a
 L<KDL layout file|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>. The
 last sections cover the widgets that structure a screen:
-L<dividers|/DIVIDERS> and L<accordions|/ACCORDIONS>.
+L<dividers|/DIVIDERS>, L<accordions|/ACCORDIONS> and L<tabs|/TABS>.
 
 The reference pages for this topic are L<Term::Fabulous::Widget> (the
 parameters and methods all container widgets share),
@@ -70,6 +70,10 @@ A horizontal or vertical line between widgets, with an optional text
 
 Sections with headers that open and close, one at a time or several
 (see L</ACCORDIONS>).
+
+=item L<Term::Fabulous::Widget::Tabs>
+
+Pages behind a row of tabs, on any side of the page (see L</TABS>).
 
 =item L<Term::Fabulous::Widget::Canvas>
 
@@ -888,11 +892,69 @@ In KDL, the items are C<Item> nodes inside the accordion:
 		Item "network" { title "Network"; Text { text "..."; } }
 	}
 
+=head1 TABS
+
+A L<Term::Fabulous::Widget::Tabs> shows one of several pages at a
+time, chosen with a row of tabs, so that a settings screen or a tool
+window keeps every part at hand without scrolling. Each page is a
+L<Term::Fabulous::Widget::Tabs::Page> with a title and a body of any
+widgets; only the active page is part of the tree, so the others take
+no space and their widgets cannot take the focus:
+
+	use Term::Fabulous::Widget::Tabs;
+	use Term::Fabulous::Widget::Tabs::Page;
+
+	my $settings = Term::Fabulous::Widget::Tabs->new;
+	foreach my $section ( [ General => \@general_rows ], [ Network => \@network_rows ] ) {
+		my $page = Term::Fabulous::Widget::Tabs::Page->new( title => $section->[0] );
+		$page->add_child( $section->[1]->@* );
+		$settings->add_child($page);
+	}
+
+The tabs are drawn as boxes that join the border of the page: the
+active tab is one cell larger and open toward the page, so that the
+two are one shape, while the other tabs are closed by the page's line
+and look as if they stood behind it. The user switches with a click,
+with C<Left>, C<Right>, C<Up>, C<Down>, C<Home> and C<End> while the
+active tab has the focus (only the active tab takes the focus, so
+C<Tab> stops at the bar once), and with C<Ctrl+PageUp> and
+C<Ctrl+PageDown> from anywhere inside the Tabs. The Tabs fires
+L<Term::Fabulous::Event::Select> for every change the user makes;
+C<select> changes the page from the program.
+
+The bar can be on any side of the page (C<side>), the labels can be
+written from left to right or downwards (C<orientation>), the tabs can
+sit at the start, in the center or at the end of the bar
+(C<tab_alignment>), the lines come in any border style with joints
+(C<line_style>) and the border around the page can be left out
+(C<page_border>). The picture shows four of these forms
+(F<examples/widgets/tabs.pl>):
+
+=begin html
+
+<p><img src="/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a sidebar of tabs along the left side, a tab bar at the bottom in the Heavy style with the tabs in the center, and tall tabs with downward labels without a page border"></p>
+
+=end html
+
+In KDL, the pages are C<Page> nodes inside the Tabs:
+
+	Tabs "settings" {
+		side "left"
+		Page "general" { title "General"; Text { text "..."; } }
+		Page "network" { title "Network"; active #true; Text { text "..."; } }
+	}
+
+The bar and its tabs are widgets of their own,
+L<Term::Fabulous::Widget::Tabs::Bar> and
+L<Term::Fabulous::Widget::Tabs::Button>, for a row of tabs that
+switches something that is not a page, for example whole layouts.
+
 =head1 SEE ALSO
 
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual>. Next page: L<Term::Fabulous::Manual::Looks>.
 
 L<Term::Fabulous::Widget::Divider>, L<Term::Fabulous::Widget::Accordion>,
+L<Term::Fabulous::Widget::Tabs>,
 L<Term::Fabulous::Widget> (the parameters and methods of all container
 widgets), L<Term::Fabulous::Widget::Box>,
 L<Term::Fabulous::Widget::ScrollBox>,

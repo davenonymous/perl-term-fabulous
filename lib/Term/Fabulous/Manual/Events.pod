@@ -178,7 +178,7 @@ the sections below it describe each event.
 	Submit           the text field                    yes
 	Activate         the Button                        yes
 	Close            the Dialog or the Toast           (no parent then)
-	Select           the Accordion                     yes
+	Select           the Accordion or the Tabs         yes
 	SeriesHover      the chart                         yes
 	OnFocus, OnBlur  the widget                        yes
 	OnPress          innermost pressable widget        yes
@@ -312,7 +312,12 @@ it has left the screen, so only listeners on it see it. No fields.
 The user opened or closed an item of a
 L<Term::Fabulous::Widget::Accordion>: clicked its header, or pressed
 C<Enter> or C<Space> on it. Also fired by C<< $accordion->choose >>.
-Fired on the accordion. Fields: C<item>, C<index>, C<open>.
+Fired on the accordion. Or the user chose another tab of a
+L<Term::Fabulous::Widget::Tabs>: clicked it, or pressed an arrow key,
+C<Home>, C<End>, C<Ctrl+PageUp> or C<Ctrl+PageDown>. Also fired by
+C<< $tabs->choose >>. Fired on the Tabs, with the page as the item; a
+L<Term::Fabulous::Widget::Tabs::Bar> on its own fires it with the tab.
+Fields: C<item>, C<index>, C<open>.
 
 =item C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>)
 

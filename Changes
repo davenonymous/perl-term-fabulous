@@ -1,6 +1,15 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Tabs and ::Tabs::Page: pages behind a
+          row of tabs that joins the page's border, the active tab one
+          cell larger and open toward the page; the bar on any side, with
+          horizontal or downward labels, the tabs at the start, center or
+          end, in any border style with joints, with or without a border
+          around the page, disabled tabs, the keys (arrows, Home, End,
+          Ctrl+PageUp, Ctrl+PageDown), the mouse, Select events and KDL
+          properties; Term::Fabulous::Widget::Tabs::Bar and
+          ::Tabs::Button are the bar and its tabs, usable on their own
         - Term::Fabulous::Widget::Toast: a notification of a kind (info,
           success, warning, danger) with an icon, a title, a message and a
           close mark that show($ui) floats into a corner of the screen,

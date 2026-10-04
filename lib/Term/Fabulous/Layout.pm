@@ -486,6 +486,10 @@ the L</Box properties>.
 	Divider          Term::Fabulous::Widget::Divider          Box + text, line_style, ...
 	Accordion        Term::Fabulous::Widget::Accordion        Box + multiple, bordered, ...
 	Item             Term::Fabulous::Widget::Accordion::Item  Box + title, open, disabled
+	Tabs             Term::Fabulous::Widget::Tabs             Box + side, orientation, ...
+	Page             Term::Fabulous::Widget::Tabs::Page       Box + title, active, disabled
+	TabBar           Term::Fabulous::Widget::Tabs::Bar        Box + side, orientation, ...
+	Tab              Term::Fabulous::Widget::Tabs::Button     Button + title, icon
 	ProgressBar      Term::Fabulous::Widget::ProgressBar      Box + range, value, style, ...
 	Spinner          Term::Fabulous::Widget::Spinner          Box + style, frames, label
 	Toast            Term::Fabulous::Widget::Toast            Box + kind, title, message, ...
@@ -540,6 +544,8 @@ The properties of each class:
 =item * L<Divider|Term::Fabulous::Widget::Divider/KDL PROPERTIES>
 
 =item * L<Accordion|Term::Fabulous::Widget::Accordion/KDL PROPERTIES> and L<Item|Term::Fabulous::Widget::Accordion::Item/KDL PROPERTIES>
+
+=item * L<Tabs|Term::Fabulous::Widget::Tabs/KDL PROPERTIES> and L<Page|Term::Fabulous::Widget::Tabs::Page/KDL PROPERTIES>, L<TabBar|Term::Fabulous::Widget::Tabs::Bar/KDL PROPERTIES> and L<Tab|Term::Fabulous::Widget::Tabs::Button/KDL PROPERTIES>
 
 =item * L<ProgressBar|Term::Fabulous::Widget::ProgressBar/KDL PROPERTIES>
 

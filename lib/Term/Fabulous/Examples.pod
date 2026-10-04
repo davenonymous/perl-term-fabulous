@@ -588,6 +588,21 @@ and closes the focused section.
 
 =end html
 
+=head3 examples/widgets/tabs.pl
+
+L<Term::Fabulous::Widget::Tabs>: tabs along the top of a settings page
+with a disabled tab, a bar at the bottom in the Heavy style with the
+tabs in the center, tabs along the left side as a sidebar, and tabs
+with downward labels without a border around the page. Left and Right
+(or Up and Down, Home and End) choose a tab, so does a click, and
+Ctrl+PageUp and Ctrl+PageDown turn the pages from anywhere inside.
+
+=begin html
+
+<p><img src="/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a sidebar of tabs along the left side, a tab bar at the bottom in the Heavy style with the tabs in the center, and tall tabs with downward labels without a page border"></p>
+
+=end html
+
 =head2 Buttons, inputs and dialogs
 
 =head3 examples/widgets/button.pl

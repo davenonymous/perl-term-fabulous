@@ -746,6 +746,11 @@ screenshot "widget-accordion" {
 	size 84 16
 }
 
+screenshot "widget-tabs" {
+	script "examples/widgets/tabs.pl"
+	size 100 30
+}
+
 screenshot "widget-table" {
 	script "examples/widgets/table.pl"
 	size 90 24
