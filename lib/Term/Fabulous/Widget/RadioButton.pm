@@ -143,7 +143,7 @@ Term::Fabulous::Widget::RadioButton - One choice of a radio group
 
 =begin html
 
-<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
 
 =end html
 
@@ -156,6 +156,8 @@ program is F<examples/widgets/radio.pl>.
 
 A radio button is one choice of a L<Term::Fabulous::Widget::RadioGroup>.
 It shows a mark and a label:
+
+=for highlighter language=text
 
 	(*) Medium
 	( ) Large
@@ -178,6 +180,8 @@ buttons are painted in C<disabled_color> and skipped by the arrow keys.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $button = Term::Fabulous::Widget::RadioButton->new(%parameters);
 

@@ -207,7 +207,7 @@ optional text
 
 =begin html
 
-<p><img src="/screenshots/widget-divider.svg" alt="Dividers: a plain line, texts at the start, the center and the end, double and heavy lines in colors, and a vertical divider with a text between two columns"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-divider.svg" alt="Dividers: a plain line, texts at the start, the center and the end, double and heavy lines in colors, and a vertical divider with a text between two columns"></p>
 
 =end html
 
@@ -220,6 +220,8 @@ program is F<examples/widgets/divider.pl>.
 
 A divider separates the widgets above and below it (or left and right
 of it, when it is vertical) with a line:
+
+=for highlighter language=text
 
 	────────────── Settings ──────────────
 	── Files ─────────────────────────────
@@ -241,6 +243,8 @@ is painted again only when something about it changed.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $divider = Term::Fabulous::Widget::Divider->new(%parameters);
 
@@ -406,6 +410,8 @@ C<text_position>, C<text_margin>, C<text_padding>, C<line_style> (the
 name of a border style) and C<glyph> (strings), and C<color> and
 C<text_color> (color strings):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Divider as Divider
 
 	Divider "settings" {
@@ -419,6 +425,8 @@ C<text_color> (color strings):
 =head1 EXAMPLES
 
 =head2 A section heading
+
+=for highlighter language=perl
 
 	my $heading = Term::Fabulous::Widget::Divider->new(
 		text          => 'Network',

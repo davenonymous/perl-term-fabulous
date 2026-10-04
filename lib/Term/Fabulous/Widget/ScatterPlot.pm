@@ -44,7 +44,7 @@ lines
 
 =begin html
 
-<p><img src="/screenshots/widget-scatter-plot.svg" alt="Two clouds of points for petrol and hybrid cars, each with a dashed trend line, over an x axis of engine power"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-scatter-plot.svg" alt="Two clouds of points for petrol and hybrid cars, each with a dashed trend line, over an x axis of engine power"></p>
 
 =end html
 
@@ -83,6 +83,8 @@ C<marker> (C<braille> by default), and C<trend> on each series.
 Those of L<Term::Fabulous::Widget::XYChart/METHODS>.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::ScatterPlot as ScatterPlot
 

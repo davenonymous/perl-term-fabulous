@@ -347,6 +347,8 @@ In a KDL layout, each C<transform> node is one step, its name and
 arguments as the node's arguments; repeat the node for several steps
 (see L<Term::Fabulous::Widget::XYChart/KDL PROPERTIES>):
 
+=for highlighter language=kdl
+
 	series "visits" {
 		data 120 135 160 158 171 190 185
 		transform "moving_average" 3 "center"
@@ -360,7 +362,7 @@ line) stay gaps unless a step says otherwise; windows skip them.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-chart-transform.svg" alt="Daily visits as a dim raw line with a 7-day moving average and a dashed exponentially smoothed line over it, and below it share and bond prices both indexed to 100 at day 1"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-chart-transform.svg" alt="Daily visits as a dim raw line with a 7-day moving average and a dashed exponentially smoothed line over it, and below it share and bond prices both indexed to 100 at day 1"></p>
 
 =end html
 
@@ -380,6 +382,8 @@ Scales the values linearly so the smallest becomes C<$low> and the
 largest C<$high> (default 0 and 1); when all values are equal, all
 become C<$low>. Use it to compare the shapes of series of different
 sizes on one axis.
+
+=for highlighter language=perl
 
 	transform => 'normalize'                     # 2, 4, 6, 8, 10  =>  0, 0.25, 0.5, 0.75, 1
 	transform => [ [ 'normalize', 0, 100 ] ]     # 2, 4, 6, 8, 10  =>  0, 25, 50, 75, 100

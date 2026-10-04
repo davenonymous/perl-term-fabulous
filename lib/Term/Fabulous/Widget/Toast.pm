@@ -369,7 +369,7 @@ and goes away by itself
 
 =begin html
 
-<p><img src="/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
 
 =end html
 
@@ -384,6 +384,8 @@ A toast is a short message the program shows the user without
 stopping them: a box with an icon, a title, a message and a close
 mark, in the color of its C<kind> (C<info>, C<success>, C<warning> or
 C<danger>):
+
+=for highlighter language=text
 
 	╭────────────────────────────────────╮
 	│ ✓ Saved                          ✕ │
@@ -415,6 +417,8 @@ can be overridden.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $toast = Term::Fabulous::Widget::Toast->new(%parameters);
 
@@ -664,6 +668,8 @@ C<text_color> (a color string). A toast built from a layout is a child
 of the widget it is in, an alert box; show one from Perl instead to
 float it.
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Toast as Toast
 
 	Toast "unsaved" {
@@ -675,6 +681,8 @@ float it.
 =head1 EXAMPLES
 
 =head2 A helper for the whole program
+
+=for highlighter language=perl
 
 	sub notify ( $kind, $title, $message = '' ) {
 		Term::Fabulous::Widget::Toast->new( kind => $kind, title => $title, message => $message )->show($ui);

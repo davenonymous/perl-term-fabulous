@@ -190,7 +190,7 @@ Term::Fabulous::Widget::TextArea - Multi-line text input
 
 =begin html
 
-<p><img src="/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
 
 =end html
 
@@ -403,6 +403,8 @@ The properties of L<Term::Fabulous::Widget::TextInput/KDL PROPERTIES>,
 plus C<preferred_columns>, C<preferred_rows>, C<wrap> and C<scrollbar>
 (C<#true> / C<#false>):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::TextArea as TextArea
 
 	TextArea "log" {
@@ -418,6 +420,8 @@ the string (C<value "first\nsecond">).
 =head1 EXAMPLES
 
 =head2 A read-only log that shows the newest line
+
+=for highlighter language=perl
 
 	my $log = Term::Fabulous::Widget::TextArea->new(
 		read_only => 1,

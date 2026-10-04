@@ -351,7 +351,7 @@ L<Term::Fabulous::Widget::Table/filter>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
 
 =end html
 
@@ -430,6 +430,8 @@ the column exists when the filter is set.
 
 The text ops (they read every cell as text):
 
+=for highlighter language=text
+
 	contains       the text contains the value
 	not_contains   it does not
 	equals         the text is the value
@@ -490,6 +492,8 @@ The I<combinations> are made with L</all>, L</any> and L</not>.
 
 =head2 all
 
+=for highlighter language=perl
+
 	my $filter = $F->all( $f1, $f2, sub ($row) { ... } );
 
 Matches rows that match every filter given (code references are row
@@ -524,6 +528,8 @@ time; a C<T> may stand for the space before the time, and a C<Z> after
 the time reads it as UTC. Epoch seconds are not a date expression. The
 notation:
 
+=for highlighter language=text
+
 	Text columns
 	  ann          contains "ann"
 	  !ann         does not contain "ann"
@@ -554,6 +560,8 @@ notation:
 =head1 METHODS
 
 =head2 matches
+
+=for highlighter language=perl
 
 	my $yes = $filter->matches( $row, $source );
 

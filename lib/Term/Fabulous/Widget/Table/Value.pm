@@ -160,6 +160,8 @@ C<[ $first, $after ]> of epoch seconds: C<$first> is the first second
 of the span, C<$after> the first second after it. The span is as long
 as the last part the string gives:
 
+=for highlighter language=text
+
 	2024                   the year 2024
 	2024-05                May 2024
 	2024-05-03             that day
@@ -196,6 +198,8 @@ a string gives the first second of its L</date_interval>.
 =back
 
 =head2 compare_values
+
+=for highlighter language=perl
 
 	my $order = compare_values( 'number', $left, $right );    # -1, 0 or 1
 

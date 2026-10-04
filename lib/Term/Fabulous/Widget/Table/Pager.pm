@@ -112,11 +112,13 @@ Term::Fabulous::Widget::Table::Pager - The page controls below a table
 
 The row below a L<Term::Fabulous::Widget::Table> with pages:
 
+=for highlighter language=text
+
 	« ‹ Page 2 of 7 › »   Rows per page 25 ▾   26–50 of 160
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
 
 =end html
 
@@ -136,6 +138,8 @@ L<Term::Fabulous::Widget::Table/pager_widget> returns the pager of a
 table.
 
 =head1 CONSTRUCTOR
+
+=for highlighter language=perl
 
 	my $pager = Term::Fabulous::Widget::Table::Pager->new( page_sizes => [ 10, 25, 50 ] );
 

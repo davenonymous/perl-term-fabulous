@@ -251,7 +251,7 @@ bins
 
 =begin html
 
-<p><img src="/screenshots/widget-histogram.svg" alt="Two overlapping translucent histograms of response times in milliseconds, with the number of requests on the y axis"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-histogram.svg" alt="Two overlapping translucent histograms of response times in milliseconds, with the number of requests on the y axis"></p>
 
 =end html
 
@@ -288,7 +288,7 @@ L<Term::Fabulous::Widget::XYChart/STACKING>) they stack, opaque.
 
 =begin html
 
-<p><img src="/screenshots/widget-histogram-measures.svg" alt="Four histograms of the same response times: counts per bin, percent per bin, density per bin, and cumulative percentages rising to 100%"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-histogram-measures.svg" alt="Four histograms of the same response times: counts per bin, percent per bin, density per bin, and cumulative percentages rising to 100%"></p>
 
 =end html
 
@@ -373,6 +373,8 @@ its visible series (after their transforms) whenever it is drawn; call
 it yourself to label or to count things the way the chart does.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Histogram as Histogram
 

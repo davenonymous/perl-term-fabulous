@@ -146,7 +146,7 @@ Term::Fabulous::Widget::Checkbox - A box the user can check and uncheck
 
 =begin html
 
-<p><img src="/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
 
 =end html
 
@@ -157,6 +157,8 @@ C<focus_background_color>), unchecked, checked, indeterminate and
 disabled. The program is F<examples/widgets/checkbox.pl>.
 
 A checkbox shows a mark followed by a label:
+
+=for highlighter language=text
 
 	[x] I accept the terms
 	[ ] Send me the newsletter
@@ -178,6 +180,8 @@ C<layout> sizes it.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $checkbox = Term::Fabulous::Widget::Checkbox->new(%parameters);
 
@@ -335,6 +339,8 @@ C<label> (a string), C<checked> and C<indeterminate> (C<#true> /
 C<#false>), and C<checked_mark>, C<unchecked_mark> and
 C<indeterminate_mark> (strings):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Checkbox as Checkbox
 
 	Checkbox "newsletter" {
@@ -345,6 +351,8 @@ C<indeterminate_mark> (strings):
 =head1 EXAMPLES
 
 =head2 A "select all" box for a group of boxes
+
+=for highlighter language=perl
 
 	my @items = map { Term::Fabulous::Widget::Checkbox->new( label => $_ ) } qw(Apples Pears Plums);
 	my $all   = Term::Fabulous::Widget::Checkbox->new( label => 'All fruit' );

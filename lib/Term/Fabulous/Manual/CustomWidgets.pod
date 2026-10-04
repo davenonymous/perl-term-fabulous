@@ -137,6 +137,8 @@ their own:
 
 The card draws a heavy line on top and thin lines on the other sides:
 
+=for highlighter language=text
+
 	┏━━━━━━━━━━━━━━┓
 	│Status        │
 	│All systems go│
@@ -160,6 +162,8 @@ C<paint> depends on changed (the size, the state marked changed, and
 whatever L<C<paint_key>|Term::Fabulous::Widget::Display/paint_key>
 adds). C<natural_size> says how big the widget wants to be when the
 layout does not size it:
+
+=for highlighter language=perl
 
 	use Object::Pad 0.825;
 

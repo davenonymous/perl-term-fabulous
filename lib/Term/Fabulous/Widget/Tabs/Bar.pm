@@ -442,6 +442,8 @@ one cell larger toward the page and open on that side, so that it and
 the page are one shape, while the other tabs are closed by the line
 and so look as if they stood behind the page:
 
+=for highlighter language=text
+
 	 ╭─────────╮
 	 │ General │ ╭─────────╮ ╭───────╮
 	 │         │ │ Network │ │ Users │
@@ -470,6 +472,8 @@ tabs, and C<add_child> accepts nothing else.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $bar = Term::Fabulous::Widget::Tabs::Bar->new(%parameters);
 
@@ -806,6 +810,8 @@ C<focus_border_color> (a color string, or C<#null> for no focus look)
 and the colors C<line_color>, C<text_color>, C<active_text_color>,
 C<hover_background_color> and C<disabled_color>. The tabs are child
 nodes of L<Term::Fabulous::Widget::Tabs::Button>:
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Tabs::Bar as TabBar
 	use Term::Fabulous::Widget::Tabs::Button as Tab

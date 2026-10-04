@@ -151,7 +151,7 @@ one is selected
 
 =begin html
 
-<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
 
 =end html
 
@@ -369,6 +369,8 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<value> (a string or number), C<disabled> and C<can_focus> (C<#true> /
 C<#false>). The radio buttons are written as child nodes:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::RadioGroup as RadioGroup
 	use Term::Fabulous::Widget::RadioButton as RadioButton
 
@@ -386,6 +388,8 @@ buttons' values when they are painted.
 =head1 EXAMPLES
 
 =head2 Enable a text field for the choice "Other"
+
+=for highlighter language=perl
 
 	my $source = Term::Fabulous::Widget::RadioGroup->new( value => 'web' );
 	$source->add_child( Term::Fabulous::Widget::RadioButton->new( label => $_ ) ) foreach qw(web friend other);

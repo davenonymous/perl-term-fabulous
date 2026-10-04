@@ -1,0 +1,147 @@
+# NAME
+
+Term::Fabulous::Unicode - Measure text in terminal cells, exactly as
+termbox2 draws it
+
+# SYNOPSIS
+
+```perl
+use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns terminal_is_utf8);
+
+my $columns  = string_columns("\x{3042}!");          # 3: a wide Hiragana letter and '!'
+my @clusters = grapheme_clusters("e\x{301}x");       # ("e\x{301}", "x"): e with a combining accent, x
+my $width    = cluster_columns("\x{1F600}");          # 2 under a UTF-8 locale
+my $safe     = sanitize_text("a\tb\e]0;title\a");      # "a b\x{FFFD}]0;title\x{FFFD}"
+
+warn "Wide characters will be misaligned\n" unless terminal_is_utf8();
+```
+
+# DESCRIPTION
+
+A terminal shows text in a grid of cells. Most characters take one
+cell, but East Asian characters and most emoji take two, and combining
+marks (such as an accent written after a letter) take none of their own.
+Layout and drawing must agree on these widths, or everything after a
+wide character shifts.
+
+termbox2, which draws Term::Fabulous programs, moves its cursor by the
+widths its own Unicode tables report: one codepoint by its `tb_wcwidth`,
+a cluster of several codepoints by its `tb_cluster_width`, which takes
+the widest codepoint and then lets a variation selector, a zero-width
+joiner or a pair of regional indicators decide between text (1) and
+emoji (2) presentation. This module calls those same functions through
+[Term::Fabulous::Termbox](Termbox.md), so the widths it computes are exactly the
+widths termbox2 uses, on every platform. Term::Fabulous uses it to
+measure text for the layout and to draw text and canvas cells; use it
+yourself when you need to know how wide a string will be on screen, for
+example to pad or truncate a label.
+
+All functions take and return Perl character strings (decoded text),
+not UTF-8 encoded bytes.
+
+## Grapheme clusters
+
+A grapheme cluster is what a reader sees as one character: a letter
+plus its combining accents, a flag made of two regional indicator
+symbols, an emoji with a skin tone modifier, and so on. Term::Fabulous
+never splits a cluster: each one is drawn into one cell (plus the cells
+to its right when it is wide). Clusters are found with
+[Unicode::GCString](https://metacpan.org/pod/Unicode%3A%3AGCString).
+
+## The locale matters
+
+The widths do not depend on the locale, but the terminal does: termbox2
+sends UTF-8, and a terminal running under a non-UTF-8 locale such as
+`C` shows the bytes of a wide character as several narrow ones, so
+everything after it shifts. [`run`](../../../README.md#run) warns when the
+locale's character set is not UTF-8 (each time it is called); see
+["terminal\_is\_utf8"](#terminal_is_utf8).
+
+# FUNCTIONS
+
+Nothing is exported by default. Import the functions you need by name.
+
+## sanitize\_text
+
+```perl
+my $safe = sanitize_text($text);
+```
+
+Returns a copy of `$text` that is safe to send to the terminal:
+
+- TAB (U+0009) becomes a space.
+- Every other C0 control character (U+0000 to U+001F, including the line
+breaks U+000A and U+000D and ESC U+001B), DEL (U+007F) and every C1
+control character (U+0080 to U+009F) becomes U+FFFD REPLACEMENT
+CHARACTER.
+- Everything else is unchanged.
+
+Without this, text from a file or a user could contain escape sequences
+that change the terminal's title, colors or clipboard, or move the
+cursor. Every text Term::Fabulous measures or draws is sanitized this
+way, so you do not need to call it for widget text. Note that a line
+break inside one line of text (one Text line, one canvas cell) is shown
+as U+FFFD; split multi-line text into lines first. Text widgets do this
+for you, because Clay breaks their text into lines at `"\n"` before it
+is drawn.
+
+## grapheme\_clusters
+
+```perl
+my @clusters = grapheme_clusters($text);
+```
+
+Sanitizes `$text` (see ["sanitize\_text"](#sanitize_text)) and returns its grapheme
+clusters as a list of character strings, in order. Returns the empty
+list for the empty string.
+
+Results are cached per text; the cache is emptied when it reaches 4096
+entries.
+
+## cluster\_columns
+
+```perl
+my $columns = cluster_columns($cluster);
+```
+
+Returns the number of columns termbox2 advances for one grapheme
+cluster: the [`tb_cluster_width`](Termbox.md#tb_cluster_width) of its code
+points (the widest one; 1 when a variation selector 15 asks for text
+presentation, 2 when a variation selector 16, a zero-width joiner or a
+pair of regional indicators asks for emoji presentation), and at least 1
+in any case. Zero-width and unprintable clusters therefore still occupy
+one cell. The argument should be a single cluster as returned by
+["grapheme\_clusters"](#grapheme_clusters). Dies if `$cluster` is the empty string.
+
+Results are cached per cluster; the cache is emptied when it reaches
+4096 entries.
+
+## string\_columns
+
+```perl
+my $columns = string_columns($text);
+```
+
+Returns the number of columns `$text` occupies on screen: the sum of
+["cluster\_columns"](#cluster_columns) over all ["grapheme\_clusters"](#grapheme_clusters) of `$text`. Returns
+0 for the empty string. This is the width Term::Fabulous reports to Clay
+for layout.
+
+Results are cached per text; the cache is emptied when it reaches 4096
+entries.
+
+## terminal\_is\_utf8
+
+```perl
+warn "Wide characters will be misaligned\n" unless terminal_is_utf8();
+```
+
+Returns 1 when the character set of the current locale
+(`langinfo(CODESET)`) is UTF-8, and 0 otherwise. Without a UTF-8
+locale, termbox2 cannot place wide characters correctly.
+
+# SEE ALSO
+
+["Wide characters and emoji" in Term::Fabulous::Manual::Looks](Manual/Looks.md#wide-characters-and-emoji),
+["Control characters" in Term::Fabulous::Manual::Looks](Manual/Looks.md#control-characters), [Term::Fabulous::Termbox](Termbox.md),
+[Unicode::GCString](https://metacpan.org/pod/Unicode%3A%3AGCString).

@@ -89,13 +89,15 @@ This program is shipped as F<examples/cookbook/report-to-file.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-report-to-file.svg" alt="The sales report: a rounded box with a title and three regions"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-report-to-file.svg" alt="The sales report: a rounded box with a title and three regions"></p>
 
 =end html
 
 The program prints a 40 column box with rounded corners holding a title
 and three lines, and writes the same box without color codes to
 F<report.txt>. In a pipe or a file, and in F<report.txt>, the box is:
+
+=for highlighter language=text
 
 	╭──────────────────────────────────────╮
 	│ Sales per region (in EUR)            │
@@ -145,6 +147,8 @@ press keys, click it, and check the values and what the screen shows,
 exactly as a user at a real terminal would see it.
 
 This program is shipped as F<examples/cookbook/test-a-widget.pl>.
+
+=for highlighter language=perl
 
 =for code-from examples/cookbook/test-a-widget.pl
 
@@ -206,6 +210,8 @@ This program is shipped as F<examples/cookbook/test-a-widget.pl>.
 Run it like any test, with C<prove> or C<perl>. Run with C<perl>, it
 prints (the first line is a note from L<Test2::V0>, with the seed of
 the day):
+
+=for highlighter language=text
 
 	# Seeded srand with seed '20261003' from local date.
 	ok 1 - typing and cursor movement

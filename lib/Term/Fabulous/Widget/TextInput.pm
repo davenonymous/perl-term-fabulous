@@ -723,6 +723,8 @@ C<#false>), C<placeholder_color> and C<selection_color>. C<max_length>
 is applied before C<value>, wherever it stands, so a too long value
 dies.
 
+=for highlighter language=kdl
+
 	TextField "nick" {
 		max_length 12
 		value "guest"
@@ -739,6 +741,8 @@ scrolling and the mapping between cells and text positions; the text
 input keeps the keys, the mouse, the painting and the placeholder.
 
 =head2 is_multi_line
+
+=for highlighter language=perl
 
 	method is_multi_line :common () { return 1 }
 

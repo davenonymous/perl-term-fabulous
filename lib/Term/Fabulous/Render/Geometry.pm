@@ -146,6 +146,8 @@ a whole cell: C<3.9> becomes 3, C<-0.5> becomes -1. Dies unless the
 value is a finite number (NaN and infinities die); the first argument
 names the value in the message:
 
+=for highlighter language=text
+
 	Term::Fabulous::Render::Geometry: x must be a finite number, got 'inf'
 
 =head1 SEE ALSO

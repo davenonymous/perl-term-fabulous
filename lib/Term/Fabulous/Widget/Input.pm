@@ -654,6 +654,8 @@ C<"rgb(255, 136, 0)">.
 
 A complete layout with one disabled text field:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Box as Box
 	use Term::Fabulous::Widget::TextField as TextField
 
@@ -694,6 +696,8 @@ add that state to L</paint_key>. Without either, the change shows only
 when something else makes the input paint.
 
 =head2 natural_size
+
+=for highlighter language=perl
 
 	method natural_size () { return ( $columns, $rows ) }
 

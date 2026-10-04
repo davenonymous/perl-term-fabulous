@@ -108,7 +108,7 @@ line at the bottom shows the last C<Change>.
 
 =begin html
 
-<p><img src="/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
 
 =end html
 
@@ -399,11 +399,13 @@ empty field with a placeholder, a masked password and a disabled field
 
 =begin html
 
-<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: a focused field with Ada Lovelace typed and Lovelace selected, a placeholder, a masked password and a disabled field"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text-field.svg" alt="Four text fields: a focused field with Ada Lovelace typed and Lovelace selected, a placeholder, a masked password and a disabled field"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	TextField "name" {
 		placeholder "Your name"
@@ -417,6 +419,8 @@ A text field with a C<mask> shows every character as the mask
 character. C<value> and the events still give the real text. A masked
 text cannot be copied or cut, and the word keys and the double click
 act on the whole text, so they do not reveal where its spaces are.
+
+=for highlighter language=perl
 
 	my $password = Term::Fabulous::Widget::TextField->new( id => 'password', mask => '*' );
 
@@ -448,11 +452,13 @@ scrollbar (F<examples/widgets/text-area.pl>):
 
 =begin html
 
-<p><img src="/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	TextArea "notes" {
 		placeholder "Anything else?"
@@ -466,6 +472,8 @@ C<Enter> or a click toggles it. Its C<value> is 1 or 0, and you set it
 with C<checked>. A checkbox can also be I<indeterminate>, a third look
 for a box that stands for a group of boxes of which only some are
 checked.
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Checkbox;
 
@@ -481,11 +489,13 @@ and a disabled checkbox (F<examples/widgets/checkbox.pl>):
 
 =begin html
 
-<p><img src="/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-checkbox.svg" alt="Five check boxes: focused, unchecked, checked, indeterminate and disabled"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	Checkbox "newsletter" {
 		label "Send me the newsletter"
@@ -501,6 +511,8 @@ in a box). The group holds the value, takes the focus for all its
 buttons and fires C<Change>; the arrow keys move the selection, and a
 click selects a button. The buttons are laid out from top to bottom
 unless the group's C<layout> says otherwise.
+
+=for highlighter language=perl
 
 	use Clay::XS qw(CLAY_LEFT_TO_RIGHT);
 	use Term::Fabulous::Widget::RadioGroup;
@@ -520,11 +532,13 @@ focused group in a row, a group in a column and a disabled group
 
 =begin html
 
-<p><img src="/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-radio.svg" alt="Radio buttons in a row with Medium chosen, in a column with Express shipping chosen, and a disabled group"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	RadioGroup "size" {
 		value "m"
@@ -545,6 +559,8 @@ given as a plain string is both. C<Up> and C<Down> change the selection
 without opening the list, and typing the first letters of a label jumps
 to it.
 
+=for highlighter language=perl
+
 	use Term::Fabulous::Widget::Dropdown;
 
 	my $color = Term::Fabulous::Widget::Dropdown->new(
@@ -561,12 +577,14 @@ selection, and a focused one with its list open
 
 =begin html
 
-<p><img src="/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
 
 =end html
 
 In KDL, C<options> adds options whose value is their label, and
 C<option> adds one option with a value of its own:
+
+=for highlighter language=kdl
 
 	Dropdown "color" {
 		placeholder "Pick a color"
@@ -581,6 +599,8 @@ C<max>, in steps of C<step>. The arrow keys move it by a step, C<PageUp>
 and C<PageDown> by a C<page_step>, C<Home> and C<End> to the ends; the
 mouse clicks, drags and turns the wheel. The value is shown right of the
 track, formatted with C<value_format>.
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Slider;
 
@@ -598,11 +618,13 @@ code reference, and a disabled one (F<examples/widgets/slider.pl>):
 
 =begin html
 
-<p><img src="/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	Slider "volume" {
 		step 5
@@ -620,6 +642,8 @@ C<half> the value moves in half stars. C<read_only> shows a rating
 without letting the user change it, for lists and cards, and
 C<show_value> adds the value as text.
 
+=for highlighter language=perl
+
 	use Term::Fabulous::Widget::StarRating;
 
 	my $rating = Term::Fabulous::Widget::StarRating->new(
@@ -634,11 +658,13 @@ one, one out of ten without gaps and a disabled one
 
 =begin html
 
-<p><img src="/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	StarRating "rating" {
 		value 3
@@ -656,6 +682,8 @@ choose, so does a click, and the selection changes at once. A
 C<vertical> control stacks the segments, and a control whose C<layout>
 makes it wider than its labels shares the space among the segments.
 
+=for highlighter language=perl
+
 	use Term::Fabulous::Widget::SegmentedControl;
 
 	my $period = Term::Fabulous::Widget::SegmentedControl->new(
@@ -670,11 +698,13 @@ one with a disabled segment, a vertical one and a disabled one
 
 =begin html
 
-<p><img src="/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	SegmentedControl "period" {
 		options "Day" "Week" "Month"
@@ -741,6 +771,8 @@ The clipboard is one string shared by all text inputs of the program,
 not the clipboard of your desktop. Your program reads and writes it with
 L<clipboard|Term::Fabulous::Editor/clipboard> from L<Term::Fabulous::Editor>:
 
+=for highlighter language=perl
+
 	use Term::Fabulous::Editor;
 
 	Term::Fabulous::Editor->clipboard('order-4711');    # Ctrl+V now pastes this
@@ -783,6 +815,8 @@ The keys each input uses while it has the focus. Keys an input does not
 use bubble to its ancestors. Each class page lists the details in its
 KEYS section.
 
+=for highlighter language=text
+
 	Widget        Keys
 	------------  --------------------------------------------------------------
 	TextField     typing, editing keys (see EDITING TEXT), Enter: Submit
@@ -822,6 +856,8 @@ L<Term::Fabulous::Widget::SegmentedControl/KEYS>.
 A complete program with a name field and a checkbox; one listener on the
 form box reports every change, and C<Enter> in the name field ends the
 program:
+
+=for highlighter language=perl
 
 	use v5.24;
 	use warnings;
@@ -906,7 +942,7 @@ of all inputs on C<F2>:
 
 =begin html
 
-<p><img src="/screenshots/example-kdl-form.svg" alt="A form built from KDL with name, password, size, color, volume and newsletter, and a status line with all values"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-kdl-form.svg" alt="A form built from KDL with name, password, size, color, volume and newsletter, and a status line with all values"></p>
 
 =end html
 

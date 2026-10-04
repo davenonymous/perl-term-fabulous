@@ -2466,7 +2466,7 @@ grouping, trees, pages and selection
 
 =begin html
 
-<p><img src="/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
 
 =end html
 
@@ -3754,6 +3754,8 @@ them C<Tab>, which moves the focus on.
 
 =head2 On the rows
 
+=for highlighter language=text
+
 	Up, Down                 the previous or next line of the page
 	PageUp, PageDown         as many lines back or forward as the rows show, minus one,
 	                         so that one line stays in view (within the page)
@@ -3963,6 +3965,8 @@ table: its columns, sort, grouping, lines, colors and options. The rows,
 everything that is a code reference (mutators, cell widgets,
 callbacks), the style hashes C<header_style> and C<group_style> of the
 table, and C<double_click_seconds> come from Perl.
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Table as Table
 

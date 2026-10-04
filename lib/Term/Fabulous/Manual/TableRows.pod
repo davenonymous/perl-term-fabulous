@@ -31,6 +31,8 @@ L<Term::Fabulous::Cookbook::TableRows>.
 
 =head1 SORTING
 
+=for highlighter language=text
+
 	Parameters:        sort
 	Column parameters: sortable, compare, type
 	Methods:           sort_by, clear_sort, sort_spec
@@ -52,6 +54,8 @@ L<SortChange|Term::Fabulous::Event::SortChange>. The listeners on this
 page show what happened in C<$status>, a L<Term::Fabulous::Widget::Text>
 below the table (printing to STDOUT would write over the screen):
 
+=for highlighter language=perl
+
 	$table->on( SortChange => sub ($event) {
 		$status->text( join ', ', map { "$_->[0] $_->[1]" } @{ $event->sort } );    # name asc, size desc
 		return;
@@ -62,7 +66,7 @@ on their title. Your program can still sort by them with C<sort_by>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-sort.svg" alt="A table of tickets sorted by version in natural order and then by priority, with numbered sort markers in the column titles and a line that names the sort"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-sort.svg" alt="A table of tickets sorted by version in natural order and then by priority, with numbered sort markers in the column titles and a line that names the sort"></p>
 
 =end html
 
@@ -107,6 +111,8 @@ sorts by that one column again.
 The C<compare> parameter of a column says how its raw values are
 ordered. It defaults to the column's C<type>:
 
+=for highlighter language=text
+
 	'string'    text, without regard to case: apple, Banana, cherry (the default for string columns)
 	'natural'   text, with runs of digits compared as numbers: file2, file10, File11
 	'number'    numbers: 9, 10, 100 (the default for number columns)
@@ -128,6 +134,8 @@ values and copies of the two rows, and returns a negative number, 0 or
 a positive number, like Perl's C<< <=> >> and C<cmp>, for B<ascending>
 order. The table reverses the result for descending order. It sees every
 value, also C<undef>.
+
+=for highlighter language=perl
 
 	my %rank = ( high => 1, normal => 2, low => 3 );
 	{ key => 'priority', title => 'Priority',
@@ -160,6 +168,8 @@ among their siblings, below their parent row.
 
 =head1 FILTERING
 
+=for highlighter language=text
+
 	Parameters:        filter_row
 	Column parameters: filterable, filter_on, type
 	Methods:           filter, remove_filter, filter_names, clear_filters,
@@ -181,11 +191,13 @@ below the column titles, one per column (columns with
 C<< filterable => 0 >> get an empty cell). An empty field shows C<…>.
 What the user types filters the table as they type.
 
+=for highlighter language=perl
+
 	my $table = Term::Fabulous::Widget::Table->new( id => 'orders', filter_row => 1, columns => [...] );
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-filter.svg" alt="A table of staff with a search field above it and a filter row under the column titles holding the expressions >=2019 and >=80000, four matching rows and the line 4 of 12 rows"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-filter.svg" alt="A table of staff with a search field above it and a filter row under the column titles holding the expressions >=2019 and >=80000, four matching rows and the line 4 of 12 rows"></p>
 
 =end html
 
@@ -196,6 +208,8 @@ L<Let the user filter rows|Term::Fabulous::Cookbook::TableRows/Let the user filt
 
 The text in a field is a I<filter expression>. Its notation depends on
 the column's C<type>:
+
+=for highlighter language=text
 
 	Text columns (type 'string')
 	  ann          the cell contains "ann" (upper and lower case do not matter)
@@ -242,6 +256,8 @@ and the column is not filtered until the text is valid again.
 C<< $table->filter_error($key) >> returns the message, and so does the
 C<error> of the L<FilterChange|Term::Fabulous::Event::FilterChange>
 event that every change of a field by the user fires:
+
+=for highlighter language=perl
 
 	$table->on( FilterChange => sub ($event) {
 		$status->text( $event->error // sprintf( '%d of %d rows', scalar $table->filtered_row_ids, $table->row_count ) );
@@ -325,7 +341,7 @@ A test of your own on one column gets the cell and a copy of the row:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-filter-perl.svg" alt="A table of invoices filtered to three rows by the fourth of five filters, with a line that names the active filter and counts the rows"></p>
 
 =end html
 
@@ -393,6 +409,8 @@ C<select_all> and C<Ctrl+A> select the rows that pass the filters.
 
 =head1 GROUPING
 
+=for highlighter language=text
+
 	Parameters: group_by, group_label, group_style, group_text_color,
 	            group_background_color
 	Methods:    group_by, ungroup, is_group_expanded, expand_group,
@@ -405,6 +423,8 @@ C<group_by> puts the rows into groups by the value of a column. Each
 group starts with a I<group header>, a line across all columns that
 shows the group's value and how many rows it has, and that the user can
 close to hide the group's rows.
+
+=for highlighter language=perl
 
 	my $table = Term::Fabulous::Widget::Table->new(
 		id       => 'staff',
@@ -419,7 +439,7 @@ close to hide the group's rows.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-groups.svg" alt="A table of staff grouped by team: group headers with the team name, the number of people and their total salary, one group closed"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-groups.svg" alt="A table of staff grouped by team: group headers with the team name, the number of people and their total salary, one group closed"></p>
 
 =end html
 
@@ -482,6 +502,8 @@ the group and returns a string or a widget:
 
 The hash has these keys:
 
+=for highlighter language=text
+
 	column    the Term::Fabulous::Widget::Table::Column object of the group column
 	value     the raw value the group's rows share
 	display   its display text
@@ -498,6 +520,8 @@ header never makes the table wider: a label longer than the table is
 wide wraps onto more lines.
 C<group_style> is a style hash for all group headers: their looks and
 lines (see L<Term::Fabulous::Manual::TableStyles/Style keys>):
+
+=for highlighter language=perl
 
 	group_style => { background_color => '#2c313c', text_color => '#e5c07b', border_bottom => 'Solid' },
 
@@ -541,6 +565,8 @@ and C<cursor_group> returns the group's path.
 
 =head1 TREES
 
+=for highlighter language=text
+
 	Parameters: children_key, tree_column, tree_expanded
 	Methods:    expand, collapse, expand_all, collapse_all, is_expanded,
 	            parent_of, children_of, add_row (parent), children_key,
@@ -551,6 +577,8 @@ and C<cursor_group> returns the group's path.
 A tree table shows nested data: rows with child rows, which have child
 rows of their own, and so on. Name the row entry that holds the child
 rows with C<children_key>:
+
+=for highlighter language=perl
 
 	my $table = Term::Fabulous::Widget::Table->new(
 		id           => 'files',
@@ -573,7 +601,7 @@ rows with C<children_key>:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-tree.svg" alt="A file tree in a table: folders with open and closed markers, indented files, sizes and dates"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-tree.svg" alt="A file tree in a table: folders with open and closed markers, indented files, sizes and dates"></p>
 
 =end html
 
@@ -678,6 +706,8 @@ child and replace it on C<Expand>:
 
 =head1 PAGES
 
+=for highlighter language=text
+
 	Parameters: page_size, page_sizes, pager
 	Methods:    page, page_count, page_size, next_page, previous_page,
 	            page_sizes, pager, page_row_ids
@@ -691,12 +721,14 @@ a I<pager> below the table:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-pages.svg" alt="A table of orders on page 3 of 30, with the pager below it and the status line naming the orders on the page"></p>
 
 =end html
 
 The program behind the picture is in the recipe
 L<Split many rows into pages|Term::Fabulous::Cookbook::TableRows/Split many rows into pages (pager and page sizes)>.
+
+=for highlighter language=perl
 
 	my $table = Term::Fabulous::Widget::Table->new(
 		id         => 'log',
@@ -765,6 +797,8 @@ table shows the page with the cursor's line.
 
 =head1 SELECTION AND CURSOR
 
+=for highlighter language=text
+
 	Parameters: selection, selection_column, cursor_color, selected_color,
 	            double_click_seconds
 	Methods:    selection, selection_column, selected_ids, selected_rows,
@@ -780,7 +814,7 @@ example to delete them all.
 
 =begin html
 
-<p><img src="/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
 
 =end html
 
@@ -828,6 +862,8 @@ when the cursor was on the last one.
 
 =back
 
+=for highlighter language=perl
+
 	my $id   = $table->cursor;         # the row id, or undef on a group header or an empty view
 	my $path = $table->cursor_group;   # the group path while on a group header, else undef
 	$table->cursor(42);                # put the cursor on row 42, show its page, scroll to it
@@ -860,6 +896,8 @@ header, the selection stays as it is.
 
 Any number of rows. Moving the cursor does not change the selection.
 The user changes it with:
+
+=for highlighter language=text
 
 	Space                     select or deselect the cursor's row
 	Shift+Up, Shift+Down,     select the range from its start to the new cursor line
@@ -897,6 +935,8 @@ also when it is selected.
 Every change of the selection by the user fires
 L<SelectionChange|Term::Fabulous::Event::SelectionChange>,
 after the C<CursorMove> of the same key or click:
+
+=for highlighter language=perl
 
 	$table->on( SelectionChange => sub ($event) {
 		my $selected = $event->selected_ids;    # all selected ids, in data order

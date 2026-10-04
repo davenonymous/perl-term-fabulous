@@ -199,7 +199,7 @@ there. F<examples/web-colors.pl> shows all of the colors in a grid.
 
 =begin html
 
-<p><img src="/screenshots/example-web-colors.svg" alt="A grid of color swatches with their hex values and names, and a dropdown to sort them"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-web-colors.svg" alt="A grid of color swatches with their hex values and names, and a dropdown to sort them"></p>
 
 =end html
 
@@ -239,6 +239,8 @@ The position of an item in L</values>, counted from 0.
 Every item also has all methods of L<Term::Fabulous::Color>.
 
 =head1 COLORS
+
+=for highlighter language=text
 
 	Name                  Value
 	--------------------  -------

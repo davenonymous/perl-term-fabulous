@@ -82,11 +82,13 @@ This program is shipped as F<examples/cookbook/width-group.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-width-group.svg" alt="Three label and value rows whose values start in the same column"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-width-group.svg" alt="Three label and value rows whose values start in the same column"></p>
 
 =end html
 
 In a pipe or a file, the program prints the same without colors:
+
+=for highlighter language=text
 
 	Name:        Ada Lovelace
 	Occupation:  Mathematician
@@ -119,6 +121,8 @@ Goal: different border styles on different sides of a box, or a border
 on some sides only.
 
 This program is shipped as F<examples/cookbook/border-sides.pl>.
+
+=for highlighter language=perl
 
 =for code-from examples/cookbook/border-sides.pl
 
@@ -167,7 +171,7 @@ This program is shipped as F<examples/cookbook/border-sides.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-border-sides.svg" alt="Three boxes: double and single rules above and below, a heavy top edge, and a thick left edge"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-border-sides.svg" alt="Three boxes: double and single rules above and below, a heavy top edge, and a thick left edge"></p>
 
 =end html
 
@@ -176,6 +180,8 @@ a single line below the text and nothing at the sides, the second a
 single-line frame with a heavy top edge, the third only a solid block
 at the left of its text. In a pipe or a file, it prints the same
 without colors:
+
+=for highlighter language=text
 
 	════════════════════════════════
 	 Rules above and below
@@ -223,6 +229,8 @@ Goal: derive a set of colors from one base color, and switch between a
 dark and a light theme with a key.
 
 This program is shipped as F<examples/cookbook/theme-switch.pl>.
+
+=for highlighter language=perl
 
 =for code-from examples/cookbook/theme-switch.pl
 
@@ -305,7 +313,7 @@ This program is shipped as F<examples/cookbook/theme-switch.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2: dark text on a light panel with a thin brown frame, and a text field holding Light and readable"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-theme-switch.svg" alt="The panel in the light theme after F2: dark text on a light panel with a thin brown frame, and a text field holding Light and readable"></p>
 
 =end html
 
@@ -398,11 +406,13 @@ This program is shipped as F<examples/cookbook/states-and-classes.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-states-and-classes.svg" alt="A menu of three items with Save in the selected color, followed by the states and classes of each item"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-states-and-classes.svg" alt="A menu of three items with Save in the selected color, followed by the states and classes of each item"></p>
 
 =end html
 
 In a pipe or a file, the program prints the same without colors:
+
+=for highlighter language=text
 
 	 Open
 	 Save
@@ -454,6 +464,8 @@ Goal: arrange two panes side by side on a wide terminal and above each
 other on a narrow one.
 
 This program is shipped as F<examples/cookbook/resize-aware-layout.pl>.
+
+=for highlighter language=perl
 
 =for code-from examples/cookbook/resize-aware-layout.pl
 
@@ -509,7 +521,7 @@ This program is shipped as F<examples/cookbook/resize-aware-layout.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-resize-aware-layout.svg" alt="The Inbox and Message panes side by side on a terminal 80 columns wide"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-resize-aware-layout.svg" alt="The Inbox and Message panes side by side on a terminal 80 columns wide"></p>
 
 =end html
 
@@ -517,7 +529,7 @@ The same program on a terminal 60 columns wide:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-resize-aware-layout-narrow.svg" alt="The Inbox and Message panes above each other on a terminal 60 columns wide"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-resize-aware-layout-narrow.svg" alt="The Inbox and Message panes above each other on a terminal 60 columns wide"></p>
 
 =end html
 

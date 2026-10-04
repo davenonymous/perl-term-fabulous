@@ -330,6 +330,8 @@ How wide the column is, as a sizing string or a hash from the
 C<sizing_*> functions of L<Clay::XS> (see
 L<Term::Fabulous::Check/sizing>):
 
+=for highlighter language=text
+
 	'fit'           as wide as its widest cell (the default)
 	'fit(8)'        at least 8 columns
 	'fit(0, 30)'    at most 30 columns; longer text wraps
@@ -441,6 +443,8 @@ C<cell_style>, C<visible>; C<width>, C<style> and C<header_style>
 return copies, C<mutators> the list of mutators.
 
 =head2 value_of
+
+=for highlighter language=perl
 
 	my $raw = $column->value_of($row);
 

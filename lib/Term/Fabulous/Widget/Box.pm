@@ -240,7 +240,7 @@ Term::Fabulous::Widget::Box - The general-purpose container widget
 
 =begin html
 
-<p><img src="/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
 
 =end html
 
@@ -260,6 +260,8 @@ built from a KDL layout file (see L</KDL PROPERTIES>).
 
 The SYNOPSIS above draws this (colors left out):
 
+=for highlighter language=text
+
 	+----------------------------+
 	| Title                      |
 	|                            |
@@ -273,6 +275,8 @@ L<Term::Fabulous::Role::HasBorderStyle/Border space>.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $box = Term::Fabulous::Widget::Box->new(%parameters);
 
@@ -397,6 +401,8 @@ A Box built by L<Term::Fabulous::Layout> reads these property nodes
 from its block. Child nodes whose names start with an uppercase letter
 are child widgets; everything else is a property. Unknown properties,
 unknown keys and invalid values die, naming the property.
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Box as Box
 	use Term::Fabulous::Widget::Text as Text
@@ -558,6 +564,8 @@ from KDL layouts. See L<Term::Fabulous::Role::CanParseLayout>, which
 also provides C<apply_layout_node> and C<apply_layout_settings>.
 
 =head2 layout_properties
+
+=for highlighter language=perl
 
 	method layout_properties :common () {
 		return ( $class->SUPER::layout_properties, title => 'scalar', collapsed => 'boolean', shortcut => \&_parse_shortcut );

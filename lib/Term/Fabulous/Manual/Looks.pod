@@ -41,6 +41,8 @@ in the text starts a new line.
 
 In a KDL layout file:
 
+=for highlighter language=kdl
+
 	Text "usage" {
 		text "Disk usage: 42%"
 		text_color "#e6e6e6"
@@ -59,7 +61,7 @@ takes:
 
 =begin html
 
-<p><img src="/screenshots/example-text-features.svg" alt="Text wrapped at spaces in a narrow panel and text broken only at newlines; a two-line text with line height 2; plain, bold, italic, underlined and combined styles; Latin, Japanese, emoji and combining accents ending in the same column; a tab shown as a space and control characters shown as replacement characters"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-text-features.svg" alt="Text wrapped at spaces in a narrow panel and text broken only at newlines; a two-line text with line height 2; plain, bold, italic, underlined and combined styles; Latin, Japanese, emoji and combining accents ending in the same column; a tab shown as a space and control characters shown as replacement characters"></p>
 
 =end html
 
@@ -71,6 +73,8 @@ options), the canvas drawing methods, L<Term::Fabulous::Editor>,
 L<Term::Fabulous::Unicode> and
 C<< Term::Fabulous::Layout->new( string => ... ) >>. With C<use utf8;>,
 non-ASCII literals in your source work directly:
+
+=for highlighter language=perl
 
 	use utf8;                 # this source file contains non-ASCII text
 
@@ -164,7 +168,7 @@ wrapped sentence aligned left, centered and aligned right:
 
 =begin html
 
-<p><img src="/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
 
 =end html
 
@@ -208,6 +212,8 @@ without an italic face shows italic text upright.
 
 In a KDL layout file:
 
+=for highlighter language=kdl
+
 	Text {
 		text "Unsaved changes"
 		text_color "#ffc850"
@@ -239,6 +245,8 @@ cells wide. Use
 L<string_columns|Term::Fabulous::Unicode/string_columns> from
 L<Term::Fabulous::Unicode> to find out
 how many columns a string takes, for example to pad a label:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Unicode qw(string_columns);
 
@@ -278,6 +286,8 @@ C<< Term::Fabulous::Color->new( color => ... ) >> accepts.
 
 =item Perl code
 
+=for highlighter language=text
+
 	Format                   Example                          Alpha
 	-----------------------  -------------------------------  ---------------
 	hex string               '#ff8800' or 'ff8800'            255
@@ -304,6 +314,8 @@ named colors. An invalid color dies with the name of the parameter:
 
 Colors in some of these formats:
 
+=for highlighter language=perl
+
 	use Term::Fabulous::Enum::WebColor;
 
 	my $box = Term::Fabulous::Widget::Box->new(
@@ -321,6 +333,8 @@ C<< $box->background_color >> returns C<[20, 25, 43, 255]> above.
 Every property whose name ends in C<_color>, and the C<color> of a
 C<border> node, takes a string in any of the string formats above:
 
+=for highlighter language=kdl
+
 	background_color "#14192b"
 	text_color "rgb(220, 220, 220)"
 	border color="hsl(210, 80%, 60%)"
@@ -336,7 +350,7 @@ and less alpha, and the terminal's default text color:
 
 =begin html
 
-<p><img src="/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
 
 =end html
 
@@ -345,6 +359,8 @@ and less alpha, and the terminal's default text color:
 L<Term::Fabulous::Enum::WebColor> has the 148 named colors of CSS as
 L<Term::Fabulous::Color> objects. Give one wherever a color is
 expected, or derive new colors from it:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Enum::WebColor;
 
@@ -407,7 +423,7 @@ orbiting over a screen of text:
 
 =begin html
 
-<p><img src="/screenshots/example-translucency.svg" alt="A green, a red and a blue translucent box over a screen of text; the text shows through the green and the blue one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-translucency.svg" alt="A green, a red and a blue translucent box over a screen of text; the text shows through the green and the blue one"></p>
 
 =end html
 
@@ -480,6 +496,8 @@ default text color.
 In a KDL layout file, the style and the color are attributes of the
 C<border> node, and the width is a property of its own:
 
+=for highlighter language=kdl
+
 	Box "panel" {
 		border style=Round color="#78aaff"
 		border_width 1
@@ -498,6 +516,8 @@ C<Panel>, C<Round>, C<Solid>, C<Tall>, C<Thick>, C<Vkey> and C<Wide>.
 Each is a class method that returns the style object; to look one up by
 name (for example from a configuration file), use C<from_name>:
 
+=for highlighter language=perl
+
 	my $style = Term::Fabulous::Enum::BorderStyle->from_name('Double')
 		// die "unknown border style\n";
 
@@ -510,7 +530,7 @@ F<examples/border-showcase.pl> shows all styles:
 
 =begin html
 
-<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
 
 =end html
 
@@ -530,6 +550,8 @@ their own. The side accessors change one side afterwards:
 
 In a KDL layout file, the side styles are the attributes C<style-top>,
 C<style-right>, C<style-bottom> and C<style-left> of the C<border> node:
+
+=for highlighter language=kdl
 
 	border style=Solid style-left=Thick style-top=Double
 
@@ -559,6 +581,8 @@ A side with the C<Hidden> style takes no space, whatever its width, so
 the content reaches that edge of the widget; use it to switch a side
 off without changing C<border_width>.
 
+=for highlighter language=perl
+
 	my $rule = Term::Fabulous::Widget::Box->new(    # a line above and at the left only
 		border_width => { left => 1, top => 1 },
 		border_style => Term::Fabulous::Enum::BorderStyle->Solid,
@@ -572,7 +596,7 @@ parameters of L</Joining borders>:
 
 =begin html
 
-<p><img src="/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
 
 =end html
 

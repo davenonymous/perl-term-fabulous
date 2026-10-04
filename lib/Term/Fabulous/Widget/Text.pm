@@ -145,7 +145,7 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 
 =begin html
 
-<p><img src="/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
 
 =end html
 
@@ -169,7 +169,7 @@ italic and underlined text, wide characters and control characters:
 
 =begin html
 
-<p><img src="/screenshots/example-text-features.svg" alt="Text wrapped at spaces in a narrow panel and text broken only at newlines; a two-line text with line height 2; plain, bold, italic, underlined and combined styles; Latin, Japanese, emoji and combining accents ending in the same column; a tab shown as a space and control characters shown as replacement characters"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-text-features.svg" alt="Text wrapped at spaces in a narrow panel and text broken only at newlines; a two-line text with line height 2; plain, bold, italic, underlined and combined styles; Latin, Japanese, emoji and combining accents ending in the same column; a tab shown as a space and control characters shown as replacement characters"></p>
 
 =end html
 
@@ -404,6 +404,8 @@ like the constructor parameter. It has no effect in a terminal.
 
 =head1 KDL PROPERTIES
 
+=for highlighter language=kdl
+
 	Text "greeting" {
 		text "Gr\u{fc}\u{df}e, world"
 		text_color "#e6e6e6"
@@ -470,6 +472,8 @@ These methods are used by L<Term::Fabulous::Layout>; you do not call
 them yourself.
 
 =head2 layout_properties
+
+=for highlighter language=perl
 
 	my %kind_of = Term::Fabulous::Widget::Text->layout_properties;
 

@@ -227,7 +227,7 @@ per cell
 
 =begin html
 
-<p><img src="/screenshots/example-pixel-paint.svg" alt="A pixel canvas with a frame, a line, a circle, a filled rectangle and a red wave painted with the mouse"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-pixel-paint.svg" alt="A pixel canvas with a frame, a line, a circle, a filled rectangle and a red wave painted with the mouse"></p>
 
 =end html
 
@@ -374,6 +374,8 @@ C<MouseMove> (use L</pixel_at> to find the pixel).
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>:
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::PixelCanvas as PixelCanvas
 

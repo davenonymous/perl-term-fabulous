@@ -173,7 +173,7 @@ Term::Fabulous::Widget::Sparkline - A small chart without axes, one row high
 
 =begin html
 
-<p><img src="/screenshots/widget-sparkline.svg" alt="Four server rows, each with its load as a line, an area and a bar sparkline of sixteen columns next to the current value"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-sparkline.svg" alt="Four server rows, each with its load as a line, an area and a bar sparkline of sixteen columns next to the current value"></p>
 
 =end html
 
@@ -294,6 +294,8 @@ Read and set the parameters; an invalid value dies and changes nothing.
 Everything else: L<Term::Fabulous::Widget::XYChart/METHODS>.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Sparkline as Sparkline
 

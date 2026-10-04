@@ -29,6 +29,8 @@ L<Term::Fabulous::Cookbook::TableStyles>.
 
 =head1 STYLES AND BORDERS
 
+=for highlighter language=text
+
 	Parameters:        text_color, header_text_color, header_background_color,
 	                   group_text_color, group_background_color, cursor_color,
 	                   selected_color, hover_color, filter_background_color,
@@ -81,7 +83,7 @@ C<hover> (default 1) turns the hover highlight on or off.
 
 =begin html
 
-<p><img src="/screenshots/example-table-directory.svg" alt="A staff directory: a grouped table with a search field above it, two rows selected, the cursor on a third row, a pager below and a details panel on the right"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-table-directory.svg" alt="A staff directory: a grouped table with a search field above it, two rows selected, the cursor on a third row, a pager below and a details panel on the right"></p>
 
 =end html
 
@@ -93,6 +95,8 @@ C<cursor_color>. It is F<examples/table-directory.pl>, described in
 L<Term::Fabulous::Examples>.
 
 =head2 Striped rows
+
+=for highlighter language=perl
 
 	stripe_color => '#1c2029',
 
@@ -108,6 +112,8 @@ L</Tables with colored backgrounds> shows striped rows.
 Looks and lines of parts of the table are given as I<style hashes>,
 hash references such as C<< { text_color => '#e5c07b', bold => 1 } >>.
 They go here:
+
+=for highlighter language=text
 
 	Where                                         For                      Kind
 	------------------------------------------------------------------------------
@@ -196,6 +202,8 @@ Use C<row_style> and C<cell_style> for formatting that follows the
 data, and C<set_row_style> and C<set_cell_style> for marks your program
 sets on single rows and cells:
 
+=for highlighter language=perl
+
 	# Overdue tasks in red, done ones in gray (by the data)
 	row_style => sub ( $row, $id ) {
 		return { text_color => '#808080', italic => 1 } if $row->{done};
@@ -226,6 +234,8 @@ The table draws its lines itself, joined into one grid: where lines
 meet, it uses the matching junction glyphs (C<┬ ┼ ╪ ╞ ...>), also
 where lines of different styles meet. These table parameters set the
 lines:
+
+=for highlighter language=text
 
 	border         [Round]   the frame around the table, all four sides
 	border_top     [border]  one side of the frame, overriding border
@@ -284,6 +294,8 @@ clean.
 
 =back
 
+=for highlighter language=perl
+
 	# A grid like a spreadsheet
 	border => 'Solid', row_lines => 'Solid',
 
@@ -295,7 +307,7 @@ clean.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-line-styles.svg" alt="Nine small tables with different lines: the default round frame, a full grid, no lines, a double frame with a heavy title line, a heavy frame with dashed row lines, ASCII lines, and Outer, Inner and Thick block frames"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-line-styles.svg" alt="Nine small tables with different lines: the default round frame, a full grid, no lines, a double frame with a heavy title line, a heavy frame with dashed row lines, ASCII lines, and Outer, Inner and Thick block frames"></p>
 
 =end html
 
@@ -345,7 +357,7 @@ titles from the rows and the rows from each other:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-colors.svg" alt="A table with an Outer block frame, no inner lines, colored column titles, striped rows and a highlighted row whose color reaches the frame"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-colors.svg" alt="A table with an Outer block frame, no inner lines, colored column titles, striped rows and a highlighted row whose color reaches the frame"></p>
 
 =end html
 
@@ -383,7 +395,7 @@ takes):
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-lines.svg" alt="A budget table: a heavy line and dashed lines in the Left column, negative amounts in red, a cancelled row in gray italics and a bold totals row under a double line"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-lines.svg" alt="A budget table: a heavy line and dashed lines in the Left column, negative amounts in red, a cancelled row in gray italics and a bold totals row under a double line"></p>
 
 =end html
 
@@ -395,6 +407,8 @@ L<Lines and colors per row, column and cell|Term::Fabulous::Cookbook::TableStyle
 
 Each piece of a line between two cells takes the first style that is
 named, in this order:
+
+=for highlighter language=text
 
 	1. the cell styles of the two cells next to it   (border_*)
 	2. the row styles of their rows                  (border_*, column_lines)
@@ -416,6 +430,8 @@ row style colors the line above the row and the lines left of its cells.
 
 =head2 Cell padding
 
+=for highlighter language=perl
+
 	cell_padding => 1,                                         # one column left and right (the default)
 	cell_padding => 0,                                         # none: text touches the lines
 	cell_padding => { left => 1, right => 1, top => 1, bottom => 0 },    # an empty line above each cell
@@ -427,6 +443,8 @@ picture in L</Tables with colored backgrounds> shows a padding of 2,
 which keeps the columns apart without lines.
 
 =head1 SIZE AND SCROLLING
+
+=for highlighter language=text
 
 	Parameters: layout (of every Box), scrollbar
 	Methods:    scroll_to_row, cursor, body
@@ -441,6 +459,8 @@ sides stay at the edges of the table while the rows scroll inside it.
 To make a table fill its parent, or take part of it, give it a sizing
 like any L<Term::Fabulous::Widget::Box> (see
 L<Term::Fabulous::Manual::Layout/Sizing>):
+
+=for highlighter language=perl
 
 	use Clay::XS qw(sizing_grow sizing_fixed);
 
@@ -470,7 +490,7 @@ L<Term::Fabulous::Widget::Scrollbar>.
 
 =begin html
 
-<p><img src="/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, and the scrollbar right of the frame shows a thumb in its middle"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, and the scrollbar right of the frame shows a thumb in its middle"></p>
 
 =end html
 
@@ -511,7 +531,7 @@ them.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-report.svg" alt="The printed sales report: products sorted by revenue, units and amounts formatted, shares in percent and a bold totals row under a double line"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-report.svg" alt="The printed sales report: products sorted by revenue, units and amounts formatted, shares in percent and a bold totals row under a double line"></p>
 
 =end html
 

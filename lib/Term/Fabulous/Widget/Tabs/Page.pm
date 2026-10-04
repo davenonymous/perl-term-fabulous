@@ -265,6 +265,8 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<title> and C<icon> (strings) and C<active> and C<disabled>
 (C<#true> / C<#false>). Child widget nodes are the content:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Tabs::Page as Page
 
 	Page "network" {

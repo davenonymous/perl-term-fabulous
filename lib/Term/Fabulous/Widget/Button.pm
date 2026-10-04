@@ -172,7 +172,7 @@ activated
 
 =begin html
 
-<p><img src="/screenshots/widget-button.svg" alt="Save, Cancel, Delete and Archive buttons: Save focused with a blue border, Archive disabled and drawn in gray, and the line Save was pressed"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-button.svg" alt="Save, Cancel, Delete and Archive buttons: Save focused with a blue border, Archive disabled and drawn in gray, and the line Save was pressed"></p>
 
 =end html
 
@@ -459,6 +459,8 @@ C<can_focus> and C<disabled> (C<#true> or C<#false>),
 C<focus_border_color> (a color string, or C<#null> for no focus look),
 C<pressed_background_color> (a color string, C<"reverse">, or C<#null>
 for no pressed look) and C<disabled_color> (a color string):
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::Button as Button
 	use Term::Fabulous::Widget::Text as Text

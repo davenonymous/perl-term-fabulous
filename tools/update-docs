@@ -1,7 +1,8 @@
 #!/usr/bin/env perl
 
 # Brings the documentation in line with the code: copies the example
-# programs into the code blocks of the POD that show them, and takes
+# programs into the code blocks of the POD that show them, points the
+# screenshot URLs of the POD to the tag of the current release, and takes
 # the screenshots the POD shows again. With --check, writes nothing and
 # exits with status 1 if anything is out of date.
 #
@@ -22,9 +23,10 @@ use Feature::Compat::Try;
 use File::Find qw(find);
 use File::Spec;
 use File::Temp ();
+use ExtUtils::MakeMaker ();
 use Getopt::Long qw(GetOptions);
 use POSIX qw(_exit);
-use Term::Fabulous::Screenshot::PodSync qw(sync_code_blocks referenced_screenshots read_text write_text);
+use Term::Fabulous::Screenshot::PodSync qw(sync_code_blocks referenced_screenshots foreign_images screenshots_at_tag read_text write_text);
 use Term::Fabulous::Screenshot::Render::SVG qw(render_svg);
 use Term::Fabulous::Screenshot::Runner;
 use Term::Fabulous::Screenshot::Scenario;
@@ -34,13 +36,15 @@ use Term::Fabulous::Screenshot::Theme;
 use constant SCENARIO_FILE   => 'screenshots/screenshots.kdl';
 use constant SCREENSHOT_DIR  => 'screenshots';
 use constant POD_DIRECTORIES => ('lib');
+use constant VERSION_FILE    => 'lib/Term/Fabulous.pm';
 
 sub usage () {
 	return <<'USAGE';
 Usage: perl -Mblib tools/update-docs [--check] [--jobs N] [NAME ...]
 
 Copies the example programs into the POD code blocks marked with
-'=for code-from FILE' and takes every screenshot of
+'=for code-from FILE', points the screenshot URLs of the POD to the tag
+of the current \$VERSION and takes every screenshot of
 screenshots/screenshots.kdl again, writing screenshots/NAME.svg.
 
   --check    write nothing; list what is out of date and exit with
@@ -70,6 +74,7 @@ sub main () {
 
 	my @scenarios = Term::Fabulous::Screenshot::Scenario->from_file(SCENARIO_FILE);
 	push @stale, check_references( \@pod_files, \@scenarios );
+	push @stale, point_screenshots_to_release( \@pod_files, $check );
 
 	my %wanted = map { $_ => 1 } @ARGV;
 	my @unknown = grep { my $name = $_; !grep { $_->name eq $name } @scenarios } @ARGV;
@@ -115,13 +120,16 @@ sub sync_all_code_blocks ( $pod_files, $check ) {
 	return @stale;
 }
 
-# Every screenshot the POD shows must have a scenario, and every scenario
-# must be shown somewhere.
+# Every image the POD shows must be a screenshot, every screenshot must
+# have a scenario, and every scenario must be shown somewhere.
 sub check_references ( $pod_files, $scenarios ) {
-	my %shown_in;
+	my ( %shown_in, @foreign );
 	foreach my $pod_file (@$pod_files) {
-		push @{ $shown_in{$_} }, $pod_file foreach referenced_screenshots( read_text($pod_file) );
+		my $pod = read_text($pod_file);
+		push @foreign, map {"$pod_file: $_ is not a screenshot URL (see tools/README.md)"} foreign_images($pod);
+		push @{ $shown_in{$_} }, $pod_file foreach referenced_screenshots($pod);
 	}
+	die join( "\n", 'update-docs:', @foreign ) . "\n" if @foreign;
 	my %defined = map { $_->name => 1 } @$scenarios;
 	my @missing = map { my $name = $_; map {"$_: shows screenshots/$name.svg, which " . SCENARIO_FILE . " does not define"} @{ $shown_in{$name} } }
 		grep { !$defined{$_} } sort keys %shown_in;
@@ -130,6 +138,23 @@ sub check_references ( $pod_files, $scenarios ) {
 	my @unused = grep { !$shown_in{$_} } map { $_->name } @$scenarios;
 	die "update-docs: " . SCENARIO_FILE . " defines screenshots no POD shows: " . join( ', ', @unused ) . "\n" if @unused;
 	return;
+}
+
+# MetaCPAN shows each release with the screenshots of its own tag, which
+# exists on GitHub once the release is tagged and pushed.
+sub point_screenshots_to_release ( $pod_files, $check ) {
+	my $tag = 'v' . MM->parse_version(VERSION_FILE);
+	my @stale;
+	foreach my $pod_file (@$pod_files) {
+		my $pod     = read_text($pod_file);
+		my $updated = screenshots_at_tag( $pod, $tag );
+		next if $updated eq $pod;
+		push @stale, "$pod_file: the screenshot URLs do not point to $tag";
+		next if $check;
+		write_text( $pod_file, $updated );
+		say "urls   $pod_file: pointed the screenshots to $tag";
+	}
+	return @stale;
 }
 
 # Takes the screenshots in parallel worker processes; each renders its

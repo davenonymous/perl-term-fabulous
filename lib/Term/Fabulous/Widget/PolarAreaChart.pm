@@ -134,7 +134,7 @@ length shows their value
 
 =begin html
 
-<p><img src="/screenshots/widget-polar-area-chart.svg" alt="Seven slices of equal angle for the weekdays, each reaching out as far as its value, over dotted rings labeled with their values"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-polar-area-chart.svg" alt="Seven slices of equal angle for the weekdays, each reaching out as far as its value, over dotted rings labeled with their values"></p>
 
 =end html
 
@@ -196,6 +196,8 @@ L<Term::Fabulous::Widget::PieChart/METHODS> manage the slices.
 	$chart->max(undef);    # from the data again
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::PolarAreaChart as PolarAreaChart
 

@@ -45,7 +45,7 @@ Term::Fabulous::Widget::AreaChart - Lines with the area below them filled
 
 =begin html
 
-<p><img src="/screenshots/widget-area-chart.svg" alt="Three stacked areas for Search, Social and Direct over the months of a year, with a title and a legend at the top"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-area-chart.svg" alt="Three stacked areas for Search, Social and Direct over the months of a year, with a title and a legend at the top"></p>
 
 =end html
 
@@ -81,6 +81,8 @@ C<fill_opacity>, C<line>, C<curve>, C<marker> (C<block> by default).
 Those of L<Term::Fabulous::Widget::XYChart/METHODS>.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::AreaChart as AreaChart
 

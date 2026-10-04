@@ -65,6 +65,8 @@ after installing Term::Fabulous. In an unpacked copy of the
 distribution that is built but not installed (C<perl Makefile.PL &&
 make>), add C<-Mblib>:
 
+=for highlighter language=sh
+
 	perl -Mblib examples/cookbook/minimal-program.pl
 
 Interactive programs take over the terminal (all of it, or a few

@@ -252,6 +252,7 @@ lib/Term/Fabulous/Widget/TextInput.pm
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
+README.md
 src/README.termbox2
 src/termbox2.c
 src/termbox2.h
@@ -497,6 +498,7 @@ tools/lib/Term/Fabulous/Screenshot/Scene.pm
 tools/lib/Term/Fabulous/Screenshot/Screen.pm 
 tools/lib/Term/Fabulous/Screenshot/Theme.pm 
 tools/lib/Term/Fabulous/Screenshot/VirtualLoop.pm 
+tools/pod2markdown
 tools/README.md                          
 tools/screenshot                         
 tools/update-docs                        

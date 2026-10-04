@@ -95,7 +95,7 @@ Term::Fabulous::Widget::TextField - Single-line text input
 
 =begin html
 
-<p><img src="/screenshots/widget-text-field.svg" alt="Four text fields: a focused field with Ada Lovelace typed and Lovelace selected, a placeholder, a masked password and a disabled field"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-text-field.svg" alt="Four text fields: a focused field with Ada Lovelace typed and Lovelace selected, a placeholder, a masked password and a disabled field"></p>
 
 =end html
 
@@ -234,6 +234,8 @@ ancestors (see L<Term::Fabulous::Manual::Events/Return values and bubbling>).
 The properties of L<Term::Fabulous::Widget::TextInput/KDL PROPERTIES>,
 plus C<preferred_columns> and C<mask>:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::TextField as TextField
 
 	TextField "email" {
@@ -245,6 +247,8 @@ plus C<preferred_columns> and C<mask>:
 =head1 EXAMPLES
 
 =head2 A search field that reacts to Enter and to typing
+
+=for highlighter language=perl
 
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow);

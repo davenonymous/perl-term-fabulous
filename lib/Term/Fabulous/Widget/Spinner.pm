@@ -229,7 +229,7 @@ Term::Fabulous::Widget::Spinner - Show that something is going on
 
 =begin html
 
-<p><img src="/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
 
 =end html
 
@@ -243,6 +243,8 @@ A spinner shows that the program is busy with something whose
 progress it cannot measure: connecting, waiting for a reply, loading.
 It cycles through the frames of its C<style>, a few times per second,
 and shows a C<label> next to them:
+
+=for highlighter language=text
 
 	⠋ Connecting
 
@@ -263,6 +265,8 @@ is as big as its largest frame plus the label.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $spinner = Term::Fabulous::Widget::Spinner->new(%parameters);
 
@@ -427,6 +431,8 @@ numbers), C<running> (C<#true> / C<#false>), C<color> and
 C<label_color> (color strings), and C<frames> with one or more string
 arguments:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Spinner as Spinner
 
 	Spinner "busy" {
@@ -443,6 +449,8 @@ arguments:
 =head1 EXAMPLES
 
 =head2 A spinner that becomes a check mark
+
+=for highlighter language=perl
 
 	my $spinner = Term::Fabulous::Widget::Spinner->new( label => 'Saving' );
 

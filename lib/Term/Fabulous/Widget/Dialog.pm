@@ -178,7 +178,7 @@ and keeps the focus
 
 =begin html
 
-<p><img src="/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files; Delete has the focus and a blue border"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files; Delete has the focus and a blue border"></p>
 
 =end html
 
@@ -360,6 +360,8 @@ one top-level widget, so a Dialog must be the root widget of a layout
 file of its own. C<build> returns the dialog, which is not open yet.
 With this in F<about.kdl>:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Dialog as Dialog
 	use Term::Fabulous::Widget::Text as Text
 
@@ -370,6 +372,8 @@ With this in F<about.kdl>:
 	}
 
 open the dialog from Perl:
+
+=for highlighter language=perl
 
 	my $about = Term::Fabulous::Layout->new( file => 'about.kdl' )->build;
 	$about->open($ui);

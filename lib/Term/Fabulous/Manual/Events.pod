@@ -66,7 +66,7 @@ which events a key press or a click produces, and in which order:
 
 =begin html
 
-<p><img src="/screenshots/example-event-monitor.svg" alt="The event monitor after Tab, typing Ada, Enter, F5, Tab and a click on the OK button: the log lists KeyPress, OnFocus, Change, Submit, OnBlur, Mouse, OnHoverStart, OnPress, Activate and OnRelease events with their targets"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-event-monitor.svg" alt="The event monitor after Tab, typing Ada, Enter, F5, Tab and a click on the OK button: the log lists KeyPress, OnFocus, Change, Submit, OnBlur, Mouse, OnHoverStart, OnPress, Activate and OnRelease events with their targets"></p>
 
 =end html
 
@@ -166,6 +166,8 @@ whatever the listeners return (see L</Firing your own events>).
 All events Term::Fabulous and Clay::UI fire. The table is an overview;
 the sections below it describe each event.
 
+=for highlighter language=text
+
 	Event            Fired on                          Bubbles
 	---------------  --------------------------------  ----------------
 	KeyPress         focused widget, else the root     yes
@@ -244,6 +246,8 @@ last size change. The layout adapts to the new size by itself; listen to
 C<Resize> when your program wants to change something more, for example
 hide a sidebar on narrow terminals. Here C<$body> holds the main area
 and, to its right, C<$sidebar>, a box with the id C<sidebar>:
+
+=for highlighter language=perl
 
 	$root->on(
 		Resize => sub ($event) {

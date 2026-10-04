@@ -96,7 +96,10 @@
 
 # Maintainer-only docs and working notes (not shipped)
 ^RELEASING\.md$
-^README\.md$
+
+# The Markdown pages of the documentation, for GitHub (README.md is
+# shipped; MetaCPAN shows it)
+^docs/
 
 # Local scratch scripts
 ^bin/

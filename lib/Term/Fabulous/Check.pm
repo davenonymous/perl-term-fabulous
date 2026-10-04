@@ -161,6 +161,8 @@ property name and the value. It returns the value as the widget stores
 it (numbers as numbers, booleans as 1 or 0, colors as
 C<[r, g, b, a]>), or dies with a message in one wording:
 
+=for highlighter language=text
+
 	My::Widget: preferred_columns must be a positive integer, got '0'
 	My::Widget: label must be a string, got a HASH reference
 	My::Widget: accent_color must be a color, got 'nope' (unrecognized color string 'nope')
@@ -210,6 +212,8 @@ Returns C<[r, g, b, a]>, the form Clay::UI takes. C<undef> dies; a
 property that can be switched off handles C<undef> before it checks.
 
 =head2 sizing
+
+=for highlighter language=perl
 
 	my $width = sizing( $self, 'width', 'fit(4, 30)' );    # the hash sizing_fit(4, 30) returns
 

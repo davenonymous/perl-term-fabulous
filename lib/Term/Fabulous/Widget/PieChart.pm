@@ -464,7 +464,7 @@ Term::Fabulous::Widget::PieChart - A pie chart: parts of a whole as slices
 
 =begin html
 
-<p><img src="/screenshots/widget-pie-chart.svg" alt="A pie of browser shares with the percentage on each slice and a legend on the right, small browsers folded into Other"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-pie-chart.svg" alt="A pie of browser shares with the percentage on each slice and a legend on the right, small browsers folded into Other"></p>
 
 =end html
 
@@ -492,7 +492,7 @@ are neither drawn nor listed in the legend.
 
 =begin html
 
-<p><img src="/screenshots/widget-pie-chart-styles.svg" alt="Four pies of the same budget: in quadrant blocks with percentages, in sextants with gaps between the slices, in Braille dots with the slice labels, and in half blocks with the values, sorted ascending and starting at 3 o'clock"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-pie-chart-styles.svg" alt="Four pies of the same budget: in quadrant blocks with percentages, in sextants with gaps between the slices, in Braille dots with the slice labels, and in half blocks with the values, sorted ascending and starting at 3 o'clock"></p>
 
 =end html
 
@@ -679,6 +679,8 @@ value is its value, and on a slice the index is its position among the
 slices as drawn (after sorting and folding, from 0).
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::PieChart as PieChart
 

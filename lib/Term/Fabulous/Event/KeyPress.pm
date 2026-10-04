@@ -520,8 +520,10 @@ These are all the names L</key_name> returns, without modifiers.
 
 =head2 Named keys
 
+=for highlighter language=text
+
 	Name          Key
-	------------  ------------------------------------------------
+	------------  -------------------------------------------------
 	Left          Arrow left
 	Right         Arrow right
 	Up            Arrow up
@@ -706,6 +708,8 @@ Compare L</key_name> with the name of the key you want, or
 L</main_key_name> when the keypad keys should count as the main keyboard
 keys they stand for. To find the name of a key on your terminal, run
 F<examples/event-monitor.pl> and press it. A dispatch table keeps longer lists readable:
+
+=for highlighter language=perl
 
 	use Clay::UI::Enum::Result;
 

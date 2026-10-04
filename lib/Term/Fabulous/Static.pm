@@ -319,7 +319,7 @@ several bordered panels with non-ASCII text.
 
 =begin html
 
-<p><img src="/screenshots/example-static-report.svg" alt="Three panels with double, heavy and round borders, printed to the terminal"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-static-report.svg" alt="Three panels with double, heavy and round borders, printed to the terminal"></p>
 
 =end html
 

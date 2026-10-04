@@ -281,7 +281,7 @@ their headers
 
 =begin html
 
-<p><img src="/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
 
 =end html
 
@@ -294,6 +294,8 @@ F<examples/widgets/accordion.pl>.
 
 An accordion stacks sections, its I<items>, each with a header line
 and a body that shows while the item is open:
+
+=for highlighter language=text
 
 	▸ General
 	▾ Network
@@ -328,6 +330,8 @@ children are its items, and C<add_child> accepts nothing else.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $accordion = Term::Fabulous::Widget::Accordion->new(%parameters);
 
@@ -625,6 +629,8 @@ C<header_background_color>, C<focus_background_color>,
 C<hover_background_color> and C<disabled_color>. The items are C<Item>
 child nodes (see L<Term::Fabulous::Widget::Accordion::Item/KDL PROPERTIES>):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Accordion as Accordion
 	use Term::Fabulous::Widget::Accordion::Item as Item
 	use Term::Fabulous::Widget::Text as Text
@@ -646,6 +652,8 @@ child nodes (see L<Term::Fabulous::Widget::Accordion::Item/KDL PROPERTIES>):
 =head1 EXAMPLES
 
 =head2 A plus toggle
+
+=for highlighter language=perl
 
 	my $faq = Term::Fabulous::Widget::Accordion->new( open_glyph => '-', closed_glyph => '+', title_bold => 1 );
 

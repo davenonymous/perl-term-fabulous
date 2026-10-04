@@ -228,7 +228,7 @@ F<examples/kdl-layout.kdl>:
 
 =begin html
 
-<p><img src="/screenshots/example-kdl-layout.svg" alt="A title bar, a sidebar with the buttons web, db and mail with db focused, and a main panel showing the details of the db server"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-kdl-layout.svg" alt="A title bar, a sidebar with the buttons web, db and mail with db focused, and a main panel showing the details of the db server"></p>
 
 =end html
 
@@ -326,6 +326,8 @@ A KDL document is a list of nodes. A node has a name, followed by
 optional arguments, optional C<key=value> properties and an optional
 block of child nodes in braces:
 
+=for highlighter language=kdl
+
 	name argument1 argument2 key=value other="value" {
 		child-node
 		another-child 42
@@ -335,6 +337,8 @@ Nodes end at a line break or a semicolon, so short nodes can share a
 line: C<RadioButton { label "Small"; value "s"; }>.
 
 Values are written like this:
+
+=for highlighter language=text
 
 	Value                          Example                Perl value
 	-----------------------------  ---------------------  -----------------
@@ -355,6 +359,8 @@ C<"false"> in quotes, dies, and a bare C<true> is a syntax error.
 Comments are C<// to the end of the line>, C</* blocks */>, and C</->
 in front of a node, which comments out the whole node with its
 children:
+
+=for highlighter language=kdl
 
 	/- Text { text "not shown"; }
 
@@ -465,45 +471,47 @@ table lists them with the alias the examples use; each link leads to the
 list of properties the class accepts. All of them except Text accept
 the L</Box properties>.
 
-	Alias            Class                                    Properties
-	---------------  ---------------------------------------  ---------------------------
-	Box              Term::Fabulous::Widget::Box              Box properties
-	Text             Term::Fabulous::Widget::Text             text, text_color, wrap_mode, ...
-	Button           Term::Fabulous::Widget::Button           Box + focus and press looks
-	Dialog           Term::Fabulous::Widget::Dialog           Box + backdrop, z_index
-	ScrollBox        Term::Fabulous::Widget::ScrollBox        Box + horizontal, vertical
-	Canvas           Term::Fabulous::Widget::Canvas           Box
-	PixelCanvas      Term::Fabulous::Widget::PixelCanvas      Box
-	TextField        Term::Fabulous::Widget::TextField        input widget + text options
-	TextArea         Term::Fabulous::Widget::TextArea         input widget + text options
-	Checkbox         Term::Fabulous::Widget::Checkbox         input widget + label, checked
-	RadioGroup       Term::Fabulous::Widget::RadioGroup       Box + value, disabled
-	RadioButton      Term::Fabulous::Widget::RadioButton      input widget + label, value
-	Dropdown         Term::Fabulous::Widget::Dropdown         input widget + options, value
-	Slider           Term::Fabulous::Widget::Slider           input widget + range, value
-	StarRating       Term::Fabulous::Widget::StarRating       input widget + max, value, half
-	SegmentedControl Term::Fabulous::Widget::SegmentedControl input widget + options, value
-	Divider          Term::Fabulous::Widget::Divider          Box + text, line_style, ...
-	Accordion        Term::Fabulous::Widget::Accordion        Box + multiple, bordered, ...
-	Item             Term::Fabulous::Widget::Accordion::Item  Box + title, open, disabled
-	Tabs             Term::Fabulous::Widget::Tabs             Box + side, orientation, ...
-	Page             Term::Fabulous::Widget::Tabs::Page       Box + title, active, disabled
-	TabBar           Term::Fabulous::Widget::Tabs::Bar        Box + side, orientation, ...
-	Tab              Term::Fabulous::Widget::Tabs::Button     Button + title, icon
-	ProgressBar      Term::Fabulous::Widget::ProgressBar      Box + range, value, style, ...
-	Spinner          Term::Fabulous::Widget::Spinner          Box + style, frames, label
-	Toast            Term::Fabulous::Widget::Toast            Box + kind, title, message, ...
-	Table            Term::Fabulous::Widget::Table            Box + columns, lines, sort, ...
-	LineChart        Term::Fabulous::Widget::LineChart        chart + series, axes, ...
-	AreaChart        Term::Fabulous::Widget::AreaChart        chart + series, axes, ...
-	BarChart         Term::Fabulous::Widget::BarChart         chart + series, axes, ...
-	ScatterPlot      Term::Fabulous::Widget::ScatterPlot      chart + series, axes, ...
-	Histogram        Term::Fabulous::Widget::Histogram        chart + series, bins, ...
-	Sparkline        Term::Fabulous::Widget::Sparkline        chart + values, type, ...
-	PieChart         Term::Fabulous::Widget::PieChart         chart + slice, sort, ...
-	DonutChart       Term::Fabulous::Widget::DonutChart       pie chart properties
-	PolarAreaChart   Term::Fabulous::Widget::PolarAreaChart   pie chart + max, ticks
-	RadarChart       Term::Fabulous::Widget::RadarChart       chart + series, labels, ticks
+=for highlighter language=text
+
+	Alias             Class                                     Properties
+	----------------  ----------------------------------------  --------------------------------
+	Box               Term::Fabulous::Widget::Box               Box properties
+	Text              Term::Fabulous::Widget::Text              text, text_color, wrap_mode, ...
+	Button            Term::Fabulous::Widget::Button            Box + focus and press looks
+	Dialog            Term::Fabulous::Widget::Dialog            Box + backdrop, z_index
+	ScrollBox         Term::Fabulous::Widget::ScrollBox         Box + horizontal, vertical
+	Canvas            Term::Fabulous::Widget::Canvas            Box
+	PixelCanvas       Term::Fabulous::Widget::PixelCanvas       Box
+	TextField         Term::Fabulous::Widget::TextField         input widget + text options
+	TextArea          Term::Fabulous::Widget::TextArea          input widget + text options
+	Checkbox          Term::Fabulous::Widget::Checkbox          input widget + label, checked
+	RadioGroup        Term::Fabulous::Widget::RadioGroup        Box + value, disabled
+	RadioButton       Term::Fabulous::Widget::RadioButton       input widget + label, value
+	Dropdown          Term::Fabulous::Widget::Dropdown          input widget + options, value
+	Slider            Term::Fabulous::Widget::Slider            input widget + range, value
+	StarRating        Term::Fabulous::Widget::StarRating        input widget + max, value, half
+	SegmentedControl  Term::Fabulous::Widget::SegmentedControl  input widget + options, value
+	Divider           Term::Fabulous::Widget::Divider           Box + text, line_style, ...
+	Accordion         Term::Fabulous::Widget::Accordion         Box + multiple, bordered, ...
+	Item              Term::Fabulous::Widget::Accordion::Item   Box + title, open, disabled
+	Tabs              Term::Fabulous::Widget::Tabs              Box + side, orientation, ...
+	Page              Term::Fabulous::Widget::Tabs::Page        Box + title, active, disabled
+	TabBar            Term::Fabulous::Widget::Tabs::Bar         Box + side, orientation, ...
+	Tab               Term::Fabulous::Widget::Tabs::Button      Button + title, icon
+	ProgressBar       Term::Fabulous::Widget::ProgressBar       Box + range, value, style, ...
+	Spinner           Term::Fabulous::Widget::Spinner           Box + style, frames, label
+	Toast             Term::Fabulous::Widget::Toast             Box + kind, title, message, ...
+	Table             Term::Fabulous::Widget::Table             Box + columns, lines, sort, ...
+	LineChart         Term::Fabulous::Widget::LineChart         chart + series, axes, ...
+	AreaChart         Term::Fabulous::Widget::AreaChart         chart + series, axes, ...
+	BarChart          Term::Fabulous::Widget::BarChart          chart + series, axes, ...
+	ScatterPlot       Term::Fabulous::Widget::ScatterPlot       chart + series, axes, ...
+	Histogram         Term::Fabulous::Widget::Histogram         chart + series, bins, ...
+	Sparkline         Term::Fabulous::Widget::Sparkline         chart + values, type, ...
+	PieChart          Term::Fabulous::Widget::PieChart          chart + slice, sort, ...
+	DonutChart        Term::Fabulous::Widget::DonutChart        pie chart properties
+	PolarAreaChart    Term::Fabulous::Widget::PolarAreaChart    pie chart + max, ticks
+	RadarChart        Term::Fabulous::Widget::RadarChart        chart + series, labels, ticks
 
 The properties of each class:
 
@@ -606,47 +614,47 @@ describes each one with an example, and
 L<the layout chapter of the manual|Term::Fabulous::Manual::Layout/LAYOUT>
 shows what they do, with pictures.
 
-	Property node                              Value
-	-----------------------------------------  -----------------------------------------
-	layout direction=... gap=N                 direction: down, ttb, top_to_bottom
-	       line_gap=N line_sizing=...          (children top to bottom), right, ltr,
-	                                           left_to_right (left to right), wrap,
-	                                           ltr_wrap, left_to_right_wrap (left to
-	                                           right, wrapping onto new lines) or
-	                                           stack, back_to_front, btf (on top of
-	                                           each other);
-	                                           gap (alias child_gap): cells between
-	                                           children, an integer >= 0;
-	                                           line_gap: rows between wrapped lines,
-	                                           an integer >= 0; line_sizing: grow
-	                                           (the default) or fit
-	sizing width=... height=...                each: grow, fit, "grow(MIN)",
-	                                           "grow(MIN, MAX)", "fit(MIN)",
-	                                           "fit(MIN, MAX)" with MIN and MAX integers
-	                                           >= 0 and MIN <= MAX (no MAX: no maximum),
-	                                           "percent(N)" with N in 0..100 (decimals
-	                                           allowed), or "fixed(N)" with N an
-	                                           integer >= 0
-	padding left=N right=N top=N bottom=N      any subset; integers >= 0
-	child_alignment x=... y=...                x: left (the default), center or right;
-	                                           y: top (the default), center or bottom
-	floating attach_to=... parent_id="..."     takes the box out of the layout and
-	         element=... parent=...            draws it on top (see below)
+	Property node                               Value
+	------------------------------------------  -------------------------------------------
+	layout direction=... gap=N                  direction: down, ttb, top_to_bottom
+	       line_gap=N line_sizing=...           (children top to bottom), right, ltr,
+	                                            left_to_right (left to right), wrap,
+	                                            ltr_wrap, left_to_right_wrap (left to
+	                                            right, wrapping onto new lines) or
+	                                            stack, back_to_front, btf (on top of
+	                                            each other);
+	                                            gap (alias child_gap): cells between
+	                                            children, an integer >= 0;
+	                                            line_gap: rows between wrapped lines,
+	                                            an integer >= 0; line_sizing: grow
+	                                            (the default) or fit
+	sizing width=... height=...                 each: grow, fit, "grow(MIN)",
+	                                            "grow(MIN, MAX)", "fit(MIN)",
+	                                            "fit(MIN, MAX)" with MIN and MAX integers
+	                                            >= 0 and MIN <= MAX (no MAX: no maximum),
+	                                            "percent(N)" with N in 0..100 (decimals
+	                                            allowed), or "fixed(N)" with N an
+	                                            integer >= 0
+	padding left=N right=N top=N bottom=N       any subset; integers >= 0
+	child_alignment x=... y=...                 x: left (the default), center or right;
+	                                            y: top (the default), center or bottom
+	floating attach_to=... parent_id="..."      takes the box out of the layout and
+	         element=... parent=...             draws it on top (see below)
 	         offset_x=N offset_y=N z_index=N
 	         pointer_capture=... clip_to=...
-	border style=... style-top=...             style: a border style name (Round, Solid,
-	       style-right=... style-bottom=...    Heavy, ...) for all four sides; the
-	       style-left=... color=...            style-SIDE keys override it for one side;
-	                                           color: a color string
-	border_width N                             all four sides, an integer 0..65535
-	border_width left=N right=N top=N bottom=N per side; missing sides are 0
-	background_color "..."                     a color string
-	glyphs_show_through #true                  #true or #false (the default): whether text
-	                                           and borders below a translucent background
-	                                           stay visible (see Term::Fabulous::Widget)
-	border_color "..."                         a color string (same as border color=)
-	width_group N                              an integer 0..1048575; 0 means no group
-	height_group N                             an integer 0..1048575; 0 means no group
+	border style=... style-top=...              style: a border style name (Round, Solid,
+	       style-right=... style-bottom=...     Heavy, ...) for all four sides; the
+	       style-left=... color=...             style-SIDE keys override it for one side;
+	                                            color: a color string
+	border_width N                              all four sides, an integer 0..65535
+	border_width left=N right=N top=N bottom=N  per side; missing sides are 0
+	background_color "..."                      a color string
+	glyphs_show_through #true                   #true or #false (the default): whether text
+	                                            and borders below a translucent background
+	                                            stay visible (see Term::Fabulous::Widget)
+	border_color "..."                          a color string (same as border color=)
+	width_group N                               an integer 0..1048575; 0 means no group
+	height_group N                              an integer 0..1048575; 0 means no group
 
 C<layout>, C<sizing>, C<padding>, C<border>, C<child_alignment> and
 C<floating> take only the keys shown, and at least one of them. The
@@ -663,7 +671,7 @@ L<Term::Fabulous::Widget/floating> and
 L<Term::Fabulous::Manual::Layout/Floating widgets>); its keys are:
 
 	Key              Value
-	---------------  -------------------------------------------------------
+	---------------  ----------------------------------------------------------
 	attach_to        parent (the default), root or element; element
 	                 requires parent_id
 	parent_id        the id of the widget to attach to (with attach_to=element)
@@ -692,6 +700,8 @@ A property node may appear more than once. A second C<padding>,
 C<sizing>, C<layout>, C<child_alignment> or C<floating> node changes
 only the keys it names and keeps the others.
 
+=for highlighter language=kdl
+
 	Box "panel" {
 		layout direction=down gap=1
 		sizing width="percent(50)" height=fit
@@ -704,6 +714,8 @@ only the keys it names and keeps the others.
 =head1 EXAMPLES
 
 =head2 A form, built from a layout
+
+=for highlighter language=perl
 
 	use v5.24;
 	use warnings;
@@ -840,6 +852,8 @@ Everything that is wrong with a layout dies, either in L</new> or in
 L</build>. Messages start with C<Term::Fabulous::Layout:>; errors in a
 widget's properties also name the widget and its id, followed by the
 widget class's own message:
+
+=for highlighter language=text
 
 	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 

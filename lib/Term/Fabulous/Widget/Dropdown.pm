@@ -446,7 +446,7 @@ list that opens
 
 =begin html
 
-<p><img src="/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-dropdown.svg" alt="Three dropdowns: a placeholder, France selected, and an open list of colors with Blue highlighted"></p>
 
 =end html
 
@@ -836,6 +836,8 @@ One option; C<value=> is optional and defaults to the label.
 
 =back
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Dropdown as Dropdown
 
 	Dropdown "color" {
@@ -853,6 +855,8 @@ dies.
 =head1 EXAMPLES
 
 =head2 Options with numeric values
+
+=for highlighter language=perl
 
 	my $priority = Term::Fabulous::Widget::Dropdown->new(
 		options => [ [ Low => 1 ], [ Normal => 2 ], [ High => 3 ] ],

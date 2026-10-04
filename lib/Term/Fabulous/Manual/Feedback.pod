@@ -46,7 +46,7 @@ The picture shows the forms a bar can take
 
 =begin html
 
-<p><img src="/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
 
 =end html
 
@@ -95,6 +95,8 @@ C<text_color> and, for a label inside the bar, C<inside_text_color>;
 the program changes C<color> to show a state, for example red below a
 threshold. In KDL:
 
+=for highlighter language=kdl
+
 	ProgressBar "download" {
 		max 2048
 		value 860
@@ -107,6 +109,8 @@ threshold. In KDL:
 A L<Term::Fabulous::Widget::Spinner> shows that the program is busy
 with something it cannot measure: connecting, waiting, loading. It
 cycles through the frames of its style next to a label:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Spinner;
 
@@ -126,11 +130,13 @@ picture shows every style (F<examples/widgets/spinner.pl>):
 
 =begin html
 
-<p><img src="/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	Spinner "busy" {
 		style "arc"
@@ -147,6 +153,8 @@ everything else, where it lines up below the toasts shown there
 before, and takes it away after C<timeout> seconds; a click on the
 close mark or C<hide> takes it away at once. Toasts take no focus and
 no keys:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Toast;
 
@@ -167,12 +175,14 @@ shows toasts of every kind, an important one and an alert box
 
 =begin html
 
-<p><img src="/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-toast.svg" alt="Toasts stacked in the top right corner: an info, a success and a warning toast with titles, messages and close marks, a filled danger toast in the bottom right corner, and an alert box inside the form"></p>
 
 =end html
 
 A toast fires C<Close> (L<Term::Fabulous::Event::Close>) when it goes,
 whichever way. In KDL a toast is an alert box inside its parent:
+
+=for highlighter language=kdl
 
 	Toast "unsaved" {
 		kind "warning"

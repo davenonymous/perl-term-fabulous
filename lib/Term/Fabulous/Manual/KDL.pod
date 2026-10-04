@@ -32,6 +32,8 @@ language made of nested I<nodes>: a name, optional values and an
 optional block of child nodes in braces. In a layout file, a node is
 either a widget or a property of the widget it is in:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Box as Box
 	use Term::Fabulous::Widget::Text as Text
 
@@ -47,6 +49,8 @@ either a widget or a property of the widget it is in:
 	}
 
 This builds the same tree as:
+
+=for highlighter language=perl
 
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
@@ -78,11 +82,13 @@ picked the second server.
 
 =begin html
 
-<p><img src="/screenshots/example-kdl-layout.svg" alt="A title bar, a sidebar with the buttons web, db and mail with db focused, and a main panel showing the details of the db server"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-kdl-layout.svg" alt="A title bar, a sidebar with the buttons web, db and mail with db focused, and a main panel showing the details of the db server"></p>
 
 =end html
 
 The layout file:
+
+=for highlighter language=kdl
 
 =for code-from examples/kdl-layout.kdl
 
@@ -181,6 +187,8 @@ The layout file:
 The program loads the file, finds the widgets it needs by their ids and
 attaches a listener:
 
+=for highlighter language=perl
+
 =for code-from examples/kdl-layout.pl
 
 	# A screen described in a KDL layout file, examples/kdl-layout.kdl: a
@@ -262,8 +270,10 @@ share a line: C<Text { text "web"; text_color "#dcdcdc"; }>. A node's
 values come after its name: I<arguments> (C<text "Hello">) and
 I<key=value pairs> (C<padding left=1 right=1>).
 
+=for highlighter language=text
+
 	Value                            Example                 Perl value
-	-------------------------------  ----------------------  ----------
+	-------------------------------  ----------------------  --------------
 	string in double quotes          "Hello, world"          'Hello, world'
 	bare word (an identifier)        grow, Round, down       'grow', ...
 	integer or decimal number        40, 2.5, 0x1f           40, 2.5, 31
@@ -278,6 +288,8 @@ C<#true> and C<#false>; a bare C<true> is a syntax error.
 Comments are C<// to the end of the line>, C</* blocks */>, and C</->
 in front of a node, which comments out the whole node with its
 children:
+
+=for highlighter language=kdl
 
 	/- Text { text "not shown"; }
 
@@ -422,22 +434,24 @@ channel value 1, almost transparent.
 Where Perl code passes a constant or an object, a layout writes a name.
 The most common ones:
 
-	Perl                                   KDL
-	-------------------------------------  ----------------------------------
-	layout_direction => CLAY_TOP_TO_BOTTOM layout direction=down
-	                    CLAY_LEFT_TO_RIGHT                  right
-	                    CLAY_LEFT_TO_RIGHT_WRAP             wrap
-	                    CLAY_BACK_TO_FRONT                  stack
-	line_sizing => CLAY_LINE_SIZING_FIT    layout line_sizing=fit (or grow)
-	sizing_grow(), sizing_fit()            sizing width=grow height=fit
-	sizing_grow(10, 40), sizing_fit(30)    "grow(10, 40)", "fit(30)"
-	sizing_fixed(20)                       "fixed(20)"
-	sizing_percent(0.5)                    "percent(50)"   (a percentage!)
-	CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_...  child_alignment x=center y=bottom
-	BorderStyle->Round                     border style=Round
-	floating => { attach_to => ... }       floating attach_to=element ...
-	wrap_mode => CLAY_TEXT_WRAP_NONE       wrap_mode none   (Text)
-	text_alignment => CLAY_TEXT_ALIGN_...  text_alignment center   (Text)
+=for highlighter language=text
+
+	Perl                                         KDL
+	-------------------------------------------  ----------------------------------
+	layout_direction => CLAY_TOP_TO_BOTTOM       layout direction=down
+	                    CLAY_LEFT_TO_RIGHT                        right
+	                    CLAY_LEFT_TO_RIGHT_WRAP                   wrap
+	                    CLAY_BACK_TO_FRONT                        stack
+	line_sizing => CLAY_LINE_SIZING_FIT          layout line_sizing=fit (or grow)
+	sizing_grow(), sizing_fit()                  sizing width=grow height=fit
+	sizing_grow(10, 40), sizing_fit(30)          "grow(10, 40)", "fit(30)"
+	sizing_fixed(20)                             "fixed(20)"
+	sizing_percent(0.5)                          "percent(50)"   (a percentage!)
+	CLAY_ALIGN_X_CENTER, CLAY_ALIGN_Y_...        child_alignment x=center y=bottom
+	BorderStyle->Round                           border style=Round
+	floating => { attach_to => ... }             floating attach_to=element ...
+	wrap_mode => CLAY_TEXT_WRAP_NONE             wrap_mode none   (Text)
+	text_alignment => CLAY_TEXT_ALIGN_...        text_alignment center   (Text)
 
 Border style names are case sensitive and are the names of the
 L<Term::Fabulous::Enum::BorderStyle> items (C<Round>, C<Solid>,
@@ -452,6 +466,8 @@ manual shows the KDL form of every layout option next to its Perl form.
 C<build> returns only the root widget. Get the other widgets with
 L<find_by_id|Term::Fabulous::Widget/find_by_id>, which searches the tree below a
 widget and returns the first widget with that id, or C<undef>:
+
+=for highlighter language=perl
 
 	my $root   = $layout->build;
 	my $status = $root->find_by_id('status');
@@ -521,6 +537,8 @@ L<Term::Fabulous::Widget::Box> (or of any other widget) inherits the
 role and all properties of its parent, and adds its own with a
 C<layout_properties> method:
 
+=for highlighter language=kdl
+
 	use My::Panel as Panel
 
 	Panel "network" {
@@ -539,6 +557,8 @@ general.
 Everything that is wrong with a layout dies with a message that starts
 with C<Term::Fabulous::Layout:>. Problems with the document itself die
 in C<new>:
+
+=for highlighter language=text
 
 	Term::Fabulous::Layout: failed to parse KDL: KDL parse error
 	Term::Fabulous::Layout: invalid widget alias 'text'; it must start with an uppercase letter and contain only letters, digits and '_'
@@ -579,7 +599,7 @@ a form of every input widget, shipped as F<examples/kdl-form.pl>.
 
 =begin html
 
-<p><img src="/screenshots/example-kdl-form.svg" alt="The KDL form filled in, with all values shown in the status line after F2"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-kdl-form.svg" alt="The KDL form filled in, with all values shown in the status line after F2"></p>
 
 =end html
 

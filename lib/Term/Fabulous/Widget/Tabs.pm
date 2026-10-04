@@ -314,7 +314,7 @@ Term::Fabulous::Widget::Tabs - Pages behind a row of tabs
 
 =begin html
 
-<p><img src="/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, tabs with vertical labels along the left side, a tab bar at the bottom in the Heavy style, and tabs on the right without a page border"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, tabs with vertical labels along the left side, a tab bar at the bottom in the Heavy style, and tabs on the right without a page border"></p>
 
 =end html
 
@@ -331,6 +331,8 @@ tabs of its bar. The bar is drawn as a row of boxes that join the
 border of the page: the active tab is one cell larger and open toward
 the page, so that it and the page are one shape, while the others are
 closed by the page's line and look as if they stood behind it:
+
+=for highlighter language=text
 
 	 ╭─────────╮
 	 │ General │ ╭─────────╮ ╭───────╮
@@ -370,6 +372,8 @@ page, so use L</pages> rather than C<children> to get at the pages.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $tabs = Term::Fabulous::Widget::Tabs->new(%parameters);
 
@@ -684,6 +688,8 @@ and the colors C<line_color>, C<text_color>, C<active_text_color>,
 C<hover_background_color> and C<disabled_color>. The pages are C<Page>
 child nodes (see L<Term::Fabulous::Widget::Tabs::Page/KDL PROPERTIES>):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Tabs as Tabs
 	use Term::Fabulous::Widget::Tabs::Page as Page
 	use Term::Fabulous::Widget::Text as Text
@@ -705,6 +711,8 @@ child nodes (see L<Term::Fabulous::Widget::Tabs::Page/KDL PROPERTIES>):
 =head1 EXAMPLES
 
 =head2 A sidebar of tabs
+
+=for highlighter language=perl
 
 	my $tabs = Term::Fabulous::Widget::Tabs->new( side => 'left', tab_alignment => 'start' );
 

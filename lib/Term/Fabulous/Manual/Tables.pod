@@ -90,7 +90,7 @@ row, a sort, a multiple selection and pages:
 
 =begin html
 
-<p><img src="/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-table.svg" alt="A table of staff with a filter row, sorted by the start date, two rows selected with check boxes and a pager below"></p>
 
 =end html
 
@@ -284,6 +284,8 @@ L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>.
 
 =head1 ROWS
 
+=for highlighter language=text
+
 	Parameters: rows, row_id
 	Methods:    rows, row, row_ids, row_count, has_row, value, display_value,
 	            filtered_row_ids, page_row_ids, add_row, add_rows, update_row,
@@ -294,6 +296,8 @@ the C<rows> parameter or later with the C<rows> method. A row can hold
 more entries than the table has columns; the extra entries are kept and
 passed to your code (mutators, cell widgets, filters), so a row can
 carry everything you need to know about it.
+
+=for highlighter language=perl
 
 	my $table = Term::Fabulous::Widget::Table->new(
 		id      => 'files',
@@ -317,7 +321,7 @@ is a complete program:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-basics.svg" alt="A table of user accounts sorted by name, two rows selected with check boxes, and two status lines below: the selected logins and the account opened with Enter"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-basics.svg" alt="A table of user accounts sorted by name, two rows selected with check boxes, and two status lines below: the selected logins and the account opened with Enter"></p>
 
 =end html
 
@@ -424,6 +428,8 @@ L</Updating cell widgets instead of rebuilding them>.
 
 =head1 COLUMNS
 
+=for highlighter language=text
+
 	Parameters: columns
 	Methods:    columns, column, column_keys, add_column, remove_column,
 	            move_column, update_column, visible_columns,
@@ -436,6 +442,8 @@ L</Updating cell widgets instead of rebuilding them>.
 The C<columns> parameter is an array reference with one hash reference
 per column, in the order they are shown. Only C<key> is required:
 
+=for highlighter language=perl
+
 	columns => [
 		{ key => 'name',    title => 'Name', width => 'grow' },
 		{ key => 'size',    title => 'Size', type => 'number', mutator => bytes() },
@@ -446,6 +454,8 @@ per column, in the order they are shown. Only C<key> is required:
 The table turns each hash into a L<Term::Fabulous::Widget::Table::Column>
 object. That class's page describes every column parameter in full;
 here is the overview:
+
+=for highlighter language=text
 
 	key            the column's name and, by default, the row entry it shows (required)
 	title          the header text (default: the key)
@@ -479,6 +489,8 @@ one about an unknown key names the key
 C<width> sets how wide a column is, in terminal cells (character
 cells), including the cell padding (one cell left and right by default;
 see L<Term::Fabulous::Manual::TableStyles/Cell padding>):
+
+=for highlighter language=perl
 
 	width => 'fit'           # as wide as the widest cell of the column (the default)
 	width => 'fit(8)'        # the same, but at least 8 cells
@@ -521,7 +533,7 @@ newlines of its text:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-widths.svg" alt="An order table with a fixed number column, a growing Item column, a Notes column that takes a third of the width and wraps, an address column of two lines per row, a centered quantity, prices with a left-aligned title, and a Rating title with a star"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-widths.svg" alt="An order table with a fixed number column, a growing Item column, a Notes column that takes a third of the width and wraps, an address column of two lines per row, a centered quantity, prices with a left-aligned title, and a Rating title with a star"></p>
 
 =end html
 
@@ -626,11 +638,13 @@ is a complete program:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-columns.svg" alt="A staff table with the column chooser open over its top right corner: City unchecked, E-mail checked, and the status line with the columns to save"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-columns.svg" alt="A staff table with the column chooser open over its top right corner: City unchecked, E-mail checked, and the status line with the columns to save"></p>
 
 =end html
 
 =head1 DISPLAY TEXT AND MUTATORS
+
+=for highlighter language=text
 
 	Column parameters: mutator, value, type
 	Methods:           display_value, value
@@ -650,11 +664,13 @@ column is a computed column (see L</Computed columns>):
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-format.svg" alt="A table of backup jobs with formatted times, durations, sizes, file counts, percentages, transfer rates and check marks, sorted by size, and a line that shows the raw value and the display text of one size"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-format.svg" alt="A table of backup jobs with formatted times, durations, sizes, file counts, percentages, transfer rates and check marks, sorted by size, and a line that shows the raw value and the display text of one size"></p>
 
 =end html
 
 L<Term::Fabulous::Widget::Table::Mutator> makes the common mutators:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Table::Mutator qw(datetime date number percent bytes duration boolean lookup truncate);
 
@@ -735,6 +751,8 @@ comparators and filters read values the same way.
 
 =head1 CELL WIDGETS
 
+=for highlighter language=text
+
 	Column parameters: cell, update_cell, header
 	Methods:           cell_widget
 
@@ -745,6 +763,8 @@ L<Term::Fabulous::Widget::Checkbox>, a
 L<Term::Fabulous::Widget::TextField>, a
 L<Term::Fabulous::Widget::PixelCanvas>, or a
 L<Term::Fabulous::Widget::Box> with several children.
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Button;
 	use Term::Fabulous::Widget::Text;
@@ -760,6 +780,8 @@ L<Term::Fabulous::Widget::Box> with several children.
 
 The code gets one hash reference, the I<cell context>, with these
 keys:
+
+=for highlighter language=text
 
 	value     the raw value of the cell
 	display   the display text (after the mutators)
@@ -779,7 +801,7 @@ has a check box and a delete button in every row:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-table-edit.svg" alt="A to-do table with check boxes, delete buttons and a note column, two tasks selected, a new task added and the status line below"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-table-edit.svg" alt="A to-do table with check boxes, delete buttons and a note column, two tasks selected, a new task added and the status line below"></p>
 
 =end html
 
@@ -828,6 +850,8 @@ code reference: the table then keeps the widget when the row's data
 changes and calls C<< update_cell->( $widget, $cell ) >> with the
 existing widget and the new cell context instead. C<update_cell> needs a
 C<cell>.
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Checkbox;
 

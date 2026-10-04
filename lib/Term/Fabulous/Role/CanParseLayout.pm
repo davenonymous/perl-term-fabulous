@@ -157,6 +157,8 @@ a KDL layout
 
 and in a layout:
 
+=for highlighter language=kdl
+
 	use My::Panel as Panel
 
 	Panel "settings" {
@@ -172,6 +174,8 @@ and in a layout:
 L<Term::Fabulous::Layout> builds a widget tree from a KDL document.
 For every widget node it constructs the widget with only its id, and
 then hands the node to the finished widget:
+
+=for highlighter language=perl
 
 	my $widget = $class->new( id => $id );
 	$widget->apply_layout_node($node);
@@ -308,9 +312,13 @@ The single argument of a boolean property node: C<#true> and C<1> give
 C<1>, C<#false> and C<0> give C<0>. Anything else dies, including
 C<#null>, other numbers and strings such as C<"false">:
 
+=for highlighter language=text
+
 	Term::Fabulous::Widget::Checkbox: layout property 'checked' must be #true or #false, got 'false'
 
 =head2 kdl_value
+
+=for highlighter language=perl
 
 	my $value = $self->kdl_value($kid);
 

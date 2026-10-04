@@ -182,7 +182,7 @@ F<examples/custom-widget.pl>.
 
 =begin html
 
-<p><img src="/screenshots/example-custom-widget.svg" alt="Three toggle switches, Bluetooth focused and switched on, and the status line"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-custom-widget.svg" alt="Three toggle switches, Bluetooth focused and switched on, and the status line"></p>
 
 =end html
 
@@ -346,7 +346,7 @@ directory:
 
 =begin html
 
-<p><img src="/screenshots/cookbook-kdl-panel.svg" alt="The Network panel in a rounded frame and the Disk panel in a double frame"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-kdl-panel.svg" alt="The Network panel in a rounded frame and the Disk panel in a double frame"></p>
 
 =end html
 
@@ -354,6 +354,8 @@ The program prints two framed panels: "Network" (in blue) above
 "Connected to the office network." in a rounded frame, and "Disk" above
 "42 % used" in a double-lined frame. In a pipe or a file, it prints
 the same without colors:
+
+=for highlighter language=text
 
 	╭──────────────────────────────────────╮
 	│ Network                              │
@@ -408,6 +410,8 @@ the built-in events.
 
 This program is shipped as F<examples/cookbook/custom-events.pl>.
 
+=for highlighter language=perl
+
 =for code-from examples/cookbook/custom-events.pl
 
 	use v5.24;
@@ -456,6 +460,8 @@ This program is shipped as F<examples/cookbook/custom-events.pl>.
 	$editor->fire_event( Clay::UI::Events::Event->new( name => 'Refresh', bubble_mode => Clay::UI::Enum::Bubble->ALWAYS ) );
 
 The program prints:
+
+=for highlighter language=text
 
 	editor: saved /tmp/notes.txt
 	app: editor saved /tmp/notes.txt

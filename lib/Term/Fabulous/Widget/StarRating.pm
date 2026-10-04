@@ -329,7 +329,7 @@ Term::Fabulous::Widget::StarRating - Rate something with a row of stars
 
 =begin html
 
-<p><img src="/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
 
 =end html
 
@@ -342,6 +342,8 @@ The program is F<examples/widgets/star-rating.pl>.
 
 A star rating shows C<max> stars (five by default), the first C<value>
 of them filled, and optionally the value as text:
+
+=for highlighter language=text
 
 	★ ★ ★ ☆ ☆  3/5
 
@@ -367,6 +369,8 @@ label.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $rating = Term::Fabulous::Widget::StarRating->new(%parameters);
 
@@ -644,6 +648,8 @@ references cannot be written in KDL), C<full_glyph>, C<empty_glyph>,
 C<half_glyph>, C<half>, C<read_only> and C<show_value> (C<#true> /
 C<#false>), and C<inactive_color> and C<half_color> (color strings):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::StarRating as StarRating
 
 	StarRating "rating" {
@@ -659,6 +665,8 @@ order.
 =head1 EXAMPLES
 
 =head2 A rating in a list
+
+=for highlighter language=perl
 
 	my $stars = Term::Fabulous::Widget::StarRating->new( value => 4, read_only => 1, gap => 0 );
 

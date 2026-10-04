@@ -48,7 +48,7 @@ horizontal
 
 =begin html
 
-<p><img src="/screenshots/widget-bar-chart.svg" alt="Pairs of bars for 2025 and 2026 in four quarters, each bar with its value written above it"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-bar-chart.svg" alt="Pairs of bars for 2025 and 2026 in four quarters, each bar with its value written above it"></p>
 
 =end html
 
@@ -94,6 +94,8 @@ C<fill_opacity>, C<marker>.
 Those of L<Term::Fabulous::Widget::XYChart/METHODS>.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::BarChart as BarChart
 

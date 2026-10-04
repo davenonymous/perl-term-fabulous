@@ -384,7 +384,7 @@ distribution.
 
 =begin html
 
-<p><img src="/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-border-showcase.svg" alt="Twenty boxes, one in each border style, labeled with the style's name"></p>
 
 =end html
 
@@ -538,6 +538,8 @@ edge, bottom-left corner, bottom edge, bottom-right corner.
 An array reference of eight location codes, one per glyph in the order
 of L</glyphs>. The code decides which colors the glyph is drawn in:
 
+=for highlighter language=text
+
 	Code  Foreground                Background
 	----  ------------------------  ------------------------------------
 	0     border color              the widget's own background
@@ -551,6 +553,8 @@ video attribute, which also works when one of the colors is the
 terminal default color.
 
 =head2 get_top_glyphs
+
+=for highlighter language=perl
 
 	my ( $left_corner, $edge, $right_corner ) = $style->get_top_glyphs;
 

@@ -97,7 +97,7 @@ This program is shipped as F<examples/cookbook/minimal-program.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-minimal-program.svg" alt="The minimal program: one line of text on a dark background"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-minimal-program.svg" alt="The minimal program: one line of text on a dark background"></p>
 
 =end html
 
@@ -220,7 +220,7 @@ This program is shipped as F<examples/cookbook/non-ascii-text.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-non-ascii-text.svg" alt="German, Japanese and a combining accent, each line aligned in its columns"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-non-ascii-text.svg" alt="German, Japanese and a combining accent, each line aligned in its columns"></p>
 
 =end html
 
@@ -228,6 +228,8 @@ The program prints three lines: the German greeting, seven Japanese
 characters that take two columns each (14 columns) followed by C<|>,
 and an C<e> with an acute accent followed by the rest of the line. In a
 pipe or a file, it prints:
+
+=for highlighter language=text
 
 	Grüße aus München
 	いろはにほへと|
@@ -268,6 +270,8 @@ Goal: control how a L<Term::Fabulous::Widget::Text> breaks its lines,
 how it aligns them and how much room each line gets.
 
 This program is shipped as F<examples/cookbook/wrap-and-align-text.pl>.
+
+=for highlighter language=perl
 
 =for code-from examples/cookbook/wrap-and-align-text.pl
 
@@ -333,11 +337,13 @@ This program is shipped as F<examples/cookbook/wrap-and-align-text.pl>.
 
 =begin html
 
-<p><img src="/screenshots/cookbook-wrap-and-align-text.svg" alt="Six framed samples: wrapped text aligned left, centered and right, text broken only at line breaks, two rows per line, and a centered label"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-wrap-and-align-text.svg" alt="Six framed samples: wrapped text aligned left, centered and right, text broken only at line breaks, two rows per line, and a centered label"></p>
 
 =end html
 
 In a pipe or a file, the program prints the same without colors:
+
+=for highlighter language=text
 
 	+----------------------+  +----------------------+  +----------------------+
 	|Default: wrap at words|  |Centered lines        |  |Right-aligned lines   |
@@ -418,6 +424,8 @@ copy text on the screen with the terminal's own selection.
 
 Create the L<Term::Fabulous> object of the program in
 L</A minimal program to start from> with C<mouse =E<gt> 0>:
+
+=for highlighter language=perl
 
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24, mouse => 0 );
 

@@ -163,7 +163,7 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 
 =begin html
 
-<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
 
 =end html
 
@@ -350,6 +350,8 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<horizontal>, C<vertical> and C<scrollbar> (C<#true> or C<#false>) and
 the colors C<track_color> and C<thumb_color>. The node needs an id
 argument:
+
+=for highlighter language=kdl
 
 	ScrollBox "log" {
 		layout direction=down

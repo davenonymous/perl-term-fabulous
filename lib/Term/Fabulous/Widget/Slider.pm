@@ -332,7 +332,7 @@ Term::Fabulous::Widget::Slider - Choose a number from a range by moving a thumb
 
 =begin html
 
-<p><img src="/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-slider.svg" alt="Three sliders: focused at 65 percent, a temperature of 21.5 degrees, and a disabled one"></p>
 
 =end html
 
@@ -346,6 +346,8 @@ program is F<examples/widgets/slider.pl>.
 A slider lets the user choose a number from a range. It shows a
 horizontal track with a thumb at the current value and, by default, the
 value itself right of the track:
+
+=for highlighter language=text
 
 	==========o---------  50
 
@@ -374,6 +376,8 @@ value label plus one column wide.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $slider = Term::Fabulous::Widget::Slider->new(%parameters);
 
@@ -659,6 +663,8 @@ C<min>, C<max>, C<step>, C<page_step>, C<value>, C<show_value>
 references cannot be written in KDL), C<preferred_columns>,
 C<fill_glyph>, C<track_glyph>, C<thumb_glyph> and C<track_color>:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Slider as Slider
 
 	Slider "temperature" {
@@ -676,6 +682,8 @@ works although the default C<max> is 100.
 =head1 EXAMPLES
 
 =head2 A percentage with a custom label
+
+=for highlighter language=perl
 
 	my $opacity = Term::Fabulous::Widget::Slider->new(
 		min          => 0,

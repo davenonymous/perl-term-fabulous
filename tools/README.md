@@ -16,14 +16,25 @@ make docs-check    # fails when anything is out of date; part of `make release`
 1. copies every program shown in the POD into its code block: a code
    block marked with `=for code-from FILE` is replaced by the file
    (without its `#!` line), so the POD always shows the shipped code;
-2. checks that every screenshot the POD shows
-   (`<img src="/screenshots/NAME.svg">` in a `=begin html` block) is
-   defined in `screenshots/screenshots.kdl`, and that every defined
-   screenshot is shown somewhere;
-3. takes every screenshot again and writes `screenshots/NAME.svg` when it
+2. checks that every image the POD shows is a screenshot
+   (`<img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/TAG/screenshots/NAME.svg">`
+   in a `=begin html` block), that every screenshot is defined in
+   `screenshots/screenshots.kdl`, and that every defined screenshot is
+   shown somewhere;
+3. points the URL of every screenshot to the tag `vVERSION` of the
+   current `$VERSION`: MetaCPAN shows images in the POD only with
+   absolute URLs, and so each release shows its own screenshots once its
+   tag is pushed;
+4. takes every screenshot again and writes `screenshots/NAME.svg` when it
    changed;
 
-and then regenerates `README.md` (`make readme`).
+and then regenerates the Markdown pages (`make readme`):
+`tools/pod2markdown` writes `README.md` from `lib/Term/Fabulous.pm` and
+`docs/NAME.md` from every other `lib/NAME.pm` and `lib/NAME.pod`. The
+pages link to each other, show the screenshots of the `master` branch
+and fence every code block with the language of the last
+`=for highlighter language=NAME` paragraph before it (`perl` by
+default). See `perldoc tools/pod2markdown`.
 
 `make docs-check` does the same without writing anything and lists what
 is out of date.
@@ -104,4 +115,4 @@ All under `tools/lib/Term/Fabulous/Screenshot/`:
 | `Screen` | the captured cells |
 | `Scene`, `BoxDrawing`, `Theme` | what the image shows, independent of the format |
 | `Render::SVG`, `Render::PNG` | draw a scene |
-| `PodSync` | the code blocks marked with `=for code-from` |
+| `PodSync` | the code blocks marked with `=for code-from` and the screenshot URLs |

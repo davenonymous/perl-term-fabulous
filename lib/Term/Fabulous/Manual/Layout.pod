@@ -228,6 +228,8 @@ L<cells|Term::Fabulous::Manual::Glossary/cell>.
 
 The same box in a KDL layout:
 
+=for highlighter language=kdl
+
 	Box {
 		layout direction=down gap=1
 		sizing width=grow height=fit
@@ -243,8 +245,10 @@ ones you use, or all of them with C<use Clay::XS qw(:all)>.
 
 =head2 The layout keys
 
+=for highlighter language=text
+
 	Perl key            KDL                          Section
-	------------------  ---------------------------  ------------------------------
+	------------------  ---------------------------  -------------------------------
 	layout_direction    layout direction=...         Direction, Flow, Stack
 	sizing              sizing width=... height=...  Sizing
 	padding             padding left=N ...           Padding
@@ -283,6 +287,8 @@ See L</Stack layout>.
 
 =back
 
+=for highlighter language=perl
+
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
 
 	my $column = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
@@ -296,7 +302,7 @@ the program is F<examples/layout-direction.pl>.
 
 =begin html
 
-<p><img src="/screenshots/example-layout-direction.svg" alt="Four panels: three boxes side by side, three boxes in a column, seven boxes wrapped onto two lines, and three boxes of different sizes on top of each other"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-layout-direction.svg" alt="Four panels: three boxes side by side, three boxes in a column, seven boxes wrapped onto two lines, and three boxes of different sizes on top of each other"></p>
 
 =end html
 
@@ -344,7 +350,7 @@ dies. Values with parentheses must be quoted in KDL.
 
 =begin html
 
-<p><img src="/screenshots/example-layout-sizing.svg" alt="Eight rows, each a track with colored boxes sized by fit, fit with a minimum, fixed, percent, grow, grow with a maximum, fixed plus grow, and two grow boxes"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-layout-sizing.svg" alt="Eight rows, each a track with colored boxes sized by fit, fit with a minimum, fixed, percent, grow, grow with a maximum, fixed plus grow, and two grow boxes"></p>
 
 =end html
 
@@ -367,6 +373,8 @@ main area that takes the rest look like this:
 	$columns->add_child( $sidebar, $main );
 
 In KDL:
+
+=for highlighter language=kdl
 
 	Box {
 		sizing width=grow height=grow
@@ -395,6 +403,8 @@ C<top> and C<bottom>, each a number of cells. Missing sides are 0.
 C<padding_all(1)> from L<Clay::XS> builds a hash with the same value on
 all four sides.
 
+=for highlighter language=perl
+
 	use Clay::XS qw(padding_all);
 
 	my $card = Term::Fabulous::Widget::Box->new(
@@ -408,7 +418,7 @@ for all four sides.
 
 =begin html
 
-<p><img src="/screenshots/example-layout-padding.svg" alt="Three boxes with the same three children: without padding and gap, with padding and a gap of one row, and with a border and one cell of padding"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-layout-padding.svg" alt="Three boxes with the same three children: without padding and gap, with padding and a gap of one row, and with a border and one cell of padding"></p>
 
 =end html
 
@@ -465,7 +475,7 @@ out.
 
 =begin html
 
-<p><img src="/screenshots/example-layout-alignment.svg" alt="Nine boxes in a grid, each with one child placed at a different combination of left, center, right and top, center, bottom"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-layout-alignment.svg" alt="Nine boxes in a grid, each with one child placed at a different combination of left, center, right and top, center, bottom"></p>
 
 =end html
 
@@ -500,6 +510,8 @@ to the terminal width need no code of their own:
 
 In KDL:
 
+=for highlighter language=kdl
+
 	Box "tags" {
 		layout direction=wrap gap=1 line_gap=0 line_sizing=fit
 		sizing width=grow
@@ -507,7 +519,7 @@ In KDL:
 
 =begin html
 
-<p><img src="/screenshots/example-flow.svg" alt="Twenty colored tags in a rounded box, wrapped onto several lines"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-flow.svg" alt="Twenty colored tags in a rounded box, wrapped onto several lines"></p>
 
 =end html
 
@@ -561,6 +573,8 @@ its children on top of each other inside its padding. Later children
 are drawn over earlier ones, so a background, the content and a badge in
 the corner are three children in that order:
 
+=for highlighter language=perl
+
 	use Clay::XS qw(sizing_grow CLAY_BACK_TO_FRONT CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP);
 
 	my $card = Term::Fabulous::Widget::Box->new(
@@ -582,6 +596,8 @@ the corner are three children in that order:
 
 In KDL:
 
+=for highlighter language=kdl
+
 	Box "card" {
 		layout direction=stack
 		child_alignment x=right y=top
@@ -600,7 +616,7 @@ In KDL:
 
 =begin html
 
-<p><img src="/screenshots/example-stack.svg" alt="Three bordered cards with colored badges in their top right corners above a log with a bordered message centered over it"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-stack.svg" alt="Three bordered cards with colored badges in their top right corners above a log with a bordered message centered over it"></p>
 
 =end html
 
@@ -644,6 +660,8 @@ position relative to its parent, to the whole screen or to any other
 widget. Menus, tooltips, badges and notifications are floating widgets.
 L<Term::Fabulous::Widget::Dialog> uses the same mechanism.
 
+=for highlighter language=perl
+
 	use Clay::XS qw(Clay_GetElementId CLAY_ATTACH_TO_ELEMENT_WITH_ID
 		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_BOTTOM);
 
@@ -662,6 +680,8 @@ L<Term::Fabulous::Widget::Dialog> uses the same mechanism.
 In KDL the keys have shorter names and C<parent_id> takes the widget's
 id directly:
 
+=for highlighter language=kdl
+
 	Box "file-menu" {
 		floating attach_to=element parent_id="file-button" element=left_top parent=left_bottom z_index=10
 		background_color "rgb(40, 46, 64)"
@@ -669,7 +689,7 @@ id directly:
 
 =begin html
 
-<p><img src="/screenshots/example-layout-floating.svg" alt="A File menu open below its button over a panel, a red badge on the panel's top right corner and a green message in the bottom row of the screen"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-layout-floating.svg" alt="A File menu open below its button over a panel, a red badge on the panel's top right corner and a green message in the bottom row of the screen"></p>
 
 =end html
 
@@ -738,6 +758,8 @@ clicked or dragged; C<< scrollbar =E<gt> 0 >> removes it. Its size
 comes from its own C<sizing>, not from its content, so give it a
 C<grow>, C<fixed> or C<percent> height. It needs an id.
 
+=for highlighter language=perl
+
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 	my $log = Term::Fabulous::Widget::ScrollBox->new(
@@ -750,6 +772,8 @@ C<grow>, C<fixed> or C<percent> height. It needs an id.
 
 In KDL:
 
+=for highlighter language=kdl
+
 	ScrollBox "log" {
 		layout direction=down
 		sizing width=grow height=grow
@@ -757,7 +781,7 @@ In KDL:
 
 =begin html
 
-<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
 
 =end html
 
@@ -777,6 +801,8 @@ give them the same positive C<width_group> (or C<height_group>) number.
 After Clay has computed their natural size, all members of a group get
 the size of the largest one. This lines up, for example, the labels of
 a form whose rows are separate boxes:
+
+=for highlighter language=perl
 
 	my $label_a = Term::Fabulous::Widget::Box->new( width_group => 1 );
 	my $label_b = Term::Fabulous::Widget::Box->new( width_group => 1 );
@@ -841,11 +867,13 @@ one character per row. The picture shows the forms
 
 =begin html
 
-<p><img src="/screenshots/widget-divider.svg" alt="Dividers: a plain line, texts at the start, the center and the end, double and heavy lines in colors, and a vertical divider with a text between two columns"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-divider.svg" alt="Dividers: a plain line, texts at the start, the center and the end, double and heavy lines in colors, and a vertical divider with a text between two columns"></p>
 
 =end html
 
 In KDL:
+
+=for highlighter language=kdl
 
 	Divider { text "Network"; text_position "start"; bold #true; }
 	Divider { vertical #true; }
@@ -858,6 +886,8 @@ shows one part at a time. Each section is a
 L<Term::Fabulous::Widget::Accordion::Item> with a title and a body of
 any widgets; the body is part of the tree only while the item is open,
 so a closed section takes one row:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Accordion;
 	use Term::Fabulous::Widget::Accordion::Item;
@@ -883,11 +913,13 @@ both looks (F<examples/widgets/accordion.pl>):
 
 =begin html
 
-<p><img src="/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>
 
 =end html
 
 In KDL, the items are C<Item> nodes inside the accordion:
+
+=for highlighter language=kdl
 
 	Accordion "settings" {
 		Item "general" { title "General"; open #true; Text { text "..."; } }
@@ -902,6 +934,8 @@ window keeps every part at hand without scrolling. Each page is a
 L<Term::Fabulous::Widget::Tabs::Page> with a title and a body of any
 widgets; only the active page is part of the tree, so the others take
 no space and their widgets cannot take the focus:
+
+=for highlighter language=perl
 
 	use Term::Fabulous::Widget::Tabs;
 	use Term::Fabulous::Widget::Tabs::Page;
@@ -934,11 +968,13 @@ sit at the start, in the center or at the end of the bar
 
 =begin html
 
-<p><img src="/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a sidebar of tabs along the left side, a tab bar at the bottom in the Heavy style with the tabs in the center, and tall tabs with downward labels without a page border"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a sidebar of tabs along the left side, a tab bar at the bottom in the Heavy style with the tabs in the center, and tall tabs with downward labels without a page border"></p>
 
 =end html
 
 In KDL, the pages are C<Page> nodes inside the Tabs:
+
+=for highlighter language=kdl
 
 	Tabs "settings" {
 		side "left"

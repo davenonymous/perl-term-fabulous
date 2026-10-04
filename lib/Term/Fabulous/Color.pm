@@ -373,7 +373,7 @@ less and less alpha:
 
 =begin html
 
-<p><img src="/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-colors.svg" alt="Six orange swatches written in different formats; a blue darkened, lightened and blended with white in steps; red swatches with alpha 255, 192, 128, 64 and 0 over a light panel; a line in the terminal's default text color"></p>
 
 =end html
 
@@ -395,11 +395,15 @@ built (an exact half rounds up), and the rounded value must be from 0 to
 while C<255.5> and C<-1> die. Undefined values, non-numbers, NaN and
 infinities die too. The error names the channel and the value:
 
+=for highlighter language=text
+
 	Term::Fabulous::Color: red must be a number in 0..255, got '300'
 
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $color = Term::Fabulous::Color->new( color => $spec );
 
@@ -431,8 +435,10 @@ allowed. The function names are lowercase. Named colors such as
 C<'red'> and three-digit hex such as C<'#f00'> are not supported;
 L<Term::Fabulous::Enum::WebColor> has the CSS named colors as objects.
 
+=for highlighter language=text
+
 	String              Example                     Meaning
-	------------------  --------------------------  -------------------------------
+	------------------  --------------------------  ---------------------------------
 	#rrggbb             '#7c3aed', '7c3aed'         hex, alpha 255; '#' is optional
 	#rrggbbaa           '#7c3aed80'                 hex with alpha
 	packed integer      0xFF8800, '16746496'        0xRRGGBB as one number, alpha 255
@@ -476,6 +482,8 @@ Anything else (C<undef>, other references or objects, unknown strings)
 dies with the offending value in the message.
 
 =head2 rgb
+
+=for highlighter language=perl
 
 	my $color = Term::Fabulous::Color->rgb( $r, $g, $b );
 

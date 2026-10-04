@@ -409,7 +409,7 @@ Term::Fabulous::Widget::ProgressBar - How much of a task is done
 
 =begin html
 
-<p><img src="/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-progress-bar.svg" alt="Progress bars: a block bar at 42 percent, one with the value inside, a thin line bar, a striped bar, a bar of three colored segments, an indeterminate bar with its runner, and a two-row ASCII bar"></p>
 
 =end html
 
@@ -423,6 +423,8 @@ the ASCII style. The program is F<examples/widgets/progress-bar.pl>.
 
 A progress bar shows a value between C<min> and C<max> as a bar
 filled from the left, and the value as text next to it:
+
+=for highlighter language=text
 
 	████████▌░░░░░░░░░░░ 42%
 
@@ -453,6 +455,8 @@ plus the label wide; a taller layout gives a thicker bar.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $progress = Term::Fabulous::Widget::ProgressBar->new(%parameters);
 
@@ -790,6 +794,8 @@ C<#false>); the colors C<color>, C<track_color>, C<text_color> and
 C<inside_text_color>; and C<segment value=N color="..."> nodes, one
 per segment, which add to the segments given before:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::ProgressBar as ProgressBar
 
 	ProgressBar "download" {
@@ -812,6 +818,8 @@ before C<value> and the segments, so they may come in any order.
 =head1 EXAMPLES
 
 =head2 A download that reports bytes
+
+=for highlighter language=perl
 
 	my $progress = Term::Fabulous::Widget::ProgressBar->new(
 		max          => $total,

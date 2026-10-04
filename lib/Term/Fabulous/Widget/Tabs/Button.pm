@@ -320,6 +320,8 @@ bar fires L<Term::Fabulous::Event::Select> when a tab is chosen.
 The properties of L<Term::Fabulous::Widget::Button/KDL PROPERTIES>,
 plus C<title> and C<icon> (strings):
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Tabs::Button as Tab
 
 	Tab "network" {

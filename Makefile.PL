@@ -133,31 +133,39 @@ src/%$(OBJ_EXT) : src/%.c src/termbox2.h src/tf_termbox.h
 
 lib/Term/Fabulous/Termbox$(OBJ_EXT) : src/termbox2.h src/tf_termbox.h
 
-# --- README regeneration ---------------------------------------------
+# --- Markdown pages ---------------------------------------------------
 # Usage: make readme
 #
-# README.md is the GitHub-facing rendering of the pod in Fabulous.pm;
-# it is not shipped in the dist (see MANIFEST.SKIP), so distcheck
-# cannot flag drift. Regenerate it after any pod change.
+# README.md and the pages in docs/ are the pod of every module and pod
+# file under lib/ converted with tools/pod2markdown, a Pod::Markdown
+# subclass that links the pages to each other's Markdown files, points
+# the screenshots to the master branch on GitHub, removes the shared
+# indentation of code blocks, fences them with the language set by
+# '=for highlighter' and turns tables in 'text' blocks into Markdown
+# tables. README.md is shipped and shown on MetaCPAN, docs/ is not (see
+# MANIFEST.SKIP). Regenerate them after any pod change.
 
 .PHONY: readme
 
-readme :
-	@command -v pod2markdown >/dev/null 2>&1 || { \
-	    echo "ERROR: pod2markdown not found in PATH; cpanm Pod::Markdown"; \
+POD_MARKDOWN_CHECK = $(PERLRUN) -MPod::Markdown -e1 2>/dev/null || { \
+	    echo "ERROR: Pod::Markdown is not installed; cpanm Pod::Markdown"; \
 	    exit 1; \
 	}
-	pod2markdown lib/Term/Fabulous.pm > README.md
+
+readme :
+	@$(POD_MARKDOWN_CHECK)
+	$(PERLRUN) tools/pod2markdown
 
 # --- Documentation: code blocks and screenshots ----------------------
 # Usage: make docs         (after changing an example program)
 #        make docs-check   (fails when the documentation is out of date)
 #
 # tools/update-docs copies the example programs into the POD code blocks
-# marked '=for code-from FILE' and takes the screenshots defined in
-# screenshots/screenshots.kdl again; then README.md is regenerated. The
-# programs run against blib/, so this distribution is built first. See
-# tools/README.md.
+# marked '=for code-from FILE', points the screenshot URLs of the POD to
+# the tag of the current $VERSION on GitHub and takes the screenshots
+# defined in screenshots/screenshots.kdl again; then README.md and
+# docs/ are regenerated. The programs run against blib/, so this
+# distribution is built first. See tools/README.md.
 
 .PHONY: docs docs-check
 
@@ -167,12 +175,9 @@ docs : pure_all
 
 docs-check : pure_all
 	$(FULLPERLRUN) -Mblib tools/update-docs --check
-	@command -v pod2markdown >/dev/null 2>&1 || { \
-	    echo "ERROR: pod2markdown not found in PATH; cpanm Pod::Markdown"; \
-	    exit 1; \
-	}
-	@pod2markdown lib/Term/Fabulous.pm | cmp -s - README.md || { \
-	    echo "ERROR: README.md is out of date; run 'make readme' (or 'make docs')."; \
+	@$(POD_MARKDOWN_CHECK)
+	@$(PERLRUN) tools/pod2markdown --check || { \
+	    echo "ERROR: the Markdown pages are out of date; run 'make readme' (or 'make docs')."; \
 	    exit 1; \
 	}
 
@@ -185,7 +190,8 @@ docs-check : pure_all
 # Refuses to run if the git working tree is dirty, if any module's
 # $VERSION differs from the one in lib/Term/Fabulous.pm, if a tag
 # for the current $(VERSION) already exists, or if the documentation's
-# code blocks, screenshots or README.md are out of date (docs-check).
+# code blocks, screenshot URLs, screenshots or Markdown pages are out of
+# date (docs-check).
 # See RELEASING.md.
 #
 # disttest and dist run as separate sub-makes on purpose: as

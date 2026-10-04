@@ -564,7 +564,7 @@ title, legend, colors and hover
 
 =begin html
 
-<p><img src="/screenshots/widget-chart.svg" alt="Four bar charts of the same data: the legend at the top, at the bottom under a centered title, at the right with the iOS series highlighted and the others faded, and at the left of a chart on a light panel with a right-aligned title"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-chart.svg" alt="Four bar charts of the same data: the legend at the top, at the bottom under a centered title, at the right with the iOS series highlighted and the others faded, and at the left of a chart on a light panel with a right-aligned title"></p>
 
 =end html
 
@@ -806,6 +806,8 @@ C<theme>, C<hover> (C<#true> or C<#false>), C<hover_fade>,
 C<highlight>, the color properties C<title_color>, C<text_color>,
 C<label_color>, C<axis_color> and C<grid_color>, and C<palette> with a
 palette name or one or more colors:
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::LineChart as LineChart
 

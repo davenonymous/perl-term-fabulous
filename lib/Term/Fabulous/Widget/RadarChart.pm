@@ -417,7 +417,7 @@ around a center
 
 =begin html
 
-<p><img src="/screenshots/widget-radar-chart.svg" alt="Two translucent polygons for two laptop models over a web of six axes labeled Speed, Battery, Screen, Keyboard, Weight and Price"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-radar-chart.svg" alt="Two translucent polygons for two laptop models over a web of six axes labeled Speed, Battery, Screen, Keyboard, Weight and Price"></p>
 
 =end html
 
@@ -571,6 +571,8 @@ the number of the nearest axis as the index, its label and the value
 there.
 
 =head1 KDL PROPERTIES
+
+=for highlighter language=kdl
 
 	use Term::Fabulous::Widget::RadarChart as RadarChart
 

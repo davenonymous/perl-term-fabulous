@@ -402,6 +402,8 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<title> and C<icon> (strings) and C<open> and C<disabled> (C<#true> /
 C<#false>). Child widget nodes go into the body:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Accordion::Item as Item
 
 	Item "network" {

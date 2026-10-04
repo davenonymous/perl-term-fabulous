@@ -9,7 +9,7 @@ use Carp qw(croak);
 use Encode qw(decode encode);
 use Exporter qw(import);
 
-our @EXPORT_OK = qw(sync_code_blocks referenced_screenshots read_text write_text);
+our @EXPORT_OK = qw(sync_code_blocks referenced_screenshots foreign_images screenshots_at_tag read_text write_text);
 
 # A code block in POD that shows a file of the distribution is marked
 #
@@ -21,9 +21,11 @@ our @EXPORT_OK = qw(sync_code_blocks referenced_screenshots read_text write_text
 
 use constant MARKER => qr/\A=for code-from (\S+)\s*\z/;
 
-# Screenshots are shown with HTML blocks whose images live in the
-# distribution's screenshots directory.
-use constant IMAGE_SOURCE => qr{src="/screenshots/([a-z0-9]+(?:-[a-z0-9]+)*)\.svg"};
+# Screenshots are shown with HTML blocks whose images are the raw files
+# of the screenshots directory on GitHub, at the tag of a release:
+# MetaCPAN shows images in the POD only with absolute URLs.
+use constant IMAGE_URL_BASE => 'https://raw.githubusercontent.com/davenonymous/perl-term-fabulous';
+use constant IMAGE_SOURCE   => qr{src="\Q${\ IMAGE_URL_BASE}\E/([^"/]+)/screenshots/([a-z0-9]+(?:-[a-z0-9]+)*)\.svg"};
 
 sub read_text ($file) {
 	open my $handle, '<:raw', $file or croak "Term::Fabulous::Screenshot::PodSync: cannot read $file: $!";
@@ -70,8 +72,19 @@ sub _verbatim ( $code, $file ) {
 
 # The names of the screenshots a POD text shows.
 sub referenced_screenshots ($pod) {
-	my %seen;
-	return grep { !$seen{$_}++ } $pod =~ /${\ IMAGE_SOURCE}/g;
+	my ( %seen, @names );
+	push @names, $2 while $pod =~ /${\ IMAGE_SOURCE}/g;
+	return grep { !$seen{$_}++ } @names;
+}
+
+# The <img> tags of a POD text that do not show a screenshot.
+sub foreign_images ($pod) {
+	return grep { !/\A<img ${\ IMAGE_SOURCE}/ } $pod =~ /(<img\b[^>]*>)/g;
+}
+
+# The POD text with every screenshot shown at the tag $tag.
+sub screenshots_at_tag ( $pod, $tag ) {
+	return $pod =~ s{${\ IMAGE_SOURCE}}{src="${\ IMAGE_URL_BASE}/$tag/screenshots/$2.svg"}gr;
 }
 
 1;
@@ -91,6 +104,7 @@ the files they show
 	write_text( $file, $pod ) if @changed;
 
 	my @names = referenced_screenshots($pod);    # screenshots/NAME.svg
+	$pod = screenshots_at_tag( $pod, 'v0.01' );
 
 =head1 DESCRIPTION
 
@@ -124,7 +138,23 @@ to show other code after it, put a text paragraph in between.
 	my @names = referenced_screenshots($pod);
 
 The names of the screenshots the POD shows: every
-C<src="/screenshots/NAME.svg"> in it, each name once, in order.
+C<src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/TAG/screenshots/NAME.svg">
+in it, each name once, in order. MetaCPAN shows images in the POD only
+with absolute URLs, so the POD points to the raw files on GitHub at the
+tag of a release.
+
+=head2 foreign_images
+
+	my @tags = foreign_images($pod);
+
+The C<< <img> >> tags of the POD whose C<src> is not the first attribute
+or not the URL of a screenshot as above.
+
+=head2 screenshots_at_tag
+
+	my $new_pod = screenshots_at_tag( $pod, 'v0.01' );
+
+The POD with the URL of every screenshot pointing to the tag C<$tag>.
 
 =head2 read_text, write_text
 

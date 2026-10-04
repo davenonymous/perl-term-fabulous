@@ -352,7 +352,7 @@ shown side by side
 
 =begin html
 
-<p><img src="/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
 
 =end html
 
@@ -365,6 +365,8 @@ is F<examples/widgets/segmented-control.pl>.
 
 A segmented control shows a few options side by side as one bar, with
 the selected one highlighted:
+
+=for highlighter language=text
 
 	 Day │ Week │ Month │ Year
 
@@ -395,6 +397,8 @@ between them.
 =head1 CONSTRUCTOR
 
 =head2 new
+
+=for highlighter language=perl
 
 	my $control = Term::Fabulous::Widget::SegmentedControl->new(%parameters);
 
@@ -655,6 +659,8 @@ One option; C<value=> defaults to the label, C<disabled=> to C<#false>.
 
 =back
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::SegmentedControl as SegmentedControl
 
 	SegmentedControl "period" {
@@ -671,6 +677,8 @@ C<value> that no option has dies.
 =head1 EXAMPLES
 
 =head2 A view switch that fills its row
+
+=for highlighter language=perl
 
 	my $view = Term::Fabulous::Widget::SegmentedControl->new(
 		options => [qw(List Grid Map)],

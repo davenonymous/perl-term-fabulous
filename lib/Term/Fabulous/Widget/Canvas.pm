@@ -361,7 +361,7 @@ Term::Fabulous::Widget::Canvas - A widget you draw on cell by cell
 
 =begin html
 
-<p><img src="/screenshots/example-canvas.svg" alt="Three waves in red, blue and green on a canvas, drawn with half blocks"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-canvas.svg" alt="Three waves in red, blue and green on a canvas, drawn with half blocks"></p>
 
 =end html
 
@@ -622,6 +622,8 @@ paints with clicks and drags.
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>. The
 drawing itself is done from Perl:
 
+=for highlighter language=kdl
+
 	use Term::Fabulous::Widget::Canvas as Canvas
 
 	Canvas "chart" {
@@ -632,6 +634,8 @@ drawing itself is done from Perl:
 =head1 EXAMPLES
 
 A bar chart that is redrawn whenever the canvas changes size:
+
+=for highlighter language=perl
 
 	use Clay::XS qw(sizing_grow sizing_fixed);
 	use List::Util qw(max);
