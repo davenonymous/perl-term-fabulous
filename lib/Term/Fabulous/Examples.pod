@@ -195,7 +195,7 @@ L<Term::Fabulous::Manual::Layout/Floating widgets>.
 =head3 examples/scroll-box.pl
 
 Two L<Term::Fabulous::Widget::ScrollBox> widgets with more lines than
-fit, scrolled with the mouse wheel. See
+fit, scrolled with the mouse wheel, each with a scrollbar. See
 L<Term::Fabulous::Manual::Layout/Scrolling content>.
 
 The picture shows the boxes after five notches of the wheel on the left
@@ -203,7 +203,7 @@ box and two on the right one.
 
 =begin html
 
-<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares"></p>
+<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
 
 =end html
 

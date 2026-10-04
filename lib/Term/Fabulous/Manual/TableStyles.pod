@@ -466,7 +466,7 @@ not fit, it shows a track with a thumb for the visible part; clicking
 or dragging on it scrolls. C<< scrollbar => 0 >> removes it, and the
 column it takes. Its colors are the table's C<line_color> (the track)
 and C<text_color> (the thumb); see
-L<Term::Fabulous::Widget::Table::Scrollbar>.
+L<Term::Fabulous::Widget::Scrollbar>.
 
 =begin html
 
@@ -523,7 +523,7 @@ L<Print a table as a report|Term::Fabulous::Cookbook::Tables/Print a table as a 
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::TableRows>. Next page: L<Term::Fabulous::Manual::KDL>.
 
 L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::Table::Style>,
-L<Term::Fabulous::Widget::Table::Scrollbar>,
+L<Term::Fabulous::Widget::Scrollbar>,
 L<Term::Fabulous::Enum::BorderStyle>, L<Term::Fabulous::Static>,
 L<Term::Fabulous::Cookbook::TableStyles>.
 

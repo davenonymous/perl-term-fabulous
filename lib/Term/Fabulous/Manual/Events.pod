@@ -938,6 +938,16 @@ uses them to keep a log at its newest line.
 
 =item *
 
+A scrollbar in the last column inside the border shows how far the box
+is scrolled, and one in the last row when it scrolls sideways; the
+content keeps clear of them. A click on a scrollbar scrolls so that the
+thumb is centered under the pointer, and dragging with the left button
+keeps doing so. C<< scrollbar =E<gt> 0 >> removes them; C<track_color>
+and C<thumb_color> color them (see
+L<Term::Fabulous::Widget::Scrollbar>).
+
+=item *
+
 Scrolled content passes under the border, which is drawn on top of it.
 
 =item *
@@ -949,11 +959,11 @@ L<Term::Fabulous::Widget::ScrollBox>.
 
 =back
 
-There is no keyboard scrolling and no scroll bar for ScrollBox. A
+There is no keyboard scrolling for ScrollBox. A
 L<Term::Fabulous::Widget::TextArea> scrolls its own text, with keys,
-wheel and a scroll bar; the scroll box around it scrolls only when the
+wheel and a scrollbar; the scroll box around it scrolls only when the
 area is already at its end. A L<Term::Fabulous::Widget::Table> scrolls its rows
-with the keys, the wheel and its own scroll bar.
+with the keys, the wheel and its own scrollbar.
 
 =head1 SEE ALSO
 

@@ -22,7 +22,7 @@ use Term::Fabulous::Widget::Table::Grid;
 use Term::Fabulous::Widget::Table::HeaderView;
 use Term::Fabulous::Widget::Table::Model;
 use Term::Fabulous::Widget::Table::Pager;
-use Term::Fabulous::Widget::Table::Scrollbar;
+use Term::Fabulous::Widget::Scrollbar;
 use Term::Fabulous::Widget::Table::Toggle;
 
 class Term::Fabulous::Widget::Table
@@ -317,6 +317,7 @@ class Term::Fabulous::Widget::Table
 			id         => "$id/body",
 			vertical   => 1,
 			horizontal => 1,
+			scrollbar  => 0,
 			layout     => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_fit() } },
 		);
 		$_header_grid = Term::Fabulous::Widget::Table::Grid->new( layout => { sizing => { width => sizing_grow(), height => sizing_fit() } } );
@@ -334,7 +335,7 @@ class Term::Fabulous::Widget::Table
 
 		$_body_row = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT, sizing => { width => sizing_grow(), height => sizing_fit() } } );
 		$_body_row->add_child($_body);
-		$_scrollbar = Term::Fabulous::Widget::Table::Scrollbar->new(
+		$_scrollbar = Term::Fabulous::Widget::Scrollbar->new(
 			follows     => $_body,
 			thumb_color => $text_color,
 			track_color => $line_color,
@@ -1486,13 +1487,12 @@ class Term::Fabulous::Widget::Table
 	# Mouse
 	# ---------------------------------------------------------------------
 
-	# The table widget a mouse event is about: a toggle, the scrollbar or a
-	# cell, and the widget it hit.
+	# The table widget a mouse event is about: a toggle or a cell, and the
+	# widget it hit. The scrollbar handles its own clicks.
 	method _hit ($target) {
 		for ( my $node = $target; defined $node && refaddr($node) != refaddr($self); $node = $node->parent ) {
-			return ( toggle    => $node ) if $node->isa('Term::Fabulous::Widget::Table::Toggle');
-			return ( scrollbar => $node ) if $node->isa('Term::Fabulous::Widget::Table::Scrollbar');
-			return ( cell      => $node ) if $node->isa('Term::Fabulous::Widget::Table::Cell');
+			return ( toggle => $node ) if $node->isa('Term::Fabulous::Widget::Table::Toggle');
+			return ( cell   => $node ) if $node->isa('Term::Fabulous::Widget::Table::Cell');
 		}
 		return ();
 	}
@@ -1502,14 +1502,6 @@ class Term::Fabulous::Widget::Table
 		return $CONTINUE unless defined $kind;
 		my $key    = $event->key;
 		my $motion = $event->modifiers & TB_MOD_MOTION;
-
-		if ( $kind eq 'scrollbar' ) {
-			return $CONTINUE unless $key == TB_KEY_MOUSE_LEFT;
-			my ( undef, $top ) = $widget->content_origin;
-			my $position = defined $top ? $widget->position_at_row( $event->y - $top ) : undef;
-			$self->ui->scroll_to( $_body, { y => $position } ) if defined $position && defined $self->ui;
-			return $HANDLED;
-		}
 		return $CONTINUE if $motion;
 		if ( $key == TB_KEY_MOUSE_RIGHT ) {
 			return $CONTINUE unless $kind eq 'cell' && $widget->part eq 'header';

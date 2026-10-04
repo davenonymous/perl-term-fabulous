@@ -17,14 +17,112 @@ class Term::Fabulous::Widget::ScrollBox
 	:does(Clay::UI::Role::Layout::HasScroll)
 	:strict(params)
 {
+	use Clay::XS qw(
+		sizing_grow sizing_fixed CLAY_LEFT_TO_RIGHT CLAY_ALIGN_Y_BOTTOM
+		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_CLIP_TO_ATTACHED_PARENT
+		CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
+	);
+	use Term::Fabulous::Check qw(boolean color);
+	use Term::Fabulous::Widget::Scrollbar;
+
+	# The gutter floats over the whole box and is padded by its border: a
+	# column with the horizontal scrollbar at its bottom, then the
+	# vertical scrollbar, which runs the full height. It lets the pointer
+	# through, so the box below still scrolls with the wheel and its
+	# content is still hovered.
+	my %GUTTER_LAYOUT   = ( layout_direction => CLAY_LEFT_TO_RIGHT, sizing => { width => sizing_grow(), height => sizing_grow() } );
+	my %GUTTER_FLOATING = (
+		attach_to            => CLAY_ATTACH_TO_PARENT,
+		attach_points        => { element => CLAY_ATTACH_POINT_LEFT_TOP, parent => CLAY_ATTACH_POINT_LEFT_TOP },
+		clip_to              => CLAY_CLIP_TO_ATTACHED_PARENT,
+		pointer_capture_mode => CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH,
+	);
+	my %BAR_LAYOUT = (
+		vertical   => { sizing => { width => sizing_fixed(1), height => sizing_grow() } },
+		horizontal => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
+	);
+	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
+
+	field $scrollbar   :param = 1;
+	field $track_color :param = undef;
+	field $thumb_color :param = undef;
+	field $_gutter;
+	field %_bar_by_axis;
+
 	# Clay::UI stores these as given; the constructor takes any truth value.
 	sub BUILDARGS ( $class, %params ) {
 		$params{$_} = $params{$_} ? 1 : 0 foreach grep { exists $params{$_} } qw(horizontal vertical);
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
+	ADJUST {
+		$scrollbar = boolean( $self, scrollbar => $scrollbar );
+		my %colors;
+		$colors{track_color} = color( $self, track_color => $track_color ) if defined $track_color;
+		$colors{thumb_color} = color( $self, thumb_color => $thumb_color ) if defined $thumb_color;
+		%_bar_by_axis = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, %colors, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
+
+		my $column = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_alignment => { y => CLAY_ALIGN_Y_BOTTOM } } );
+		$column->add_child( $_bar_by_axis{horizontal} );
+		$_gutter = Term::Fabulous::Widget::Box->new( floating => {%GUTTER_FLOATING} );
+		$_gutter->add_child( $column, $_bar_by_axis{vertical} );
+		$self->_pad_gutter;
+		$self->add_internal_children($_gutter) if $scrollbar;
+	}
+
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean' );
+		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean', scrollbar => 'boolean', track_color => 'color', thumb_color => 'color' );
+	}
+
+	# Whether a scrollbar is shown for an axis: wanted, and the box
+	# scrolls that way.
+	method _shows_bar ($axis) {
+		return $scrollbar && ( $axis eq 'vertical' ? $self->vertical : $self->horizontal ) ? 1 : 0;
+	}
+
+	# The content keeps clear of the scrollbars: one column at the right
+	# for the vertical one, one row at the bottom for the horizontal one.
+	method contribute_layout :override ($config) {
+		$self->SUPER::contribute_layout($config);
+		my @sides = map { $SIDE_OF_AXIS{$_} } grep { $self->_shows_bar($_) } sort keys %SIDE_OF_AXIS;
+		return unless @sides;
+		my %padding = %{ $config->{layout}{padding} // {} };
+		$padding{$_} = ( $padding{$_} // 0 ) + 1 foreach @sides;
+		$config->{layout} = { %{ $config->{layout} // {} }, padding => \%padding };
+		return;
+	}
+
+	# The gutter is padded by the border, so the scrollbars sit inside it.
+	method _pad_gutter () {
+		my $border = $self->to_config->{border}{width} // {};
+		$_gutter->layout( { %GUTTER_LAYOUT, padding => { map { $_ => $border->{$_} // 0 } qw(left right top bottom) } } );
+		return;
+	}
+
+	method border_width :override (@new) {
+		my $width = $self->SUPER::border_width(@new);
+		$self->_pad_gutter if @new;
+		return $width;
+	}
+
+	method scrollbar (@new) {
+		return $scrollbar unless @new;
+		$scrollbar = boolean( $self, scrollbar => $new[0] );
+		my $attached = defined $_gutter->parent ? 1 : 0;
+		$self->add_internal_children($_gutter)    if $scrollbar && !$attached;
+		$self->remove_internal_children($_gutter) if !$scrollbar && $attached;
+		return $scrollbar;
+	}
+
+	method track_color (@new) { return $self->_bar_color( track_color => @new ) }
+	method thumb_color (@new) { return $self->_bar_color( thumb_color => @new ) }
+
+	# Both scrollbars share a color; a read asks the vertical one.
+	method _bar_color ( $name, @new ) {
+		return $_bar_by_axis{vertical}->$name unless @new;
+		my $value = color( $self, $name => $new[0] );
+		$_->$name($value) foreach values %_bar_by_axis;
+		return $value;
 	}
 }
 
@@ -65,7 +163,7 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 
 =begin html
 
-<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares"></p>
+<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
 
 =end html
 
@@ -73,8 +171,17 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 
 A ScrollBox is a L<Term::Fabulous::Widget::Box> for content that is
 larger than the box: everything that does not fit is clipped, and the
-user scrolls through it with the mouse wheel. Typical uses are logs,
-long lists and help texts.
+user scrolls through it with the mouse wheel or with the scrollbars.
+Typical uses are logs, long lists and help texts.
+
+A vertical scrollbar (a L<Term::Fabulous::Widget::Scrollbar>) takes the
+last column inside the border, and a horizontal one the last row when
+the box scrolls sideways; the content keeps clear of them. While the
+content fits, a scrollbar is empty but keeps its column or row, so the
+content does not jump when it starts to scroll. A click on a scrollbar
+scrolls so that the thumb is centered under the pointer, and dragging
+with the left button keeps doing so. C<< scrollbar => 0 >> removes the
+scrollbars and gives their cells back to the content.
 
 The size of a ScrollBox comes from its own C<sizing>, not from its
 content, so give it a C<fixed>, C<grow> or C<percent> height (and
@@ -132,6 +239,23 @@ row on. Set it back to C<undef> to give control back to the wheel. The wheel
 keeps moving the hidden scroll position while C<child_offset> is set,
 so the content may jump when you set it back to C<undef>.
 
+=item C<scrollbar>
+
+A boolean, stored as 1 or 0. Default: 1. Whether the scrollbars are
+shown: a vertical one while C<vertical> is true, a horizontal one while
+C<horizontal> is true. Each takes one column or row inside the border
+from the content.
+
+=item C<track_color>
+
+The color of the scrollbars' track, anything L<Term::Fabulous::Color>
+understands. Default: the scrollbar's dark grey, C<[ 70, 76, 90, 255 ]>.
+
+=item C<thumb_color>
+
+The color of the scrollbars' thumb. Default: the scrollbar's light blue,
+C<[ 97, 175, 239, 255 ]>.
+
 =back
 
 =head1 METHODS
@@ -171,6 +295,30 @@ C<undef> while the wheel controls the position; with an argument it
 sets it and returns the new value. An invalid value dies like the
 constructor parameter. The change shows in the next frame.
 
+=head2 scrollbar
+
+	$box->scrollbar(0);
+
+Accessor for C<scrollbar>, used like L</vertical>. Switching the
+scrollbars off gives their cells back to the content in the next frame.
+
+=head2 track_color, thumb_color
+
+	$box->track_color('#464c5a');
+	$box->thumb_color( [ 97, 175, 239, 255 ] );
+
+Accessors for the scrollbar colors. Without an argument they return the
+color as C<[r, g, b, a]>; with one they set it on both scrollbars and
+return it. An invalid color dies and leaves the old one.
+
+=head2 children
+
+	my @lines = @{ $box->children };
+
+The children you added, as on any L<Term::Fabulous::Widget::Box>. The
+scrollbars are not among them, and C<clear_children> and the other
+removal methods leave them alone.
+
 =head1 EVENTS
 
 =over
@@ -199,13 +347,15 @@ the box.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<horizontal> and C<vertical> (C<#true> or C<#false>). The node needs an
-id argument:
+C<horizontal>, C<vertical> and C<scrollbar> (C<#true> or C<#false>) and
+the colors C<track_color> and C<thumb_color>. The node needs an id
+argument:
 
 	ScrollBox "log" {
 		layout direction=down
 		sizing width=grow height="fixed(10)"
 		vertical #true
+		thumb_color "#61afef"
 	}
 
 C<child_offset> cannot be set from KDL.
@@ -219,11 +369,17 @@ over it while it can move, and the ScrollBox stays put; once the widget
 is at its end, the notches scroll the ScrollBox again. So a long form
 scrolls past a text area as soon as the text area shows its last rows.
 
+The scrollbars are drawn over the box, inside its border, after the
+content. Content that scrolls sideways passes under the vertical
+scrollbar's column; while there is nothing to scroll down, that column
+is empty and shows the content beneath.
+
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual::Events/SCROLLING>,
 L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
-L<Term::Fabulous::Widget::Box>, L<Clay::UI::Role::Layout::HasScroll>,
-the example program F<examples/scroll-box.pl>.
+L<Term::Fabulous::Widget::Scrollbar>, L<Term::Fabulous::Widget::Box>,
+L<Clay::UI::Role::Layout::HasScroll>, the example program
+F<examples/scroll-box.pl>.
 
 =cut

@@ -23,9 +23,15 @@
 <rect x="57" y="122" width="315" height="1" fill="#78a0dc"/>
 <rect x="408" y="122" width="315" height="1" fill="#78a0dc"/>
 <rect x="52" y="132" width="1" height="180" fill="#78a0dc"/>
+<rect x="367" y="132" width="1" height="18" fill="#464c5a"/>
 <rect x="376" y="132" width="1" height="180" fill="#78a0dc"/>
 <rect x="403" y="132" width="1" height="180" fill="#78a0dc"/>
+<rect x="718" y="132" width="1" height="18" fill="#464c5a"/>
 <rect x="727" y="132" width="1" height="180" fill="#78a0dc"/>
+<rect x="367" y="150" width="2" height="18" fill="#61afef"/>
+<rect x="718" y="150" width="2" height="36" fill="#61afef"/>
+<rect x="367" y="168" width="1" height="144" fill="#464c5a"/>
+<rect x="718" y="186" width="1" height="126" fill="#464c5a"/>
 <rect x="57" y="320" width="315" height="1" fill="#78a0dc"/>
 <rect x="408" y="320" width="315" height="1" fill="#78a0dc"/>
 </g>

@@ -102,8 +102,8 @@ subtest 'scroll box' => sub {
 	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
 	$root->add_child($_) foreach $log, Term::Fabulous::Widget::Text->new( text => 'below' );
 
-	is [ Term::Fabulous::Static->new( root => $root, width => 8 )->render_lines( colors => 0 ) ], [ "╭──────╮", "│line 1│", "│line 2│", "╰──────╯", "below" ],
-		'content beyond the box is clipped and the layout continues after it';
+	is [ Term::Fabulous::Static->new( root => $root, width => 9 )->render_lines( colors => 0 ) ], [ "╭───────╮", "│line 1┃│", "│line 2││", "╰───────╯", "below" ],
+		'content beyond the box is clipped, the scrollbar takes the last column and the layout continues after the box';
 };
 
 subtest 'flow layout' => sub {

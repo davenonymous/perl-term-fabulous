@@ -414,9 +414,11 @@
 <rect x="484" y="420" width="1" height="144" fill="#46556e"/>
 <rect x="997" y="420" width="1" height="144" fill="#46556e"/>
 <rect x="57" y="428" width="396" height="1" fill="#46556e"/>
+<rect x="979" y="456" width="1" height="36" fill="#464c5a"/>
 <rect x="57" y="464" width="396" height="1" fill="#46556e"/>
 <rect x="52" y="474" width="1" height="90" fill="#46556e"/>
 <rect x="457" y="474" width="1" height="90" fill="#46556e"/>
+<rect x="979" y="492" width="2" height="72" fill="#61afef"/>
 <rect x="57" y="572" width="396" height="1" fill="#46556e"/>
 <rect x="489" y="572" width="504" height="1" fill="#46556e"/>
 </g>

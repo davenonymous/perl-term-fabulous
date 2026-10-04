@@ -870,7 +870,13 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::ScrollBox](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollBox)
 
     A box whose content can be larger than the box and scrolls with the
-    mouse wheel.
+    mouse wheel and its scrollbars.
+
+- [Term::Fabulous::Widget::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollbar)
+
+    The scrollbar of a scroll container: a track with a thumb that shows
+    the visible part, scrolled by clicking and dragging. ScrollBox and
+    Table make their own; place one yourself for another layout.
 
 - [Term::Fabulous::Widget::Divider](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ADivider)
 
@@ -1040,11 +1046,12 @@ Term::Fabulous, and programs do not use them directly.
     How a table checks its style hashes and works out its grid lines. Used
     internally by the table.
 
-- [Term::Fabulous::Widget::Table::Cell](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ACell), [Term::Fabulous::Widget::Table::Toggle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AToggle), [Term::Fabulous::Widget::Table::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AGrid), [Term::Fabulous::Widget::Table::HeaderView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AHeaderView), [Term::Fabulous::Widget::Table::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AScrollbar), [Term::Fabulous::Widget::Table::Pager](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3APager), [Term::Fabulous::Widget::Table::ColumnChooser](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumnChooser)
+- [Term::Fabulous::Widget::Table::Cell](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3ACell), [Term::Fabulous::Widget::Table::Toggle](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AToggle), [Term::Fabulous::Widget::Table::Grid](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AGrid), [Term::Fabulous::Widget::Table::HeaderView](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AHeaderView), [Term::Fabulous::Widget::Table::Pager](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3APager), [Term::Fabulous::Widget::Table::ColumnChooser](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3ATable%3A%3AColumnChooser)
 
     The widgets a table is built of: cells, the open and close markers,
-    the grids, the header, the scrollbar, the page controls and the column
-    chooser. Used internally by the table.
+    the grids, the header, the page controls and the column chooser (the
+    scrollbar is a [Term::Fabulous::Widget::Scrollbar](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3AWidget%3A%3AScrollbar)). Used internally
+    by the table.
 
 ## Charts
 

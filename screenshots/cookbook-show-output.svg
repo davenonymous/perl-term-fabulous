@@ -21,7 +21,9 @@
 <rect x="39" y="78" width="630" height="234" fill="#1e2332"/>
 <rect x="48" y="86" width="612" height="1" fill="#78a0dc"/>
 <rect x="43" y="96" width="1" height="198" fill="#78a0dc"/>
+<rect x="655" y="96" width="1" height="144" fill="#464c5a"/>
 <rect x="664" y="96" width="1" height="198" fill="#78a0dc"/>
+<rect x="655" y="240" width="2" height="54" fill="#61afef"/>
 <rect x="48" y="302" width="612" height="1" fill="#78a0dc"/>
 </g>
 <polyline points="43.5 96 43.5 91 43.538 90.413 43.653 89.835 43.843 89.278 44.103 88.75 44.43 88.261 44.818 87.818 45.261 87.43 45.75 87.103 46.278 86.843 46.835 86.653 47.413 86.538 48 86.5 48 86.5" fill="none" stroke="#78a0dc" stroke-width="1" stroke-linejoin="round"/>

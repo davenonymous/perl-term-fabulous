@@ -59,7 +59,7 @@ backdrop; Tab stays inside it and Escape closes it.
 =item L<Term::Fabulous::Widget::ScrollBox>
 
 A box whose content can be larger than the box itself and is scrolled
-with the mouse wheel (see L</Scrolling content>).
+with the mouse wheel and its scrollbars (see L</Scrolling content>).
 
 =item L<Term::Fabulous::Widget::Divider>
 
@@ -732,9 +732,11 @@ normal layout.
 
 A L<Term::Fabulous::Widget::ScrollBox> is a box whose content may be
 larger than the box: what does not fit is cut off at the box's edges,
-and the mouse wheel scrolls it. Its size comes from its own C<sizing>,
-not from its content, so give it a C<grow>, C<fixed> or C<percent>
-height. It needs an id.
+and the mouse wheel scrolls it. A scrollbar in its last column (and in
+its last row when it scrolls sideways) shows how far, and scrolls when
+clicked or dragged; C<< scrollbar =E<gt> 0 >> removes it. Its size
+comes from its own C<sizing>, not from its content, so give it a
+C<grow>, C<fixed> or C<percent> height. It needs an id.
 
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
@@ -755,7 +757,7 @@ In KDL:
 
 =begin html
 
-<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares"></p>
+<p><img src="/screenshots/example-scroll-box.svg" alt="Two framed boxes scrolled down, one with numbered lines, one with squares, each with a scrollbar in its last column whose thumb shows the visible part"></p>
 
 =end html
 

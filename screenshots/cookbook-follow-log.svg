@@ -21,7 +21,11 @@
 <rect x="39" y="96" width="702" height="216" fill="#1e2332"/>
 <rect x="48" y="104" width="684" height="1" fill="#78a0dc"/>
 <rect x="43" y="114" width="1" height="180" fill="#78a0dc"/>
+<rect x="727" y="114" width="1" height="126" fill="#464c5a"/>
 <rect x="736" y="114" width="1" height="180" fill="#78a0dc"/>
+<rect x="727" y="240" width="2" height="54" fill="#61afef"/>
+<rect x="48" y="284" width="297" height="2" fill="#61afef"/>
+<rect x="345" y="284" width="378" height="1" fill="#464c5a"/>
 <rect x="48" y="302" width="684" height="1" fill="#78a0dc"/>
 </g>
 <polyline points="43.5 114 43.5 109 43.538 108.413 43.653 107.835 43.843 107.278 44.103 106.75 44.43 106.261 44.818 105.818 45.261 105.43 45.75 105.103 46.278 104.843 46.835 104.653 47.413 104.538 48 104.5 48 104.5" fill="none" stroke="#78a0dc" stroke-width="1" stroke-linejoin="round"/>
@@ -31,16 +35,15 @@
 <g class="terminal">
 <text x="39" y="74" textLength="666" fill="#e6e6e6">Wheel or Up/Down scroll, Left/Right scroll sideways, Home goes to the top,</text>
 <text x="39" y="92" textLength="252" fill="#e6e6e6">End follows the newest line.</text>
-<text x="48" y="128" textLength="81" fill="#c8d2e6">Line   26</text>
-<text x="48" y="146" textLength="81" fill="#c8d2e6">Line   27</text>
-<text x="48" y="164" textLength="81" fill="#c8d2e6">Line   28</text>
-<text x="48" y="182" textLength="81" fill="#c8d2e6">Line   29</text>
-<text x="48" y="200" textLength="684" fill="#c8d2e6">Line   30 ------------------------------------------------------------------</text>
-<text x="48" y="218" textLength="81" fill="#c8d2e6">Line   31</text>
-<text x="48" y="236" textLength="81" fill="#c8d2e6">Line   32</text>
-<text x="48" y="254" textLength="81" fill="#c8d2e6">Line   33</text>
-<text x="48" y="272" textLength="81" fill="#c8d2e6">Line   34</text>
-<text x="48" y="290" textLength="684" fill="#c8d2e6">Line   35 ------------------------------------------------------------------</text>
+<text x="48" y="128" textLength="81" fill="#c8d2e6">Line   27</text>
+<text x="48" y="146" textLength="81" fill="#c8d2e6">Line   28</text>
+<text x="48" y="164" textLength="81" fill="#c8d2e6">Line   29</text>
+<text x="48" y="182" textLength="675" fill="#c8d2e6">Line   30 -----------------------------------------------------------------</text>
+<text x="48" y="200" textLength="81" fill="#c8d2e6">Line   31</text>
+<text x="48" y="218" textLength="81" fill="#c8d2e6">Line   32</text>
+<text x="48" y="236" textLength="81" fill="#c8d2e6">Line   33</text>
+<text x="48" y="254" textLength="81" fill="#c8d2e6">Line   34</text>
+<text x="48" y="272" textLength="675" fill="#c8d2e6">Line   35 -----------------------------------------------------------------</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

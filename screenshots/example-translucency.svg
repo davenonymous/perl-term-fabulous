@@ -18,24 +18,22 @@
 <text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/translucency.pl</text>
 <rect x="16.5" y="16.5" width="747" height="489" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="372" y="96" width="270" height="36" fill="#2d4c38"/>
-<rect x="381" y="132" width="261" height="18" fill="#2d4c38"/>
-<rect x="372" y="150" width="270" height="54" fill="#2d4c38"/>
+<rect x="372" y="96" width="270" height="108" fill="#2d4c38"/>
 <rect x="39" y="204" width="270" height="108" fill="#8a3a3f"/>
-<rect x="354" y="366" width="270" height="72" fill="#285391"/>
-<rect x="363" y="438" width="261" height="18" fill="#285391"/>
+<rect x="354" y="366" width="270" height="90" fill="#285391"/>
 <rect x="354" y="456" width="270" height="18" fill="#3c8cff"/>
+<rect x="745" y="60" width="2" height="72" fill="#61afef"/>
 <rect x="381" y="104" width="252" height="1" fill="#78e678"/>
-<rect x="376" y="114" width="1" height="18" fill="#78e678"/>
+<rect x="376" y="114" width="1" height="72" fill="#78e678"/>
 <rect x="637" y="114" width="1" height="72" fill="#78e678"/>
-<rect x="376" y="150" width="1" height="36" fill="#78e678"/>
+<rect x="745" y="132" width="1" height="324" fill="#464c5a"/>
 <rect x="381" y="194" width="252" height="1" fill="#78e678"/>
 <rect x="48" y="212" width="252" height="1" fill="#ff5a5a"/>
 <rect x="43" y="222" width="1" height="72" fill="#ff5a5a"/>
 <rect x="304" y="222" width="1" height="72" fill="#ff5a5a"/>
 <rect x="48" y="302" width="252" height="1" fill="#ff5a5a"/>
 <rect x="363" y="374" width="252" height="1" fill="#3c8cff"/>
-<rect x="358" y="384" width="1" height="54" fill="#3c8cff"/>
+<rect x="358" y="384" width="1" height="72" fill="#3c8cff"/>
 <rect x="619" y="384" width="1" height="72" fill="#3c8cff"/>
 <rect x="363" y="464" width="252" height="1" fill="#3c8cff"/>
 </g>
@@ -57,82 +55,81 @@
 <text x="48" y="110" textLength="54" fill="#bec8d7">target</text>
 <text x="120" y="110" text-anchor="middle" fill="#bec8d7">🙂</text>
 <text x="138" y="110" textLength="234" fill="#bec8d7">color shadow terminal cell</text>
-<text x="642" y="110" textLength="81" fill="#bec8d7">r pointer</text>
-<text x="48" y="128" textLength="324" fill="#bec8d7">glyph canvas terminal layout glyph e</text>
-<text x="381" y="128" textLength="252" fill="#acd0bf">ent alpha Grüße terminal col</text>
-<text x="642" y="128" textLength="63" fill="#bec8d7">r color</text>
-<text x="48" y="146" textLength="306" fill="#bec8d7">target pointer alpha timer scissor</text>
-<text x="372" y="146" text-anchor="middle" fill="#bec8d7">漢</text>
-<text x="390" y="146" text-anchor="middle" fill="#acd0bf">字</text>
-<text x="399" y="146" textLength="207" fill="#fff0a0">lyphs_show_through =&gt; 1</text>
-<text x="606" y="146" textLength="27" fill="#acd0bf">ent</text>
-<text x="642" y="146" textLength="45" fill="#bec8d7">color</text>
-<text x="48" y="164" textLength="324" fill="#bec8d7">timer cell terminal scissor layout s</text>
-<text x="381" y="164" textLength="9" fill="#acd0bf">i</text>
+<text x="642" y="110" textLength="9" fill="#bec8d7">r</text>
+<text x="48" y="128" textLength="324" fill="#bec8d7">pointer glyph canvas terminal layout</text>
+<text x="381" y="128" textLength="252" fill="#acd0bf">glyph event alpha Grüße term</text>
+<text x="642" y="128" textLength="27" fill="#bec8d7">nal</text>
+<text x="48" y="146" textLength="324" fill="#bec8d7">color color target pointer alpha tim</text>
+<text x="381" y="146" textLength="9" fill="#acd0bf">r</text>
+<text x="390" y="146" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 1</text>
+<text x="606" y="146" textLength="18" fill="#acd0bf">as</text>
+<text x="642" y="146" textLength="45" fill="#bec8d7">uffer</text>
+<text x="48" y="164" textLength="324" fill="#bec8d7">event color timer cell terminal scis</text>
+<text x="381" y="164" textLength="9" fill="#acd0bf">o</text>
 <text x="390" y="164" textLength="216" fill="#ffffff">alpha 64: a lighter tint</text>
-<text x="624" y="164" text-anchor="middle" fill="#acd0bf">漢</text>
-<text x="660" y="164" textLength="45" fill="#bec8d7">focus</text>
-<text x="48" y="182" textLength="315" fill="#bec8d7">frame glyph terminal terminal event</text>
-<text x="381" y="182" textLength="45" fill="#acd0bf">order</text>
-<text x="444" y="182" text-anchor="middle" fill="#acd0bf">漢</text>
-<text x="462" y="182" text-anchor="middle" fill="#acd0bf">字</text>
-<text x="480" y="182" textLength="153" fill="#acd0bf">target naïve term</text>
-<text x="642" y="182" textLength="27" fill="#bec8d7">nal</text>
-<text x="48" y="200" textLength="243" fill="#bec8d7">widget layout color pointer</text>
-<text x="309" y="200" text-anchor="middle" fill="#bec8d7">🙂</text>
-<text x="327" y="200" textLength="45" fill="#bec8d7">point</text>
-<text x="642" y="200" textLength="27" fill="#bec8d7">ame</text>
-<text x="318" y="218" textLength="243" fill="#bec8d7">layout pointer color border</text>
-<text x="579" y="218" text-anchor="middle" fill="#bec8d7">🙂</text>
-<text x="597" y="218" textLength="117" fill="#bec8d7">cell terminal</text>
-<text x="318" y="236" textLength="378" fill="#bec8d7">alpha cell event scissor cell border glyph</text>
-<text x="714" y="236" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="606" y="164" textLength="27" fill="#acd0bf">col</text>
+<text x="642" y="164" textLength="72" fill="#bec8d7">r canvas</text>
+<text x="57" y="182" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="75" y="182" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="93" y="182" textLength="279" fill="#bec8d7">focus frame glyph terminal term</text>
+<text x="381" y="182" textLength="144" fill="#acd0bf">nal event border</text>
+<text x="543" y="182" text-anchor="middle" fill="#acd0bf">漢</text>
+<text x="561" y="182" text-anchor="middle" fill="#acd0bf">字</text>
+<text x="579" y="182" textLength="54" fill="#acd0bf">target</text>
+<text x="642" y="182" textLength="45" fill="#bec8d7">naïve</text>
+<text x="48" y="200" textLength="324" fill="#bec8d7">terminal widget layout color pointer</text>
+<text x="642" y="200" textLength="27" fill="#bec8d7">ter</text>
+<text x="687" y="200" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="318" y="218" textLength="297" fill="#bec8d7">timer layout pointer color border</text>
+<text x="633" y="218" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="651" y="218" textLength="36" fill="#bec8d7">cell</text>
+<text x="309" y="236" textLength="351" fill="#bec8d7">nt widget alpha cell event scissor cell</text>
 <text x="57" y="254" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 0</text>
-<text x="318" y="254" textLength="396" fill="#bec8d7">canvas event canvas frame blend color layout</text>
+<text x="309" y="254" textLength="99" fill="#bec8d7">inter glyph</text>
+<text x="426" y="254" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="444" y="254" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="462" y="254" textLength="225" fill="#bec8d7">canvas event canvas frame</text>
 <text x="57" y="272" textLength="189" fill="#ffffff">text below is covered</text>
-<text x="309" y="272" textLength="180" fill="#bec8d7">ll blend blend focus</text>
-<text x="507" y="272" text-anchor="middle" fill="#bec8d7">🙂</text>
-<text x="525" y="272" textLength="162" fill="#bec8d7">Grüße focus widget</text>
-<text x="318" y="290" textLength="153" fill="#bec8d7">cell color shadow</text>
-<text x="489" y="290" text-anchor="middle" fill="#bec8d7">漢</text>
-<text x="507" y="290" text-anchor="middle" fill="#bec8d7">字</text>
-<text x="525" y="290" textLength="180" fill="#bec8d7">terminal frame color</text>
-<text x="309" y="308" textLength="81" fill="#bec8d7">et render</text>
-<text x="408" y="308" text-anchor="middle" fill="#bec8d7">東</text>
-<text x="426" y="308" text-anchor="middle" fill="#bec8d7">京</text>
-<text x="444" y="308" textLength="108" fill="#bec8d7">canvas event</text>
-<text x="570" y="308" text-anchor="middle" fill="#bec8d7">🙂</text>
-<text x="588" y="308" textLength="117" fill="#bec8d7">layout layout</text>
-<text x="48" y="326" textLength="666" fill="#bec8d7">cell pointer frame shadow scissor timer render blend layout render pointer</text>
-<text x="48" y="344" textLength="117" fill="#bec8d7">canvas shadow</text>
-<text x="183" y="344" text-anchor="middle" fill="#bec8d7">漢</text>
-<text x="201" y="344" text-anchor="middle" fill="#bec8d7">字</text>
-<text x="219" y="344" textLength="459" fill="#bec8d7">canvas layout canvas naïve focus event canvas timer</text>
-<text x="48" y="362" textLength="666" fill="#bec8d7">blend event alpha terminal event Grüße scissor scissor render Grüße border</text>
-<text x="48" y="380" textLength="306" fill="#bec8d7">focus target scissor widget shadow</text>
-<text x="624" y="380" textLength="81" fill="#bec8d7">fer timer</text>
-<text x="48" y="398" textLength="297" fill="#bec8d7">shadow naïve border canvas buffer</text>
-<text x="363" y="398" textLength="252" fill="#7daaeb">idget border Grüße widget fr</text>
-<text x="624" y="398" textLength="72" fill="#bec8d7">me color</text>
-<text x="48" y="416" textLength="54" fill="#bec8d7">border</text>
-<text x="120" y="416" text-anchor="middle" fill="#bec8d7">東</text>
-<text x="138" y="416" text-anchor="middle" fill="#bec8d7">京</text>
-<text x="156" y="416" textLength="198" fill="#bec8d7">terminal alpha timer b</text>
-<text x="363" y="416" textLength="9" fill="#7daaeb">f</text>
+<text x="309" y="272" textLength="351" fill="#bec8d7">ter shadow naïve cell blend blend focus</text>
+<text x="678" y="272" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="309" y="290" textLength="333" fill="#bec8d7">l color blend color cell color shadow</text>
+<text x="660" y="290" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="678" y="290" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="327" y="308" text-anchor="middle" fill="#bec8d7">京</text>
+<text x="345" y="308" textLength="234" fill="#bec8d7">timer widget target render</text>
+<text x="597" y="308" text-anchor="middle" fill="#bec8d7">東</text>
+<text x="615" y="308" text-anchor="middle" fill="#bec8d7">京</text>
+<text x="633" y="308" textLength="54" fill="#bec8d7">canvas</text>
+<text x="48" y="326" textLength="45" fill="#bec8d7">event</text>
+<text x="111" y="326" text-anchor="middle" fill="#bec8d7">🙂</text>
+<text x="129" y="326" textLength="540" fill="#bec8d7">layout layout cell pointer frame shadow scissor timer render</text>
+<text x="48" y="344" textLength="369" fill="#bec8d7">blend layout render pointer canvas shadow</text>
+<text x="435" y="344" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="453" y="344" text-anchor="middle" fill="#bec8d7">字</text>
+<text x="471" y="344" textLength="234" fill="#bec8d7">canvas layout canvas naïve</text>
+<text x="48" y="362" textLength="639" fill="#bec8d7">focus event canvas timer blend event alpha terminal event Grüße scissor</text>
+<text x="48" y="380" textLength="297" fill="#bec8d7">scissor render Grüße border focus</text>
+<text x="624" y="380" textLength="45" fill="#bec8d7">hadow</text>
+<text x="48" y="398" textLength="306" fill="#bec8d7">color shadow blend buffer timer sh</text>
+<text x="363" y="398" textLength="252" fill="#7daaeb">dow naïve border canvas buff</text>
+<text x="624" y="398" textLength="72" fill="#bec8d7">r widget</text>
+<text x="48" y="416" textLength="306" fill="#bec8d7">border Grüße widget frame color bo</text>
+<text x="363" y="416" textLength="9" fill="#7daaeb">d</text>
 <text x="372" y="416" textLength="216" fill="#fff0a0">glyphs_show_through =&gt; 1</text>
-<text x="588" y="416" textLength="27" fill="#7daaeb">len</text>
-<text x="633" y="416" textLength="63" fill="#bec8d7">scissor</text>
-<text x="48" y="434" textLength="306" fill="#bec8d7">border target color timer timer bo</text>
-<text x="363" y="434" textLength="9" fill="#7daaeb">d</text>
+<text x="588" y="416" textLength="27" fill="#7daaeb">ime</text>
+<text x="633" y="416" textLength="54" fill="#bec8d7">buffer</text>
+<text x="48" y="434" textLength="306" fill="#bec8d7">timer border Grüße blend scissor b</text>
+<text x="363" y="434" textLength="9" fill="#7daaeb">r</text>
 <text x="372" y="434" textLength="225" fill="#ffffff">text below shows through,</text>
-<text x="597" y="434" textLength="18" fill="#7daaeb">et</text>
-<text x="624" y="434" textLength="72" fill="#bec8d7">terminal</text>
-<text x="48" y="452" textLength="288" fill="#bec8d7">blend Grüße pointer Grüße border</text>
-<text x="354" y="452" text-anchor="middle" fill="#bec8d7">漢</text>
-<text x="372" y="452" text-anchor="middle" fill="#7daaeb">字</text>
-<text x="381" y="452" textLength="45" fill="#ffffff">inted</text>
-<text x="435" y="452" textLength="171" fill="#7daaeb">buffer buffer timer</text>
-<text x="624" y="452" textLength="90" fill="#bec8d7">ell buffer</text>
+<text x="597" y="434" textLength="18" fill="#7daaeb">me</text>
+<text x="633" y="434" textLength="54" fill="#bec8d7">border</text>
+<text x="48" y="452" textLength="297" fill="#bec8d7">color focus color widget terminal</text>
+<text x="363" y="452" textLength="9" fill="#7daaeb">l</text>
+<text x="372" y="452" textLength="54" fill="#ffffff">tinted</text>
+<text x="426" y="452" textLength="189" fill="#7daaeb">üße pointer Grüße bor</text>
+<text x="624" y="452" textLength="18" fill="#bec8d7">er</text>
+<text x="660" y="452" text-anchor="middle" fill="#bec8d7">漢</text>
+<text x="678" y="452" text-anchor="middle" fill="#bec8d7">字</text>
 <text x="48" y="470" textLength="306" fill="#969696">Space pauses, g toggles glyphs_sho</text>
 <text x="624" y="470" textLength="45" fill="#969696">as no</text>
 <text x="48" y="488" textLength="396" fill="#969696">background, so over it the boxes are opaque.</text>

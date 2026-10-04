@@ -1432,7 +1432,13 @@ itself and closes on Escape.
 =item L<Term::Fabulous::Widget::ScrollBox>
 
 A box whose content can be larger than the box and scrolls with the
-mouse wheel.
+mouse wheel and its scrollbars.
+
+=item L<Term::Fabulous::Widget::Scrollbar>
+
+The scrollbar of a scroll container: a track with a thumb that shows
+the visible part, scrolled by clicking and dragging. ScrollBox and
+Table make their own; place one yourself for another layout.
 
 =item L<Term::Fabulous::Widget::Divider>
 
@@ -1614,11 +1620,12 @@ The rows of a table and the lines it shows, without widgets.
 How a table checks its style hashes and works out its grid lines. Used
 internally by the table.
 
-=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Scrollbar>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
+=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
 
 The widgets a table is built of: cells, the open and close markers,
-the grids, the header, the scrollbar, the page controls and the column
-chooser. Used internally by the table.
+the grids, the header, the page controls and the column chooser (the
+scrollbar is a L<Term::Fabulous::Widget::Scrollbar>). Used internally
+by the table.
 
 =back
 

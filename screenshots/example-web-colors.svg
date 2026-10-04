@@ -47,6 +47,8 @@
 <rect x="264" y="564" width="198" height="36" fill="#ffe4c4"/>
 <rect x="480" y="564" width="198" height="36" fill="#d2b48c"/>
 <rect x="696" y="564" width="198" height="36" fill="#deb887"/>
+<rect x="925" y="114" width="2" height="90" fill="#61afef"/>
+<rect x="925" y="204" width="1" height="396" fill="#464c5a"/>
 </g>
 <g class="terminal">
 <text x="48" y="92" textLength="468" fill="#dcdcdc">148 web colors. Wheel or arrow keys scroll, q quits.</text>

@@ -1,6 +1,17 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::ScrollBox shows scrollbars: a vertical
+          one in the last column inside the border and, while it scrolls
+          sideways, a horizontal one in the last row; the content keeps
+          clear of them, a click or a drag on them scrolls, scrollbar => 0
+          removes them, track_color and thumb_color color them (also in
+          KDL). The table's scrollbar is now the general
+          Term::Fabulous::Widget::Scrollbar (was ::Table::Scrollbar), for
+          either axis, which handles its own clicks and drags and is laid
+          out zero cells thick for an axis its container does not scroll
+          along; position_at replaces position_at_row. Needs Clay::UI's
+          internal children (add_internal_children, layout_children)
         - Term::Fabulous::Widget::Tabs and ::Tabs::Page: pages behind a
           row of tabs that joins the page's border, the active tab one
           cell larger and open toward the page; the bar on any side, with
