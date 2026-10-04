@@ -52,7 +52,7 @@ check box, which validates the input when the user presses Enter.
 This program is shipped as `examples/cookbook/login-form.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -146,7 +146,7 @@ or a button.
 This program is shipped as `examples/cookbook/confirm-dialog.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -251,7 +251,7 @@ answer there when the program goes on.
 This program is shipped as `examples/cookbook/inline-prompt.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -325,7 +325,7 @@ and from radio buttons, and a number from a range, all built in Perl.
 This program is shipped as `examples/cookbook/choose-options.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -500,7 +500,7 @@ ends. This program is also shipped as `examples/kdl-form.pl`.
 #
 #     perl examples/kdl-form.pl
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';
@@ -660,7 +660,7 @@ Goal: a text field that can only be used while a check box is checked.
 This program is shipped as `examples/cookbook/disable-inputs.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -723,7 +723,7 @@ Goal: show a help text for the input that currently has the focus.
 This program is shipped as `examples/cookbook/focus-help-line.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -791,7 +791,7 @@ order on the screen.
 This program is shipped as `examples/cookbook/tab-order.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

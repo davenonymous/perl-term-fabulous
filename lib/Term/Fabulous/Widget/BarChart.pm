@@ -1,6 +1,6 @@
 package Term::Fabulous::Widget::BarChart;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

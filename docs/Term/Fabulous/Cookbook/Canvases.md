@@ -27,7 +27,7 @@ Goal: let the user draw on a canvas by clicking and dragging.
 This program is shipped as `examples/cookbook/paint-with-the-mouse.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -112,7 +112,7 @@ the terminal gives.
 This program is shipped as `examples/cookbook/pixel-canvas-plot.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

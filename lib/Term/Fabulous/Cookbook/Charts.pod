@@ -93,7 +93,7 @@ This program is shipped as F<examples/cookbook/chart-line.pl>.
 
 =for code-from examples/cookbook/chart-line.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use utf8;
 	use feature 'signatures';
@@ -201,7 +201,7 @@ This program is shipped as F<examples/cookbook/chart-bars.pl>.
 
 =for code-from examples/cookbook/chart-bars.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -335,7 +335,7 @@ This program is shipped as F<examples/cookbook/chart-pie.pl>.
 
 =for code-from examples/cookbook/chart-pie.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -447,7 +447,7 @@ This program is shipped as F<examples/cookbook/chart-scatter.pl>.
 
 =for code-from examples/cookbook/chart-scatter.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -550,7 +550,7 @@ This program is shipped as F<examples/cookbook/chart-stacked-areas.pl>.
 
 =for code-from examples/cookbook/chart-stacked-areas.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -664,7 +664,7 @@ This program is shipped as F<examples/cookbook/chart-histogram.pl>.
 
 =for code-from examples/cookbook/chart-histogram.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -775,7 +775,7 @@ This program is shipped as F<examples/cookbook/chart-radar.pl>.
 
 =for code-from examples/cookbook/chart-radar.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -889,7 +889,7 @@ This program is shipped as F<examples/cookbook/chart-sparklines.pl>.
 
 =for code-from examples/cookbook/chart-sparklines.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

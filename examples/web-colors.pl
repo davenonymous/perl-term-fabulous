@@ -15,7 +15,7 @@
 # itself; Tab again gives them back to the grid. q (while the dropdown is
 # not focused), Ctrl+Q or Ctrl+C quits.
 
-use v5.22;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

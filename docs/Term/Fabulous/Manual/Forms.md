@@ -778,7 +778,7 @@ form box reports every change, and `Enter` in the name field ends the
 program:
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

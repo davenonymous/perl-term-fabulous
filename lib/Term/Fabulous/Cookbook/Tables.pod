@@ -86,7 +86,7 @@ This program is shipped as F<examples/cookbook/table-basics.pl>.
 
 =for code-from examples/cookbook/table-basics.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -266,7 +266,7 @@ This program is shipped as F<examples/cookbook/table-format.pl>.
 
 =for code-from examples/cookbook/table-format.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -452,7 +452,7 @@ This program is shipped as F<examples/cookbook/table-edit.pl>.
 
 =for code-from examples/cookbook/table-edit.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -694,7 +694,7 @@ This program is shipped as F<examples/cookbook/table-columns.pl>.
 
 =for code-from examples/cookbook/table-columns.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -852,7 +852,7 @@ This program is shipped as F<examples/cookbook/table-kdl.pl>.
 
 =for code-from examples/cookbook/table-kdl.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -1002,7 +1002,7 @@ This program is shipped as F<examples/cookbook/table-report.pl>.
 
 =for code-from examples/cookbook/table-report.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

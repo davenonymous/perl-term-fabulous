@@ -33,7 +33,7 @@ in the middle of the terminal.
 This program is shipped as `examples/cookbook/clock.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -92,7 +92,7 @@ scrolled with the mouse wheel, and never holds more than 500 lines.
 This program is shipped as `examples/cookbook/scrolling-log.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -183,7 +183,7 @@ up to read older lines; keys that scroll the log up, down and sideways.
 This program is shipped as `examples/cookbook/follow-log.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -346,7 +346,7 @@ it runs, and its exit status when it ends.
 This program is shipped as `examples/cookbook/show-output.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

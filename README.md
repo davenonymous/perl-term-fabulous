@@ -6,7 +6,7 @@ widgets, keyboard and mouse
 # SYNOPSIS
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -166,7 +166,7 @@ start with the manual's first page and its first program.
 
 # REQUIREMENTS
 
-Perl 5.24 or later, a C compiler to build [Term::Fabulous::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Termbox.md)
+Perl 5.32.1 or later, a C compiler to build [Term::Fabulous::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Termbox.md)
 (termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. See ["REQUIREMENTS" in Term::Fabulous::Manual](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual.md#requirements).
 

@@ -1,6 +1,6 @@
 package Term::Fabulous::Role::CanParseLayout;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -118,7 +118,7 @@ a KDL layout
 =head1 SYNOPSIS
 
 	package My::Panel;
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

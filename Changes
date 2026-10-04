@@ -1,6 +1,7 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Needs Perl 5.32.1 or later (was 5.24)
         - Term::Fabulous::Layout needs Text::KDL::XS 0.002, which reads a
           string as Perl characters; layouts given as a string are passed
           to it as they are, layout files as a UTF-8 filehandle

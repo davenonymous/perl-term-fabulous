@@ -53,7 +53,7 @@ F<examples/custom-widget.pl>.
 	#
 	#     perl examples/custom-widget.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use strict;
 	use experimental 'signatures';
@@ -248,7 +248,7 @@ The widget, saved as F<lib/My/Panel.pm>:
 
 	package My::Panel;
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use Object::Pad 0.825;
 
@@ -306,7 +306,7 @@ directory:
 
 =for code-from examples/cookbook/kdl-panel.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -414,7 +414,7 @@ This program is shipped as F<examples/cookbook/custom-events.pl>.
 
 =for code-from examples/cookbook/custom-events.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

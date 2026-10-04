@@ -49,7 +49,7 @@ your own, and report every sort the user chooses.
 This program is shipped as `examples/cookbook/table-sort.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -184,7 +184,7 @@ pass.
 This program is shipped as `examples/cookbook/table-filter.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -342,7 +342,7 @@ combined with and, or and not.
 This program is shipped as `examples/cookbook/table-filter-perl.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -508,7 +508,7 @@ and close.
 This program is shipped as `examples/cookbook/table-groups.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -651,7 +651,7 @@ user opens it.
 This program is shipped as `examples/cookbook/table-tree.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -811,7 +811,7 @@ choice of page sizes, and a status line that follows the page.
 This program is shipped as `examples/cookbook/table-pages.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

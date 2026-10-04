@@ -75,7 +75,7 @@ This program is shipped as F<examples/cookbook/table-sort.pl>.
 
 =for code-from examples/cookbook/table-sort.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -233,7 +233,7 @@ This program is shipped as F<examples/cookbook/table-filter.pl>.
 
 =for code-from examples/cookbook/table-filter.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -420,7 +420,7 @@ This program is shipped as F<examples/cookbook/table-filter-perl.pl>.
 
 =for code-from examples/cookbook/table-filter-perl.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -618,7 +618,7 @@ This program is shipped as F<examples/cookbook/table-groups.pl>.
 
 =for code-from examples/cookbook/table-groups.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -793,7 +793,7 @@ This program is shipped as F<examples/cookbook/table-tree.pl>.
 
 =for code-from examples/cookbook/table-tree.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -979,7 +979,7 @@ This program is shipped as F<examples/cookbook/table-pages.pl>.
 
 =for code-from examples/cookbook/table-pages.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

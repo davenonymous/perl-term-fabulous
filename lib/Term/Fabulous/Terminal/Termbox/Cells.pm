@@ -1,6 +1,6 @@
 package Term::Fabulous::Terminal::Termbox::Cells;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

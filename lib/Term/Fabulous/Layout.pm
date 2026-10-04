@@ -1,6 +1,6 @@
 package Term::Fabulous::Layout;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -714,7 +714,7 @@ only the keys it names and keeps the others.
 
 =for highlighter language=perl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

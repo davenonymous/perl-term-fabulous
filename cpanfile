@@ -1,4 +1,4 @@
-requires 'perl', '5.024';    # postfix dereference (->@*) is stable from 5.24
+requires 'perl', '5.032001';
 
 requires 'Clay::XS';
 requires 'Data::Checks', '0.04';

@@ -7,7 +7,7 @@ package InputTest;
 # tests the widget's own handling; screen_click goes through Term::Fabulous
 # like a click on the terminal (hit-testing, focus, OnPress and OnRelease).
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

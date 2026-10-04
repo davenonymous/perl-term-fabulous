@@ -1,6 +1,6 @@
 package Term::Fabulous::Enum::WebColor;
 
-use v5.24;
+use v5.32;
 use warnings;
 
 our $VERSION = '0.01';

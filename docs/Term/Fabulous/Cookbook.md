@@ -42,7 +42,7 @@ file in the distribution, and each recipe names its file. Most are in
 the `examples/cookbook` directory and start with this header:
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

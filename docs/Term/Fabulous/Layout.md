@@ -503,7 +503,7 @@ Box "panel" {
 ## A form, built from a layout
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

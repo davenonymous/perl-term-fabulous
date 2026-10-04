@@ -15,7 +15,7 @@
 # the column chooser too, F3 switches the grouping on and off, Escape or
 # Ctrl+C quits.
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

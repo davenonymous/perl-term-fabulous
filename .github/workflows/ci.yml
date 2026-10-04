@@ -29,10 +29,6 @@ jobs:
           - '5.36.3'
           - '5.34.3'
           - '5.32.1'
-          - '5.30.3'
-          - '5.28.3'
-          - '5.26.3'
-          - '5.24.4'
 
     steps:
       - name: Checkout
@@ -45,11 +41,6 @@ jobs:
 
       - name: Show Perl configuration
         run: perl -V
-
-      # Clay::UI needs ExtUtils::MakeMaker 7.12, newer than Perl 5.24's;
-      # cpanm cannot see that from a tarball without META
-      - name: Upgrade ExtUtils::MakeMaker
-        run: cpanm --notest ExtUtils::MakeMaker
 
       - name: Install Clay::UI from GitHub
         run: cpanm --notest --verbose "$CLAY_UI_TARBALL"
@@ -84,9 +75,6 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: latest
-
-      - name: Upgrade ExtUtils::MakeMaker
-        run: cpanm --notest ExtUtils::MakeMaker
 
       - name: Install Clay::UI from GitHub
         run: cpanm --notest "$CLAY_UI_TARBALL"

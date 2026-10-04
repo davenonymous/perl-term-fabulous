@@ -36,7 +36,7 @@ be used from a KDL layout. This program is also shipped as
 #
 #     perl examples/custom-widget.pl
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';
@@ -211,7 +211,7 @@ The widget, saved as `lib/My/Panel.pm`:
 ```perl
 package My::Panel;
 
-use v5.24;
+use v5.32;
 use warnings;
 use Object::Pad 0.825;
 
@@ -269,7 +269,7 @@ A program that uses it from a layout, saved next to the `lib`
 directory:
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -360,7 +360,7 @@ the built-in events.
 This program is shipped as `examples/cookbook/custom-events.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

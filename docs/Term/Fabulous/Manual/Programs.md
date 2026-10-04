@@ -154,7 +154,7 @@ This test builds a text field above an OK button, types into the field
 and clicks the button:
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

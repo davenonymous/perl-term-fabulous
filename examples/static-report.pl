@@ -6,7 +6,7 @@
 #     perl examples/static-report.pl
 #     perl examples/static-report.pl | cat
 
-use v5.22;
+use v5.32;
 use warnings;
 use utf8;
 use experimental 'signatures';

@@ -53,7 +53,7 @@ This program is shipped as F<examples/cookbook/clock.pl>.
 
 =for code-from examples/cookbook/clock.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -129,7 +129,7 @@ This program is shipped as F<examples/cookbook/scrolling-log.pl>.
 
 =for code-from examples/cookbook/scrolling-log.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -237,7 +237,7 @@ This program is shipped as F<examples/cookbook/follow-log.pl>.
 
 =for code-from examples/cookbook/follow-log.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -423,7 +423,7 @@ This program is shipped as F<examples/cookbook/show-output.pl>.
 
 =for code-from examples/cookbook/show-output.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

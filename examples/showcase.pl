@@ -10,7 +10,7 @@
 # Tab and Shift+Tab move between the inputs, the mouse works too. Save
 # shows a notification, Ctrl+C quits.
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use utf8;

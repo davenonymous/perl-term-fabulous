@@ -61,7 +61,7 @@ on every data point and a unit on the y axis.
 This program is shipped as `examples/cookbook/chart-line.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use utf8;
 use feature 'signatures';
@@ -143,7 +143,7 @@ for long category names.
 This program is shipped as `examples/cookbook/chart-bars.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -251,7 +251,7 @@ together and the number of orders in the middle.
 This program is shipped as `examples/cookbook/chart-pie.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -340,7 +340,7 @@ of the species.
 This program is shipped as `examples/cookbook/chart-scatter.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -420,7 +420,7 @@ that add up to the total, once as each part's share of it.
 This program is shipped as `examples/cookbook/chart-stacked-areas.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -511,7 +511,7 @@ end of each range.
 This program is shipped as `examples/cookbook/chart-histogram.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -599,7 +599,7 @@ whose length is the value.
 This program is shipped as `examples/cookbook/chart-radar.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -687,7 +687,7 @@ every row, green when the price rose and red when it fell.
 This program is shipped as `examples/cookbook/chart-sparklines.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

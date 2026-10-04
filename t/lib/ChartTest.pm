@@ -4,7 +4,7 @@ package ChartTest;
 # it without a terminal and read back its cells, or put it on a memory
 # terminal and move the mouse pointer over it.
 
-use v5.24;
+use v5.32;
 use warnings;
 use utf8;
 use feature 'signatures';

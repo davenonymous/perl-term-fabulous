@@ -57,7 +57,7 @@ This program is shipped as F<examples/cookbook/minimal-program.pl>.
 
 =for code-from examples/cookbook/minimal-program.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -195,7 +195,7 @@ This program is shipped as F<examples/cookbook/non-ascii-text.pl>.
 
 =for code-from examples/cookbook/non-ascii-text.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -275,7 +275,7 @@ This program is shipped as F<examples/cookbook/wrap-and-align-text.pl>.
 
 =for code-from examples/cookbook/wrap-and-align-text.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

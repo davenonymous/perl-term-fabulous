@@ -69,9 +69,9 @@ them, grouped by purpose.
 
 Every example uses subroutine signatures. A complete program starts
 with this header, which works on every Perl that Term::Fabulous
-supports (5.24 and later):
+supports (5.32.1 and later):
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -287,7 +287,7 @@ mouse cannot keep the program busy with nothing but redrawing.
 
 =item *
 
-Perl 5.24 or later.
+Perl 5.32.1 or later.
 
 =item *
 
@@ -328,7 +328,7 @@ L<Term::Fabulous::Examples/RUNNING THE EXAMPLES>).
 
 =for code-from examples/cookbook/first-program.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

@@ -34,7 +34,7 @@ other recipes are built the same way.
 This program is shipped as `examples/cookbook/minimal-program.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -136,7 +136,7 @@ Goal: show text with umlauts, CJK characters or combining accents in
 This program is shipped as `examples/cookbook/non-ascii-text.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -197,7 +197,7 @@ how it aligns them and how much room each line gets.
 This program is shipped as `examples/cookbook/wrap-and-align-text.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

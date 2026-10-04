@@ -27,7 +27,7 @@ show what the terminal reports for every key.
 This program is shipped as `examples/cookbook/key-bindings.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -122,7 +122,7 @@ shortcuts and a clock. This program is also shipped as
 #
 #     perl examples/buttons-and-keys.pl
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

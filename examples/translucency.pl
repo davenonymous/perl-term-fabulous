@@ -15,7 +15,7 @@
 # Space pauses the orbit, g toggles glyphs_show_through on every box, q
 # or Ctrl+C quits.
 
-use v5.22;
+use v5.32;
 use warnings;
 use strict;
 use utf8;

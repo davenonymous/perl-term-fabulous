@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-use v5.22;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

@@ -56,7 +56,7 @@ This program is shipped as F<examples/cookbook/width-group.pl>.
 
 =for code-from examples/cookbook/width-group.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -126,7 +126,7 @@ This program is shipped as F<examples/cookbook/border-sides.pl>.
 
 =for code-from examples/cookbook/border-sides.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -234,7 +234,7 @@ This program is shipped as F<examples/cookbook/theme-switch.pl>.
 
 =for code-from examples/cookbook/theme-switch.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -352,7 +352,7 @@ This program is shipped as F<examples/cookbook/states-and-classes.pl>.
 
 =for code-from examples/cookbook/states-and-classes.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -469,7 +469,7 @@ This program is shipped as F<examples/cookbook/resize-aware-layout.pl>.
 
 =for code-from examples/cookbook/resize-aware-layout.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

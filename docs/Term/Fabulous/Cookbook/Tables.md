@@ -60,7 +60,7 @@ what the user does.
 This program is shipped as `examples/cookbook/table-basics.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -205,7 +205,7 @@ raw values.
 This program is shipped as `examples/cookbook/table-format.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -359,7 +359,7 @@ value and show or hide a column.
 This program is shipped as `examples/cookbook/table-edit.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -566,7 +566,7 @@ it for the next start.
 This program is shipped as `examples/cookbook/table-columns.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -701,7 +701,7 @@ formats from Perl.
 This program is shipped as `examples/cookbook/table-kdl.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -825,7 +825,7 @@ row, without an event loop, to the terminal, a pipe or a file.
 This program is shipped as `examples/cookbook/table-report.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

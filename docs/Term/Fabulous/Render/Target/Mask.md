@@ -6,7 +6,7 @@ protect kept cells during a frame
 # SYNOPSIS
 
 ```perl
-use v5.24;
+use v5.32;
 use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 

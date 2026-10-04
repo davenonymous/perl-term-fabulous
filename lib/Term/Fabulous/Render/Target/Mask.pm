@@ -1,6 +1,6 @@
 package Term::Fabulous::Render::Target::Mask;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -84,7 +84,7 @@ protect kept cells during a frame
 
 =head1 SYNOPSIS
 
-	use v5.24;
+	use v5.32;
 	use Object::Pad 0.825;
 	use Term::Fabulous::Render::Target::Mask;
 

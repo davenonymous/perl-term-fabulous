@@ -1,6 +1,6 @@
 package My::Panel;
 
-use v5.24;
+use v5.32;
 use warnings;
 use Object::Pad 0.825;
 

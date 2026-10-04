@@ -33,7 +33,7 @@ length of each label.
 This program is shipped as `examples/cookbook/width-group.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -87,7 +87,7 @@ on some sides only.
 This program is shipped as `examples/cookbook/border-sides.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -183,7 +183,7 @@ dark and a light theme with a key.
 This program is shipped as `examples/cookbook/theme-switch.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -287,7 +287,7 @@ style them from those marks in one place.
 This program is shipped as `examples/cookbook/states-and-classes.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -385,7 +385,7 @@ other on a narrow one.
 This program is shipped as `examples/cookbook/resize-aware-layout.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

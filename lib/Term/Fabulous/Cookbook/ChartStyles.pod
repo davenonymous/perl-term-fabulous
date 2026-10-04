@@ -68,7 +68,7 @@ This program is shipped as F<examples/cookbook/chart-curves.pl>.
 
 =for code-from examples/cookbook/chart-curves.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -164,7 +164,7 @@ This program is shipped as F<examples/cookbook/chart-styles.pl>.
 
 =for code-from examples/cookbook/chart-styles.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -268,7 +268,7 @@ This program is shipped as F<examples/cookbook/chart-colors.pl>.
 
 =for code-from examples/cookbook/chart-colors.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -405,7 +405,7 @@ This program is shipped as F<examples/cookbook/chart-options.pl>.
 
 =for code-from examples/cookbook/chart-options.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -567,7 +567,7 @@ This program is shipped as F<examples/cookbook/chart-hover.pl>.
 
 =for code-from examples/cookbook/chart-hover.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

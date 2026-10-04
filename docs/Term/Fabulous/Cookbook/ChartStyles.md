@@ -45,7 +45,7 @@ ways, to choose one that suits the data.
 This program is shipped as `examples/cookbook/chart-curves.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -121,7 +121,7 @@ dots, block elements and box drawing lines.
 This program is shipped as `examples/cookbook/chart-styles.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -205,7 +205,7 @@ chosen by the program, including a reference line over its bars.
 This program is shipped as `examples/cookbook/chart-colors.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -316,7 +316,7 @@ bars, bars in two stack groups, and grid lines along both axes.
 This program is shipped as `examples/cookbook/chart-options.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -452,7 +452,7 @@ emphasize a series from the keyboard.
 This program is shipped as `examples/cookbook/chart-hover.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

@@ -93,7 +93,7 @@ This program is shipped as F<examples/cookbook/login-form.pl>.
 
 =for code-from examples/cookbook/login-form.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -207,7 +207,7 @@ This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 
 =for code-from examples/cookbook/confirm-dialog.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -332,7 +332,7 @@ This program is shipped as F<examples/cookbook/inline-prompt.pl>.
 
 =for code-from examples/cookbook/inline-prompt.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -420,7 +420,7 @@ This program is shipped as F<examples/cookbook/choose-options.pl>.
 
 =for code-from examples/cookbook/choose-options.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -630,7 +630,7 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 	#
 	#     perl examples/kdl-form.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use strict;
 	use experimental 'signatures';
@@ -819,7 +819,7 @@ This program is shipped as F<examples/cookbook/disable-inputs.pl>.
 
 =for code-from examples/cookbook/disable-inputs.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -896,7 +896,7 @@ This program is shipped as F<examples/cookbook/focus-help-line.pl>.
 
 =for code-from examples/cookbook/focus-help-line.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -975,7 +975,7 @@ This program is shipped as F<examples/cookbook/tab-order.pl>.
 
 =for code-from examples/cookbook/tab-order.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

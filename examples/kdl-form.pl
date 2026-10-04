@@ -6,7 +6,7 @@
 #
 #     perl examples/kdl-form.pl
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

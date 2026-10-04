@@ -41,7 +41,7 @@ This program is shipped as F<examples/cookbook/paint-with-the-mouse.pl>.
 
 =for code-from examples/cookbook/paint-with-the-mouse.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -143,7 +143,7 @@ This program is shipped as F<examples/cookbook/pixel-canvas-plot.pl>.
 
 =for code-from examples/cookbook/pixel-canvas-plot.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

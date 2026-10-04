@@ -46,7 +46,7 @@ WriteMakefile(
 	VERSION_FROM       => 'lib/Term/Fabulous.pm',
 	ABSTRACT_FROM      => 'lib/Term/Fabulous.pm',
 	LICENSE            => 'perl_5',
-	MIN_PERL_VERSION   => '5.024',
+	MIN_PERL_VERSION   => '5.032001',
 	CONFIGURE_REQUIRES => {
 		'ExtUtils::MakeMaker' => '7.12',
 	},

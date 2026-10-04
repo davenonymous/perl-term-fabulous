@@ -8,7 +8,7 @@
 #
 #     perl examples/widgets/toast.pl
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use utf8;

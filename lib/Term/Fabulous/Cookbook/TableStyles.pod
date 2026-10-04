@@ -61,7 +61,7 @@ This program is shipped as F<examples/cookbook/table-widths.pl>.
 
 =for code-from examples/cookbook/table-widths.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -206,7 +206,7 @@ This program is shipped as F<examples/cookbook/table-lines.pl>.
 
 =for code-from examples/cookbook/table-lines.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -380,7 +380,7 @@ This program is shipped as F<examples/cookbook/table-colors.pl>.
 
 =for code-from examples/cookbook/table-colors.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -489,7 +489,7 @@ It shows the same small table nine times, each with other lines.
 
 =for code-from examples/cookbook/table-line-styles.pl
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';

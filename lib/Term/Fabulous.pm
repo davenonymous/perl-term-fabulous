@@ -1,6 +1,6 @@
 package Term::Fabulous;
 
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -485,7 +485,7 @@ widgets, keyboard and mouse
 
 =head1 SYNOPSIS
 
-	use v5.24;
+	use v5.32;
 	use warnings;
 	use feature 'signatures';
 	no warnings 'experimental::signatures';
@@ -695,7 +695,7 @@ it handles itself, inline mode and wheel scrolling.
 
 =head1 REQUIREMENTS
 
-Perl 5.24 or later, a C compiler to build L<Term::Fabulous::Termbox>
+Perl 5.32.1 or later, a C compiler to build L<Term::Fabulous::Termbox>
 (termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 

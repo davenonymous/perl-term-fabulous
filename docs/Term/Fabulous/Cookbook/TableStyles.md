@@ -41,7 +41,7 @@ and use a widget as a column title.
 This program is shipped as `examples/cookbook/table-widths.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -160,7 +160,7 @@ row under a double line.
 This program is shipped as `examples/cookbook/table-lines.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -299,7 +299,7 @@ colors, not by lines, with a frame that encloses the colors cleanly.
 This program is shipped as `examples/cookbook/table-colors.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -391,7 +391,7 @@ This program is shipped as `examples/cookbook/table-line-styles.pl`.
 It shows the same small table nine times, each with other lines.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

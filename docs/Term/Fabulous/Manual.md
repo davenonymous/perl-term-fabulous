@@ -59,10 +59,10 @@ The manual is one of four kinds of documentation:
 
 Every example uses subroutine signatures. A complete program starts
 with this header, which works on every Perl that Term::Fabulous
-supports (5.24 and later):
+supports (5.32.1 and later):
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -251,7 +251,7 @@ mouse cannot keep the program busy with nothing but redrawing.
 
 # REQUIREMENTS
 
-- Perl 5.24 or later.
+- Perl 5.32.1 or later.
 - A C compiler. termbox2 ships with the distribution and is compiled into
 [Term::Fabulous::Termbox](Termbox.md) when Term::Fabulous is installed, with
 truecolor and grapheme cluster support always on; there is no separate
@@ -277,7 +277,7 @@ shipped as `examples/cookbook/first-program.pl`; run it with
 ["RUNNING THE EXAMPLES" in Term::Fabulous::Examples](Examples.md#running-the-examples)).
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

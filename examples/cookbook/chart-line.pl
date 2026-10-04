@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-use v5.24;
+use v5.32;
 use warnings;
 use utf8;
 use feature 'signatures';

@@ -30,7 +30,7 @@ terminal and plain in a pipe or a file.
 This program is shipped as `examples/cookbook/report-to-file.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -116,7 +116,7 @@ exactly as a user at a real terminal would see it.
 This program is shipped as `examples/cookbook/test-a-widget.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';

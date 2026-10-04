@@ -13,7 +13,7 @@
 # or a date ("2026-05"); Enter or Down returns to the rows. e opens every
 # folder, c closes every folder, Escape or Ctrl+C quits.
 
-use v5.24;
+use v5.32;
 use warnings;
 use strict;
 use experimental 'signatures';

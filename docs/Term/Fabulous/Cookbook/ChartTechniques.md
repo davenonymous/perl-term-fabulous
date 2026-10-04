@@ -43,7 +43,7 @@ them with a dashed forecast, and shade a stretch of time.
 This program is shipped as `examples/cookbook/chart-time-series.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use utf8;
 use feature 'signatures';
@@ -138,7 +138,7 @@ new measurements arrive, four times a second.
 This program is shipped as `examples/cookbook/chart-live.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -238,7 +238,7 @@ early years and the smaller series stay readable.
 This program is shipped as `examples/cookbook/chart-log-scale.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -309,7 +309,7 @@ two prices of very different size on one axis.
 This program is shipped as `examples/cookbook/chart-transform.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -404,7 +404,7 @@ their data, and add data to them from Perl.
 This program is shipped as `examples/cookbook/chart-kdl.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
@@ -495,7 +495,7 @@ an event loop, to the terminal, a pipe or a file.
 This program is shipped as `examples/cookbook/chart-report.pl`.
 
 ```perl
-use v5.24;
+use v5.32;
 use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
