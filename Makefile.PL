@@ -104,10 +104,11 @@ WriteMakefile(
 		dynamic_config => 0,
 		provides       => collectProvides(),
 
-		# The documentation tools in tools/ (make docs, make docs-check).
+		# The maintainer tools in tools/ (make docs, make docs-check,
+		# tools/tidy) and perlcritic.
 		prereqs => {
 			develop => {
-				requires   => { 'IO::Pty' => '0', 'JSON::PP' => '0', 'Pod::Markdown' => '0' },
+				requires   => { 'IO::Pty' => '0', 'JSON::PP' => '0', 'Perl::Critic' => '0', 'Perl::Tidy' => '20250214', 'Pod::Markdown' => '0' },
 				recommends => { 'Imager'  => '0' },
 			},
 		},

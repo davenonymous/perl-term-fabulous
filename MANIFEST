@@ -1,3 +1,5 @@
+.perlcriticrc
+.perltidyrc
 Changes
 cpanfile
 examples/border-options.pl
@@ -501,4 +503,5 @@ tools/lib/Term/Fabulous/Screenshot/VirtualLoop.pm
 tools/pod2markdown
 tools/README.md                          
 tools/screenshot                         
+tools/tidy
 tools/update-docs                        

@@ -1,6 +1,7 @@
-# Documentation tools
+# Maintainer tools
 
-Maintainer tools that keep the documentation in step with the code.
+Maintainer tools that keep the documentation in step with the code, and
+the formatting and lint setup.
 They are shipped with the distribution but not installed.
 
 ## The workflow
@@ -116,3 +117,20 @@ All under `tools/lib/Term/Fabulous/Screenshot/`:
 | `Scene`, `BoxDrawing`, `Theme` | what the image shows, independent of the format |
 | `Render::SVG`, `Render::PNG` | draw a scene |
 | `PodSync` | the code blocks marked with `=for code-from` and the screenshot URLs |
+
+## Formatting and linting
+
+`.perltidyrc` and `.perlcriticrc` in the root of the distribution hold
+the formatting and the lint rules. Run perltidy through `tools/tidy`:
+
+```sh
+perl tools/tidy lib/Term/Fabulous/Widget/Button.pm   # rewrites the file if it changes
+perl tools/tidy --check $(git ls-files '*.pm' '*.pl' '*.t')
+perlcritic lib t examples tools
+```
+
+`tools/tidy` runs perltidy with `.perltidyrc` and then puts the opening
+brace of a class or role whose attributes span several lines back on a
+line of its own, which perltidy alone joins onto the last attribute
+line. With `--check` it writes nothing, lists the files that are not
+tidy and exits with status 1.

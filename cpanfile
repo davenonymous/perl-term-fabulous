@@ -23,10 +23,13 @@ on test => sub {
 	requires 'Test2::V0';
 };
 
-# The documentation tools in tools/ (make docs, make docs-check).
+# The maintainer tools in tools/ (make docs, make docs-check, tools/tidy)
+# and perlcritic.
 on develop => sub {
 	requires 'IO::Pty';
 	requires 'JSON::PP';
+	requires 'Perl::Critic';
+	requires 'Perl::Tidy', '20250214';
 	requires 'Pod::Markdown';
 	recommends 'Imager';    # PNG output of tools/screenshot
 };
