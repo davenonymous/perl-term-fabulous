@@ -10,7 +10,6 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 class Term::Fabulous::Layout :strict(params) {
-	use Encode qw(encode);
 	use Feature::Compat::Try;
 	use Text::KDL::XS qw(parse_kdl);
 
@@ -27,7 +26,7 @@ class Term::Fabulous::Layout :strict(params) {
 		die "Term::Fabulous::Layout: provide either 'string' or 'file'" if !defined $string && !defined $file;
 		die "Term::Fabulous::Layout: provide 'string' or 'file', not both" if defined $string && defined $file;
 
-		my $source = defined $string ? encode( 'UTF-8', $string ) : _read_file($file);
+		my $source = $string // _open_file($file);
 		try {
 			$raw = parse_kdl($source);
 		}
@@ -40,12 +39,10 @@ class Term::Fabulous::Layout :strict(params) {
 		$_root_node = _root_node( $raw, $required_modules );
 	}
 
-	sub _read_file ($path) {
+	# Text::KDL::XS reads a filehandle as UTF-8 bytes, a string as characters
+	sub _open_file ($path) {
 		open my $handle, '<:raw', $path or die "Term::Fabulous::Layout: cannot open '$path': $!";
-		local $/;
-		my $content = <$handle>;
-		close $handle;
-		return $content;
+		return $handle;
 	}
 
 	# Maps every alias declared by a top-level 'use' node to its module.

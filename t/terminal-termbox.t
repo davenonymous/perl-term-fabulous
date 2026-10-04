@@ -15,6 +15,9 @@ use Term::Fabulous::Widget::Box;
 try { require IO::Pty }
 catch ($error) { skip_all 'IO::Pty is not installed' }
 
+# termbox2 refuses to start without TERM, which CI runners do not set
+$ENV{TERM} //= 'xterm';
+
 sub pseudo_terminal {
 	my ( $columns, $rows ) = @_;
 	my $pty = IO::Pty->new;

@@ -1,6 +1,9 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Layout needs Text::KDL::XS 0.002, which reads a
+          string as Perl characters; layouts given as a string are passed
+          to it as they are, layout files as a UTF-8 filehandle
         - Term::Fabulous::Widget::ScrollBox shows scrollbars: a vertical
           one in the last column inside the border and, while it scrolls
           sideways, a horizontal one in the last row; the content keeps
