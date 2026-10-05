@@ -302,8 +302,23 @@ add timers first. Unknown parameters die
     elements for itself, so the default allows 8190 widgets on the screen
     at once; a larger tree dies with
     `Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...`.
+    Clay also wraps at most this many text lines per frame, counted over
+    every text widget it lays out, and silently stops wrapping past that.
     Raise it for very large trees; the memory Clay reserves grows with it.
-    See ["new" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#new).
+    See ["new" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#new) and ["LIMITATIONS"](#limitations).
+
+- `max_measure_text_cache_word_count`
+
+    Optional. The number of words Clay's text-measurement cache holds: an
+    integer of at least 32, default twice `max_element_count` (16384).
+    Clay measures every text it lays out word by word, visible or not, and
+    keeps the words of the last few frames; a frame whose texts have more
+    words than this dies with
+    `Clay::UI: the texts laid out in one frame have more words than max_measure_text_cache_word_count (16384) allows ...`.
+    Raise it for frames with a lot of text, or show long documents with a
+    [Term::Fabulous::Widget::VirtualList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/VirtualList.md), which lays out only the part
+    near the viewport. The memory Clay reserves grows with it. See
+    ["new" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#new) and ["LIMITATIONS"](#limitations).
 
 - `error_handler`
 
@@ -695,7 +710,8 @@ drawn, for work that needs the layout of that frame. See
 
 The class inherits further methods from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) (`render`,
 `widget_for`, `measure_text`, `max_element_count`,
-`laid_out_revision`), from [Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md) (`last_frame`,
+`max_measure_text_cache_word_count`, `laid_out_revision`), from
+[Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md) (`last_frame`,
 the [Term::Fabulous::Render::Frame](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Frame.md) of the last frame, and
 `clip_rect`) and from [Term::Fabulous::Render::Canvas](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Canvas.md)
 (`invalidate_canvases`). `cell_target` returns the cell target of the
@@ -901,6 +917,12 @@ Term::Fabulous, and programs do not use them directly.
 
     A box whose content can be larger than the box and scrolls with the
     mouse wheel and its scrollbars.
+
+- [Term::Fabulous::Widget::VirtualList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/VirtualList.md)
+
+    A ScrollBox for thousands of items, the paragraphs of a long document
+    say: it builds and lays out only the items near the viewport, with
+    spacers standing in for the rest.
 
 - [Term::Fabulous::Widget::Scrollbar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Scrollbar.md)
 
@@ -1333,7 +1355,10 @@ from layout files, or your own terminal or output class.
 
 - A frame lays out and draws the whole screen, whatever changed. Only the
 cells that changed are sent to the terminal, but a very large widget
-tree costs CPU time on every frame it needs.
+tree costs CPU time on every frame it needs: every attached widget is
+declared to Clay in every frame, visible or not. Show long lists and
+documents with a [Term::Fabulous::Widget::VirtualList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/VirtualList.md), which attaches
+only the items near the viewport.
 - Without the kitty keyboard protocol (see ["new"](#new)), `Alt` plus a key is
 recognized when the terminal sends the Escape and the key in one write,
 which terminals do. `Escape` followed quickly by a key that arrives in
@@ -1355,6 +1380,16 @@ region away from where Term::Fabulous draws it.
 default); every widget is one element and Clay keeps two for
 itself. A larger tree makes drawing die with a message that names the
 limit; raise `max_element_count` in ["new"](#new).
+- Text has two limits of its own, counted over every text widget a frame
+lays out, visible or not. Clay measures text word by word and keeps the
+words of the last few frames in a cache of
+`max_measure_text_cache_word_count` words (twice `max_element_count`
+by default); more words make drawing die with a message that names the
+parameter. And Clay wraps at most `max_element_count` lines per frame;
+past that it stops wrapping without a word, and the rest of the text is
+not shown. Raise the counts in ["new"](#new), or show long documents with a
+[Term::Fabulous::Widget::VirtualList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/VirtualList.md), which keeps only the part near
+the viewport in the frame.
 
 # SEE ALSO
 

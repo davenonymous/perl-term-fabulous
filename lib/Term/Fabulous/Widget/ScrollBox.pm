@@ -172,7 +172,11 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 A ScrollBox is a L<Term::Fabulous::Widget::Box> for content that is
 larger than the box: everything that does not fit is clipped, and the
 user scrolls through it with the mouse wheel or with the scrollbars.
-Typical uses are logs, long lists and help texts.
+Typical uses are logs, long lists and help texts. Every child is laid
+out in every frame, visible or not; for thousands of children, the
+paragraphs of a long document say, use a
+L<Term::Fabulous::Widget::VirtualList>, which attaches only the ones
+near the viewport.
 
 A vertical scrollbar (a L<Term::Fabulous::Widget::Scrollbar>) takes the
 last column inside the border, and a horizontal one the last row when
@@ -382,6 +386,7 @@ is empty and shows the content beneath.
 
 L<Term::Fabulous::Manual::Events/SCROLLING>,
 L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
+L<Term::Fabulous::Widget::VirtualList> for thousands of children,
 L<Term::Fabulous::Widget::Scrollbar>, L<Term::Fabulous::Widget::Box>,
 L<Clay::UI::Role::Layout::HasScroll>, the example program
 F<examples/scroll-box.pl>.

@@ -116,6 +116,12 @@ measured in terminal columns.
     8192, of which Clay keeps two for itself). Raise it for very large
     trees; see ["new" in Term::Fabulous](../../../README.md#new).
 
+- `max_measure_text_cache_word_count`
+
+    Passed to [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI): how many words Clay's text-measurement cache
+    holds (default twice `max_element_count`). Raise it for pages with a
+    lot of text; see ["new" in Term::Fabulous](../../../README.md#new).
+
 - `error_handler`
 
     Passed to [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI); see there.

@@ -842,8 +842,23 @@ integer, default 8192. Every widget is one element and Clay keeps two
 elements for itself, so the default allows 8190 widgets on the screen
 at once; a larger tree dies with
 C<Clay::UI: the widget tree has more elements than max_element_count (8192) allows ...>.
+Clay also wraps at most this many text lines per frame, counted over
+every text widget it lays out, and silently stops wrapping past that.
 Raise it for very large trees; the memory Clay reserves grows with it.
-See L<Clay::UI/new>.
+See L<Clay::UI/new> and L</LIMITATIONS>.
+
+=item C<max_measure_text_cache_word_count>
+
+Optional. The number of words Clay's text-measurement cache holds: an
+integer of at least 32, default twice C<max_element_count> (16384).
+Clay measures every text it lays out word by word, visible or not, and
+keeps the words of the last few frames; a frame whose texts have more
+words than this dies with
+C<Clay::UI: the texts laid out in one frame have more words than max_measure_text_cache_word_count (16384) allows ...>.
+Raise it for frames with a lot of text, or show long documents with a
+L<Term::Fabulous::Widget::VirtualList>, which lays out only the part
+near the viewport. The memory Clay reserves grows with it. See
+L<Clay::UI/new> and L</LIMITATIONS>.
 
 =item C<error_handler>
 
@@ -1234,7 +1249,8 @@ L<Term::Fabulous::Render/after_draw>.
 
 The class inherits further methods from L<Clay::UI> (C<render>,
 C<widget_for>, C<measure_text>, C<max_element_count>,
-C<laid_out_revision>), from L<Term::Fabulous::Render> (C<last_frame>,
+C<max_measure_text_cache_word_count>, C<laid_out_revision>), from
+L<Term::Fabulous::Render> (C<last_frame>,
 the L<Term::Fabulous::Render::Frame> of the last frame, and
 C<clip_rect>) and from L<Term::Fabulous::Render::Canvas>
 (C<invalidate_canvases>). C<cell_target> returns the cell target of the
@@ -1472,6 +1488,12 @@ itself and closes on Escape.
 
 A box whose content can be larger than the box and scrolls with the
 mouse wheel and its scrollbars.
+
+=item L<Term::Fabulous::Widget::VirtualList>
+
+A ScrollBox for thousands of items, the paragraphs of a long document
+say: it builds and lays out only the items near the viewport, with
+spacers standing in for the rest.
 
 =item L<Term::Fabulous::Widget::Scrollbar>
 
@@ -1938,7 +1960,10 @@ Converts Clay's layout boxes into terminal cells.
 
 A frame lays out and draws the whole screen, whatever changed. Only the
 cells that changed are sent to the terminal, but a very large widget
-tree costs CPU time on every frame it needs.
+tree costs CPU time on every frame it needs: every attached widget is
+declared to Clay in every frame, visible or not. Show long lists and
+documents with a L<Term::Fabulous::Widget::VirtualList>, which attaches
+only the items near the viewport.
 
 =item *
 
@@ -1972,6 +1997,19 @@ Clay lays out at most C<max_element_count> elements per frame (8192 by
 default); every widget is one element and Clay keeps two for
 itself. A larger tree makes drawing die with a message that names the
 limit; raise C<max_element_count> in L</new>.
+
+=item *
+
+Text has two limits of its own, counted over every text widget a frame
+lays out, visible or not. Clay measures text word by word and keeps the
+words of the last few frames in a cache of
+C<max_measure_text_cache_word_count> words (twice C<max_element_count>
+by default); more words make drawing die with a message that names the
+parameter. And Clay wraps at most C<max_element_count> lines per frame;
+past that it stops wrapping without a word, and the rest of the text is
+not shown. Raise the counts in L</new>, or show long documents with a
+L<Term::Fabulous::Widget::VirtualList>, which keeps only the part near
+the viewport in the frame.
 
 =back
 

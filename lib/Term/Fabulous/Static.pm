@@ -208,6 +208,12 @@ Passed to L<Clay::UI>: how many widgets a frame may hold (default
 8192, of which Clay keeps two for itself). Raise it for very large
 trees; see L<Term::Fabulous/new>.
 
+=item C<max_measure_text_cache_word_count>
+
+Passed to L<Clay::UI>: how many words Clay's text-measurement cache
+holds (default twice C<max_element_count>). Raise it for pages with a
+lot of text; see L<Term::Fabulous/new>.
+
 =item C<error_handler>
 
 Passed to L<Clay::UI>; see there.

@@ -40,7 +40,11 @@ $log->on( OnScroll => sub ($event) {
 A ScrollBox is a [Term::Fabulous::Widget::Box](Box.md) for content that is
 larger than the box: everything that does not fit is clipped, and the
 user scrolls through it with the mouse wheel or with the scrollbars.
-Typical uses are logs, long lists and help texts.
+Typical uses are logs, long lists and help texts. Every child is laid
+out in every frame, visible or not; for thousands of children, the
+paragraphs of a long document say, use a
+[Term::Fabulous::Widget::VirtualList](VirtualList.md), which attaches only the ones
+near the viewport.
 
 A vertical scrollbar (a [Term::Fabulous::Widget::Scrollbar](Scrollbar.md)) takes the
 last column inside the border, and a horizontal one the last row when
@@ -256,6 +260,7 @@ is empty and shows the content beneath.
 
 ["SCROLLING" in Term::Fabulous::Manual::Events](../Manual/Events.md#scrolling),
 ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
+[Term::Fabulous::Widget::VirtualList](VirtualList.md) for thousands of children,
 [Term::Fabulous::Widget::Scrollbar](Scrollbar.md), [Term::Fabulous::Widget::Box](Box.md),
 [Clay::UI::Role::Layout::HasScroll](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasScroll), the example program
 `examples/scroll-box.pl`.

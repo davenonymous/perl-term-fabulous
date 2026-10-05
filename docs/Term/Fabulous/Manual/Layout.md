@@ -725,6 +725,26 @@ event and how to read and set the scroll position from code; the recipe
 [Scroll a ScrollBox from code](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
 keeps a log at its newest line.
 
+A ScrollBox lays out every child in every frame, visible or not, and
+Clay measures every text it lays out (see
+["LIMITATIONS" in Term::Fabulous](../../../../README.md#limitations)), so a box with thousands of children
+scrolls slowly and one with more words than Clay's cache holds dies.
+For a long document or list, use a
+[Term::Fabulous::Widget::VirtualList](../Widget/VirtualList.md): it takes the number of items
+and a `build` callback that returns the widget of one item, builds
+only the items near the viewport and stands in for the rest with
+spacers, so the scrollbar and the wheel see the whole list while a
+frame costs what the visible part costs.
+
+```perl
+my $document = Term::Fabulous::Widget::VirtualList->new(
+        id     => 'document',
+        count  => scalar @paragraphs,
+        build  => sub ($index) { Term::Fabulous::Widget::RichText->new( markup => $paragraphs[$index] ) },
+        layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
+);
+```
+
 ## Equal sizes across the tree
 
 Widgets in different parts of the tree can be made equally wide or high

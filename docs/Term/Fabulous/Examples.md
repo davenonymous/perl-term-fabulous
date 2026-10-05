@@ -536,6 +536,22 @@ of a wrapped text.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, and a wrapped paragraph whose italic green span and highlighted span continue on the next line"></p>
 </div>
 
+### examples/widgets/virtual-list.pl
+
+[Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md): a document of fifty thousand
+paragraphs with a heading every twenty-five, built paragraph by
+paragraph as the viewport reaches them, scrolled with the wheel, the
+scrollbar and the Home, End, PageUp and PageDown keys. The status line
+shows how many of the paragraphs have been built so far.
+
+The picture shows the document after the End key and four notches of
+the wheel back up: of the fifty thousand paragraphs, nineteen have been
+built.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-virtual-list.svg" alt="A framed document near its end: numbered paragraphs of different lengths, a scrollbar whose thumb sits at the bottom, and a status line saying Paragraphs 49993-49997 of 50000, 19 built"></p>
+</div>
+
 ### examples/widgets/divider.pl
 
 [Term::Fabulous::Widget::Divider](Widget/Divider.md): a plain line, lines with a text at

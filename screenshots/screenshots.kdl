@@ -711,6 +711,15 @@ screenshot "widget-rich-text" {
 	size 80 13
 }
 
+screenshot "widget-virtual-list" {
+	script "examples/widgets/virtual-list.pl"
+	size 80 20
+	steps {
+		key "End"
+		wheel 40 10 direction="up" notches=4
+	}
+}
+
 screenshot "widget-button" {
 	script "examples/widgets/button.pl"
 	size 60 7
