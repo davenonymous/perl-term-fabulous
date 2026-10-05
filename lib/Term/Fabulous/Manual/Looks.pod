@@ -483,8 +483,8 @@ L</Border styles> and L</Use a different border style on each side>.
 =item C<border_color>
 
 The color of the border characters, in the formats described in
-L</Color formats>. Without one, the border is drawn in the terminal's
-default text color.
+L</Color formats>. Without one, the border is drawn in the theme's
+border color (the C<border> token of the built-in themes).
 
 =back
 
@@ -506,9 +506,11 @@ C<border> node, and the width is a property of its own:
 		border_width 1
 	}
 
-A border needs both a width and a style: a style without a width draws
-nothing, and a side with a width but no style is drawn with spaces (the
-C<Blank> style).
+A border needs a width: a style without a width draws nothing. A side
+with a width but no style takes the style the theme gives the widget's
+family, C<Round> for every box, button and input in the built-in
+themes; a theme that sets a family's style to C<none> has such a side
+drawn with spaces (the C<Blank> style).
 
 =head2 Border styles
 
@@ -616,9 +618,9 @@ border styles say which. Change the color like any other color:
 
 A widget that was given no C<border_color> or no C<border_style> takes
 them from the theme, where the theme has them for the widget's family
-(a button, a dialog, a toast, ...); see L</THEMES>. A plain Box has
-none in the built-in themes, so its border is drawn in the terminal's
-default color and, without a style, with spaces.
+(a button, a dialog, a toast, ...); see L</THEMES>. The built-in
+themes draw every border in their C<border> token and in the C<Round>
+style, so a Box with a C<border_width> alone gets a round frame.
 
 =head2 Joining borders
 

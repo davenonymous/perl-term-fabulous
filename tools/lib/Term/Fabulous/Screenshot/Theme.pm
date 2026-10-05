@@ -19,7 +19,7 @@ class Term::Fabulous::Screenshot::Theme :strict(params) {
 
 	# The colors the terminal shows where a program sets none.
 	field $default_foreground :param :reader = 0xD4D8E0;
-	field $default_background :param :reader = 0x141923;
+	field $default_background :param :reader = 0x161622;
 
 	# The window around the terminal.
 	field $margin           :param :reader = 16;    # room for the shadow

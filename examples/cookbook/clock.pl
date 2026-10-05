@@ -15,8 +15,7 @@ use Clay::XS qw(sizing_grow CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
 
 my $clock = Term::Fabulous::Widget::Text->new( text => '--:--:--', text_color => [ 255, 200, 80, 255 ] );
 my $root  = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	layout => {
 		sizing          => { width => sizing_grow(),       height => sizing_grow() },
 		child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 	},

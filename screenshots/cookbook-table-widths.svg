@@ -10,7 +10,7 @@
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
 <clipPath id="window"><rect x="16" y="16" width="1018" height="364" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="1018" height="364" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="1018" height="364" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="1018" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>
@@ -20,6 +20,7 @@
 <g shape-rendering="crispEdges">
 <rect x="57" y="96" width="927" height="36" fill="#242832"/>
 <rect x="57" y="132" width="927" height="36" fill="#343a48"/>
+<rect x="57" y="168" width="927" height="126" fill="#16191f"/>
 <rect x="57" y="86" width="927" height="1" fill="#586070"/>
 <rect x="106" y="86" width="1" height="217" fill="#586070"/>
 <rect x="286" y="86" width="1" height="217" fill="#586070"/>

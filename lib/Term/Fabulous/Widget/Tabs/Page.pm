@@ -150,7 +150,7 @@ class Term::Fabulous::Widget::Tabs::Page
 	method contribute_look_theme :override ($config) {
 		$self->SUPER::contribute_look_theme($config);
 		my $border = $config->{border} // return;
-		return if defined $self->border_color;
+		return if $self->has_look_override('border_color');
 		my $bar = $self->_bar_with_page_border // return;
 		$config->{border} = { %$border, color => $bar->line_color };
 		return;

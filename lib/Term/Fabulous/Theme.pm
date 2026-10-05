@@ -27,7 +27,7 @@ class Term::Fabulous::Theme :strict(params) {
 	# The dark values are the colors the widgets were drawn in before
 	# themes existed.
 	my %PALETTE = (
-		background       => { dark => [ 20,  25,  35,  255 ], light => [ 250, 250, 247, 255 ] },
+		background       => { dark => [ 22,  22,  34,  255 ], light => [ 250, 250, 247, 255 ] },
 		surface          => { dark => [ 28,  33,  45,  255 ], light => [ 240, 241, 245, 255 ] },
 		surface_raised   => { dark => [ 36,  40,  50,  255 ], light => [ 228, 231, 238, 255 ] },
 		surface_field    => { dark => [ 36,  40,  48,  255 ], light => [ 255, 255, 255, 255 ] },
@@ -75,24 +75,24 @@ class Term::Fabulous::Theme :strict(params) {
 		box  => {
 			slots => {
 				'background'   => _color_slot('none'),
-				'border.color' => _color_slot('none'),
-				'border.style' => _style_slot('none'),
+				'border.color' => _color_slot('border'),
+				'border.style' => _style_slot('Round'),
 			}
 		},
 		button => {
 			extends => 'box',
 			slots   => {
 				'background'   => { %{ _color_slot( 'none', hovered => 'normal', focused => 'normal', pressed => 'reverse', disabled => 'normal' ) }, reverse => 1 },
-				'border.color' => _color_slot( 'none', hovered => 'normal', focused => 'accent', pressed => 'normal', disabled => 'disabled' ),
-				'text'         => _color_slot( 'text', hovered => 'normal', focused => 'normal', pressed => 'normal', disabled => 'disabled' ),
+				'border.color' => _color_slot( 'border', hovered => 'normal', focused => 'accent', pressed => 'normal', disabled => 'disabled' ),
+				'text'         => _color_slot( 'text',   hovered => 'normal', focused => 'normal', pressed => 'normal', disabled => 'disabled' ),
 			}
 		},
 		input => {
 			extends => 'box',
 			slots   => {
-				'background'       => _color_slot( 'none', focused  => 'focus_background', disabled => 'normal' ),
-				'border.color'     => _color_slot( 'none', focused  => 'normal',           disabled => 'normal' ),
-				'text'             => _color_slot( 'text', disabled => 'disabled' ),
+				'background'       => _color_slot( 'none',   focused  => 'focus_background', disabled => 'normal' ),
+				'border.color'     => _color_slot( 'border', focused  => 'normal',           disabled => 'normal' ),
+				'text'             => _color_slot( 'text',   disabled => 'disabled' ),
 				'accent'           => _color_slot('accent'),
 				'star'             => _color_slot('warning'),
 				'placeholder'      => _color_slot('placeholder'),
@@ -753,7 +753,10 @@ colors for a light screen.
 	track track_scroll button_face backdrop
 	success warning danger
 
-C<background> is the screen behind the widgets: L<Term::Fabulous>
+C<border> is what every border is drawn in unless a theme or the
+widget says otherwise, so a frame stays visible on the theme's own
+screen; the built-in themes draw every border, of a Box, a Button or
+an input, in the C<Round> style. C<background> is the screen behind the widgets: L<Term::Fabulous>
 paints the whole screen in it before every frame, so a theme looks the
 same whatever colors the terminal shows otherwise, and a light theme is
 readable on a dark terminal. A theme that wants the terminal's own

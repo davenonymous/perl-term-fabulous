@@ -10,7 +10,7 @@
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
 <clipPath id="window"><rect x="16" y="16" width="712" height="454" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="712" height="454" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="712" height="454" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="712" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>
@@ -18,29 +18,29 @@
 <text class="title" x="372" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/widgets/scatter-plot.pl</text>
 <rect x="16.5" y="16.5" width="711" height="453" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="93" y="176" width="495" height="1" fill="#30353d"/>
-<rect x="606" y="176" width="72" height="1" fill="#30353d"/>
-<rect x="93" y="248" width="261" height="1" fill="#30353d"/>
-<rect x="462" y="248" width="27" height="1" fill="#30353d"/>
-<rect x="498" y="248" width="180" height="1" fill="#30353d"/>
-<rect x="93" y="320" width="27" height="1" fill="#30353d"/>
-<rect x="174" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="192" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="228" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="255" y="320" width="63" height="1" fill="#30353d"/>
-<rect x="327" y="320" width="54" height="1" fill="#30353d"/>
-<rect x="462" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="489" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="516" y="320" width="9" height="1" fill="#30353d"/>
-<rect x="534" y="320" width="144" height="1" fill="#30353d"/>
-<rect x="93" y="392" width="585" height="1" fill="#5b5e65"/>
-<rect x="97" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="196" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="286" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="385" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="484" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="574" y="392" width="1" height="10" fill="#5b5e65"/>
-<rect x="673" y="392" width="1" height="10" fill="#5b5e65"/>
+<rect x="93" y="176" width="495" height="1" fill="#353535"/>
+<rect x="606" y="176" width="72" height="1" fill="#353535"/>
+<rect x="93" y="248" width="261" height="1" fill="#353535"/>
+<rect x="462" y="248" width="27" height="1" fill="#353535"/>
+<rect x="498" y="248" width="180" height="1" fill="#353535"/>
+<rect x="93" y="320" width="27" height="1" fill="#353535"/>
+<rect x="174" y="320" width="9" height="1" fill="#353535"/>
+<rect x="192" y="320" width="9" height="1" fill="#353535"/>
+<rect x="228" y="320" width="9" height="1" fill="#353535"/>
+<rect x="255" y="320" width="63" height="1" fill="#353535"/>
+<rect x="327" y="320" width="54" height="1" fill="#353535"/>
+<rect x="462" y="320" width="9" height="1" fill="#353535"/>
+<rect x="489" y="320" width="9" height="1" fill="#353535"/>
+<rect x="516" y="320" width="9" height="1" fill="#353535"/>
+<rect x="534" y="320" width="144" height="1" fill="#353535"/>
+<rect x="93" y="392" width="585" height="1" fill="#5f5f5e"/>
+<rect x="97" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="196" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="286" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="385" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="484" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="574" y="392" width="1" height="10" fill="#5f5f5e"/>
+<rect x="673" y="392" width="1" height="10" fill="#5f5f5e"/>
 </g>
 <circle cx="590.25" cy="179.25" r="1.8" fill="#3987e5"/>
 <circle cx="594.75" cy="179.25" r="1.8" fill="#3987e5"/>
@@ -435,18 +435,18 @@
 <circle cx="270.75" cy="368.25" r="1.8" fill="#d95926"/>
 <circle cx="270.75" cy="372.75" r="1.8" fill="#d95926"/>
 <g class="terminal">
-<text x="48" y="92" textLength="162" class="b" fill="#f3f4f4">Power and fuel use</text>
+<text x="48" y="92" textLength="162" class="b" fill="#f4f4f4">Power and fuel use</text>
 <text x="52.5" y="128" text-anchor="middle" fill="#3987e5">●</text>
-<text x="66" y="128" textLength="54" fill="#d0d1d3">Petrol</text>
+<text x="66" y="128" textLength="54" fill="#d1d1d1">Petrol</text>
 <text x="151.5" y="128" text-anchor="middle" fill="#d95926">●</text>
-<text x="165" y="128" textLength="54" fill="#d0d1d3">Hybrid</text>
-<text x="48" y="164" textLength="72" fill="#95989c">l/100 km</text>
-<text x="48" y="182" textLength="36" fill="#95989c">10.0</text>
-<text x="57" y="254" textLength="27" fill="#95989c">7.5</text>
-<text x="57" y="326" textLength="27" fill="#95989c">5.0</text>
-<text x="57" y="398" textLength="27" fill="#95989c">2.5</text>
-<text x="84" y="416" textLength="603" fill="#95989c">50         75        100        125       150        175        200</text>
-<text x="309" y="434" textLength="153" fill="#95989c">Engine power (kW)</text>
+<text x="165" y="128" textLength="54" fill="#d1d1d1">Hybrid</text>
+<text x="48" y="164" textLength="72" fill="#989898">l/100 km</text>
+<text x="48" y="182" textLength="36" fill="#989898">10.0</text>
+<text x="57" y="254" textLength="27" fill="#989898">7.5</text>
+<text x="57" y="326" textLength="27" fill="#989898">5.0</text>
+<text x="57" y="398" textLength="27" fill="#989898">2.5</text>
+<text x="84" y="416" textLength="603" fill="#989898">50         75        100        125       150        175        200</text>
+<text x="309" y="434" textLength="153" fill="#989898">Engine power (kW)</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

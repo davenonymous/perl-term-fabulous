@@ -32,7 +32,6 @@ Box "root" {
 	layout direction=down gap=1
 	sizing width=grow height=grow
 	padding left=2 right=2 top=1 bottom=1
-	background_color "#141923"
 
 	Text { text "Fill in the form. Tab moves on, F2 shows the values, Ctrl+C ends."; text_color "#dcdcdc"; }
 

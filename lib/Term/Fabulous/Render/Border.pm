@@ -185,7 +185,8 @@ width.
 =item *
 
 Each side uses the style of that side (C<border_style_top>, ...). A
-side without a style is drawn with the C<Blank> style: spaces. A corner
+side without a style is drawn in the theme's style for the widget's
+family, or with the C<Blank> style (spaces) when the theme has none. A corner
 the widget names in C<border_corners> is drawn with that glyph instead
 (see L<Term::Fabulous::Role::HasBorderStyle/border_corners>), in the
 colors of the style's corner.

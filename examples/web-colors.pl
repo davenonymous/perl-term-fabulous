@@ -106,8 +106,7 @@ my $grid = Term::Fabulous::Widget::ScrollBox->new(
 );
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
 		padding          => { top   => 1 },

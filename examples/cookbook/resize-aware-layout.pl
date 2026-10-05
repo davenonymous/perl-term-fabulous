@@ -15,8 +15,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
 use constant NARROW_COLUMNS => 70;
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
+	layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
 );
 foreach my $name (qw(Inbox Message)) {
 	my $pane = Term::Fabulous::Widget::Box->new(

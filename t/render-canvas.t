@@ -41,7 +41,7 @@ subtest 'the buffer is painted into the content box' => sub {
 	$ui->draw;
 
 	is \@sizes,                   [ [ 3, 1 ] ],                  'CanvasResize reports the content size before the frame is painted';
-	is glyphs_at( $ui, 2, 2, 8 ), ' ab   ',                      'the cells start inside border and padding';
+	is glyphs_at( $ui, 2, 2, 8 ), " ab \x{2502} ",               'the cells start inside border and padding, the frame is the theme\'s round style';
 	is $ui->cell( 3, 2 ),         [ 'a', 0x0000FF, 0xFF0000 ],   'a cell with its own colors';
 	is $ui->cell( 4, 2 ),         [ 'b', TB_DEFAULT, 0x020202 ], 'a cell without colors: terminal foreground, canvas background';
 	is $ui->cell( 5, 2 ),         [ ' ', TB_DEFAULT, 0x020202 ], 'an unset cell: a space in the canvas background';

@@ -10,7 +10,7 @@
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
 <clipPath id="window"><rect x="16" y="16" width="856" height="508" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="856" height="508" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="856" height="508" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="856" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>

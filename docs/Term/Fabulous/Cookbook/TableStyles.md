@@ -63,8 +63,7 @@ my @orders = (
 );
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -200,8 +199,7 @@ push @budget, {
 };
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -322,8 +320,7 @@ use Term::Fabulous::Widget::Table::Mutator qw(number);
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -442,8 +439,7 @@ sub example ( $index, $caption, $lines ) {
 }
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },

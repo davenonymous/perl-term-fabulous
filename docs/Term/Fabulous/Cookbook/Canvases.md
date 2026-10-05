@@ -41,8 +41,7 @@ use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTIO
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -129,8 +128,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 my @temperatures = map { 12 + 8 * sin( $_ / 9 ) + 3 * sin( $_ / 2.3 ) } 0 .. 199;
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },

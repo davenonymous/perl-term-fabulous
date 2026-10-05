@@ -66,8 +66,7 @@ use Term::Fabulous::Widget::TextField;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 sizing          => { width => sizing_grow(),       height => sizing_grow() },
                 child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
         },
@@ -166,8 +165,7 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
 }
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -263,8 +261,7 @@ use Term::Fabulous::Widget::TextField;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 1,             right  => 1 },
@@ -340,8 +337,7 @@ use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -526,7 +522,6 @@ Box "root" {
         layout direction=down gap=1
         sizing width=grow height=grow
         padding left=2 right=2 top=1 bottom=1
-        background_color "#141923"
 
         Text { text "Fill in the form. Tab moves on, F2 shows the values, Ctrl+C ends."; text_color "#dcdcdc"; }
 
@@ -673,8 +668,7 @@ use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -743,8 +737,7 @@ my %help_by_id = (
 );
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -827,8 +820,7 @@ class My::OrderedBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Int
 
 my %field = map { $_ => Term::Fabulous::Widget::TextField->new( id => $_, placeholder => ucfirst, preferred_columns => 12 ) } qw(street city zip);
 my $root  = My::OrderedBox->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
+        layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
 );
 
 # Shown left to right as street, city, zip; Tab goes street, zip, city.

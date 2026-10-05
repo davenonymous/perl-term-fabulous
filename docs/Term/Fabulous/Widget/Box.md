@@ -115,14 +115,16 @@ describes the accepted values in full.
 - `border_color`
 
     The color of the border glyphs, in the same formats as
-    `background_color`. Default: `undef`, which draws the border in the
-    terminal's default foreground color.
+    `background_color`. Default: the theme's `box.border.color`, the
+    `border` token in the built-in themes (see
+    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
 
 - `border_style`
 
     A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item that sets the style of
-    every side that has no side parameter of its own. Default: `undef` (no
-    border style; a side with a width is then drawn with spaces).
+    every side that has no side parameter of its own. Default: the
+    theme's `box.border.style`, `Round` in the built-in themes (see
+    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
 
 - `border_style_top`
 - `border_style_right`

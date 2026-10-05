@@ -36,8 +36,7 @@ class My::OrderedBox :isa(Term::Fabulous::Widget::Box) :does(Clay::UI::Role::Int
 
 my %field = map { $_ => Term::Fabulous::Widget::TextField->new( id => $_, placeholder => ucfirst, preferred_columns => 12 ) } qw(street city zip);
 my $root  = My::OrderedBox->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
+	layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
 );
 
 # Shown left to right as street, city, zip; Tab goes street, zip, city.

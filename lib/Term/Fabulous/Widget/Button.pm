@@ -209,10 +209,10 @@ replaces that with a background color, or switches it off;
 
 =item * while it has the focus, its border is drawn in
 C<focus_border_color>, the blue the input widgets use for their accent.
-A Button without a visible border shows nothing: give it a border
-with both C<border_width =E<gt> 1> and a C<border_style> (a border
-without a style is drawn as spaces, which show no color), or change its
-background in an C<OnFocus> listener;
+A Button without a border shows nothing: give it
+C<border_width =E<gt> 1>, and the theme supplies the style (C<Round>
+in the built-in themes) and the color, or change its background in an
+C<OnFocus> listener;
 
 =item * hovering changes nothing by default. C<is_hovered> and the
 C<OnHoverStart> and C<OnHoverStopped> events follow the pointer, so a
@@ -270,8 +270,8 @@ The color of the border while the Button has the focus, in any format
 L<Term::Fabulous::Color> accepts, or C<undef> for no focus look.
 Default: the theme's C<button.border.color> in the C<focused> state,
 the accent C<[ 97, 175, 239, 255 ]> in the built-in dark theme. It
-only shows on sides with a positive C<border_width> and a
-C<border_style> other than C<Blank>.
+only shows on sides with a positive C<border_width> whose style, the
+theme's or the widget's own, is not C<Blank>.
 
 =item C<pressed_background_color>
 

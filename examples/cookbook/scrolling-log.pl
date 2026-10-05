@@ -18,8 +18,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 use constant MAX_LINES => 500;
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
 		padding          => { left  => 1,             right  => 1 },

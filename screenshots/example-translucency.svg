@@ -10,7 +10,7 @@
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
 <clipPath id="window"><rect x="16" y="16" width="748" height="490" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="748" height="490" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="748" height="490" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="748" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>
@@ -18,9 +18,9 @@
 <text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/translucency.pl</text>
 <rect x="16.5" y="16.5" width="747" height="489" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="372" y="96" width="270" height="108" fill="#2d4c38"/>
-<rect x="39" y="204" width="270" height="108" fill="#8a3a3f"/>
-<rect x="354" y="366" width="270" height="108" fill="#285391"/>
+<rect x="372" y="96" width="270" height="108" fill="#2f4a38"/>
+<rect x="39" y="204" width="270" height="108" fill="#8b383e"/>
+<rect x="354" y="366" width="270" height="108" fill="#295191"/>
 <rect x="745" y="60" width="2" height="72" fill="#61afef"/>
 <rect x="381" y="104" width="252" height="1" fill="#78e678"/>
 <rect x="376" y="114" width="1" height="72" fill="#78e678"/>

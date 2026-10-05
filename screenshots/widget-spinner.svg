@@ -10,7 +10,7 @@
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
 <clipPath id="window"><rect x="16" y="16" width="568" height="382" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="568" height="382" rx="10" fill="#141923" filter="url(#shadow)"/>
+<rect x="16" y="16" width="568" height="382" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="568" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>
@@ -18,10 +18,10 @@
 <text class="title" x="300" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/widgets/spinner.pl</text>
 <rect x="16.5" y="16.5" width="567" height="381" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="300" y="150" width="18" height="18" fill="#472e38"/>
-<rect x="318" y="150" width="9" height="18" fill="#ad5761"/>
+<rect x="300" y="150" width="18" height="18" fill="#492c37"/>
+<rect x="318" y="150" width="9" height="18" fill="#ae5760"/>
 <rect x="327" y="150" width="9" height="18" fill="#e06c75"/>
-<rect x="336" y="150" width="9" height="18" fill="#ad5761"/>
+<rect x="336" y="150" width="9" height="18" fill="#ae5760"/>
 <rect x="300" y="186" width="27" height="18" fill="#98c379"/>
 <rect x="300" y="204" width="9" height="18" fill="#98c379"/>
 <rect x="300" y="222" width="27" height="18" fill="#98c379"/>

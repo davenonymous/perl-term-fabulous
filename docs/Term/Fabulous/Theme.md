@@ -67,7 +67,10 @@ track track_scroll button_face backdrop
 success warning danger
 ```
 
-`background` is the screen behind the widgets: [Term::Fabulous](../../../README.md)
+`border` is what every border is drawn in unless a theme or the
+widget says otherwise, so a frame stays visible on the theme's own
+screen; the built-in themes draw every border, of a Box, a Button or
+an input, in the `Round` style. `background` is the screen behind the widgets: [Term::Fabulous](../../../README.md)
 paints the whole screen in it before every frame, so a theme looks the
 same whatever colors the terminal shows otherwise, and a light theme is
 readable on a dark terminal. A theme that wants the terminal's own

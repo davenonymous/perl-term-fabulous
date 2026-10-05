@@ -473,8 +473,8 @@ input widgets. Three parameters control it:
 - `border_color`
 
     The color of the border characters, in the formats described in
-    ["Color formats"](#color-formats). Without one, the border is drawn in the terminal's
-    default text color.
+    ["Color formats"](#color-formats). Without one, the border is drawn in the theme's
+    border color (the `border` token of the built-in themes).
 
 ```perl
 use Term::Fabulous::Enum::BorderStyle;
@@ -496,9 +496,11 @@ Box "panel" {
 }
 ```
 
-A border needs both a width and a style: a style without a width draws
-nothing, and a side with a width but no style is drawn with spaces (the
-`Blank` style).
+A border needs a width: a style without a width draws nothing. A side
+with a width but no style takes the style the theme gives the widget's
+family, `Round` for every box, button and input in the built-in
+themes; a theme that sets a family's style to `none` has such a side
+drawn with spaces (the `Blank` style).
 
 ## Border styles
 
@@ -606,9 +608,9 @@ $panel->border_color('#ff5050');    # shown in the next frame
 
 A widget that was given no `border_color` or no `border_style` takes
 them from the theme, where the theme has them for the widget's family
-(a button, a dialog, a toast, ...); see ["THEMES"](#themes). A plain Box has
-none in the built-in themes, so its border is drawn in the terminal's
-default color and, without a style, with spaces.
+(a button, a dialog, a toast, ...); see ["THEMES"](#themes). The built-in
+themes draw every border in their `border` token and in the `Round`
+style, so a Box with a `border_width` alone gets a round frame.
 
 ## Joining borders
 

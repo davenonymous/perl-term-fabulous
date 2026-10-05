@@ -324,7 +324,9 @@ composes the role. Unknown values die.
 
 A L<Term::Fabulous::Enum::BorderStyle> item, for example
 C<< Term::Fabulous::Enum::BorderStyle->Round >>; it sets the style of
-every side that has no side parameter of its own. Default: none.
+every side that has no side parameter of its own. Default: the style
+the theme gives the widget's family, if any (see
+L<Term::Fabulous::Manual::Looks/THEMES>).
 Anything else, including the name of a style as a string, dies. To use
 a name, convert it:
 C<< Term::Fabulous::Enum::BorderStyle->from_name('Round') >>.

@@ -104,7 +104,6 @@ The layout file:
 	Box "root" {
 		layout direction=down
 		sizing width=grow height=grow
-		background_color "#141923"
 
 		// The title bar: the title on the left, a summary pushed to the right
 		// by a growing box between them.

@@ -82,8 +82,7 @@ my @users = (
 );
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -235,8 +234,7 @@ my $per_second = sub ( $text, $row ) {
 };
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -386,8 +384,7 @@ my @tasks = (
 my $next_id = @tasks + 1;
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -598,8 +595,7 @@ my @rows = map {
 } @staff;
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -724,7 +720,6 @@ Box "root" {
         layout direction=down gap=1
         sizing width=grow height=grow
         padding left=2 right=2 top=1 bottom=1
-        background_color "#141923"
 
         Text { text "Stock by category. Space selects, Enter on a group header closes it."; text_color "#dcdcdc"; }
 

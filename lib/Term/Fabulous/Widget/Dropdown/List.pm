@@ -56,7 +56,8 @@ class Term::Fabulous::Widget::Dropdown::List
 
 	method border_color :override (@new) {
 		return $self->SUPER::border_color(@new) if @new;
-		return $self->SUPER::border_color // ( defined $dropdown ? $dropdown->accent_color : undef );
+		return $self->SUPER::border_color if $self->has_look_override('border_color') || !defined $dropdown;
+		return $dropdown->accent_color;
 	}
 
 	method contribute_look_theme :override ($config) {

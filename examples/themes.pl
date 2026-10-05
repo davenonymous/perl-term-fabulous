@@ -38,10 +38,10 @@ if ( my ($wanted) = @ARGV ) {
 	die "themes.pl: unknown theme '$wanted' (known: @names)\n" unless defined $current;
 }
 
-# A panel: its frame is the box family's border, which the built-in
-# themes leave empty and the theme files draw; the title is a Text
-# without a color of its own, so it is drawn in the theme's text color,
-# and the screen around the panel in the theme's background.
+# A panel: its frame is the box family's border, drawn in the theme's
+# border style and color; the title is a Text without a color of its
+# own, so it is drawn in the theme's text color, and the screen around
+# the panel in the theme's background.
 my $panel = Term::Fabulous::Widget::Box->new(
 	border_width => 1,
 	layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(56) }, padding => { left => 1, right => 1 }, child_gap => 1 },

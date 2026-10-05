@@ -18,7 +18,6 @@ Box "root" {
 	layout direction=down gap=1
 	sizing width=grow height=grow
 	padding left=2 right=2 top=1 bottom=1
-	background_color "#141923"
 
 	Text { text "Stock by category. Space selects, Enter on a group header closes it."; text_color "#dcdcdc"; }
 

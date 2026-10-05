@@ -50,9 +50,8 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
 }
 
 my $root = Term::Fabulous::Widget::Box->new(
-	id               => 'root',
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	id     => 'root',
+	layout => {
 		sizing    => { width => sizing_grow(), height => sizing_grow() },
 		padding   => { left  => 2, right => 2, top => 1, bottom => 1 },
 		child_gap => 3,

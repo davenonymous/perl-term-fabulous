@@ -107,8 +107,7 @@ This program is shipped as F<examples/cookbook/login-form.pl>.
 	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			sizing          => { width => sizing_grow(),       height => sizing_grow() },
 			child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 		},
@@ -227,8 +226,7 @@ This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 	}
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
 			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -344,8 +342,7 @@ This program is shipped as F<examples/cookbook/inline-prompt.pl>.
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
 			padding          => { left  => 1,             right  => 1 },
@@ -435,8 +432,7 @@ This program is shipped as F<examples/cookbook/choose-options.pl>.
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
 			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -656,7 +652,6 @@ ends. This program is also shipped as F<examples/kdl-form.pl>.
 		layout direction=down gap=1
 		sizing width=grow height=grow
 		padding left=2 right=2 top=1 bottom=1
-		background_color "#141923"
 
 		Text { text "Fill in the form. Tab moves on, F2 shows the values, Ctrl+C ends."; text_color "#dcdcdc"; }
 
@@ -832,8 +827,7 @@ This program is shipped as F<examples/cookbook/disable-inputs.pl>.
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
 			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -916,8 +910,7 @@ This program is shipped as F<examples/cookbook/focus-help-line.pl>.
 	);
 
 	my $root = Term::Fabulous::Widget::Box->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => {
+		layout => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow(), height => sizing_grow() },
 			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
@@ -1011,8 +1004,7 @@ This program is shipped as F<examples/cookbook/tab-order.pl>.
 
 	my %field = map { $_ => Term::Fabulous::Widget::TextField->new( id => $_, placeholder => ucfirst, preferred_columns => 12 ) } qw(street city zip);
 	my $root  = My::OrderedBox->new(
-		background_color => [ 20, 25, 35, 255 ],
-		layout           => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
+		layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 }, child_gap => 2 },
 	);
 
 	# Shown left to right as street, city, zip; Tab goes street, zip, city.

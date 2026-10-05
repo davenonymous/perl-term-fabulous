@@ -39,15 +39,15 @@ subtest 'the built-in themes' => sub {
 
 	is $dark->token('accent'),                               [ 97, 175, 239, 255 ],           'the dark accent is the color the widgets always used';
 	is $dark->look( 'button', 'border.color', 'focused' ),   [ 97, 175, 239, 255 ],           'a focused button border is the accent';
-	is $dark->look( 'button', 'border.color' ),              undef,                           'a button border has no color of its own';
+	is $dark->look( 'button', 'border.color' ),              [ 70, 85, 110, 255 ],            'a button border is drawn in the border token';
 	is $dark->look( 'button', 'background', 'pressed' ),     'reverse',                       'a pressed button is drawn in reverse video';
 	is $dark->look( 'button', 'text', 'hovered' ),           $dark->look( 'button', 'text' ), 'a state without a value of its own looks normal';
 	is $dark->look( 'text_input', 'background' ),            [ 36, 40, 48, 255 ],             'a text input background';
 	is $dark->look( 'text_input', 'background', 'focused' ), [ 52, 58, 72, 255 ],             'a focused text input background';
 	is $dark->look( 'text_input', 'placeholder' ),           [ 120, 126, 138, 255 ],          'text_input inherits the input slots';
 	ref_is $dark->look( 'dialog', 'border.style' ), Term::Fabulous::Enum::BorderStyle->Round, 'a style slot holds a BorderStyle item';
-	is $dark->look( 'box', 'border.style' ), undef, 'a plain box has no border style';
-	is $dark->look( 'box', 'background' ),   undef, 'a plain box has no background';
+	ref_is $dark->look( 'box',    'border.style' ), Term::Fabulous::Enum::BorderStyle->Round, 'a plain box has the round border style';
+	is $dark->look( 'box', 'background' ), undef, 'a plain box has no background';
 
 	my $light = $Theme->builtin('light');
 	isnt $light->token('text'), $dark->token('text'), 'the light theme has its own text color';
@@ -114,7 +114,7 @@ subtest 'variants' => sub {
 	is $theme->look( 'button', 'border.color', 'disabled', ['primary'] ),              $theme->token('disabled'), 'disabled keeps the family value';
 	is $theme->look( 'button', 'text',         'disabled', ['primary'] ),              [ 0, 0, 0, 255 ],          'a variant overrides one state';
 	is $theme->look( 'button', 'text',         'normal',   ['primary'] ),              $theme->token('text'),     'the other states stay';
-	is $theme->look( 'button', 'border.color', 'normal',   ['danger'] ),               undef,                     'a class without a variant changes nothing';
+	is $theme->look( 'button', 'border.color', 'normal',   ['danger'] ),               $theme->token('border'),   'a class without a variant changes nothing';
 	is $theme->look( 'button', 'border.color', 'normal',   [ 'primary', 'compact' ] ), [ 0, 255, 0, 255 ],        'later classes win';
 	is $theme->look( 'button', 'border.color', 'normal',   [ 'compact', 'primary' ] ), $accent,                   'in class order';
 	is $theme->look( 'button', 'text',         'disabled', [ 'compact', 'primary' ] ), [ 0, 0, 0, 255 ],          'slots only one variant sets are kept';

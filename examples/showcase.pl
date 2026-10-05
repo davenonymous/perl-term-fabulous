@@ -45,7 +45,6 @@ use Clay::XS qw(
 
 # The palette, a dark theme.
 my %color = (
-	screen => [ 20,  25,  35,  255 ],
 	panel  => [ 28,  33,  45,  255 ],
 	header => [ 33,  44,  70,  255 ],
 	border => [ 70,  85,  110, 255 ],
@@ -252,8 +251,7 @@ foreach my $hint ( [ 'Tab' => 'next input' ], [ 'Shift+Tab' => 'previous input' 
 }
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => $color{screen},
-	layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { bottom => 1 }, child_gap => 1 },
+	layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { bottom => 1 }, child_gap => 1 },
 );
 $root->add_child( $header, $body, $footer );
 

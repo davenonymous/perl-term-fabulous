@@ -17,7 +17,6 @@ Box "root" {
 	layout gap=4
 	sizing width=grow height=grow
 	padding left=2 right=2 top=1 bottom=1
-	background_color "#141923"
 
 	BarChart "sales" {
 		sizing width="percent(60)" height=grow

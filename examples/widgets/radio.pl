@@ -25,8 +25,7 @@ use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT);
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,
 		sizing           => { width => sizing_grow(), height => sizing_grow() },
 		padding          => { left  => 2, right => 2, top => 1, bottom => 1 },

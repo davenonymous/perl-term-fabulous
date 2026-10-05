@@ -55,7 +55,7 @@ subtest 'the screen background' => sub {
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 4, height => 2 );
 	my $ui       = Term::Fabulous->new( root => $small_box->(), width => 4, height => 2, terminal => $terminal );
 	$ui->step;
-	is $terminal->cell( 3, 1 ), [ ' ', 0, 0x141923 ], 'a cell no widget paints shows the background token of the dark theme';
+	is $terminal->cell( 3, 1 ), [ ' ', 0, 0x161622 ], 'a cell no widget paints shows the background token of the dark theme';
 	is [ $terminal->lines ], [ '    ', '    ' ], 'so no cell of the screen is blank';
 
 	$ui->theme('light');

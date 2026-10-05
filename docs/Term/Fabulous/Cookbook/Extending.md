@@ -138,7 +138,6 @@ Box "root" {
         layout direction=down gap=1
         sizing width=grow height=grow
         padding left=2 right=2 top=1 bottom=1
-        background_color "#141923"
 
         Text { text "Tab moves, Space, Enter, Left, Right or a click switch. Ctrl+C ends."; text_color "#dcdcdc"; }
         Toggle "wifi" { label "Wi-Fi"; value #true; }

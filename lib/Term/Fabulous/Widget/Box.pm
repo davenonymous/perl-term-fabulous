@@ -333,14 +333,16 @@ no border.
 =item C<border_color>
 
 The color of the border glyphs, in the same formats as
-C<background_color>. Default: C<undef>, which draws the border in the
-terminal's default foreground color.
+C<background_color>. Default: the theme's C<box.border.color>, the
+C<border> token in the built-in themes (see
+L<Term::Fabulous::Manual::Looks/THEMES>).
 
 =item C<border_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of
-every side that has no side parameter of its own. Default: C<undef> (no
-border style; a side with a width is then drawn with spaces).
+every side that has no side parameter of its own. Default: the
+theme's C<box.border.style>, C<Round> in the built-in themes (see
+L<Term::Fabulous::Manual::Looks/THEMES>).
 
 =item C<border_style_top>
 

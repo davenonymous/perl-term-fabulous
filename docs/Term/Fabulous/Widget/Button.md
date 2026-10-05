@@ -57,10 +57,10 @@ every cell it paints, label included, are swapped. `pressed_background_color`
 replaces that with a background color, or switches it off;
 - while it has the focus, its border is drawn in
 `focus_border_color`, the blue the input widgets use for their accent.
-A Button without a visible border shows nothing: give it a border
-with both `border_width => 1` and a `border_style` (a border
-without a style is drawn as spaces, which show no color), or change its
-background in an `OnFocus` listener;
+A Button without a border shows nothing: give it
+`border_width => 1`, and the theme supplies the style (`Round`
+in the built-in themes) and the color, or change its background in an
+`OnFocus` listener;
 - hovering changes nothing by default. `is_hovered` and the
 `OnHoverStart` and `OnHoverStopped` events follow the pointer, so a
 hover look is one listener away;
@@ -114,8 +114,8 @@ every parameter of [Term::Fabulous::Widget::Box](Box.md) (`id`, `layout`,
     [Term::Fabulous::Color](../Color.md) accepts, or `undef` for no focus look.
     Default: the theme's `button.border.color` in the `focused` state,
     the accent `[ 97, 175, 239, 255 ]` in the built-in dark theme. It
-    only shows on sides with a positive `border_width` and a
-    `border_style` other than `Blank`.
+    only shows on sides with a positive `border_width` whose style, the
+    theme's or the widget's own, is not `Blank`.
 
 - `pressed_background_color`
 

@@ -48,8 +48,7 @@ use Clay::XS qw(sizing_grow CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
 
 my $clock = Term::Fabulous::Widget::Text->new( text => '--:--:--', text_color => [ 255, 200, 80, 255 ] );
 my $root  = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 sizing          => { width => sizing_grow(),       height => sizing_grow() },
                 child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
         },
@@ -110,8 +109,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 use constant MAX_LINES => 500;
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 1,             right  => 1 },
@@ -199,8 +197,7 @@ use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 1,             right  => 1 },
@@ -367,8 +364,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 my @command = @ARGV ? @ARGV : ( 'ls', '-l', '/' );
 
 my $root = Term::Fabulous::Widget::Box->new(
-        background_color => [ 20, 25, 35, 255 ],
-        layout           => {
+        layout => {
                 layout_direction => CLAY_TOP_TO_BOTTOM,
                 sizing           => { width => sizing_grow(), height => sizing_grow() },
                 padding          => { left  => 1,             right  => 1 },

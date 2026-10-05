@@ -14,8 +14,7 @@ use Term::Fabulous::Widget::TextField;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER);
 
 my $root = Term::Fabulous::Widget::Box->new(
-	background_color => [ 20, 25, 35, 255 ],
-	layout           => {
+	layout => {
 		sizing          => { width => sizing_grow(),       height => sizing_grow() },
 		child_alignment => { x     => CLAY_ALIGN_X_CENTER, y      => CLAY_ALIGN_Y_CENTER },
 	},
