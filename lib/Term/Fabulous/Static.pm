@@ -44,6 +44,12 @@ class Term::Fabulous::Static
 		return undef;
 	}
 
+	# The lines are printed into whatever the terminal shows; the theme's
+	# background token paints nothing here (Term::Fabulous::Render).
+	method screen_background () {
+		return undef;
+	}
+
 	method cell ( $x, $y ) {
 		return $cell_target->cell( $x, $y );
 	}
@@ -210,8 +216,10 @@ Passed to L<Clay::UI>; see there.
 
 The L<Term::Fabulous::Theme> the widgets draw with: a theme object or
 a built-in name, C<dark> (the default) or C<light>; the C<theme>
-accessor changes it. See L<Term::Fabulous/new> and
-L<Term::Fabulous::Manual::Looks/THEMES>.
+accessor changes it. Unlike L<Term::Fabulous>, Static paints no screen
+background from the theme: the lines are printed into whatever the
+terminal shows, and a root with a C<background_color> paints its own.
+See L<Term::Fabulous/new> and L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =back
 

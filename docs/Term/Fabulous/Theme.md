@@ -56,7 +56,7 @@ the theme. See ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#theme
 
 The palette has these tokens. The built-in `dark` theme gives them the
 colors the widgets have always been drawn in; `light` gives them
-colors for a light terminal background.
+colors for a light screen.
 
 ```perl
 background surface surface_raised surface_field surface_low group_background
@@ -66,6 +66,13 @@ accent focus_background hover_background hover_low control_hover selected select
 track track_scroll button_face backdrop
 success warning danger
 ```
+
+`background` is the screen behind the widgets: [Term::Fabulous](../../../README.md)
+paints the whole screen in it before every frame, so a theme looks the
+same whatever colors the terminal shows otherwise, and a light theme is
+readable on a dark terminal. A theme that wants the terminal's own
+background instead gives the token a color with alpha 0, such as
+`rgba(0, 0, 0, 0)`. [Term::Fabulous::Static](Static.md) does not paint it.
 
 ## Families, slots and states
 
@@ -105,6 +112,7 @@ node, a `palette` node and one node per family, all optional:
 theme "ocean" extends="dark"
 
 palette {
+        background "#242933"
         accent "#88c0d0"
         surface "#2e3440"
 }

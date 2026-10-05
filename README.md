@@ -276,8 +276,11 @@ add timers first. Unknown parameters die
     Optional. The [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md) the widgets draw with: a theme
     object, or the name of a built-in theme, `dark` (the default) or
     `light`. Widgets that were given a color or a border style keep it.
-    ["theme"](#theme) switches the theme at run time. See
-    ["THEMES" in Term::Fabulous::Manual::Looks](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Looks.md#themes).
+    Every frame first paints the screen in the theme's `background`
+    token, so a theme looks the same on any terminal; a theme whose
+    `background` has alpha 0 leaves the terminal's own background (see
+    ["SCREEN BACKGROUND" in Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md#screen-background)). ["theme"](#theme) switches the
+    theme at run time. See ["THEMES" in Term::Fabulous::Manual::Looks](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Looks.md#themes).
 
 - `output_mode`
 
@@ -571,7 +574,8 @@ $ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
 Accessor for the theme (see ["new"](#new)). Without an argument it returns
 the [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md) object; with one it sets the theme, a
 theme object or a built-in name, makes every widget read its colors
-and border styles again, and draws a frame. Anything else dies. See
+and border styles again, and draws a frame, screen background
+included. Anything else dies. See
 ["THEMES" in Term::Fabulous::Manual::Looks](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Looks.md#themes).
 
 ## invalidate

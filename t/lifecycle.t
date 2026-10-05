@@ -156,7 +156,7 @@ subtest 'a resize that ends at the old size repaints the canvases' => sub {
 
 	$resizing_terminal->resize( 10, 3 )->resize( 20, 5 );
 	$resizing->step;
-	is [ $resizing_terminal->lines ]->[0], 'abc', 'every reported size makes the terminal lose its cells, so no canvas is kept';
+	is [ $resizing_terminal->lines ]->[0] =~ s/\s+\z//r, 'abc', 'every reported size makes the terminal lose its cells, so no canvas is kept';
 };
 
 subtest 'inline mode' => sub {
@@ -180,9 +180,9 @@ subtest 'inline mode' => sub {
 		}
 	);
 	ok lives { $inline->run }, 'run returns';
-	is \@seen,                        [ [ 3, 3, 0 ] ],    'Start reports the rows of the region; the terminal reports no mouse';
-	is [ $inline_terminal->lines ],   [ 'done', '', '' ], 'the state the loop stopped in is drawn before run returns';
-	is $inline_terminal->inline_rows, undef,              'the region is given back after run';
+	is \@seen,                                         [ [ 3, 3, 0 ] ],    'Start reports the rows of the region; the terminal reports no mouse';
+	is [ map { s/\s+\z//r } $inline_terminal->lines ], [ 'done', '', '' ], 'the state the loop stopped in is drawn before run returns';
+	is $inline_terminal->inline_rows,                  undef,              'the region is given back after run';
 
 	my ( $resizing, $resizing_terminal ) = memory_ui( root => $box->(), inline => 3 );
 	$resizing->root->on( Start => sub { $resizing_terminal->resize( 30, 8 ); return } );

@@ -8,8 +8,10 @@ use Test2::V0;
 
 use Clay::XS qw(sizing_fixed);
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous;
 use Term::Fabulous::Layout;
 use Term::Fabulous::Static;
+use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
@@ -44,6 +46,27 @@ subtest 'the theme of a UI' => sub {
 	ref_is $ui->theme('light'), $light, 'the writer returns the new theme';
 	is Term::Fabulous::Theme::generation(), $generation + 1, 'setting a theme bumps the generation';
 	like dies { $ui->theme(undef) }, qr/got undef/, 'the writer checks too';
+};
+
+subtest 'the screen background' => sub {
+	my $transparent = $Theme->new( name => 'transparent', palette => { background => [ 0, 0, 0, 0 ] } );
+	my $small_box   = sub { Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } } ) };
+
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 4, height => 2 );
+	my $ui       = Term::Fabulous->new( root => $small_box->(), width => 4, height => 2, terminal => $terminal );
+	$ui->step;
+	is $terminal->cell( 3, 1 ), [ ' ', 0, 0x141923 ], 'a cell no widget paints shows the background token of the dark theme';
+	is [ $terminal->lines ], [ '    ', '    ' ], 'so no cell of the screen is blank';
+
+	$ui->theme('light');
+	$ui->step;
+	is $terminal->cell( 3, 1 )->[2], 0xFAFAF7, 'a theme switch repaints the screen in the new background';
+
+	$ui->theme($transparent);
+	$ui->step;
+	is $terminal->cell( 3, 1 ), undef, 'a background token with alpha 0 leaves the terminal\'s own background';
+
+	is static( $small_box->(), width => 4 )->cell( 3, 0 ), undef, 'Static paints no screen background';
 };
 
 subtest 'a widget reads the theme of its UI' => sub {

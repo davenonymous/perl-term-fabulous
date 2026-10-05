@@ -124,8 +124,10 @@ measured in terminal columns.
 
     The [Term::Fabulous::Theme](Theme.md) the widgets draw with: a theme object or
     a built-in name, `dark` (the default) or `light`; the `theme`
-    accessor changes it. See ["new" in Term::Fabulous](../../../README.md#new) and
-    ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
+    accessor changes it. Unlike [Term::Fabulous](../../../README.md), Static paints no screen
+    background from the theme: the lines are printed into whatever the
+    terminal shows, and a root with a `background_color` paints its own.
+    See ["new" in Term::Fabulous](../../../README.md#new) and ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
 
 # METHODS
 

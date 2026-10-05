@@ -225,14 +225,29 @@ backgrounds over a light panel, and the terminal's default text color
 
 [Term::Fabulous::Theme](Theme.md): a panel with a text field, a check box, a
 progress bar and two buttons under the built-in `dark` and `light`
-themes and under `examples/ocean.kdl`, a theme file; F2 switches to
-the next theme. The Save button has the class `primary`, which the
-ocean theme draws in its accent, and the Cancel button keeps its own
-border color under every theme. See
-["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
+themes and under the theme files in `examples/themes/`: `ocean`,
+`nord`, `dracula` and `solarized-light`. F2 switches to the next
+theme, and a theme name on the command line
+(`perl examples/themes.pl nord`) picks the first one. Every theme
+paints the screen in its own background, so the light themes are
+readable on a dark terminal. The Save button has the class `primary`,
+which the theme files draw in their accent, and the Cancel button
+keeps its own border color under every theme. See
+["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes). The pictures show the six
+themes in that order:
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes.svg" alt="A panel in the ocean theme: teal accents on a deep blue background, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-dark.svg" alt="The panel in the dark theme: light text on a dark blue-gray screen, a text field holding Ada, a checked check box, a blue progress bar at 65 percent, a Save button and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-light.svg" alt="The panel in the light theme: dark text on a near-white screen, a white text field holding Ada, a checked check box, a blue progress bar at 65 percent, a Save button and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-ocean.svg" alt="The panel in the ocean theme: teal accents on a deep blue screen, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-nord.svg" alt="The panel in the nord theme: pale text on a slate gray screen, frost blue accents, a text field holding Ada, a checked check box, a progress bar at 65 percent, a round-bordered Save button in frost blue and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-dracula.svg" alt="The panel in the dracula theme: white text on a dark purple-gray screen, purple accents, a text field holding Ada, a checked check box, a progress bar at 65 percent, a pink Save button and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-solarized-light.svg" alt="The panel in the solarized-light theme: gray-blue text on a warm paper-colored screen, blue accents, an orange divider, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in blue and a Cancel button with a red border"></p>
 </div>
 
 ### examples/web-colors.pl
@@ -1084,7 +1099,7 @@ The programs of [Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md).
 
     ["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file):
     the built-in `dark` and `light` themes and the theme file
-    `examples/ocean.kdl`; F2 switches to the next one. The picture shows
+    `examples/themes/ocean.kdl`; F2 switches to the next one. The picture shows
     the ocean theme, after typing a line and two presses of F2.
 
     <div>

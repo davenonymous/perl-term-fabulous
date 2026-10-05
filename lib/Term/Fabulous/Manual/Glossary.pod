@@ -404,7 +404,7 @@ A KDL file that describes a theme: a C<theme> node, a C<palette> node and one no
 
 =item token (theme)
 
-A named color of a theme's palette, such as C<accent>, C<surface> or C<text>, which the slots default to. See L<Term::Fabulous::Theme/Tokens>.
+A named color of a theme's palette, such as C<accent>, C<surface> or C<text>, which the slots default to. The C<background> token is the screen behind the widgets, which every frame paints first. See L<Term::Fabulous::Theme/Tokens>.
 
 =item tree row, child row (table)
 

@@ -1,9 +1,15 @@
 #!/usr/bin/env perl
 
-# Themes: the same widgets in the built-in dark and light themes and in
-# a theme loaded from a file (examples/ocean.kdl). F2 switches to the
-# next theme; the widgets that were given a color of their own keep it.
-# See Term::Fabulous::Manual::Looks and Term::Fabulous::Theme.
+# Themes: the same widgets under the built-in dark and light themes and
+# under the theme files in examples/themes/. A theme paints the screen
+# in its background, so a light theme is readable on a dark terminal and
+# the other way around. F2 switches to the next theme; a theme name on
+# the command line picks the first one:
+#
+#     perl examples/themes.pl nord
+#
+# The widgets that were given a color of their own keep it under every
+# theme. See Term::Fabulous::Manual::Looks and Term::Fabulous::Theme.
 
 use v5.32;
 use warnings;
@@ -22,24 +28,32 @@ use Term::Fabulous::Widget::ProgressBar;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::TextField;
 
-my @themes  = ( 'dark', 'light', Term::Fabulous::Theme->from_file("$FindBin::Bin/ocean.kdl") );
-my $current = 0;
+# The built-in themes first, then every theme file, by name.
+my @themes = ( ( map { Term::Fabulous::Theme->builtin($_) } qw(dark light) ), ( map { Term::Fabulous::Theme->from_file($_) } sort glob("$FindBin::Bin/themes/*.kdl") ) );
+my @names  = map { $_->name } @themes;
 
-# A panel: the frame and the background come from the theme, the title
-# is a Text without a color of its own, so it is drawn in the theme's
-# text color.
+my $current = 0;
+if ( my ($wanted) = @ARGV ) {
+	($current) = grep { $names[$_] eq $wanted } 0 .. $#names;
+	die "themes.pl: unknown theme '$wanted' (known: @names)\n" unless defined $current;
+}
+
+# A panel: its frame is the box family's border, which the built-in
+# themes leave empty and the theme files draw; the title is a Text
+# without a color of its own, so it is drawn in the theme's text color,
+# and the screen around the panel in the theme's background.
 my $panel = Term::Fabulous::Widget::Box->new(
 	border_width => 1,
-	layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(50) }, padding => { left => 1, right => 1 }, child_gap => 1 },
+	layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(56) }, padding => { left => 1, right => 1 }, child_gap => 1 },
 );
-my $title = Term::Fabulous::Widget::Text->new( text => 'Theme: dark (F2 switches, Ctrl+C quits)' );
+my $title = Term::Fabulous::Widget::Text->new( text => "Theme: $names[$current] (F2 switches, Ctrl+C quits)" );
 
 my $name  = Term::Fabulous::Widget::TextField->new( placeholder => 'Your name', layout => { sizing => { width => sizing_grow() } } );
 my $agree = Term::Fabulous::Widget::Checkbox->new( label => 'Subscribe to the newsletter', checked => 1 );
 my $bar   = Term::Fabulous::Widget::ProgressBar->new( value => 65, layout => { sizing => { width => sizing_grow() } } );
 
-# Two buttons: the first is 'primary', which the ocean theme styles in
-# its accent; the second keeps its own border color under every theme.
+# Two buttons: the first is 'primary', which the theme files style in
+# their accent; the second keeps its own border color under every theme.
 my $save = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 2, right => 2 } } );
 $save->add_child( Term::Fabulous::Widget::Text->new( text => 'Save' ) );
 my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, border_color => '#e06c75', layout => { padding => { left => 2, right => 2 } } );
@@ -58,7 +72,7 @@ $root->on(
 		return unless ( $event->key_name // '' ) eq 'F2';
 		$current = ( $current + 1 ) % @themes;
 		$ui->theme( $themes[$current] );
-		$title->text( 'Theme: ' . $ui->theme->name . ' (F2 switches, Ctrl+C quits)' );
+		$title->text("Theme: $names[$current] (F2 switches, Ctrl+C quits)");
 		return;
 	}
 );

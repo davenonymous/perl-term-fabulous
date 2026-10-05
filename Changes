@@ -12,7 +12,12 @@ Revision history for Term::Fabulous
           theme's text color instead of black. Widget authors: the
           Term::Fabulous::Role::Themed role (theme_family,
           themed_params, look, look_value, theme_changed); a Button's
-          disabled_text_color became child_text_color
+          disabled_text_color became child_text_color. Term::Fabulous
+          paints the screen in the theme's background token before every
+          frame, so a theme looks the same on any terminal (a token with
+          alpha 0 keeps the terminal's own background; Static paints
+          none). The theme files moved to examples/themes/, with nord,
+          dracula and solarized-light beside ocean
         - Needs Perl 5.32.1 or later (was 5.24)
         - Term::Fabulous::Layout needs Text::KDL::XS 0.002, which reads a
           string as Perl characters; layouts given as a string are passed

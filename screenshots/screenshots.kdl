@@ -75,11 +75,57 @@ screenshot "example-colors" {
 	size 80 13
 }
 
-screenshot "example-themes" {
+screenshot "example-themes-dark" {
 	script "examples/themes.pl"
+	args "dark"
+	size 80 20
 	steps {
 		type "Ada"
-		key "F2" "F2"
+	}
+}
+
+screenshot "example-themes-light" {
+	script "examples/themes.pl"
+	args "light"
+	size 80 20
+	steps {
+		type "Ada"
+	}
+}
+
+screenshot "example-themes-ocean" {
+	script "examples/themes.pl"
+	args "ocean"
+	size 80 20
+	steps {
+		type "Ada"
+	}
+}
+
+screenshot "example-themes-nord" {
+	script "examples/themes.pl"
+	args "nord"
+	size 80 20
+	steps {
+		type "Ada"
+	}
+}
+
+screenshot "example-themes-dracula" {
+	script "examples/themes.pl"
+	args "dracula"
+	size 80 20
+	steps {
+		type "Ada"
+	}
+}
+
+screenshot "example-themes-solarized-light" {
+	script "examples/themes.pl"
+	args "solarized-light"
+	size 80 20
+	steps {
+		type "Ada"
 	}
 }
 

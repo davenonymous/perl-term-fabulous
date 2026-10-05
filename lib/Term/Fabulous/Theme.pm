@@ -744,7 +744,7 @@ the theme. See L<Term::Fabulous::Manual::Looks/THEMES> for the guide.
 
 The palette has these tokens. The built-in C<dark> theme gives them the
 colors the widgets have always been drawn in; C<light> gives them
-colors for a light terminal background.
+colors for a light screen.
 
 	background surface surface_raised surface_field surface_low group_background
 	border line outline
@@ -752,6 +752,13 @@ colors for a light terminal background.
 	accent focus_background hover_background hover_low control_hover selected selection
 	track track_scroll button_face backdrop
 	success warning danger
+
+C<background> is the screen behind the widgets: L<Term::Fabulous>
+paints the whole screen in it before every frame, so a theme looks the
+same whatever colors the terminal shows otherwise, and a light theme is
+readable on a dark terminal. A theme that wants the terminal's own
+background instead gives the token a color with alpha 0, such as
+C<rgba(0, 0, 0, 0)>. L<Term::Fabulous::Static> does not paint it.
 
 =head2 Families, slots and states
 
@@ -800,6 +807,7 @@ node, a C<palette> node and one node per family, all optional:
 	theme "ocean" extends="dark"
 
 	palette {
+		background "#242933"
 		accent "#88c0d0"
 		surface "#2e3440"
 	}

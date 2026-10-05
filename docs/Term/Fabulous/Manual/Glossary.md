@@ -364,7 +364,7 @@ belongs to, such as (table) or (KDL).
 
 - token (theme)
 
-    A named color of a theme's palette, such as `accent`, `surface` or `text`, which the slots default to. See ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens).
+    A named color of a theme's palette, such as `accent`, `surface` or `text`, which the slots default to. The `background` token is the screen behind the widgets, which every frame paints first. See ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens).
 
 - tree row, child row (table)
 

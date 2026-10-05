@@ -20,8 +20,7 @@
 <g shape-rendering="crispEdges">
 <rect x="372" y="96" width="270" height="108" fill="#2d4c38"/>
 <rect x="39" y="204" width="270" height="108" fill="#8a3a3f"/>
-<rect x="354" y="366" width="270" height="90" fill="#285391"/>
-<rect x="354" y="456" width="270" height="18" fill="#3c8cff"/>
+<rect x="354" y="366" width="270" height="108" fill="#285391"/>
 <rect x="745" y="60" width="2" height="72" fill="#61afef"/>
 <rect x="381" y="104" width="252" height="1" fill="#78e678"/>
 <rect x="376" y="114" width="1" height="72" fill="#78e678"/>

@@ -4,11 +4,14 @@
 // Term::Fabulous::Theme->from_file.
 //
 // A theme starts from a built-in one (dark or light) and changes
-// palette tokens, slots of widget families, and variants.
+// palette tokens, slots of widget families, and variants. The
+// background token is the screen behind the widgets: every frame
+// paints it first, so the theme looks the same on any terminal.
 
 theme "ocean" extends="dark"
 
-// The palette: every widget look that is not set below follows these.
+// The palette: every widget look that is not set below follows these,
+// and the background is the screen.
 palette {
 	background "#0b1a24"
 	surface "#10242f"

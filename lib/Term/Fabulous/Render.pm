@@ -34,7 +34,8 @@ role Term::Fabulous::Render
 	use Feature::Compat::Try;
 	use Scalar::Util qw(blessed looks_like_number);
 	use Term::Fabulous::Check qw(describe);
-	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR);
+	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR TB_DEFAULT);
+	use Term::Fabulous::Render::Attr qw(color_attr);
 	use Term::Fabulous::Render::Frame;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -59,6 +60,10 @@ role Term::Fabulous::Render
 
 	# Background attribute of every cell painted this frame, indexed [y][x].
 	field $buffer = [];
+
+	# The attribute of the screen background the frame being painted lies
+	# on, TB_DEFAULT when the terminal's own background shows.
+	field $_screen_background_attr = TB_DEFAULT;
 	field $_last_frame;
 
 	# The paint-order index of the command being painted, undef between
@@ -75,6 +80,11 @@ role Term::Fabulous::Render
 
 	# Provided by the consumer: undef, or { x, y, down } of the pointer.
 	method pointer_state;
+
+	# Provided by the consumer: the Term::Fabulous::Color the screen is
+	# painted in before the widgets, or undef to leave the terminal's own
+	# background (see SCREEN BACKGROUND).
+	method screen_background;
 
 	# Provided by the consumer: the cell target the frames are painted
 	# into (see CELL TARGET).
@@ -121,6 +131,10 @@ role Term::Fabulous::Render
 	# Clay measures single words and single lines, so the height is one cell.
 	sub _measure_text ( $text, $config, $userdata ) {
 		return { width => string_columns($text), height => 1 };
+	}
+
+	method screen_background_attr () {
+		return $_screen_background_attr;
 	}
 
 	method last_frame () {
@@ -180,15 +194,33 @@ role Term::Fabulous::Render
 		# frame even when painting dies partway.
 		$_last_frame = Term::Fabulous::Render::Frame->new( commands => $commands, width => $self->width, height => $self->height );
 
+		my $screen_background = $self->screen_background;
+		$_screen_background_attr = defined $screen_background ? color_attr($screen_background) : TB_DEFAULT;
+
 		my $target = $self->cell_target;
 		$target->begin_frame( $self->plan_canvases($_last_frame) );
 		$buffer = [];
+		$self->_paint_screen_background($target) if defined $screen_background;
 		$self->_paint_commands($_last_frame);
 		$target->end_frame;
 		$self->finish_canvases;
 
 		# A callback may queue another one for the frame after this one.
 		$_->() foreach splice @_after_draw;
+		return;
+	}
+
+	# Fills the viewport with spaces in the screen background and records
+	# it as the background below every cell, so that the widgets, borders
+	# and translucent boxes of the frame are painted over it instead of
+	# over the terminal's own background. The target leaves the cells a
+	# canvas keeps from the last frame as they are.
+	method _paint_screen_background ($target) {
+		my $width = $self->width;
+		foreach my $y ( 0 .. $self->height - 1 ) {
+			$buffer->[$y] = [ ($_screen_background_attr) x $width ];
+			$target->fill_row( 0, $y, $width, $_screen_background_attr );
+		}
 		return;
 	}
 
@@ -267,6 +299,8 @@ The class that composes this role must provide:
 
 =item * C<pointer_state> (see L</pointer_state>);
 
+=item * C<screen_background> (see L</SCREEN BACKGROUND>);
+
 =item * C<cell_target>, which returns the object the frames are painted into (see L</CELL TARGET>).
 
 =back
@@ -337,8 +371,9 @@ C<CanvasResize> here.
 
 =item 4.
 
-Calls the cell target's C<begin_frame>, paints every render command in
-paint order and calls C<end_frame>.
+Calls the cell target's C<begin_frame>, paints the screen background
+(see L</SCREEN BACKGROUND>), paints every render command in paint
+order and calls C<end_frame>.
 
 =item 5.
 
@@ -413,6 +448,15 @@ The paint roles call it from their render command handlers; it dies
 when no command is being painted
 (C<Term::Fabulous::Render: clip_rect is only known while a render command is painted>).
 
+=head2 screen_background_attr
+
+	my $attr = $ui->screen_background_attr;
+
+The termbox2 background attribute of the screen background of the
+frame being painted, or C<TB_DEFAULT> when the terminal's own
+background shows (see L</SCREEN BACKGROUND>). The canvases paint their
+unset cells in it when no widget above them has a background.
+
 =head2 pointer_state
 
 	method pointer_state () { return { x => 12, y => 3, down => 0 } }
@@ -480,6 +524,27 @@ into the clip rects of the commands between them. See
 L<Term::Fabulous::Render::Frame>.
 
 =back
+
+=head1 SCREEN BACKGROUND
+
+	method screen_background () { return $color }    # a Term::Fabulous::Color, or undef
+
+Before the render commands of a frame are painted, the whole viewport
+(the screen, or the rows of an inline region) is filled with spaces in
+the color the consuming class returns from C<screen_background>, and
+that color is recorded as the background below every cell. So the
+widgets, their borders and their translucent backgrounds are painted
+over it, not over whatever the terminal shows where a program sets no
+color, and a theme made for a light background is readable on a dark
+terminal. The cells a canvas keeps from the last frame are left alone.
+A translucent color is painted opaque here, since there is nothing
+below it to blend with.
+
+L<Term::Fabulous> returns the C<background> token of its theme, or
+C<undef> for a token with alpha 0, which leaves the terminal's own
+background (see L<Term::Fabulous::Theme/Tokens>).
+L<Term::Fabulous::Static> returns C<undef>: its lines are printed into
+whatever the terminal shows.
 
 =head1 CELL TARGET
 

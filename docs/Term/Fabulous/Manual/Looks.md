@@ -657,21 +657,28 @@ A _theme_ decides the colors and the border styles of every widget
 that does not set them itself: the text color of a Text, the
 background of a text field, the border of a focused button, the lines
 of a table. Term::Fabulous comes with two themes, `dark` (the colors
-the pictures on these pages show) and `light`, for terminals with a
-light background. A theme is set per UI and can be switched at any
-time:
+the pictures on these pages show) and `light`. A theme also decides
+the background of the screen: every frame first paints the whole
+screen in the theme's `background` token, so a theme looks the same
+on any terminal, and `light` is readable on a dark one. A theme is
+set per UI and can be switched at any time:
 
 ```perl
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24, theme => 'light' );
 $ui->theme('dark');    # every widget takes the new colors in the next frame
 ```
 
-[Term::Fabulous::Static](../Static.md) takes the same parameter. Without one, a UI
-uses `dark`. The program `examples/themes.pl` shows the same panel
-under both built-in themes and under a theme file (F2 switches):
+[Term::Fabulous::Static](../Static.md) takes the same parameter, but paints no
+screen background: its lines go into whatever the terminal shows.
+Without a theme, a UI uses `dark`. The program `examples/themes.pl`
+shows the same panel under both built-in themes and under the theme
+files in `examples/themes/` (F2 switches); here under `light` and
+under the `ocean` theme file:
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes.svg" alt="A panel in the ocean theme: teal accents on a deep blue background, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-light.svg" alt="The panel in the light theme: dark text on a near-white screen, a white text field holding Ada, a checked check box, a blue progress bar at 65 percent, a Save button and a Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-ocean.svg" alt="The panel in the ocean theme: teal accents on a deep blue screen, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
 </div>
 
 ## What a theme colors
@@ -680,7 +687,10 @@ A theme has two layers. The _palette_ is a set of named colors, the
 _tokens_: `background`, `surface`, `border`, `text`,
 `text_muted`, `accent`, `focus_background`, `success`, `warning`,
 `danger` and some twenty more (the full list is in
-["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)). Above it, every kind of widget, a
+["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)). `background` is the screen itself:
+a theme that wants the terminal's own background gives it a color
+with alpha 0 (see ["Alpha and the terminal default color"](#alpha-and-the-terminal-default-color)). Above
+it, every kind of widget, a
 _family_, has _slots_, one for each colored or styled part: a
 button has `background`, `border.color`, `border.style` and
 `text`; an input has `text`, `accent`, `placeholder`, `selection`
@@ -748,6 +758,7 @@ slots of that state, and `variant "NAME"` holds a variant:
 theme "ocean" extends="dark"
 
 palette {
+        background "#0b1a24"
         accent "#5fd3c0"
         surface "#10242f"
         text "#d8e8ee"
@@ -780,7 +791,8 @@ my $ocean = Term::Fabulous::Theme->from_file('ocean.kdl');
 my $ui    = Term::Fabulous->new( root => $root, width => 80, height => 24, theme => $ocean );
 ```
 
-`examples/ocean.kdl` is a complete theme file, and the recipe
+`examples/themes/ocean.kdl` is a complete theme file (`examples/themes/`
+holds three more: `nord`, `dracula` and `solarized-light`), and the recipe
 [Switch themes at run time](../Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file)
 a complete program. The grammar is described in
 ["THEME FILES" in Term::Fabulous::Theme](../Theme.md#theme-files).

@@ -59,6 +59,7 @@ The class that composes this role must provide:
 
 - the methods of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI): `render`, `widget_for`, `measure_text`, `width` and `height` (subclass Clay::UI);
 - `pointer_state` (see ["pointer\_state"](#pointer_state));
+- `screen_background` (see ["SCREEN BACKGROUND"](#screen-background));
 - `cell_target`, which returns the object the frames are painted into (see ["CELL TARGET"](#cell-target)).
 
 # CONSTRUCTOR PARAMETERS
@@ -114,8 +115,9 @@ paint order, the clip rect of each and the cells each paints.
 can keep the cells of the previous frame
 (["plan\_canvases" in Term::Fabulous::Render::Canvas](Render/Canvas.md#plan_canvases)). Canvases fire
 `CanvasResize` here.
-4. Calls the cell target's `begin_frame`, paints every render command in
-paint order and calls `end_frame`.
+4. Calls the cell target's `begin_frame`, paints the screen background
+(see ["SCREEN BACKGROUND"](#screen-background)), paints every render command in paint
+order and calls `end_frame`.
 5. Calls ["finish\_canvases" in Term::Fabulous::Render::Canvas](Render/Canvas.md#finish_canvases), which
 remembers this completely painted frame for the comparison in step 3 of
 the next frame. If painting died, this step is skipped and the next
@@ -188,6 +190,17 @@ The paint roles call it from their render command handlers; it dies
 when no command is being painted
 (`Term::Fabulous::Render: clip_rect is only known while a render command is painted`).
 
+## screen\_background\_attr
+
+```perl
+my $attr = $ui->screen_background_attr;
+```
+
+The termbox2 background attribute of the screen background of the
+frame being painted, or `TB_DEFAULT` when the terminal's own
+background shows (see ["SCREEN BACKGROUND"](#screen-background)). The canvases paint their
+unset cells in it when no widget above them has a background.
+
 ## pointer\_state
 
 ```perl
@@ -253,6 +266,29 @@ and only a background with an alpha from 1 to 254 is blended.
     scroll container. They paint nothing themselves; the Frame turns them
     into the clip rects of the commands between them. See
     [Term::Fabulous::Render::Frame](Render/Frame.md).
+
+# SCREEN BACKGROUND
+
+```perl
+method screen_background () { return $color }    # a Term::Fabulous::Color, or undef
+```
+
+Before the render commands of a frame are painted, the whole viewport
+(the screen, or the rows of an inline region) is filled with spaces in
+the color the consuming class returns from `screen_background`, and
+that color is recorded as the background below every cell. So the
+widgets, their borders and their translucent backgrounds are painted
+over it, not over whatever the terminal shows where a program sets no
+color, and a theme made for a light background is readable on a dark
+terminal. The cells a canvas keeps from the last frame are left alone.
+A translucent color is painted opaque here, since there is nothing
+below it to blend with.
+
+[Term::Fabulous](../../../README.md) returns the `background` token of its theme, or
+`undef` for a token with alpha 0, which leaves the terminal's own
+background (see ["Tokens" in Term::Fabulous::Theme](Theme.md#tokens)).
+[Term::Fabulous::Static](Static.md) returns `undef`: its lines are printed into
+whatever the terminal shows.
 
 # CELL TARGET
 

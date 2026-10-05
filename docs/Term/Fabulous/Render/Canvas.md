@@ -87,7 +87,8 @@ kept rectangle and paints the cells that changed since it was last
 painted; any other canvas paints all of its visible cells. Unset cells,
 and cells without a background color, are painted as the canvas
 background: the `background_color` of the canvas, or of its nearest
-ancestor that has one, or else the terminal default. A translucent
+ancestor that has one, or else the screen background of the frame
+(["SCREEN BACKGROUND" in Term::Fabulous::Render](../Render.md#screen-background)). A translucent
 background color is used opaque here; only the widget's own background
 rectangle, painted before the cells, is blended. A wide glyph that
 would cross the visible right edge is painted as spaces. Every painted

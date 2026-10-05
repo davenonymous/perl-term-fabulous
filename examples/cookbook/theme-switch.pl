@@ -17,12 +17,13 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 # Three themes: the two built-in ones, and one from a file. The file
 # starts from the dark theme and changes its palette, gives buttons a
 # round border and defines a 'primary' variant for them.
-my @themes  = ( 'dark', 'light', Term::Fabulous::Theme->from_file("$FindBin::Bin/../ocean.kdl") );
+my @themes  = ( 'dark', 'light', Term::Fabulous::Theme->from_file("$FindBin::Bin/../themes/ocean.kdl") );
 my $current = 0;
 
 # No widget here is given a color: the theme supplies them all. The
-# panel is a Box, which stays transparent, so the terminal's background
-# shows; the text, the field and the buttons take their family's looks.
+# screen is painted in the theme's background, the panel is a Box,
+# which paints nothing of its own, and the text, the field and the
+# buttons take their family's looks.
 my $root = Term::Fabulous::Widget::Box->new(
 	layout => {
 		layout_direction => CLAY_TOP_TO_BOTTOM,

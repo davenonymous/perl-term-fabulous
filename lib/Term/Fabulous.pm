@@ -39,6 +39,7 @@ class Term::Fabulous
 	use Term::Fabulous::Event::MouseMove;
 	use Term::Fabulous::Event::Resize;
 	use Term::Fabulous::Event::Start;
+	use Term::Fabulous::Color;
 	use Term::Fabulous::Unicode qw(terminal_is_utf8);
 
 	use constant WATCHED_SIGNALS     => qw(TERM INT HUP);
@@ -103,6 +104,14 @@ class Term::Fabulous
 
 	method kitty_keyboard_active () {
 		return $terminal->kitty_keyboard_active;
+	}
+
+	# The screen behind the widgets: the theme's background token, which
+	# every frame paints first. A token with alpha 0 leaves the terminal's
+	# own background (Term::Fabulous::Render).
+	method screen_background () {
+		my $color = Term::Fabulous::Color->new( color => $self->theme->token('background') );
+		return $color->alpha > 0 ? $color : undef;
 	}
 
 	method pointer_state () {
@@ -807,8 +816,11 @@ or to move an animation on. Anything but a code reference dies.
 Optional. The L<Term::Fabulous::Theme> the widgets draw with: a theme
 object, or the name of a built-in theme, C<dark> (the default) or
 C<light>. Widgets that were given a color or a border style keep it.
-L</theme> switches the theme at run time. See
-L<Term::Fabulous::Manual::Looks/THEMES>.
+Every frame first paints the screen in the theme's C<background>
+token, so a theme looks the same on any terminal; a theme whose
+C<background> has alpha 0 leaves the terminal's own background (see
+L<Term::Fabulous::Render/SCREEN BACKGROUND>). L</theme> switches the
+theme at run time. See L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =item C<output_mode>
 
@@ -1119,7 +1131,8 @@ release of another button does not end a press.
 Accessor for the theme (see L</new>). Without an argument it returns
 the L<Term::Fabulous::Theme> object; with one it sets the theme, a
 theme object or a built-in name, makes every widget read its colors
-and border styles again, and draws a frame. Anything else dies. See
+and border styles again, and draws a frame, screen background
+included. Anything else dies. See
 L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =head2 invalidate

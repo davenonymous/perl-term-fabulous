@@ -83,7 +83,6 @@ examples/layout-direction.pl
 examples/layout-floating.pl
 examples/layout-padding.pl
 examples/layout-sizing.pl
-examples/ocean.kdl
 examples/pixel-paint.pl
 examples/scroll-box.pl
 examples/stack.pl
@@ -93,6 +92,10 @@ examples/table-files.pl
 examples/text-features.pl
 examples/text-sizing.pl
 examples/themes.pl
+examples/themes/dracula.kdl
+examples/themes/nord.kdl
+examples/themes/ocean.kdl
+examples/themes/solarized-light.kdl
 examples/translucency.pl
 examples/web-colors.pl
 lib/Term/Fabulous.pm
@@ -457,7 +460,12 @@ screenshots/example-table-files.svg
 screenshots/example-table-files-scrolling.svg
 screenshots/example-text-features.svg
 screenshots/example-text-sizing.svg      
-screenshots/example-themes.svg
+screenshots/example-themes-dark.svg
+screenshots/example-themes-dracula.svg
+screenshots/example-themes-light.svg
+screenshots/example-themes-nord.svg
+screenshots/example-themes-ocean.svg
+screenshots/example-themes-solarized-light.svg
 screenshots/example-translucency.svg     
 screenshots/example-web-colors.svg       
 screenshots/overview.svg                 

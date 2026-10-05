@@ -8,6 +8,7 @@ use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous::Termbox qw(TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_ARROW_LEFT TB_MOD_SHIFT);
 use Term::Fabulous;
 use Term::Fabulous::Terminal::Memory;
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
@@ -70,13 +71,17 @@ subtest 'the session' => sub {
 };
 
 subtest 'the screen' => sub {
-	my $root   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-	my $field  = Term::Fabulous::Widget::TextField->new( preferred_columns => 6 );
-	my $button = Term::Fabulous::Widget::Button->new( background_color => [ 0, 0, 200, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
+
+	# A background token with alpha 0 leaves the screen in the terminal's
+	# own background, which is what the trimming of blank cells is about.
+	my $transparent = Term::Fabulous::Theme->new( name => 'transparent', palette => { background => [ 0, 0, 0, 0 ] } );
+	my $root        = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $field       = Term::Fabulous::Widget::TextField->new( preferred_columns => 6 );
+	my $button      = Term::Fabulous::Widget::Button->new( background_color => [ 0, 0, 200, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
 	$button->add_child( Term::Fabulous::Widget::Text->new( text => 'OK', text_color => [ 255, 255, 255, 255 ] ) );
 	$root->add_child( $field, $button );
 	my $terminal  = Term::Fabulous::Terminal::Memory->new( width => 10, height => 3 );
-	my $ui        = Term::Fabulous->new( root => $root, width => 1, height => 1, terminal => $terminal );
+	my $ui        = Term::Fabulous->new( root => $root, width => 1, height => 1, terminal => $terminal, theme => $transparent );
 	my $activated = 0;
 	$button->on( Activate => sub { $activated++; return } );
 
