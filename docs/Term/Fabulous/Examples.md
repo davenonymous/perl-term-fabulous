@@ -525,6 +525,17 @@ in boxes, and in several scripts.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
 </div>
 
+### examples/widgets/rich-text.pl
+
+[Term::Fabulous::Widget::RichText](Widget/RichText.md): bold words, colored phrases and
+highlighted ranges inside one text, from markup and from spans, every
+text style the terminal has, and spans that run across the line breaks
+of a wrapped text.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, and a wrapped paragraph whose italic green span and highlighted span continue on the next line"></p>
+</div>
+
 ### examples/widgets/divider.pl
 
 [Term::Fabulous::Widget::Divider](Widget/Divider.md): a plain line, lines with a text at

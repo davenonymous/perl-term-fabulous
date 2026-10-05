@@ -193,6 +193,8 @@ lib/Term/Fabulous/Termbox/Event.pm
 lib/Term/Fabulous/Terminal/Memory.pm
 lib/Term/Fabulous/Terminal/Termbox.pm
 lib/Term/Fabulous/Terminal/Termbox/Cells.pm
+lib/Term/Fabulous/Text/Markup.pm
+lib/Term/Fabulous/Text/Style.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Unicode.pm
@@ -229,6 +231,7 @@ lib/Term/Fabulous/Widget/ProgressBar.pm
 lib/Term/Fabulous/Widget/RadarChart.pm
 lib/Term/Fabulous/Widget/RadioButton.pm
 lib/Term/Fabulous/Widget/RadioGroup.pm
+lib/Term/Fabulous/Widget/RichText.pm
 lib/Term/Fabulous/Widget/ScatterPlot.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Scrollbar.pm
@@ -300,6 +303,8 @@ t/table-value.t
 t/termbox.t
 t/terminal-memory.t
 t/terminal-termbox.t
+t/text-markup.t
+t/text-style.t
 t/text-view.t
 t/theme-binding.t
 t/theme-file.t
@@ -323,6 +328,7 @@ t/widget-progress-bar.t
 t/widget-radar-chart.t
 t/widget-radio.t
 t/widget-revision.t
+t/widget-rich-text.t
 t/widget-scroll-box.t
 t/widget-segmented-control.t
 t/widget-slider.t
@@ -360,6 +366,7 @@ examples/widgets/polar-area-chart.pl
 examples/widgets/progress-bar.pl
 examples/widgets/radar-chart.pl
 examples/widgets/radio.pl                
+examples/widgets/rich-text.pl
 examples/widgets/scatter-plot.pl
 examples/widgets/segmented-control.pl
 examples/widgets/slider.pl               

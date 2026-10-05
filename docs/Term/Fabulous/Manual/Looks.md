@@ -224,9 +224,57 @@ Text {
 }
 ```
 
-These are the only text styles a Text widget has. To show text in
-reverse video (swapped colors), give its box a `background_color` and
-the Text a dark `text_color` instead.
+These are the only text styles a Text widget has, and they apply to
+the whole text. For a bold word inside a sentence, a colored phrase or
+reverse video, use a RichText.
+
+## Styled spans inside one text
+
+A [Term::Fabulous::Widget::RichText](../Widget/RichText.md) is a Text whose _spans_ give
+ranges of its characters a look of their own: style bits (bold, italic,
+underline, reverse, dim, blink, strike, overline, conceal), a text
+color and a background. The text wraps and aligns exactly like a Text;
+a span simply continues on the next line. The shortest way to write
+one is markup in the syntax of Python's `rich` library:
+
+```kdl
+my $hint = Term::Fabulous::Widget::RichText->new(
+        markup => 'Press [bold]Enter[/] to save, [bold #e06c75]Esc[/] to leave.',
+);
+```
+
+A tag opens a span with a style string, `[/]` closes the innermost
+open span, `[/bold]` the matching one, and `\[` is a literal bracket.
+A style string is words in any order: the bit names above, `not bold`
+to clear a bit inside an outer span, a color (a CSS name in any case,
+or any color string of [Term::Fabulous::Color](../Color.md)), `on COLOR` for the
+background, and `default` for the terminal's own color. See
+[Term::Fabulous::Text::Style](../Text/Style.md) for the words and
+[Term::Fabulous::Text::Markup](../Text/Markup.md) for the tags.
+
+Spans can also be given as character ranges, or added later:
+
+```kdl
+my $line = Term::Fabulous::Widget::RichText->new(
+        text  => 'error: config.kdl not found',
+        spans => [ [ 0, 6, 'bold #e06c75' ] ],
+);
+$line->stylize( 'underline', 7, 17 );    # the file name, shown in the next frame
+```
+
+Later spans win where spans overlap, and setting `text` drops them.
+In a KDL layout file:
+
+```kdl
+RichText {
+        markup "Press [bold]Enter[/] to save"
+}
+```
+
+The widget's own `text_color`, `bold`, `italic` and `underline` are
+the base look that the spans change. The program
+`examples/widgets/rich-text.pl` shows markup, spans, every style word
+and a wrapped paragraph side by side.
 
 ## Wide characters and emoji
 

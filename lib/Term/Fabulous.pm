@@ -1453,6 +1453,11 @@ The general container, with layout options, a background and a border.
 
 Shows text in one color; wraps and aligns it.
 
+=item L<Term::Fabulous::Widget::RichText>
+
+A Text whose spans set bold, colors and other styles on ranges of it,
+from markup such as C<[bold]Enter[/]>.
+
 =item L<Term::Fabulous::Widget::Button>
 
 A box that can take the keyboard focus, shows when it is focused or
@@ -1838,6 +1843,15 @@ The per-side border styles of a widget and how borders take space.
 
 How many terminal columns a piece of text takes, and how text is made
 safe for the terminal.
+
+=item L<Term::Fabulous::Text::Style>
+
+Style strings such as C<bold red on #202020> and the style hashes
+behind the spans of a RichText.
+
+=item L<Term::Fabulous::Text::Markup>
+
+The C<[bold red]text[/]> markup of a RichText.
 
 =back
 

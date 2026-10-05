@@ -302,7 +302,8 @@ Booleans, default 0: draw the characters bold, italic or underlined.
 Any true or false value; references die. Terminals show these styles
 with the font they have, so a font without an italic face may show
 italic text upright. They take no space and do not change the layout.
-These three are the only text styles. See
+These three are the only text styles, and they apply to the whole
+text; a L<Term::Fabulous::Widget::RichText> styles ranges of it. See
 L<Term::Fabulous::Manual::Looks/Bold, italic and underline>.
 
 =item C<id>
@@ -576,7 +577,8 @@ L</KDL PROPERTIES>.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual::Looks/TEXT>, L<Term::Fabulous::Widget::Box>,
-L<Term::Fabulous::Unicode>, L<Clay::UI::Text>,
+L<Term::Fabulous::Widget::RichText>, L<Term::Fabulous::Unicode>,
+L<Clay::UI::Text>,
 L<Term::Fabulous::Cookbook::GettingStarted/Wrap, align and space text>,
 L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, combining accents)>.
 

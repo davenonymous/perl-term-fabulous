@@ -83,8 +83,9 @@ covers. Options:
     colors is preceded by an ANSI SGR sequence with 24-bit colors
     (`ESC [ 38;2;R;G;B m` for the foreground, `48;2;...` for the
     background), `7` (reverse video) for cells in reverse video, and `1`
-    (bold), `3` (italic) and `4` (underline) for those termbox2 flags; the line ends
-    with `ESC [ 0 m` when it set any. The terminal's default colors get no
+    (bold), `2` (dim), `3` (italic), `4` (underline), `5` (blink), `8`
+    (conceal), `9` (strikeout) and `53` (overline) for those termbox2
+    flags; the line ends with `ESC [ 0 m` when it set any. The terminal's default colors get no
     sequence.
 
 - `trim_trailing_whitespace`

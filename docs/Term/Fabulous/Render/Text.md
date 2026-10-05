@@ -44,6 +44,16 @@ are not painted but still advance.
 - The background of each cell is the one recorded in `$buffer` (an array
 reference of rows of attributes, `$buffer->[$y][$x]`) by whatever
 was painted there before in this frame, or the terminal default.
+- When the widget has a `line_styles` method (a
+[Term::Fabulous::Widget::RichText](../Widget/RichText.md)), it is asked for the runs of the
+line, `$widget->line_styles( $offset, $length )` with the
+command's `stringOffset` (where the line starts in the widget's text,
+in characters) and the line's length, and each cluster is painted in
+the look of the run its first character lies in: the run's style bits
+set and cleared on the widget's, its text color in place of the
+command's, and its background in place of the one recorded in
+`$buffer`, which is updated to it. See
+["line\_styles" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#line_styles) for the runs.
 
 The line is skipped when its row lies outside the clip area. Segmented
 lines are cached by their text (the cache is emptied when it reaches

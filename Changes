@@ -1,6 +1,15 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::RichText: a Text whose spans give ranges
+          of it bold, italic, underline, reverse, dim, blink, strike,
+          overline, conceal, a color and a background, from markup in the
+          syntax of Python's rich ('[bold red]Esc[/]') or as [start, end,
+          style] spans and stylize(). Clay lays the text out as before and
+          the renderer reapplies the spans per wrapped line, which needs
+          the stringOffset of Clay::XS 0.05. Term::Fabulous::Text::Style
+          parses style strings, Term::Fabulous::Text::Markup the markup;
+          Static output now emits the SGR codes of every style bit.
         - Themes: Term::Fabulous::Theme colors every widget that is not
           given its own colors or border styles, from a palette of
           tokens and the slots of each widget family, with variants

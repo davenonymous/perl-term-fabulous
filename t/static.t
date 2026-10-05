@@ -14,6 +14,8 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Render::Target::Grid;
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_BOLD TB_DIM TB_ITALIC TB_UNDERLINE TB_BLINK TB_INVISIBLE TB_STRIKEOUT TB_OVERLINE);
 
 sub page {
 	my (%args) = @_;
@@ -63,6 +65,10 @@ subtest 'colors' => sub {
 
 	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(1), height => sizing_fixed(1) } }, background_color => [ 0, 0, 0, 255 ] );
 	is [ Term::Fabulous::Static->new( root => $root, width => 1 )->render_lines ], ["\e[48;2;0;0;0m \e[0m"], 'opaque black is emitted as black, not as the default';
+
+	my $grid = Term::Fabulous::Render::Target::Grid->new;
+	$grid->set_cell( 0, 0, 'a', 0xFF0000 | TB_BOLD | TB_DIM | TB_ITALIC | TB_UNDERLINE | TB_BLINK | TB_INVISIBLE | TB_STRIKEOUT | TB_OVERLINE, TB_DEFAULT );
+	is $grid->row_text( 0, columns => 1, colors => 1 ), "\e[1;2;3;4;5;8;9;53;38;2;255;0;0ma\e[0m", 'every style bit has its SGR code';
 
 	$root = Term::Fabulous::Widget::Box->new(
 		layout       => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } }, border_width => 1,

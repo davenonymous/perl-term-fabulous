@@ -41,6 +41,8 @@ role Term::Fabulous::Render::Text {
 	# advance by the same widths the measure callback reported. Drawing stops
 	# before a cluster that would cross the box's right edge or the clip
 	# rect; clusters left of the clip rect are skipped but still advance.
+	# A widget with line_styles (a RichText) paints the line in runs: each
+	# cluster takes the look of the run its first character lies in.
 	method render_text ( $command, $widget, $buffer ) {
 		my ( $x, $y, $x1 ) = cell_rect( $command->{boundingBox} );
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
@@ -48,16 +50,29 @@ role Term::Fabulous::Render::Text {
 
 		my $right_limit = min( $x1, $clip_x1 );
 		my $data        = $command->{renderData};
-		my $fg_attr     = color_attr( clay_color( $data->{textColor} ) ) | ( defined $widget && $widget->can('style_attrs') ? $widget->style_attrs : 0 );
+		my $color_attr  = color_attr( clay_color( $data->{textColor} ) );
+		my $style_bits  = defined $widget && $widget->can('style_attrs') ? $widget->style_attrs                                                               : 0;
+		my $runs        = defined $widget && $widget->can('line_styles') ? $widget->line_styles( $data->{stringOffset} // 0, length $data->{stringContents} ) : [];
 		my $row         = $buffer->[$y] //= [];
 		my $target      = $self->cell_target;
 
+		my $fg_attr = $color_attr | $style_bits;
+		my $run_bg_attr;
+		my ( $run_index, $left_in_run ) = ( -1, 0 );
 		foreach my $cluster_with_columns ( @{ _clusters_with_columns( $data->{stringContents} ) } ) {
 			my ( $cluster, $columns ) = @$cluster_with_columns;
 			last if $x + $columns > $right_limit;
 
+			while ( $left_in_run <= 0 && $run_index < $#$runs ) {
+				my ( $characters, $set, $clear, $run_fg_attr, $bg_attr ) = @{ $runs->[ ++$run_index ] };
+				$left_in_run = $characters;
+				$fg_attr     = ( $run_fg_attr // $color_attr ) | ( ( $style_bits & ~$clear ) | $set );
+				$run_bg_attr = $bg_attr;
+			}
+			$left_in_run -= length $cluster;
+
 			if ( $x >= $clip_x0 ) {
-				my $bg_attr = $row->[$x] // TB_DEFAULT;
+				my $bg_attr = $run_bg_attr // $row->[$x] // TB_DEFAULT;
 				my ( $base, @extenders ) = split //, $cluster;
 				$target->set_cell( $x, $y, $base, $fg_attr, $bg_attr );
 				$target->extend_cell( $x, $y, $_ ) foreach @extenders;
@@ -128,6 +143,19 @@ are not painted but still advance.
 The background of each cell is the one recorded in C<$buffer> (an array
 reference of rows of attributes, C<< $buffer->[$y][$x] >>) by whatever
 was painted there before in this frame, or the terminal default.
+
+=item *
+
+When the widget has a C<line_styles> method (a
+L<Term::Fabulous::Widget::RichText>), it is asked for the runs of the
+line, C<< $widget->line_styles( $offset, $length ) >> with the
+command's C<stringOffset> (where the line starts in the widget's text,
+in characters) and the line's length, and each cluster is painted in
+the look of the run its first character lies in: the run's style bits
+set and cleared on the widget's, its text color in place of the
+command's, and its background in place of the one recorded in
+C<$buffer>, which is updated to it. See
+L<Term::Fabulous::Widget::RichText/line_styles> for the runs.
 
 =back
 

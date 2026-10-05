@@ -882,6 +882,11 @@ Term::Fabulous, and programs do not use them directly.
 
     Shows text in one color; wraps and aligns it.
 
+- [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md)
+
+    A Text whose spans set bold, colors and other styles on ranges of it,
+    from markup such as `[bold]Enter[/]`.
+
 - [Term::Fabulous::Widget::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Button.md)
 
     A box that can take the keyboard focus, shows when it is focused or
@@ -1243,6 +1248,15 @@ Term::Fabulous, and programs do not use them directly.
 
     How many terminal columns a piece of text takes, and how text is made
     safe for the terminal.
+
+- [Term::Fabulous::Text::Style](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Style.md)
+
+    Style strings such as `bold red on #202020` and the style hashes
+    behind the spans of a RichText.
+
+- [Term::Fabulous::Text::Markup](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Markup.md)
+
+    The `[bold red]text[/]` markup of a RichText.
 
 ## Extending Term::Fabulous
 

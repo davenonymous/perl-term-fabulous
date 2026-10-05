@@ -5,7 +5,7 @@ use utf8;
 use Test2::V0;
 
 use Object::Pad 0.825;
-use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
+use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_BOLD TB_ITALIC);
 use Term::Fabulous::Render::Text;
 use Term::Fabulous::Unicode qw(cluster_columns);
 
@@ -92,6 +92,55 @@ subtest 'colors' => sub {
 
 	draw_text('a');
 	is $calls[0][5], TB_DEFAULT, 'unpainted cell uses the terminal default background';
+};
+
+# A widget with line_styles paints runs: bits set and cleared on the
+# widget's style bits, colors replaced, backgrounds painted and recorded.
+class StyledText {
+	use Term::Fabulous::Termbox qw(TB_ITALIC);
+	field $runs_by_offset :param;
+	method style_attrs ()                   { return TB_ITALIC }
+	method line_styles ( $offset, $length ) { return $runs_by_offset->{$offset} // [] }
+}
+
+subtest 'runs of a rich text' => sub {
+	my $widget = StyledText->new(
+		runs_by_offset => {
+			0 => [ [ 2, TB_BOLD, 0, undef, undef ], [ 1, 0, TB_ITALIC, 0x00FF00, 0x0000FF ], [ 3, 0, 0, undef, undef ] ],
+		}
+	);
+	my $buffer = [];
+	@calls = ();
+	$canvas->render_text(
+		{ boundingBox => { x => 0, y => 0, width => 20, height => 1 }, renderData => { stringContents => "abe\x{301}\x{3042}z", stringOffset => 0, textColor => $white } },
+		$widget, $buffer,
+	);
+	my @sets = map { [ @{$_}[ 1 .. 5 ] ] } grep { $_->[0] eq 'set' } @calls;
+	is \@sets,
+		[
+		[ 0, 0, 'a',        0xFFFFFF | TB_ITALIC | TB_BOLD, TB_DEFAULT ],
+		[ 1, 0, 'b',        0xFFFFFF | TB_ITALIC | TB_BOLD, TB_DEFAULT ],
+		[ 2, 0, 'e',        0x00FF00,                       0x0000FF ],
+		[ 3, 0, "\x{3042}", 0xFFFFFF | TB_ITALIC,           TB_DEFAULT ],
+		[ 5, 0, 'z',        0xFFFFFF | TB_ITALIC,           TB_DEFAULT ],
+		],
+		'bits added and removed, colors replaced; a two-character cluster uses up two characters of its run';
+	is $buffer->[0], [ TB_DEFAULT, TB_DEFAULT, 0x0000FF, TB_DEFAULT, TB_DEFAULT, TB_DEFAULT ], 'the run background is recorded for the cells it painted';
+
+	@calls = ();
+	$canvas->render_text(
+		{ boundingBox => { x => -1, y => 0, width => 20, height => 1 }, renderData => { stringContents => 'abc', stringOffset => 0, textColor => $white } },
+		StyledText->new( runs_by_offset => { 0 => [ [ 1, TB_BOLD, 0, undef, undef ], [ 2, 0, 0, 0xFF0000, undef ] ] } ), [],
+	);
+	is [ map { [ @{$_}[ 1, 3, 4 ] ] } grep { $_->[0] eq 'set' } @calls ], [ [ 0, 'b', 0xFF0000 | TB_ITALIC ], [ 1, 'c', 0xFF0000 | TB_ITALIC ] ],
+		'a cluster left of the viewport still uses up its run';
+
+	@calls = ();
+	$canvas->render_text(
+		{ boundingBox => { x => 0, y => 0, width => 20, height => 1 }, renderData => { stringContents => 'ab', stringOffset => 7, textColor => $white } },
+		StyledText->new( runs_by_offset => { 7 => [ [ 2, 0, 0, undef, undef ] ] } ), [],
+	);
+	is [ map { $_->[4] } grep { $_->[0] eq 'set' } @calls ], [ 0xFFFFFF | TB_ITALIC, 0xFFFFFF | TB_ITALIC ], 'the line is looked up by its offset';
 };
 
 done_testing;

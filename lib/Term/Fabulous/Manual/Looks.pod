@@ -224,9 +224,55 @@ In a KDL layout file:
 		underline #true
 	}
 
-These are the only text styles a Text widget has. To show text in
-reverse video (swapped colors), give its box a C<background_color> and
-the Text a dark C<text_color> instead.
+These are the only text styles a Text widget has, and they apply to
+the whole text. For a bold word inside a sentence, a colored phrase or
+reverse video, use a RichText.
+
+=head2 Styled spans inside one text
+
+A L<Term::Fabulous::Widget::RichText> is a Text whose I<spans> give
+ranges of its characters a look of their own: style bits (bold, italic,
+underline, reverse, dim, blink, strike, overline, conceal), a text
+color and a background. The text wraps and aligns exactly like a Text;
+a span simply continues on the next line. The shortest way to write
+one is markup in the syntax of Python's C<rich> library:
+
+	my $hint = Term::Fabulous::Widget::RichText->new(
+		markup => 'Press [bold]Enter[/] to save, [bold #e06c75]Esc[/] to leave.',
+	);
+
+A tag opens a span with a style string, C<[/]> closes the innermost
+open span, C<[/bold]> the matching one, and C<\[> is a literal bracket.
+A style string is words in any order: the bit names above, C<not bold>
+to clear a bit inside an outer span, a color (a CSS name in any case,
+or any color string of L<Term::Fabulous::Color>), C<on COLOR> for the
+background, and C<default> for the terminal's own color. See
+L<Term::Fabulous::Text::Style> for the words and
+L<Term::Fabulous::Text::Markup> for the tags.
+
+Spans can also be given as character ranges, or added later:
+
+	my $line = Term::Fabulous::Widget::RichText->new(
+		text  => 'error: config.kdl not found',
+		spans => [ [ 0, 6, 'bold #e06c75' ] ],
+	);
+	$line->stylize( 'underline', 7, 17 );    # the file name, shown in the next frame
+
+Later spans win where spans overlap, and setting C<text> drops them.
+In a KDL layout file:
+
+=for highlighter language=kdl
+
+	RichText {
+		markup "Press [bold]Enter[/] to save"
+	}
+
+=for highlighter language=perl
+
+The widget's own C<text_color>, C<bold>, C<italic> and C<underline> are
+the base look that the spans change. The program
+F<examples/widgets/rich-text.pl> shows markup, spans, every style word
+and a wrapped paragraph side by side.
 
 =head2 Wide characters and emoji
 

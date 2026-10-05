@@ -706,6 +706,11 @@ screenshot "widget-text" {
 	size 80 11
 }
 
+screenshot "widget-rich-text" {
+	script "examples/widgets/rich-text.pl"
+	size 80 13
+}
+
 screenshot "widget-button" {
 	script "examples/widgets/button.pl"
 	size 60 7

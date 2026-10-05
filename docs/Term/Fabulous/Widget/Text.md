@@ -111,7 +111,8 @@ except `id` also has an accessor of the same name.
     Any true or false value; references die. Terminals show these styles
     with the font they have, so a font without an italic face may show
     italic text upright. They take no space and do not change the layout.
-    These three are the only text styles. See
+    These three are the only text styles, and they apply to the whole
+    text; a [Term::Fabulous::Widget::RichText](RichText.md) styles ranges of it. See
     ["Bold, italic and underline" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#bold-italic-and-underline).
 
 - `id`
@@ -402,6 +403,7 @@ booleans, and `text`, `wrap_mode` and
 # SEE ALSO
 
 ["TEXT" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#text), [Term::Fabulous::Widget::Box](Box.md),
-[Term::Fabulous::Unicode](../Unicode.md), [Clay::UI::Text](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AText),
+[Term::Fabulous::Widget::RichText](RichText.md), [Term::Fabulous::Unicode](../Unicode.md),
+[Clay::UI::Text](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AText),
 ["Wrap, align and space text" in Term::Fabulous::Cookbook::GettingStarted](../Cookbook/GettingStarted.md#wrap-align-and-space-text),
 ["Show non-ASCII text (umlauts, CJK, combining accents)" in Term::Fabulous::Cookbook::GettingStarted](../Cookbook/GettingStarted.md#show-non-ascii-text-umlauts-cjk-combining-accents).
