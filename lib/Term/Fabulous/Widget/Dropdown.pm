@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::HasOptions;
 use Term::Fabulous::Widget::Dropdown::List;
 use Term::Fabulous::Widget::Input;
 
@@ -14,12 +15,15 @@ our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Dropdown
 	:isa(Term::Fabulous::Widget::Input)
+	:does(Term::Fabulous::Role::HasOptions)
 	:strict(params)
 {
 	use Clay::XS qw(sizing_fixed CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_BOTTOM);
-	use List::Util qw(first max min);
+	use List::Util qw(max min);
 	use Scalar::Util qw(refaddr);
-	use Term::Fabulous::Check qw(cell_color positive_integer string);
+	use Term::Fabulous::Check qw(positive_integer string);
+	use Term::Fabulous::OptionList;
+	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
 	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -33,15 +37,10 @@ class Term::Fabulous::Widget::Dropdown
 	# included.
 	use constant LIST_Z_INDEX => 32767;
 
-	field @options;
-	field $selected;    # index into @options, or undef
+	field $option_list = Term::Fabulous::OptionList->new( owner => __CLASS__ );
 
 	field $placeholder         :param = '';
 	field $max_visible_options :param = 8;
-
-	# The colors of the placeholder, the open list and the highlighted
-	# option come from the theme's dropdown family unless given.
-	my @COLOR_NAMES = qw(placeholder_color list_background_color highlight_text_color);
 
 	# The open list, the option it highlights and whether it opened upwards.
 	field $list;
@@ -63,69 +62,34 @@ class Term::Fabulous::Widget::Dropdown
 		$self->selected_index($selected_index) if defined $selected_index;
 	}
 
-	# An option is a label (its own value), [ label, value ] or
-	# { label => ..., value => ... }.
-	method _parse_option ($option) {
-		my ( $label, $value )
-			= ref $option eq 'ARRAY' && @$option == 2 ? @$option
-			: ref $option eq 'HASH'                   ? @{$option}{qw(label value)}
-			: !ref $option                            ? ( $option, $option )
-			:                                           ();
-		die "Term::Fabulous::Widget::Dropdown: an option must be a label, [ label, value ] or { label => ..., value => ... }, got " . ( defined $option ? ( ref $option || "'$option'" ) : 'undef' )
-			unless defined $label && !ref $label && !ref $value;
-		die "Term::Fabulous::Widget::Dropdown: a hash option takes only the keys 'label' and 'value'"
-			if ref $option eq 'HASH' && grep { $_ ne 'label' && $_ ne 'value' } keys %$option;
-		return { label => "$label", value => $value // $label };
-	}
-
 	# ---------------------------------------------------------------------
-	# Properties
+	# Options and value (Term::Fabulous::OptionList)
 	# ---------------------------------------------------------------------
 
 	method options (@new) {
-		return map { +{%$_} } @options unless @new;
-		my ($list_of_options) = @new;
-		die "Term::Fabulous::Widget::Dropdown: options must be an array reference" unless ref $list_of_options eq 'ARRAY';
-		my @parsed = map { $self->_parse_option($_) } @$list_of_options;
-
-		my $kept_value = defined $selected ? $options[$selected]{value} : undef;
+		return $option_list->options unless @new;
+		$option_list->set_options( $new[0] );
 		$self->close;
-		@options  = @parsed;
-		$selected = defined $kept_value ? $self->_index_of_value($kept_value) : undef;
 		$self->mark_changed;
-		return map { +{%$_} } @options;
-	}
-
-	method _index_of_value ($wanted) {
-		return first { defined $options[$_]{value} && $options[$_]{value} eq $wanted } 0 .. $#options;
+		return $option_list->options;
 	}
 
 	method value (@new) {
-		return defined $selected ? $options[$selected]{value} : undef unless @new;
-		my ($wanted) = @new;
-		my $index = defined $wanted ? $self->_index_of_value($wanted) : undef;
-		die "Term::Fabulous::Widget::Dropdown: no option has the value '$wanted'" if defined $wanted && !defined $index;
-		$self->_select($index);
-		return $self->value;
+		return $option_list->value unless @new;
+		$option_list->set_value( $new[0] );
+		$self->mark_changed;
+		return $option_list->value;
 	}
 
 	method selected_index (@new) {
-		return $selected unless @new;
-		my ($index) = @new;
-		die "Term::Fabulous::Widget::Dropdown: selected_index must be undef or an index in 0.." . $#options . ", got '$index'"
-			if defined $index && !( !ref $index && $index =~ /\A[0-9]+\z/ && $index < @options );
-		$self->_select($index);
-		return $selected;
+		return $option_list->selected_index unless @new;
+		$option_list->set_selected_index( $new[0] );
+		$self->mark_changed;
+		return $option_list->selected_index;
 	}
 
 	method selected_label () {
-		return defined $selected ? $options[$selected]{label} : undef;
-	}
-
-	method _select ($index) {
-		$selected = defined $index ? $index + 0 : undef;
-		$self->mark_changed;
-		return;
+		return $option_list->selected_label;
 	}
 
 	method placeholder (@new) {
@@ -140,10 +104,6 @@ class Term::Fabulous::Widget::Dropdown
 		return $max_visible_options = positive_integer( $self, max_visible_options => $new[0] );
 	}
 
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @COLOR_NAMES );
-	}
-
 	method theme_family :common () {
 		return 'dropdown';
 	}
@@ -151,22 +111,22 @@ class Term::Fabulous::Widget::Dropdown
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			placeholder_color     => [ 'placeholder',     'normal' ],
-			list_background_color => [ 'list.background', 'normal' ],
-			highlight_text_color  => [ 'highlight.text',  'normal' ],
+			placeholder_color     => [ 'placeholder',     'normal', 'cell_color' ],
+			list_background_color => [ 'list.background', 'normal', 'cell_color' ],
+			highlight_text_color  => [ 'highlight.text',  'normal', 'cell_color' ],
 		);
 	}
 
 	method placeholder_color (@new) {
-		return @new ? $self->_set_color( placeholder_color => @new ) : $self->look_value('placeholder_color');
+		return @new ? $self->set_look( placeholder_color => $new[0] ) : $self->look_value('placeholder_color');
 	}
 
 	method list_background_color (@new) {
-		return @new ? $self->_set_color( list_background_color => @new ) : $self->look_value('list_background_color');
+		return @new ? $self->set_look( list_background_color => $new[0] ) : $self->look_value('list_background_color');
 	}
 
 	method highlight_text_color (@new) {
-		return @new ? $self->_set_color( highlight_text_color => @new ) : $self->look_value('highlight_text_color');
+		return @new ? $self->set_look( highlight_text_color => $new[0] ) : $self->look_value('highlight_text_color');
 	}
 
 	method disabled :override (@new) {
@@ -181,37 +141,9 @@ class Term::Fabulous::Widget::Dropdown
 			selected_index      => 'scalar',
 			placeholder         => 'scalar',
 			max_visible_options => 'scalar',
-			( map { $_ => 'color' } @COLOR_NAMES ),
-			options => \&_parse_options,
-			option  => \&_parse_options,
+			options             => \&add_layout_options,
+			option              => \&add_layout_options,
 		);
-	}
-
-	# The options of a layout come first, so value and selected_index can
-	# name one wherever they stand.
-	method apply_layout_settings :override (@settings) {
-		my %is_option = ( options => 1, option => 1 );
-		return $self->SUPER::apply_layout_settings( ( grep { $is_option{ $_->[0] } } @settings ), ( grep { !$is_option{ $_->[0] } } @settings ) );
-	}
-
-	# The options come as 'options "Red" "Green"' or as one 'option "Red"
-	# value="r"' node per option.
-	method _parse_options ($kid) {
-		my $name = $kid->name;
-		die "Term::Fabulous::Widget::Dropdown: layout property '$name' takes no children" if $kid->children->@*;
-
-		my @labels = map { $_->as_perl } $kid->args->@*;
-		if ( $name eq 'options' ) {
-			die "Term::Fabulous::Widget::Dropdown: layout property 'options' takes one or more labels and no properties"
-				if !@labels || $kid->props->@*;
-			return $self->options( [ $self->options, @labels ] );
-		}
-
-		my %props   = map  { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
-		my @unknown = grep { $_ ne 'value' } sort keys %props;
-		die "Term::Fabulous::Widget::Dropdown: layout property 'option' takes one label and an optional value=..."
-			if @labels != 1 || @unknown;
-		return $self->options( [ $self->options, { label => $labels[0], value => $props{value} // $labels[0] } ] );
 	}
 
 	# ---------------------------------------------------------------------
@@ -226,13 +158,16 @@ class Term::Fabulous::Widget::Dropdown
 		return $highlighted;
 	}
 
+	# The list opens with the selected option highlighted, or the first
+	# one that is enabled.
 	method open () {
-		return $self if defined $list || !@options || !$self->is_enabled;
-		$highlighted = $selected // 0;
+		return $self if defined $list || !$option_list->count || !$self->is_enabled;
+		my $selected = $option_list->selected_index;
+		$highlighted = defined $selected && !$option_list->is_disabled($selected) ? $selected : ( $option_list->enabled_indexes )[0];
 
 		my ( $visible, $upwards ) = $self->_list_rows;
-		my $scrolls = $visible < @options;
-		my $width   = max( $self->_box_width, 2 + ( max map { string_columns( $_->{label} ) } @options ) + 2 + ( $scrolls ? 1 : 0 ) );
+		my $scrolls = $visible < $option_list->count;
+		my $width   = max( $self->_box_width, 2 + ( max map { string_columns( $_->{label} ) } $option_list->options ) + 2 + ( $scrolls ? 1 : 0 ) );
 		$opens_upwards = $upwards;
 
 		my ( $element, $parent ) = $upwards ? ( CLAY_ATTACH_POINT_LEFT_BOTTOM, CLAY_ATTACH_POINT_LEFT_TOP ) : ( CLAY_ATTACH_POINT_LEFT_TOP, CLAY_ATTACH_POINT_LEFT_BOTTOM );
@@ -257,7 +192,7 @@ class Term::Fabulous::Widget::Dropdown
 		my $closing = $list;
 		undef $list;
 		undef $highlighted;
-		$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($closing) } );
+		$self->remove_child($closing);
 		return $self->mark_changed;
 	}
 
@@ -272,7 +207,7 @@ class Term::Fabulous::Widget::Dropdown
 	# the widget when they fit there or there is at least as much room
 	# below as above.
 	method _list_rows () {
-		my $wanted = min( scalar @options, $max_visible_options );
+		my $wanted = min( $option_list->count, $max_visible_options );
 		my $ui     = $self->ui;
 		my @origin = $self->content_origin;
 		return ( $wanted, 0 ) unless defined $ui && @origin;
@@ -285,20 +220,24 @@ class Term::Fabulous::Widget::Dropdown
 		return ( max( 1, min( $wanted, $room - 2 ) ), $upwards ? 1 : 0 );
 	}
 
-	# Chooses an option as the user does.
+	# Chooses an option as the user does; a disabled option cannot be
+	# chosen, and the list stays open then.
 	method choose ($index) {
-		die "Term::Fabulous::Widget::Dropdown: choose needs an option index in 0.." . $#options . ", got " . ( defined $index ? "'$index'" : 'undef' )
-			unless defined $index && !ref $index && $index =~ /\A[0-9]+\z/ && $index < @options;
+		my $changed = $option_list->choose($index);
+		return $self if $option_list->is_disabled($index);
 		$self->close;
-		return $self if defined $selected && $selected == $index;
-		$self->_select($index);
-		$self->fire_change( $self->value );
+		return $self unless $changed;
+		$self->mark_changed;
+		$self->fire_change( $option_list->value );
 		return $self;
 	}
 
+	# A disabled option is never highlighted.
 	method highlight ($index) {
 		return $self unless defined $list;
-		$highlighted = min( max( $index, 0 ), $#options );
+		$index = min( max( $index, 0 ), $option_list->count - 1 );
+		return $self if $option_list->is_disabled($index);
+		$highlighted = $index;
 		$list->show_highlight;
 		return $self;
 	}
@@ -330,23 +269,15 @@ class Term::Fabulous::Widget::Dropdown
 			$self->open;
 			return 1;
 		}
-		my $last = $#options;
-		return 0 if $last < 0;
-		my %target = (
-			Up   => defined $selected ? max( $selected - 1, 0 )     : $last,
-			Down => defined $selected ? min( $selected + 1, $last ) : 0,
-			Home => 0,
-			End  => $last,
-		);
-		return 0 unless exists $target{$name};
-		$self->_choose_closed( $target{$name} );
+		my $target = roving_target( [ $option_list->enabled_indexes ], $option_list->selected_index, $name, keys => 'vertical', policy => 'clamp' ) // return 0;
+		$self->_choose_closed($target);
 		return 1;
 	}
 
 	method _choose_closed ($index) {
-		return if defined $selected && $selected == $index;
-		$self->_select($index);
-		$self->fire_change( $self->value );
+		return unless $option_list->choose($index);
+		$self->mark_changed;
+		$self->fire_change( $option_list->value );
 		return;
 	}
 
@@ -356,35 +287,28 @@ class Term::Fabulous::Widget::Dropdown
 			return 1;
 		}
 		if ( $name eq 'Enter' || $name eq 'Space' ) {
-			$self->choose($highlighted);
+			defined $highlighted ? $self->choose($highlighted) : $self->close;
 			return 1;
 		}
-		my $page   = $list->visible_rows;
-		my %target = (
-			Up       => $highlighted - 1,
-			Down     => $highlighted + 1,
-			PageUp   => $highlighted - $page,
-			PageDown => $highlighted + $page,
-			Home     => 0,
-			End      => $#options,
-		);
-		return 0 unless exists $target{$name};
-		$self->highlight( $target{$name} );
+		my $target = roving_target( [ $option_list->enabled_indexes ], $highlighted, $name, keys => 'list', policy => 'clamp', page => $list->visible_rows ) // return 0;
+		$self->highlight($target);
 		return 1;
 	}
 
 	# Typing finds the next option whose label starts with the typed text;
 	# characters typed within a second of each other form one search.
+	# Disabled options are skipped.
 	method _type_ahead ($character) {
+		my @options = $option_list->options;
 		return 0 unless @options;
 		my $now = time;
 		$typed    = $now - $typed_at <= TYPEAHEAD_SECONDS ? $typed . $character : $character;
 		$typed_at = $now;
 
-		my $current = $self->is_open    ? $highlighted : $selected // -1;
-		my $start   = length $typed > 1 ? $current     : $current + 1;
+		my $current = $self->is_open    ? $highlighted // -1 : $option_list->selected_index // -1;
+		my $start   = length $typed > 1 ? $current           : $current + 1;
 		my $wanted  = fc $typed;
-		my ($match) = grep { fc( substr( $options[$_]{label}, 0, length $typed ) ) eq $wanted } map { ( $start + $_ ) % @options } 0 .. $#options;
+		my ($match) = grep { !$options[$_]{disabled} && fc( substr( $options[$_]{label}, 0, length $typed ) ) eq $wanted } map { ( $start + $_ ) % @options } 0 .. $#options;
 		return 1 unless defined $match;
 
 		$self->is_open ? $self->highlight($match) : $self->_choose_closed($match);
@@ -396,7 +320,7 @@ class Term::Fabulous::Widget::Dropdown
 	# ---------------------------------------------------------------------
 
 	method natural_size () {
-		my $widest = max 0, map { string_columns( $_->{label} ) } @options;
+		my $widest = max 0, map { string_columns( $_->{label} ) } $option_list->options;
 		return ( max( $widest, string_columns($placeholder) ) + 2, 1 );
 	}
 
@@ -419,17 +343,19 @@ class Term::Fabulous::Widget::Dropdown
 	}
 
 	method option_attrs ($index) {
+		my $selected = $option_list->selected_index;
 		return ( $self->color_attr( $self->highlight_text_color ), $self->_highlight_background_attr ) if defined $highlighted && $index == $highlighted;
-		return ( $self->accent_attr,                               undef ) if defined $selected                                && $index == $selected;
+		return ( $self->color_attr( $self->disabled_color ),       undef ) if $option_list->is_disabled($index);
+		return ( $self->accent_attr,                               undef ) if defined $selected && $index == $selected;
 		return ( $self->foreground_attr,                           undef );
 	}
 
 	method option_label ($index) {
-		return $options[$index]{label};
+		return $option_list->label($index);
 	}
 
 	method option_count () {
-		return scalar @options;
+		return $option_list->count;
 	}
 }
 
@@ -483,7 +409,10 @@ it does not fit there and there is more room above the dropdown; then it
 opens above. The list shows up to C<max_visible_options> options at a
 time; when the terminal has less room on the chosen side, it shrinks to
 that room, but always shows at least one option. It scrolls through the
-rest and has a scrollbar when it scrolls. Choosing an option closes the list.
+rest and has a scrollbar when it scrolls, drawn like every scrollbar
+(L<Term::Fabulous::Widget::Scrollbar>) in the theme's
+C<scrollbar.track> and C<scrollbar.thumb> colors. Choosing an option
+closes the list.
 
 Every option has a label (the text shown) and a value (what C<value>
 and the C<Change> event return). The value defaults to the label.
@@ -530,13 +459,21 @@ an array reference C<[ $label, $value ]>: C<[ 'Dark green' => 'green' ]>;
 
 =item *
 
-a hash reference with the keys C<label> and optionally C<value>:
-C<< { label => 'Blue', value => 'blue' } >>.
+a hash reference with the key C<label> and optionally C<value> and
+C<disabled>: C<< { label => 'Blue', value => 'blue', disabled => 1 } >>.
 
 =back
 
 A missing or C<undef> value is the label. Labels are character strings;
-values are strings or numbers. Any other shape dies.
+values are strings or numbers. Any other shape dies. These are the
+options of a L<Term::Fabulous::Widget::SegmentedControl> as well (see
+L<Term::Fabulous::OptionList/Options>).
+
+A disabled option is shown in the open list in the C<disabled_color>,
+but the user cannot choose it: the keys and typing skip it, it is never
+highlighted, and pressing or releasing the mouse on it does nothing (the
+list stays open). The program may still select it with C<value> or
+C<selected_index>; the list then opens on the first enabled option.
 
 =item C<value>
 
@@ -625,12 +562,12 @@ The label of the selected option, or C<undef> when none is selected.
 
 =head2 options
 
-	my @options = $dropdown->options;    # ( { label => ..., value => ... }, ... )
+	my @options = $dropdown->options;    # ( { label => ..., value => ..., disabled => 0 }, ... )
 	$dropdown->options( [ 'One', 'Two', [ Three => 3 ] ] );
 
 Accessor. Returns the options as a list of hash references with the keys
-C<label> and C<value> (copies; changing them does not change the
-dropdown). Writing replaces all options (in the formats of the
+C<label>, C<value> and C<disabled> (copies; changing them does not
+change the dropdown). Writing replaces all options (in the formats of the
 C<options> parameter), closes the list, and keeps the selection when an
 option with the selected value still exists; otherwise nothing is
 selected afterwards. Writing fires no C<Change> event. Returns the new
@@ -690,8 +627,8 @@ also closes the list.
 
 	$dropdown->open;
 
-Opens the list as the user does, with the selected option (or the first
-one) highlighted. Does nothing when the list is already open, when there
+Opens the list as the user does, with the selected option (or, when it
+is disabled or there is none, the first enabled one) highlighted. Does nothing when the list is already open, when there
 are no options, or while the dropdown is disabled. Returns the dropdown.
 
 =head2 close
@@ -712,8 +649,9 @@ closed. Returns the dropdown.
 	$dropdown->choose(2);
 
 Selects the option at an index (from 0) as the user does: closes the
-list and, when the selection changes, fires a C<Change> event. Dies if
-the index is not an integer in range. Returns the dropdown.
+list and, when the selection changes, fires a C<Change> event. A
+disabled option is not chosen and the list stays as it is. Dies if the
+index is not an integer in range. Returns the dropdown.
 
 =head2 highlight
 
@@ -721,7 +659,7 @@ the index is not an integer in range. Returns the dropdown.
 
 Moves the highlight of the open list to an index (clamped to the
 options) and scrolls it into view. Does nothing while the list is
-closed. Returns the dropdown.
+closed, or for a disabled option. Returns the dropdown.
 
 =head2 highlighted_index
 
@@ -733,6 +671,8 @@ list is closed.
 =head1 KEYS
 
 The dropdown uses the keys below while it has the focus and is enabled.
+All of them skip disabled options, as the other widgets with entries do
+(see L<Term::Fabulous::Roving>).
 
 When the list is closed:
 
@@ -850,9 +790,9 @@ which may be repeated and mixed; each adds to the options given before:
 
 One or more options whose value is their label.
 
-=item C<option "Label" value="v">
+=item C<option "Label" value="v" disabled=#true>
 
-One option; C<value=> is optional and defaults to the label.
+One option; C<value=> defaults to the label, C<disabled=> to C<#false>.
 
 =back
 

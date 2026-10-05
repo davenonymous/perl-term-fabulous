@@ -6,7 +6,7 @@ Term::Fabulous::Text::Style - Parse style strings such as "bold red on
 # SYNOPSIS
 
 ```perl
-use Term::Fabulous::Text::Style qw(parse_style style apply_style);
+use Term::Fabulous::Text::Style qw(parse_style style compose_styles apply_style);
 
 my $style = parse_style('bold underline SteelBlue on #202020');
 # { set => TB_BOLD | TB_UNDERLINE, clear => 0, color => [ 70, 130, 180, 255 ], background => [ 32, 32, 32, 255 ] }
@@ -15,6 +15,9 @@ my $plain = parse_style('not bold default');
 # { set => 0, clear => TB_BOLD, color => [ 0, 0, 0, 0 ], background => undef }
 
 my $same = style($style);    # a style hash is checked and copied, a string parsed
+
+my $inner = compose_styles( $style, parse_style('not bold') );    # stacked: the later wins
+# { set => TB_UNDERLINE, clear => TB_BOLD, color => [ 70, 130, 180, 255 ], background => [ 32, 32, 32, 255 ] }
 
 my $look = apply_style( { attrs => TB_ITALIC, color => [ 220, 223, 228, 255 ], background => undef }, $style );
 # { attrs => TB_ITALIC | TB_BOLD | TB_UNDERLINE, color => [ 70, 130, 180, 255 ], background => [ 32, 32, 32, 255 ] }
@@ -26,8 +29,12 @@ A _style_ is what a span of a [Term::Fabulous::Widget::RichText](../Widget/RichT
 adds to the look of the characters it covers: style bits to set or
 clear, a text color and a background. It is written as a string of
 words, in the manner of Python's `rich` library, or given as a hash.
-This module turns both into one normalized hash, and applies such a
-hash to a look.
+This module turns both into one normalized hash, stacks such hashes
+(["compose\_styles"](#compose_styles)) and applies one to a look (["apply\_style"](#apply_style)). These
+two functions are the only place where style bits are combined:
+[Term::Fabulous::Widget::RichText](../Widget/RichText.md) composes the styles of nested spans
+with the first, and [Term::Fabulous::Render::Text](../Render/Text.md) paints each run of
+a line with the second.
 
 ## Style strings
 
@@ -49,11 +56,12 @@ A style string is words separated by whitespace, in any order:
 
 - A color
 
-    The text color: a CSS color name in any case (`SteelBlue`,
-    `steelblue`; the names of [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md)), or any
-    string [Term::Fabulous::Color](../Color.md) reads, such as `#ff8800`,
-    `rgb(255, 136, 0)` or `hsl(32, 100%, 50%)`. `default` is the
-    terminal's default color (alpha 0).
+    The text color: any string [Term::Fabulous::Color](../Color.md) reads (see
+    ["A string" in Term::Fabulous::Color](../Color.md#a-string)), such as a CSS color name in any case
+    (`SteelBlue`, `steelblue`), `#ff8800`, `rgb(255, 136, 0)` or
+    `hsl(32, 100%, 50%)`. `default` is the terminal's default color
+    (alpha 0); the style words above win over a color of the same spelling
+    (there is none among the CSS names).
 
 - `on COLOR`
 
@@ -105,6 +113,21 @@ the colors may be in any format [Term::Fabulous::Color](../Color.md) accepts. Th
 result is a new hash. Unknown keys, invalid bits (not a non-negative
 integer) and invalid colors die.
 
+## compose\_styles
+
+```perl
+my $style = compose_styles( $outer, $inner, $innermost );
+```
+
+Stacks style hashes in order and returns the style hash they make
+together, as if each were applied after the ones before it: a later
+`set` bit wins over an earlier `clear` of the same bit and the other
+way round (both stay recorded, so the result still clears what it must
+clear), and a later color replaces an earlier one. No styles give the
+style that touches nothing. Applying the result to a look gives the
+same look as applying the styles one after the other. The given hashes
+are not changed.
+
 ## apply\_style
 
 ```perl
@@ -114,7 +137,10 @@ my $look = apply_style( { attrs => $bits, color => $rgba, background => $rgba_or
 Applies a style hash to a _look_, a hash of the termbox2 style bits
 `attrs`, the text `color` and the `background`, and returns the new
 look: the bits with `clear` removed and `set` added, and each color
-replaced when the style has one. The given look is not changed.
+replaced when the style has one. The given look is not changed. The
+colors are passed through as they are, so they may be in any one form
+as long as the look and the style agree: [Term::Fabulous::Render::Text](../Render/Text.md)
+applies RichText runs whose colors are termbox attributes.
 
 # SEE ALSO
 

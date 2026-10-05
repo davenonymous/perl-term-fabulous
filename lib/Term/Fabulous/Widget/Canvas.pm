@@ -18,6 +18,7 @@ class Term::Fabulous::Widget::Canvas
 	use Feature::Compat::Try;
 	use List::Util qw(max min);
 	use POSIX qw(ceil);
+	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Event::CanvasResize;
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
 	use Term::Fabulous::Render::Geometry qw(cell_coordinate);
@@ -57,10 +58,6 @@ class Term::Fabulous::Widget::Canvas
 	# being drawn and make no further frame due.
 	field $_refreshing = 0;
 
-	sub _describe ($value) {
-		return defined $value ? "'$value'" : 'undef';
-	}
-
 	sub _is_tail ($cell) {
 		return defined $cell && !ref $cell;
 	}
@@ -75,7 +72,7 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	sub _glyph ($string) {
-		die "Term::Fabulous::Widget::Canvas: a glyph must be a non-empty string, got " . _describe($string)
+		die "Term::Fabulous::Widget::Canvas: a glyph must be a non-empty string, got " . describe($string)
 			unless defined $string && !ref $string && length $string;
 		my $glyph = $glyph_by_string{$string};
 		return $glyph if defined $glyph;
@@ -107,7 +104,7 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	method put_text ( $x, $y, $text, $fg = undef, $bg = undef ) {
-		die "Term::Fabulous::Widget::Canvas: text must be a string, got " . _describe($text) unless defined $text && !ref $text;
+		die "Term::Fabulous::Widget::Canvas: text must be a string, got " . describe($text) unless defined $text && !ref $text;
 		my ( $column,  $row )     = ( cell_coordinate( x => $x ),   cell_coordinate( y => $y ) );
 		my ( $fg_attr, $bg_attr ) = ( cell_color_attr( fg => $fg ), cell_color_attr( bg => $bg ) );
 
@@ -261,7 +258,7 @@ class Term::Fabulous::Widget::Canvas
 	}
 
 	method fit_to ( $new_columns, $new_rows ) {
-		die "Term::Fabulous::Widget::Canvas: fit_to needs a non-negative integer size, got " . _describe($new_columns) . " x " . _describe($new_rows)
+		die "Term::Fabulous::Widget::Canvas: fit_to needs a non-negative integer size, got " . describe($new_columns) . " x " . describe($new_rows)
 			unless grep( { defined && /\A[0-9]+\z/ } $new_columns, $new_rows ) == 2;
 		return if $new_columns == $columns && $new_rows == $rows;
 
@@ -408,8 +405,11 @@ with an optional foreground and an optional background color.
 
 =item * An unset cell, and a set cell without a background color, show
 the canvas's C<background_color>. When the canvas has none, they show
-the background of the nearest ancestor that has one, or else the
-terminal's default background.
+the background of the nearest ancestor that has one (translucent ones
+count; the cell is blended over it), or else the screen color of the
+theme, or else (in a L<Term::Fabulous::Static>) the terminal's default
+background: L<Term::Fabulous::Widget/background_below> with
+C<< translucent => 1 >>.
 
 =item * A cell without a foreground color uses the terminal's default
 foreground color.

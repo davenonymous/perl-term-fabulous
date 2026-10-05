@@ -98,6 +98,57 @@ Like ["color"](#color), and also a packed `0xRRGGBB` integer, opaque, as the
 cells of a [Term::Fabulous::Widget::Canvas](Widget/Canvas.md) take it. Returns
 `[r, g, b, a]`.
 
+## one\_of
+
+```perl
+my $side = one_of( $self, side => $value, qw(top right bottom left) );
+```
+
+One of a fixed set of words, given after the value. Anything else
+dies, listing the words in sorted order:
+`My::Widget: side must be one of bottom, left, right, top, got 'middle'`.
+
+## border\_style
+
+```perl
+my $style = border_style( $self, line_style => 'Double' );
+my $line  = border_style( $self, column_lines => 'none', none => Term::Fabulous::Enum::BorderStyle->Hidden );
+my $grid  = border_style( $self, line_style => $value, grid => 1 );
+```
+
+A [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item, given as the item or its
+name (case sensitive, `'Round'`). Returns the item. Options:
+
+- `none => $meaning`
+
+    Also accept the word `'none'` and return `$meaning` for it (an item
+    such as `Hidden`, or `undef`). Without this option `'none'` dies.
+
+- `grid => 1`
+
+    Accept only the styles with grid joints (see
+    ["get\_grid\_styles" in Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md#get_grid_styles)).
+
+The message lists the names it accepts:
+`My::Widget: line_style must be a border style or its name, got 'Fancy' (known: Ascii, Blank, ...)`.
+
+## value\_format
+
+How a widget writes a number: `undef` (the widget's default), a
+`sprintf` format string such as `'%d%%'` or a code reference.
+Returns the value; anything else dies.
+
+## optional
+
+```perl
+my $icon  = optional( \&string, $self, icon => $value );
+my $style = optional( \&border_style, $self, border_style_top => $value );
+```
+
+Runs the check given as a code reference for a defined value, with the
+owner, the name, the value and any further arguments; returns `undef`
+for `undef`. For properties where `undef` means "none".
+
 ## describe
 
 ```perl

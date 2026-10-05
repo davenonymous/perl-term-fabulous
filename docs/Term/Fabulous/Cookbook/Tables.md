@@ -931,9 +931,11 @@ double line above the row and makes its text bold.
 - The root box has the height `sizing_fit()`, so the output is as high
 as the report. The table is as wide as its columns; the `width` of
 [Term::Fabulous::Static](../Static.md) is only the room it may take.
-- The cells always have a background color. In a tree without a
-background, as here, it is `[22, 25, 31]`; give the table or the box a
-`background_color` to choose another. See
+- The cells always have a background color. In a live program they are
+painted in what the table lies on, at the latest the screen color of
+the theme; a [Term::Fabulous::Static](../Static.md) report paints no screen, so in a
+tree without a background, as here, it is `[22, 25, 31]`. Give the
+table or the box a `background_color` to choose another. See
 ["Colors" in Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md#colors).
 
 # SEE ALSO

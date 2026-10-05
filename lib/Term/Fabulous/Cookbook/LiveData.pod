@@ -182,7 +182,7 @@ This program is shipped as F<examples/cookbook/scrolling-log.pl>.
 
 			# Keep the log from growing forever: drop the oldest line.
 			my $oldest = $log->children->[0];
-			$log->remove_children_with( sub ($child) { $child == $oldest } ) if @{ $log->children } > MAX_LINES;
+			$log->remove_child($oldest) if @{ $log->children } > MAX_LINES;
 			return;
 		},
 	);
@@ -219,8 +219,8 @@ L</Scroll a ScrollBox from code (keep a log at the newest line)>.
 
 =item *
 
-C<remove_children_with> removes every child for which the code returns
-true. A removed widget can be added again, to the same box or another
+C<remove_child> removes the widgets it is given from the box. A
+removed widget can be added again, to the same box or another
 one, and keeps its children and its state. See
 L<Term::Fabulous::Manual::Layout/Changing the tree>.
 

@@ -118,9 +118,9 @@ subtest 'sides, orientations and styles' => sub {
 		],
 		'another style, tabs at the end, no border around the page';
 	is $tabs->line_style->name, 'Heavy', 'the style is an item';
-	like dies { $tabs->line_style('Block') }, qr/line_style must be a border style with joints/, 'a style without joints dies';
-	like dies { $tabs->side('middle') },      qr/side must be top, right, bottom or left/,       'an unknown side dies';
-	like dies { $tabs->orientation('up') },   qr/orientation must be horizontal or vertical/,    'an unknown orientation dies';
+	like dies { $tabs->line_style('Block') }, qr/line_style must be a border style with joints/,   'a style without joints dies';
+	like dies { $tabs->side('middle') },      qr/side must be one of bottom, left, right, top/,    'an unknown side dies';
+	like dies { $tabs->orientation('up') },   qr/orientation must be one of horizontal, vertical/, 'an unknown orientation dies';
 };
 
 subtest 'keys and clicks' => sub {
@@ -188,6 +188,11 @@ subtest 'pages' => sub {
 	is [ scalar $tabs->pages, $tabs->active_index, $page->tabs, $events ], [ 2, 0, undef, [] ], 'removing the active page shows the first enabled one, without an event';
 	$tabs->add_child( Term::Fabulous::Widget::Tabs::Page->new( title => 'Audit', active => 1 ) );
 	is $tabs->active->title, 'Audit', 'a page added with active => 1 is shown';
+	my $audit = $tabs->active;
+	$tabs->remove_child( $audit, $page );
+	is [ scalar $tabs->pages, scalar $tabs->bar->buttons, $tabs->active_index, $audit->tabs ], [ 2, 2, 0, undef ], 'remove_child takes the given page and its tab, and ignores a page of no Tabs';
+	like dies { $tabs->remove_child('audit') }, qr/remove_child takes pages, got 'audit'; remove a page by its id with remove_child_with_id/, 'an id dies';
+	$tabs->add_child($audit);
 	like dies { $tabs->add_child( $tabs->page(0) ) },                                   qr/part of a Tabs already/,                        'a page cannot join twice';
 	like dies { $tabs->add_child( Term::Fabulous::Widget::Text->new( text => 'x' ) ) }, qr/holds only Term::Fabulous::Widget::Tabs::Page/, 'only pages';
 	$tabs->clear_children;
@@ -217,6 +222,13 @@ subtest 'a bar on its own' => sub {
 	$bar->choose(1);
 	is [ $bar->active_index, \@chosen ], [ 1, [ [ 1, 'Grid' ] ] ], 'choose fires Select with the tab';
 	like dies { $bar->add_child( Term::Fabulous::Widget::Box->new ) }, qr/holds only Term::Fabulous::Widget::Tabs::Button/, 'only tabs';
+
+	my $list = $bar->button(0);
+	is [ map { $list->border_style_of($_)->name } qw(top right bottom left) ], [qw(Round Round Hidden Round)], 'a tab derives its sides from the bar';
+	$list->border_style_top('Double');
+	is [ $list->border_style_top->name, $list->border_style_of('right')->name ], [qw(Double Round)], 'a style given to a tab wins over the derived one (it was ignored)';
+	$ui->step;
+	is substr( lines($terminal)->[1], 0, 8 ), "\x{2554}" . ( "\x{2550}" x 6 ) . "\x{2557}", 'and is drawn';
 };
 
 subtest 'a layout builds pages into the Tabs' => sub {

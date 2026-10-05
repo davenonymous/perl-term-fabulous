@@ -157,13 +157,13 @@ subtest 'invalid input dies' => sub {
 		[ sub { $chart->add_slice( A => 1 ) },               qr/a slice labeled 'A' exists already/, 'add_slice of a known label' ],
 		[ sub { $chart->remove_slice('Z') },                 qr/no slice labeled 'Z'/,               'remove_slice of an unknown label' ],
 		[ sub { $chart->set_slice_color( Z => '#ff0000' ) }, qr/no slice labeled 'Z'/,               'set_slice_color of an unknown label' ],
-		[ sub { pie( hole          => 0.95 ) },     qr/hole must be a number from 0 to 0\.9, got '0\.95'/,            'a hole too large' ],
-		[ sub { pie( marker        => 'block' ) },  qr/marker must be quadrant, half, sextant, braille, got 'block'/, 'an unknown marker' ],
-		[ sub { pie( sort          => 'random' ) }, qr/sort must be asc, desc, none, got 'random'/,                   'an unknown sort' ],
-		[ sub { pie( slice_labels  => 'all' ) },    qr/slice_labels must be label, none, percent, value, got 'all'/,  'unknown slice labels' ],
-		[ sub { pie( legend_values => 'all' ) },    qr/legend_values must be both, none, percent, value, got 'all'/,  'unknown legend values' ],
-		[ sub { pie( other         => 2 ) },        qr/other must be a number from 0 to 1, got '2'/,                  'an other share above 1' ],
-		[ sub { pie( start_angle   => 'north' ) },  qr/start_angle must be a number of degrees, got 'north'/,         'an angle that is no number' ],
+		[ sub { pie( hole          => 0.95 ) },     qr/hole must be a number from 0 to 0\.9, got '0\.95'/,                  'a hole too large' ],
+		[ sub { pie( marker        => 'block' ) },  qr/marker must be quadrant, half, sextant, braille, got 'block'/,       'an unknown marker' ],
+		[ sub { pie( sort          => 'random' ) }, qr/sort must be one of asc, desc, none, got 'random'/,                  'an unknown sort' ],
+		[ sub { pie( slice_labels  => 'all' ) },    qr/slice_labels must be one of label, none, percent, value, got 'all'/, 'unknown slice labels' ],
+		[ sub { pie( legend_values => 'all' ) },    qr/legend_values must be one of both, none, percent, value, got 'all'/, 'unknown legend values' ],
+		[ sub { pie( other         => 2 ) },        qr/other must be a number from 0 to 1, got '2'/,                        'an other share above 1' ],
+		[ sub { pie( start_angle   => 'north' ) },  qr/start_angle must be a number of degrees, got 'north'/,               'an angle that is no number' ],
 	);
 	foreach my $case (@cases) {
 		like dies { $case->[0]->() }, $case->[1], $case->[2];

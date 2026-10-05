@@ -18,10 +18,10 @@ class Term::Fabulous::Widget::TextArea
 	use List::Util qw(max);
 	use Term::Fabulous::Check qw(boolean positive_integer);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
+	use Term::Fabulous::Viewport qw(scroll_thumb);
+	use Term::Fabulous::Widget::Scrollbar;
 
-	use constant WHEEL_ROWS      => 3;
-	use constant SCROLLBAR_TRACK => "\x{2502}";
-	use constant SCROLLBAR_THUMB => "\x{2503}";
+	use constant WHEEL_ROWS => 3;
 
 	# Vertical movement: key name => [ direction, unit, extend the selection ].
 	my %VERTICAL_BY_KEY = (
@@ -141,21 +141,18 @@ class Term::Fabulous::Widget::TextArea
 		return;
 	}
 
+	# In the last column, in the theme's scrollbar colors.
 	method _paint_scrollbar () {
 		my $view = $self->view;
-		my ( $height, $x ) = ( $self->rows, $self->columns - 1 );
-		my $total     = $view->visual_row_count;
-		my $thumb     = max( 1, int( $height * $height / $total + 0.5 ) );
-		my $max_top   = $view->max_top;
-		my $thumb_top = $max_top ? int( ( $height - $thumb ) * $view->top_row / $max_top + 0.5 ) : 0;
-		my $track_fg  = $self->color_attr( $self->disabled_color );
-		my $thumb_fg  = $self->accent_attr;
-		my $bg        = $self->focus_background_attr;
-
-		foreach my $y ( 0 .. $height - 1 ) {
-			my $is_thumb = $y >= $thumb_top && $y < $thumb_top + $thumb;
-			$self->put_attrs( $x, $y, $is_thumb ? SCROLLBAR_THUMB : SCROLLBAR_TRACK, $is_thumb ? $thumb_fg : $track_fg, $bg );
-		}
+		Term::Fabulous::Widget::Scrollbar->paint_track(
+			$self,
+			axis            => 'vertical',
+			at              => $self->columns - 1,
+			thumb           => scroll_thumb( $view->visual_row_count, $self->rows, $view->top_row, $self->rows ),
+			track_attr      => $self->color_attr( $self->family_look( scrollbar => 'track' ) ),
+			thumb_attr      => $self->color_attr( $self->family_look( scrollbar => 'thumb' ) ),
+			background_attr => $self->focus_background_attr,
+		);
 		return;
 	}
 }
@@ -264,7 +261,9 @@ scrolls no further than needed to fill the area with that line.
 A boolean, stored as 1 or 0; a reference dies. Default: 1. When true, a scrollbar is
 shown in the rightmost column while the text has more rows than the
 area; it then takes one column from the text. The scrollbar only shows
-the position; it cannot be dragged.
+the position; it cannot be dragged. It is drawn like every scrollbar
+(L<Term::Fabulous::Widget::Scrollbar>), in the theme's C<scrollbar.track>
+and C<scrollbar.thumb> colors.
 
 =back
 

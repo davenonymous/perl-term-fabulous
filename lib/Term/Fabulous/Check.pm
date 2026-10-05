@@ -8,13 +8,14 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names describe);
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names one_of border_style value_format optional describe);
 
 use Carp qw(croak);
 use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
 use Feature::Compat::Try;
 use Scalar::Util qw(blessed looks_like_number);
 use Term::Fabulous::Color;
+use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 use constant MAX_RGB => 0xFFFFFF;
@@ -131,6 +132,50 @@ sub class_names ( $owner, $name, $value ) {
 	return [@$value];
 }
 
+# One of a fixed set of words; the message lists them sorted.
+sub one_of ( $owner, $name, $value, @allowed ) {
+	_fail( $owner, $name, 'one of ' . join( ', ', sort @allowed ), $value ) unless _is_plain($value) && grep { $_ eq $value } @allowed;
+	return $value;
+}
+
+# A border style item, given as an item or its name. 'none' is accepted
+# only where an option says what it means (Hidden in table styles); grid
+# restricts to the styles with joints.
+sub border_style ( $owner, $name, $value, %options ) {
+	my @unknown = grep { $_ ne 'none' && $_ ne 'grid' } sort keys %options;
+	croak "Term::Fabulous::Check: border_style does not take @unknown (known: grid, none)" if @unknown;
+	return $options{none} if exists $options{none} && _is_plain($value) && $value eq 'none';
+	my $style
+		= blessed $value && $value->isa('Term::Fabulous::Enum::BorderStyle') ? $value
+		: _is_plain($value)                                                  ? Term::Fabulous::Enum::BorderStyle->from_name($value)
+		:                                                                      undef;
+	_fail( $owner, $name, _border_style_words(%options), $value, 'known: ' . _border_style_names(%options) )
+		unless defined $style && ( !$options{grid} || $style->joints );
+	return $style;
+}
+
+sub _border_style_words (%options) {
+	my $kind = $options{grid} ? 'a border style with joints' : 'a border style';
+	return exists $options{none} ? "$kind, its name or 'none'" : "$kind or its name";
+}
+
+sub _border_style_names (%options) {
+	my @styles = $options{grid} ? Term::Fabulous::Enum::BorderStyle->get_grid_styles : Term::Fabulous::Enum::BorderStyle->values;
+	return join ', ', sort map { $_->name } @styles;
+}
+
+# How a widget writes a number: undef (its default), a sprintf format
+# string or a code reference.
+sub value_format ( $owner, $name, $value ) {
+	_fail( $owner, $name, 'a sprintf format string or a code reference', $value ) if ref $value && ref $value ne 'CODE';
+	return $value;
+}
+
+# Runs a check for a defined value; undef stays undef.
+sub optional ( $check, $owner, $name, $value, @options ) {
+	return defined $value ? $check->( $owner, $name, $value, @options ) : undef;
+}
+
 # Canvas cells also take a packed 0xRRGGBB integer, which is opaque.
 sub cell_color ( $owner, $name, $value ) {
 	return color( $owner, $name, $value ) unless _is_plain($value) && $value =~ /\A[0-9]+\z/;
@@ -239,6 +284,55 @@ C<NAME percentage must be in 0..100, got 'SPEC'>.
 Like L</color>, and also a packed C<0xRRGGBB> integer, opaque, as the
 cells of a L<Term::Fabulous::Widget::Canvas> take it. Returns
 C<[r, g, b, a]>.
+
+=head2 one_of
+
+	my $side = one_of( $self, side => $value, qw(top right bottom left) );
+
+One of a fixed set of words, given after the value. Anything else
+dies, listing the words in sorted order:
+C<My::Widget: side must be one of bottom, left, right, top, got 'middle'>.
+
+=head2 border_style
+
+	my $style = border_style( $self, line_style => 'Double' );
+	my $line  = border_style( $self, column_lines => 'none', none => Term::Fabulous::Enum::BorderStyle->Hidden );
+	my $grid  = border_style( $self, line_style => $value, grid => 1 );
+
+A L<Term::Fabulous::Enum::BorderStyle> item, given as the item or its
+name (case sensitive, C<'Round'>). Returns the item. Options:
+
+=over
+
+=item C<< none => $meaning >>
+
+Also accept the word C<'none'> and return C<$meaning> for it (an item
+such as C<Hidden>, or C<undef>). Without this option C<'none'> dies.
+
+=item C<< grid => 1 >>
+
+Accept only the styles with grid joints (see
+L<Term::Fabulous::Enum::BorderStyle/get_grid_styles>).
+
+=back
+
+The message lists the names it accepts:
+C<My::Widget: line_style must be a border style or its name, got 'Fancy' (known: Ascii, Blank, ...)>.
+
+=head2 value_format
+
+How a widget writes a number: C<undef> (the widget's default), a
+C<sprintf> format string such as C<'%d%%'> or a code reference.
+Returns the value; anything else dies.
+
+=head2 optional
+
+	my $icon  = optional( \&string, $self, icon => $value );
+	my $style = optional( \&border_style, $self, border_style_top => $value );
+
+Runs the check given as a code reference for a defined value, with the
+owner, the name, the value and any further arguments; returns C<undef>
+for C<undef>. For properties where C<undef> means "none".
 
 =head2 describe
 

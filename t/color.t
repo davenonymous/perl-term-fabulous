@@ -4,6 +4,7 @@ use warnings;
 use Test2::V0;
 
 use Term::Fabulous::Color;
+use Term::Fabulous::Enum::WebColor;
 
 my $Color = 'Term::Fabulous::Color';
 
@@ -19,10 +20,20 @@ subtest 'string grammar' => sub {
 	is rgba_of('hsl(0, 100%, 50%)'),         [ 255, 0,   0,   255 ], 'hsl()';
 	is rgba_of('hsl(720, 100%, 50%)'),       [ 255, 0,   0,   255 ], 'hue is taken modulo 360';
 	is rgba_of('hsla(120, 100%, 50%, 0.5)'), [ 0,   255, 0,   128 ], 'hsla()';
-	like dies { $Color->new( color => 'white' ) }, qr/unrecognized color string 'white'/, 'named colors are not supported';
-	is rgba_of(0xFF8800),  [ 255, 136, 0,  255 ], 'a packed integer';
-	is rgba_of('#123456'), [ 18,  52,  86, 255 ], 'digits-only hex with #';
+	is rgba_of(0xFF8800),                    [ 255, 136, 0,   255 ], 'a packed integer';
+	is rgba_of('#123456'),                   [ 18,  52,  86,  255 ], 'digits-only hex with #';
 	like dies { rgba_of( 0xFFFFFF + 1 ) }, qr/packed integer color must be in 0\.\.0xFFFFFF/, 'a packed integer above 0xFFFFFF dies';
+};
+
+subtest 'web color names' => sub {
+	is rgba_of('SteelBlue'),                                          [ 70, 130, 180, 255 ],                               'a web color name, as WebColor spells it';
+	is [ map { rgba_of($_) } 'steelblue', 'STEELBLUE', 'sTeElBlUe' ], [ ( [ 70, 130, 180, 255 ] ) x 3 ],                   'in any case';
+	is rgba_of('rebeccapurple'),                                      [ 102, 51, 153, 255 ],                               'every CSS name';
+	is rgba_of('grey'),                                               rgba_of('gray'),                                     'both spellings of gray';
+	is rgba_of('Tomato'),                                             [ Term::Fabulous::Enum::WebColor->Tomato->to_rgba ], 'the colors of Term::Fabulous::Enum::WebColor';
+	like dies { $Color->new( color => 'steelblu' ) },   qr/\ATerm::Fabulous::Color: unrecognized color string 'steelblu' at /, 'an unknown name dies naming it';
+	like dies { $Color->new( color => 'steel blue' ) }, qr/unrecognized color string 'steel blue'/,                            'names have no spaces';
+	is [ grep { $_->name =~ /\A(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\z/ } Term::Fabulous::Enum::WebColor->values ], [], 'no name reads as a hex color';
 };
 
 subtest 'blend' => sub {

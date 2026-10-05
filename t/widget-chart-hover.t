@@ -101,7 +101,8 @@ subtest 'hover and hover_fade' => sub {
 	is [ scalar hovers($h)->@*, bg_at( $chart, 6, 7 ) ], [ 1, $RED ], 'hover_fade 0: events, no fading';
 	$chart->hover_fade(1);
 	$h->{ui}->step;
-	is bg_at( $chart, 6, 7 ), rgb('#1a1a19'), 'hover_fade 1: the others fade into the background';
+	my ( $x0, $y0 ) = $chart->content_origin;
+	is [ bg_at( $chart, 6, 7 ), $h->{terminal}->cell( $x0 + 6, $y0 + 7 )->[2] ], [ undef, rgb('#161622') ], 'hover_fade 1: the others fade into the background, here the screen';
 
 	$chart->hover(0);
 	is [ hovers($h), $chart->hovered ], [ [ {} ], undef ], 'turning hover off ends the hover';

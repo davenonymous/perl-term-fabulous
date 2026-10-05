@@ -26,16 +26,8 @@ class Term::Fabulous::Widget::Input
 	use Clay::UI::Enum::Result;
 	use Scalar::Util qw(refaddr weaken);
 	use Term::Fabulous::Termbox qw(TB_REVERSE);
-	use Term::Fabulous::Check qw(cell_color);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::Change;
-
-	# The colors come from the theme's input family unless given.
-	my @COLOR_NAMES = qw(text_color disabled_color accent_color focus_background_color);
-
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @COLOR_NAMES );
-	}
 
 	ADJUST {
 		weaken( my $weak_self = $self );
@@ -66,10 +58,10 @@ class Term::Fabulous::Widget::Input
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			text_color             => [ 'text',       'normal' ],
-			disabled_color         => [ 'text',       'disabled' ],
-			accent_color           => [ 'accent',     'normal' ],
-			focus_background_color => [ 'background', 'focused' ],
+			text_color             => [ 'text',       'normal',   'cell_color' ],
+			disabled_color         => [ 'text',       'disabled', 'cell_color' ],
+			accent_color           => [ 'accent',     'normal',   'cell_color' ],
+			focus_background_color => [ 'background', 'focused',  'cell_color' ],
 		);
 	}
 
@@ -90,24 +82,20 @@ class Term::Fabulous::Widget::Input
 		return;
 	}
 
-	method _set_color ( $name, $value ) {
-		return $self->set_look( $name => cell_color( $self, $name => $value ) );
-	}
-
 	method text_color (@new) {
-		return @new ? $self->_set_color( text_color => @new ) : $self->look_value('text_color');
+		return @new ? $self->set_look( text_color => $new[0] ) : $self->look_value('text_color');
 	}
 
 	method disabled_color (@new) {
-		return @new ? $self->_set_color( disabled_color => @new ) : $self->look_value('disabled_color');
+		return @new ? $self->set_look( disabled_color => $new[0] ) : $self->look_value('disabled_color');
 	}
 
 	method accent_color (@new) {
-		return @new ? $self->_set_color( accent_color => @new ) : $self->look_value('accent_color');
+		return @new ? $self->set_look( accent_color => $new[0] ) : $self->look_value('accent_color');
 	}
 
 	method focus_background_color (@new) {
-		return @new ? $self->_set_color( focus_background_color => @new ) : $self->look_value('focus_background_color');
+		return @new ? $self->set_look( focus_background_color => $new[0] ) : $self->look_value('focus_background_color');
 	}
 
 	# The attribute for normal text: the text color, or the disabled color.
@@ -189,7 +177,7 @@ class Term::Fabulous::Widget::Input
 	}
 
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, can_focus => 'boolean', disabled => 'boolean', map { $_ => 'color' } @COLOR_NAMES );
+		return ( $class->SUPER::layout_properties, can_focus => 'boolean', disabled => 'boolean' );
 	}
 }
 

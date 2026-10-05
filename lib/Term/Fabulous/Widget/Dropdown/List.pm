@@ -7,31 +7,27 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Dropdown::List
-	:isa(Term::Fabulous::Widget::Canvas)
+	:isa(Term::Fabulous::Widget::Display)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
-	use List::Util qw(max min);
+	use List::Util qw(max);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
-	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
-
-	use constant SCROLLBAR_TRACK => "\x{2502}";
-	use constant SCROLLBAR_THUMB => "\x{2503}";
+	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
+	use Term::Fabulous::Viewport qw(clamp_offset reveal_range scroll_thumb);
+	use Term::Fabulous::Widget::Scrollbar;
 
 	field $dropdown     :param :weak;
 	field $visible_rows :param :reader;
 
 	# The first option shown.
 	field $top = 0;
-
-	# What the cells were last painted for.
-	field $_painted_key;
 
 	ADJUST {
 		weaken( my $weak_self = $self );
@@ -68,36 +64,25 @@ class Term::Fabulous::Widget::Dropdown::List
 		return;
 	}
 
-	method _list_border_style ( $accessor, @new ) {
-		my $method = "SUPER::$accessor";
-		return $self->$method(@new) if @new;
-		return $self->$method // ( defined $dropdown ? $dropdown->look('list.border.style') : undef );
+	# A side without a style of its own is drawn in the dropdown's
+	# list.border.style (Term::Fabulous::Role::HasBorderStyle).
+	method derived_border_style ($side) {
+		return defined $dropdown ? $dropdown->look('list.border.style') : undef;
 	}
-
-	method border_style_top    :override (@new) { return $self->_list_border_style( border_style_top    => @new ) }
-	method border_style_right  :override (@new) { return $self->_list_border_style( border_style_right  => @new ) }
-	method border_style_bottom :override (@new) { return $self->_list_border_style( border_style_bottom => @new ) }
-	method border_style_left   :override (@new) { return $self->_list_border_style( border_style_left   => @new ) }
 
 	method _scrolls () {
 		return $dropdown->option_count > $visible_rows;
 	}
 
-	method _max_top () {
-		return max( 0, $dropdown->option_count - $visible_rows );
-	}
-
 	# Scrolls the highlighted option into view.
 	method show_highlight () {
 		my $highlighted = $dropdown->highlighted_index // 0;
-		$top = $highlighted if $highlighted < $top;
-		$top = $highlighted - $visible_rows + 1 if $highlighted >= $top + $visible_rows;
-		$top = min( max( $top, 0 ), $self->_max_top );
+		$top = reveal_range( $dropdown->option_count, $visible_rows, $top, $highlighted, $highlighted + 1 );
 		return $self->mark_changed;
 	}
 
 	method scroll ($rows) {
-		$top = min( max( $top + $rows, 0 ), $self->_max_top );
+		$top = clamp_offset( $dropdown->option_count, $visible_rows, $top + $rows );
 		return $self->mark_changed;
 	}
 
@@ -133,17 +118,30 @@ class Term::Fabulous::Widget::Dropdown::List
 		return $self->columns - ( $self->_scrolls ? 1 : 0 );
 	}
 
-	# The options and colors the list shows come from the dropdown: paints
-	# again when what the rows would show changed.
-	method refresh :override () {
-		return unless $self->columns > 0 && $self->rows > 0 && defined $dropdown;
-		my @rows      = map { [ $dropdown->option_label($_), $dropdown->option_attrs($_) ] } grep { defined } map { $self->option_at_row($_) } 0 .. $self->rows - 1;
-		my @scrollbar = $self->_scrolls ? ( $dropdown->option_count, $dropdown->color_attr( $dropdown->disabled_color ), $dropdown->accent_attr ) : ();
-		my $key       = join "\x{1F}", map { $_ // "\x{0}" } $self->columns, $self->rows, $top, @scrollbar, map { @$_ } @rows;
-		return if defined $_painted_key && $key eq $_painted_key;
-		$_painted_key = $key;
+	# The widest label with its margins, and a column for the scrollbar
+	# (Term::Fabulous::Widget::Display); the dropdown gives the list its
+	# size when it opens it.
+	method natural_size () {
+		return ( 0, $visible_rows ) unless defined $dropdown;
+		my $widest = max( 0, map { string_columns( $dropdown->option_label($_) ) } 0 .. $dropdown->option_count - 1 );
+		return ( $widest + 2 + ( $self->_scrolls ? 1 : 0 ), $visible_rows );
+	}
 
-		$self->clear;
+	# What the shown rows paint: [ label, fg, bg ] each.
+	method _shown_rows () {
+		return map { [ $dropdown->option_label($_), $dropdown->option_attrs($_) ] } grep { defined } map { $self->option_at_row($_) } 0 .. $self->rows - 1;
+	}
+
+	# The options and colors the list shows come from the dropdown, which
+	# does not mark the list changed.
+	method paint_key :override () {
+		return $self->SUPER::paint_key unless defined $dropdown;
+		return ( $self->SUPER::paint_key, $top, $dropdown->option_count, map { @$_ } $self->_shown_rows );
+	}
+
+	method paint () {
+		return unless defined $dropdown;
+		my @rows  = $self->_shown_rows;
 		my $width = $self->_text_columns;
 		foreach my $row ( 0 .. $#rows ) {
 			my ( $label, $fg, $bg ) = @{ $rows[$row] };
@@ -166,19 +164,16 @@ class Term::Fabulous::Widget::Dropdown::List
 		return;
 	}
 
+	# In the rightmost column, in the theme's scrollbar colors.
 	method _paint_scrollbar () {
-		my ( $height, $x ) = ( $self->rows, $self->columns - 1 );
-		my $total     = $dropdown->option_count;
-		my $thumb     = max( 1, int( $height * $height / $total + 0.5 ) );
-		my $max_top   = $self->_max_top;
-		my $thumb_top = $max_top ? int( ( $height - $thumb ) * $top / $max_top + 0.5 ) : 0;
-		my $track_fg  = $dropdown->color_attr( $dropdown->disabled_color );
-		my $thumb_fg  = $dropdown->accent_attr;
-
-		foreach my $y ( 0 .. $height - 1 ) {
-			my $is_thumb = $y >= $thumb_top && $y < $thumb_top + $thumb;
-			$self->put_attrs( $x, $y, $is_thumb ? SCROLLBAR_THUMB : SCROLLBAR_TRACK, $is_thumb ? $thumb_fg : $track_fg, undef );
-		}
+		Term::Fabulous::Widget::Scrollbar->paint_track(
+			$self,
+			axis       => 'vertical',
+			at         => $self->columns - 1,
+			thumb      => scroll_thumb( $dropdown->option_count, $visible_rows, $top, $self->rows ),
+			track_attr => $self->color_attr( $self->family_look( scrollbar => 'track' ) ),
+			thumb_attr => $self->color_attr( $self->family_look( scrollbar => 'thumb' ) ),
+		);
 		return;
 	}
 }
@@ -199,7 +194,7 @@ each time it opens, adds it as a floating child of itself (so it is
 drawn over the other widgets, attached below or above the dropdown), and
 removes it when it closes.
 
-The list is a L<Term::Fabulous::Widget::Canvas> that paints the
+The list is a L<Term::Fabulous::Widget::Display> that paints the
 dropdown's options with a one-column margin on both sides, highlights
 one of them, scrolls through them when there are more options than
 rows, and then shows a scrollbar in its rightmost column. It turns mouse
@@ -273,12 +268,16 @@ within the options. Returns the list.
 The index of the option shown at a row of the list's content (from 0),
 or C<undef> for a row without an option.
 
-=head2 refresh
+=head2 paint, paint_key, natural_size
 
-Paints the visible options and, when the list scrolls, the scrollbar,
-while a frame is drawn (see L<Term::Fabulous::Widget::Canvas/refresh>):
-again whenever what its rows show changed, also when the change came
-from the dropdown (its colors, its highlight, its options).
+The L<Term::Fabulous::Widget::Display> interface. C<paint> draws the
+visible options and, when the list scrolls, the scrollbar. The paint key
+adds the first option shown, what the shown rows display and the
+scrollbar's colors, so the list paints again whenever that changed, also
+when the change came from the dropdown (its colors, its highlight, its
+options). The natural size (the widest label with its margins and the
+scrollbar column, by C<visible_rows>) is used only for an axis the
+dropdown leaves unsized; it always sizes both.
 
 =head1 MOUSE
 

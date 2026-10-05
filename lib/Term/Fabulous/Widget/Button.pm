@@ -25,20 +25,12 @@ class Term::Fabulous::Widget::Button
 {
 	use Clay::UI::Enum::Result;
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(color);
+	use Term::Fabulous::Check qw(color optional);
 	use Term::Fabulous::Event::Activate;
 
 	use constant REVERSE_VIDEO => 'reverse';
 
 	my %ACTIVATES = map { $_ => 1 } qw(Enter Space);
-
-	# The looks of a focused, a pressed and a disabled Button come from the
-	# theme unless given: focus_border_color (a color, or undef for no
-	# focus look), pressed_background_color ('reverse', a color, or undef
-	# for no change) and disabled_color.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, qw(focus_border_color pressed_background_color disabled_color) );
-	}
 
 	ADJUST {
 		weaken( my $weak_self = $self );
@@ -58,26 +50,17 @@ class Term::Fabulous::Widget::Button
 		);
 	}
 
-	# A look: [r, g, b, a], or undef for none.
-	method _optional_color ( $name, $value ) {
-		return defined $value ? color( $self, $name => $value ) : undef;
-	}
-
-	method _pressed_look ($value) {
+	# The pressed look: 'reverse', a color, or undef for no change.
+	sub _pressed_look ( $owner, $name, $value ) {
 		return REVERSE_VIDEO if defined $value && !ref $value && $value eq REVERSE_VIDEO;
-		return $self->_optional_color( pressed_background_color => $value );
+		return optional( \&color, $owner, $name, $value );
 	}
 
-	# The looks are not plain colors: #null switches a look off, and the
-	# pressed look may be 'reverse'. The accessors check the value.
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			can_focus                => 'boolean',
-			disabled                 => 'boolean',
-			focus_border_color       => 'scalar',
-			pressed_background_color => 'scalar',
-			disabled_color           => 'color',
+			can_focus => 'boolean',
+			disabled  => 'boolean',
 		);
 	}
 
@@ -90,12 +73,16 @@ class Term::Fabulous::Widget::Button
 		return 'button';
 	}
 
+	# The looks of a focused, a pressed and a disabled Button come from the
+	# theme unless given: focus_border_color (a color, or undef for no
+	# focus look), pressed_background_color ('reverse', a color, or undef
+	# for no change) and disabled_color.
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			focus_border_color       => [ 'border.color', 'focused' ],
-			pressed_background_color => [ 'background',   'pressed' ],
-			disabled_color           => [ 'border.color', 'disabled' ],
+			focus_border_color       => [ 'border.color', 'focused',  'optional_color' ],
+			pressed_background_color => [ 'background',   'pressed',  \&_pressed_look ],
+			disabled_color           => [ 'border.color', 'disabled', 'color' ],
 		);
 	}
 
@@ -110,7 +97,7 @@ class Term::Fabulous::Widget::Button
 
 	method disabled_color (@new) {
 		return $self->look_value('disabled_color') unless @new;
-		return $self->set_look( disabled_color => color( $self, disabled_color => $new[0] ) );
+		return $self->set_look( disabled_color => $new[0] );
 	}
 
 	# The color the Text widgets inside the Button are drawn in: the
@@ -124,12 +111,12 @@ class Term::Fabulous::Widget::Button
 
 	method focus_border_color (@new) {
 		return $self->look_value('focus_border_color') unless @new;
-		return $self->set_look( focus_border_color => $self->_optional_color( focus_border_color => $new[0] ) );
+		return $self->set_look( focus_border_color => $new[0] );
 	}
 
 	method pressed_background_color (@new) {
 		return $self->look_value('pressed_background_color') unless @new;
-		return $self->set_look( pressed_background_color => $self->_pressed_look( $new[0] ) );
+		return $self->set_look( pressed_background_color => $new[0] );
 	}
 
 	method reverse_video :override () {

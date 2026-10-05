@@ -23,10 +23,6 @@ role Term::Fabulous::Render::Canvas {
 	# The cell target the frame is painted into (Term::Fabulous::Render).
 	method cell_target;
 
-	# The attribute of the screen background of the frame being painted
-	# (Term::Fabulous::Render).
-	method screen_background_attr;
-
 	# By canvas refaddr: { canvas, origin => [x, y], visible => [x0, y0, x1, y1],
 	# background, covered, intact } for the frame being painted, and for the
 	# last frame that was painted completely.
@@ -34,15 +30,12 @@ role Term::Fabulous::Render::Canvas {
 	field %_painted_by_canvas;
 	field $_painted_viewport = '';
 
-	# The background of the canvas, of its nearest ancestor that has one,
-	# or else the screen background the frame lies on.
-	method _background_attr ($widget) {
-		for ( my $node = $widget; defined $node; $node = $node->parent ) {
-			next unless $node->can('background_color') && defined $node->background_color;
-			my $color = Term::Fabulous::Color->new( color => $node->background_color );
-			return color_attr($color) if $color->alpha > 0;
-		}
-		return $self->screen_background_attr;
+	# What the unset cells of a canvas show: the first background with an
+	# alpha above 0 at or above it (its cells are then blended over that),
+	# else the screen background of its UI, else the terminal's.
+	sub _background_attr ($canvas) {
+		my $rgba = $canvas->background_below( translucent => 1 ) // return TB_DEFAULT;
+		return color_attr( Term::Fabulous::Color->new( color => $rgba ) );
 	}
 
 	sub _same_place ( $before, $now ) {
@@ -66,7 +59,7 @@ role Term::Fabulous::Render::Canvas {
 
 		my $visible = intersect_cell_rects( \@content, $clip );
 		return undef unless rects_overlap( $visible, $visible );
-		return { canvas => $canvas, origin => [ @content[ 0, 1 ] ], visible => $visible, background => $self->_background_attr($canvas) };
+		return { canvas => $canvas, origin => [ @content[ 0, 1 ] ], visible => $visible, background => _background_attr($canvas) };
 	}
 
 	method plan_canvases ($frame) {

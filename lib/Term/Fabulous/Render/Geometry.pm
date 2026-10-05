@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside cell_coordinate);
+our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside cell_coordinate line_steps);
 
 use List::Util qw(min max);
 use POSIX qw(floor);
@@ -41,6 +41,35 @@ sub cell_coordinate ( $what, $value ) {
 	return $whole <= $value ? $whole : $whole - 1;
 }
 
+# Bresenham: the line passes every pixel from one end to the other, both
+# included. Along the longer (major) axis every step moves one pixel, and
+# after $i steps the shorter axis has moved round($i * minor / major)
+# pixels, halves rounded up. The steps whose major coordinate lies in the
+# raster are computed directly, so a line far longer than the raster
+# costs no more than one across it.
+sub line_steps ( $x0, $y0, $x1, $y1, $width, $height ) {
+	my ( $dx, $dy ) = ( abs( $x1 - $x0 ), abs( $y1 - $y0 ) );
+	my ( $step_x, $step_y ) = ( $x0 < $x1 ? 1 : -1, $y0 < $y1 ? 1 : -1 );
+	if ( $dx >= $dy ) {
+		my ( $first, $last ) = _steps_inside( $x0, $step_x, $dx, $width );
+		return ( $first, map { [ $x0 + $step_x * $_, $y0 + $step_y * _minor_steps( $_, $dy, $dx ) ] } $first .. $last );
+	}
+	my ( $first, $last ) = _steps_inside( $y0, $step_y, $dy, $height );
+	return ( $first, map { [ $x0 + $step_x * _minor_steps( $_, $dx, $dy ), $y0 + $step_y * $_ ] } $first .. $last );
+}
+
+# The first and last step $i of 0 .. $length at which $start + $step * $i
+# lies in 0 .. $limit - 1 (first above last when there is none).
+sub _steps_inside ( $start, $step, $length, $limit ) {
+	my ( $first, $last ) = $step > 0 ? ( -$start, $limit - 1 - $start ) : ( $start - $limit + 1, $start );
+	return ( max( $first, 0 ), min( $last, $length ) );
+}
+
+sub _minor_steps ( $i, $minor, $major ) {
+	return 0 unless $major;
+	return int( ( 2 * $minor * $i + $major ) / ( 2 * $major ) );
+}
+
 sub rects_overlap ( $first, $second ) {
 	my ( $x0, $y0, $x1, $y1 ) = @{ intersect_cell_rects( $first, $second ) };
 	return $x0 < $x1 && $y0 < $y1;
@@ -65,7 +94,8 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Render::Geometry - Snap Clay's layout boxes to terminal cells
+Term::Fabulous::Render::Geometry - Snap Clay's layout boxes to terminal
+cells, and step lines through a raster
 
 =head1 SYNOPSIS
 
@@ -94,6 +124,8 @@ rectangle with C<x1 == x0> or C<y1 == y0> is empty.
 =head1 FUNCTIONS
 
 Nothing is exported by default. Import the functions you need by name.
+All but L</line_steps> work on cells; L</line_steps> works on the pixels
+of any raster.
 
 =head2 cell_rect
 
@@ -136,6 +168,32 @@ list of C<[from, to]> pairs (C<to> exclusive), from left to right.
 Without rectangles it returns the whole span C<[$x0, $x1]>.
 
 	row_spans_outside( 1, 0, 10, [ 2, 0, 4, 3 ], [ 6, 1, 8, 2 ] );    # ([0, 2], [4, 6], [8, 10])
+
+=head2 line_steps
+
+	my ( $first, @pixels ) = line_steps( $x0, $y0, $x1, $y1, $width, $height );
+	set_pixel(@$_) foreach @pixels;
+
+The pixels of a straight line between two pixels (whole numbers), both
+ends included, as Bresenham's algorithm steps through them, clipped to
+a raster of C<$width> x C<$height> pixels: each pixel as C<[x, y]>, in
+order from C<($x0, $y0)>. The line takes one step per pixel along its
+longer axis (x when both are equally long), and only the steps whose
+coordinate along that axis lies in the raster are returned, however
+long the line is. On the other axis a returned pixel may still lie
+outside the raster (a line that leaves a wide raster through its top),
+so the caller's pixel writer skips those, as it skips any pixel
+outside.
+
+C<$first> is the index of the first returned step (0 for a line that
+starts inside the raster): a caller that counts steps, such as the
+dash pattern of L<Term::Fabulous::Chart::Raster>, advances its count by
+it. When no step lies inside, C<@pixels> is empty.
+
+	my ( $first, @pixels ) = line_steps( -2, 0, 3, 1, 4, 4 );    # (2, [0, 0], [1, 1], [2, 1], [3, 1])
+
+L<Term::Fabulous::Widget::PixelCanvas/draw_line> and
+L<Term::Fabulous::Chart::Raster> draw their lines with it.
 
 =head2 cell_coordinate
 

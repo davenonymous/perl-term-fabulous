@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::Tabs::Page
 {
 	use Clay::XS qw(sizing_grow padding_all CLAY_TOP_TO_BOTTOM);
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(boolean string);
+	use Term::Fabulous::Check qw(boolean optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	field $title    :param = '';
@@ -33,7 +33,7 @@ class Term::Fabulous::Widget::Tabs::Page
 
 	ADJUST :params ( :$active = 0 ) {
 		$title         = string( $self, title => $title );
-		$icon          = defined $icon ? string( $self, icon => $icon ) : undef;
+		$icon          = optional( \&string, $self, icon => $icon );
 		$disabled      = boolean( $self, disabled => $disabled );
 		$_wants_active = boolean( $self, active   => $active );
 
@@ -79,7 +79,7 @@ class Term::Fabulous::Widget::Tabs::Page
 
 	method icon (@new) {
 		return $icon unless @new;
-		$icon = defined $new[0] ? string( $self, icon => $new[0] ) : undef;
+		$icon = optional( \&string, $self, icon => $new[0] );
 		$self->_notify_tabs;
 		return $icon;
 	}
@@ -133,19 +133,12 @@ class Term::Fabulous::Widget::Tabs::Page
 		return $bar->page_border ? $bar : undef;
 	}
 
-	method _border_style_of ( $side, $accessor, @new ) {
-		my $method = "SUPER::$accessor";
-		return $self->$method(@new) if @new;
-		my $explicit = $self->$method;
-		return $explicit if defined $explicit;
+	# The style of a side without one of its own
+	# (Term::Fabulous::Role::HasBorderStyle).
+	method derived_border_style ($side) {
 		my $bar = $self->_bar_with_page_border // return undef;
 		return $side eq $bar->side ? Term::Fabulous::Enum::BorderStyle->Hidden : $bar->line_style;
 	}
-
-	method border_style_top    :override (@new) { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
-	method border_style_right  :override (@new) { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
-	method border_style_bottom :override (@new) { return $self->_border_style_of( bottom => 'border_style_bottom', @new ) }
-	method border_style_left   :override (@new) { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
 
 	method contribute_look_theme :override ($config) {
 		$self->SUPER::contribute_look_theme($config);

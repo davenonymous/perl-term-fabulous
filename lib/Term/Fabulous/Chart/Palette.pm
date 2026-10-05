@@ -14,7 +14,7 @@ our @EXPORT_OK = qw(
 );
 
 use Carp qw(croak);
-use Term::Fabulous::Check qw(cell_color);
+use Term::Fabulous::Check qw(cell_color one_of);
 
 # The categorical palettes, each with steps for dark and for light
 # backgrounds. "default" is the validated palette of the documentation:
@@ -56,8 +56,7 @@ sub is_palette_name ($name) {
 sub palette_colors ( $name, $mode ) {
 	croak "Term::Fabulous::Chart::Palette: unknown palette '" . ( $name // 'undef' ) . "' (known: " . join( ', ', palette_names() ) . ")"
 		unless is_palette_name($name);
-	croak "Term::Fabulous::Chart::Palette: mode must be 'dark' or 'light', got '" . ( $mode // 'undef' ) . "'"
-		unless defined $mode && exists $INK{$mode};
+	one_of( __PACKAGE__, mode => $mode, keys %INK );
 	return map { hex } $PALETTES{$name}{$mode}->@*;
 }
 
@@ -103,7 +102,7 @@ sub contrast_rgb ($rgb) {
 # The colors of a chart's text and lines on a background in a mode:
 # title, text (legend), label (ticks, axis titles), axis and grid.
 sub ink_colors ( $background, $mode ) {
-	my $ink = $INK{$mode} // croak "Term::Fabulous::Chart::Palette: mode must be 'dark' or 'light', got '" . ( $mode // 'undef' ) . "'";
+	my $ink = $INK{ one_of( __PACKAGE__, mode => $mode, keys %INK ) };
 	return {
 		title => mix_rgb( $background, $ink, 0.95 ),
 		text  => mix_rgb( $background, $ink, 0.80 ),

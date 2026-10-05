@@ -1,6 +1,94 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Render::Geometry gains line_steps, the one
+          clipped Bresenham stepper: PixelCanvas's draw_line and the chart
+          raster's lines step through it (same pixels as before)
+        - Term::Fabulous::Role::HasBorderStyle's border_style_of($side)
+          answers the style a side is drawn in: its own, else the one the
+          widget derives (the new optional hook derived_border_style), else
+          the theme's border.style, else Blank. The renderer and the Hidden
+          side rule read it, and the border_style_top/right/bottom/left
+          readers return it for every widget (they returned undef for a
+          side without a style of its own). Tabs::Button, Tabs::Page and
+          the dropdown's option list derive their borders through the hook.
+          Fixed: a style given to a tab's side was ignored
+        - Term::Fabulous::Role::Themed owns how looks change: a widget
+          declares each themed parameter once, with its kind (color,
+          cell_color, optional_color, border_style, ...), next to its slot
+          in themed_params, and the role takes it from the constructor,
+          checks every value and makes it a layout property;
+          adopt_look_params is gone. One optional hook, looks_changed,
+          hears every change (set_look, reset_look, a theme switch, joining
+          a tree in a UI) and replaces theme_changed. forwarded_looks
+          declares looks a widget keeps on its parts: reset_look now
+          returns the colors and line style of a Tabs (kept by its bar) and
+          the track_color and thumb_color of a ScrollBox (kept by both
+          scrollbars) to the theme (it died). A color parameter given
+          undef dies with a message that names reset_look
+        - Dropdown takes disabled options, in the option grammar of
+          SegmentedControl ({ label => ..., disabled => 1 }, and
+          'option "X" disabled=#true' in KDL): shown in the disabled
+          color, skipped by the keys and typing, not chosen by a click;
+          the program may still select one. Term::Fabulous::OptionList
+          holds the options and the selection of both widgets, and
+          Term::Fabulous::Role::HasOptions reads their KDL options.
+          Term::Fabulous::Roving is the one rule for moving between
+          entries with the keys (wrap or clamp, disabled entries skipped),
+          used by SegmentedControl, Dropdown, Tabs, Tabs::Bar, RadioGroup
+          and Accordion
+        - Term::Fabulous::Range holds the value of a Slider, a StarRating
+          and a ProgressBar: one range check, one snapping rule, one key
+          table, one value format; Term::Fabulous::Role::HasRange applies a
+          layout's range properties together for all three. StarRating
+          gains set_range( max => ..., half => ... )
+        - Term::Fabulous::Viewport: the arithmetic of a scrolled view
+          (max_offset, clamp_offset, reveal_range, scroll_thumb), used by
+          the Scrollbar, the dropdown list, TextArea's view and the table.
+          Every scrollbar is painted by Scrollbar's paint_track, so the
+          scrollbars of a TextArea and of a dropdown list are drawn in the
+          theme's scrollbar colors (were the input's disabled and accent
+          colors). Role::Themed gains family_look for such parts
+        - The charts (Term::Fabulous::Widget::Chart), the Scrollbar and
+          the dropdown's option list are Term::Fabulous::Widget::Display
+          widgets: they paint through Display's paint key, so a theme
+          switch now repaints a chart (it kept the old ink), and a chart
+          or scrollbar without a sizing takes its natural size (a chart
+          grows, a scrollbar is one cell thick). Chart's revision is gone
+        - One rule for the color a widget lies on:
+          Term::Fabulous::Widget's background_below (its own or the
+          nearest opaque ancestor background, else the screen color of the
+          theme, else none). Canvases, tables and charts use it, so under
+          the light theme table cells and chart ink follow the screen
+          (were dark cells on a light screen and an invisible chart
+          title); dark-theme tables and charts on no background of their
+          own now lie on the dark screen color too. Static output is
+          unchanged. Term::Fabulous::Render's screen_background_attr is
+          gone
+        - Every color takes the 148 CSS color names in any case
+          ('steelblue', 'SteelBlue'): widget color parameters and
+          accessors, canvas cells, KDL layouts and theme files, not only
+          rich text markup; Term::Fabulous::Color parses them, and
+          Term::Fabulous::Text::Style uses it instead of a table of its
+          own. Term::Fabulous::Text::Style gains compose_styles, the one
+          rule for stacking styles, which RichText uses for nested spans;
+          the renderer paints each run with apply_style
+        - Border styles are taken as a Term::Fabulous::Enum::BorderStyle
+          item or its name everywhere a style is taken: border_style and
+          border_style_top/right/bottom/left of every widget (constructor
+          and accessors), KDL, Divider and Tabs line_style, table lines
+          and theme slots. Term::Fabulous::Check gains one_of,
+          border_style, value_format and optional, and every widget
+          checks its words, border styles and value formats with them,
+          so the messages have one shape: 'NAME must be one of A, B, C,
+          got X' (sorted) and 'NAME must be a border style or its name,
+          got X (known: ...)'. A KDL null is reported as undef
+        - Children are removed by identity: remove_child takes the widgets
+          themselves (also Text widgets and widgets without an id) and
+          dies for an id, remove_child_with_id removes children by id and
+          has_child tells whether a widget is a direct child; from
+          Clay::UI's Container. Tabs, Tabs::Bar, Accordion::Item and
+          Toast forward both removals to their pages, tabs or body
         - Term::Fabulous::Widget::RichText: a Text whose spans give ranges
           of it bold, italic, underline, reverse, dim, blink, strike,
           overline, conceal, a color and a background, from markup in the

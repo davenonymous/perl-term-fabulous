@@ -171,6 +171,8 @@ lib/Term/Fabulous/Manual/TableRows.pod
 lib/Term/Fabulous/Manual/TableStyles.pod
 lib/Term/Fabulous/Manual/Tables.pod
 lib/Term/Fabulous/Manual/Troubleshooting.pod
+lib/Term/Fabulous/OptionList.pm
+lib/Term/Fabulous/Range.pm
 lib/Term/Fabulous/Render.pm
 lib/Term/Fabulous/Render/Attr.pm
 lib/Term/Fabulous/Render/Border.pm
@@ -183,9 +185,12 @@ lib/Term/Fabulous/Render/Target/Mask.pm
 lib/Term/Fabulous/Render/Text.pm
 lib/Term/Fabulous/Role/CanParseLayout.pm
 lib/Term/Fabulous/Role/HasBorderStyle.pm
+lib/Term/Fabulous/Role/HasOptions.pm
+lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/Terminal.pm
 lib/Term/Fabulous/Role/Themed.pm
+lib/Term/Fabulous/Roving.pm
 lib/Term/Fabulous/Static.pm
 lib/Term/Fabulous/Termbox.pm
 lib/Term/Fabulous/Termbox.xs
@@ -198,6 +203,7 @@ lib/Term/Fabulous/Text/Style.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Unicode.pm
+lib/Term/Fabulous/Viewport.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
 lib/Term/Fabulous/Widget/Accordion.pm
@@ -270,6 +276,7 @@ src/README.termbox2
 src/termbox2.c
 src/termbox2.h
 src/tf_termbox.h
+t/background-below.t
 t/border-style.t
 t/chart-curve.t
 t/chart-format.t
@@ -289,12 +296,16 @@ t/layout.t
 t/lib/ChartTest.pm
 t/lib/InputTest.pm
 t/lifecycle.t
+t/line-steps.t
+t/option-list.t
+t/range.t
 t/render-attr.t
 t/render-border.t
 t/render-canvas.t
 t/render-frame.t
 t/render-rectangle.t
 t/render-text.t
+t/roving.t
 t/screenshot-box-drawing.t
 t/static.t
 t/table-borders.t
@@ -311,6 +322,7 @@ t/theme-binding.t
 t/theme-file.t
 t/theme.t
 t/unicode.t
+t/viewport.t
 t/web-color.t
 t/widget-accordion.t
 t/widget-tabs.t

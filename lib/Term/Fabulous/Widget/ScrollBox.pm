@@ -22,7 +22,7 @@ class Term::Fabulous::Widget::ScrollBox
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_CLIP_TO_ATTACHED_PARENT
 		CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 	);
-	use Term::Fabulous::Check qw(boolean color);
+	use Term::Fabulous::Check qw(boolean);
 	use Term::Fabulous::Widget::Scrollbar;
 
 	# The gutter floats over the whole box and is padded by its border: a
@@ -43,9 +43,7 @@ class Term::Fabulous::Widget::ScrollBox
 	);
 	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
 
-	field $scrollbar   :param = 1;
-	field $track_color :param = undef;
-	field $thumb_color :param = undef;
+	field $scrollbar :param = 1;
 	field $_gutter;
 	field %_bar_by_axis;
 
@@ -55,12 +53,13 @@ class Term::Fabulous::Widget::ScrollBox
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
-	ADJUST {
-		$scrollbar = boolean( $self, scrollbar => $scrollbar );
-		my %colors;
-		$colors{track_color} = color( $self, track_color => $track_color ) if defined $track_color;
-		$colors{thumb_color} = color( $self, thumb_color => $thumb_color ) if defined $thumb_color;
-		%_bar_by_axis        = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, %colors, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
+	# The colors go to the scrollbars once they exist; undef leaves them
+	# to the theme.
+	ADJUST :params ( :$track_color = undef, :$thumb_color = undef ) {
+		$scrollbar    = boolean( $self, scrollbar => $scrollbar );
+		%_bar_by_axis = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
+		$self->set_look( track_color => $track_color ) if defined $track_color;
+		$self->set_look( thumb_color => $thumb_color ) if defined $thumb_color;
 
 		my $column = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_alignment => { y => CLAY_ALIGN_Y_BOTTOM } } );
 		$column->add_child( $_bar_by_axis{horizontal} );
@@ -71,7 +70,7 @@ class Term::Fabulous::Widget::ScrollBox
 	}
 
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean', scrollbar => 'boolean', track_color => 'color', thumb_color => 'color' );
+		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean', scrollbar => 'boolean' );
 	}
 
 	# Whether a scrollbar is shown for an axis: wanted, and the box
@@ -114,16 +113,19 @@ class Term::Fabulous::Widget::ScrollBox
 		return $scrollbar;
 	}
 
-	method track_color (@new) { return $self->_bar_color( track_color => @new ) }
-	method thumb_color (@new) { return $self->_bar_color( thumb_color => @new ) }
-
-	# Both scrollbars share a color; a read asks the vertical one.
-	method _bar_color ( $name, @new ) {
-		return $_bar_by_axis{vertical}->$name unless @new;
-		my $value = color( $self, $name => $new[0] );
-		$_->$name($value) foreach values %_bar_by_axis;
-		return $value;
+	# The scrollbars keep the colors (Term::Fabulous::Role::Themed): both
+	# take a color given here, reset_look returns both to the theme, and a
+	# read asks the vertical one.
+	method forwarded_looks :common () {
+		return ( _scrollbars => [ 'Term::Fabulous::Widget::Scrollbar', qw(track_color thumb_color) ] );
 	}
+
+	method _scrollbars () {
+		return @_bar_by_axis{qw(vertical horizontal)};
+	}
+
+	method track_color (@new) { return @new ? $self->set_look( track_color => $new[0] ) : $self->look_value('track_color') }
+	method thumb_color (@new) { return @new ? $self->set_look( thumb_color => $new[0] ) : $self->look_value('thumb_color') }
 }
 
 1;
@@ -315,7 +317,10 @@ scrollbars off gives their cells back to the content in the next frame.
 
 Accessors for the scrollbar colors. Without an argument they return the
 color as C<[r, g, b, a]>; with one they set it on both scrollbars and
-return it. An invalid color dies and leaves the old one.
+return it. An invalid color dies and leaves the old one; so does
+C<undef>: C<< $box->reset_look('thumb_color') >> returns the color of
+both scrollbars to the theme (see
+L<Term::Fabulous::Widget/reset_look>).
 
 =head2 children
 

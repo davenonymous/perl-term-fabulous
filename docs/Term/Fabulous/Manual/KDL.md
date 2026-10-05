@@ -402,13 +402,13 @@ border_color "#61afef80"                   // hex with alpha
 text_color "rgb(97, 175, 239)"             // red, green, blue 0..255
 text_color "rgba(97, 175, 239, 0.5)"       // with alpha
 text_color "hsl(207, 82%, 66%)"            // hue, saturation, lightness
+text_color "SteelBlue"                     // a web color name, in any case
 ```
 
 All formats are described in
 [the color formats section](Looks.md#color-formats)
-of the looks page.
-Color names such as `"red"` are not color strings; look up their values
-in [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md). Note that the alpha of `rgba()`
+of the looks page, the grammar in ["A string" in Term::Fabulous::Color](../Color.md#a-string).
+Note that the alpha of `rgba()`
 is read by how it is written: `1.0` is opaque, while `1` is the
 channel value 1, almost transparent.
 

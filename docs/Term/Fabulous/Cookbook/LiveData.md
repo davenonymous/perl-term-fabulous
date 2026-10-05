@@ -145,7 +145,7 @@ my $timer = IO::Async::Timer::Periodic->new(
 
                 # Keep the log from growing forever: drop the oldest line.
                 my $oldest = $log->children->[0];
-                $log->remove_children_with( sub ($child) { $child == $oldest } ) if @{ $log->children } > MAX_LINES;
+                $log->remove_child($oldest) if @{ $log->children } > MAX_LINES;
                 return;
         },
 );
@@ -168,8 +168,8 @@ of the box. The scroll position does not follow new lines
 automatically: the view stays where the user scrolled to.
 - To keep the newest line in view, see
 ["Scroll a ScrollBox from code (keep a log at the newest line)"](#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
-- `remove_children_with` removes every child for which the code returns
-true. A removed widget can be added again, to the same box or another
+- `remove_child` removes the widgets it is given from the box. A
+removed widget can be added again, to the same box or another
 one, and keeps its children and its state. See
 ["Changing the tree" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#changing-the-tree).
 

@@ -135,7 +135,7 @@ subtest 'looks' => sub {
 	$accordion->toggle_position('start');
 	$ui->step;
 	is lines($terminal)->[0], '+ General', 'restyled at once';
-	like dies { $accordion->toggle_position('middle') }, qr/toggle_position must be start or end/, 'an unknown position dies';
+	like dies { $accordion->toggle_position('middle') }, qr/toggle_position must be one of end, start, got 'middle'/, 'an unknown position dies';
 };
 
 subtest 'a layout builds items into the accordion' => sub {

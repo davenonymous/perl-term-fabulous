@@ -12,7 +12,7 @@ $box->add_child($spinner);
 
 # When the work is done:
 $spinner->stop;
-$box->remove_children_with( sub { $_ == $spinner } );
+$box->remove_child($spinner);
 
 # Other looks:
 Term::Fabulous::Widget::Spinner->new( style => 'line' );                     # - \ | /

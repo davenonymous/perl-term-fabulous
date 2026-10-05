@@ -1536,7 +1536,8 @@ the constructor parameters and methods they all share.
 =item L<Term::Fabulous::Widget::Display>
 
 The abstract base class of the widgets that paint themselves from their
-own state (the divider, the progress bar, the input widgets), with the
+own state (the divider, the progress bar, the charts, the scrollbar,
+the input widgets), with the
 animation helpers; derive from it to write your own.
 
 =item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
@@ -1610,6 +1611,11 @@ inputs, without any drawing.
 
 How the text inputs lay an editor's text out in rows: wrapping,
 scrolling, the cell of the cursor and the text under a click.
+
+=item L<Term::Fabulous::Viewport>
+
+The arithmetic of a scrolled view: how far it can scroll, the offset
+that shows a row, the thumb of a scrollbar.
 
 =item L<Term::Fabulous::Widget::Dropdown::List>
 
@@ -1860,6 +1866,18 @@ The 20 border styles and their characters.
 =item L<Term::Fabulous::Role::HasBorderStyle>
 
 The per-side border styles of a widget and how borders take space.
+
+=item L<Term::Fabulous::OptionList>, L<Term::Fabulous::Role::HasOptions>, L<Term::Fabulous::Roving>
+
+The options of a dropdown or a segmented control and the one selected;
+how such a widget takes its options from a layout; which entry an arrow
+key moves to.
+
+=item L<Term::Fabulous::Range>, L<Term::Fabulous::Role::HasRange>
+
+A value in a range on a grid of steps (snapping, keys, formats), behind
+the slider, the star rating and the progress bar; and how such a widget
+takes its range from a layout in one piece.
 
 =item L<Term::Fabulous::Unicode>
 

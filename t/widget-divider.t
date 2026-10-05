@@ -82,10 +82,10 @@ KDL
 };
 
 subtest 'invalid values die' => sub {
-	like dies { Term::Fabulous::Widget::Divider->new( text_position => 'middle' ) }, qr/text_position must be start, center or end/,  'an unknown position';
-	like dies { Term::Fabulous::Widget::Divider->new( line_style    => 'Fancy' ) },  qr/line_style must be .* got 'Fancy' \(known: /, 'an unknown style';
-	like dies { Term::Fabulous::Widget::Divider->new( glyph         => 'ab' ) },     qr/glyph must be a single character/,            'a glyph of two characters';
-	like dies { Term::Fabulous::Widget::Divider->new( text_margin   => -1 ) },       qr/text_margin must be a non-negative integer/,  'a negative margin';
+	like dies { Term::Fabulous::Widget::Divider->new( text_position => 'middle' ) }, qr/text_position must be one of center, end, start/,                             'an unknown position';
+	like dies { Term::Fabulous::Widget::Divider->new( line_style    => 'Fancy' ) },  qr/line_style must be a border style or its name, got 'Fancy' \(known: Ascii, /, 'an unknown style';
+	like dies { Term::Fabulous::Widget::Divider->new( glyph         => 'ab' ) },     qr/glyph must be a single character/,                                            'a glyph of two characters';
+	like dies { Term::Fabulous::Widget::Divider->new( text_margin   => -1 ) },       qr/text_margin must be a non-negative integer/,                                  'a negative margin';
 	my $divider = Term::Fabulous::Widget::Divider->new( text => 'ok' );
 	like dies { $divider->text( [] ) }, qr/text must be a string/, 'the accessor checks too';
 	is $divider->text, 'ok', 'and leaves the value';

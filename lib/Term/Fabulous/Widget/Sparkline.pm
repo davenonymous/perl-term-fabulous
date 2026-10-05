@@ -16,13 +16,13 @@ class Term::Fabulous::Widget::Sparkline
 	:strict(params)
 {
 	use Carp qw(croak);
-	use Clay::XS qw(sizing_fixed sizing_grow);
+	use Clay::XS qw(sizing_grow);
 	use List::Util ();
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean one_of);
 
 	use constant SERIES => 'values';
 
-	my %IS_TYPE = map { $_ => 1 } qw(line area bar);
+	my @TYPES = qw(line area bar);
 
 	field $type   :param = 'line';
 	field $values :param = [];
@@ -32,7 +32,7 @@ class Term::Fabulous::Widget::Sparkline
 	field $zero   :param = undef;    # undef: by type
 
 	ADJUST {
-		croak ref($self) . ": type must be line, area or bar, got " . ( $type // 'undef' ) unless defined $type && !ref $type && $IS_TYPE{$type};
+		one_of( $self, type => $type, @TYPES );
 		$zero = $self->_checked_zero($zero);
 		$self->legend('none');
 		$self->x_axis( { visible => 0 } );
@@ -73,11 +73,8 @@ class Term::Fabulous::Widget::Sparkline
 	}
 
 	# A sparkline is one row high, and as wide as its parent lets it be.
-	method contribute_layout_size :override ($config) {
-		my $layout = $config->{layout} // {};
-		my $sizing = $layout->{sizing} // {};
-		$config->{layout} = { %$layout, sizing => { width => $sizing->{width} // sizing_grow(), height => $sizing->{height} // sizing_fixed(1) } };
-		return;
+	method natural_size :override () {
+		return ( sizing_grow(), 1 );
 	}
 
 	method values (@new) {
@@ -94,7 +91,7 @@ class Term::Fabulous::Widget::Sparkline
 
 	method type (@new) {
 		return $type unless @new;
-		croak ref($self) . ": type must be line, area or bar, got " . ( $new[0] // 'undef' ) unless defined $new[0] && !ref $new[0] && $IS_TYPE{ $new[0] };
+		one_of( $self, type => $new[0], @TYPES );
 		$self->check_series_type( SERIES, $new[0] );
 		$self->_set_value_axis( $new[0], $min, $max, $zero );
 		$self->set_series( SERIES, type => $new[0] );

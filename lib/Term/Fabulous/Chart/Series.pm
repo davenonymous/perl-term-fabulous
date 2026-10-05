@@ -12,12 +12,12 @@ use Object::Pad 0.825;
 class Term::Fabulous::Chart::Series :strict(params) {
 	use Carp qw(croak);
 	use Scalar::Util qw(blessed looks_like_number);
-	use Term::Fabulous::Check qw(describe glyph);
+	use Term::Fabulous::Check qw(describe glyph one_of);
 	use Term::Fabulous::Chart::Curve qw(check_curve);
 	use Term::Fabulous::Chart::Palette qw(chart_color);
 	use Term::Fabulous::Chart::Transform qw(parse_transforms);
 
-	my %IS_TYPE = map { $_ => 1 } qw(line area bar scatter);
+	my @TYPES = qw(line area bar scatter);
 
 	# The markers each type may draw with.
 	my %MARKERS = (
@@ -50,7 +50,7 @@ class Term::Fabulous::Chart::Series :strict(params) {
 	ADJUST :params (%options) {
 		croak "$owner: a series name must be a non-empty string, got " . describe($name)
 			unless defined $name && !ref $name && length $name;
-		croak "$owner: series '$name' has an unknown type " . describe($type) . " (known: line, area, bar, scatter)" unless defined $type && !ref $type && $IS_TYPE{$type};
+		one_of( $owner, "type of series '$name'", $type, @TYPES );
 		my ( $data, $given_color ) = ( delete $options{data} // [], delete $options{color} );
 		$self->set_color($given_color);
 		$self->set_option( $_ => delete $options{$_} ) foreach grep { exists $options{$_} } @OPTIONS;
@@ -72,7 +72,7 @@ class Term::Fabulous::Chart::Series :strict(params) {
 
 	# A new type; a marker the new type cannot draw with is dropped.
 	method set_type ($new) {
-		croak "$owner: series '$name' has an unknown type " . describe($new) . " (known: line, area, bar, scatter)" unless defined $new && !ref $new && $IS_TYPE{$new};
+		one_of( $owner, "type of series '$name'", $new, @TYPES );
 		$type = $new;
 		delete $option{marker} if defined $option{marker} && !grep { $_ eq $option{marker} } $MARKERS{$type}->@*;
 		$revision++;
@@ -118,7 +118,7 @@ class Term::Fabulous::Chart::Series :strict(params) {
 			$option{$key} = check_curve( $owner, $label, $value );
 		}
 		elsif ( $key eq 'line_style' ) {
-			croak "$owner: $label must be solid, dashed or dotted, got " . describe($value) unless !ref $value && exists $LINE_STYLE{$value};
+			one_of( $owner, $label, $value, keys %LINE_STYLE );
 			$option{$key} = $value;
 		}
 		elsif ( $key eq 'tension' || $key eq 'fill_opacity' ) {

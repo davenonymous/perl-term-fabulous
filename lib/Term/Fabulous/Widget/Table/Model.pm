@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	use List::Util qw(any first max min);
 	use POSIX ();
 	use Scalar::Util qw(blessed refaddr);
+	use Term::Fabulous::Check qw(describe one_of);
 	use Term::Fabulous::Widget::Table::Value qw(is_blank);
 
 	# A line of the view is a data row or a group header. Its key names it
@@ -71,18 +72,12 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	field $columns_revision :reader = 0;
 
 	ADJUST {
-		die "Term::Fabulous::Widget::Table::Model: row_id must be a column key or a code reference, got " . _describe($row_id)
+		die "Term::Fabulous::Widget::Table::Model: row_id must be a column key or a code reference, got " . describe($row_id)
 			if defined $row_id && !( ref $row_id eq 'CODE' || ( !ref $row_id && length $row_id ) );
-		die "Term::Fabulous::Widget::Table::Model: children_key must be a non-empty string, got " . _describe($children_key)
+		die "Term::Fabulous::Widget::Table::Model: children_key must be a non-empty string, got " . describe($children_key)
 			if defined $children_key && ( ref $children_key || !length $children_key );
 		$page_size  = _page_size($page_size);
 		$expand_new = $expand_new ? 1 : 0;
-	}
-
-	sub _describe ($thing) {
-		return 'undef' unless defined $thing;
-		return ref($thing) . ' reference' if ref $thing;
-		return "'$thing'";
 	}
 
 	# How rows are read can change only while there are none.
@@ -93,7 +88,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method set_row_id ($new) {
 		$self->_check_no_rows('row_id');
-		die "Term::Fabulous::Widget::Table::Model: row_id must be a column key or a code reference, got " . _describe($new)
+		die "Term::Fabulous::Widget::Table::Model: row_id must be a column key or a code reference, got " . describe($new)
 			if defined $new && !( ref $new eq 'CODE' || ( !ref $new && length $new ) );
 		$row_id = $new;
 		return $row_id;
@@ -101,7 +96,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method set_children_key ($new) {
 		$self->_check_no_rows('children_key');
-		die "Term::Fabulous::Widget::Table::Model: children_key must be a non-empty string, got " . _describe($new)
+		die "Term::Fabulous::Widget::Table::Model: children_key must be a non-empty string, got " . describe($new)
 			if defined $new && ( ref $new || !length $new );
 		$children_key = $new;
 		$self->_changed;
@@ -115,7 +110,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	sub _page_size ($size) {
-		die "Term::Fabulous::Widget::Table::Model: page_size must be a non-negative integer (0 for no pages), got " . _describe($size)
+		die "Term::Fabulous::Widget::Table::Model: page_size must be a non-negative integer (0 for no pages), got " . describe($size)
 			unless defined $size && !ref $size && $size =~ /\A[0-9]+\z/;
 		return $size + 0;
 	}
@@ -140,7 +135,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method _column_from ($spec) {
 		return $spec if blessed $spec && $spec->isa('Term::Fabulous::Widget::Table::Column');
-		die "Term::Fabulous::Widget::Table::Model: a column must be a hash reference of column parameters or a Term::Fabulous::Widget::Table::Column, got " . _describe($spec)
+		die "Term::Fabulous::Widget::Table::Model: a column must be a hash reference of column parameters or a Term::Fabulous::Widget::Table::Column, got " . describe($spec)
 			unless ref $spec eq 'HASH';
 		return Term::Fabulous::Widget::Table::Column->new(%$spec);
 	}
@@ -163,7 +158,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	method column ($key) {
-		return $_column_by_key{ $key // '' } // die "Term::Fabulous::Widget::Table::Model: there is no column " . _describe($key);
+		return $_column_by_key{ $key // '' } // die "Term::Fabulous::Widget::Table::Model: there is no column " . describe($key);
 	}
 
 	method columns () {
@@ -233,7 +228,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	sub _check_index ( $what, $index, $last ) {
-		die "Term::Fabulous::Widget::Table::Model: $what must be an integer from 0 to $last, got " . _describe($index)
+		die "Term::Fabulous::Widget::Table::Model: $what must be an integer from 0 to $last, got " . describe($index)
 			unless defined $index && !ref $index && $index =~ /\A[0-9]+\z/ && $index <= $last;
 		return;
 	}
@@ -268,7 +263,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	method _id_for ($data) {
 		return $_next_id++ unless defined $row_id;
 		my $id = ref $row_id ? $row_id->( {%$data} ) : $data->{$row_id};
-		die "Term::Fabulous::Widget::Table::Model: a row has no id (row_id " . ( ref $row_id ? 'returned' : "key '$row_id' holds" ) . " " . _describe($id) . ")"
+		die "Term::Fabulous::Widget::Table::Model: a row has no id (row_id " . ( ref $row_id ? 'returned' : "key '$row_id' holds" ) . " " . describe($id) . ")"
 			unless defined $id && !ref $id && length $id;
 		return $id;
 	}
@@ -277,17 +272,17 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# data) without storing anything: ( [ top-level ids ], { id => record } ).
 	# $taken holds the ids that are in use already.
 	method _records_for ( $rows, $parent, $taken ) {
-		die "Term::Fabulous::Widget::Table::Model: rows must be an array reference of hash references, got " . _describe($rows)
+		die "Term::Fabulous::Widget::Table::Model: rows must be an array reference of hash references, got " . describe($rows)
 			unless ref $rows eq 'ARRAY';
 		my ( @records, %by_id );
 		my $collect;
 		$collect = sub ( $list, $parent_id ) {
 			my @ids;
 			foreach my $row (@$list) {
-				die "Term::Fabulous::Widget::Table::Model: a row must be a hash reference, got " . _describe($row) unless ref $row eq 'HASH';
+				die "Term::Fabulous::Widget::Table::Model: a row must be a hash reference, got " . describe($row) unless ref $row eq 'HASH';
 				my %data   = %$row;
 				my $nested = defined $children_key ? delete $data{$children_key} : undef;
-				die "Term::Fabulous::Widget::Table::Model: the '$children_key' of a row must be an array reference of rows, got " . _describe($nested)
+				die "Term::Fabulous::Widget::Table::Model: the '$children_key' of a row must be an array reference of rows, got " . describe($nested)
 					if defined $nested && ref $nested ne 'ARRAY';
 				my $id = $self->_id_for( \%data );
 				die "Term::Fabulous::Widget::Table::Model: two rows have the id '$id'" if exists $by_id{$id} || exists $taken->{$id};
@@ -335,7 +330,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	method _record ($id) {
-		return $_row{ $id // '' } // die "Term::Fabulous::Widget::Table::Model: there is no row with the id " . _describe($id);
+		return $_row{ $id // '' } // die "Term::Fabulous::Widget::Table::Model: there is no row with the id " . describe($id);
 	}
 
 	method has_row ($id) {
@@ -356,7 +351,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method update_row ( $id, $changes ) {
 		my $record = $self->_record($id);
-		die "Term::Fabulous::Widget::Table::Model: update_row needs a hash reference of changes, got " . _describe($changes) unless ref $changes eq 'HASH';
+		die "Term::Fabulous::Widget::Table::Model: update_row needs a hash reference of changes, got " . describe($changes) unless ref $changes eq 'HASH';
 		die "Term::Fabulous::Widget::Table::Model: update_row cannot change '$children_key'; add or remove the child rows instead"
 			if defined $children_key && exists $changes->{$children_key};
 		my %data = ( %{ $record->{data} }, %$changes );
@@ -368,7 +363,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 
 	method replace_row ( $id, $data ) {
 		my $record = $self->_record($id);
-		die "Term::Fabulous::Widget::Table::Model: replace_row needs a hash reference, got " . _describe($data) unless ref $data eq 'HASH';
+		die "Term::Fabulous::Widget::Table::Model: replace_row needs a hash reference, got " . describe($data) unless ref $data eq 'HASH';
 		my %copy = %$data;
 		delete $copy{$children_key} if defined $children_key;
 		$self->_check_kept_id( $id, \%copy );
@@ -381,7 +376,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	method _check_kept_id ( $id, $data ) {
 		return unless defined $row_id;
 		my $new = ref $row_id ? $row_id->( {%$data} ) : $data->{$row_id};
-		die "Term::Fabulous::Widget::Table::Model: the change would give row '$id' the id " . _describe($new) . "; ids cannot change"
+		die "Term::Fabulous::Widget::Table::Model: the change would give row '$id' the id " . describe($new) . "; ids cannot change"
 			unless defined $new && !ref $new && "$new" eq "$id";
 		return;
 	}
@@ -541,8 +536,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		foreach my $entry (@spec) {
 			my ( $key, $direction ) = ref $entry eq 'ARRAY' ? @$entry : ( $entry, 'asc' );
 			$self->column($key);
-			die "Term::Fabulous::Widget::Table::Model: a sort direction must be 'asc' or 'desc', got " . _describe($direction)
-				unless defined $direction && ( $direction eq 'asc' || $direction eq 'desc' );
+			one_of( $self, 'sort direction', $direction, qw(asc desc) );
 			die "Term::Fabulous::Widget::Table::Model: the column '$key' is in the sort twice" if $seen{$key}++;
 			push @sort, [ $key, $direction eq 'asc' ? 1 : -1 ];
 		}
@@ -615,11 +609,11 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# =====================================================================
 
 	method set_filter ( $name, $filter ) {
-		die "Term::Fabulous::Widget::Table::Model: a filter name must be a non-empty string, got " . _describe($name)
+		die "Term::Fabulous::Widget::Table::Model: a filter name must be a non-empty string, got " . describe($name)
 			unless defined $name && !ref $name && length $name;
 		return $self->remove_filter($name) unless defined $filter;
 		$filter = Term::Fabulous::Widget::Table::Filter->new( test => $filter ) if ref $filter eq 'CODE';
-		die "Term::Fabulous::Widget::Table::Model: a filter must be a Term::Fabulous::Widget::Table::Filter, a code reference or undef, got " . _describe($filter)
+		die "Term::Fabulous::Widget::Table::Model: a filter must be a Term::Fabulous::Widget::Table::Filter, a code reference or undef, got " . describe($filter)
 			unless blessed $filter && $filter->isa('Term::Fabulous::Widget::Table::Filter');
 		$filter->check($self);
 		push @_filter_names, $name unless exists $_filter{$name};
@@ -657,7 +651,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		return $_search unless @new;
 		my ($text) = @new;
 		$text //= '';
-		die "Term::Fabulous::Widget::Table::Model: search needs a string, got " . _describe($text) if ref $text;
+		die "Term::Fabulous::Widget::Table::Model: search needs a string, got " . describe($text) if ref $text;
 		return $_search if $text eq $_search;
 		$_search = $text;
 		$self->_changed;
@@ -970,7 +964,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# Turns to a page (kept within the pages) and puts the cursor on its
 	# first line. Returns whether the page changed.
 	method set_page ($page) {
-		die "Term::Fabulous::Widget::Table::Model: a page must be a whole number from 1, got " . _describe($page)
+		die "Term::Fabulous::Widget::Table::Model: a page must be a whole number from 1, got " . describe($page)
 			unless defined $page && !ref $page && $page =~ /\A[0-9]+\z/ && $page >= 1;
 		$page = min( $page + 0, $self->page_count );
 		return 0 if $page == $self->page;
@@ -1075,7 +1069,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# Puts the cursor on a line of the view, and turns to its page.
 	# Returns whether it moved.
 	method set_cursor ($key) {
-		die "Term::Fabulous::Widget::Table::Model: the cursor needs a line of the view, got " . _describe($key)
+		die "Term::Fabulous::Widget::Table::Model: the cursor needs a line of the view, got " . describe($key)
 			unless defined $key && defined $self->line_index($key);
 		my $before = $self->cursor;
 		$_cursor = $key;
@@ -1145,7 +1139,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	# The keys of the lines from one line to another, both included, in
 	# view order.
 	method line_keys_between ( $from, $to ) {
-		my ( $first, $last ) = map { $self->line_index($_) // die "Term::Fabulous::Widget::Table::Model: no line " . _describe($_) } $from, $to;
+		my ( $first, $last ) = map { $self->line_index($_) // die "Term::Fabulous::Widget::Table::Model: no line " . describe($_) } $from, $to;
 		( $first, $last ) = ( $last, $first ) if $first > $last;
 		return map { $_->{key} } @{ $self->_view->{lines} }[ $first .. $last ];
 	}

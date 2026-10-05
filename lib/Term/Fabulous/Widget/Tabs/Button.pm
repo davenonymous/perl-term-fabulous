@@ -20,7 +20,7 @@ class Term::Fabulous::Widget::Tabs::Button
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE CLAY_TEXT_WRAP_NEWLINES);
 	use Scalar::Util qw(weaken);
-	use Term::Fabulous::Check qw(string);
+	use Term::Fabulous::Check qw(optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Unicode qw(grapheme_clusters);
 
@@ -50,7 +50,7 @@ class Term::Fabulous::Widget::Tabs::Button
 
 	ADJUST {
 		$title = string( $self, title => $title );
-		$icon  = defined $icon ? string( $self, icon => $icon ) : undef;
+		$icon  = optional( \&string, $self, icon => $icon );
 
 		$self->border_width(1);
 		$self->pressed_background_color(undef);
@@ -92,7 +92,7 @@ class Term::Fabulous::Widget::Tabs::Button
 
 	method icon (@new) {
 		return $icon unless @new;
-		$icon = defined $new[0] ? string( $self, icon => $new[0] ) : undef;
+		$icon = optional( \&string, $self, icon => $new[0] );
 		$self->refresh_look;
 		return $icon;
 	}
@@ -126,7 +126,7 @@ class Term::Fabulous::Widget::Tabs::Button
 		return $bar->$name if defined $bar;
 		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
 		my %themed = Term::Fabulous::Widget::Tabs::Bar->themed_params;
-		return Term::Fabulous::Theme->default->look( 'tabs', @{ $themed{$name} } );
+		return Term::Fabulous::Theme->default->look( 'tabs', @{ $themed{$name} }[ 0, 1 ] );    # slot and state
 	}
 
 	# The tab's border and background follow the bar's colors and the
@@ -143,18 +143,13 @@ class Term::Fabulous::Widget::Tabs::Button
 		return;
 	}
 
-	# The border is the line's style on the three sides away from the page
-	# and none on the page's side, read when the frame is drawn.
-	method _border_style_of ( $side, $accessor, @new ) {
-		my $method = "SUPER::$accessor";
-		return $self->$method(@new) if @new;
+	# A side without a style of its own is drawn in the line's style on
+	# the three sides away from the page and not at all on the page's
+	# side, read when the frame is drawn
+	# (Term::Fabulous::Role::HasBorderStyle).
+	method derived_border_style ($side) {
 		return $side eq $PAGE_SIDE{ $self->_look('side') } ? Term::Fabulous::Enum::BorderStyle->Hidden : $self->_look('line_style');
 	}
-
-	method border_style_top    :override (@new) { return $self->_border_style_of( top    => 'border_style_top',    @new ) }
-	method border_style_right  :override (@new) { return $self->_border_style_of( right  => 'border_style_right',  @new ) }
-	method border_style_bottom :override (@new) { return $self->_border_style_of( bottom => 'border_style_bottom', @new ) }
-	method border_style_left   :override (@new) { return $self->_border_style_of( left   => 'border_style_left',   @new ) }
 
 	# The labels are drawn in the bar's text colors.
 	method child_text_color :override ($explicit) {

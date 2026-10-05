@@ -215,9 +215,9 @@ $list->children;    # always empty
 ```
 
 A VirtualList has no children of its own: `add_child`,
-`insert_children`, `clear_children`, `remove_child` and
-`remove_children_with` die. The items are the children of an internal
-column; reach one with ["item"](#item).
+`insert_children`, `clear_children`, `remove_child`,
+`remove_child_with_id` and `remove_children_with` die. The items are
+the children of an internal column; reach one with ["item"](#item).
 
 # EVENTS
 

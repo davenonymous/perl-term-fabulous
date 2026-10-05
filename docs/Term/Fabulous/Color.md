@@ -104,9 +104,8 @@ required; unknown parameters die. `$spec` can be any of the following.
 
     In one of the notations below. The string must not have leading or
     trailing whitespace; whitespace after `(` and around the commas is
-    allowed. The function names are lowercase. Named colors such as
-    `'red'` and three-digit hex such as `'#f00'` are not supported;
-    [Term::Fabulous::Enum::WebColor](Enum/WebColor.md) has the CSS named colors as objects.
+    allowed. The function names are lowercase. Three-digit hex such as
+    `'#f00'` is not supported.
 
     | String             | Example                    | Meaning                           |
     | ------------------ | -------------------------- | --------------------------------- |
@@ -117,6 +116,7 @@ required; unknown parameters die. `$spec` can be any of the following.
     | rgba(r, g, b, a)   | 'rgba(124, 58, 237, 0.5)'  | alpha as described below          |
     | hsl(h, s%, l%)     | 'hsl(262, 83%, 58%)'       | hue in degrees, alpha 255         |
     | hsla(h, s%, l%, a) | 'hsla(262, 83%, 58%, 50%)' | alpha as described below          |
+    | web color name     | 'SteelBlue', 'steelblue'   | a CSS named color, alpha 255      |
 
     Hex digits may be upper or lower case. A string of digits only is a
     packed `0xRRGGBB` integer (the form the canvas drawing methods take as
@@ -146,6 +146,19 @@ required; unknown parameters die. `$spec` can be any of the following.
     without a fractional part is written without a point when it becomes a
     string, so `->rgba( 0, 0, 0, 1.0 )` is alpha 1 as well; pass
     `'100%'` or `255` for opaque.
+
+    A web color name is one of the 148 CSS named colors of
+    [Term::Fabulous::Enum::WebColor](Enum/WebColor.md) (`Gray` and `Grey` spellings,
+    `RebeccaPurple`), in any case: `'SteelBlue'`, `'steelblue'` and
+    `'STEELBLUE'` are the same color. Where a name could also mean
+    something else, the other meaning is looked up first: a palette token of
+    a [theme](Theme.md) (`accent`, `text`, ...; none of them
+    is a web color name) and the words of a
+    [style string](Text/Style.md) (`bold`, `default`, ...).
+
+    This grammar is the one of every color in Term::Fabulous: widget color
+    parameters and accessors, canvas cells, KDL layout files, theme files
+    and rich text markup.
 
 Anything else (`undef`, other references or objects, unknown strings)
 dies with the offending value in the message.

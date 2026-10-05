@@ -13,6 +13,7 @@ class Term::Fabulous::TextView :strict(params) {
 	use List::Util qw(max min sum0);
 	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Unicode qw(sanitize_text cluster_columns);
+	use Term::Fabulous::Viewport qw(clamp_offset max_offset reveal_range);
 
 	field $editor    :param :reader;
 	field $display   :param = \&sanitize_text;
@@ -253,7 +254,7 @@ class Term::Fabulous::TextView :strict(params) {
 	}
 
 	method max_top () {
-		return max( 0, $self->visual_row_count - $rows );
+		return max_offset( $self->visual_row_count, $rows );
 	}
 
 	# The visual row showing an editor position: the end of a wrapped
@@ -283,9 +284,7 @@ class Term::Fabulous::TextView :strict(params) {
 		return $self if $columns < 1 || $rows < 1;
 		my ( $line, $offset ) = $editor->cursor;
 		my $visual = $self->visual_row_of( $line, $offset );
-		$top = $visual if $visual < $top;
-		$top = $visual - $rows + 1 if $visual >= $top + $rows;
-		$top = min( max( $top, 0 ), $self->max_top );
+		$top = reveal_range( $self->visual_row_count, $rows, $top, $visual, $visual + 1 );
 		$self->_scroll_sideways_to( $line, $offset ) unless $wrap;
 		return $self;
 	}
@@ -320,7 +319,7 @@ class Term::Fabulous::TextView :strict(params) {
 	# Scrolls by visual rows within the text; returns how many it moved.
 	method scroll_rows ($count) {
 		my $before = $top;
-		$top = min( max( $top + $count, 0 ), $self->max_top );
+		$top = clamp_offset( $self->visual_row_count, $rows, $top + $count );
 		return $top - $before;
 	}
 

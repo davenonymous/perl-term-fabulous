@@ -31,8 +31,14 @@ role Term::Fabulous::Role::CanParseLayout {
 		return $self;
 	}
 
+	# The properties of the class: its themed parameters (see
+	# Term::Fabulous::Role::Themed), then the ones it declares itself.
+	sub _kind_of_properties ($class) {
+		return ( $class->can('themed_layout_properties') ? $class->themed_layout_properties : (), $class->layout_properties );
+	}
+
 	method _checked_layout_properties () {
-		my %kind_of = ref($self)->layout_properties;
+		my %kind_of = _kind_of_properties( ref $self );
 		foreach my $name ( sort keys %kind_of ) {
 			my $kind = $kind_of{$name};
 			next if ref $kind eq 'CODE' || ( defined $kind && $IS_SIMPLE_KIND{$kind} );
@@ -56,7 +62,7 @@ role Term::Fabulous::Role::CanParseLayout {
 	}
 
 	method apply_layout_settings (@settings) {
-		my %kind_of = ref($self)->layout_properties;
+		my %kind_of = _kind_of_properties( ref $self );
 		foreach my $setting (@settings) {
 			my ( $name, $value ) = @$setting;
 			my $handler = $kind_of{$name};
@@ -253,8 +259,7 @@ dies instead of counting as true.
 The node's value, read with L</kdl_value> and turned into
 C<[r, g, b, a]> with L<Term::Fabulous::Check/color>, so a layout can
 write any color string (C<"#ffcc00">, C<"rgb(255, 204, 0)">,
-C<"hsl(48, 100%, 50%)">). Color names are not color strings; see
-L<Term::Fabulous::Enum::WebColor> for their values.
+C<"hsl(48, 100%, 50%)">, C<"Gold">; see L<Term::Fabulous::Color/A string>).
 
 =item a code reference
 
@@ -275,6 +280,12 @@ silently ignore a misspelled property. A subclass returns its parent's
 table (C<< $class->SUPER::layout_properties >>) plus its own pairs; a
 later pair for a name replaces the parent's. Any other kind dies when a
 layout is applied.
+
+The themed parameters that have a kind (see
+L<Term::Fabulous::Role::Themed/themed_params>) and the looks a widget
+forwards to its parts are layout properties by themselves: a color
+kind is a C<'color'> property, every other kind a C<'scalar'> one. They
+need no entry here; an entry of the same name replaces theirs.
 
 =head1 METHODS
 
@@ -304,10 +315,12 @@ message.
 Applies the settings in the order given: an accessor call for a simple
 property, the handler for a structured one. Override it to apply related
 values together, so that a layout may give them in any order:
-L<Term::Fabulous::Widget::Slider> sets C<min>, C<max> and C<step>
-through one range setter, and L<Term::Fabulous::Widget::Dropdown> sets
-its options before the value that picks one of them. Pass the other
-settings on to C<SUPER::apply_layout_settings>.
+L<Term::Fabulous::Widget::Dropdown> sets its options before the value
+that picks one of them. Pass the other settings on to
+C<SUPER::apply_layout_settings>. For a range (C<min>, C<max>, C<step>
+and the like, set through one range setter) compose
+L<Term::Fabulous::Role::HasRange>, which does exactly that, as
+L<Term::Fabulous::Widget::Slider> does.
 
 =head1 HELPERS
 

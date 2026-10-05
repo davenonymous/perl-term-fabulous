@@ -54,7 +54,7 @@ my $timer = IO::Async::Timer::Periodic->new(
 
 		# Keep the log from growing forever: drop the oldest line.
 		my $oldest = $log->children->[0];
-		$log->remove_children_with( sub ($child) { $child == $oldest } ) if @{ $log->children } > MAX_LINES;
+		$log->remove_child($oldest) if @{ $log->children } > MAX_LINES;
 		return;
 	},
 );

@@ -68,10 +68,10 @@ subtest 'running and stopped' => sub {
 };
 
 subtest 'invalid values and layouts' => sub {
-	like dies { Term::Fabulous::Widget::Spinner->new( style          => 'twirl' ) }, qr/style must be one of arc, arrow/,          'an unknown style';
-	like dies { Term::Fabulous::Widget::Spinner->new( frames         => [] ) },      qr/frames must be an array reference of one/, 'no frames';
-	like dies { Term::Fabulous::Widget::Spinner->new( interval       => 0 ) },       qr/interval must be positive/,                'a zero interval';
-	like dies { Term::Fabulous::Widget::Spinner->new( label_position => 'below' ) }, qr/label_position must be left or right/,     'an unknown position';
+	like dies { Term::Fabulous::Widget::Spinner->new( style          => 'twirl' ) }, qr/style must be one of arc, arrow/,           'an unknown style';
+	like dies { Term::Fabulous::Widget::Spinner->new( frames         => [] ) },      qr/frames must be an array reference of one/,  'no frames';
+	like dies { Term::Fabulous::Widget::Spinner->new( interval       => 0 ) },       qr/interval must be positive/,                 'a zero interval';
+	like dies { Term::Fabulous::Widget::Spinner->new( label_position => 'below' ) }, qr/label_position must be one of left, right/, 'an unknown position';
 
 	my $built
 		= Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Spinner as Spinner\nSpinner { style \"arc\"; label \"Loading\"; running #false; frames \"a\" \"b\"; interval 0.5; }" )

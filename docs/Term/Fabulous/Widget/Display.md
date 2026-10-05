@@ -44,6 +44,10 @@ keyboard to it ([Term::Fabulous::Widget::Input](Input.md)):
 optional text
 - [Term::Fabulous::Widget::ProgressBar](ProgressBar.md) - how much of a task is done
 - [Term::Fabulous::Widget::Spinner](Spinner.md) - that something is going on
+- [Term::Fabulous::Widget::Chart](Chart.md) and the charts built on it - data as
+lines, bars, slices and more
+- [Term::Fabulous::Widget::Scrollbar](Scrollbar.md) - how far a scroll container is
+scrolled
 
 You do not create a `Display` directly (the class is abstract and
 `new` dies); this page describes what these widgets have in common and

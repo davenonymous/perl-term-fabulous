@@ -10,6 +10,7 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 
 use ChartTest;
+use Clay::UI::Revision qw(current_revision);
 use Clay::XS qw(sizing_fixed);
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::AreaChart;
@@ -106,9 +107,9 @@ subtest 'size and colors' => sub {
 	is [ $chart->columns, $chart->rows ], [ 30, 8 ], 'a chart without a size takes the room it gets';
 	is $chart->effective_background,      0xFAFAFA,  'and is drawn on the background of its parent';
 
-	my $revision = $chart->revision;
+	my $revision = current_revision();
 	$chart->theme('dark');
-	ok $chart->revision > $revision, 'a change makes a new revision';
+	ok current_revision() > $revision, 'a change marks the chart changed';
 	$page->render_lines;
 	my $dark = fg_at( $chart, 0, 0 );
 	$chart->theme('auto');
@@ -395,23 +396,23 @@ subtest 'invalid input dies' => sub {
 		[ sub { $chart->set_series( a => ( name => 'b' ) ) },         qr/set_series cannot rename a series/,                                                     'renaming' ],
 		[ sub { $chart->append( 1, [1] ) },                           qr/append needs a hash reference of values by series name/,                                'append without a hash' ],
 		[ sub { $chart->series_default( stack => 'x' ) },             qr/unknown series default 'stack'/,                                                        'an unknown series default' ],
-		[ sub { line_chart( x_axis      => { kind => 'time' } ) }, qr/x_axis does not take kind \(known: type min max/,                      'an unknown axis key' ],
-		[ sub { line_chart( x_axis      => [] ) },                 qr/x_axis must be a hash reference, got an ARRAY reference/,              'an axis that is no hash' ],
-		[ sub { line_chart( y_axis      => { type => 'time' } ) }, qr/the type of y_axis must be one of linear, log, got 'time'/,            'a y axis of time' ],
-		[ sub { line_chart( y_axis      => { grid => 'wavy' } ) }, qr/the grid of y_axis must be 0, 1, solid, dashed or dotted, got 'wavy'/, 'an unknown grid style' ],
-		[ sub { line_chart( y_axis      => { ticks => 0 } ) },     qr/the ticks of y_axis must be a positive integer, got '0'/,              'zero ticks' ],
-		[ sub { line_chart( y_axis      => { min => 'low' } ) },   qr/the min of y_axis must be a number, got 'low'/,                        'a y minimum that is no number' ],
-		[ sub { line_chart( x_axis      => { base => 1 } ) },      qr/the base of x_axis must be a number greater than 1/,                   'a log base of 1' ],
-		[ sub { line_chart( stacked     => [] ) },                 qr/stacked must be 0, 1 or 'percent', got an ARRAY reference/,            'stacked as an array' ],
-		[ sub { line_chart( stacked     => 'percents' ) },         qr/stacked must be 0, 1 or 'percent', got 'percents'/,                    'stacked as a misspelled percent' ],
-		[ sub { line_chart( stacked     => '1.0' ) },              qr/stacked must be 0, 1 or 'percent', got '1.0'/,                         'stacked as 1.0' ],
-		[ sub { line_chart( curve       => 'wiggly' ) },           qr/LineChart: curve must be /,                                            'a chart-wide option names no series' ],
-		[ sub { line_chart( bar_width   => 1.5 ) },                qr/bar_width must be a number from 0 to 1, got '1\.5'/,                   'a bar width above 1' ],
-		[ sub { line_chart( labels      => [undef] ) },            qr/every label must be a string, got undef/,                              'an undefined label' ],
-		[ sub { line_chart( series      => 'a' ) },                qr/series must be an array reference of series hashes/,                   'series that are no array' ],
-		[ sub { line_chart( legend      => 'middle' ) },           qr/legend must be auto, bottom, left, none, right, top, got 'middle'/,    'an unknown legend position' ],
-		[ sub { line_chart( title_align => 'top' ) },              qr/title_align must be center, left, right, got 'top'/,                   'an unknown title alignment' ],
-		[ sub { line_chart( theme       => 'blue' ) },             qr/theme must be auto, dark, light, got 'blue'/,                          'an unknown theme' ],
+		[ sub { line_chart( x_axis      => { kind => 'time' } ) }, qr/x_axis does not take kind \(known: type min max/,                          'an unknown axis key' ],
+		[ sub { line_chart( x_axis      => [] ) },                 qr/x_axis must be a hash reference, got an ARRAY reference/,                  'an axis that is no hash' ],
+		[ sub { line_chart( y_axis      => { type => 'time' } ) }, qr/y_axis type must be one of linear, log, got 'time'/,                       'a y axis of time' ],
+		[ sub { line_chart( y_axis      => { grid => 'wavy' } ) }, qr/the grid of y_axis must be 0, 1, solid, dashed or dotted, got 'wavy'/,     'an unknown grid style' ],
+		[ sub { line_chart( y_axis      => { ticks => 0 } ) },     qr/the ticks of y_axis must be a positive integer, got '0'/,                  'zero ticks' ],
+		[ sub { line_chart( y_axis      => { min => 'low' } ) },   qr/the min of y_axis must be a number, got 'low'/,                            'a y minimum that is no number' ],
+		[ sub { line_chart( x_axis      => { base => 1 } ) },      qr/the base of x_axis must be a number greater than 1/,                       'a log base of 1' ],
+		[ sub { line_chart( stacked     => [] ) },                 qr/stacked must be 0, 1 or 'percent', got an ARRAY reference/,                'stacked as an array' ],
+		[ sub { line_chart( stacked     => 'percents' ) },         qr/stacked must be 0, 1 or 'percent', got 'percents'/,                        'stacked as a misspelled percent' ],
+		[ sub { line_chart( stacked     => '1.0' ) },              qr/stacked must be 0, 1 or 'percent', got '1.0'/,                             'stacked as 1.0' ],
+		[ sub { line_chart( curve       => 'wiggly' ) },           qr/LineChart: curve must be /,                                                'a chart-wide option names no series' ],
+		[ sub { line_chart( bar_width   => 1.5 ) },                qr/bar_width must be a number from 0 to 1, got '1\.5'/,                       'a bar width above 1' ],
+		[ sub { line_chart( labels      => [undef] ) },            qr/every label must be a string, got undef/,                                  'an undefined label' ],
+		[ sub { line_chart( series      => 'a' ) },                qr/series must be an array reference of series hashes/,                       'series that are no array' ],
+		[ sub { line_chart( legend      => 'middle' ) },           qr/legend must be one of auto, bottom, left, none, right, top, got 'middle'/, 'an unknown legend position' ],
+		[ sub { line_chart( title_align => 'top' ) },              qr/title_align must be one of center, left, right, got 'top'/,                'an unknown title alignment' ],
+		[ sub { line_chart( theme       => 'blue' ) },             qr/theme must be one of auto, dark, light, got 'blue'/,                       'an unknown theme' ],
 		[ sub { line_chart( palette    => 'nope' ) }, qr/palette must be a palette name \(classic, default, pastel, vivid\) or an array reference of colors, got 'nope'/, 'an unknown palette' ],
 		[ sub { line_chart( hover_fade => 2 ) },      qr/hover_fade must be a number from 0 to 1, got '2'/,                                                               'a fade above 1' ],
 		[ sub { line_chart( title      => [] ) },     qr/title must be a string or undef, got an ARRAY reference/,                                                        'a title that is no string' ],

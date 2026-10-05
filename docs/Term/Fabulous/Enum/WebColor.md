@@ -28,10 +28,10 @@ Term::Fabulous::Color objects.
 
 The item names are in PascalCase, as the other enumerations of
 Term::Fabulous, and `from_name` is case sensitive: `'SteelBlue'` is
-found, `'steelblue'` is not. Color names as strings, such as `'red'`, are
-not accepted by ["new" in Term::Fabulous::Color](../Color.md#new) or in KDL layouts; use
-`Term::Fabulous::Enum::WebColor->Red->hexString` or the hex value
-there. `examples/web-colors.pl` shows all of the colors in a grid.
+found, `'steelblue'` is not. Every color input of Term::Fabulous takes
+the names as strings as well, in any case (`'steelblue'`,
+`text_color "SteelBlue"` in KDL): see
+["A string" in Term::Fabulous::Color](../Color.md#a-string). `examples/web-colors.pl` shows all of the colors in a grid.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-web-colors.svg" alt="A grid of color swatches with their hex values and names, and a dropdown to sort them"></p>

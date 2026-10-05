@@ -16,6 +16,7 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 	use List::Util qw(max min);
 	use POSIX qw(ceil floor);
 	use Term::Fabulous::Chart::Palette qw(mix_rgb);
+	use Term::Fabulous::Render::Geometry qw(line_steps);
 
 	field $marker  :param :reader;
 	field $columns :param :reader;    # in cells
@@ -121,39 +122,13 @@ class Term::Fabulous::Chart::Raster :strict(params) {
 	# subpixels. With $opacity below 1 the line is blended into what is
 	# there (or $base).
 	method line ( $x0, $y0, $x1, $y1, $color, $owner = undef, $opacity = 1, $base = undef ) {
-		my ( $from_x, $from_y, $to_x, $to_y ) = map { floor($_) } $x0, $y0, $x1, $y1;
-		my ( $dx,     $dy )     = ( abs( $to_x - $from_x ), abs( $to_y - $from_y ) );
-		my ( $step_x, $step_y ) = ( $from_x < $to_x ? 1 : -1, $from_y < $to_y ? 1 : -1 );
-		my $steps = max( $dx, $dy );
-
-		# Lines far outside the raster are clipped to their visible steps.
-		my ( $first, $last ) = ( 0, $steps );
-		if ( $dx >= $dy ) {
-			( $first, $last ) = _visible_steps( $from_x, $step_x, $steps, $width );
-		}
-		else {
-			( $first, $last ) = _visible_steps( $from_y, $step_y, $steps, $height );
-		}
-		$_pattern_step += $first if $_pattern;
-		foreach my $i ( $first .. $last ) {
-			my ( $x, $y )
-				= $dx >= $dy
-				? ( $from_x + $step_x * $i, $from_y + $step_y * _minor( $i, $dy, $dx ) )
-				: ( $from_x + $step_x * _minor( $i, $dx, $dy ), $from_y + $step_y * $i );
+		my ( $first, @pixels ) = line_steps( ( map { floor($_) } $x0, $y0, $x1, $y1 ), $width, $height );
+		$_pattern_step += $first if $_pattern;    # the steps before the raster count for the dashes
+		foreach my $pixel (@pixels) {
 			next unless $self->_pattern_allows;
-			$opacity >= 1 ? $self->set( $x, $y, $color, $owner ) : $self->blend( $x, $y, $color, $opacity, $base, $owner );
+			$opacity >= 1 ? $self->set( @$pixel, $color, $owner ) : $self->blend( @$pixel, $color, $opacity, $base, $owner );
 		}
 		return $self;
-	}
-
-	sub _visible_steps ( $start, $step, $steps, $limit ) {
-		my ( $first, $last ) = $step > 0 ? ( -$start, $limit - 1 - $start ) : ( $start - $limit + 1, $start );
-		return ( max( $first, 0 ), min( $last, $steps ) );
-	}
-
-	sub _minor ( $i, $minor, $major ) {
-		return 0 unless $major;
-		return int( ( 2 * $minor * $i + $major ) / ( 2 * $major ) );
 	}
 
 	# ---------------------------------------------------------------------

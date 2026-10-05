@@ -498,9 +498,11 @@ opens a list of all options on `Enter`, `Space`, `Alt+Down`, `F4` or
 a click. The list floats over the other widgets, below the dropdown, or
 above it when it does not fit below and there is more room above. Every option has a label (what
 the user sees) and a value (what `value` and `Change` give); an option
-given as a plain string is both. `Up` and `Down` change the selection
-without opening the list, and typing the first letters of a label jumps
-to it.
+given as a plain string is both. An option can be disabled
+(`{ label => 'Archive', disabled => 1 }`): it is shown greyed out
+and the user cannot choose it, as in a segmented control. `Up` and
+`Down` change the selection without opening the list, and typing the
+first letters of a label jumps to it.
 
 ```perl
 use Term::Fabulous::Widget::Dropdown;

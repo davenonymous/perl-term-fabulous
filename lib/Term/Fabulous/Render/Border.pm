@@ -13,7 +13,6 @@ role Term::Fabulous::Render::Border {
 	use List::Util qw(min max);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);    # checks truecolor support first
 	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_REVERSE);
-	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
 
 	# The cells the command being painted may touch (Term::Fabulous::Render).
@@ -45,9 +44,8 @@ role Term::Fabulous::Render::Border {
 	# Draws one glyph line per side whose Clay border width is positive;
 	# HasBorderStyle has already set the width of Hidden sides to 0. The
 	# "inner" background of a cell is the shadow buffer at that cell, the
-	# "outer" one is the cell just outside the box on the same side. A side
-	# without a border style is drawn in the theme's style for the widget,
-	# or with the Blank style when the theme has none.
+	# "outer" one is the cell just outside the box on the same side. Each
+	# side is drawn in the style HasBorderStyle's border_style_of answers.
 	method render_border ( $command, $widget, $buffer ) {
 		return unless defined $widget && $widget->DOES('Term::Fabulous::Role::HasBorderStyle');
 
@@ -66,7 +64,6 @@ role Term::Fabulous::Render::Border {
 
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
 		my $border_attr = color_attr( clay_color( $data->{color} ) );
-		my $blank       = $widget->look('border.style') // Term::Fabulous::Enum::BorderStyle->Blank;
 		my $target      = $self->cell_target;
 
 		my $shade_at = sub ( $x, $y ) {
@@ -109,19 +106,19 @@ role Term::Fabulous::Render::Border {
 		};
 
 		if ($top) {
-			my $style = $widget->border_style_top // $blank;
+			my $style = $widget->border_style_of('top');
 			$paint_row->( $y0, $y0 - 1, [ $style->get_top_glyphs ], [ $style->get_top_locations ], 'top' );
 		}
 		if ($bottom) {
-			my $style = $widget->border_style_bottom // $blank;
+			my $style = $widget->border_style_of('bottom');
 			$paint_row->( $last_y, $last_y + 1, [ $style->get_bottom_glyphs ], [ $style->get_bottom_locations ], 'bottom' );
 		}
 		if ($left) {
-			my $style = $widget->border_style_left // $blank;
+			my $style = $widget->border_style_of('left');
 			$paint_column->( $x0, $x0 - 1, $style->get_left_glyphs, $style->get_left_locations, 'left' );
 		}
 		if ($right) {
-			my $style = $widget->border_style_right // $blank;
+			my $style = $widget->border_style_of('right');
 			$paint_column->( $last_x, $last_x + 1, $style->get_right_glyphs, $style->get_right_locations, 'right' );
 		}
 		return;
@@ -184,9 +181,11 @@ width.
 
 =item *
 
-Each side uses the style of that side (C<border_style_top>, ...). A
-side without a style is drawn in the theme's style for the widget's
-family, or with the C<Blank> style (spaces) when the theme has none. A corner
+Each side uses the style it is drawn in, as
+L<Term::Fabulous::Role::HasBorderStyle/border_style_of> answers: the
+widget's own style for that side, else the one the widget derives,
+else the theme's style for the widget's family, else the C<Blank>
+style (spaces). A corner
 the widget names in C<border_corners> is drawn with that glyph instead
 (see L<Term::Fabulous::Role::HasBorderStyle/border_corners>), in the
 colors of the style's corner.

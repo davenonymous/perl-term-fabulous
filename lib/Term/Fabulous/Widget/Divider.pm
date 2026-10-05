@@ -17,8 +17,7 @@ class Term::Fabulous::Widget::Divider
 {
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(max);
-	use Scalar::Util qw(blessed);
-	use Term::Fabulous::Check qw(boolean cell_color describe non_negative_integer string);
+	use Term::Fabulous::Check qw(boolean non_negative_integer one_of optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Termbox qw(TB_BOLD);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
@@ -28,7 +27,7 @@ class Term::Fabulous::Widget::Divider
 	use constant HORIZONTAL_GLYPH => 1;
 	use constant VERTICAL_GLYPH   => 3;
 
-	my %IS_POSITION = map { $_ => 1 } qw(start center end);
+	my @POSITIONS = qw(start center end);
 
 	field $vertical      :param = 0;
 	field $text          :param = '';
@@ -38,22 +37,14 @@ class Term::Fabulous::Widget::Divider
 	field $glyph         :param = undef;
 	field $bold          :param = 0;
 
-	# The line's style and the colors come from the theme's divider family
-	# unless given.
-	my @THEMED_PARAMS = qw(line_style color text_color);
-
 	ADJUST {
 		$vertical      = boolean( $self, vertical => $vertical );
 		$text          = string( $self, text => $text );
-		$text_position = $self->_checked_position($text_position);
+		$text_position = one_of( $self, text_position => $text_position, @POSITIONS );
 		$text_margin   = non_negative_integer( $self, text_margin  => $text_margin );
 		$text_padding  = non_negative_integer( $self, text_padding => $text_padding );
 		$glyph         = $self->_checked_glyph($glyph);
 		$bold          = boolean( $self, bold => $bold );
-	}
-
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @THEMED_PARAMS );
 	}
 
 	method theme_family :common () {
@@ -61,29 +52,14 @@ class Term::Fabulous::Widget::Divider
 	}
 
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, line_style => [ 'line.style', 'normal' ], color => [ 'line.color', 'normal' ], text_color => [ 'text', 'normal' ] );
-	}
-
-	method _checked_position ($position) {
-		die ref($self) . ": text_position must be start, center or end, got " . describe($position) unless defined $position && !ref $position && $IS_POSITION{$position};
-		return $position;
-	}
-
-	# A border style item, or the name of one.
-	method _checked_style ($style) {
-		return $style if blessed $style && $style->isa('Term::Fabulous::Enum::BorderStyle');
-		my $named = defined $style && !ref $style ? Term::Fabulous::Enum::BorderStyle->from_name($style) : undef;
-		die ref($self)
-			. ": line_style must be a Term::Fabulous::Enum::BorderStyle item or its name, got "
-			. describe($style)
-			. " (known: "
-			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")"
-			unless defined $named;
-		return $named;
+		return (
+			$class->SUPER::themed_params, line_style => [ 'line.style', 'normal', 'border_style' ], color => [ 'line.color', 'normal', 'cell_color' ],
+			text_color => [ 'text', 'normal', 'cell_color' ]
+		);
 	}
 
 	method _checked_glyph ($value) {
-		return defined $value ? Term::Fabulous::Check::glyph( $self, glyph => $value ) : undef;
+		return optional( \&Term::Fabulous::Check::glyph, $self, glyph => $value );
 	}
 
 	# ---------------------------------------------------------------------
@@ -98,21 +74,23 @@ class Term::Fabulous::Widget::Divider
 
 	method vertical      (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                      : $vertical }
 	method text          (@new) { return @new ? $self->_set( \$text, string( $self, text => $new[0] ) )                               : $text }
-	method text_position (@new) { return @new ? $self->_set( \$text_position, $self->_checked_position( $new[0] ) )                   : $text_position }
+	method text_position (@new) { return @new ? $self->_set( \$text_position, one_of( $self, text_position => $new[0], @POSITIONS ) ) : $text_position }
 	method text_margin   (@new) { return @new ? $self->_set( \$text_margin, non_negative_integer( $self, text_margin => $new[0] ) )   : $text_margin }
 	method text_padding  (@new) { return @new ? $self->_set( \$text_padding, non_negative_integer( $self, text_padding => $new[0] ) ) : $text_padding }
 	method glyph         (@new) { return @new ? $self->_set( \$glyph, $self->_checked_glyph( $new[0] ) )                              : $glyph }
 	method bold          (@new) { return @new ? $self->_set( \$bold, boolean( $self, bold => $new[0] ) )                              : $bold }
-	method line_style (@new) { return @new ? $self->set_look( line_style => $self->_checked_style( $new[0] ) )           : $self->look_value('line_style') // Term::Fabulous::Enum::BorderStyle->Solid }
-	method color      (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )           : $self->look_value('color') }
-	method text_color (@new) { return @new ? $self->set_look( text_color => cell_color( $self, text_color => $new[0] ) ) : $self->look_value('text_color') }
+
+	method line_style (@new) {
+		return @new ? $self->set_look( line_style => $new[0] ) : $self->look_value('line_style') // Term::Fabulous::Enum::BorderStyle->Solid;
+	}
+	method color      (@new) { return @new ? $self->set_look( color      => $new[0] ) : $self->look_value('color') }
+	method text_color (@new) { return @new ? $self->set_look( text_color => $new[0] ) : $self->look_value('text_color') }
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
 			( map { $_ => 'boolean' } qw(vertical bold) ),
-			( map { $_ => 'scalar' } qw(text text_position text_margin text_padding line_style glyph) ),
-			( map { $_ => 'color' } qw(color text_color) ),
+			( map { $_ => 'scalar' } qw(text text_position text_margin text_padding glyph) ),
 		);
 	}
 

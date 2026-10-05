@@ -23,19 +23,15 @@ class Term::Fabulous::Widget::Tabs
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(describe);
+	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Event::Select;
 
 	use constant PAGE_CLASS => 'Term::Fabulous::Widget::Tabs::Page';
 
-	# The look is the bar's; these constructor parameters go to it.
-	my @BAR_PARAMS = qw(
-		side orientation tab_alignment tab_gap tab_margin tab_padding
-		line_style line_color text_color active_text_color active_bold
-		hover_background_color focus_border_color disabled_color page_border
-	);
-
-	# Key name => step through the enabled pages, from anywhere inside.
-	my %STEP_BY_KEY = ( 'Ctrl+PageUp' => -1, 'Ctrl+PageDown' => 1 );
+	# The look is the bar's; these constructor parameters go to it. The
+	# themed ones live on the bar (see forwarded_looks).
+	my @BAR_LOOKS  = qw(line_style line_color text_color active_text_color hover_background_color focus_border_color disabled_color);
+	my @BAR_PARAMS = ( qw(side orientation tab_alignment tab_gap tab_margin tab_padding active_bold page_border), @BAR_LOOKS );
 
 	# The bar, the slot that shows the active page, and the pages, in the
 	# order of the bar's tabs.
@@ -102,7 +98,17 @@ class Term::Fabulous::Widget::Tabs
 		return $self;
 	}
 
-	method remove_child :override ($target_id) {
+	method remove_child :override (@kids) {
+		foreach my $kid (@kids) {
+			die ref($self) . ": remove_child takes pages, got " . describe($kid) . "; remove a page by its id with remove_child_with_id"
+				unless blessed $kid;
+		}
+		my %given = map { refaddr($_) => 1 } @kids;
+		$self->_remove_pages( grep { $given{ refaddr $_ } } @_pages );
+		return $self;
+	}
+
+	method remove_child_with_id :override ($target_id) {
 		$self->_remove_pages( grep { defined $_->id && $_->id eq $target_id } @_pages );
 		return $self;
 	}
@@ -125,7 +131,7 @@ class Term::Fabulous::Widget::Tabs
 			my $button = $_bar->button($index);
 			splice @_pages, $index, 1;
 			$page->_set_tabs(undef);
-			$_bar->remove_children_with( sub ($child) { refaddr($child) == refaddr($button) } );
+			$_bar->remove_child($button);
 		}
 		$self->_sync;
 		return;
@@ -232,28 +238,35 @@ class Term::Fabulous::Widget::Tabs
 		return $value;
 	}
 
-	method side                   (@new) { return $self->_forward( side                   => 1, 1, @new ) }
-	method orientation            (@new) { return $self->_forward( orientation            => 0, 0, @new ) }
-	method tab_alignment          (@new) { return $self->_forward( tab_alignment          => 0, 0, @new ) }
-	method tab_gap                (@new) { return $self->_forward( tab_gap                => 0, 0, @new ) }
-	method tab_margin             (@new) { return $self->_forward( tab_margin             => 0, 0, @new ) }
-	method tab_padding            (@new) { return $self->_forward( tab_padding            => 0, 0, @new ) }
-	method line_style             (@new) { return $self->_forward( line_style             => 0, 1, @new ) }
-	method line_color             (@new) { return $self->_forward( line_color             => 0, 1, @new ) }
-	method text_color             (@new) { return $self->_forward( text_color             => 0, 0, @new ) }
-	method active_text_color      (@new) { return $self->_forward( active_text_color      => 0, 0, @new ) }
-	method active_bold            (@new) { return $self->_forward( active_bold            => 0, 0, @new ) }
-	method hover_background_color (@new) { return $self->_forward( hover_background_color => 0, 0, @new ) }
-	method focus_border_color     (@new) { return $self->_forward( focus_border_color     => 0, 0, @new ) }
-	method disabled_color         (@new) { return $self->_forward( disabled_color         => 0, 0, @new ) }
-	method page_border            (@new) { return $self->_forward( page_border            => 0, 1, @new ) }
+	method side          (@new) { return $self->_forward( side          => 1, 1, @new ) }
+	method orientation   (@new) { return $self->_forward( orientation   => 0, 0, @new ) }
+	method tab_alignment (@new) { return $self->_forward( tab_alignment => 0, 0, @new ) }
+	method tab_gap       (@new) { return $self->_forward( tab_gap       => 0, 0, @new ) }
+	method tab_margin    (@new) { return $self->_forward( tab_margin    => 0, 0, @new ) }
+	method tab_padding   (@new) { return $self->_forward( tab_padding   => 0, 0, @new ) }
+	method active_bold   (@new) { return $self->_forward( active_bold   => 0, 0, @new ) }
+	method page_border   (@new) { return $self->_forward( page_border   => 0, 1, @new ) }
+
+	# The looks live on the bar (Term::Fabulous::Role::Themed): the bar
+	# takes them from the constructor, and reset_look returns them to the
+	# theme there.
+	method forwarded_looks :common () {
+		return ( bar => [ 'Term::Fabulous::Widget::Tabs::Bar', @BAR_LOOKS ] );
+	}
+
+	method line_style             (@new) { return @new ? $self->set_look( line_style             => $new[0] ) : $_bar->line_style }
+	method line_color             (@new) { return @new ? $self->set_look( line_color             => $new[0] ) : $self->look_value('line_color') }
+	method text_color             (@new) { return @new ? $self->set_look( text_color             => $new[0] ) : $self->look_value('text_color') }
+	method active_text_color      (@new) { return @new ? $self->set_look( active_text_color      => $new[0] ) : $self->look_value('active_text_color') }
+	method hover_background_color (@new) { return @new ? $self->set_look( hover_background_color => $new[0] ) : $self->look_value('hover_background_color') }
+	method focus_border_color     (@new) { return @new ? $self->set_look( focus_border_color     => $new[0] ) : $self->look_value('focus_border_color') }
+	method disabled_color         (@new) { return @new ? $self->set_look( disabled_color         => $new[0] ) : $self->look_value('disabled_color') }
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding line_style focus_border_color) ),
+			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding) ),
 			( map { $_ => 'boolean' } qw(active_bold page_border) ),
-			( map { $_ => 'color' } qw(line_color text_color active_text_color hover_background_color disabled_color) ),
 		);
 	}
 
@@ -263,11 +276,9 @@ class Term::Fabulous::Widget::Tabs
 	# ---------------------------------------------------------------------
 
 	method _handle_key ($event) {
-		my $step    = $STEP_BY_KEY{ $event->main_key_name // '' } // return 0;
-		my @enabled = grep { $_->is_enabled } @_pages or return 0;
-		my $active  = $self->active;
-		my ($at)    = defined $active ? grep { refaddr( $enabled[$_] ) == refaddr($active) } 0 .. $#enabled : ();
-		$self->choose( defined $at ? $enabled[ ( $at + $step ) % @enabled ] : $step > 0 ? $enabled[0] : $enabled[-1] );
+		my @enabled = grep { $_pages[$_]->is_enabled } 0 .. $#_pages;
+		my $target  = roving_target( \@enabled, $self->active_index, $event->main_key_name, keys => 'pages' ) // return 0;
+		$self->choose($target);
 		return 1;
 	}
 }
@@ -458,11 +469,14 @@ L<Term::Fabulous::Widget::Tabs::Page>, and for a page that is part of
 a Tabs already. The first enabled page added becomes the active one,
 unless a page asks for it with C<< active => 1 >>. Returns the Tabs.
 
-=head2 remove_child, remove_children_with, clear_children
+=head2 remove_child, remove_child_with_id, remove_children_with, clear_children
 
-As in L<Term::Fabulous::Widget>, for the pages (also those not shown).
-When the active page is removed, the first enabled page left becomes
-the active one. Fires nothing.
+As in L<Term::Fabulous::Widget>, for the pages (also those not shown);
+C<remove_child> dies for anything but a widget and ignores widgets that
+are not pages of this Tabs. When the active page is removed, the first
+enabled page left becomes the active one. Fires nothing. C<children>
+and C<has_child> see the bar and the box that holds the shown page, not
+the pages.
 
 =head2 pages
 
@@ -563,15 +577,17 @@ Accessor for the C<tab_padding> parameter.
 	$tabs->line_style('Heavy');
 
 Accessor for the C<line_style> parameter; the reader returns the
-style item. Restyles the pages as well.
+style item. The borders of the pages follow it.
 
 =head2 line_color
 
 	$tabs->line_color('#5a606e');
 
 Accessor for the C<line_color> parameter. The reader returns
-C<[r, g, b, a]>; an invalid color dies and leaves the old one.
-Restyles the pages as well.
+C<[r, g, b, a]>; an invalid color dies and leaves the old one, and so
+does C<undef>. The borders of the pages follow it. The bar keeps the
+colors and the line style; C<< $tabs->reset_look('line_color') >>
+returns them to the theme (see L<Term::Fabulous::Widget/reset_look>).
 
 =head2 text_color
 

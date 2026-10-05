@@ -180,7 +180,7 @@ sub show_toast ($message) {
 }
 
 sub hide_toast () {
-	$chart_panel->remove_children_with( sub ($child) { $child == $toast } );
+	$chart_panel->remove_child($toast);
 	return;
 }
 
@@ -209,7 +209,7 @@ sub log_event () {
 	$line->add_child( text( strftime( '%H:%M:%S', localtime ), $color{muted} ), text( $message, $level_color ) );
 	$log->add_child($line);
 	my $oldest = $log->children->[0];
-	$log->remove_children_with( sub ($child) { $child == $oldest } ) if @{ $log->children } > 100;
+	$log->remove_child($oldest) if @{ $log->children } > 100;
 	return;
 }
 

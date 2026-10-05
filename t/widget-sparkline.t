@@ -86,9 +86,9 @@ subtest 'values' => sub {
 };
 
 subtest 'invalid input dies' => sub {
-	like dies { sparkline( 8, type => 'scatter' ) }, qr/type must be line, area or bar, got scatter/, 'an unknown type';
+	like dies { sparkline( 8, type => 'scatter' ) }, qr/type must be one of area, bar, line, got 'scatter'/, 'an unknown type';
 	my $sparkline = sparkline( 8, values => [ 1, 2 ] );
-	like dies { $sparkline->type('pie') },               qr/type must be line, area or bar, got pie/,                    'an unknown type later';
+	like dies { $sparkline->type('pie') },               qr/type must be one of area, bar, line, got 'pie'/,             'an unknown type later';
 	like dies { $sparkline->values( [ [ 1, 2, 3 ] ] ) }, qr/data point 0 of series 'values' must be \[ x, y \]/,         'a wrong value';
 	like dies { $sparkline->min('low') },                qr/the min of y_axis must be a number, got 'low'/,              'a min that is no number';
 	like dies { $sparkline->zero( [] ) },                qr/zero must be a plain boolean value, got an ARRAY reference/, 'a zero that is no boolean';

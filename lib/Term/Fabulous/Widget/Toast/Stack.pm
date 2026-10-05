@@ -15,6 +15,7 @@ class Term::Fabulous::Widget::Toast::Stack
 	:isa(Term::Fabulous::Widget::Box)
 	:strict(params)
 {
+	use Term::Fabulous::Check qw(one_of);
 	use Clay::XS qw(
 		CLAY_ATTACH_TO_ROOT CLAY_TOP_TO_BOTTOM
 		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_CENTER_TOP CLAY_ATTACH_POINT_RIGHT_TOP
@@ -35,8 +36,7 @@ class Term::Fabulous::Widget::Toast::Stack
 	field $margin   :param;
 
 	ADJUST {
-		die "Term::Fabulous::Widget::Toast::Stack: position must be one of " . join( ', ', sort keys %ATTACH_POINT_OF_POSITION ) . ", got '$position'"
-			unless exists $ATTACH_POINT_OF_POSITION{$position};
+		one_of( $self, position => $position, keys %ATTACH_POINT_OF_POSITION );
 		my $point = $ATTACH_POINT_OF_POSITION{$position};
 		my ( $vertical, $horizontal ) = split /_/, $position;
 		$self->floating(

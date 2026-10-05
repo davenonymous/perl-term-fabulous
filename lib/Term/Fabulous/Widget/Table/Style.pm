@@ -8,10 +8,9 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(style_hash border_style_of merge_styles);
+our @EXPORT_OK = qw(style_hash merge_styles);
 
-use Scalar::Util qw(blessed);
-use Term::Fabulous::Check qw(boolean color);
+use Term::Fabulous::Check qw(boolean border_style color);
 use Term::Fabulous::Enum::BorderStyle;
 
 # What each kind of style may hold. Borders name the lines around a cell,
@@ -35,20 +34,6 @@ my %KIND_OF_KEY = (
 	map { $_ => 'border' } qw(border_top border_right border_bottom border_left column_lines row_lines),
 );
 
-# A border style from a BorderStyle item, its name, or 'none' (no line:
-# Hidden).
-sub border_style_of ( $owner, $name, $value ) {
-	return $value if blessed $value && $value->isa('Term::Fabulous::Enum::BorderStyle');
-	if ( defined $value && !ref $value ) {
-		return Term::Fabulous::Enum::BorderStyle->Hidden if $value eq 'none';
-		my $style = Term::Fabulous::Enum::BorderStyle->from_name($value);
-		return $style if defined $style;
-	}
-	die(  ( ref $owner || $owner )
-		. ": $name must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got "
-			. ( defined $value ? ( ref $value ? ref($value) . ' reference' : "'$value'" ) : 'undef' ) );
-}
-
 # A validated copy of a style hash of the given kind: colors as
 # [r, g, b, a], booleans as 1 or 0, borders as BorderStyle items. Keys
 # with an undef value are left out (they inherit).
@@ -67,7 +52,7 @@ sub style_hash ( $owner, $name, $kind, $style ) {
 		$copy{$key}
 			= $kind_of_key eq 'color'   ? color( $owner, "$name $key", $style->{$key} )
 			: $kind_of_key eq 'boolean' ? boolean( $owner, "$name $key", $style->{$key} )
-			:                             border_style_of( $owner, "$name $key", $style->{$key} );
+			:                             border_style( $owner, "$name $key", $style->{$key}, none => Term::Fabulous::Enum::BorderStyle->Hidden );
 	}
 	return \%copy;
 }
@@ -124,12 +109,6 @@ style name such as C<'Heavy'>, or C<'none'> for no line, which is the
 C<Hidden> style). Keys whose value is C<undef> are left out. Unknown keys
 and invalid values die with a message that starts with C<$owner>'s class
 and names C<$name>.
-
-=head2 border_style_of
-
-	my $style = border_style_of( $owner, $name, 'Double' );
-
-One line style as L</style_hash> reads it.
 
 =head2 merge_styles
 

@@ -74,10 +74,13 @@ and return C<[ $r, $g, $b, $a ]>.
 
 The cells always have a background of their own; that is what makes
 them receive the mouse. A cell without a color from a style or a state
-(cursor, selected, hover, stripe) gets the table's C<background_color>
-when it has one, else the background of the nearest ancestor widget
-with an opaque background, else C<[22, 25, 31]>. So a table without a
-C<background_color> blends into the box it is in.
+(cursor, selected, hover, stripe) gets what the table lies on (see
+L<Term::Fabulous::Widget/background_below>): the table's
+C<background_color> when it has one, else the background of the
+nearest ancestor widget with an opaque background, else the screen
+color of the theme, else (in a L<Term::Fabulous::Static>, which paints
+no screen) C<[22, 25, 31]>. So a table without a C<background_color>
+blends into the box or the screen it is on.
 
 C<hover> (default 1) turns the hover highlight on or off.
 

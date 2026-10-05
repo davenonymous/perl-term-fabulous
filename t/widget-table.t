@@ -96,8 +96,8 @@ sub static_lines ( $table, $width = 40, $height = 12 ) {
 
 subtest 'construction' => sub {
 	like dies { Term::Fabulous::Widget::Table->new( columns => [] ) }, qr/a table needs an id/, 'an id is required';
-	like dies { Term::Fabulous::Widget::Table->new( id      => 't', selection    => 'some' ) }, qr/selection must be 'none', 'single' or 'multiple'/, 'selection';
-	like dies { Term::Fabulous::Widget::Table->new( id      => 't', column_lines => 'Dots' ) }, qr/column_lines must be a Term::Fabulous::Enum::BorderStyle, the name of one or 'none', got 'Dots'/,
+	like dies { Term::Fabulous::Widget::Table->new( id      => 't', selection    => 'some' ) }, qr/selection must be one of multiple, none, single, got 'some'/, 'selection';
+	like dies { Term::Fabulous::Widget::Table->new( id      => 't', column_lines => 'Dots' ) }, qr/column_lines must be a border style, its name or 'none', got 'Dots'/,
 		'line styles';
 	like dies { Term::Fabulous::Widget::Table->new( id => 't', header_style => { size => 2 } ) }, qr/header_style does not know size/,                            'style hashes';
 	like dies { Term::Fabulous::Widget::Table->new( id => 't', page_sizes   => [0] ) },           qr/page_sizes must be an array reference of positive integers/, 'page sizes';

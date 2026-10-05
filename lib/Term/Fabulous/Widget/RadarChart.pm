@@ -21,7 +21,7 @@ class Term::Fabulous::Widget::RadarChart
 	use List::Util ();
 	use POSIX qw(floor ceil);
 	use Scalar::Util qw(looks_like_number);
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean one_of);
 	use Term::Fabulous::Chart::Format qw(check_number_format format_value);
 	use Term::Fabulous::Chart::Marker;
 	use Term::Fabulous::Chart::Radial qw(CELL_ASPECT TAU circle_frame point_at);
@@ -37,7 +37,7 @@ class Term::Fabulous::Widget::RadarChart
 		LEGEND_POINT => "\x{25CF}",
 	};
 
-	my %IS_GRID  = map { $_ => 1 } qw(polygon circle none);
+	my @GRID     = qw(polygon circle none);
 	my @DEFAULTS = qw(marker line_style points point fill_opacity transform);
 
 	field $initial_series :param(series) = [];
@@ -56,7 +56,7 @@ class Term::Fabulous::Widget::RadarChart
 		$self->_checked_end( min => $min );
 		$self->_checked_end( max => $max );
 		$self->_fail( 'ticks', 'a positive integer or undef', $ticks ) if defined $ticks && ( ref $ticks || $ticks !~ /\A[1-9][0-9]*\z/ );
-		$self->_check_choice( grid => $grid, \%IS_GRID );
+		one_of( $self, grid => $grid, @GRID );
 		$format = check_number_format( ref $self, 'format', $format );
 		$self->_fail( 'start_angle', 'a number of degrees', $start_angle ) unless defined number_of($start_angle);
 		croak ref($self) . ": series must be an array reference of series hashes" unless ref $initial_series eq 'ARRAY';
@@ -106,7 +106,7 @@ class Term::Fabulous::Widget::RadarChart
 
 	method min          (@new) { return @new ? $self->_set( \$min, $self->_checked_end( min => $new[0] ) ) : $min }
 	method max          (@new) { return @new ? $self->_set( \$max, $self->_checked_end( max => $new[0] ) ) : $max }
-	method grid         (@new) { return @new ? $self->_set( \$grid, $self->_check_choice( grid => $new[0], \%IS_GRID ) ) : $grid }
+	method grid         (@new) { return @new ? $self->_set( \$grid, one_of( $self, grid => $new[0], @GRID ) ) : $grid }
 	method format       (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) ) : $format }
 	method marker       (@new) { return $self->series_default( marker       => @new ) }
 	method line_style   (@new) { return $self->series_default( line_style   => @new ) }

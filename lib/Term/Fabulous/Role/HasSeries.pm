@@ -14,7 +14,8 @@ use Term::Fabulous::Chart::Series;
 role Term::Fabulous::Role::HasSeries {
 	use Carp qw(croak);
 	use Scalar::Util qw(weaken);
-	use Term::Fabulous::Check qw(describe);
+	use List::Util qw(uniq);
+	use Term::Fabulous::Check qw(describe one_of);
 
 	field @_series;
 	field %_series_by_name;
@@ -69,8 +70,7 @@ role Term::Fabulous::Role::HasSeries {
 			delete $_defaults{$key};
 		}
 		elsif ( $key eq 'marker' ) {
-			my %all = map { $_ => 1 } map { Term::Fabulous::Chart::Series->marker_names($_) } $self->series_types;
-			croak ref($self) . ": marker must be one of " . join( ', ', sort keys %all ) . ", got " . describe($value) unless !ref $value && $all{$value};
+			one_of( $self, marker => $value, uniq map { Term::Fabulous::Chart::Series->marker_names($_) } $self->series_types );
 			$_defaults{$key} = $value;
 		}
 		else {

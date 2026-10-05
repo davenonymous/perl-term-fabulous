@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::PixelCanvas
 {
 	use List::Util qw(max min);
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
-	use Term::Fabulous::Render::Geometry qw(cell_coordinate);
+	use Term::Fabulous::Render::Geometry qw(cell_coordinate line_steps);
 
 	use constant UPPER_HALF => "\x{2580}";
 	use constant LOWER_HALF => "\x{2584}";
@@ -100,42 +100,15 @@ class Term::Fabulous::Widget::PixelCanvas
 		return $self;
 	}
 
-	# Bresenham: every pixel the line passes, both end points included.
-	# Along the longer axis every step moves one pixel, and after $i steps
-	# the shorter axis has moved round($i * minor / major) pixels, halves
-	# rounded up: the pixels of the steps inside the canvas are computed
-	# directly, so a line far longer than the canvas costs no more than
-	# one across it.
+	# Every pixel the line passes, both end points included
+	# (Term::Fabulous::Render::Geometry::line_steps).
 	method draw_line ( $from_x, $from_y, $to_x, $to_y, $color ) {
 		my ( $x0, $y0 ) = ( cell_coordinate( x => $from_x ), cell_coordinate( y => $from_y ) );
-		my ( $x1, $y1 ) = ( cell_coordinate( x => $to_x ),   cell_coordinate( y => $to_y ) );
+		my ( $x1, $y1 ) = ( cell_coordinate( x => $to_x ), cell_coordinate( y => $to_y ) );
 		my $attr = cell_color_attr( color => $color );
-
-		my ( $dx, $dy ) = ( abs( $x1 - $x0 ), abs( $y1 - $y0 ) );
-		my ( $step_x, $step_y ) = ( $x0 < $x1 ? 1 : -1, $y0 < $y1 ? 1 : -1 );
-		if ( $dx >= $dy ) {
-			foreach my $i ( _steps_inside( $x0, $step_x, $dx, $self->pixel_width ) ) {
-				$self->_paint_pixel( $x0 + $step_x * $i, $y0 + $step_y * _minor_steps( $i, $dy, $dx ), $attr );
-			}
-		}
-		else {
-			foreach my $i ( _steps_inside( $y0, $step_y, $dy, $self->pixel_height ) ) {
-				$self->_paint_pixel( $x0 + $step_x * _minor_steps( $i, $dx, $dy ), $y0 + $step_y * $i, $attr );
-			}
-		}
+		my ( undef, @pixels ) = line_steps( $x0, $y0, $x1, $y1, $self->pixel_width, $self->pixel_height );
+		$self->_paint_pixel( @$_, $attr ) foreach @pixels;
 		return $self;
-	}
-
-	# The steps $i in 0 .. $length at which $start + $step * $i lies in
-	# 0 .. $limit - 1.
-	sub _steps_inside ( $start, $step, $length, $limit ) {
-		my ( $first, $last ) = $step > 0 ? ( -$start, $limit - 1 - $start ) : ( $start - $limit + 1, $start );
-		return max( $first, 0 ) .. min( $last, $length );
-	}
-
-	sub _minor_steps ( $i, $minor, $major ) {
-		return 0 unless $major;
-		return int( ( 2 * $minor * $i + $major ) / ( 2 * $major ) );
 	}
 
 	# Midpoint circle: the outline, one pixel wide. In each octant the
@@ -247,7 +220,8 @@ square. An image is C<columns> pixels wide and C<2 * rows> pixels high.
 Everything else works as for a Canvas: the layout decides the size,
 C<CanvasResize> tells you when it changes (draw then), only changed
 cells are sent to the terminal, and unset pixels show the canvas's
-background (or that of its nearest ancestor with one).
+background (or that of its nearest ancestor with one, or the screen
+color).
 
 =head2 Pixels and cells
 

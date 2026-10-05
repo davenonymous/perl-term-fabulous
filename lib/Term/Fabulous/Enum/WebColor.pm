@@ -192,10 +192,10 @@ Term::Fabulous::Color objects.
 
 The item names are in PascalCase, as the other enumerations of
 Term::Fabulous, and C<from_name> is case sensitive: C<'SteelBlue'> is
-found, C<'steelblue'> is not. Color names as strings, such as C<'red'>, are
-not accepted by L<Term::Fabulous::Color/new> or in KDL layouts; use
-C<< Term::Fabulous::Enum::WebColor->Red->hexString >> or the hex value
-there. F<examples/web-colors.pl> shows all of the colors in a grid.
+found, C<'steelblue'> is not. Every color input of Term::Fabulous takes
+the names as strings as well, in any case (C<'steelblue'>,
+C<text_color "SteelBlue"> in KDL): see
+L<Term::Fabulous::Color/A string>. F<examples/web-colors.pl> shows all of the colors in a grid.
 
 =begin html
 

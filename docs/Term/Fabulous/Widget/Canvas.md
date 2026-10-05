@@ -70,8 +70,11 @@ with an optional foreground and an optional background color.
 
 - An unset cell, and a set cell without a background color, show
 the canvas's `background_color`. When the canvas has none, they show
-the background of the nearest ancestor that has one, or else the
-terminal's default background.
+the background of the nearest ancestor that has one (translucent ones
+count; the cell is blended over it), or else the screen color of the
+theme, or else (in a [Term::Fabulous::Static](../Static.md)) the terminal's default
+background: ["background\_below" in Term::Fabulous::Widget](../Widget.md#background_below) with
+`translucent => 1`.
 - A cell without a foreground color uses the terminal's default
 foreground color.
 - A character that is two columns wide, such as most CJK

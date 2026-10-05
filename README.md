@@ -965,7 +965,8 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::Display](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Display.md)
 
     The abstract base class of the widgets that paint themselves from their
-    own state (the divider, the progress bar, the input widgets), with the
+    own state (the divider, the progress bar, the charts, the scrollbar,
+    the input widgets), with the
     animation helpers; derive from it to write your own.
 
 - [Term::Fabulous::Widget::Element](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Element.md), [Term::Fabulous::Widget::TextNode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextNode.md)
@@ -1035,6 +1036,11 @@ Term::Fabulous, and programs do not use them directly.
 
     How the text inputs lay an editor's text out in rows: wrapping,
     scrolling, the cell of the cursor and the text under a click.
+
+- [Term::Fabulous::Viewport](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Viewport.md)
+
+    The arithmetic of a scrolled view: how far it can scroll, the offset
+    that shows a row, the thumb of a scrollbar.
 
 - [Term::Fabulous::Widget::Dropdown::List](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dropdown/List.md)
 
@@ -1265,6 +1271,18 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Role::HasBorderStyle](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/HasBorderStyle.md)
 
     The per-side border styles of a widget and how borders take space.
+
+- [Term::Fabulous::OptionList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/OptionList.md), [Term::Fabulous::Role::HasOptions](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/HasOptions.md), [Term::Fabulous::Roving](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Roving.md)
+
+    The options of a dropdown or a segmented control and the one selected;
+    how such a widget takes its options from a layout; which entry an arrow
+    key moves to.
+
+- [Term::Fabulous::Range](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Range.md), [Term::Fabulous::Role::HasRange](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/HasRange.md)
+
+    A value in a range on a grid of steps (snapping, keys, formats), behind
+    the slider, the star rating and the progress bar; and how such a widget
+    takes its range from a layout in one piece.
 
 - [Term::Fabulous::Unicode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Unicode.md)
 

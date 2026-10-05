@@ -84,7 +84,7 @@ subtest 'the close mark, positions and looks' => sub {
 	$toast->background_color('#000000');
 	$toast->kind('info');
 	is $toast->background_color, [ 0, 0, 0, 255 ], 'a background of your own survives a look change';
-	like dies { $toast->kind('fatal') }, qr/kind must be info, success, warning or danger/, 'an unknown kind dies';
+	like dies { $toast->kind('fatal') }, qr/kind must be one of danger, info, success, warning, got 'fatal'/, 'an unknown kind dies';
 	like dies { Term::Fabulous::Widget::Toast->new( position => 'middle' ) }, qr/position must be one of bottom_center/, 'an unknown position dies';
 	like dies { Term::Fabulous::Widget::Toast->new( timeout  => 0 ) },        qr/timeout must be positive/,              'a zero timeout dies';
 };
@@ -99,6 +99,9 @@ subtest 'an alert in the layout, and children below the message' => sub {
 	is scalar $alert->children->@*,       2, 'no close mark';
 	$alert->remove_children_with( sub { $_[0] == $note } );
 	is scalar $alert->body->children->@*, 2, 'remove_children_with acts on the children below the message';
+	$alert->add_child($note);
+	$alert->remove_child( $alert->body->children->@* );
+	is [ map { $_->text } $alert->body->children->@* ], [ 'Careful', 'Unsaved changes.' ], 'remove_child removes the children but keeps the title and the message';
 
 	my $built
 		= Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Toast as Toast\nToast { kind \"success\"; title \"Done\"; important #true; timeout 2; position \"top_left\"; }" )->build;

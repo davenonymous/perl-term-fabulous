@@ -74,9 +74,9 @@ parameters die.
 # METHODS
 
 The methods of [Term::Fabulous::Widget](../../Widget.md), of which `add_child`,
-`remove_child`, `remove_children_with` and `clear_children` act on
-the body (`children` returns the header and, while open, the body),
-plus:
+`remove_child`, `remove_child_with_id`, `remove_children_with` and
+`clear_children` act on the body (`children` and `has_child` see the
+header and, while open, the body), plus:
 
 ## open
 

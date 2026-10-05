@@ -170,8 +170,8 @@ subtest 'sorting' => sub {
 	is $model->sort_spec, [ [ 'age', 'desc' ], [ 'name', 'asc' ] ], 'cycling one keeps its place';
 	$model->cycle_sort( 'age', 1 );
 	is $model->sort_spec, [ [ 'name', 'asc' ] ], 'the third click removes it';
-	like dies { $model->set_sort( [ age => 'up' ] ) }, qr/sort direction must be 'asc' or 'desc', got 'up'/, 'bad direction';
-	like dies { $model->set_sort( 'age', 'age' ) },    qr/the column 'age' is in the sort twice/,            'a column twice';
+	like dies { $model->set_sort( [ age => 'up' ] ) }, qr/sort direction must be one of asc, desc, got 'up'/, 'bad direction';
+	like dies { $model->set_sort( 'age', 'age' ) },    qr/the column 'age' is in the sort twice/,             'a column twice';
 };
 
 subtest 'filters and search' => sub {

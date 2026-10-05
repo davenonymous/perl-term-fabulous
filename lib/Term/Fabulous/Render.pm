@@ -37,6 +37,7 @@ role Term::Fabulous::Render
 	use Term::Fabulous::Termbox qw(TB_OUTPUT_TRUECOLOR TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr);
 	use Term::Fabulous::Render::Frame;
+	use Term::Fabulous::Role::Themed;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(string_columns);
 
@@ -96,7 +97,7 @@ role Term::Fabulous::Render
 
 		$theme = _checked_theme( $theme // 'dark' );
 		Term::Fabulous::Theme::bump_generation();    # widgets built before this UI look their looks up again
-		_notify_theme_changed( $self->root );
+		Term::Fabulous::Role::Themed::forget_tree_looks( $self->root );
 		$self->measure_text( \&_measure_text );
 	}
 
@@ -116,25 +117,14 @@ role Term::Fabulous::Render
 		return $theme unless @new;
 		$theme = _checked_theme( $new[0] );
 		Term::Fabulous::Theme::bump_generation();
-		_notify_theme_changed( $self->root );
+		Term::Fabulous::Role::Themed::forget_tree_looks( $self->root );
 		bump_revision();
 		return $theme;
-	}
-
-	sub _notify_theme_changed ($node) {
-		$node->theme_changed if $node->can('theme_changed');
-		return unless $node->can('layout_children');
-		_notify_theme_changed($_) foreach @{ $node->layout_children };
-		return;
 	}
 
 	# Clay measures single words and single lines, so the height is one cell.
 	sub _measure_text ( $text, $config, $userdata ) {
 		return { width => string_columns($text), height => 1 };
-	}
-
-	method screen_background_attr () {
-		return $_screen_background_attr;
 	}
 
 	method last_frame () {
@@ -336,8 +326,8 @@ See L</theme>.
 Accessor for the theme. Without an argument it returns the
 L<Term::Fabulous::Theme> object; with one it sets the theme (an object
 or a built-in name; anything else dies), makes every widget read its
-looks again, calls C<theme_changed> on every widget of the tree that
-has such a method (see L<Term::Fabulous::Role::Themed/theme_changed>)
+looks again, calls C<looks_changed> on every widget of the tree that
+has such a method (see L<Term::Fabulous::Role::Themed/looks_changed>)
 and draws a frame. Widgets that were given a color or a border style
 explicitly keep it; see L<Term::Fabulous::Manual::Looks/THEMES>.
 
@@ -448,15 +438,6 @@ The paint roles call it from their render command handlers; it dies
 when no command is being painted
 (C<Term::Fabulous::Render: clip_rect is only known while a render command is painted>).
 
-=head2 screen_background_attr
-
-	my $attr = $ui->screen_background_attr;
-
-The termbox2 background attribute of the screen background of the
-frame being painted, or C<TB_DEFAULT> when the terminal's own
-background shows (see L</SCREEN BACKGROUND>). The canvases paint their
-unset cells in it when no widget above them has a background.
-
 =head2 pointer_state
 
 	method pointer_state () { return { x => 12, y => 3, down => 0 } }
@@ -538,7 +519,9 @@ over it, not over whatever the terminal shows where a program sets no
 color, and a theme made for a light background is readable on a dark
 terminal. The cells a canvas keeps from the last frame are left alone.
 A translucent color is painted opaque here, since there is nothing
-below it to blend with.
+below it to blend with. Widgets that need the color they lie on (the
+unset cells of a canvas, the cells of a table, the ink of a chart) ask
+L<Term::Fabulous::Widget/background_below>, which ends at this color.
 
 L<Term::Fabulous> returns the C<background> token of its theme, or
 C<undef> for a token with alpha 0, which leaves the terminal's own

@@ -191,7 +191,10 @@ $box->thumb_color( [ 97, 175, 239, 255 ] );
 
 Accessors for the scrollbar colors. Without an argument they return the
 color as `[r, g, b, a]`; with one they set it on both scrollbars and
-return it. An invalid color dies and leaves the old one.
+return it. An invalid color dies and leaves the old one; so does
+`undef`: `$box->reset_look('thumb_color')` returns the color of
+both scrollbars to the theme (see
+["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look)).
 
 ## children
 

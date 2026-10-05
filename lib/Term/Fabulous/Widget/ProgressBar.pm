@@ -7,16 +7,19 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::HasRange;
 use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::ProgressBar
 	:isa(Term::Fabulous::Widget::Display)
+	:does(Term::Fabulous::Role::HasRange)
 	:strict(params)
 {
 	use List::Util ();    # max and min are methods here
-	use Term::Fabulous::Check qw(boolean cell_color describe number positive_integer);
+	use Term::Fabulous::Check qw(boolean cell_color describe number one_of optional positive_integer);
+	use Term::Fabulous::Range;
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
 
 	use constant FULL_BLOCK => "\x{2588}";
@@ -36,14 +39,11 @@ class Term::Fabulous::Widget::ProgressBar
 		ascii => [ '#',        '-',        '=' ],
 	);
 
-	my %IS_POSITION = map { $_ => 1 } qw(left right inside);
+	my @VALUE_POSITIONS = qw(left right inside);
 
-	field $min               :param = 0;
-	field $max               :param = 100;
 	field $indeterminate     :param = 0;
 	field $show_value        :param = 1;
 	field $value_position    :param = 'right';
-	field $value_format      :param = undef;
 	field $preferred_columns :param = 20;
 	field $style             :param = 'block';
 	field $fill_glyph        :param = undef;
@@ -54,22 +54,25 @@ class Term::Fabulous::Widget::ProgressBar
 	field $animated          :param = 0;
 	field $separated         :param = 0;
 
-	# The colors come from the theme's progress family unless given.
-	my @COLOR_NAMES = qw(color track_color text_color inside_text_color);
-
-	field $current = 0;
+	field $range;    # a Term::Fabulous::Range without steps: min, max and the value
 	field @segments;    # { value, color }, or empty for a single value
 
-	ADJUST :params ( :$value = undef, :$segments = undef ) {
+	ADJUST :params ( :$min = 0, :$max = 100, :$value_format = undef, :$value = undef, :$segments = undef ) {
 		die ref($self) . ": give 'value' or 'segments', not both"
 			if defined $value && defined $segments;
-		( $min, $max ) = $self->_checked_range( min => $min, max => $max );
+		$range = Term::Fabulous::Range->new(
+			owner          => ref $self,
+			min            => $min,
+			max            => $max,
+			value_format   => $value_format,
+			format_percent => 1,
+			default_format => sub ( $number, $range ) { sprintf '%.0f%%', 100 * $range->fraction_of($number) },
+		);
 		$indeterminate     = boolean( $self, indeterminate => $indeterminate );
 		$show_value        = boolean( $self, show_value    => $show_value );
-		$value_position    = $self->_checked_position($value_position);
-		$value_format      = $self->_checked_format($value_format);
+		$value_position    = one_of( $self, value_position => $value_position, @VALUE_POSITIONS );
 		$preferred_columns = positive_integer( $self, preferred_columns => $preferred_columns );
-		$style             = $self->_checked_style($style);
+		$style             = one_of( $self, style => $style, keys %GLYPHS_OF_STYLE );
 		$fill_glyph        = $self->_checked_glyph( fill_glyph   => $fill_glyph );
 		$track_glyph       = $self->_checked_glyph( track_glyph  => $track_glyph );
 		$stripe_glyph      = $self->_checked_glyph( stripe_glyph => $stripe_glyph );
@@ -77,35 +80,12 @@ class Term::Fabulous::Widget::ProgressBar
 		$striped           = boolean( $self, striped    => $striped );
 		$animated          = boolean( $self, animated   => $animated );
 		$separated         = boolean( $self, separated  => $separated );
-		$current           = $min;
 		$self->value($value) if defined $value;
 		$self->segments($segments) if defined $segments;
 	}
 
-	method _checked_range (%range) {
-		my ( $low, $high ) = map { number( $self, $_ => $range{$_} ) } qw(min max);
-		die ref($self) . ": min ($low) must be less than max ($high)" unless $low < $high;
-		return ( $low, $high );
-	}
-
-	method _checked_position ($position) {
-		die ref($self) . ": value_position must be left, right or inside, got " . describe($position) unless defined $position && !ref $position && $IS_POSITION{$position};
-		return $position;
-	}
-
-	method _checked_format ($format) {
-		return undef unless defined $format;
-		die ref($self) . ": value_format must be a sprintf format string or a code reference, got " . describe($format) unless ref $format eq 'CODE' || !ref $format;
-		return $format;
-	}
-
-	method _checked_style ($name) {
-		die ref($self) . ": style must be block, line or ascii, got " . describe($name) unless defined $name && !ref $name && $GLYPHS_OF_STYLE{$name};
-		return $name;
-	}
-
 	method _checked_glyph ( $name, $value ) {
-		return defined $value ? Term::Fabulous::Check::glyph( $self, $name => $value ) : undef;
+		return optional( \&Term::Fabulous::Check::glyph, $self, $name => $value );
 	}
 
 	# A segment is { value => ..., color => ... }; the color defaults to
@@ -116,7 +96,7 @@ class Term::Fabulous::Widget::ProgressBar
 		die ref($self) . ": a segment takes only 'value' and 'color', got @unknown" if @unknown;
 		my $amount = number( $self, 'segment value' => $segment->{value} );
 		die ref($self) . ": a segment value must not be negative, got $amount" if $amount < 0;
-		return { value => $amount, color => defined $segment->{color} ? cell_color( $self, 'segment color' => $segment->{color} ) : undef };
+		return { value => $amount, color => optional( \&cell_color, $self, 'segment color' => $segment->{color} ) };
 	}
 
 	# ---------------------------------------------------------------------
@@ -125,17 +105,15 @@ class Term::Fabulous::Widget::ProgressBar
 
 	# The value of a bar with segments is their sum, from min on.
 	method value (@new) {
-		return @segments ? List::Util::min( $max, $min + List::Util::sum0( map { $_->{value} } @segments ) ) : $current unless @new;
-		my $number = number( $self, value => $new[0] );
-		die ref($self) . ": value must be in $min..$max, got $number" if $number < $min || $number > $max;
-		$current  = $number;
+		return @segments ? List::Util::min( $range->max, $range->min + List::Util::sum0( map { $_->{value} } @segments ) ) : $range->value unless @new;
+		$range->set_value( $new[0] );
 		@segments = ();
 		$self->mark_changed;
-		return $current;
+		return $range->value;
 	}
 
 	method fraction () {
-		return ( $self->value - $min ) / ( $max - $min );
+		return $range->fraction_of( $self->value );
 	}
 
 	method percent () {
@@ -153,41 +131,40 @@ class Term::Fabulous::Widget::ProgressBar
 		die ref($self) . ": segments must be an array reference, got " . describe($list) unless ref $list eq 'ARRAY';
 		my @checked = map { $self->_checked_segment($_) } @$list;
 		@segments = @checked;
-		$current  = $min;
+		$range->set_value( $range->min );
 		$self->mark_changed;
 		return [ map { +{%$_} } @segments ];
 	}
 
 	method add_segment ($segment) {
 		push @segments, $self->_checked_segment($segment);
-		$current = $min;
+		$range->set_value( $range->min );
 		$self->mark_changed;
 		return $self;
 	}
 
 	method set_range (%range) {
-		my @unknown = grep { !/\A(?:min|max)\z/ } sort keys %range;
-		die ref($self) . ": set_range takes min and max, got @unknown" if @unknown;
-		( $min, $max ) = $self->_checked_range( min => $min, max => $max, %range );
-		$current = List::Util::min( List::Util::max( $current, $min ), $max );
+		$range->set_range(%range);
 		$self->mark_changed;
 		return $self;
 	}
 
+	method range_properties :common () {
+		return qw(min max);
+	}
+
 	method min (@new) {
 		$self->set_range( min => $new[0] ) if @new;
-		return $min;
+		return $range->min;
 	}
 
 	method max (@new) {
 		$self->set_range( max => $new[0] ) if @new;
-		return $max;
+		return $range->max;
 	}
 
 	method format_value ($number) {
-		my $fraction = ( $number - $min ) / ( $max - $min );
-		return $value_format->( $number, $fraction ) if ref $value_format eq 'CODE';
-		return sprintf $value_format // '%.0f%%', 100 * $fraction;
+		return $range->format_value($number);
 	}
 
 	# ---------------------------------------------------------------------
@@ -200,27 +177,29 @@ class Term::Fabulous::Widget::ProgressBar
 		return $$field_ref;
 	}
 
-	method indeterminate     (@new) { return @new ? $self->_set( \$indeterminate, boolean( $self, indeterminate => $new[0] ) )                  : $indeterminate }
-	method show_value        (@new) { return @new ? $self->_set( \$show_value, boolean( $self, show_value => $new[0] ) )                        : $show_value }
-	method value_position    (@new) { return @new ? $self->_set( \$value_position, $self->_checked_position( $new[0] ) )                        : $value_position }
-	method value_format      (@new) { return @new ? $self->_set( \$value_format, $self->_checked_format( $new[0] ) )                            : $value_format }
-	method preferred_columns (@new) { return @new ? $self->_set( \$preferred_columns, positive_integer( $self, preferred_columns => $new[0] ) ) : $preferred_columns }
-	method style             (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                                    : $style }
-	method fill_glyph        (@new) { return @new ? $self->_set( \$fill_glyph, $self->_checked_glyph( fill_glyph => $new[0] ) )                 : $fill_glyph }
-	method track_glyph       (@new) { return @new ? $self->_set( \$track_glyph, $self->_checked_glyph( track_glyph => $new[0] ) )               : $track_glyph }
-	method stripe_glyph      (@new) { return @new ? $self->_set( \$stripe_glyph, $self->_checked_glyph( stripe_glyph => $new[0] ) )             : $stripe_glyph }
-	method fractional        (@new) { return @new ? $self->_set( \$fractional, boolean( $self, fractional => $new[0] ) )                        : $fractional }
-	method striped           (@new) { return @new ? $self->_set( \$striped, boolean( $self, striped => $new[0] ) )                              : $striped }
-	method animated          (@new) { return @new ? $self->_set( \$animated, boolean( $self, animated => $new[0] ) )                            : $animated }
-	method separated         (@new) { return @new ? $self->_set( \$separated, boolean( $self, separated => $new[0] ) )                          : $separated }
-	method color             (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )                           : $self->look_value('color') }
-	method track_color       (@new) { return @new ? $self->set_look( track_color => cell_color( $self, track_color => $new[0] ) )               : $self->look_value('track_color') }
-	method text_color        (@new) { return @new ? $self->set_look( text_color => cell_color( $self, text_color => $new[0] ) )                 : $self->look_value('text_color') }
-	method inside_text_color (@new) { return @new ? $self->set_look( inside_text_color => cell_color( $self, inside_text_color => $new[0] ) )   : $self->look_value('inside_text_color') }
-
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @COLOR_NAMES );
+	method _set_value_format ($format) {
+		$range->set_value_format($format);
+		$self->mark_changed;
+		return $range->value_format;
 	}
+
+	method indeterminate     (@new) { return @new ? $self->_set( \$indeterminate, boolean( $self, indeterminate => $new[0] ) )                    : $indeterminate }
+	method show_value        (@new) { return @new ? $self->_set( \$show_value, boolean( $self, show_value => $new[0] ) )                          : $show_value }
+	method value_position    (@new) { return @new ? $self->_set( \$value_position, one_of( $self, value_position => $new[0], @VALUE_POSITIONS ) ) : $value_position }
+	method value_format      (@new) { return @new ? $self->_set_value_format( $new[0] )                                                           : $range->value_format }
+	method preferred_columns (@new) { return @new ? $self->_set( \$preferred_columns, positive_integer( $self, preferred_columns => $new[0] ) )   : $preferred_columns }
+	method style             (@new) { return @new ? $self->_set( \$style, one_of( $self, style => $new[0], keys %GLYPHS_OF_STYLE ) )              : $style }
+	method fill_glyph        (@new) { return @new ? $self->_set( \$fill_glyph, $self->_checked_glyph( fill_glyph => $new[0] ) )                   : $fill_glyph }
+	method track_glyph       (@new) { return @new ? $self->_set( \$track_glyph, $self->_checked_glyph( track_glyph => $new[0] ) )                 : $track_glyph }
+	method stripe_glyph      (@new) { return @new ? $self->_set( \$stripe_glyph, $self->_checked_glyph( stripe_glyph => $new[0] ) )               : $stripe_glyph }
+	method fractional        (@new) { return @new ? $self->_set( \$fractional, boolean( $self, fractional => $new[0] ) )                          : $fractional }
+	method striped           (@new) { return @new ? $self->_set( \$striped, boolean( $self, striped => $new[0] ) )                                : $striped }
+	method animated          (@new) { return @new ? $self->_set( \$animated, boolean( $self, animated => $new[0] ) )                              : $animated }
+	method separated         (@new) { return @new ? $self->_set( \$separated, boolean( $self, separated => $new[0] ) )                            : $separated }
+	method color             (@new) { return @new ? $self->set_look( color => $new[0] )                                                           : $self->look_value('color') }
+	method track_color       (@new) { return @new ? $self->set_look( track_color => $new[0] )                                                     : $self->look_value('track_color') }
+	method text_color        (@new) { return @new ? $self->set_look( text_color => $new[0] )                                                      : $self->look_value('text_color') }
+	method inside_text_color (@new) { return @new ? $self->set_look( inside_text_color => $new[0] )                                               : $self->look_value('inside_text_color') }
 
 	method theme_family :common () {
 		return 'progress';
@@ -229,10 +208,10 @@ class Term::Fabulous::Widget::ProgressBar
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			color             => [ 'color',       'normal' ],
-			track_color       => [ 'track',       'normal' ],
-			text_color        => [ 'text',        'normal' ],
-			inside_text_color => [ 'inside_text', 'normal' ],
+			color             => [ 'color',       'normal', 'cell_color' ],
+			track_color       => [ 'track',       'normal', 'cell_color' ],
+			text_color        => [ 'text',        'normal', 'cell_color' ],
+			inside_text_color => [ 'inside_text', 'normal', 'cell_color' ],
 		);
 	}
 
@@ -247,7 +226,6 @@ class Term::Fabulous::Widget::ProgressBar
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(min max value value_position value_format preferred_columns style fill_glyph track_glyph stripe_glyph) ),
 			( map { $_ => 'boolean' } qw(indeterminate show_value fractional striped animated separated) ),
-			( map { $_ => 'color' } @COLOR_NAMES ),
 			segment => \&_parse_segment,
 		);
 	}
@@ -257,15 +235,6 @@ class Term::Fabulous::Widget::ProgressBar
 		my $props = $self->kdl_properties( $kid, qw(value color) );
 		die ref($self) . ": layout property 'segment' needs value=..." unless exists $props->{value};
 		return $self->add_segment($props);
-	}
-
-	# min and max of a layout are one range, so they apply in any order;
-	# the value and the segments come after it.
-	method apply_layout_settings :override (@settings) {
-		my %is_range = map { $_ => 1 } qw(min max);
-		my %range    = map { @$_ } grep { $is_range{ $_->[0] } } @settings;
-		$self->set_range(%range) if %range;
-		return $self->SUPER::apply_layout_settings( grep { !$is_range{ $_->[0] } } @settings );
 	}
 
 	# ---------------------------------------------------------------------
@@ -281,7 +250,7 @@ class Term::Fabulous::Widget::ProgressBar
 	# takes no columns of its own.
 	method _label_columns () {
 		return 0 unless $self->_shows_label && $value_position ne 'inside';
-		return List::Util::max map { string_columns( $self->format_value($_) ) } $min, $max, $self->value;
+		return List::Util::max map { string_columns( $self->format_value($_) ) } $range->min, $range->max, $self->value;
 	}
 
 	# Where the bar starts and how many columns it has.
@@ -329,14 +298,14 @@ class Term::Fabulous::Widget::ProgressBar
 		my $inside = $self->_shows_label && $value_position eq 'inside';
 		my @cells  = map { [ $inside ? ' ' : $track, $self->color_attr( $self->track_color ), $inside ? $self->color_attr( $self->track_color ) : undef, 0 ] } 1 .. $bar;
 
-		my @parts = @segments ? @segments : ( { value => $current - $min, color => undef } );
+		my @parts = @segments ? @segments : ( { value => $range->value - $range->min, color => undef } );
 		my ( $edge, $at ) = ( 0, 0 );
 		foreach my $index ( 0 .. $#parts ) {
 			my $part  = $parts[$index];
 			my $fg    = $self->color_attr( $part->{color} // $self->color );
 			my $bg    = $inside ? $fg : undef;
 			my $start = $at;
-			$edge += $part->{value} / ( $max - $min ) * $bar;
+			$edge += $part->{value} / ( $range->max - $range->min ) * $bar;
 			$edge = $bar if $edge > $bar;
 			my $full = int( $edge + 1e-9 );
 			foreach my $x ( $start .. $full - 1 ) {

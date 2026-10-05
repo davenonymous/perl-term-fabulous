@@ -343,6 +343,7 @@ drawing methods, accepts the same formats: anything
     | rgba() string          | 'rgba(255, 136, 0, 0.5)'        | the 4th value  |
     | hsl() string           | 'hsl(32, 100%, 50%)'            | 255            |
     | hsla() string          | 'hsla(32, 100%, 50%, 50%)'      | the 4th value  |
+    | web color name         | 'DarkOrange' or 'darkorange'    | 255            |
     | array reference        | [ 255, 136, 0 ] or [ ..., 128 ] | 255 or the 4th |
     | hash reference         | { r => 255, g => 136, b => 0 }  | 255 or a/alpha |
     | packed integer         | 0xFF8800                        | 255            |
@@ -353,12 +354,14 @@ drawing methods, accepts the same formats: anything
     `green`, `blue` (and `alpha`). The alpha of `rgba()` and `hsla()`
     can be a channel value (`128`), a fraction with a decimal point
     (`0.5`) or a percentage (`50%`); see ["new" in Term::Fabulous::Color](../Color.md#new) for
-    all rules. Color names as strings (`'orange'`) and three-digit hex
-    (`'#f80'`) are not accepted; use [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md) for
-    named colors. An invalid color dies with the name of the parameter:
+    all rules. A web color name is one of the 148 CSS named colors, in any
+    case (["A string" in Term::Fabulous::Color](../Color.md#a-string) has the grammar,
+    ["COLORS" in Term::Fabulous::Enum::WebColor](../Enum/WebColor.md#colors) the names). Three-digit hex
+    (`'#f80'`) is not accepted. An invalid color dies with the name of the
+    parameter:
 
     ```text
-    Term::Fabulous::Widget::Box: background_color must be a color, got 'red' (unrecognized color string 'red')
+    Term::Fabulous::Widget::Box: background_color must be a color, got 'redd' (unrecognized color string 'redd')
     ```
 
     Colors in some of these formats:
@@ -368,7 +371,7 @@ drawing methods, accepts the same formats: anything
 
     my $box = Term::Fabulous::Widget::Box->new(
             background_color => '#14192b',
-            border_color     => Term::Fabulous::Enum::WebColor->SteelBlue,
+            border_color     => Term::Fabulous::Enum::WebColor->SteelBlue,    # or 'SteelBlue'
     );
     my $text = Term::Fabulous::Widget::Text->new( text => 'Hello', text_color => 'hsl(210, 20%, 90%)' );
     ```
@@ -386,10 +389,11 @@ drawing methods, accepts the same formats: anything
     background_color "#14192b"
     text_color "rgb(220, 220, 220)"
     border color="hsl(210, 80%, 60%)"
+    text_color "SteelBlue"
     ```
 
-    For a named color, write its hex value; the
-    [table of named colors](../Enum/WebColor.md#colors) lists them.
+    The [table of named colors](../Enum/WebColor.md#colors)
+    lists the web color names.
 
 The program `examples/colors.pl` shows one orange in six formats, the
 color functions of ["Working with colors"](#working-with-colors), red backgrounds with less
@@ -402,13 +406,15 @@ and less alpha, and the terminal's default text color:
 ## Named colors
 
 [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md) has the 148 named colors of CSS as
-[Term::Fabulous::Color](../Color.md) objects. Give one wherever a color is
+[Term::Fabulous::Color](../Color.md) objects. Give one, or its name as a string in
+any case (`'MidnightBlue'`, `'midnightblue'`), wherever a color is
 expected, or derive new colors from it:
 
 ```perl
 use Term::Fabulous::Enum::WebColor;
 
 my $box = Term::Fabulous::Widget::Box->new( background_color => Term::Fabulous::Enum::WebColor->MidnightBlue );
+my $same = Term::Fabulous::Widget::Box->new( background_color => 'MidnightBlue' );
 my $by_name = Term::Fabulous::Enum::WebColor->from_name('Tomato');    # undef for unknown names
 ```
 
@@ -513,9 +519,10 @@ input widgets. Three parameters control it:
 
 - `border_style`
 
-    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item that decides the characters
-    of all four sides; `border_style_top`, `border_style_right`,
-    `border_style_bottom` and `border_style_left` set one side each. See
+    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item, or its name such as
+    `'Round'`, that decides the characters of all four sides;
+    `border_style_top`, `border_style_right`, `border_style_bottom` and
+    `border_style_left` set one side each. See
     ["Border styles"](#border-styles) and ["Use a different border style on each side"](#use-a-different-border-style-on-each-side).
 
 - `border_color`
@@ -775,6 +782,14 @@ with the parameter's name:
 $button->border_color('#ff5050');    # red under every theme
 $button->reset_look('border_color');  # the theme's again
 ```
+
+`undef` is not the way back: most color accessors die for it, with a
+message that names `reset_look` (`undef` switches a look off where a
+widget allows that, such as a button's `focus_border_color`).
+`reset_look` also takes the looks a widget hands to its parts: the
+colors of a [Term::Fabulous::Widget::Tabs](../Widget/Tabs.md) (kept by its bar) and the
+scrollbar colors of a [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) (kept by
+both scrollbars).
 
 Only the colors and border styles are themed. Layout, text and the
 glyphs of a widget (the marks of a check box, the frames of a

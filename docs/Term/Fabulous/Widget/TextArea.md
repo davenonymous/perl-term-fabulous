@@ -98,7 +98,9 @@ other Box parameters), plus the ones below. Unknown parameters die.
     A boolean, stored as 1 or 0; a reference dies. Default: 1. When true, a scrollbar is
     shown in the rightmost column while the text has more rows than the
     area; it then takes one column from the text. The scrollbar only shows
-    the position; it cannot be dragged.
+    the position; it cannot be dragged. It is drawn like every scrollbar
+    ([Term::Fabulous::Widget::Scrollbar](Scrollbar.md)), in the theme's `scrollbar.track`
+    and `scrollbar.thumb` colors.
 
 # METHODS
 

@@ -90,7 +90,7 @@ subtest 'invalid input dies' => sub {
 	like dies { histogram( bin_width => -1 ) },                     qr/bin_width must be a positive number or undef, got '-1'/,               'a negative bin width';
 	like dies { histogram( range     => [ 5, 1 ] ) },               qr/range must be an array reference \[ low, high \] with low below high/, 'a reversed range';
 	like dies { histogram( range     => [1] ) },                    qr/range must be an array reference/,                                     'a range of one value';
-	like dies { histogram( measure   => 'sum' ) },                  qr/measure must be count, density, percent, got 'sum'/,                   'an unknown measure';
+	like dies { histogram( measure   => 'sum' ) },                  qr/measure must be one of count, density, percent, got 'sum'/,            'an unknown measure';
 	like dies { $chart->cumulative( [] ) }, qr/cumulative/, 'cumulative as an array';
 };
 

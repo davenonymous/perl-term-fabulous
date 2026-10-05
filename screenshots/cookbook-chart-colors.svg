@@ -1241,10 +1241,10 @@
 <text x="507" y="110" textLength="162" class="b" fill="#e5c07b">Colors of your own</text>
 <text x="57" y="146" textLength="9" fill="#777777">9</text>
 <text x="511.5" y="146" text-anchor="middle" fill="#61afef">■</text>
-<text x="525" y="146" textLength="36" fill="#d1d1d1">Plan</text>
+<text x="525" y="146" textLength="36" fill="#d0d0d3">Plan</text>
 <text x="592.5" y="146" text-anchor="middle" fill="#c678dd">■</text>
-<text x="606" y="146" textLength="54" fill="#d1d1d1">Actual</text>
-<text x="714" y="146" textLength="54" fill="#d1d1d1">Target</text>
+<text x="606" y="146" textLength="54" fill="#d0d0d3">Actual</text>
+<text x="714" y="146" textLength="54" fill="#d0d0d3">Target</text>
 <text x="57" y="182" textLength="9" fill="#777777">8</text>
 <text x="507" y="182" textLength="18" fill="#7f848e">10</text>
 <text x="57" y="218" textLength="9" fill="#777777">7</text>

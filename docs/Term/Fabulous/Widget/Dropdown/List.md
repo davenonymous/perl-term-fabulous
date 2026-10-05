@@ -10,7 +10,7 @@ each time it opens, adds it as a floating child of itself (so it is
 drawn over the other widgets, attached below or above the dropdown), and
 removes it when it closes.
 
-The list is a [Term::Fabulous::Widget::Canvas](../Canvas.md) that paints the
+The list is a [Term::Fabulous::Widget::Display](../Display.md) that paints the
 dropdown's options with a one-column margin on both sides, highlights
 one of them, scrolls through them when there are more options than
 rows, and then shows a scrollbar in its rightmost column. It turns mouse
@@ -92,12 +92,16 @@ my $index = $list->option_at_row($row);
 The index of the option shown at a row of the list's content (from 0),
 or `undef` for a row without an option.
 
-## refresh
+## paint, paint\_key, natural\_size
 
-Paints the visible options and, when the list scrolls, the scrollbar,
-while a frame is drawn (see ["refresh" in Term::Fabulous::Widget::Canvas](../Canvas.md#refresh)):
-again whenever what its rows show changed, also when the change came
-from the dropdown (its colors, its highlight, its options).
+The [Term::Fabulous::Widget::Display](../Display.md) interface. `paint` draws the
+visible options and, when the list scrolls, the scrollbar. The paint key
+adds the first option shown, what the shown rows display and the
+scrollbar's colors, so the list paints again whenever that changed, also
+when the change came from the dropdown (its colors, its highlight, its
+options). The natural size (the widest label with its margins and the
+scrollbar column, by `visible_rows`) is used only for an axis the
+dropdown leaves unsized; it always sizes both.
 
 # MOUSE
 

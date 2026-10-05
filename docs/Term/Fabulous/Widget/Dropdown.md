@@ -44,7 +44,10 @@ it does not fit there and there is more room above the dropdown; then it
 opens above. The list shows up to `max_visible_options` options at a
 time; when the terminal has less room on the chosen side, it shrinks to
 that room, but always shows at least one option. It scrolls through the
-rest and has a scrollbar when it scrolls. Choosing an option closes the list.
+rest and has a scrollbar when it scrolls, drawn like every scrollbar
+([Term::Fabulous::Widget::Scrollbar](Scrollbar.md)) in the theme's
+`scrollbar.track` and `scrollbar.thumb` colors. Choosing an option
+closes the list.
 
 Every option has a label (the text shown) and a value (what `value`
 and the `Change` event return). The value defaults to the label.
@@ -81,11 +84,19 @@ Unknown parameters die.
 
     - a string, which is both the label and the value: `'Red'`;
     - an array reference `[ $label, $value ]`: `[ 'Dark green' =` 'green' \]>;
-    - a hash reference with the keys `label` and optionally `value`:
-    `{ label => 'Blue', value => 'blue' }`.
+    - a hash reference with the key `label` and optionally `value` and
+    `disabled`: `{ label => 'Blue', value => 'blue', disabled => 1 }`.
 
     A missing or `undef` value is the label. Labels are character strings;
-    values are strings or numbers. Any other shape dies.
+    values are strings or numbers. Any other shape dies. These are the
+    options of a [Term::Fabulous::Widget::SegmentedControl](SegmentedControl.md) as well (see
+    ["Options" in Term::Fabulous::OptionList](../OptionList.md#options)).
+
+    A disabled option is shown in the open list in the `disabled_color`,
+    but the user cannot choose it: the keys and typing skip it, it is never
+    highlighted, and pressing or releasing the mouse on it does nothing (the
+    list stays open). The program may still select it with `value` or
+    `selected_index`; the list then opens on the first enabled option.
 
 - `value`
 
@@ -179,13 +190,13 @@ The label of the selected option, or `undef` when none is selected.
 ## options
 
 ```perl
-my @options = $dropdown->options;    # ( { label => ..., value => ... }, ... )
+my @options = $dropdown->options;    # ( { label => ..., value => ..., disabled => 0 }, ... )
 $dropdown->options( [ 'One', 'Two', [ Three => 3 ] ] );
 ```
 
 Accessor. Returns the options as a list of hash references with the keys
-`label` and `value` (copies; changing them does not change the
-dropdown). Writing replaces all options (in the formats of the
+`label`, `value` and `disabled` (copies; changing them does not
+change the dropdown). Writing replaces all options (in the formats of the
 `options` parameter), closes the list, and keeps the selection when an
 option with the selected value still exists; otherwise nothing is
 selected afterwards. Writing fires no `Change` event. Returns the new
@@ -259,8 +270,8 @@ also closes the list.
 $dropdown->open;
 ```
 
-Opens the list as the user does, with the selected option (or the first
-one) highlighted. Does nothing when the list is already open, when there
+Opens the list as the user does, with the selected option (or, when it
+is disabled or there is none, the first enabled one) highlighted. Does nothing when the list is already open, when there
 are no options, or while the dropdown is disabled. Returns the dropdown.
 
 ## close
@@ -287,8 +298,9 @@ $dropdown->choose(2);
 ```
 
 Selects the option at an index (from 0) as the user does: closes the
-list and, when the selection changes, fires a `Change` event. Dies if
-the index is not an integer in range. Returns the dropdown.
+list and, when the selection changes, fires a `Change` event. A
+disabled option is not chosen and the list stays as it is. Dies if the
+index is not an integer in range. Returns the dropdown.
 
 ## highlight
 
@@ -298,7 +310,7 @@ $dropdown->highlight(3);
 
 Moves the highlight of the open list to an index (clamped to the
 options) and scrolls it into view. Does nothing while the list is
-closed. Returns the dropdown.
+closed, or for a disabled option. Returns the dropdown.
 
 ## highlighted\_index
 
@@ -312,6 +324,8 @@ list is closed.
 # KEYS
 
 The dropdown uses the keys below while it has the focus and is enabled.
+All of them skip disabled options, as the other widgets with entries do
+(see [Term::Fabulous::Roving](../Roving.md)).
 
 When the list is closed:
 
@@ -403,9 +417,9 @@ which may be repeated and mixed; each adds to the options given before:
 
     One or more options whose value is their label.
 
-- `option "Label" value="v"`
+- `option "Label" value="v" disabled=#true`
 
-    One option; `value=` is optional and defaults to the label.
+    One option; `value=` defaults to the label, `disabled=` to `#false`.
 
 ```kdl
 use Term::Fabulous::Widget::Dropdown as Dropdown

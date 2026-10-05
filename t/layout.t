@@ -97,15 +97,15 @@ subtest 'child alignment' => sub {
 	my $box  = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
 	my $root = build( sprintf $box, "child_alignment x=center\nchild_alignment y=bottom" );
 	is $root->layout->{child_alignment}, { x => CLAY_ALIGN_X_CENTER, y => CLAY_ALIGN_Y_BOTTOM }, 'a second child_alignment node keeps the other key';
-	like dies { build( sprintf $box, 'child_alignment x=middle' ) }, qr/invalid child_alignment x 'middle' \(known: center, left, right\)/, 'an unknown name dies';
+	like dies { build( sprintf $box, 'child_alignment x=middle' ) }, qr/Term::Fabulous::Widget::Box: child_alignment x must be one of center, left, right, got 'middle'/, 'an unknown name dies';
 };
 
 subtest 'flow layout' => sub {
 	my $box  = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
 	my $root = build( sprintf $box, 'layout direction=wrap gap=1 line_gap=2 line_sizing=fit' );
 	is $root->layout, { layout_direction => CLAY_LEFT_TO_RIGHT_WRAP, child_gap => 1, line_gap => 2, line_sizing => CLAY_LINE_SIZING_FIT }, 'direction=wrap with line_gap and line_sizing';
-	like dies { build( sprintf $box, 'layout line_sizing=shrink' ) }, qr/invalid layout line_sizing 'shrink' \(known: fit, grow\)/, 'an unknown line_sizing dies';
-	like dies { build( sprintf $box, 'layout line_gap=-1' ) },        qr/layout line_gap must be a non-negative integer/,           'a negative line_gap dies';
+	like dies { build( sprintf $box, 'layout line_sizing=shrink' ) }, qr/layout line_sizing must be one of fit, grow, got 'shrink'/, 'an unknown line_sizing dies';
+	like dies { build( sprintf $box, 'layout line_gap=-1' ) },        qr/layout line_gap must be a non-negative integer/,            'a negative line_gap dies';
 };
 
 subtest 'stack layout' => sub {
@@ -135,9 +135,9 @@ KDL
 		'a second floating node merges key by key';
 
 	my $box = "use Term::Fabulous::Widget::Box as Box\nBox {\n%s\n}";
-	like dies { build( sprintf $box, 'floating attach_to=element' ) }, qr/floating attach_to=element needs parent_id/,            'attaching to an element needs parent_id';
-	like dies { build( sprintf $box, 'floating element=top' ) },       qr/invalid floating element 'top' \(known: center_bottom/, 'an unknown attach point dies';
-	like dies { build( sprintf $box, 'floating z_index=1.5' ) },       qr/floating z_index must be an integer, got '1\.5'/,       'z_index must be an integer';
+	like dies { build( sprintf $box, 'floating attach_to=element' ) }, qr/floating attach_to=element needs parent_id/,      'attaching to an element needs parent_id';
+	like dies { build( sprintf $box, 'floating element=top' ) },       qr/floating element must be one of center_bottom, /, 'an unknown attach point dies';
+	like dies { build( sprintf $box, 'floating z_index=1.5' ) },       qr/floating z_index must be an integer, got '1\.5'/, 'z_index must be an integer';
 };
 
 subtest 'scroll box' => sub {
@@ -200,7 +200,7 @@ KDL
 
 	my $field = "use Term::Fabulous::Widget::TextField as TextField\nTextField {\n%s\n}";
 	like dies { build( sprintf $field, 'max_length 2' . "\n" . 'value "abc"' ) }, qr/more than max_length 2/, 'a value longer than max_length dies';
-	like dies { build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\toption \"a\" color=1\n}") }, qr/takes one label and an optional value/,
+	like dies { build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\toption \"a\" color=1\n}") }, qr/takes one label and optional value=\.\.\. and disabled=\.\.\./,
 		'an option with an unknown property dies';
 	is build("use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\tvalue \"b\"\n\toptions \"a\" \"b\"\n}")->value, 'b', 'a Dropdown value may come before its options';
 
@@ -232,8 +232,11 @@ KDL
 
 	my $styled = build("use Term::Fabulous::Widget::Text as Text\nText {\n\twrap_mode newlines\n\ttext_alignment right\n}");
 	is [ $styled->wrap_mode, $styled->text_alignment ], [ CLAY_TEXT_WRAP_NEWLINES, CLAY_TEXT_ALIGN_RIGHT ], 'wrap_mode and text_alignment';
-	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\twrap_mode lines\n}") },    qr/invalid wrap_mode 'lines' \(known: newlines, none, words\)/,  'an unknown wrap_mode dies';
-	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext_alignment top\n}") }, qr/invalid text_alignment 'top' \(known: center, left, right\)/, 'an unknown text_alignment dies';
+	is build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext_color SteelBlue\n}")->text_color, [ 70, 130, 180, 255 ], 'a color by its web name';
+	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\twrap_mode lines\n}") }, qr/Term::Fabulous::Widget::Text: wrap_mode must be one of newlines, none, words, got 'lines'/,
+		'an unknown wrap_mode dies';
+	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext_alignment top\n}") }, qr/text_alignment must be one of center, left, right, got 'top'/,
+		'an unknown text_alignment dies';
 
 	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext\n}") },   qr/'text' needs exactly one argument/, 'text without argument';
 	like dies { build("use Term::Fabulous::Widget::Text as Text\nText {\n\ttext 5\n}") }, qr/'text' needs a string argument/,    'text with a number';

@@ -17,8 +17,8 @@ class Term::Fabulous::Widget::Dialog
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
-	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean color integer);
+	use Scalar::Util qw(blessed weaken);
+	use Term::Fabulous::Check qw(boolean integer);
 	use Term::Fabulous::Event::Close;
 
 	my %DEFAULT_LAYOUT = (
@@ -51,22 +51,17 @@ class Term::Fabulous::Widget::Dialog
 		$close_on_escape = boolean( $self, close_on_escape => $close_on_escape );
 	}
 
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, 'backdrop_color' );
-	}
-
 	method theme_family :common () {
 		return 'dialog';
 	}
 
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, backdrop_color => [ 'backdrop', 'normal' ] );
+		return ( $class->SUPER::themed_params, backdrop_color => [ 'backdrop', 'normal', 'color' ] );
 	}
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			backdrop_color  => 'color',
 			z_index         => 'scalar',
 			close_on_escape => 'boolean',
 		);
@@ -75,7 +70,7 @@ class Term::Fabulous::Widget::Dialog
 	# The backdrop reads the color when a frame is drawn.
 	method backdrop_color (@new) {
 		return $self->look_value('backdrop_color') unless @new;
-		return $self->set_look( backdrop_color => color( $self, backdrop_color => $new[0] ) );
+		return $self->set_look( backdrop_color => $new[0] );
 	}
 
 	method z_index (@new) {
@@ -128,7 +123,7 @@ class Term::Fabulous::Widget::Dialog
 
 		if ( defined $backdrop ) {
 			my $holder = $backdrop->parent;
-			$holder->remove_children_with( sub ($child) { refaddr($child) == refaddr($backdrop) } ) if defined $holder;
+			$holder->remove_child($backdrop) if defined $holder;
 			$backdrop->clear_children;
 		}
 		$self->_restore_focus($ui) if defined $ui;

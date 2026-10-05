@@ -18,7 +18,7 @@ my $bar = Term::Fabulous::Widget::Scrollbar->new(
 
 # DESCRIPTION
 
-A [Term::Fabulous::Widget::Canvas](Canvas.md) one cell thick that shows how far a
+A [Term::Fabulous::Widget::Display](Display.md) one cell thick that shows how far a
 scroll container (a widget with [Clay::UI::Role::Layout::HasScroll](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasScroll),
 such as a [Term::Fabulous::Widget::ScrollBox](ScrollBox.md)) is scrolled along one
 axis. While the content is larger than the container along that axis,
@@ -30,7 +30,8 @@ paints from the scroll state of the frame being drawn, so it is always
 up to date, and it paints again only when the thumb moved. A scrollbar
 for an axis its container does not scroll along (`vertical` or
 `horizontal` of the container is false) is laid out zero cells thick
-and takes no space.
+and takes no space. Without a `sizing` in its `layout` a scrollbar is
+one cell thick and grows along its axis.
 
 A left click on the scrollbar scrolls the container so that the thumb
 is centered under the pointer, and dragging with the left button keeps
@@ -53,7 +54,7 @@ my $bar = Term::Fabulous::Widget::Scrollbar->new( follows => $box, %parameters )
 ```
 
 Unknown parameters die. A Scrollbar takes every parameter of
-[Term::Fabulous::Widget::Canvas](Canvas.md) plus:
+[Term::Fabulous::Widget::Display](Display.md) plus:
 
 - `follows`
 
@@ -78,7 +79,7 @@ Unknown parameters die. A Scrollbar takes every parameter of
 
 # METHODS
 
-A Scrollbar has all methods of [Term::Fabulous::Widget::Canvas](Canvas.md) plus:
+A Scrollbar has all methods of [Term::Fabulous::Widget::Display](Display.md) plus:
 
 ## axis
 
@@ -117,6 +118,30 @@ The scroll position along the axis (Clay's, 0 or negative; see
 the thumb on a cell of the track, counted from the top or the left, or
 `undef` when there is nothing to scroll. A click on the scrollbar
 scrolls to this position.
+
+# CLASS METHODS
+
+## paint\_track
+
+```perl
+Term::Fabulous::Widget::Scrollbar->paint_track(
+        $canvas,
+        axis            => 'vertical',            # or 'horizontal'
+        at              => $canvas->columns - 1,  # the column (a row for horizontal)
+        thumb           => scroll_thumb( $content, $viewport, $offset, $canvas->rows ),
+        track_attr      => $canvas->color_attr( $canvas->family_look( scrollbar => 'track' ) ),
+        thumb_attr      => $canvas->color_attr( $canvas->family_look( scrollbar => 'thumb' ) ),
+        background_attr => undef,                 # optional
+);
+```
+
+Paints a track with its thumb along a whole column (or row) of any
+[Term::Fabulous::Widget::Canvas](Canvas.md), in the glyphs of a Scrollbar: what a
+Scrollbar paints, for a widget that draws its own scrollbar, as
+[Term::Fabulous::Widget::TextArea](TextArea.md) and the list of a
+[Term::Fabulous::Widget::Dropdown](Dropdown.md) do. `thumb` is
+`[ $first_cell, $cells ]`, as ["scroll\_thumb" in Term::Fabulous::Viewport](../Viewport.md#scroll_thumb)
+returns it; the colors are termbox2 attributes. Unknown arguments die.
 
 # EVENTS
 

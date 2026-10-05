@@ -10,15 +10,15 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 class Term::Fabulous::Widget::Table::Column :strict(params) {
-	use Term::Fabulous::Check qw(boolean sizing string);
+	use Term::Fabulous::Check qw(boolean describe one_of sizing string);
 	use Term::Fabulous::Widget::Table::Style qw(style_hash);
 	use Term::Fabulous::Widget::Table::Value qw(is_blank number_of date_epoch compare_values natural_compare);
 
-	my %IS_TYPE      = map { $_ => 1 } qw(string number date);
-	my %IS_ALIGN     = map { $_ => 1 } qw(left center right);
-	my %IS_WRAP      = map { $_ => 1 } qw(words newlines none);
-	my %IS_FILTER_ON = map { $_ => 1 } qw(value display);
-	my %COMPARATOR   = (
+	my @TYPES      = qw(string number date);
+	my @ALIGNS     = qw(left center right);
+	my @WRAPS      = qw(words newlines none);
+	my @FILTER_ONS = qw(value display);
+	my %COMPARATOR = (
 		string  => sub ( $left, $right ) { compare_values( string => $left, $right ) },
 		natural => \&natural_compare,
 		number  => sub ( $left, $right ) { compare_values( number => $left, $right ) },
@@ -70,23 +70,23 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 			header_style => $header_style, visible    => $visible,
 		);
 
-		die "Term::Fabulous::Widget::Table::Column: key must be a non-empty string, got " . _describe($key)
+		die "Term::Fabulous::Widget::Table::Column: key must be a non-empty string, got " . describe($key)
 			unless defined $key && !ref $key && length $key;
 		$title = string( $self, title => $title // $key );
-		die "Term::Fabulous::Widget::Table::Column '$key': type must be 'string', 'number' or 'date', got " . _describe($type) unless defined $type && $IS_TYPE{$type};
+		my $owner = "Term::Fabulous::Widget::Table::Column '$key'";
+		one_of( $owner, type => $type, @TYPES );
 		$align        //= $type eq 'number' ? 'right' : 'left';
 		$header_align //= $align;
 		foreach my $setting ( [ align => $align ], [ header_align => $header_align ] ) {
-			die "Term::Fabulous::Widget::Table::Column '$key': $setting->[0] must be 'left', 'center' or 'right', got " . _describe( $setting->[1] )
-				unless $IS_ALIGN{ $setting->[1] };
+			one_of( $owner, @$setting, @ALIGNS );
 		}
 		$width = sizing( $self, 'width', $width );
-		die "Term::Fabulous::Widget::Table::Column '$key': wrap must be 'words', 'newlines' or 'none', got " . _describe($wrap) unless defined $wrap && $IS_WRAP{$wrap};
+		one_of( $owner, wrap => $wrap, @WRAPS );
 		$sortable   = boolean( $self, sortable   => $sortable );
 		$filterable = boolean( $self, filterable => $filterable );
 		$visible    = boolean( $self, visible    => $visible );
 		$filter_on //= $type eq 'string' ? 'display' : 'value';
-		die "Term::Fabulous::Widget::Table::Column '$key': filter_on must be 'value' or 'display', got " . _describe($filter_on) unless $IS_FILTER_ON{$filter_on};
+		one_of( $owner, filter_on => $filter_on, @FILTER_ONS );
 
 		$self->_check_code( value => $value );
 		@_mutators = ref $mutator eq 'ARRAY' ? @$mutator : defined $mutator ? ($mutator) : ();
@@ -99,7 +99,7 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 			$_comparator = undef;
 		}
 		else {
-			die "Term::Fabulous::Widget::Table::Column '$key': compare must be a code reference or one of 'string', 'natural', 'number', 'date', got " . _describe($compare)
+			die "Term::Fabulous::Widget::Table::Column '$key': compare must be a code reference or one of 'string', 'natural', 'number', 'date', got " . describe($compare)
 				unless defined $compare && !ref $compare && $COMPARATOR{$compare};
 			$_comparator = $compare;
 		}
@@ -108,15 +108,9 @@ class Term::Fabulous::Widget::Table::Column :strict(params) {
 		$header_style = style_hash( $self, "column '$key' header_style", header => $header_style );
 	}
 
-	sub _describe ($thing) {
-		return 'undef' unless defined $thing;
-		return ref($thing) . ' reference' if ref $thing;
-		return "'$thing'";
-	}
-
 	method _check_code ( $name, $code ) {
 		return if !defined $code || ref $code eq 'CODE';
-		die "Term::Fabulous::Widget::Table::Column '$key': $name must be a code reference, got " . _describe($code);
+		die "Term::Fabulous::Widget::Table::Column '$key': $name must be a code reference, got " . describe($code);
 	}
 
 	# A new column with some parameters changed.

@@ -41,14 +41,6 @@ style name such as `'Heavy'`, or `'none'` for no line, which is the
 and invalid values die with a message that starts with `$owner`'s class
 and names `$name`.
 
-## border\_style\_of
-
-```perl
-my $style = border_style_of( $owner, $name, 'Double' );
-```
-
-One line style as ["style\_hash"](#style_hash) reads it.
-
 ## merge\_styles
 
 ```perl

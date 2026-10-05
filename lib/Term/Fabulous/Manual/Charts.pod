@@ -86,7 +86,7 @@ C<put> sets one cell, C<put_text> writes a string from a cell to the
 right (without wrapping), C<fill> fills a rectangle with one character,
 C<erase> unsets one cell and C<clear> unsets them all. An unset cell
 shows the canvas's background (or that of its nearest ancestor with
-one). The drawing methods return the canvas, so calls chain, and a
+one, or the screen color). The drawing methods return the canvas, so calls chain, and a
 change appears in the next frame, also when it is drawn from a timer.
 
 	$canvas->put( 5, 2, '@', 0xFFFF00 );                    # one cell, yellow
@@ -418,9 +418,11 @@ own (L<Term::Fabulous::Chart::Palette>).
 	);
 
 A chart has no background of its own by default: it draws on the
-background of its nearest ancestor with an opaque one. Its title,
-legend text, tick labels, axis and grid lines are mixed from that
-background and a light or dark ink, so a chart suits any panel. The
+background of its nearest ancestor with an opaque one, or on the screen
+color of the theme (see L<Term::Fabulous::Widget/background_below>).
+Its title, legend text, tick labels, axis and grid lines are mixed from
+that background and a light or dark ink, so a chart suits any panel and
+any theme. The
 C<theme> chooses the ink and the palette steps; C<auto> (the default)
 picks the C<light> theme on a light background by itself, as the chart
 on the light panel in the picture above does. C<title_color>,

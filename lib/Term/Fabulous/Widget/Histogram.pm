@@ -18,7 +18,7 @@ class Term::Fabulous::Widget::Histogram
 	use Carp qw(croak);
 	use List::Util ();
 	use POSIX qw(ceil floor);
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean one_of);
 	use Term::Fabulous::Chart::Format qw(format_value);
 	use Term::Fabulous::Chart::Transform qw(apply_transforms);
 	use Term::Fabulous::Widget::Table::Value qw(number_of);
@@ -28,7 +28,7 @@ class Term::Fabulous::Widget::Histogram
 		OVERLAP_OPACITY => 0.6,
 	};
 
-	my %IS_MEASURE = map { $_ => 1 } qw(count percent density);
+	my @MEASURE = qw(count percent density);
 
 	field $bins       :param = 'auto';
 	field $bin_width  :param = undef;
@@ -40,7 +40,7 @@ class Term::Fabulous::Widget::Histogram
 		$bins       = $self->_checked_bins($bins);
 		$bin_width  = $self->_checked_bin_width($bin_width);
 		$range      = $self->_checked_range($range);
-		$measure    = $self->_check_choice( measure => $measure, \%IS_MEASURE );
+		$measure    = one_of( $self, measure => $measure, @MEASURE );
 		$cumulative = boolean( $self, cumulative => $cumulative );
 	}
 
@@ -72,10 +72,10 @@ class Term::Fabulous::Widget::Histogram
 		return $value;
 	}
 
-	method bins       (@new) { return @new ? $self->_set( \$bins,       $self->_checked_bins( $new[0] ) )                          : $bins }
-	method bin_width  (@new) { return @new ? $self->_set( \$bin_width,  $self->_checked_bin_width( $new[0] ) )                     : $bin_width }
-	method measure    (@new) { return @new ? $self->_set( \$measure,    $self->_check_choice( measure => $new[0], \%IS_MEASURE ) ) : $measure }
-	method cumulative (@new) { return @new ? $self->_set( \$cumulative, boolean( $self, cumulative => $new[0] ) )                  : $cumulative }
+	method bins       (@new) { return @new ? $self->_set( \$bins,       $self->_checked_bins( $new[0] ) )               : $bins }
+	method bin_width  (@new) { return @new ? $self->_set( \$bin_width,  $self->_checked_bin_width( $new[0] ) )          : $bin_width }
+	method measure    (@new) { return @new ? $self->_set( \$measure,    one_of( $self, measure => $new[0], @MEASURE ) ) : $measure }
+	method cumulative (@new) { return @new ? $self->_set( \$cumulative, boolean( $self, cumulative => $new[0] ) )       : $cumulative }
 
 	method range (@new) {
 		return defined $range ? [@$range] : undef unless @new;

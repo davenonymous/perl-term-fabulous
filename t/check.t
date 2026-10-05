@@ -24,11 +24,12 @@ my @accepted = (
 	[ boolean              => undef,                      0 ],
 	[ glyph                => "\x{2501}",                 "\x{2501}" ],
 	[ glyph                => "e\x{301}",                 "e\x{301}" ],
-	[ color                => '#ff8800',                  [ 255, 136, 0,  255 ] ],
-	[ color                => [ 1, 2, 3, 4 ],             [ 1,   2,   3,  4 ] ],
-	[ color                => { r => 1, g => 2, b => 3 }, [ 1,   2,   3,  255 ] ],
-	[ cell_color           => 0x102030,                   [ 16,  32,  48, 255 ] ],
-	[ cell_color           => 'rgb(255, 0, 0)',           [ 255, 0,   0,  255 ] ],
+	[ color                => '#ff8800',                  [ 255, 136, 0,   255 ] ],
+	[ color                => [ 1, 2, 3, 4 ],             [ 1,   2,   3,   4 ] ],
+	[ color                => { r => 1, g => 2, b => 3 }, [ 1,   2,   3,   255 ] ],
+	[ color                => 'steelblue',                [ 70,  130, 180, 255 ] ],
+	[ cell_color           => 0x102030,                   [ 16,  32,  48,  255 ] ],
+	[ cell_color           => 'rgb(255, 0, 0)',           [ 255, 0,   0,   255 ] ],
 );
 
 # [ check, value, the expectation the message names ]
@@ -69,6 +70,51 @@ subtest 'sizing' => sub {
 	like dies { $sizing->( 'My::Widget', width => 'fit(5, 2)' ) },    qr/width minimum 5 is greater than maximum 2/,               'a minimum above the maximum dies';
 	like dies { $sizing->( 'My::Widget', width => 'percent(101)' ) }, qr/width percentage must be in 0\.\.100/,                    'a percentage above 100 dies';
 	like dies { $sizing->( 'My::Widget', width => { kind => 1 } ) },  qr/\AMy::Widget: invalid width: /,                           'an invalid hash dies';
+};
+
+subtest 'one_of' => sub {
+	my $one_of = \&Term::Fabulous::Check::one_of;
+	is $one_of->( 'My::Widget', side => 'left', qw(top right bottom left) ), 'left', 'an allowed word is returned';
+	like dies { $one_of->( 'My::Widget', side => 'middle', qw(top right bottom left) ) }, qr/\AMy::Widget: side must be one of bottom, left, right, top, got 'middle' at /,
+		'the message lists the allowed words sorted';
+	like dies { $one_of->( 'My::Widget', side => undef,   qw(top) ) }, qr/side must be one of top, got undef/,              'undef dies';
+	like dies { $one_of->( 'My::Widget', side => ['top'], qw(top) ) }, qr/side must be one of top, got an ARRAY reference/, 'a reference dies';
+};
+
+subtest 'border_style' => sub {
+	my $border_style = \&Term::Fabulous::Check::border_style;
+	my $Style        = 'Term::Fabulous::Enum::BorderStyle';
+	ref_is $border_style->( 'My::Widget', style => $Style->Round ), $Style->Round,  'an item';
+	ref_is $border_style->( 'My::Widget', style => 'Double' ),      $Style->Double, 'a name';
+	like dies { $border_style->( 'My::Widget', style => 'double' ) }, qr/\AMy::Widget: style must be a border style or its name, got 'double' \(known: Ascii, Blank, Block, /,
+		'names are case sensitive; the message lists them';
+	like dies { $border_style->( 'My::Widget', style => 'none' ) }, qr/style must be a border style or its name, got 'none'/, "'none' only where an option allows it";
+	ref_is $border_style->( 'My::Widget', style => 'none', none => $Style->Hidden ), $Style->Hidden, "'none' means what the option says";
+	is $border_style->( 'My::Widget', style => 'none', none => undef ), undef, 'also undef';
+	like dies { $border_style->( 'My::Widget', style => 'Wavy', none => undef ) }, qr/style must be a border style, its name or 'none', got 'Wavy'/, "the message names 'none' then";
+	ref_is $border_style->( 'My::Widget', style => 'Heavy', grid => 1 ), $Style->Heavy, 'a style with joints for a grid';
+	like dies { $border_style->( 'My::Widget', style => 'Block', grid => 1 ) },
+		qr/style must be a border style with joints or its name, got 'Block' \(known: Ascii, Dashed, Double, Heavy, Round, Solid\)/, 'a grid takes only styles with joints';
+	like dies { $border_style->( 'My::Widget', style => undef ) }, qr/style must be a border style or its name, got undef/, 'undef dies';
+	like dies { $border_style->( 'My::Widget', style => 'Round', joints => 1 ) }, qr/\ATerm::Fabulous::Check: border_style does not take joints/, 'an unknown option dies';
+};
+
+subtest 'value_format' => sub {
+	my $value_format = \&Term::Fabulous::Check::value_format;
+	my $code         = sub { "$_[0] dB" };
+	is $value_format->( 'My::Widget', value_format => undef ),  undef,  'undef: the default format';
+	is $value_format->( 'My::Widget', value_format => '%d%%' ), '%d%%', 'a sprintf format';
+	ref_is $value_format->( 'My::Widget', value_format => $code ), $code, 'a code reference';
+	like dies { $value_format->( 'My::Widget', value_format => [] ) }, qr/\AMy::Widget: value_format must be a sprintf format string or a code reference, got an ARRAY reference at /,
+		'anything else dies';
+};
+
+subtest 'optional' => sub {
+	my $optional = \&Term::Fabulous::Check::optional;
+	is $optional->( $check{color}, 'My::Widget', accent => undef ),     undef,              'undef stays undef';
+	is $optional->( $check{color}, 'My::Widget', accent => '#ff0000' ), [ 255, 0, 0, 255 ], 'a value is checked';
+	like dies { $optional->( $check{color}, 'My::Widget', accent => 'nope' ) }, qr/\AMy::Widget: accent must be a color, got 'nope'/, 'and dies like the check';
+	is $optional->( \&Term::Fabulous::Check::one_of, 'My::Widget', side => 'top', qw(top bottom) ), 'top', 'further arguments reach the check';
 };
 
 my $owner = bless {}, 'My::Widget';

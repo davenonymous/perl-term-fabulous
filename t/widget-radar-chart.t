@@ -90,11 +90,11 @@ subtest 'invalid input dies' => sub {
 	like dies { radar( series => [ { name => 'X', type => 'bar' } ] ) }, qr/draws series of the types area, line, not 'bar'/, 'a bar series';
 	like dies { radar( series => [ { name => 'X', data => [ [ Weight => 1 ] ] } ] ) }, qr/series 'X' has a value for 'Weight', which is not one of the labels/,
 		'a value for a label the chart does not have';
-	like dies { radar( grid        => 'square' ) }, qr/grid must be circle, none, polygon, got 'square'/,     'an unknown grid';
-	like dies { radar( min         => 'low' ) },    qr/min must be a number or undef, got 'low'/,             'a min that is no number';
-	like dies { radar( ticks       => 0 ) },        qr/ticks must be a positive integer or undef, got '0'/,   'zero ticks';
-	like dies { radar( start_angle => 'north' ) },  qr/start_angle must be a number of degrees, got 'north'/, 'an angle that is no number';
-	like dies { radar( labels      => 'Speed' ) },  qr/labels must be an array reference of strings/,         'labels that are no array';
+	like dies { radar( grid        => 'square' ) }, qr/grid must be one of circle, none, polygon, got 'square'/, 'an unknown grid';
+	like dies { radar( min         => 'low' ) },    qr/min must be a number or undef, got 'low'/,                'a min that is no number';
+	like dies { radar( ticks       => 0 ) },        qr/ticks must be a positive integer or undef, got '0'/,      'zero ticks';
+	like dies { radar( start_angle => 'north' ) },  qr/start_angle must be a number of degrees, got 'north'/,    'an angle that is no number';
+	like dies { radar( labels      => 'Speed' ) },  qr/labels must be an array reference of strings/,            'labels that are no array';
 	like dies { radar()->series_default( curve => 'linear' ) }, qr/unknown series default 'curve'/, 'a series option radar charts do not take';
 };
 

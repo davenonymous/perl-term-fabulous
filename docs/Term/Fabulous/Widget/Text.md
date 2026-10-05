@@ -120,8 +120,9 @@ except `id` also has an accessor of the same name.
     A string naming the widget, for your own use (for example to find a
     Text in a tree built from a layout). Default: none. Unlike a Box's id,
     it is not passed to Clay and does not need to be unique, and
-    ["remove\_child" in Term::Fabulous::Widget](../Widget.md#remove_child) does not remove Text widgets by
-    id. Read it with `$text->id`; there is no writer.
+    ["remove\_child\_with\_id" in Term::Fabulous::Widget](../Widget.md#remove_child_with_id) does not remove Text
+    widgets by id (["remove\_child" in Term::Fabulous::Widget](../Widget.md#remove_child) removes the widget
+    itself). Read it with `$text->id`; there is no writer.
     [`find_by_id`](../Widget.md#find_by_id) finds Text widgets by this id.
 
 - `wrap_mode`

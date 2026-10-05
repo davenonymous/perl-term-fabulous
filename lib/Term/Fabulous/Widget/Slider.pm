@@ -7,154 +7,88 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::HasRange;
 use Term::Fabulous::Widget::Input;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Slider
 	:isa(Term::Fabulous::Widget::Input)
+	:does(Term::Fabulous::Role::HasRange)
 	:strict(params)
 {
 	use List::Util ();    # min and max are methods here
-	use POSIX qw(floor);
-	use Term::Fabulous::Check qw(boolean glyph number positive_integer);
+	use Term::Fabulous::Check qw(boolean glyph positive_integer);
+	use Term::Fabulous::Range;
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 	use Term::Fabulous::Unicode qw(string_columns);
 
-	# Key name => steps (or pages, or the end) the value moves.
-	my %MOVE_BY_KEY = (
-		Left     => [ step => -1 ],
-		Down     => [ step => -1 ],
-		Right    => [ step =>  1 ],
-		Up       => [ step =>  1 ],
-		PageDown => [ page => -1 ],
-		PageUp   => [ page =>  1 ],
-		Home     => [ end  => -1 ],
-		End      => [ end  =>  1 ],
-	);
-
-	field $min               :param = 0;
-	field $max               :param = 100;
-	field $step              :param = 1;
-	field $page_step         :param = undef;
 	field $show_value        :param = 1;
-	field $value_format      :param = undef;
 	field $preferred_columns :param = 20;
 	field $fill_glyph        :param = "\x{2501}";
 	field $track_glyph       :param = "\x{2500}";
 	field $thumb_glyph       :param = "\x{25CF}";
 
-	field $current;
+	field $range;    # a Term::Fabulous::Range: min, max, step and the value
 
-	ADJUST :params ( :$value = undef ) {
+	ADJUST :params ( :$min = 0, :$max = 100, :$step = 1, :$page_step = undef, :$value_format = undef, :$value = undef ) {
 		$show_value        = boolean( $self, show_value => $show_value );
-		$page_step         = $self->_checked_page_step($page_step);
-		$value_format      = $self->_checked_format($value_format);
 		$preferred_columns = positive_integer( $self, preferred_columns => $preferred_columns );
 		$fill_glyph        = glyph( $self, fill_glyph  => $fill_glyph );
 		$track_glyph       = glyph( $self, track_glyph => $track_glyph );
 		$thumb_glyph       = glyph( $self, thumb_glyph => $thumb_glyph );
-		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step );
-		$current = $min;
-		$self->value( $value // $min );
-	}
-
-	# The range with the given parts changed, checked as a whole.
-	method _checked_range (%range) {
-		my ( $low, $high, $increment ) = map { number( $self, $_ => $range{$_} ) } qw(min max step);
-		die "Term::Fabulous::Widget::Slider: min ($low) must be less than max ($high)" unless $low < $high;
-		die "Term::Fabulous::Widget::Slider: step must be positive, got $increment" unless $increment > 0;
-		return ( $low, $high, $increment );
-	}
-
-	method _checked_page_step ($size) {
-		return undef unless defined $size;
-		$size = number( $self, page_step => $size );
-		die "Term::Fabulous::Widget::Slider: page_step must be positive, got $size" unless $size > 0;
-		return $size;
-	}
-
-	method _checked_format ($format) {
-		return undef unless defined $format;
-		die "Term::Fabulous::Widget::Slider: value_format must be a sprintf format string or a code reference"
-			unless ref $format eq 'CODE' || !ref $format;
-		return $format;
+		$range             = Term::Fabulous::Range->new(
+			owner        => ref $self,
+			min          => $min,
+			max          => $max,
+			step         => $step,
+			page_step    => $page_step,
+			value_format => $value_format,
+			value        => $value,
+		);
 	}
 
 	# ---------------------------------------------------------------------
 	# Value
 	# ---------------------------------------------------------------------
 
-	# Digits after the decimal point in the shortest form of a number:
-	# 0.25 has 2, 1e-12 has 12, 1500 has 0.
-	sub _decimal_places ($number) {
-		my ( $mantissa, $exponent ) = sprintf( '%.15g', $number ) =~ /\A-?(\d+(?:\.\d+)?)(?:e([-+]\d+))?\z/
-			or die "Term::Fabulous::Widget::Slider: cannot read the decimal places of $number";
-		my $places = $mantissa =~ /\.(\d+)\z/ ? length $1 : 0;
-		return List::Util::max( 0, $places - ( $exponent // 0 ) );
-	}
-
-	# Digits after the decimal point that values need: enough for the
-	# step and for min, so values stay on the grid and print without
-	# floating-point noise.
-	method _decimals () {
-		return List::Util::max( _decimal_places($step), _decimal_places($min) );
-	}
-
-	# The nearest value on the grid min, min + step, ... inside the range.
-	method _snapped ($number) {
-		my $steps   = floor( ( $number - $min ) / $step + 0.5 );
-		my $snapped = $min + $steps * $step;
-		$snapped -= $step while $snapped > $max + $step / 1e6;
-		$snapped = $min if $snapped < $min;
-		return 0 + sprintf '%.*f', $self->_decimals, $snapped;
-	}
-
 	method value (@new) {
-		return $current unless @new;
-		my $number = number( $self, value => $new[0] );
-		die "Term::Fabulous::Widget::Slider: value must be in $min..$max, got $number" if $number < $min || $number > $max;
-		$current = $self->_snapped($number);
+		return $range->value unless @new;
+		$range->set_value( $new[0] );
 		$self->mark_changed;
-		return $current;
-	}
-
-	# The highest value on the grid; max itself when the range is a whole
-	# number of steps.
-	method _top_value () {
-		return $self->_snapped($max);
+		return $range->value;
 	}
 
 	# Changes min, max and step together, so a new range can be set in one
 	# go whatever the old one was; the value moves into it.
 	method set_range (%range) {
-		my @unknown = grep { !/\A(?:min|max|step)\z/ } sort keys %range;
-		die "Term::Fabulous::Widget::Slider: set_range takes min, max and step, got @unknown" if @unknown;
-		( $min, $max, $step ) = $self->_checked_range( min => $min, max => $max, step => $step, %range );
-		$current = $self->_snapped( List::Util::min( List::Util::max( $current, $min ), $max ) );
+		$range->set_range(%range);
 		$self->mark_changed;
 		return $self;
 	}
 
+	method range_properties :common () {
+		return qw(min max step);
+	}
+
 	method min (@new) {
 		$self->set_range( min => $new[0] ) if @new;
-		return $min;
+		return $range->min;
 	}
 
 	method max (@new) {
 		$self->set_range( max => $new[0] ) if @new;
-		return $max;
+		return $range->max;
 	}
 
 	method step (@new) {
 		$self->set_range( step => $new[0] ) if @new;
-		return $step;
+		return $range->step;
 	}
 
 	method page_step (@new) {
-		return $page_step // List::Util::max( $step, $step * floor( ( $max - $min ) / $step / 10 + 0.5 ) ) unless @new;
-		$page_step = $self->_checked_page_step( $new[0] );
-		return $self->page_step;
+		$range->set_page_step( $new[0] ) if @new;
+		return $range->page_step;
 	}
 
 	method show_value (@new) {
@@ -165,10 +99,10 @@ class Term::Fabulous::Widget::Slider
 	}
 
 	method value_format (@new) {
-		return $value_format unless @new;
-		$value_format = $self->_checked_format( $new[0] );
+		return $range->value_format unless @new;
+		$range->set_value_format( $new[0] );
 		$self->mark_changed;
-		return $value_format;
+		return $range->value_format;
 	}
 
 	method preferred_columns (@new) {
@@ -188,51 +122,32 @@ class Term::Fabulous::Widget::Slider
 		return $$field_ref;
 	}
 
-	# The track color comes from the theme's input.track unless given.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, 'track_color' );
-	}
-
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, track_color => [ 'track', 'normal' ] );
+		return ( $class->SUPER::themed_params, track_color => [ 'track', 'normal', 'cell_color' ] );
 	}
 
 	method track_color (@new) {
-		return @new ? $self->_set_color( track_color => @new ) : $self->look_value('track_color');
+		return @new ? $self->set_look( track_color => $new[0] ) : $self->look_value('track_color');
 	}
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(min max step page_step value value_format preferred_columns fill_glyph track_glyph thumb_glyph) ),
-			show_value  => 'boolean',
-			track_color => 'color',
+			show_value => 'boolean',
 		);
 	}
 
-	# min, max and step of a layout are one range, so they apply in any
-	# order; the value comes after it.
-	method apply_layout_settings :override (@settings) {
-		my %is_range = map { $_ => 1 } qw(min max step);
-		my %range    = map { @$_ } grep { $is_range{ $_->[0] } } @settings;
-		$self->set_range(%range) if %range;
-		return $self->SUPER::apply_layout_settings( grep { !$is_range{ $_->[0] } } @settings );
-	}
-
 	method format_value ($number) {
-		return $value_format->($number) if ref $value_format eq 'CODE';
-		return sprintf $value_format, $number if defined $value_format;
-		return sprintf '%.*f', $self->_decimals, $number;
+		return $range->format_value($number);
 	}
 
-	# The user moved the value: snap, and fire Change if it moved.
-	# Returns 1 when the value changed.
-	method _move_to ($number) {
-		my $snapped = $self->_snapped( List::Util::min( List::Util::max( $number, $min ), $max ) );
-		return 0 if $snapped == $current;
-		$current = $snapped;
+	# The user moved the value: fire Change if it moved. Returns 1 when
+	# the value changed.
+	method _moved ($changed) {
+		return 0 unless $changed;
 		$self->mark_changed;
-		$self->fire_change($current);
+		$self->fire_change( $range->value );
 		return 1;
 	}
 
@@ -241,15 +156,8 @@ class Term::Fabulous::Widget::Slider
 	# ---------------------------------------------------------------------
 
 	method handle_key ($event) {
-		my $name = $event->main_key_name // return 0;
-		my $move = $MOVE_BY_KEY{$name}   // return 0;
-		my ( $unit, $direction ) = @$move;
-		$self->_move_to(
-			  $unit eq 'step' ? $current + $direction * $step
-			: $unit eq 'page' ? $current + $direction * $self->page_step
-			: $direction < 0  ? $min
-			:                   $self->_top_value
-		);
+		my $changed = $range->move_by_key( $event->main_key_name ) // return 0;
+		$self->_moved($changed);
 		return 1;
 	}
 
@@ -258,7 +166,7 @@ class Term::Fabulous::Widget::Slider
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
 
 			# At min or max the notch is left to a scroll box.
-			return 0 unless $self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? $step : -$step ) );
+			return 0 unless $self->_moved( $range->move_by( $key == TB_KEY_MOUSE_WHEEL_UP ? 1 : -1 ) );
 			$event->use_wheel;
 			return 1;
 		}
@@ -267,7 +175,7 @@ class Term::Fabulous::Widget::Slider
 		my ($column) = $self->cell_at($event);
 		my $track = $self->_track_columns;
 		return 1 unless defined $column && $column < $track;
-		$self->_move_to( $track > 1 ? $min + ( $max - $min ) * $column / ( $track - 1 ) : $min );
+		$self->_moved( $range->move_to( $range->min + ( $track > 1 ? ( $range->max - $range->min ) * $column / ( $track - 1 ) : 0 ) ) );
 		return 1;
 	}
 
@@ -279,7 +187,7 @@ class Term::Fabulous::Widget::Slider
 	# track keeps its length while the value changes.
 	method _label_columns () {
 		return 0 unless $show_value;
-		return List::Util::max map { string_columns( $self->format_value($_) ) } $min, $self->_top_value, $current;
+		return List::Util::max map { string_columns( $self->format_value($_) ) } $range->min, $range->top_value, $range->value;
 	}
 
 	method _track_columns () {
@@ -295,14 +203,14 @@ class Term::Fabulous::Widget::Slider
 	method paint () {
 		my $bg    = $self->paint_focus_background;
 		my $track = $self->_track_columns;
-		my $thumb = int( ( $track - 1 ) * ( $current - $min ) / ( $max - $min ) + 0.5 );
+		my $thumb = int( ( $track - 1 ) * $range->fraction + 0.5 );
 
 		$self->fill_attrs( 0,          0, $thumb,              $fill_glyph,  $self->accent_attr,                                                                  $bg );
 		$self->fill_attrs( $thumb + 1, 0, $track - $thumb - 1, $track_glyph, $self->color_attr( $self->is_enabled ? $self->track_color : $self->disabled_color ), $bg );
 		$self->put_attrs( $thumb, 0, $thumb_glyph, $self->is_focused ? $self->foreground_attr : $self->accent_attr, $bg );
 		return unless $show_value;
 
-		my $label = $self->format_value($current);
+		my $label = $self->format_value( $range->value );
 		my $x     = $self->columns - string_columns($label);
 		$self->paint_text( List::Util::max( $x, $track + 1 ), 0, $label, $self->foreground_attr, $bg );
 		return;

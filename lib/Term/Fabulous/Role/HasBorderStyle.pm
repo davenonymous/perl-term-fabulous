@@ -8,22 +8,22 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Object::Pad 0.825;
-use Object::Pad::FieldAttr::Checked;
-use Data::Checks qw(Isa Maybe);
 
 role Term::Fabulous::Role::HasBorderStyle {
-	use Scalar::Util qw(blessed refaddr);
-	use Term::Fabulous::Check qw(glyph);
+	use Scalar::Util qw(refaddr);
+	use Term::Fabulous::Check qw(border_style describe glyph optional);
 	use Term::Fabulous::Enum::BorderStyle;
+
+	# The theme's value of a slot of the widget's family
+	# (Term::Fabulous::Role::Themed): the border.style a side falls back to.
+	method look;
 
 	my @SIDES = qw(left right top bottom);
 
-	field $border_style_top    :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
-	field $border_style_right  :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
-	field $border_style_bottom :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
-	field $border_style_left   :param :Checked( Maybe( Isa('Term::Fabulous::Enum::BorderStyle') ) ) = undef;
-	field $border_corners      :param = undef;
-	field $outer_border_sides  :param = [];
+	# The style the program gave each side, or none.
+	field %_style_of_side;
+	field $border_corners     :param = undef;
+	field $outer_border_sides :param = [];
 
 	my @CORNERS = qw(top_left top_right bottom_left bottom_right);
 
@@ -32,9 +32,19 @@ role Term::Fabulous::Role::HasBorderStyle {
 		$outer_border_sides = _side_names( $self, $outer_border_sides );
 	}
 
+	# A side parameter wins over border_style, which fills the others.
+	ADJUST :params ( :$border_style = undef, :$border_style_top = undef, :$border_style_right = undef, :$border_style_bottom = undef, :$border_style_left = undef ) {
+		my %given = ( top => $border_style_top, right => $border_style_right, bottom => $border_style_bottom, left => $border_style_left );
+		my $all   = optional( \&border_style, $self, border_style => $border_style );
+		foreach my $side (@SIDES) {
+			my $style = optional( \&border_style, $self, "border_style_$side" => $given{$side} );
+			$_style_of_side{$side} = $style // $all;
+		}
+	}
+
 	# A copy of a list of side names, each at most once, in @SIDES order.
 	sub _side_names ( $owner, $sides ) {
-		die ref($owner) . ": outer_border_sides must be an array reference of side names, got " . ( defined $sides ? ( ref $sides ? ref($sides) . ' reference' : "'$sides'" ) : 'undef' )
+		die ref($owner) . ": outer_border_sides must be an array reference of side names, got " . describe($sides)
 			unless ref $sides eq 'ARRAY';
 		my %is_side = map  { $_ => 1 } @SIDES;
 		my @unknown = grep { !defined || ref || !$is_side{$_} } @$sides;
@@ -56,41 +66,37 @@ role Term::Fabulous::Role::HasBorderStyle {
 		return ( grep { $_ eq $side } @$outer_border_sides ) ? 1 : 0;
 	}
 
-	# border_style fills the sides that have no style of their own.
-	ADJUST :params ( :$border_style = undef ) {
-		if ( defined $border_style ) {
-			die "Term::Fabulous::Role::HasBorderStyle: border_style must be a Term::Fabulous::Enum::BorderStyle, got " . ( ref $border_style || "'$border_style'" )
-				unless blessed $border_style && $border_style->isa('Term::Fabulous::Enum::BorderStyle');
+	# Hand-written accessors, so that writing a style marks the widget
+	# changed and reading one answers the style the side is drawn in.
+	method border_style_top    (@new) { return $self->_border_style( top    => @new ) }
+	method border_style_right  (@new) { return $self->_border_style( right  => @new ) }
+	method border_style_bottom (@new) { return $self->_border_style( bottom => @new ) }
+	method border_style_left   (@new) { return $self->_border_style( left   => @new ) }
 
-			foreach my $side (@SIDES) {
-				my $accessor = "border_style_$side";
-				$self->$accessor($border_style) unless defined $self->$accessor;
-			}
-		}
+	method _border_style ( $side, @new ) {
+		return $self->border_style_of($side) unless @new;
+		$_style_of_side{$side} = optional( \&border_style, $self, "border_style_$side" => $new[0] );
+		$self->mark_changed;
+		return $_style_of_side{$side};
 	}
 
-	# Hand-written accessors rather than :accessor ones, so that writing a
-	# style marks the widget changed.
-	method border_style_top    (@new) { return $self->_set_border_style( top    => \$border_style_top,    @new ) }
-	method border_style_right  (@new) { return $self->_set_border_style( right  => \$border_style_right,  @new ) }
-	method border_style_bottom (@new) { return $self->_set_border_style( bottom => \$border_style_bottom, @new ) }
-	method border_style_left   (@new) { return $self->_set_border_style( left   => \$border_style_left,   @new ) }
+	# The style a side is drawn in: the program's, else the one the widget
+	# derives (derived_border_style), else the theme's border.style for the
+	# widget, else Blank. Term::Fabulous::Render::Border draws with it.
+	method border_style_of ($side) {
+		die ref($self) . ": border_style_of takes a side (@SIDES), got " . describe($side) unless defined $side && !ref $side && exists $_style_of_side{$side};
+		return $_style_of_side{$side} // $self->_derived_border_style($side) // $self->look('border.style') // Term::Fabulous::Enum::BorderStyle->Blank;
+	}
 
-	method _set_border_style ( $side, $field_ref, @new ) {
-		return $$field_ref unless @new;
-		my ($style) = @new;
-		die "Term::Fabulous::Role::HasBorderStyle: border_style_$side must be undef or a Term::Fabulous::Enum::BorderStyle, got " . ( ref $style || "'$style'" )
-			if defined $style && !( blessed $style && $style->isa('Term::Fabulous::Enum::BorderStyle') );
-		$$field_ref = $style;
-		$self->mark_changed;
-		return $$field_ref;
+	method _derived_border_style ($side) {
+		return $self->can('derived_border_style') ? $self->derived_border_style($side) : undef;
 	}
 
 	# A copy of a corner glyph hash: undef, or a hash of single glyphs one
 	# column wide under the names in @CORNERS.
 	sub _corner_glyphs ( $owner, $corners ) {
 		return undef unless defined $corners;
-		die ref($owner) . ": border_corners must be undef or a hash reference of corner glyphs, got " . ( ref $corners ? ref($corners) . ' reference' : "'$corners'" )
+		die ref($owner) . ": border_corners must be undef or a hash reference of corner glyphs, got " . describe($corners)
 			unless ref $corners eq 'HASH';
 		my %is_corner = map  { $_ => 1 } @CORNERS;
 		my @unknown   = grep { !$is_corner{$_} } sort keys %$corners;
@@ -114,10 +120,7 @@ role Term::Fabulous::Role::HasBorderStyle {
 	# The sides whose style is Hidden; they take no space and draw nothing.
 	method _hidden_border_sides () {
 		my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
-		return grep {
-			my $style = $self->${ \"border_style_$_" };
-			defined $style && refaddr($style) == refaddr($hidden);
-		} @SIDES;
+		return grep { refaddr( $self->border_style_of($_) ) == refaddr($hidden) } @SIDES;
 	}
 
 	# Per-side widths of a Clay border_width (a number for all sides, or a
@@ -261,8 +264,12 @@ widget and own the corners: a corner glyph appears where the top or
 bottom row meets a drawn left or right side, taken from the style of
 the top or bottom side. The left and right sides fill the rows between.
 
-=item * A side that has a width but no style is drawn with the C<Blank>
-style, that is with spaces.
+=item * A side is drawn in the style L</border_style_of> answers: its
+own style, else the style the widget derives for it (see
+L</derived_border_style>), else the style the theme gives the
+widget's family (C<border.style>), else the C<Blank> style, that is
+with spaces. A C<Hidden> style from any of these switches the side
+off.
 
 =item * C<border_corners> replaces the glyph of any corner, for example
 to join the box to lines around it (C<\x{251C}> instead of
@@ -323,13 +330,12 @@ composes the role. Unknown values die.
 =item C<border_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item, for example
-C<< Term::Fabulous::Enum::BorderStyle->Round >>; it sets the style of
-every side that has no side parameter of its own. Default: the style
-the theme gives the widget's family, if any (see
-L<Term::Fabulous::Manual::Looks/THEMES>).
-Anything else, including the name of a style as a string, dies. To use
-a name, convert it:
-C<< Term::Fabulous::Enum::BorderStyle->from_name('Round') >>.
+C<< Term::Fabulous::Enum::BorderStyle->Round >>, or its name
+(C<'Round'>, case sensitive); it sets the style of every side that has
+no side parameter of its own. Default: the style the theme gives the
+widget's family, if any (see L<Term::Fabulous::Manual::Looks/THEMES>).
+Anything else dies, listing the known names (see
+L<Term::Fabulous::Check/border_style>).
 
 =item C<border_style_top>
 
@@ -339,8 +345,8 @@ C<< Term::Fabulous::Enum::BorderStyle->from_name('Round') >>.
 
 =item C<border_style_left>
 
-C<undef> or a L<Term::Fabulous::Enum::BorderStyle> item for one side.
-Default: C<undef>. A side parameter wins over C<border_style>:
+C<undef>, a L<Term::Fabulous::Enum::BorderStyle> item or its name, for
+one side. Default: C<undef>. A side parameter wins over C<border_style>:
 
 	border_style      => Term::Fabulous::Enum::BorderStyle->Solid,
 	border_style_left => Term::Fabulous::Enum::BorderStyle->Thick,
@@ -392,12 +398,17 @@ construction, call the four side accessors.
 
 =head2 border_style_top
 
-	my $style = $box->border_style_top;
+	my $style = $box->border_style_top;    # the style the top side is drawn in
 	$box->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
+	$box->border_style_top(undef);         # no style of its own: the theme's
 
-Accessor for the style of the top side. Takes and returns C<undef> or
-a L<Term::Fabulous::Enum::BorderStyle> item; anything else dies. The
-change shows in the next frame.
+Accessor for the style of the top side. The writer takes C<undef> (no
+style of its own), a L<Term::Fabulous::Enum::BorderStyle> item or its
+name, anything else dies, and returns the new value. The reader
+returns the style the side is drawn in, as L</border_style_of>: the
+side's own style, else the derived or the theme's style, else
+C<Blank>; it is never C<undef>, like the color readers that return the
+color in use. The change shows in the next frame.
 
 =head2 border_style_right
 
@@ -416,6 +427,19 @@ Accessor for the style of the bottom side, as L</border_style_top>.
 	$box->border_style_left( Term::Fabulous::Enum::BorderStyle->Heavy );
 
 Accessor for the style of the left side, as L</border_style_top>.
+
+=head2 border_style_of
+
+	my $style = $widget->border_style_of('left');
+
+The L<Term::Fabulous::Enum::BorderStyle> item a side (C<top>,
+C<right>, C<bottom> or C<left>; anything else dies) is drawn in: the
+style given to the side (directly or through C<border_style>), else
+the one the widget derives (L</derived_border_style>), else the
+theme's C<border.style> for the widget's family and classes (see
+L<Term::Fabulous::Role::Themed/look>), else C<Blank>. The four side
+readers and L<Term::Fabulous::Render::Border> answer with it, and a
+side it answers C<Hidden> for takes no space (see L</Border space>).
 
 =head2 border_corners
 
@@ -469,6 +493,25 @@ C<border_width> is not modified. You do not call it yourself.
 Called by Clay::UI while it builds the configuration of a frame; it
 adds the border widths of the sides that are not C<Hidden> to the
 padding as described in L</Border space>. You do not call it yourself.
+
+=head1 METHODS A WIDGET DEFINES
+
+=head2 derived_border_style
+
+	# A tab: the bar's line style, except on the side toward the page.
+	method derived_border_style ($side) {
+		return $side eq $page_side ? Term::Fabulous::Enum::BorderStyle->Hidden : $bar->line_style;
+	}
+
+Optional. The style a side without a style of its own is drawn in,
+derived from the widget's surroundings, or C<undef> to leave the side
+to the theme. Read whenever a side's style is read, so it may follow
+other widgets without copying their looks.
+L<Term::Fabulous::Widget::Tabs::Button> and
+L<Term::Fabulous::Widget::Tabs::Page> derive their borders from the
+bar, the option list of a L<Term::Fabulous::Widget::Dropdown> takes the
+dropdown's C<list.border.style>. A style the program gives a side wins
+over it.
 
 =head1 SEE ALSO
 

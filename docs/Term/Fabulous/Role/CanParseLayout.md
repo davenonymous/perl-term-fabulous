@@ -133,8 +133,7 @@ as pairs of a name and how its node is read:
     The node's value, read with ["kdl\_value"](#kdl_value) and turned into
     `[r, g, b, a]` with ["color" in Term::Fabulous::Check](../Check.md#color), so a layout can
     write any color string (`"#ffcc00"`, `"rgb(255, 204, 0)"`,
-    `"hsl(48, 100%, 50%)"`). Color names are not color strings; see
-    [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md) for their values.
+    `"hsl(48, 100%, 50%)"`, `"Gold"`; see ["A string" in Term::Fabulous::Color](../Color.md#a-string)).
 
 - a code reference
 
@@ -153,6 +152,12 @@ silently ignore a misspelled property. A subclass returns its parent's
 table (`$class->SUPER::layout_properties`) plus its own pairs; a
 later pair for a name replaces the parent's. Any other kind dies when a
 layout is applied.
+
+The themed parameters that have a kind (see
+["themed\_params" in Term::Fabulous::Role::Themed](Themed.md#themed_params)) and the looks a widget
+forwards to its parts are layout properties by themselves: a color
+kind is a `'color'` property, every other kind a `'scalar'` one. They
+need no entry here; an entry of the same name replaces theirs.
 
 # METHODS
 
@@ -186,10 +191,12 @@ method apply_layout_settings :override (@settings) {
 Applies the settings in the order given: an accessor call for a simple
 property, the handler for a structured one. Override it to apply related
 values together, so that a layout may give them in any order:
-[Term::Fabulous::Widget::Slider](../Widget/Slider.md) sets `min`, `max` and `step`
-through one range setter, and [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md) sets
-its options before the value that picks one of them. Pass the other
-settings on to `SUPER::apply_layout_settings`.
+[Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md) sets its options before the value
+that picks one of them. Pass the other settings on to
+`SUPER::apply_layout_settings`. For a range (`min`, `max`, `step`
+and the like, set through one range setter) compose
+[Term::Fabulous::Role::HasRange](HasRange.md), which does exactly that, as
+[Term::Fabulous::Widget::Slider](../Widget/Slider.md) does.
 
 # HELPERS
 

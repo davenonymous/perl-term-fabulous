@@ -173,11 +173,14 @@ Appends pages. Dies for anything but a
 a Tabs already. The first enabled page added becomes the active one,
 unless a page asks for it with `active => 1`. Returns the Tabs.
 
-## remove\_child, remove\_children\_with, clear\_children
+## remove\_child, remove\_child\_with\_id, remove\_children\_with, clear\_children
 
-As in [Term::Fabulous::Widget](../Widget.md), for the pages (also those not shown).
-When the active page is removed, the first enabled page left becomes
-the active one. Fires nothing.
+As in [Term::Fabulous::Widget](../Widget.md), for the pages (also those not shown);
+`remove_child` dies for anything but a widget and ignores widgets that
+are not pages of this Tabs. When the active page is removed, the first
+enabled page left becomes the active one. Fires nothing. `children`
+and `has_child` see the bar and the box that holds the shown page, not
+the pages.
 
 ## pages
 
@@ -308,7 +311,7 @@ $tabs->line_style('Heavy');
 ```
 
 Accessor for the `line_style` parameter; the reader returns the
-style item. Restyles the pages as well.
+style item. The borders of the pages follow it.
 
 ## line\_color
 
@@ -317,8 +320,10 @@ $tabs->line_color('#5a606e');
 ```
 
 Accessor for the `line_color` parameter. The reader returns
-`[r, g, b, a]`; an invalid color dies and leaves the old one.
-Restyles the pages as well.
+`[r, g, b, a]`; an invalid color dies and leaves the old one, and so
+does `undef`. The borders of the pages follow it. The bar keeps the
+colors and the line style; `$tabs->reset_look('line_color')`
+returns them to the theme (see ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look)).
 
 ## text\_color
 

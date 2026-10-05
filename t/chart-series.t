@@ -35,7 +35,7 @@ subtest 'construction' => sub {
 
 	like dies { series( name  => '' ) },      qr/\AChart: a series name must be a non-empty string, got ''/,                          'an empty name dies';
 	like dies { series( name  => [] ) },      qr/a series name must be a non-empty string, got an ARRAY reference/,                   'so does a reference';
-	like dies { series( type  => 'pie' ) },   qr/series 'CPU' has an unknown type 'pie' \(known: line, area, bar, scatter\)/,         'an unknown type dies';
+	like dies { series( type  => 'pie' ) },   qr/\AChart: type of series 'CPU' must be one of area, bar, line, scatter, got 'pie'/,   'an unknown type dies';
 	like dies { series( shape => 'round' ) }, qr/series 'CPU' does not take shape \(known: name, type, data, color, marker, curve, /, 'an unknown option dies';
 };
 
@@ -76,7 +76,7 @@ subtest 'options' => sub {
 	my @cases = (
 		[ 'a marker the type cannot draw with', [ marker       => 'block' ],  qr/\AChart: marker of series 'CPU' must be one of braille, half, quadrant, sextant, box for a line series, got 'block'/ ],
 		[ 'an unknown curve',                   [ curve        => 'smooth' ], qr/curve of series 'CPU' must be a curve name/ ],
-		[ 'an unknown line style',              [ line_style   => 'wavy' ],   qr/line_style of series 'CPU' must be solid, dashed or dotted, got 'wavy'/ ],
+		[ 'an unknown line style',              [ line_style   => 'wavy' ],   qr/line_style of series 'CPU' must be one of dashed, dotted, solid, got 'wavy'/ ],
 		[ 'a tension above 1',                  [ tension      => 1.5 ],      qr/tension of series 'CPU' must be a number from 0 to 1, got '1.5'/ ],
 		[ 'a word as fill_opacity',             [ fill_opacity => 'half' ],   qr/fill_opacity of series 'CPU' must be a number from 0 to 1/ ],
 		[ 'a wide point glyph',                 [ point        => "\x{65E5}" ], qr/point of series 'CPU' must be a single character one column wide/ ],
@@ -160,7 +160,7 @@ subtest 'set_type' => sub {
 	is [ $series->type, $series->option('marker') ], [ 'line', undef ], 'a marker the new type cannot draw with is dropped';
 	$series = series( type => 'area', marker => 'braille' )->set_type('scatter');
 	is $series->option('marker'), 'braille', 'one it can draw with is kept';
-	like dies { $series->set_type('pie') }, qr/series 'CPU' has an unknown type 'pie'/, 'an unknown type dies';
+	like dies { $series->set_type('pie') }, qr/type of series 'CPU' must be one of area, bar, line, scatter, got 'pie'/, 'an unknown type dies';
 };
 
 done_testing;

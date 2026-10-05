@@ -10,6 +10,7 @@ use lib "$FindBin::Bin/lib";
 use Clay::XS qw(sizing_fixed CLAY_TOP_TO_BOTTOM);
 use InputTest;
 use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_DOWN);
+use Term::Fabulous::Layout;
 use Term::Fabulous::Static;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Dropdown;
@@ -34,7 +35,8 @@ sub list_rows {
 
 subtest 'options and value' => sub {
 	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [ 'Red', [ 'Dark green' => 'green' ], { label => 'Blue', value => 'b' } ], value => 'green' );
-	is [ $dropdown->options ], [ { label => 'Red', value => 'Red' }, { label => 'Dark green', value => 'green' }, { label => 'Blue', value => 'b' } ], 'three ways to give options';
+	is [ $dropdown->options ], [ { label => 'Red', value => 'Red', disabled => 0 }, { label => 'Dark green', value => 'green', disabled => 0 }, { label => 'Blue', value => 'b', disabled => 0 } ],
+		'three ways to give options';
 	is [ $dropdown->selected_index, $dropdown->selected_label ], [ 1, 'Dark green' ], 'selected by value';
 
 	$dropdown->options( [ 'Red', [ Green => 'green' ] ] );
@@ -102,6 +104,42 @@ subtest 'mouse' => sub {
 	is $list->top_option, 0, 'and does not scroll';
 	click( $list, 2, 3, key => TB_KEY_MOUSE_RELEASE );
 	is [ $dropdown->is_open, $changes ], [ 0, ['Cyan'] ], 'releasing over an option chooses it';
+};
+
+subtest 'disabled options' => sub {
+	my ( $dropdown, $ui, $changes ) = dropdown();
+	$dropdown->options( [ 'Red', { label => 'Green', disabled => 1 }, 'Blue', { label => 'Cyan', disabled => 1 } ] );
+	is [ map { $_->{disabled} } $dropdown->options ], [ 0, 1, 0, 1 ], 'an option hash takes disabled';
+
+	press( $dropdown, $_ ) foreach qw(Down Down Down End Home);
+	is $changes, [qw(Red Blue Red)], 'the keys skip disabled options, also End';
+	press( $dropdown, 'g' );
+	is $dropdown->value, 'Red', 'and so does typing';
+
+	press( $dropdown, 'Enter' );
+	$ui->draw;
+	my ($list) = @{ $dropdown->children };
+	is( shown($list)->cell( 1, 1 )->[1], $dropdown->color_attr( $dropdown->disabled_color ), 'a disabled option is painted in the disabled color' );
+	press( $dropdown, $_ ) foreach qw(Down End);
+	is $dropdown->highlighted_index, 2, 'the highlight skips them too';
+	click( $list, 2, 1 );
+	is $dropdown->highlighted_index, 2, 'pressing one does not highlight it';
+	click( $list, 2, 1, key => TB_KEY_MOUSE_RELEASE );
+	is [ $dropdown->is_open, $dropdown->value ], [ 1, 'Red' ], 'releasing over one neither chooses it nor closes the list';
+	$dropdown->choose(3);
+	is [ $dropdown->is_open, $dropdown->value ], [ 1, 'Red' ], 'choose refuses it as well';
+	press( $dropdown, 'Escape' );
+
+	$dropdown->value('Green');
+	is [ $dropdown->selected_index, scalar @$changes ], [ 1, 3 ], 'the program can select one, without an event';
+	press( $dropdown, 'Enter' );
+	is $dropdown->highlighted_index, 0, 'the list then opens on the first enabled option';
+	press( $dropdown, 'Escape' );
+
+	my $kdl
+		= Term::Fabulous::Layout->new( string => qq{use Term::Fabulous::Widget::Dropdown as Dropdown\nDropdown {\n\tvalue "b"\n\toption "Red" value="r"\n\toption "Blue" value="b" disabled=#true\n}} )
+		->build;
+	is [ $kdl->value, map { $_->{disabled} } $kdl->options ], [ 'b', 0, 1 ], 'a layout gives disabled options';
 };
 
 subtest 'losing the focus closes the list' => sub {

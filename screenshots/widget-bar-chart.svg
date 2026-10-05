@@ -26,23 +26,23 @@
 <rect x="264" y="276" width="45" height="126" fill="#3987e5"/>
 <rect x="417" y="276" width="45" height="126" fill="#3987e5"/>
 <rect x="111" y="294" width="45" height="108" fill="#3987e5"/>
-<rect x="75" y="194" width="621" height="1" fill="#353535"/>
+<rect x="75" y="194" width="621" height="1" fill="#32323d"/>
 <rect x="570" y="229" width="45" height="11" fill="#3987e5"/>
 <rect x="462" y="236" width="45" height="4" fill="#d95926"/>
 <rect x="309" y="242" width="45" height="16" fill="#d95926"/>
 <rect x="264" y="263" width="45" height="13" fill="#3987e5"/>
-<rect x="75" y="266" width="45" height="1" fill="#353535"/>
-<rect x="156" y="266" width="108" height="1" fill="#353535"/>
-<rect x="354" y="266" width="63" height="1" fill="#353535"/>
-<rect x="507" y="266" width="63" height="1" fill="#353535"/>
-<rect x="660" y="266" width="36" height="1" fill="#353535"/>
+<rect x="75" y="266" width="45" height="1" fill="#32323d"/>
+<rect x="156" y="266" width="108" height="1" fill="#32323d"/>
+<rect x="354" y="266" width="63" height="1" fill="#32323d"/>
+<rect x="507" y="266" width="63" height="1" fill="#32323d"/>
+<rect x="660" y="266" width="36" height="1" fill="#32323d"/>
 <rect x="417" y="274" width="45" height="2" fill="#3987e5"/>
 <rect x="111" y="290" width="45" height="4" fill="#3987e5"/>
-<rect x="75" y="338" width="36" height="1" fill="#353535"/>
-<rect x="201" y="338" width="63" height="1" fill="#353535"/>
-<rect x="354" y="338" width="63" height="1" fill="#353535"/>
-<rect x="507" y="338" width="63" height="1" fill="#353535"/>
-<rect x="660" y="338" width="36" height="1" fill="#353535"/>
+<rect x="75" y="338" width="36" height="1" fill="#32323d"/>
+<rect x="201" y="338" width="63" height="1" fill="#32323d"/>
+<rect x="354" y="338" width="63" height="1" fill="#32323d"/>
+<rect x="507" y="338" width="63" height="1" fill="#32323d"/>
+<rect x="660" y="338" width="36" height="1" fill="#32323d"/>
 <rect x="111" y="402" width="45" height="9" fill="#3987e5"/>
 <rect x="156" y="402" width="45" height="9" fill="#d95926"/>
 <rect x="264" y="402" width="45" height="9" fill="#3987e5"/>
@@ -51,30 +51,30 @@
 <rect x="462" y="402" width="45" height="9" fill="#d95926"/>
 <rect x="570" y="402" width="45" height="9" fill="#3987e5"/>
 <rect x="615" y="402" width="45" height="9" fill="#d95926"/>
-<rect x="75" y="410" width="36" height="1" fill="#5f5f5e"/>
-<rect x="201" y="410" width="63" height="1" fill="#5f5f5e"/>
-<rect x="354" y="410" width="63" height="1" fill="#5f5f5e"/>
-<rect x="507" y="410" width="63" height="1" fill="#5f5f5e"/>
-<rect x="660" y="410" width="36" height="1" fill="#5f5f5e"/>
+<rect x="75" y="410" width="36" height="1" fill="#5c5c64"/>
+<rect x="201" y="410" width="63" height="1" fill="#5c5c64"/>
+<rect x="354" y="410" width="63" height="1" fill="#5c5c64"/>
+<rect x="507" y="410" width="63" height="1" fill="#5c5c64"/>
+<rect x="660" y="410" width="36" height="1" fill="#5c5c64"/>
 </g>
 <g class="terminal">
-<text x="48" y="92" textLength="162" class="b" fill="#f4f4f4">Revenue by quarter</text>
+<text x="48" y="92" textLength="162" class="b" fill="#f3f3f4">Revenue by quarter</text>
 <text x="52.5" y="128" text-anchor="middle" fill="#3987e5">■</text>
-<text x="66" y="128" textLength="36" fill="#d1d1d1">2025</text>
+<text x="66" y="128" textLength="36" fill="#d0d0d3">2025</text>
 <text x="133.5" y="128" text-anchor="middle" fill="#d95926">■</text>
-<text x="147" y="128" textLength="36" fill="#d1d1d1">2026</text>
-<text x="48" y="164" textLength="99" fill="#989898">million EUR</text>
-<text x="624" y="182" textLength="36" fill="#d1d1d1">72.2</text>
-<text x="48" y="200" textLength="18" fill="#989898">75</text>
-<text x="471" y="218" textLength="144" fill="#d1d1d1">61.0        63.4</text>
-<text x="318" y="236" textLength="36" fill="#d1d1d1">58.3</text>
-<text x="165" y="254" textLength="144" fill="#d1d1d1">47.1        51.2</text>
-<text x="426" y="254" textLength="36" fill="#d1d1d1">48.0</text>
-<text x="48" y="272" textLength="18" fill="#989898">50</text>
-<text x="120" y="272" textLength="36" fill="#d1d1d1">42.5</text>
-<text x="48" y="344" textLength="18" fill="#989898">25</text>
-<text x="57" y="416" textLength="9" fill="#989898">0</text>
-<text x="147" y="434" textLength="477" fill="#989898">Q1               Q2               Q3               Q4</text>
+<text x="147" y="128" textLength="36" fill="#d0d0d3">2026</text>
+<text x="48" y="164" textLength="99" fill="#96969c">million EUR</text>
+<text x="624" y="182" textLength="36" fill="#d0d0d3">72.2</text>
+<text x="48" y="200" textLength="18" fill="#96969c">75</text>
+<text x="471" y="218" textLength="144" fill="#d0d0d3">61.0        63.4</text>
+<text x="318" y="236" textLength="36" fill="#d0d0d3">58.3</text>
+<text x="165" y="254" textLength="144" fill="#d0d0d3">47.1        51.2</text>
+<text x="426" y="254" textLength="36" fill="#d0d0d3">48.0</text>
+<text x="48" y="272" textLength="18" fill="#96969c">50</text>
+<text x="120" y="272" textLength="36" fill="#d0d0d3">42.5</text>
+<text x="48" y="344" textLength="18" fill="#96969c">25</text>
+<text x="57" y="416" textLength="9" fill="#96969c">0</text>
+<text x="147" y="434" textLength="477" fill="#96969c">Q1               Q2               Q3               Q4</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

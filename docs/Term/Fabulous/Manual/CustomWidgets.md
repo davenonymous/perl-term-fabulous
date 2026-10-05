@@ -36,7 +36,8 @@ widget classes. Choose the base class by what the widget does:
 
     for a widget that draws itself cell by cell from its own state, such as
     a gauge, a meter or a game board; the built-in
-    [Term::Fabulous::Widget::Divider](../Widget/Divider.md) is one. See
+    [Term::Fabulous::Widget::Divider](../Widget/Divider.md), the charts and the scrollbar are
+    ones. See
     ["A widget that draws itself"](#a-widget-that-draws-itself).
 
 - [Term::Fabulous::Widget::Input](../Widget/Input.md)
@@ -274,16 +275,25 @@ the family of its base class (a widget derived from Input reads the
 `input` slots, a Box the `box` slots); `theme_family` names another
 one.
 - `themed_params` lists the parameters the theme supplies when the
-program gives none, each with the slot and the state it reads. Do not
-declare such a parameter as a field: take it out of the constructor's
-arguments with `adopt_look_params`, which calls the accessor for the
-values that were given.
-- The accessor reads `look_value` and writes `set_look`; `paint` and
-the `contribute_*` methods read the accessor or `look_value`, never a
-field, so that a theme switch shows at once. A widget that paints into
-a buffer of its own (a Display) repaints after a switch by itself; one
-that copies colors into widgets it builds does so again in
-`theme_changed`.
+program gives none, each with the slot and the state it reads and its
+_kind_: `color`, `cell_color`, `optional_color` (`undef` for
+none), `border_style`, ... (see
+["themed\_params" in Term::Fabulous::Role::Themed](../Role/Themed.md#themed_params)). The kind is all the
+role needs: it takes the parameter from the constructor, checks every
+value, and makes it a layout property. Do not declare such a parameter
+as a field, and do not list it in `layout_properties`.
+- The accessor is one line: it reads `look_value` and writes
+`set_look`. `paint` and the `contribute_*` methods read the
+accessor or `look_value`, never a copy, so that a theme switch shows
+at once. A widget that paints into a buffer of its own (a Display)
+repaints after a switch by itself.
+- A widget that copies looks into widgets it builds (a text color into
+its labels) does so in `ADJUST`, after it built them, and again in
+`looks_changed`, which the role calls with the names of the looks
+that may have changed: after `set_look` and `reset_look`, and with
+all of them when the theme of its UI changes. A widget whose looks
+live on its parts declares them in `forwarded_looks` instead, and
+`reset_look` reaches the parts.
 
 A gauge that reads its fill color from the `progress` family:
 
@@ -291,23 +301,16 @@ A gauge that reads its fill color from the `progress` family:
 use Object::Pad 0.825;
 
 class My::Gauge :isa(Term::Fabulous::Widget::Display) :strict(params) {
-        use Term::Fabulous::Check qw(cell_color);
-
         field $fraction :param = 0;
-
-        ADJUSTPARAMS ($params) {
-                $self->adopt_look_params( $params, 'fill_color' );    # fill_color => ... was given, or not
-        }
 
         method theme_family :common () { return 'progress' }
 
         method themed_params :common () {
-                return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal' ] );
+                return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal', 'cell_color' ] );
         }
 
         method fill_color (@new) {
-                return $self->look_value('fill_color') unless @new;
-                return $self->set_look( fill_color => cell_color( $self, fill_color => $new[0] ) );
+                return @new ? $self->set_look( fill_color => $new[0] ) : $self->look_value('fill_color');
         }
 
         method natural_size () { return ( 20, 1 ) }

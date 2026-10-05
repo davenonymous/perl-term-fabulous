@@ -41,9 +41,10 @@ class Term::Fabulous::Widget::Table
 		CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT
 	);
 	use List::Util qw(any first max min);
+	use Term::Fabulous::Viewport qw(reveal_range);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Time::HiRes ();
-	use Term::Fabulous::Check qw(boolean color non_negative_integer string);
+	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::CursorMove;
 	use Term::Fabulous::Event::Collapse;
@@ -57,7 +58,7 @@ class Term::Fabulous::Widget::Table
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTION TB_MOD_SHIFT TB_MOD_CTRL TB_MOD_ALT);
 	use Term::Fabulous::Widget::Table::Borders qw(resolve_borders);
 	use Term::Fabulous::Widget::Table::Filter;
-	use Term::Fabulous::Widget::Table::Style qw(style_hash border_style_of merge_styles);
+	use Term::Fabulous::Widget::Table::Style qw(style_hash merge_styles);
 
 	use constant {
 		SELECT_COLUMN       => '',    # the column key of the selection column
@@ -72,18 +73,19 @@ class Term::Fabulous::Widget::Table
 		SORT_DOWN           => "\x{25BE}",
 		INDENT              => 2,
 		DEFAULT_PAGE_STEP   => 10,
-		FALLBACK_BACKGROUND => [ 22, 25, 31, 255 ],
+		FALLBACK_BACKGROUND => [ 22, 25, 31, 255 ],    # cells on nothing (see _base_background)
 	};
 
 	my $CONTINUE = Clay::UI::Enum::Result->CONTINUE;
 	my $HANDLED  = Clay::UI::Enum::Result->HANDLED;
 
-	my %IS_SELECTION = map { $_ => 1 } qw(none single multiple);
-	my %ALIGN_X      = ( left  => CLAY_ALIGN_X_LEFT,    center   => CLAY_ALIGN_X_CENTER,     right => CLAY_ALIGN_X_RIGHT );
-	my %TEXT_ALIGN   = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
-	my %WRAP         = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
-	my @LINE_PARAMS  = qw(border_top border_right border_bottom border_left column_lines row_lines header_line);
-	my @COLOR_PARAMS = qw(
+	my @SELECTIONS     = qw(none single multiple);
+	my %ALIGN_X        = ( left  => CLAY_ALIGN_X_LEFT,    center   => CLAY_ALIGN_X_CENTER,     right => CLAY_ALIGN_X_RIGHT );
+	my %TEXT_ALIGN     = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
+	my %WRAP           = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
+	my @LINE_PARAMS    = qw(border_top border_right border_bottom border_left column_lines row_lines header_line);
+	my @NONE_IS_HIDDEN = ( none => Term::Fabulous::Enum::BorderStyle->Hidden );    # 'none' draws no line
+	my @COLOR_PARAMS   = qw(
 		text_color header_text_color header_background_color group_text_color group_background_color
 		cursor_color selected_color hover_color filter_background_color error_color muted_color line_color
 	);
@@ -193,34 +195,23 @@ class Term::Fabulous::Widget::Table
 	field $_reveal_cursor = 0;
 	field $_shown_page    = 0;
 
-	# The colors come from the theme's table family unless given.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @COLOR_PARAMS, 'stripe_color' );
-	}
-
 	method theme_family :common () {
 		return 'table';
 	}
 
+	# The colors come from the theme's table family unless given.
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			stripe_color => [ 'stripe', 'normal' ],
-			map { $_ => [ $COLOR_SLOT{$_}, 'normal' ] } @COLOR_PARAMS,
+			stripe_color => [ 'stripe', 'normal', 'optional_color' ],
+			map { $_ => [ $COLOR_SLOT{$_}, 'normal', 'color' ] } @COLOR_PARAMS,
 		);
 	}
 
-	# Dresses the cells, the pager and the scrollbar in the new theme's
-	# colors.
-	method theme_changed () {
-		$self->_colors_changed(@COLOR_PARAMS);
-		return;
-	}
-
-	# A color returned to the theme shows in the parts too.
-	method look_reset :override ($name) {
-		$self->SUPER::look_reset($name);
-		$self->_colors_changed($name);
+	# The cells, the pager and the scrollbar copy the colors
+	# (Term::Fabulous::Role::Themed).
+	method looks_changed (@names) {
+		$self->_colors_changed(@names);
 		return;
 	}
 
@@ -247,8 +238,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _check_parameters () {
-		die "Term::Fabulous::Widget::Table: selection must be 'none', 'single' or 'multiple', got " . _describe($selection)
-			unless defined $selection && $IS_SELECTION{$selection};
+		one_of( $self, selection => $selection, @SELECTIONS );
 		$_explicit_selection_column = boolean( $self, selection_column => $selection_column ) if defined $selection_column;
 		$selection_column           = $_explicit_selection_column // ( $selection eq 'multiple' ? 1 : 0 );
 		$show_header                = boolean( $self, header        => $show_header );
@@ -257,12 +247,12 @@ class Term::Fabulous::Widget::Table
 		$hover                      = boolean( $self, hover         => $hover );
 		$tree_expanded              = boolean( $self, tree_expanded => $tree_expanded );
 		$show_pager                 = boolean( $self, pager         => $show_pager ) if defined $show_pager;
-		die "Term::Fabulous::Widget::Table: page_sizes must be an array reference of positive integers, got " . _describe($page_sizes)
+		die "Term::Fabulous::Widget::Table: page_sizes must be an array reference of positive integers, got " . describe($page_sizes)
 			unless ref $page_sizes eq 'ARRAY' && @$page_sizes && !grep { !defined || ref || !/\A[1-9][0-9]*\z/ } @$page_sizes;
 		$page_sizes = [ map { $_ + 0 } @$page_sizes ];
 
 		foreach my $code ( [ group_label => $group_label ], [ row_style => $row_style ] ) {
-			die "Term::Fabulous::Widget::Table: $code->[0] must be a code reference, got " . _describe( $code->[1] )
+			die "Term::Fabulous::Widget::Table: $code->[0] must be a code reference, got " . describe( $code->[1] )
 				if defined $code->[1] && ref $code->[1] ne 'CODE';
 		}
 		$header_style  = style_hash( $self, 'header_style', row => $header_style );
@@ -270,10 +260,10 @@ class Term::Fabulous::Widget::Table
 		$empty_text    = string( $self, empty_text    => $empty_text );
 		$no_match_text = string( $self, no_match_text => $no_match_text );
 		$cell_padding  = $self->_padding($cell_padding);
-		die "Term::Fabulous::Widget::Table: double_click_seconds must be a number of at least 0, got " . _describe($double_click_seconds)
+		die "Term::Fabulous::Widget::Table: double_click_seconds must be a number of at least 0, got " . describe($double_click_seconds)
 			unless defined $double_click_seconds && !ref $double_click_seconds && $double_click_seconds =~ /\A[0-9]*\.?[0-9]+\z/;
 
-		my $outer = defined $border ? border_style_of( $self, border => $border ) : undef;
+		my $outer = optional( \&border_style, $self, border => $border, @NONE_IS_HIDDEN );
 		my %line  = (
 			border_top    => $border_top,
 			border_right  => $border_right,
@@ -285,26 +275,20 @@ class Term::Fabulous::Widget::Table
 		);
 		foreach my $name (@LINE_PARAMS) {
 			my $value = $line{$name} // ( $name =~ /\Aborder_/ ? $outer : undef );
-			$_line_style{$name} = defined $value ? border_style_of( $self, $name => $value ) : undef;
+			$_line_style{$name} = optional( \&border_style, $self, $name => $value, @NONE_IS_HIDDEN );
 		}
 		return;
 	}
 
-	sub _describe ($thing) {
-		return 'undef' unless defined $thing;
-		return ref($thing) . ' reference' if ref $thing;
-		return "'$thing'";
-	}
-
 	sub _sort_spec ($spec) {
-		die "Term::Fabulous::Widget::Table: sort must be an array reference of column keys or [ key, 'asc' or 'desc' ] pairs, got " . _describe($spec)
+		die "Term::Fabulous::Widget::Table: sort must be an array reference of column keys or [ key, 'asc' or 'desc' ] pairs, got " . describe($spec)
 			unless ref $spec eq 'ARRAY';
 		return @$spec;
 	}
 
 	method _padding ($padding) {
 		return { left => $padding, right => $padding, top => 0, bottom => 0 } if !ref $padding && defined $padding && $padding =~ /\A[0-9]+\z/;
-		die "Term::Fabulous::Widget::Table: cell_padding must be a number of cells or a hash reference of left, right, top and bottom, got " . _describe($padding)
+		die "Term::Fabulous::Widget::Table: cell_padding must be a number of cells or a hash reference of left, right, top and bottom, got " . describe($padding)
 			unless ref $padding eq 'HASH' && !grep { !/\A(?:left|right|top|bottom)\z/ } keys %$padding;
 		return { map { $_ => non_negative_integer( $self, "cell_padding $_", $padding->{$_} // 0 ) } qw(left right top bottom) };
 	}
@@ -373,7 +357,7 @@ class Term::Fabulous::Widget::Table
 		my $old = $_pager;
 		$_pager = $self->_new_pager;
 		$self->_wire_pager;
-		$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($old) } );
+		$self->remove_child($old);
 		return;
 	}
 
@@ -550,7 +534,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	sub _widget_from ( $what, $widget ) {
-		die "Term::Fabulous::Widget::Table: $what must return a widget, got " . _describe($widget)
+		die "Term::Fabulous::Widget::Table: $what must return a widget, got " . describe($widget)
 			unless blessed $widget && ( $widget->DOES('Clay::UI::Role::Core::Element') || $widget->DOES('Clay::UI::Role::Core::TextNode') );
 		return $widget;
 	}
@@ -695,7 +679,7 @@ class Term::Fabulous::Widget::Table
 			}
 			my $holder = $built->{holder}{$key};
 			my $old    = $built->{content}{$key};
-			$holder->remove_children_with( sub ($child) { refaddr($child) == refaddr($old) } );
+			$holder->remove_child($old);
 			$holder->add_child( $self->_cell_content( $built, $column ) );
 		}
 		return;
@@ -728,10 +712,7 @@ class Term::Fabulous::Widget::Table
 			return;
 		}
 		my $widget = ref $label ? _widget_from( 'group_label', $label ) : Term::Fabulous::Widget::Text->new( text => $label // '', bold => 1 );
-		if ( defined $built->{label} ) {
-			my $old = $built->{label};
-			$built->{holder}->remove_children_with( sub ($child) { refaddr($child) == refaddr($old) } );
-		}
+		$built->{holder}->remove_child( $built->{label} ) if defined $built->{label};
 		$built->{holder}->add_child($widget);
 		$built->{label} = $widget;
 		return;
@@ -1018,17 +999,12 @@ class Term::Fabulous::Widget::Table
 		return { background_color => $self->_base_background, text_color => $self->muted_color, border_color => $self->line_color, italic => 1 };
 	}
 
-	# The color of cells that have none of their own: the table's
-	# background, or that of its nearest ancestor with an opaque one, so
-	# the cells blend in. Cells are always painted: only painted cells
-	# receive the mouse.
+	# The color of cells that have none of their own: what the table lies
+	# on (background_below), so the cells blend in; a fixed dark color only
+	# where there is none (Term::Fabulous::Static, no UI). Cells are always
+	# painted: only painted cells receive the mouse.
 	method _base_background () {
-		for ( my $node = $self; defined $node; $node = $node->parent ) {
-			next unless $node->can('background_color');
-			my $color = $node->background_color // next;
-			return $color if $color->[3] == 255;
-		}
-		return FALLBACK_BACKGROUND;
+		return $self->background_below // FALLBACK_BACKGROUND;
 	}
 
 	method _mark_header ($grid_columns) {
@@ -1070,9 +1046,8 @@ class Term::Fabulous::Widget::Table
 	}
 
 	sub _show_child ( $parent, $child, $show ) {
-		my $shown = grep { refaddr($_) == refaddr($child) } @{ $parent->children };
-		$parent->add_child($child) if $show && !$shown;
-		$parent->remove_children_with( sub ($node) { refaddr($node) == refaddr($child) } ) if !$show && $shown;
+		$parent->remove_child($child) unless $show;
+		$parent->add_child($child) if $show && !$parent->has_child($child);
 		return;
 	}
 
@@ -1081,12 +1056,11 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _prepare_pager () {
-		my $attached = grep { refaddr($_) == refaddr($_pager) } @{ $self->children };
 		if ( !$self->_pager_shown ) {
-			$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($_pager) } ) if $attached;
+			$self->remove_child($_pager);
 			return;
 		}
-		$self->add_child($_pager) unless $attached;
+		$self->add_child($_pager) unless $self->has_child($_pager);
 		my $size  = $model->page_size;
 		my $total = $model->line_count;
 		my $first = $size ? ( $model->page - 1 ) * $size + 1  : 1;
@@ -1110,27 +1084,25 @@ class Term::Fabulous::Widget::Table
 		return;
 	}
 
-	# The rows of the body's viewport and of a line, in the last frame.
+	# The rows of the body's content and viewport, how far it is scrolled
+	# (Clay keeps a negative position) and where a line lies in the
+	# content, in the last frame.
 	method _line_box ($key) {
-		my $ui    = $self->ui                               // return undef;
-		my $built = $_built{ $key // '' }                   // return undef;
-		my $box   = $ui->bounding_box( $built->{cells}[0] ) // return undef;
-		my $state = $ui->scroll_state($_body)               // return undef;
-		my $body  = $ui->bounding_box($_body)               // return undef;
-		return { top => $box->{y} - $body->{y}, height => $box->{height}, viewport => $state->{viewport}{height}, position => $state->{position}{y} };
+		my $ui     = $self->ui                               // return undef;
+		my $built  = $_built{ $key // '' }                   // return undef;
+		my $box    = $ui->bounding_box( $built->{cells}[0] ) // return undef;
+		my $state  = $ui->scroll_state($_body)               // return undef;
+		my $body   = $ui->bounding_box($_body)               // return undef;
+		my $offset = -$state->{position}{y};
+		my $from   = $box->{y} - $body->{y} + $offset;
+		return { content => $state->{content}{height}, viewport => $state->{viewport}{height}, offset => $offset, from => $from, to => $from + $box->{height} };
 	}
 
 	method _scroll_cursor_into_view () {
-		my $ui       = $self->ui                          // return;
-		my $box      = $self->_line_box( $model->cursor ) // return;
-		my $position = $box->{position};
-		if ( $box->{top} < 0 ) {
-			$position -= $box->{top};
-		}
-		elsif ( $box->{top} + $box->{height} > $box->{viewport} ) {
-			$position -= min( $box->{top}, $box->{top} + $box->{height} - $box->{viewport} );
-		}
-		$ui->scroll_to( $_body, { y => $position } ) if $position != $box->{position};
+		my $ui     = $self->ui                          // return;
+		my $box    = $self->_line_box( $model->cursor ) // return;
+		my $offset = reveal_range( @{$box}{qw(content viewport offset from to)} );
+		$ui->scroll_to( $_body, { y => -$offset } ) if $offset != $box->{offset};
 		return;
 	}
 
@@ -1711,7 +1683,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _check_row ($id) {
-		die "Term::Fabulous::Widget::Table: there is no row with the id " . _describe($id) unless $model->has_row($id);
+		die "Term::Fabulous::Widget::Table: there is no row with the id " . describe($id) unless $model->has_row($id);
 		return $id;
 	}
 
@@ -1829,7 +1801,7 @@ class Term::Fabulous::Widget::Table
 		my $closing = $_chooser;
 		undef $_chooser;
 		my $refocus = $self->_focus_is_inside($closing);
-		$self->remove_children_with( sub ($child) { refaddr($child) == refaddr($closing) } );
+		$self->remove_child($closing);
 		$self->_focus_self if $refocus;
 		return $self;
 	}
@@ -2029,9 +2001,7 @@ class Term::Fabulous::Widget::Table
 	# none of it for 'none', the first selected row for 'single'.
 	method selection (@new) {
 		return $selection unless @new;
-		my ($mode) = @new;
-		die "Term::Fabulous::Widget::Table: selection must be 'none', 'single' or 'multiple', got " . _describe($mode)
-			unless defined $mode && !ref $mode && $IS_SELECTION{$mode};
+		my $mode = one_of( $self, selection => $new[0], @SELECTIONS );
 		$selection = $mode;
 		my @kept = $mode eq 'none' ? () : $model->selected_ids;
 		@kept = @kept[ 0 .. 0 ] if $mode eq 'single' && @kept > 1;
@@ -2168,15 +2138,11 @@ class Term::Fabulous::Widget::Table
 	# --- Appearance ------------------------------------------------------
 
 	method _color_property ( $name, @new ) {
-		return $self->look_value($name) unless @new;
-		$self->set_look( $name => color( $self, $name => $new[0] ) );
-		$self->_colors_changed($name);
-		return $self->look_value($name);
+		return @new ? $self->set_look( $name => $new[0] ) : $self->look_value($name);
 	}
 
 	# The parts that copy the table's colors take them again.
 	method _colors_changed (@names) {
-		return unless defined $_scrollbar;    # the constructor adopts the given colors before it builds the parts
 		my %changed = map { $_ => 1 } @names;
 		$_scrollbar->thumb_color( $self->text_color ) if $changed{text_color};
 		$_scrollbar->track_color( $self->line_color ) if $changed{line_color};
@@ -2200,10 +2166,7 @@ class Term::Fabulous::Widget::Table
 	method line_color              (@new) { return $self->_color_property( line_color              => @new ) }
 
 	method stripe_color (@new) {
-		return $self->look_value('stripe_color') unless @new;
-		$self->set_look( stripe_color => defined $new[0] ? color( $self, stripe_color => $new[0] ) : undef );
-		$self->_restyle;
-		return $self->look_value('stripe_color');
+		return @new ? $self->set_look( stripe_color => $new[0] ) : $self->look_value('stripe_color');
 	}
 
 	# The table's own background is the color of its cells (see
@@ -2216,7 +2179,7 @@ class Term::Fabulous::Widget::Table
 
 	method _line_property ( $name, @new ) {
 		return $_line_style{$name} unless @new;
-		$_line_style{$name} = defined $new[0] ? border_style_of( $self, $name => $new[0] ) : undef;
+		$_line_style{$name} = optional( \&border_style, $self, $name => $new[0], @NONE_IS_HIDDEN );
 		$self->_restyle;
 		return $_line_style{$name};
 	}
@@ -2285,7 +2248,7 @@ class Term::Fabulous::Widget::Table
 
 	method _callback_property ( $name, $field_ref, @new ) {
 		return $$field_ref unless @new;
-		die "Term::Fabulous::Widget::Table: $name must be a code reference or undef, got " . _describe( $new[0] )
+		die "Term::Fabulous::Widget::Table: $name must be a code reference or undef, got " . describe( $new[0] )
 			if defined $new[0] && ref $new[0] ne 'CODE';
 		$$field_ref = $new[0];
 		$_->{label_signature} = '' foreach grep { $_->{kind} eq 'group' } values %_built;    # labels are made again
@@ -2320,7 +2283,7 @@ class Term::Fabulous::Widget::Table
 
 	method tree_column (@new) {
 		return $tree_column unless @new;
-		die "Term::Fabulous::Widget::Table: tree_column must be a column key or undef, got " . _describe( $new[0] ) if ref $new[0];
+		die "Term::Fabulous::Widget::Table: tree_column must be a column key or undef, got " . describe( $new[0] ) if ref $new[0];
 		$model->column( $new[0] ) if defined $new[0];
 		$tree_column     = $new[0];
 		$_body_signature = '';
@@ -2330,7 +2293,7 @@ class Term::Fabulous::Widget::Table
 
 	method page_sizes (@new) {
 		return [@$page_sizes] unless @new;
-		die "Term::Fabulous::Widget::Table: page_sizes must be an array reference of positive integers, got " . _describe( $new[0] )
+		die "Term::Fabulous::Widget::Table: page_sizes must be an array reference of positive integers, got " . describe( $new[0] )
 			unless ref $new[0] eq 'ARRAY' && @{ $new[0] } && !grep { !defined || ref || !/\A[1-9][0-9]*\z/ } @{ $new[0] };
 		$page_sizes = [ map { $_ + 0 } @{ $new[0] } ];
 		$self->_rebuild_pager;
@@ -2357,13 +2320,12 @@ class Term::Fabulous::Widget::Table
 			tree_column      => 'scalar',
 			empty_text       => 'scalar',
 			no_match_text    => 'scalar',
-			( map { $_ => 'color' } @COLOR_PARAMS, 'stripe_color' ),
-			column       => \&_parse_column,
-			sort         => \&_parse_sort,
-			group_by     => \&_parse_group_by,
-			lines        => \&_parse_lines,
-			cell_padding => \&_parse_cell_padding,
-			page_sizes   => \&_parse_page_sizes,
+			column           => \&_parse_column,
+			sort             => \&_parse_sort,
+			group_by         => \&_parse_group_by,
+			lines            => \&_parse_lines,
+			cell_padding     => \&_parse_cell_padding,
+			page_sizes       => \&_parse_page_sizes,
 		);
 	}
 

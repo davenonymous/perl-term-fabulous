@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::PieChart
 	use List::Util qw(max min sum0 first);
 	use POSIX qw(floor ceil);
 	use Scalar::Util qw(looks_like_number);
-	use Term::Fabulous::Check qw(boolean describe);
+	use Term::Fabulous::Check qw(boolean describe one_of);
 	use Term::Fabulous::Chart::Format qw(format_value check_number_format);
 	use Term::Fabulous::Chart::Marker;
 	use Term::Fabulous::Chart::Palette qw(chart_color contrast_rgb mix_rgb);
@@ -35,10 +35,10 @@ class Term::Fabulous::Widget::PieChart
 		LEGEND_PERCENT_DECIMALS => 0,
 	};
 
-	my %IS_SORT          = map { $_ => 1 } qw(none desc asc);
-	my %IS_SLICE_LABELS  = map { $_ => 1 } qw(percent value label none);
-	my %IS_LEGEND_VALUES = map { $_ => 1 } qw(percent value both none);
-	my @PIE_MARKERS      = qw(quadrant half sextant braille);
+	my @SORT          = qw(none desc asc);
+	my @SLICE_LABELS  = qw(percent value label none);
+	my @LEGEND_VALUES = qw(percent value both none);
+	my @PIE_MARKERS   = qw(quadrant half sextant braille);
 
 	field $initial_data   :param(data)   = [];
 	field $initial_labels :param(labels) = undef;
@@ -65,9 +65,9 @@ class Term::Fabulous::Widget::PieChart
 		$legend_values //= $self->default_legend_values;
 		$hole          = $self->_checked_hole($hole);
 		$start_angle   = $self->_checked_angle($start_angle);
-		$sort          = $self->_check_choice( sort          => $sort,          \%IS_SORT );
-		$slice_labels  = $self->_check_choice( slice_labels  => $slice_labels,  \%IS_SLICE_LABELS );
-		$legend_values = $self->_check_choice( legend_values => $legend_values, \%IS_LEGEND_VALUES );
+		$sort          = one_of( $self, sort          => $sort,          @SORT );
+		$slice_labels  = one_of( $self, slice_labels  => $slice_labels,  @SLICE_LABELS );
+		$legend_values = one_of( $self, legend_values => $legend_values, @LEGEND_VALUES );
 		$marker        = $self->_checked_marker($marker);
 		$other         = $self->_checked_fraction( other => $other );
 		$gap           = boolean( $self, gap => $gap );
@@ -386,17 +386,17 @@ class Term::Fabulous::Widget::PieChart
 		return $value;
 	}
 
-	method hole          (@new) { return @new ? $self->_set( \$hole, $self->_checked_hole( $new[0] ) )                                               : $hole }
-	method start_angle   (@new) { return @new ? $self->_set( \$start_angle, $self->_checked_angle( $new[0] ) )                                       : $start_angle }
-	method sort          (@new) { return @new ? $self->_set( \$sort, $self->_check_choice( sort => $new[0], \%IS_SORT ) )                            : $sort }
-	method slice_labels  (@new) { return @new ? $self->_set( \$slice_labels, $self->_check_choice( slice_labels => $new[0], \%IS_SLICE_LABELS ) )    : $slice_labels }
-	method legend_values (@new) { return @new ? $self->_set( \$legend_values, $self->_check_choice( legend_values => $new[0], \%IS_LEGEND_VALUES ) ) : $legend_values }
-	method center_text   (@new) { return @new ? $self->_set( \$center_text, $self->_check_title( center_text => $new[0] ) )                          : $center_text }
-	method marker        (@new) { return @new ? $self->_set( \$marker, $self->_checked_marker( $new[0] ) )                                           : $marker }
-	method other         (@new) { return @new ? $self->_set( \$other, $self->_checked_fraction( other => $new[0] ) )                                 : $other }
-	method other_label   (@new) { return @new ? $self->_set( \$other_label, $self->_check_title( other_label => $new[0] ) // 'Other' )               : $other_label }
-	method gap           (@new) { return @new ? $self->_set( \$gap, boolean( $self, gap => $new[0] ) )                                               : $gap }
-	method format        (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) )                         : $format }
+	method hole          (@new) { return @new ? $self->_set( \$hole, $self->_checked_hole( $new[0] ) )                                    : $hole }
+	method start_angle   (@new) { return @new ? $self->_set( \$start_angle, $self->_checked_angle( $new[0] ) )                            : $start_angle }
+	method sort          (@new) { return @new ? $self->_set( \$sort, one_of( $self, sort => $new[0], @SORT ) )                            : $sort }
+	method slice_labels  (@new) { return @new ? $self->_set( \$slice_labels, one_of( $self, slice_labels => $new[0], @SLICE_LABELS ) )    : $slice_labels }
+	method legend_values (@new) { return @new ? $self->_set( \$legend_values, one_of( $self, legend_values => $new[0], @LEGEND_VALUES ) ) : $legend_values }
+	method center_text   (@new) { return @new ? $self->_set( \$center_text, $self->_check_title( center_text => $new[0] ) )               : $center_text }
+	method marker        (@new) { return @new ? $self->_set( \$marker, $self->_checked_marker( $new[0] ) )                                : $marker }
+	method other         (@new) { return @new ? $self->_set( \$other, $self->_checked_fraction( other => $new[0] ) )                      : $other }
+	method other_label   (@new) { return @new ? $self->_set( \$other_label, $self->_check_title( other_label => $new[0] ) // 'Other' )    : $other_label }
+	method gap           (@new) { return @new ? $self->_set( \$gap, boolean( $self, gap => $new[0] ) )                                    : $gap }
+	method format        (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) )              : $format }
 
 	# ---------------------------------------------------------------------
 	# KDL

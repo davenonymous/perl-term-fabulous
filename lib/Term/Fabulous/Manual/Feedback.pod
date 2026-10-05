@@ -118,7 +118,7 @@ cycles through the frames of its style next to a label:
 	$status_row->add_child($spinner);
 	# later:
 	$spinner->stop;
-	$status_row->remove_children_with( sub { $_ == $spinner } );
+	$status_row->remove_child($spinner);
 
 The styles come in three sizes: one cell (C<dots>, the default, made
 of Braille patterns; C<line>, C<arc>, C<circle>, C<arrow>, C<box>,

@@ -95,7 +95,7 @@ my $spinner = Term::Fabulous::Widget::Spinner->new( label => 'Connecting' );
 $status_row->add_child($spinner);
 # later:
 $spinner->stop;
-$status_row->remove_children_with( sub { $_ == $spinner } );
+$status_row->remove_child($spinner);
 ```
 
 The styles come in three sizes: one cell (`dots`, the default, made

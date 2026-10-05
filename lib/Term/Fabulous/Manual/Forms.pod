@@ -555,9 +555,11 @@ opens a list of all options on C<Enter>, C<Space>, C<Alt+Down>, C<F4> or
 a click. The list floats over the other widgets, below the dropdown, or
 above it when it does not fit below and there is more room above. Every option has a label (what
 the user sees) and a value (what C<value> and C<Change> give); an option
-given as a plain string is both. C<Up> and C<Down> change the selection
-without opening the list, and typing the first letters of a label jumps
-to it.
+given as a plain string is both. An option can be disabled
+(C<< { label => 'Archive', disabled => 1 } >>): it is shown greyed out
+and the user cannot choose it, as in a segmented control. C<Up> and
+C<Down> change the selection without opening the list, and typing the
+first letters of a label jumps to it.
 
 =for highlighter language=perl
 

@@ -222,7 +222,7 @@ the sections below it describe each event.
     last size change. The layout adapts to the new size by itself; listen to
     `Resize` when your program wants to change something more, for example
     hide a sidebar on narrow terminals. Here `$body` holds the main area
-    and, to its right, `$sidebar`, a box with the id `sidebar`:
+    and, to its right, `$sidebar`, a box:
 
     ```perl
     $root->on(
@@ -230,8 +230,8 @@ the sections below it describe each event.
                     return unless $event->is_post_event;
                     my $wide  = $event->width >= 60;
                     my $shown = defined $sidebar->parent;
-                    $body->add_child($sidebar)     if $wide  && !$shown;
-                    $body->remove_child('sidebar') if !$wide && $shown;
+                    $body->add_child($sidebar)    if $wide  && !$shown;
+                    $body->remove_child($sidebar) if !$wide && $shown;
                     return;
             }
     );

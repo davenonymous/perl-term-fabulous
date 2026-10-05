@@ -5,7 +5,7 @@ use utf8;
 use Test2::V0;
 
 use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE TB_REVERSE TB_DIM TB_BLINK TB_STRIKEOUT TB_OVERLINE TB_INVISIBLE);
-use Term::Fabulous::Text::Style qw(parse_style style apply_style);
+use Term::Fabulous::Text::Style qw(parse_style style compose_styles apply_style);
 
 my $untouched = { set => 0, clear => 0, color => undef, background => undef };
 
@@ -53,6 +53,19 @@ subtest 'style accepts strings and hashes' => sub {
 	like dies { style( { set   => -1 } ) },      qr/set/,                                                                   'bits are non-negative integers';
 	like dies { style( { color => 'shiny' } ) }, qr/color/,                                                                 'colors are checked';
 	like dies { style( [] ) }, qr/a style is a string or a hash reference/, 'an array';
+};
+
+subtest 'compose_styles' => sub {
+	is compose_styles(), $untouched, 'no styles touch nothing';
+	is compose_styles( parse_style('bold red'), parse_style('italic blue') ), { %$untouched, set => TB_BOLD | TB_ITALIC, color => [ 0, 0, 255, 255 ] }, 'bits add up, the later color wins';
+	is compose_styles( parse_style('bold'),       parse_style('not bold') ), { %$untouched, clear => TB_BOLD }, 'clear after set clears';
+	is compose_styles( parse_style('not bold'),   parse_style('bold') ),     { %$untouched, set   => TB_BOLD }, 'set after clear sets';
+	is compose_styles( parse_style('on #000000'), parse_style('dim'), parse_style('not dim') ), { %$untouched, clear => TB_DIM, background => [ 0, 0, 0, 255 ] },
+		'a background stays until a later one replaces it';
+	my ( $outer, $inner ) = ( parse_style('bold underline'), parse_style('not bold red') );
+	my $look = { attrs => TB_ITALIC, color => [ 1, 1, 1, 255 ], background => [ 2, 2, 2, 255 ] };
+	is apply_style( $look, compose_styles( $outer, $inner ) ), apply_style( apply_style( $look, $outer ), $inner ), 'applying the composed style is applying each in turn';
+	is $outer, { %$untouched, set => TB_BOLD | TB_UNDERLINE }, 'the given styles are not changed';
 };
 
 subtest 'apply_style' => sub {

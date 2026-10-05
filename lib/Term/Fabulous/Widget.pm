@@ -46,6 +46,26 @@ class Term::Fabulous::Widget
 		return $self->SUPER::border_color // $self->look('border.color');
 	}
 
+	# The color this widget lies on: the background of the widget itself
+	# or of its nearest ancestor that has one, else the screen background
+	# of its UI, painted opaque, else undef. A background counts when it is
+	# opaque; with translucent => 1 any background with an alpha above 0
+	# counts, the one a painter blends the widget's own cells over.
+	method background_below (%options) {
+		my @unknown = grep { $_ ne 'translucent' } sort keys %options;
+		die ref($self) . ": background_below does not take @unknown (known: translucent)" if @unknown;
+		my $lowest_alpha = $options{translucent} ? 1 : 255;
+		for ( my $node = $self; defined $node; $node = $node->parent ) {
+			next unless $node->can('background_color');
+			my $color = $node->background_color // next;
+			return [@$color] if $color->[3] >= $lowest_alpha;
+		}
+		my $ui = $self->ui // return undef;
+		return undef unless $ui->can('screen_background');
+		my $screen = $ui->screen_background // return undef;
+		return [ ( $screen->to_rgba )[ 0 .. 2 ], 255 ];
+	}
+
 	# ---------------------------------------------------------------------
 	# The theme (Term::Fabulous::Role::Themed): a container is a box, whose
 	# background and border the theme colors only when the program gave
@@ -246,8 +266,8 @@ empty; add children afterwards with L</add_child>.
 
 =item C<id>
 
-A non-empty string. Default: none. Names the widget: L</remove_child>
-removes children by id, listeners can tell widgets apart with
+A non-empty string. Default: none. Names the widget:
+L</remove_child_with_id> removes children by id, listeners can tell widgets apart with
 C<< $event->target->id >>, and Clay keeps state (such as a scroll
 position) for it between frames. L</find_by_id> finds a widget in a
 tree by its id. Ids must be unique in a widget tree: two widgets with
@@ -432,7 +452,8 @@ C<background_color>. Default: the terminal's default foreground color.
 =item C<border_style>
 
 A L<Term::Fabulous::Enum::BorderStyle> item, such as
-C<< Term::Fabulous::Enum::BorderStyle->Round >>, used for every side
+C<< Term::Fabulous::Enum::BorderStyle->Round >>, or its name
+(C<'Round'>), used for every side
 that has no side parameter of its own. Default: none; a side that has a
 width but no style is drawn with the C<Blank> style (spaces). See
 L<Term::Fabulous::Role::HasBorderStyle>.
@@ -445,8 +466,8 @@ L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<border_style_left>
 
-The style of one side, a L<Term::Fabulous::Enum::BorderStyle> item. It
-wins over C<border_style> for that side; see
+The style of one side, a L<Term::Fabulous::Enum::BorderStyle> item or
+its name. It wins over C<border_style> for that side; see
 L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<border_corners>
@@ -523,17 +544,29 @@ L<Clay::UI::Role::Core::Container/add_child>.
 
 =head2 remove_child
 
-	$box->remove_child('status');
+	$box->remove_child($status);
+	$box->remove_child( $spinner, $label );
 
-Removes every direct child whose C<id> equals the argument. Unknown ids
-are ignored. Text widgets are never removed this way, even when they
-have an C<id> (use L</remove_children_with>). A removed widget keeps
-its children and its state and can be added again. Returns the widget.
+Removes each given widget that is a direct child of this one (the very
+object; widgets without an id and Text widgets included). A widget that
+is not a direct child is ignored. Dies, removing nothing, for anything
+but a widget, an id included (use L</remove_child_with_id>). A removed
+widget keeps its children and its state and can be added again. Returns
+the widget.
 
 Removing a subtree that holds the focused widget or a hovered widget
 fires C<OnBlur> or C<OnHoverStopped> on it during the call; C<OnBlur>
 still bubbles through the old parents. When an C<OnBlur> listener dies,
 the removal is completed first and the error is rethrown afterwards.
+
+=head2 remove_child_with_id
+
+	$box->remove_child_with_id('status');
+
+Removes every direct child whose C<id> equals the argument. Unknown ids
+are ignored. Text widgets are never removed this way, even when they
+have an C<id> (use L</remove_child> or L</remove_children_with>).
+Returns the widget. Removal works as described in L</remove_child>.
 
 =head2 remove_children_with
 
@@ -574,6 +607,13 @@ instead of searching in every event.
 
 A new array reference with the direct children, in order. Changing the
 array does not change the widget.
+
+=head2 has_child
+
+	$box->add_child($status) unless $box->has_child($status);
+
+1 when the widget is a direct child of this one (the very object), else
+0. Dies for anything but a widget.
 
 =head2 get_children_with
 
@@ -678,6 +718,29 @@ C<undef> removes the given background color (L</reset_look> does the
 same). An invalid value dies like the constructor parameter of the
 same name. The change shows in the next frame.
 
+=head2 background_below
+
+	my $rgba = $widget->background_below;                     # opaque backgrounds only
+	my $seen = $widget->background_below( translucent => 1 );
+
+The color the widget lies on, as a new C<[r, g, b, a]>: the
+L</background_color> of the widget itself or of its nearest ancestor
+that has an opaque one, else the screen background of the
+L<Term::Fabulous> object the widget is shown in (the theme's
+C<background> token, returned with alpha 255 because it is painted
+opaque; see L<Term::Fabulous::Render/SCREEN BACKGROUND>), else
+C<undef>: for a widget that is in no UI, in a
+L<Term::Fabulous::Static> (which paints no screen) or under a
+C<background> token with alpha 0. Widgets that draw on what lies below
+them use it: a L<Term::Fabulous::Widget::Table> paints the cells that
+have no color of their own in it, and a chart mixes its ink from it.
+
+A translucent background (alpha from 1 to 254) lets the colors below
+show through, so it is skipped. With C<< translucent => 1 >> it counts
+as well: that is the color a painter blends a widget's own cells over,
+which is how the unset cells of a L<Term::Fabulous::Widget::Canvas> are
+painted. Other options die.
+
 =head2 glyphs_show_through
 
 	$box->glyphs_show_through(1);
@@ -715,9 +778,13 @@ frame. Changing it changes the layout, because borders take space.
 
 	$box->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
 
-Accessor for the style of the top side. Returns and takes C<undef>
-or a L<Term::Fabulous::Enum::BorderStyle> item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the top side. The writer takes C<undef>
+(no style of its own), a L<Term::Fabulous::Enum::BorderStyle> item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else C<Blank>; see
+L<Term::Fabulous::Role::HasBorderStyle/border_style_of>. The change
+shows in the next frame.
 There is no C<border_style> accessor; set the sides one by one. See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
@@ -725,9 +792,13 @@ L<Term::Fabulous::Role::HasBorderStyle>.
 
 	$box->border_style_right( Term::Fabulous::Enum::BorderStyle->Heavy );
 
-Accessor for the style of the right side. Returns and takes C<undef>
-or a L<Term::Fabulous::Enum::BorderStyle> item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the right side. The writer takes C<undef>
+(no style of its own), a L<Term::Fabulous::Enum::BorderStyle> item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else C<Blank>; see
+L<Term::Fabulous::Role::HasBorderStyle/border_style_of>. The change
+shows in the next frame.
 There is no C<border_style> accessor; set the sides one by one. See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
@@ -735,9 +806,13 @@ L<Term::Fabulous::Role::HasBorderStyle>.
 
 	$box->border_style_bottom( Term::Fabulous::Enum::BorderStyle->Heavy );
 
-Accessor for the style of the bottom side. Returns and takes C<undef>
-or a L<Term::Fabulous::Enum::BorderStyle> item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the bottom side. The writer takes C<undef>
+(no style of its own), a L<Term::Fabulous::Enum::BorderStyle> item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else C<Blank>; see
+L<Term::Fabulous::Role::HasBorderStyle/border_style_of>. The change
+shows in the next frame.
 There is no C<border_style> accessor; set the sides one by one. See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
@@ -745,9 +820,13 @@ L<Term::Fabulous::Role::HasBorderStyle>.
 
 	$box->border_style_left( Term::Fabulous::Enum::BorderStyle->Heavy );
 
-Accessor for the style of the left side. Returns and takes C<undef>
-or a L<Term::Fabulous::Enum::BorderStyle> item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the left side. The writer takes C<undef>
+(no style of its own), a L<Term::Fabulous::Enum::BorderStyle> item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else C<Blank>; see
+L<Term::Fabulous::Role::HasBorderStyle/border_style_of>. The change
+shows in the next frame.
 There is no C<border_style> accessor; set the sides one by one. See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
@@ -850,8 +929,11 @@ theme reads the classes only, not the state names.
 Drops the colors or border styles the program gave for the named
 parameters, so the theme supplies them again. Takes the names of
 the widget's themed parameters (C<background_color>, C<border_color>
-and the ones a subclass lists); an unknown name dies naming the known
-ones. Returns the widget. The change shows in the next frame. From
+and the ones a subclass lists), including the looks a widget keeps on
+its parts (the colors of a L<Term::Fabulous::Widget::Tabs> live on its
+bar, the scrollbar colors of a L<Term::Fabulous::Widget::ScrollBox> on
+both scrollbars); an unknown name dies naming the known ones. Returns
+the widget. The change shows in the next frame. From
 L<Term::Fabulous::Role::Themed>, which also has L<look|Term::Fabulous::Role::Themed/look>
 and L<look_value|Term::Fabulous::Role::Themed/look_value> for widget
 authors.

@@ -205,6 +205,16 @@ L<Term::Fabulous::Widget::ProgressBar> - how much of a task is done
 
 L<Term::Fabulous::Widget::Spinner> - that something is going on
 
+=item *
+
+L<Term::Fabulous::Widget::Chart> and the charts built on it - data as
+lines, bars, slices and more
+
+=item *
+
+L<Term::Fabulous::Widget::Scrollbar> - how far a scroll container is
+scrolled
+
 =back
 
 You do not create a C<Display> directly (the class is abstract and

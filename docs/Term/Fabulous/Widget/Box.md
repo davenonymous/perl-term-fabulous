@@ -121,18 +121,19 @@ describes the accepted values in full.
 
 - `border_style`
 
-    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item that sets the style of
-    every side that has no side parameter of its own. Default: the
-    theme's `box.border.style`, `Round` in the built-in themes (see
-    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
+    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item or its name (`'Round'`)
+    that sets the style of every side that has no side parameter of its
+    own. Default: the theme's `box.border.style`, `Round` in the
+    built-in themes (see ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
 
 - `border_style_top`
 - `border_style_right`
 - `border_style_bottom`
 - `border_style_left`
 
-    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item that sets the style of one
-    side. Default: `undef`. It wins over `border_style` for that side.
+    A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item or its name that sets the
+    style of one side. Default: `undef`. It wins over `border_style` for
+    that side.
 
 - `border_corners`
 

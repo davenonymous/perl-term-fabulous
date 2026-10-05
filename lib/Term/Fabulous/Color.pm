@@ -117,7 +117,24 @@ class Term::Fabulous::Color :strict(params) {
 		if ( my @hsla = $spec =~ /\Ahsla\(\s*($NUMBER)$COMMA($NUMBER)%$COMMA($NUMBER)%$COMMA($NUMBER%?)\s*\)\z/ ) {
 			return ( _hsl_to_rgb_float( _normalized_hsl( @hsla[ 0 .. 2 ] ) ), _alpha_from_token( $hsla[3] ) );
 		}
+		if ( my $channels = _web_color_channels($spec) ) {
+			return @$channels;
+		}
 		die "Term::Fabulous::Color: unrecognized color string '$spec'";
+	}
+
+	# The CSS color names of Term::Fabulous::Enum::WebColor, looked up
+	# without regard to case. Its items are Colors themselves, so the
+	# enumeration cannot be loaded before this class; the table is built
+	# when the first name is looked up.
+	my %RGBA_BY_WEB_NAME;
+
+	sub _web_color_channels ($name) {
+		if ( !%RGBA_BY_WEB_NAME ) {
+			require Term::Fabulous::Enum::WebColor;
+			%RGBA_BY_WEB_NAME = map { lc( $_->name ) => [ $_->to_rgba ] } Term::Fabulous::Enum::WebColor->values;
+		}
+		return $RGBA_BY_WEB_NAME{ lc $name };
 	}
 
 	# Alpha grammar of rgba()/hsla(), string and factory alike: "N%" is a
@@ -430,9 +447,8 @@ C<red>, C<green>, C<blue> (and optionally C<alpha>). Alpha defaults to
 
 In one of the notations below. The string must not have leading or
 trailing whitespace; whitespace after C<(> and around the commas is
-allowed. The function names are lowercase. Named colors such as
-C<'red'> and three-digit hex such as C<'#f00'> are not supported;
-L<Term::Fabulous::Enum::WebColor> has the CSS named colors as objects.
+allowed. The function names are lowercase. Three-digit hex such as
+C<'#f00'> is not supported.
 
 =for highlighter language=text
 
@@ -445,6 +461,7 @@ L<Term::Fabulous::Enum::WebColor> has the CSS named colors as objects.
 	rgba(r, g, b, a)    'rgba(124, 58, 237, 0.5)'   alpha as described below
 	hsl(h, s%, l%)      'hsl(262, 83%, 58%)'        hue in degrees, alpha 255
 	hsla(h, s%, l%, a)  'hsla(262, 83%, 58%, 50%)'  alpha as described below
+	web color name      'SteelBlue', 'steelblue'    a CSS named color, alpha 255
 
 Hex digits may be upper or lower case. A string of digits only is a
 packed C<0xRRGGBB> integer (the form the canvas drawing methods take as
@@ -474,6 +491,19 @@ while C<'rgba(0, 0, 0, 1.0)'> has alpha 255. In Perl code, a number
 without a fractional part is written without a point when it becomes a
 string, so C<< ->rgba( 0, 0, 0, 1.0 ) >> is alpha 1 as well; pass
 C<'100%'> or C<255> for opaque.
+
+A web color name is one of the 148 CSS named colors of
+L<Term::Fabulous::Enum::WebColor> (C<Gray> and C<Grey> spellings,
+C<RebeccaPurple>), in any case: C<'SteelBlue'>, C<'steelblue'> and
+C<'STEELBLUE'> are the same color. Where a name could also mean
+something else, the other meaning is looked up first: a palette token of
+a L<theme|Term::Fabulous::Theme> (C<accent>, C<text>, ...; none of them
+is a web color name) and the words of a
+L<style string|Term::Fabulous::Text::Style> (C<bold>, C<default>, ...).
+
+This grammar is the one of every color in Term::Fabulous: widget color
+parameters and accessors, canvas cells, KDL layout files, theme files
+and rich text markup.
 
 =back
 

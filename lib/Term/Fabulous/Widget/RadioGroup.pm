@@ -22,13 +22,11 @@ class Term::Fabulous::Widget::RadioGroup
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM);
 	use List::Util qw(first);
+	use Term::Fabulous::Roving qw(roving_target);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Event::Change;
 
 	use constant BUTTON_CLASS => 'Term::Fabulous::Widget::RadioButton';
-
-	# Arrow keys: key name => step through the enabled buttons.
-	my %STEP_BY_KEY = ( Up => -1, Left => -1, Down => 1, Right => 1 );
 
 	field $value :param = undef;
 
@@ -110,15 +108,11 @@ class Term::Fabulous::Widget::RadioGroup
 			return 1;
 		}
 
-		my @enabled = grep { $_->is_enabled } $self->buttons;
-		my ($index) = grep { refaddr( $enabled[$_] ) == refaddr($cursor) } 0 .. $#enabled;
-		my %target  = (
-			Home => 0,
-			End  => $#enabled,
-			( exists $STEP_BY_KEY{$name} ? ( $name => ( $index + $STEP_BY_KEY{$name} ) % @enabled ) : () ),
-		);
-		return 0 unless exists $target{$name};
-		$self->choose( $enabled[ $target{$name} ] );
+		my @buttons = $self->buttons;
+		my @enabled = grep { $buttons[$_]->is_enabled } 0 .. $#buttons;
+		my $at      = first { refaddr( $buttons[$_] ) == refaddr($cursor) } 0 .. $#buttons;
+		my $target  = roving_target( \@enabled, $at, $name ) // return 0;
+		$self->choose( $buttons[$target] );
 		return 1;
 	}
 }

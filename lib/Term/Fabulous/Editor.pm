@@ -11,6 +11,7 @@ use Object::Pad 0.825;
 
 class Term::Fabulous::Editor :strict(params) {
 	use List::Util qw(sum0);
+	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Unicode qw(grapheme_clusters);
 
 	use constant UNDO_LIMIT           => 100;
@@ -57,10 +58,6 @@ class Term::Fabulous::Editor :strict(params) {
 	ADJUST :params ( :$text = '' ) {
 		$self->set_max_length($max_length);
 		$self->set_text($text);
-	}
-
-	sub _describe ($value) {
-		return defined $value ? "'$value'" : 'undef';
 	}
 
 	sub _boundaries ($line) {
@@ -142,7 +139,7 @@ class Term::Fabulous::Editor :strict(params) {
 
 	# undef removes the limit; a limit below the current length dies.
 	method set_max_length ($limit) {
-		die "Term::Fabulous::Editor: max_length must be a non-negative integer or undef, got " . _describe($limit)
+		die "Term::Fabulous::Editor: max_length must be a non-negative integer or undef, got " . describe($limit)
 			if defined $limit && !( !ref $limit && $limit =~ /\A[0-9]+\z/ );
 		die "Term::Fabulous::Editor: the text has " . $self->character_count . " characters, more than max_length $limit"
 			if defined $limit && $self->character_count > $limit;
@@ -194,7 +191,7 @@ class Term::Fabulous::Editor :strict(params) {
 	}
 
 	method _clamped_position ( $row, $offset ) {
-		die "Term::Fabulous::Editor: a position needs integer row and offset, got " . _describe($row) . ', ' . _describe($offset)
+		die "Term::Fabulous::Editor: a position needs integer row and offset, got " . describe($row) . ', ' . describe($offset)
 			unless grep( { defined && !ref && /\A-?[0-9]+\z/ } $row, $offset ) == 2;
 		$row = 0 if $row < 0;
 		$row = $#lines if $row > $#lines;

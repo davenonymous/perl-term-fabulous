@@ -190,6 +190,16 @@ $rating->half(1);
 Accessor for the `half` parameter. Writing rounds the value to the new
 grid (without a `Change` event) and returns 1 or 0.
 
+## set\_range
+
+```perl
+$rating->set_range( max => 10, half => 1 );
+```
+
+Changes `max` and `half` together, as a layout does (see
+[Term::Fabulous::Role::HasRange](../Role/HasRange.md)): the value moves onto the new grid
+without a `Change` event. Unknown parts die. Returns the rating.
+
 ## step
 
 ```perl

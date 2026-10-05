@@ -3,9 +3,14 @@ use warnings;
 
 use Test2::V0;
 
+use Object::Pad 0.825;
+
+use Clay::XS qw(sizing_fixed);
 use Term::Fabulous::Color;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Layout;
+use Term::Fabulous::Static;
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
@@ -47,19 +52,57 @@ subtest 'style list' => sub {
 	is $Style->from_name('Tab'), undef, 'Tab is gone';
 	isa_ok $Style->from_name('Hidden'), [$Style], 'Hidden exists';
 	like dies { Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox {\n\tborder style=Tab\n}" )->build },
-		qr/invalid border style 'Tab' \(known: Ascii, .*Wide\)/, 'a layout with style=Tab dies';
+		qr/Box: border style must be a border style or its name, got 'Tab' \(known: Ascii, .*Wide\)/, 'a layout with style=Tab dies';
 };
 
-subtest 'widget border styles are validated' => sub {
-	like dies { Term::Fabulous::Widget::Box->new( border_style     => 'Round' ) }, qr/border_style must be a Term::Fabulous::Enum::BorderStyle/, 'border_style string';
-	like dies { Term::Fabulous::Widget::Box->new( border_style_top => 'Round' ) }, qr/border_style_top/,                                         'side parameter string';
+subtest 'widget border styles take items and names' => sub {
+	ref_is( Term::Fabulous::Widget::Box->new( border_style     => 'Round' )->border_style_top,  $Style->Round,  'border_style takes a name' );
+	ref_is( Term::Fabulous::Widget::Box->new( border_style_top => 'Double' )->border_style_top, $Style->Double, 'so does a side parameter' );
+	like dies { Term::Fabulous::Widget::Box->new( border_style => 'round' ) },
+		qr/\ATerm::Fabulous::Widget::Box: border_style must be a border style or its name, got 'round' \(known: Ascii, Blank, /, 'names are case sensitive';
+	like dies { Term::Fabulous::Widget::Box->new( border_style_top => [] ) }, qr/border_style_top must be a border style or its name, got an ARRAY reference/, 'a side parameter is checked';
 
 	my $box = Term::Fabulous::Widget::Box->new( border_style => $Style->Round );
 	ref_is $box->border_style_left, $Style->Round, 'border_style sets every side';
 	my $mixed = Term::Fabulous::Widget::Box->new( border_style => $Style->Round, border_style_left => $Style->Thick );
 	is [ map { $mixed->$_ } qw(border_style_left border_style_top) ], [ $Style->Thick, $Style->Round ], 'a side parameter wins over border_style';
-	like dies { $box->border_style_left('Round') }, qr/border_style_left/, 'accessor write is checked';
+	ref_is $box->border_style_left('Heavy'), $Style->Heavy, 'an accessor takes a name and returns the item';
+	like dies { $box->border_style_left('Tab') }, qr/border_style_left must be a border style or its name, got 'Tab'/, 'accessor write is checked';
 	ok lives { $box->border_style_left(undef) }, 'undef clears a side';
+};
+
+# A box that derives a Double left side and a Hidden bottom side.
+class DerivingBox :isa(Term::Fabulous::Widget::Box) {
+
+	method derived_border_style ($side) {
+		return $side eq 'left' ? Term::Fabulous::Enum::BorderStyle->Double : $side eq 'bottom' ? Term::Fabulous::Enum::BorderStyle->Hidden : undef;
+	}
+}
+
+subtest 'the style a side is drawn in' => sub {
+	my $theme_style = Term::Fabulous::Theme->default->look( box => 'border.style' );
+	my $box         = DerivingBox->new( border_style_top => 'Heavy' );
+	ref_is $box->border_style_of('top'),     $Style->Heavy,  'its own style first';
+	ref_is $box->border_style_of('left'),    $Style->Double, 'else the derived one';
+	ref_is $box->border_style_of('right'),   $theme_style,   'else the theme\'s border.style';
+	ref_is $box->border_style_of('bottom'),  $Style->Hidden, 'a derived Hidden side';
+	ref_is $box->border_style_left('Thick'), $Style->Thick,  'a style of its own';
+	ref_is $box->border_style_of('left'),    $Style->Thick,  'wins over the derived one';
+	is $box->border_style_left(undef), undef, 'the writer returns the new value, undef too';
+	ref_is $box->border_style_left,  $Style->Double, 'and the reader the style in use again';
+	ref_is $box->border_style_right, $theme_style,   'every reader answers the style in use';
+	like dies { $box->border_style_of('middle') }, qr/border_style_of takes a side \(left right top bottom\), got 'middle'/, 'an unknown side dies';
+
+	my $none = Term::Fabulous::Theme->new( name => 'none', slots => { 'box.border.style' => 'none' } );
+	my $bare = Term::Fabulous::Widget::Box->new( border_width => 1, layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
+	my $ui   = Term::Fabulous::Static->new( root => $bare, width => 4, theme => $none );
+	ref_is $bare->border_style_of('top'), $Style->Blank, 'without a style anywhere: Blank';
+
+	my $framed = DerivingBox->new( border_width => 1, border_style => 'Solid', layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
+	$framed->border_style_left(undef);
+	$framed->border_style_bottom(undef);
+	is [ Term::Fabulous::Static->new( root => $framed, width => 4 )->render_lines( colors => 0 ) ], [ "\x{250C}\x{2500}\x{2500}\x{2510}", "\x{2551}  \x{2502}", "\x{2551}  \x{2502}" ],
+		'the renderer draws the derived styles, and a derived Hidden side takes no space';
 };
 
 subtest 'widget colors take every Term::Fabulous::Color format' => sub {

@@ -17,6 +17,7 @@ class Term::Fabulous::Widget::Table::Cell
 	:does(Clay::UI::Role::Layout::GridCell)
 	:strict(params)
 {
+	use Term::Fabulous::Check qw(one_of);
 
 	# Which part of the table the cell belongs to ('header', 'filter',
 	# 'body'), the line it shows (a line key of the table's model; undef in
@@ -27,8 +28,7 @@ class Term::Fabulous::Widget::Table::Cell
 	field $column_key :param :reader = undef;
 
 	ADJUST {
-		die "Term::Fabulous::Widget::Table::Cell: part must be 'header', 'filter' or 'body', got " . ( defined $part ? "'$part'" : 'undef' )
-			unless defined $part && $part =~ /\A(?:header|filter|body)\z/;
+		one_of( $self, part => $part, qw(header filter body) );
 	}
 }
 

@@ -1134,9 +1134,11 @@ L<Term::Fabulous::Static> is only the room it may take.
 
 =item *
 
-The cells always have a background color. In a tree without a
-background, as here, it is C<[22, 25, 31]>; give the table or the box a
-C<background_color> to choose another. See
+The cells always have a background color. In a live program they are
+painted in what the table lies on, at the latest the screen color of
+the theme; a L<Term::Fabulous::Static> report paints no screen, so in a
+tree without a background, as here, it is C<[22, 25, 31]>. Give the
+table or the box a C<background_color> to choose another. See
 L<Term::Fabulous::Manual::TableStyles/Colors>.
 
 =back

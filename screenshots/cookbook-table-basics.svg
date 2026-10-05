@@ -19,13 +19,10 @@
 <rect x="16.5" y="16.5" width="711" height="399" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
 <rect x="48" y="114" width="549" height="36" fill="#242832"/>
-<rect x="48" y="150" width="549" height="18" fill="#16191f"/>
 <rect x="48" y="168" width="549" height="18" fill="#263e5c"/>
-<rect x="48" y="186" width="549" height="18" fill="#16191f"/>
 <rect x="48" y="204" width="549" height="18" fill="#263e5c"/>
 <rect x="48" y="222" width="549" height="18" fill="#343a48"/>
 <rect x="48" y="240" width="549" height="18" fill="#1c2029"/>
-<rect x="48" y="258" width="549" height="36" fill="#16191f"/>
 <rect x="48" y="114" width="549" height="9" fill="#586070"/>
 <rect x="48" y="123" width="5" height="162" fill="#586070"/>
 <rect x="593" y="123" width="4" height="162" fill="#586070"/>

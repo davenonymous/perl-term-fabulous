@@ -13,7 +13,7 @@ class Term::Fabulous::Theme :strict(params) {
 	use Feature::Compat::Try;
 	use Scalar::Util qw(blessed);
 	use Text::KDL::XS qw(parse_kdl);
-	use Term::Fabulous::Check qw(color describe);
+	use Term::Fabulous::Check qw(border_style color describe);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	# ---------------------------------------------------------------------
@@ -388,16 +388,7 @@ class Term::Fabulous::Theme :strict(params) {
 			die "Term::Fabulous::Theme: $what cannot be 'reverse' (only button.background can)" unless $definition->{reverse};
 			return 'reverse';
 		}
-		if ( $definition->{kind} eq 'style' ) {
-			return $value if blessed $value && $value->isa('Term::Fabulous::Enum::BorderStyle');
-			my $style = !ref $value ? Term::Fabulous::Enum::BorderStyle->from_name($value) : undef;
-			die "Term::Fabulous::Theme: $what must be a border style name or 'none', got "
-				. describe($value)
-				. " (styles: "
-				. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")"
-				unless defined $style;
-			return $style;
-		}
+		return border_style( __PACKAGE__, $what, $value, none => 'none' ) if $definition->{kind} eq 'style';
 		return $value if !ref $value && exists $PALETTE{$value};
 		return color( __PACKAGE__, $what, $value );
 	}

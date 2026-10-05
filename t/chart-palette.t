@@ -15,8 +15,8 @@ subtest 'palettes' => sub {
 	is [ palette_colors( default => 'dark' ) ],              [ 0x3987e5, 0xd95926, 0x199e70, 0xc98500, 0xd55181, 0x008300, 0x9085e9, 0xe66767 ], 'the default palette on dark backgrounds';
 	is [ ( palette_colors( default => 'light' ) )[ 0, 7 ] ], [ 0x2a78d6, 0xe34948 ],                                                             'and on light ones';
 	is [ map { scalar( () = palette_colors( $_, 'dark' ) ) } palette_names() ], [ 8, 8, 8, 8 ],                                                  'eight colors each';
-	like dies { palette_colors( neon    => 'dark' ) }, qr/unknown palette 'neon' \(known: classic, default, pastel, vivid\)/, 'an unknown palette dies';
-	like dies { palette_colors( default => 'dim' ) },  qr/mode must be 'dark' or 'light', got 'dim'/,                         'an unknown mode dies';
+	like dies { palette_colors( neon    => 'dark' ) }, qr/unknown palette 'neon' \(known: classic, default, pastel, vivid\)/,            'an unknown palette dies';
+	like dies { palette_colors( default => 'dim' ) },  qr/\ATerm::Fabulous::Chart::Palette: mode must be one of dark, light, got 'dim'/, 'an unknown mode dies';
 };
 
 subtest 'chart_color' => sub {
@@ -44,7 +44,7 @@ subtest 'color arithmetic' => sub {
 subtest 'ink_colors' => sub {
 	is ink_colors( 0x000000, 'dark' ),  { title => 0xF2F2F2, text => 0xCCCCCC, label => 0x8C8C8C, axis => 0x4D4D4D, grid => 0x1F1F1F }, 'white ink mixed into a dark background';
 	is ink_colors( 0xFFFFFF, 'light' ), { title => 0x171717, text => 0x3C3C3C, label => 0x797979, axis => 0xB6B6B6, grid => 0xE2E2E2 }, 'near black ink mixed into a light one';
-	like dies { ink_colors( 0, 'dim' ) }, qr/mode must be 'dark' or 'light', got 'dim'/, 'an unknown mode dies';
+	like dies { ink_colors( 0, 'dim' ) }, qr/\ATerm::Fabulous::Chart::Palette: mode must be one of dark, light, got 'dim'/, 'an unknown mode dies';
 };
 
 subtest 'radial geometry' => sub {

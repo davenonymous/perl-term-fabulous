@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::RadioButton
 {
 	use List::Util qw(max);
 	use Scalar::Util qw(refaddr);
-	use Term::Fabulous::Check qw(string);
+	use Term::Fabulous::Check qw(optional string);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	field $label           :param = '';
@@ -46,7 +46,7 @@ class Term::Fabulous::Widget::RadioButton
 	# The value defaults to the label.
 	method value (@new) {
 		return $value // $label unless @new;
-		$value = defined $new[0] ? string( $self, value => $new[0] ) : undef;
+		$value = optional( \&string, $self, value => $new[0] );
 		$self->mark_changed;
 		return $value // $label;
 	}

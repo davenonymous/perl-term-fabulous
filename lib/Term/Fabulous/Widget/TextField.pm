@@ -15,7 +15,7 @@ class Term::Fabulous::Widget::TextField
 	:isa(Term::Fabulous::Widget::TextInput)
 	:strict(params)
 {
-	use Term::Fabulous::Check qw(glyph positive_integer);
+	use Term::Fabulous::Check qw(glyph optional positive_integer);
 	use Term::Fabulous::Event::Submit;
 
 	field $preferred_columns :param = 20;
@@ -35,7 +35,7 @@ class Term::Fabulous::Widget::TextField
 
 	method mask (@new) {
 		return $mask unless @new;
-		$mask = defined $new[0] ? glyph( $self, mask => $new[0] ) : undef;
+		$mask = optional( \&glyph, $self, mask => $new[0] );
 		$self->view->display_changed;    # masked text has other widths
 		$self->mark_changed;
 		return $mask;

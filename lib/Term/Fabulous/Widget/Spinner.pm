@@ -16,7 +16,7 @@ class Term::Fabulous::Widget::Spinner
 	:strict(params)
 {
 	use List::Util ();    # max is a method elsewhere in the family
-	use Term::Fabulous::Check qw(boolean cell_color describe number string);
+	use Term::Fabulous::Check qw(boolean describe number one_of string);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	# A ring of blocks with a gap that runs around it: the frames remove
@@ -60,7 +60,7 @@ class Term::Fabulous::Widget::Spinner
 		ring => { interval => 0.10, frames => _ring_frames() },
 	);
 
-	my %IS_POSITION = map { $_ => 1 } qw(left right);
+	my @LABEL_POSITIONS = qw(left right);
 
 	field $style          :param = 'dots';
 	field $frames         :param = undef;
@@ -70,17 +70,12 @@ class Term::Fabulous::Widget::Spinner
 	field $running        :param = 1;
 
 	ADJUST {
-		$style          = $self->_checked_style($style);
+		$style          = one_of( $self, style => $style, keys %STYLE );
 		$frames         = $self->_checked_frames($frames);
 		$interval       = $self->_checked_interval($interval);
 		$label          = string( $self, label => $label );
-		$label_position = $self->_checked_position($label_position);
+		$label_position = one_of( $self, label_position => $label_position, @LABEL_POSITIONS );
 		$running        = boolean( $self, running => $running );
-	}
-
-	# The colors come from the theme's spinner family unless given.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, qw(color label_color) );
 	}
 
 	method theme_family :common () {
@@ -88,12 +83,7 @@ class Term::Fabulous::Widget::Spinner
 	}
 
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, color => [ 'color', 'normal' ], label_color => [ 'label', 'normal' ] );
-	}
-
-	method _checked_style ($name) {
-		die ref($self) . ": style must be one of " . join( ', ', sort keys %STYLE ) . ", got " . describe($name) unless defined $name && !ref $name && $STYLE{$name};
-		return $name;
+		return ( $class->SUPER::themed_params, color => [ 'color', 'normal', 'cell_color' ], label_color => [ 'label', 'normal', 'cell_color' ] );
 	}
 
 	# Frames of your own: a non-empty array of strings, copied.
@@ -113,11 +103,6 @@ class Term::Fabulous::Widget::Spinner
 		return $seconds;
 	}
 
-	method _checked_position ($position) {
-		die ref($self) . ": label_position must be left or right, got " . describe($position) unless defined $position && !ref $position && $IS_POSITION{$position};
-		return $position;
-	}
-
 	# ---------------------------------------------------------------------
 	# Accessors
 	# ---------------------------------------------------------------------
@@ -128,13 +113,13 @@ class Term::Fabulous::Widget::Spinner
 		return $$field_ref;
 	}
 
-	method style          (@new) { return @new ? $self->_set( \$style, $self->_checked_style( $new[0] ) )                      : $style }
-	method interval       (@new) { return @new ? $self->_set( \$interval, $self->_checked_interval( $new[0] ) )                : $interval // $STYLE{$style}{interval} }
-	method label          (@new) { return @new ? $self->_set( \$label, string( $self, label => $new[0] ) )                     : $label }
-	method label_position (@new) { return @new ? $self->_set( \$label_position, $self->_checked_position( $new[0] ) )          : $label_position }
-	method running        (@new) { return @new ? $self->_set( \$running, boolean( $self, running => $new[0] ) )                : $running }
-	method color          (@new) { return @new ? $self->set_look( color => cell_color( $self, color => $new[0] ) )             : $self->look_value('color') }
-	method label_color    (@new) { return @new ? $self->set_look( label_color => cell_color( $self, label_color => $new[0] ) ) : $self->look_value('label_color') }
+	method style          (@new) { return @new ? $self->_set( \$style, one_of( $self, style => $new[0], keys %STYLE ) )                        : $style }
+	method interval       (@new) { return @new ? $self->_set( \$interval, $self->_checked_interval( $new[0] ) )                                : $interval // $STYLE{$style}{interval} }
+	method label          (@new) { return @new ? $self->_set( \$label, string( $self, label => $new[0] ) )                                     : $label }
+	method label_position (@new) { return @new ? $self->_set( \$label_position, one_of( $self, label_position => $new[0], @LABEL_POSITIONS ) ) : $label_position }
+	method running        (@new) { return @new ? $self->_set( \$running, boolean( $self, running => $new[0] ) )                                : $running }
+	method color          (@new) { return @new ? $self->set_look( color => $new[0] )                                                           : $self->look_value('color') }
+	method label_color    (@new) { return @new ? $self->set_look( label_color => $new[0] )                                                     : $self->look_value('label_color') }
 
 	method frames (@new) {
 		return [ ( $frames // $STYLE{$style}{frames} )->@* ] unless @new;
@@ -163,8 +148,7 @@ class Term::Fabulous::Widget::Spinner
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(style interval label label_position) ),
 			running => 'boolean',
-			( map { $_ => 'color' } qw(color label_color) ),
-			frames => \&_parse_frames,
+			frames  => \&_parse_frames,
 		);
 	}
 
@@ -240,7 +224,7 @@ Term::Fabulous::Widget::Spinner - Show that something is going on
 
 	# When the work is done:
 	$spinner->stop;
-	$box->remove_children_with( sub { $_ == $spinner } );
+	$box->remove_child($spinner);
 
 	# Other looks:
 	Term::Fabulous::Widget::Spinner->new( style => 'line' );                     # - \ | /

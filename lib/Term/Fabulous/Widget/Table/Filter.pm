@@ -13,14 +13,15 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	use Feature::Compat::Try;
 	use List::Util ();    # all and any are methods of this class
 	use Scalar::Util qw(blessed);
+	use Term::Fabulous::Check qw(describe one_of optional);
 	use Term::Fabulous::Widget::Table::Value qw(is_blank number_of date_epoch date_interval);
 
 	my %TEXT_OP    = map { $_ => 1 } qw(contains not_contains equals not_equals starts_with ends_with matches);
 	my %BLANK_OP   = map { $_ => 1 } qw(empty not_empty);
 	my %COMPARE_OP = map { $_ => 1 } ( '=', '!=', '<', '<=', '>', '>=', 'between', 'in' );
 	my %ALIAS      = ( '==' => '=', eq => '=', ne => '!=', lt => '<', le => '<=', gt => '>', ge => '>=' );
-	my %IS_TYPE    = map { $_ => 1 } qw(string number date);
-	my %IS_ON      = map { $_ => 1 } qw(value display);
+	my @TYPES      = qw(string number date);
+	my @ONS        = qw(value display);
 
 	my $NUMBER = qr/[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?/;
 
@@ -48,23 +49,16 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 		$self->_check_condition if defined $op;
 		die "Term::Fabulous::Widget::Table::Filter: a filter needs 'op' (with 'column'), 'test' or a combination"
 			unless defined $op || defined $test || defined $combine;
-		die "Term::Fabulous::Widget::Table::Filter: on must be 'value' or 'display', got " . _describe($on) unless defined $on && $IS_ON{$on};
-		die "Term::Fabulous::Widget::Table::Filter: type must be 'string', 'number' or 'date', got " . _describe($type)
-			if defined $type && !$IS_TYPE{$type};
+		one_of( $self, on => $on, @ONS );
+		optional( \&one_of, $self, type => $type, @TYPES );
 		$case_sensitive = $case_sensitive ? 1 : 0;
-	}
-
-	sub _describe ($thing) {
-		return 'undef' unless defined $thing;
-		return ref($thing) . ' reference' if ref $thing;
-		return "'$thing'";
 	}
 
 	method _check_combination () {
 		die "Term::Fabulous::Widget::Table::Filter: internal: unknown combination '$combine'" unless $combine =~ /\A(?:all|any|not)\z/;
 		die "Term::Fabulous::Widget::Table::Filter: $combine takes filters, not a column" if defined $column;
 		foreach my $filter (@$filters) {
-			die "Term::Fabulous::Widget::Table::Filter: $combine takes Term::Fabulous::Widget::Table::Filter objects or code references, got " . _describe($filter)
+			die "Term::Fabulous::Widget::Table::Filter: $combine takes Term::Fabulous::Widget::Table::Filter objects or code references, got " . describe($filter)
 				unless blessed $filter && $filter->isa('Term::Fabulous::Widget::Table::Filter');
 		}
 		die "Term::Fabulous::Widget::Table::Filter: not takes exactly one filter" if $combine eq 'not' && @$filters != 1;
@@ -72,34 +66,34 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 	}
 
 	method _check_test () {
-		die "Term::Fabulous::Widget::Table::Filter: test must be a code reference, got " . _describe($test) unless ref $test eq 'CODE';
+		die "Term::Fabulous::Widget::Table::Filter: test must be a code reference, got " . describe($test) unless ref $test eq 'CODE';
 		return;
 	}
 
 	method _check_condition () {
 		$op = $ALIAS{$op} // $op;
-		die "Term::Fabulous::Widget::Table::Filter: unknown op " . _describe($op) . " (known: " . join( ', ', sort( keys %TEXT_OP, keys %BLANK_OP, keys %COMPARE_OP ) ) . ")"
+		die "Term::Fabulous::Widget::Table::Filter: unknown op " . describe($op) . " (known: " . join( ', ', sort( keys %TEXT_OP, keys %BLANK_OP, keys %COMPARE_OP ) ) . ")"
 			unless $TEXT_OP{$op} || $BLANK_OP{$op} || $COMPARE_OP{$op};
 		die "Term::Fabulous::Widget::Table::Filter: op '$op' needs a column" unless defined $column && !ref $column && length $column;
 		return if $BLANK_OP{$op};
 		die "Term::Fabulous::Widget::Table::Filter: op '$op' needs a value" unless defined $value;
 		if ( $op eq 'between' ) {
-			die "Term::Fabulous::Widget::Table::Filter: op 'between' needs [ from, to ] as its value, got " . _describe($value)
+			die "Term::Fabulous::Widget::Table::Filter: op 'between' needs [ from, to ] as its value, got " . describe($value)
 				unless ref $value eq 'ARRAY' && @$value == 2 && !grep { !defined || ref } @$value;
 			$value = [@$value];
 		}
 		elsif ( $op eq 'in' ) {
-			die "Term::Fabulous::Widget::Table::Filter: op 'in' needs an array reference of values, got " . _describe($value)
+			die "Term::Fabulous::Widget::Table::Filter: op 'in' needs an array reference of values, got " . describe($value)
 				unless ref $value eq 'ARRAY' && !grep { !defined || ref } @$value;
 			$value = [@$value];
 		}
 		elsif ( $op eq 'matches' ) {
-			die "Term::Fabulous::Widget::Table::Filter: op 'matches' needs a pattern (qr// or a string), got " . _describe($value)
+			die "Term::Fabulous::Widget::Table::Filter: op 'matches' needs a pattern (qr// or a string), got " . describe($value)
 				if ref $value && ref $value ne 'Regexp';
 			_compile_pattern( $value, $case_sensitive );
 		}
 		else {
-			die "Term::Fabulous::Widget::Table::Filter: op '$op' needs a plain value, got " . _describe($value) if ref $value;
+			die "Term::Fabulous::Widget::Table::Filter: op '$op' needs a plain value, got " . describe($value) if ref $value;
 		}
 		$self->_operand($type) if defined $type && $COMPARE_OP{$op};    # dies now for a value the type cannot read
 		return;
@@ -270,8 +264,8 @@ class Term::Fabulous::Widget::Table::Filter :strict(params) {
 		die "Term::Fabulous::Widget::Table::Filter: parse does not accept @unknown (known: case_sensitive, column, on, type)" if @unknown;
 		die "Term::Fabulous::Widget::Table::Filter: parse needs a column" unless defined $options{column};
 		my $type = $options{type} // 'string';
-		die "Term::Fabulous::Widget::Table::Filter: parse type must be 'string', 'number' or 'date', got " . _describe($type) unless $IS_TYPE{$type};
-		die "Term::Fabulous::Widget::Table::Filter: parse needs a string, got " . _describe($expression) if ref $expression || !defined $expression;
+		one_of( $class, 'parse type' => $type, @TYPES );
+		die "Term::Fabulous::Widget::Table::Filter: parse needs a string, got " . describe($expression) if ref $expression || !defined $expression;
 
 		my $text = $expression =~ s/\A\s+|\s+\z//gr;
 		return undef unless length $text;

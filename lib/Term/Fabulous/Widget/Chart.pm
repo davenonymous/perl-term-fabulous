@@ -10,10 +10,10 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 use Clay::UI::Role::Interaction::Hoverable;
-use Term::Fabulous::Widget::Canvas;
+use Term::Fabulous::Widget::Display;
 
 class Term::Fabulous::Widget::Chart
-	:isa(Term::Fabulous::Widget::Canvas)
+	:isa(Term::Fabulous::Widget::Display)
 	:does(Clay::UI::Role::Interaction::Hoverable)
 	:abstract
 {
@@ -22,21 +22,21 @@ class Term::Fabulous::Widget::Chart
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(max min sum0);
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(boolean describe);
+	use Term::Fabulous::Check qw(boolean describe one_of);
 	use Term::Fabulous::Chart::Palette qw(palette_colors is_palette_name palette_names chart_color mix_rgb is_light_rgb ink_colors);
 	use Term::Fabulous::Chart::Surface;
 	use Term::Fabulous::Event::SeriesHover;
 	use Term::Fabulous::Termbox qw(TB_BOLD);
 
 	use constant {
-		DARK_SURFACE  => 0x1A1A19,
+		DARK_SURFACE  => 0x1A1A19,    # the ink's base where the chart lies on nothing
 		LIGHT_SURFACE => 0xFCFCFB,
 		LEGEND_GAP    => 3,    # columns between legend entries in a row
 	};
 
-	my %IS_LEGEND      = map { $_ => 1 } qw(auto top bottom left right none);
-	my %IS_ALIGN       = map { $_ => 1 } qw(left center right);
-	my %IS_THEME       = map { $_ => 1 } qw(auto dark light);
+	my @LEGEND         = qw(auto top bottom left right none);
+	my @ALIGN          = qw(left center right);
+	my @THEME          = qw(auto dark light);
 	my @INK_COLORS     = qw(title_color text_color label_color axis_color grid_color);
 	my %SYMBOL_COLUMNS = ( line => 2, fill => 1, point => 1 );
 
@@ -50,8 +50,6 @@ class Term::Fabulous::Widget::Chart
 	field $highlight   :param = undef;
 	field %_ink;    # the colors given for title_color, ..., as 0xRRGGBB
 
-	field $_revision = 0;
-	field $_painted_key;
 	field $_surface;    # the last frame's surface, for the mouse
 	field @_targets;    # owner id => { key, series, index, label, value, x }
 	field $_hovered;    # the target under the pointer, or undef
@@ -64,9 +62,9 @@ class Term::Fabulous::Widget::Chart
 	ADJUST :params ( :$title_color = undef, :$text_color = undef, :$label_color = undef, :$axis_color = undef, :$grid_color = undef ) {
 		my %given = ( title_color => $title_color, text_color => $text_color, label_color => $label_color, axis_color => $axis_color, grid_color => $grid_color );
 		$self->_check_title( title => $title );
-		$self->_check_choice( title_align => $title_align, \%IS_ALIGN );
-		$self->_check_choice( legend      => $legend,      \%IS_LEGEND );
-		$self->_check_choice( theme       => $theme,       \%IS_THEME );
+		one_of( $self, title_align => $title_align, @ALIGN );
+		one_of( $self, legend      => $legend,      @LEGEND );
+		one_of( $self, theme       => $theme,       @THEME );
 		$palette    = $self->_checked_palette($palette);
 		$hover      = boolean( $self, hover => $hover );
 		$hover_fade = $self->_checked_fraction( hover_fade => $hover_fade );
@@ -97,11 +95,6 @@ class Term::Fabulous::Widget::Chart
 		return $value;
 	}
 
-	method _check_choice ( $name, $value, $allowed ) {
-		$self->_fail( $name, join( ', ', sort keys %$allowed ), $value ) unless defined $value && !ref $value && $allowed->{$value};
-		return $value;
-	}
-
 	method _checked_fraction ( $name, $value ) {
 		$self->_fail( $name, 'a number from 0 to 1', $value ) unless defined $value && !ref $value && $value =~ /\A(?:0|1|0?\.[0-9]+|1\.0*)\z/;
 		return $value + 0;
@@ -119,47 +112,30 @@ class Term::Fabulous::Widget::Chart
 	# Changes and painting
 	# ---------------------------------------------------------------------
 
-	method mark_changed :override () {
-		$_revision++;
-		return $self->SUPER::mark_changed;
+	# A chart without a size in the layout takes the room it gets
+	# (Term::Fabulous::Widget::Display).
+	method natural_size () {
+		return ( sizing_grow(), sizing_grow() );
 	}
 
-	method revision () {
-		return $_revision;
-	}
-
-	# A chart without a size in the layout takes the room it gets.
-	method contribute_layout_size ($config) {
-		my $layout = $config->{layout} // {};
-		my $sizing = $layout->{sizing} // {};
-		my @open   = grep { !defined $sizing->{$_} } qw(width height);
-		return unless @open;
-		$config->{layout} = { %$layout, sizing => { %$sizing, map { $_ => sizing_grow() } @open } };
-		return;
-	}
-
-	# The background the chart is drawn on: its own, or that of its
-	# nearest ancestor with an opaque one; undef for the terminal's.
+	# The background the chart is drawn on (Term::Fabulous::Widget's
+	# background_below) as 0xRRGGBB; undef where there is none.
 	method effective_background () {
-		for ( my $node = $self; defined $node; $node = $node->parent ) {
-			next unless $node->can('background_color');
-			my $color = $node->background_color // next;
-			return ( $color->[0] << 16 ) | ( $color->[1] << 8 ) | $color->[2] if $color->[3] == 255;
-		}
-		return undef;
+		my $rgba = $self->background_below // return undef;
+		return ( $rgba->[0] << 16 ) | ( $rgba->[1] << 8 ) | $rgba->[2];
 	}
 
-	method refresh :override () {
-		my ( $columns, $rows ) = ( $self->columns, $self->rows );
-		return unless $columns > 0 && $rows > 0;
-		my $background = $self->effective_background;
-		my $key        = join "\x{1F}", $columns, $rows, $_revision, $background // 'none', defined $_hovered ? $_hovered->{key} : '';
-		return if defined $_painted_key && $key eq $_painted_key;
-		$_painted_key = $key;
+	# Besides its own state and the theme (Term::Fabulous::Widget::Display),
+	# a chart is drawn from what it lies on and what the pointer is on.
+	method paint_key :override () {
+		return ( $self->SUPER::paint_key, $self->effective_background, defined $_hovered ? $_hovered->{key} : undef );
+	}
 
-		my $look = $self->_look($background);
+	method paint () {
+		my $background = $self->effective_background;
+		my $look       = $self->_look($background);
 		@_targets = ();
-		$_surface = Term::Fabulous::Chart::Surface->new( columns => $columns, rows => $rows, background => $background );
+		$_surface = Term::Fabulous::Chart::Surface->new( columns => $self->columns, rows => $self->rows, background => $background );
 		$self->_draw( $_surface, $look );
 		$_surface->paint($self);
 		return;
@@ -446,17 +422,17 @@ class Term::Fabulous::Widget::Chart
 
 	method title_align (@new) {
 		return $title_align unless @new;
-		return $self->_changed_to( \$title_align, $self->_check_choice( title_align => $new[0], \%IS_ALIGN ) );
+		return $self->_changed_to( \$title_align, one_of( $self, title_align => $new[0], @ALIGN ) );
 	}
 
 	method legend (@new) {
 		return $legend unless @new;
-		return $self->_changed_to( \$legend, $self->_check_choice( legend => $new[0], \%IS_LEGEND ) );
+		return $self->_changed_to( \$legend, one_of( $self, legend => $new[0], @LEGEND ) );
 	}
 
 	method theme (@new) {
 		return $theme unless @new;
-		return $self->_changed_to( \$theme, $self->_check_choice( theme => $new[0], \%IS_THEME ) );
+		return $self->_changed_to( \$theme, one_of( $self, theme => $new[0], @THEME ) );
 	}
 
 	method palette (@new) {
@@ -594,7 +570,7 @@ Round charts.
 
 =back
 
-A chart is a L<Term::Fabulous::Widget::Canvas> that draws itself: give it
+A chart is a L<Term::Fabulous::Widget::Display> that draws itself: give it
 data, and it lays out its title, legend, axes and plot in whatever room
 the layout gives it, and draws them again whenever the data, an option or
 its size changes. Only cells that changed are sent to the terminal, so a
@@ -651,10 +627,12 @@ colors repeat; give such series colors of their own, or better, fewer
 series.
 
 The chart has no background of its own by default: it is drawn on the
-background of its nearest ancestor with an opaque one, and blends its
-translucent fills with it. Set C<background_color> to give it one. The
-C<theme> chooses between dark and light ink and palette steps; C<auto>
-(the default) looks at the background and picks C<light> on a light one.
+background of its nearest ancestor with an opaque one, or on the
+screen color of the theme (L<Term::Fabulous::Widget/background_below>),
+and blends its translucent fills with it. Set C<background_color> to
+give it one. The C<theme> chooses between dark and light ink and
+palette steps; C<auto> (the default) looks at the background and picks
+C<light> on a light one.
 
 Text and lines that are not data are drawn in colors mixed from the
 background and the ink of the theme, so they suit any background: the
@@ -774,15 +752,14 @@ the chart fires a C<SeriesHover> event without a series.
 What the mouse pointer is on, with the values the last C<SeriesHover>
 event had.
 
-=head2 revision
-
-A number that grows with every change of the chart.
-
 =head2 effective_background
 
 The background the chart is drawn on, as a packed C<0xRRGGBB> integer:
-its own, or its nearest ancestor's with an opaque one; C<undef> for the
-terminal's default background.
+L<Term::Fabulous::Widget/background_below>, so its own, its nearest
+ancestor's with an opaque one or the screen color of the theme;
+C<undef> where there is none (in a L<Term::Fabulous::Static>, or under
+a theme whose C<background> token has alpha 0). The ink is then mixed
+from a fixed dark surface.
 
 =head1 EVENTS
 

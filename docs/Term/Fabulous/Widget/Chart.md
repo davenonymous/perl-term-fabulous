@@ -49,7 +49,7 @@ The base class of the chart widgets:
 
     Round charts.
 
-A chart is a [Term::Fabulous::Widget::Canvas](Canvas.md) that draws itself: give it
+A chart is a [Term::Fabulous::Widget::Display](Display.md) that draws itself: give it
 data, and it lays out its title, legend, axes and plot in whatever room
 the layout gives it, and draws them again whenever the data, an option or
 its size changes. Only cells that changed are sent to the terminal, so a
@@ -106,10 +106,12 @@ colors repeat; give such series colors of their own, or better, fewer
 series.
 
 The chart has no background of its own by default: it is drawn on the
-background of its nearest ancestor with an opaque one, and blends its
-translucent fills with it. Set `background_color` to give it one. The
-`theme` chooses between dark and light ink and palette steps; `auto`
-(the default) looks at the background and picks `light` on a light one.
+background of its nearest ancestor with an opaque one, or on the
+screen color of the theme (["background\_below" in Term::Fabulous::Widget](../Widget.md#background_below)),
+and blends its translucent fills with it. Set `background_color` to
+give it one. The `theme` chooses between dark and light ink and
+palette steps; `auto` (the default) looks at the background and picks
+`light` on a light one.
 
 Text and lines that are not data are drawn in colors mixed from the
 background and the ink of the theme, so they suit any background: the
@@ -229,15 +231,14 @@ my $what = $chart->hovered;    # { series => 'api', index => 3, label => 'Apr', 
 What the mouse pointer is on, with the values the last `SeriesHover`
 event had.
 
-## revision
-
-A number that grows with every change of the chart.
-
 ## effective\_background
 
 The background the chart is drawn on, as a packed `0xRRGGBB` integer:
-its own, or its nearest ancestor's with an opaque one; `undef` for the
-terminal's default background.
+["background\_below" in Term::Fabulous::Widget](../Widget.md#background_below), so its own, its nearest
+ancestor's with an opaque one or the screen color of the theme;
+`undef` where there is none (in a [Term::Fabulous::Static](../Static.md), or under
+a theme whose `background` token has alpha 0). The ink is then mixed
+from a fixed dark surface.
 
 # EVENTS
 

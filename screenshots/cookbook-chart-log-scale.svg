@@ -22,32 +22,32 @@
 <rect x="183" y="122" width="18" height="2" fill="#d95926"/>
 <rect x="498" y="122" width="18" height="2" fill="#3987e5"/>
 <rect x="633" y="122" width="18" height="2" fill="#d95926"/>
-<rect x="93" y="158" width="351" height="1" fill="#353535"/>
-<rect x="543" y="158" width="324" height="1" fill="#353535"/>
-<rect x="543" y="194" width="225" height="1" fill="#353535"/>
-<rect x="822" y="194" width="72" height="1" fill="#353535"/>
-<rect x="93" y="212" width="333" height="1" fill="#353535"/>
-<rect x="435" y="212" width="9" height="1" fill="#353535"/>
-<rect x="543" y="230" width="144" height="1" fill="#353535"/>
-<rect x="732" y="230" width="135" height="1" fill="#353535"/>
-<rect x="93" y="266" width="306" height="1" fill="#353535"/>
-<rect x="417" y="266" width="27" height="1" fill="#353535"/>
-<rect x="543" y="266" width="63" height="1" fill="#353535"/>
-<rect x="651" y="266" width="81" height="1" fill="#353535"/>
-<rect x="804" y="266" width="90" height="1" fill="#353535"/>
-<rect x="570" y="302" width="27" height="1" fill="#353535"/>
-<rect x="660" y="302" width="234" height="1" fill="#353535"/>
-<rect x="93" y="320" width="279" height="1" fill="#353535"/>
-<rect x="390" y="320" width="54" height="1" fill="#353535"/>
-<rect x="543" y="338" width="351" height="1" fill="#5f5f5e"/>
-<rect x="547" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="592" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="646" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="691" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="745" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="790" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="844" y="338" width="1" height="10" fill="#5f5f5e"/>
-<rect x="889" y="338" width="1" height="10" fill="#5f5f5e"/>
+<rect x="93" y="158" width="351" height="1" fill="#32323d"/>
+<rect x="543" y="158" width="324" height="1" fill="#32323d"/>
+<rect x="543" y="194" width="225" height="1" fill="#32323d"/>
+<rect x="822" y="194" width="72" height="1" fill="#32323d"/>
+<rect x="93" y="212" width="333" height="1" fill="#32323d"/>
+<rect x="435" y="212" width="9" height="1" fill="#32323d"/>
+<rect x="543" y="230" width="144" height="1" fill="#32323d"/>
+<rect x="732" y="230" width="135" height="1" fill="#32323d"/>
+<rect x="93" y="266" width="306" height="1" fill="#32323d"/>
+<rect x="417" y="266" width="27" height="1" fill="#32323d"/>
+<rect x="543" y="266" width="63" height="1" fill="#32323d"/>
+<rect x="651" y="266" width="81" height="1" fill="#32323d"/>
+<rect x="804" y="266" width="90" height="1" fill="#32323d"/>
+<rect x="570" y="302" width="27" height="1" fill="#32323d"/>
+<rect x="660" y="302" width="234" height="1" fill="#32323d"/>
+<rect x="93" y="320" width="279" height="1" fill="#32323d"/>
+<rect x="390" y="320" width="54" height="1" fill="#32323d"/>
+<rect x="543" y="338" width="351" height="1" fill="#5c5c64"/>
+<rect x="547" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="592" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="646" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="691" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="745" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="790" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="844" y="338" width="1" height="10" fill="#5c5c64"/>
+<rect x="889" y="338" width="1" height="10" fill="#5c5c64"/>
 </g>
 <circle cx="873.75" cy="165.75" r="1.8" fill="#3987e5"/>
 <circle cx="878.25" cy="165.75" r="1.8" fill="#3987e5"/>
@@ -283,42 +283,42 @@
 <circle cx="428.25" cy="372.75" r="1.8" fill="#d95926"/>
 <circle cx="432.75" cy="372.75" r="1.8" fill="#d95926"/>
 <g class="terminal">
-<text x="48" y="92" textLength="594" class="b" fill="#f4f4f4">Linear axis                                       Logarithmic axis</text>
-<text x="75" y="128" textLength="81" fill="#d1d1d1">Downloads</text>
-<text x="210" y="128" textLength="54" fill="#d1d1d1">Issues</text>
-<text x="525" y="128" textLength="81" fill="#d1d1d1">Downloads</text>
-<text x="660" y="128" textLength="54" fill="#d1d1d1">Issues</text>
-<text x="48" y="164" textLength="36" fill="#989898">100k</text>
-<text x="498" y="164" textLength="36" fill="#989898">100k</text>
+<text x="48" y="92" textLength="594" class="b" fill="#f3f3f4">Linear axis                                       Logarithmic axis</text>
+<text x="75" y="128" textLength="81" fill="#d0d0d3">Downloads</text>
+<text x="210" y="128" textLength="54" fill="#d0d0d3">Issues</text>
+<text x="525" y="128" textLength="81" fill="#d0d0d3">Downloads</text>
+<text x="660" y="128" textLength="54" fill="#d0d0d3">Issues</text>
+<text x="48" y="164" textLength="36" fill="#96969c">100k</text>
+<text x="498" y="164" textLength="36" fill="#96969c">100k</text>
 <text x="889.5" y="164" text-anchor="middle" fill="#3987e5">•</text>
 <text x="439.5" y="182" text-anchor="middle" fill="#3987e5">•</text>
 <text x="844.5" y="182" text-anchor="middle" fill="#3987e5">•</text>
-<text x="507" y="200" textLength="27" fill="#989898">10k</text>
+<text x="507" y="200" textLength="27" fill="#96969c">10k</text>
 <text x="790.5" y="200" text-anchor="middle" fill="#3987e5">•</text>
-<text x="57" y="218" textLength="27" fill="#989898">75k</text>
+<text x="57" y="218" textLength="27" fill="#96969c">75k</text>
 <text x="745.5" y="218" text-anchor="middle" fill="#3987e5">•</text>
-<text x="516" y="236" textLength="18" fill="#989898">1k</text>
+<text x="516" y="236" textLength="18" fill="#96969c">1k</text>
 <text x="691.5" y="236" text-anchor="middle" fill="#3987e5">•</text>
 <text x="889.5" y="236" text-anchor="middle" fill="#d95926">•</text>
 <text x="844.5" y="254" text-anchor="middle" fill="#d95926">•</text>
-<text x="57" y="272" textLength="27" fill="#989898">50k</text>
-<text x="507" y="272" textLength="27" fill="#989898">100</text>
+<text x="57" y="272" textLength="27" fill="#96969c">50k</text>
+<text x="507" y="272" textLength="27" fill="#96969c">100</text>
 <text x="646.5" y="272" text-anchor="middle" fill="#3987e5">•</text>
 <text x="745.5" y="272" text-anchor="middle" fill="#d95926">•</text>
 <text x="790.5" y="272" text-anchor="middle" fill="#d95926">•</text>
 <text x="592.5" y="290" text-anchor="middle" fill="#3987e5">•</text>
 <text x="691.5" y="290" text-anchor="middle" fill="#d95926">•</text>
 <text x="394.5" y="308" text-anchor="middle" fill="#3987e5">•</text>
-<text x="516" y="308" textLength="18" fill="#989898">10</text>
+<text x="516" y="308" textLength="18" fill="#96969c">10</text>
 <text x="547.5" y="308" text-anchor="middle" fill="#3987e5">•</text>
 <text x="646.5" y="308" text-anchor="middle" fill="#d95926">•</text>
-<text x="57" y="326" textLength="27" fill="#989898">25k</text>
+<text x="57" y="326" textLength="27" fill="#96969c">25k</text>
 <text x="547.5" y="326" text-anchor="middle" fill="#d95926">•</text>
 <text x="592.5" y="326" text-anchor="middle" fill="#d95926">•</text>
-<text x="525" y="344" textLength="9" fill="#989898">1</text>
+<text x="525" y="344" textLength="9" fill="#96969c">1</text>
 <text x="340.5" y="362" text-anchor="middle" fill="#3987e5">•</text>
-<text x="525" y="362" textLength="378" fill="#989898">2019 2020  2021 2022  2023 2024  2025 2026</text>
-<text x="75" y="380" textLength="9" fill="#989898">0</text>
+<text x="525" y="362" textLength="378" fill="#96969c">2019 2020  2021 2022  2023 2024  2025 2026</text>
+<text x="75" y="380" textLength="9" fill="#96969c">0</text>
 <text x="97.5" y="380" text-anchor="middle" fill="#d95926">•</text>
 <text x="142.5" y="380" text-anchor="middle" fill="#d95926">•</text>
 <text x="196.5" y="380" text-anchor="middle" fill="#d95926">•</text>
@@ -327,7 +327,7 @@
 <text x="340.5" y="380" text-anchor="middle" fill="#d95926">•</text>
 <text x="394.5" y="380" text-anchor="middle" fill="#d95926">•</text>
 <text x="439.5" y="380" text-anchor="middle" fill="#d95926">•</text>
-<text x="75" y="398" textLength="378" fill="#989898">2019 2020  2021 2022  2023 2024  2025 2026</text>
+<text x="75" y="398" textLength="378" fill="#96969c">2019 2020  2021 2022  2023 2024  2025 2026</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

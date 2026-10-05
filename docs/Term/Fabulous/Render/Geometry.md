@@ -1,6 +1,7 @@
 # NAME
 
-Term::Fabulous::Render::Geometry - Snap Clay's layout boxes to terminal cells
+Term::Fabulous::Render::Geometry - Snap Clay's layout boxes to terminal
+cells, and step lines through a raster
 
 # SYNOPSIS
 
@@ -31,6 +32,8 @@ rectangle with `x1 == x0` or `y1 == y0` is empty.
 # FUNCTIONS
 
 Nothing is exported by default. Import the functions you need by name.
+All but ["line\_steps"](#line_steps) work on cells; ["line\_steps"](#line_steps) works on the pixels
+of any raster.
 
 ## cell\_rect
 
@@ -85,6 +88,36 @@ Without rectangles it returns the whole span `[$x0, $x1]`.
 ```perl
 row_spans_outside( 1, 0, 10, [ 2, 0, 4, 3 ], [ 6, 1, 8, 2 ] );    # ([0, 2], [4, 6], [8, 10])
 ```
+
+## line\_steps
+
+```perl
+my ( $first, @pixels ) = line_steps( $x0, $y0, $x1, $y1, $width, $height );
+set_pixel(@$_) foreach @pixels;
+```
+
+The pixels of a straight line between two pixels (whole numbers), both
+ends included, as Bresenham's algorithm steps through them, clipped to
+a raster of `$width` x `$height` pixels: each pixel as `[x, y]`, in
+order from `($x0, $y0)`. The line takes one step per pixel along its
+longer axis (x when both are equally long), and only the steps whose
+coordinate along that axis lies in the raster are returned, however
+long the line is. On the other axis a returned pixel may still lie
+outside the raster (a line that leaves a wide raster through its top),
+so the caller's pixel writer skips those, as it skips any pixel
+outside.
+
+`$first` is the index of the first returned step (0 for a line that
+starts inside the raster): a caller that counts steps, such as the
+dash pattern of [Term::Fabulous::Chart::Raster](../Chart/Raster.md), advances its count by
+it. When no step lies inside, `@pixels` is empty.
+
+```perl
+my ( $first, @pixels ) = line_steps( -2, 0, 3, 1, 4, 4 );    # (2, [0, 0], [1, 1], [2, 1], [3, 1])
+```
+
+["draw\_line" in Term::Fabulous::Widget::PixelCanvas](../Widget/PixelCanvas.md#draw_line) and
+[Term::Fabulous::Chart::Raster](../Chart/Raster.md) draw their lines with it.
 
 ## cell\_coordinate
 

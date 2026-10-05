@@ -18,7 +18,7 @@ class Term::Fabulous::Widget::RichText
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Render::Attr qw(color_attr);
 	use Term::Fabulous::Text::Markup qw(parse_markup);
-	use Term::Fabulous::Text::Style qw(style);
+	use Term::Fabulous::Text::Style qw(compose_styles style);
 
 	# The markup the text and spans came from, or undef when they were
 	# given directly.
@@ -129,8 +129,11 @@ class Term::Fabulous::Widget::RichText
 		return \@slice;
 	}
 
-	# The whole text cut at every span boundary, each piece with the look
-	# its spans give it: [ $characters, $set, $clear, $fg_attr, $bg_attr ].
+	# The whole text cut at every span boundary, each piece with the style
+	# its spans give it. A run is the tuple Term::Fabulous::Render::Text
+	# paints with: [ $characters, $set, $clear, $fg_attr, $bg_attr ], the
+	# style's bits and its colors as termbox attributes (undef: the color
+	# is not touched), converted once here rather than in every frame.
 	method _runs_of_text () {
 		my $length = length $self->text;
 		return [ [ $length, 0, 0, undef, undef ] ] unless @spans && $length;
@@ -146,16 +149,10 @@ class Term::Fabulous::Widget::RichText
 	}
 
 	# The set and clear bits and the color attributes that the given spans,
-	# applied in order, give a piece of text.
+	# stacked in order, give a piece of text.
 	sub _look_of (@spans) {
-		my ( $set, $clear, $color, $background ) = ( 0, 0, undef, undef );
-		foreach my $style ( map { $_->[2] } @spans ) {
-			$set        = ( $set & ~$style->{clear} ) | $style->{set};
-			$clear      = ( $clear & ~$style->{set} ) | $style->{clear};
-			$color      = $style->{color}      // $color;
-			$background = $style->{background} // $background;
-		}
-		return ( $set, $clear, _attr_of($color), _attr_of($background) );
+		my $style = compose_styles( map { $_->[2] } @spans );
+		return ( $style->{set}, $style->{clear}, _attr_of( $style->{color} ), _attr_of( $style->{background} ) );
 	}
 
 	sub _attr_of ($rgba) {

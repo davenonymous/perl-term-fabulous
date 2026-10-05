@@ -20,7 +20,7 @@ class Term::Fabulous::Widget::VirtualList
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_LEFT);
 	use List::Util qw(max min);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(non_negative_integer describe);
+	use Term::Fabulous::Check qw(describe non_negative_integer optional);
 	use Term::Fabulous::Widget::Box;
 
 	field $count    :param = 0;
@@ -124,7 +124,7 @@ class Term::Fabulous::Widget::VirtualList
 
 	method overscan (@new) {
 		return $overscan unless @new;
-		$overscan      = defined $new[0] ? non_negative_integer( $self, overscan => $new[0] ) : undef;
+		$overscan      = optional( \&non_negative_integer, $self, overscan => $new[0] );
 		$_window_stale = 1;
 		$self->request_prepare;
 		return $overscan;
@@ -185,7 +185,8 @@ class Term::Fabulous::Widget::VirtualList
 	method add_child            :override (@kids)            { die $self->_unsupported('add_child') }
 	method insert_children      :override ( $offset, @kids ) { die $self->_unsupported('insert_children') }
 	method clear_children       :override ()                 { die $self->_unsupported('clear_children') }
-	method remove_child         :override ($target_id)       { die $self->_unsupported('remove_child') }
+	method remove_child         :override (@kids)            { die $self->_unsupported('remove_child') }
+	method remove_child_with_id :override ($target_id)       { die $self->_unsupported('remove_child_with_id') }
 	method remove_children_with :override ($predicate)       { die $self->_unsupported('remove_children_with') }
 
 	method _unsupported ($method) {
@@ -746,9 +747,9 @@ not laid out or has no items.
 	$list->children;    # always empty
 
 A VirtualList has no children of its own: C<add_child>,
-C<insert_children>, C<clear_children>, C<remove_child> and
-C<remove_children_with> die. The items are the children of an internal
-column; reach one with L</item>.
+C<insert_children>, C<clear_children>, C<remove_child>,
+C<remove_child_with_id> and C<remove_children_with> die. The items are
+the children of an internal column; reach one with L</item>.
 
 =head1 EVENTS
 

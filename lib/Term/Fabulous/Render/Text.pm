@@ -14,6 +14,7 @@ role Term::Fabulous::Render::Text {
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
 	use Term::Fabulous::Render::Attr qw(color_attr clay_color);
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
+	use Term::Fabulous::Text::Style qw(apply_style);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	use constant CLUSTER_CACHE_LIMIT => 4096;
@@ -42,7 +43,10 @@ role Term::Fabulous::Render::Text {
 	# before a cluster that would cross the box's right edge or the clip
 	# rect; clusters left of the clip rect are skipped but still advance.
 	# A widget with line_styles (a RichText) paints the line in runs: each
-	# cluster takes the look of the run its first character lies in.
+	# cluster takes the look of the run its first character lies in. A run
+	# is [ $characters, $set, $clear, $fg_attr, $bg_attr ] (see
+	# Term::Fabulous::Widget::RichText::_runs_of_text): a style whose
+	# colors are termbox attributes, applied onto the widget's own look.
 	method render_text ( $command, $widget, $buffer ) {
 		my ( $x, $y, $x1 ) = cell_rect( $command->{boundingBox} );
 		my ( $clip_x0, $clip_y0, $clip_x1, $clip_y1 ) = @{ $self->clip_rect };
@@ -65,9 +69,10 @@ role Term::Fabulous::Render::Text {
 
 			while ( $left_in_run <= 0 && $run_index < $#$runs ) {
 				my ( $characters, $set, $clear, $run_fg_attr, $bg_attr ) = @{ $runs->[ ++$run_index ] };
+				my $look = apply_style( { attrs => $style_bits, color => $color_attr, background => undef }, { set => $set, clear => $clear, color => $run_fg_attr, background => $bg_attr } );
 				$left_in_run = $characters;
-				$fg_attr     = ( $run_fg_attr // $color_attr ) | ( ( $style_bits & ~$clear ) | $set );
-				$run_bg_attr = $bg_attr;
+				$fg_attr     = $look->{color} | $look->{attrs};
+				$run_bg_attr = $look->{background};
 			}
 			$left_in_run -= length $cluster;
 

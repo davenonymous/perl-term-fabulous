@@ -118,8 +118,8 @@ $root->add_child( $toolbar, $panel, $message, $menu );
 
 $file->on(
 	Activate => sub ($event) {
-		if ( $root->find_by_id('file-menu') ) {
-			$root->remove_child('file-menu');
+		if ( $root->has_child($menu) ) {
+			$root->remove_child($menu);
 		}
 		else {
 			$root->add_child($menu);

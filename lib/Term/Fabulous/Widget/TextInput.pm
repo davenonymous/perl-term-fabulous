@@ -150,37 +150,29 @@ class Term::Fabulous::Widget::TextInput
 		return $read_only;
 	}
 
-	# The placeholder and selection colors come from the theme's text_input
-	# family unless given, as does the background.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, qw(placeholder_color selection_color) );
-	}
-
 	method theme_family :common () {
 		return 'text_input';
 	}
 
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, placeholder_color => [ 'placeholder', 'normal' ], selection_color => [ 'selection', 'normal' ] );
+		return ( $class->SUPER::themed_params, placeholder_color => [ 'placeholder', 'normal', 'cell_color' ], selection_color => [ 'selection', 'normal', 'cell_color' ] );
 	}
 
 	method placeholder_color (@new) {
-		return @new ? $self->_set_color( placeholder_color => @new ) : $self->look_value('placeholder_color');
+		return @new ? $self->set_look( placeholder_color => $new[0] ) : $self->look_value('placeholder_color');
 	}
 
 	method selection_color (@new) {
-		return @new ? $self->_set_color( selection_color => @new ) : $self->look_value('selection_color');
+		return @new ? $self->set_look( selection_color => $new[0] ) : $self->look_value('selection_color');
 	}
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			value             => 'scalar',
-			placeholder       => 'scalar',
-			max_length        => 'scalar',
-			read_only         => 'boolean',
-			placeholder_color => 'color',
-			selection_color   => 'color',
+			value       => 'scalar',
+			placeholder => 'scalar',
+			max_length  => 'scalar',
+			read_only   => 'boolean',
 		);
 	}
 

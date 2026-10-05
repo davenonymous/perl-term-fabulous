@@ -73,9 +73,9 @@ subtest 'ranges and invalid values' => sub {
 	$bar->set_range( min => 100, max => 200 );
 	is [ $bar->value, $bar->min, $bar->max ], [ 100, 100, 200 ], 'a new range moves the value into it';
 	like dies { $bar->value(300) }, qr/value must be in 100\.\.200/, 'a value outside the range dies';
-	like dies { Term::Fabulous::Widget::ProgressBar->new( max   => 0 ) },                 qr/min \(0\) must be less than max/,      'an empty range dies';
-	like dies { Term::Fabulous::Widget::ProgressBar->new( style => 'x' ) },               qr/style must be block, line or ascii/,   'an unknown style';
-	like dies { Term::Fabulous::Widget::ProgressBar->new( value => 1, segments => [] ) }, qr/give 'value' or 'segments', not both/, 'value and segments together';
+	like dies { Term::Fabulous::Widget::ProgressBar->new( max   => 0 ) },                 qr/min \(0\) must be less than max/,         'an empty range dies';
+	like dies { Term::Fabulous::Widget::ProgressBar->new( style => 'x' ) },               qr/style must be one of ascii, block, line/, 'an unknown style';
+	like dies { Term::Fabulous::Widget::ProgressBar->new( value => 1, segments => [] ) }, qr/give 'value' or 'segments', not both/,    'value and segments together';
 
 	my $built = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 use Term::Fabulous::Widget::ProgressBar as ProgressBar

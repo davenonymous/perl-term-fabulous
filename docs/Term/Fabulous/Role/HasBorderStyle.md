@@ -64,8 +64,12 @@ one side off without changing `border_width`.
 widget and own the corners: a corner glyph appears where the top or
 bottom row meets a drawn left or right side, taken from the style of
 the top or bottom side. The left and right sides fill the rows between.
-- A side that has a width but no style is drawn with the `Blank`
-style, that is with spaces.
+- A side is drawn in the style ["border\_style\_of"](#border_style_of) answers: its
+own style, else the style the widget derives for it (see
+["derived\_border\_style"](#derived_border_style)), else the style the theme gives the
+widget's family (`border.style`), else the `Blank` style, that is
+with spaces. A `Hidden` style from any of these switches the side
+off.
 - `border_corners` replaces the glyph of any corner, for example
 to join the box to lines around it (`\x{251C}` instead of
 `\x{250C}` where a line comes in from above). The corner keeps the
@@ -112,21 +116,20 @@ composes the role. Unknown values die.
 - `border_style`
 
     A [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item, for example
-    `Term::Fabulous::Enum::BorderStyle->Round`; it sets the style of
-    every side that has no side parameter of its own. Default: the style
-    the theme gives the widget's family, if any (see
-    ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
-    Anything else, including the name of a style as a string, dies. To use
-    a name, convert it:
-    `Term::Fabulous::Enum::BorderStyle->from_name('Round')`.
+    `Term::Fabulous::Enum::BorderStyle->Round`, or its name
+    (`'Round'`, case sensitive); it sets the style of every side that has
+    no side parameter of its own. Default: the style the theme gives the
+    widget's family, if any (see ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes)).
+    Anything else dies, listing the known names (see
+    ["border\_style" in Term::Fabulous::Check](../Check.md#border_style)).
 
 - `border_style_top`
 - `border_style_right`
 - `border_style_bottom`
 - `border_style_left`
 
-    `undef` or a [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item for one side.
-    Default: `undef`. A side parameter wins over `border_style`:
+    `undef`, a [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item or its name, for
+    one side. Default: `undef`. A side parameter wins over `border_style`:
 
     ```perl
     border_style      => Term::Fabulous::Enum::BorderStyle->Solid,
@@ -181,13 +184,18 @@ construction, call the four side accessors.
 ## border\_style\_top
 
 ```perl
-my $style = $box->border_style_top;
+my $style = $box->border_style_top;    # the style the top side is drawn in
 $box->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
+$box->border_style_top(undef);         # no style of its own: the theme's
 ```
 
-Accessor for the style of the top side. Takes and returns `undef` or
-a [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item; anything else dies. The
-change shows in the next frame.
+Accessor for the style of the top side. The writer takes `undef` (no
+style of its own), a [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item or its
+name, anything else dies, and returns the new value. The reader
+returns the style the side is drawn in, as ["border\_style\_of"](#border_style_of): the
+side's own style, else the derived or the theme's style, else
+`Blank`; it is never `undef`, like the color readers that return the
+color in use. The change shows in the next frame.
 
 ## border\_style\_right
 
@@ -212,6 +220,21 @@ $box->border_style_left( Term::Fabulous::Enum::BorderStyle->Heavy );
 ```
 
 Accessor for the style of the left side, as ["border\_style\_top"](#border_style_top).
+
+## border\_style\_of
+
+```perl
+my $style = $widget->border_style_of('left');
+```
+
+The [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item a side (`top`,
+`right`, `bottom` or `left`; anything else dies) is drawn in: the
+style given to the side (directly or through `border_style`), else
+the one the widget derives (["derived\_border\_style"](#derived_border_style)), else the
+theme's `border.style` for the widget's family and classes (see
+["look" in Term::Fabulous::Role::Themed](Themed.md#look)), else `Blank`. The four side
+readers and [Term::Fabulous::Render::Border](../Render/Border.md) answer with it, and a
+side it answers `Hidden` for takes no space (see ["Border space"](#border-space)).
 
 ## border\_corners
 
@@ -277,6 +300,27 @@ $widget->contribute_layout_inset( \%config );
 Called by Clay::UI while it builds the configuration of a frame; it
 adds the border widths of the sides that are not `Hidden` to the
 padding as described in ["Border space"](#border-space). You do not call it yourself.
+
+# METHODS A WIDGET DEFINES
+
+## derived\_border\_style
+
+```perl
+# A tab: the bar's line style, except on the side toward the page.
+method derived_border_style ($side) {
+        return $side eq $page_side ? Term::Fabulous::Enum::BorderStyle->Hidden : $bar->line_style;
+}
+```
+
+Optional. The style a side without a style of its own is drawn in,
+derived from the widget's surroundings, or `undef` to leave the side
+to the theme. Read whenever a side's style is read, so it may follow
+other widgets without copying their looks.
+[Term::Fabulous::Widget::Tabs::Button](../Widget/Tabs/Button.md) and
+[Term::Fabulous::Widget::Tabs::Page](../Widget/Tabs/Page.md) derive their borders from the
+bar, the option list of a [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md) takes the
+dropdown's `list.border.style`. A style the program gives a side wins
+over it.
 
 # SEE ALSO
 

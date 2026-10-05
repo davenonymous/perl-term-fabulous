@@ -82,7 +82,7 @@ current size; draw again from them whenever your data changes.
 right (without wrapping), `fill` fills a rectangle with one character,
 `erase` unsets one cell and `clear` unsets them all. An unset cell
 shows the canvas's background (or that of its nearest ancestor with
-one). The drawing methods return the canvas, so calls chain, and a
+one, or the screen color). The drawing methods return the canvas, so calls chain, and a
 change appears in the next frame, also when it is drawn from a timer.
 
 ```perl
@@ -413,9 +413,11 @@ my $chart = Term::Fabulous::Widget::LineChart->new(
 ```
 
 A chart has no background of its own by default: it draws on the
-background of its nearest ancestor with an opaque one. Its title,
-legend text, tick labels, axis and grid lines are mixed from that
-background and a light or dark ink, so a chart suits any panel. The
+background of its nearest ancestor with an opaque one, or on the screen
+color of the theme (see ["background\_below" in Term::Fabulous::Widget](../Widget.md#background_below)).
+Its title, legend text, tick labels, axis and grid lines are mixed from
+that background and a light or dark ink, so a chart suits any panel and
+any theme. The
 `theme` chooses the ink and the palette steps; `auto` (the default)
 picks the `light` theme on a light background by itself, as the chart
 on the light panel in the picture above does. `title_color`,

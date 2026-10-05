@@ -91,8 +91,8 @@ $ui->theme( Term::Fabulous::Theme->from_file('ocean.kdl') );
 Accessor for the theme. Without an argument it returns the
 [Term::Fabulous::Theme](Theme.md) object; with one it sets the theme (an object
 or a built-in name; anything else dies), makes every widget read its
-looks again, calls `theme_changed` on every widget of the tree that
-has such a method (see ["theme\_changed" in Term::Fabulous::Role::Themed](Role/Themed.md#theme_changed))
+looks again, calls `looks_changed` on every widget of the tree that
+has such a method (see ["looks\_changed" in Term::Fabulous::Role::Themed](Role/Themed.md#looks_changed))
 and draws a frame. Widgets that were given a color or a border style
 explicitly keep it; see ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
 
@@ -190,17 +190,6 @@ The paint roles call it from their render command handlers; it dies
 when no command is being painted
 (`Term::Fabulous::Render: clip_rect is only known while a render command is painted`).
 
-## screen\_background\_attr
-
-```perl
-my $attr = $ui->screen_background_attr;
-```
-
-The termbox2 background attribute of the screen background of the
-frame being painted, or `TB_DEFAULT` when the terminal's own
-background shows (see ["SCREEN BACKGROUND"](#screen-background)). The canvases paint their
-unset cells in it when no widget above them has a background.
-
 ## pointer\_state
 
 ```perl
@@ -282,7 +271,9 @@ over it, not over whatever the terminal shows where a program sets no
 color, and a theme made for a light background is readable on a dark
 terminal. The cells a canvas keeps from the last frame are left alone.
 A translucent color is painted opaque here, since there is nothing
-below it to blend with.
+below it to blend with. Widgets that need the color they lie on (the
+unset cells of a canvas, the cells of a table, the ink of a chart) ask
+["background\_below" in Term::Fabulous::Widget](Widget.md#background_below), which ends at this color.
 
 [Term::Fabulous](../../../README.md) returns the `background` token of its theme, or
 `undef` for a token with alpha 0, which leaves the terminal's own

@@ -24,7 +24,8 @@ class Term::Fabulous::Widget::Tabs::Bar
 	);
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean color describe non_negative_integer);
+	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of);
+	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Select;
 
@@ -41,12 +42,9 @@ class Term::Fabulous::Widget::Tabs::Bar
 		left   => { horizontal => 0, toward_page => 'right', away => 'left' },
 		right  => { horizontal => 0, toward_page => 'left',  away => 'right' },
 	);
-	my %IS_ORIENTATION = map { $_ => 1 } qw(horizontal vertical);
-	my %ALIGN_X        = ( start => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, end => CLAY_ALIGN_X_RIGHT );
-	my %ALIGN_Y        = ( start => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, end => CLAY_ALIGN_Y_BOTTOM );
-
-	# Key name => step through the enabled tabs.
-	my %STEP_BY_KEY = ( Left => -1, Up => -1, Right => 1, Down => 1 );
+	my @ORIENTATIONS = qw(horizontal vertical);
+	my %ALIGN_X      = ( start => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, end => CLAY_ALIGN_X_RIGHT );
+	my %ALIGN_Y      = ( start => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, end => CLAY_ALIGN_Y_BOTTOM );
 
 	field $side          :param = $DEFAULT_LOOK{side};
 	field $orientation   :param = $DEFAULT_LOOK{orientation};
@@ -56,10 +54,6 @@ class Term::Fabulous::Widget::Tabs::Bar
 	field $tab_padding   :param = $DEFAULT_LOOK{tab_padding};
 	field $active_bold   :param = $DEFAULT_LOOK{active_bold};
 	field $page_border   :param = 0;
-
-	# The colors and the line style come from the theme's tabs family
-	# unless given.
-	my @THEMED_PARAMS = qw(line_style line_color text_color active_text_color hover_background_color focus_border_color disabled_color);
 
 	# The row of tabs and the line toward the page; the active tab; the
 	# sizing the layout asked for, which wins over the side's.
@@ -72,9 +66,9 @@ class Term::Fabulous::Widget::Tabs::Bar
 	field $_owner;
 
 	ADJUST {
-		$side          = $self->_checked_side($side);
-		$orientation   = $self->_checked_orientation($orientation);
-		$tab_alignment = $self->_checked_alignment($tab_alignment);
+		$side          = one_of( $self, side          => $side,          keys %SIDE );
+		$orientation   = one_of( $self, orientation   => $orientation,   @ORIENTATIONS );
+		$tab_alignment = one_of( $self, tab_alignment => $tab_alignment, keys %ALIGN_X );
 		$tab_gap       = non_negative_integer( $self, tab_gap     => $tab_gap );
 		$tab_margin    = non_negative_integer( $self, tab_margin  => $tab_margin );
 		$tab_padding   = non_negative_integer( $self, tab_padding => $tab_padding );
@@ -90,10 +84,6 @@ class Term::Fabulous::Widget::Tabs::Bar
 		$self->on( KeyPress => sub ($event) { return $weak_self && $weak_self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
 	}
 
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @THEMED_PARAMS );
-	}
-
 	# ---------------------------------------------------------------------
 	# The theme: the tabs family
 	# ---------------------------------------------------------------------
@@ -102,55 +92,26 @@ class Term::Fabulous::Widget::Tabs::Bar
 		return 'tabs';
 	}
 
+	# The colors and the line style come from the theme's tabs family
+	# unless given.
 	method themed_params :common () {
 		return (
 			$class->SUPER::themed_params,
-			line_style             => [ 'line.style',       'normal' ],
-			line_color             => [ 'line.color',       'normal' ],
-			text_color             => [ 'text',             'normal' ],
-			active_text_color      => [ 'text',             'active' ],
-			disabled_color         => [ 'text',             'disabled' ],
-			hover_background_color => [ 'hover_background', 'normal' ],
-			focus_border_color     => [ 'focus_border',     'normal' ],
+			line_style             => [ 'line.style',       'normal',   'grid_border_style' ],
+			line_color             => [ 'line.color',       'normal',   'color' ],
+			text_color             => [ 'text',             'normal',   'color' ],
+			active_text_color      => [ 'text',             'active',   'color' ],
+			disabled_color         => [ 'text',             'disabled', 'color' ],
+			hover_background_color => [ 'hover_background', 'normal',   'color' ],
+			focus_border_color     => [ 'focus_border',     'normal',   'optional_color' ],
 		);
 	}
 
-	# ---------------------------------------------------------------------
-	# Checks
-	# ---------------------------------------------------------------------
-
-	method _checked_side ($value) {
-		die ref($self) . ": side must be top, right, bottom or left, got " . describe($value) unless defined $value && !ref $value && $SIDE{$value};
-		return $value;
-	}
-
-	method _checked_orientation ($value) {
-		die ref($self) . ": orientation must be horizontal or vertical, got " . describe($value) unless defined $value && !ref $value && $IS_ORIENTATION{$value};
-		return $value;
-	}
-
-	method _checked_alignment ($value) {
-		die ref($self) . ": tab_alignment must be start, center or end, got " . describe($value) unless defined $value && !ref $value && exists $ALIGN_X{$value};
-		return $value;
-	}
-
-	# A border style with grid joints, or the name of one.
-	method _checked_style ($value) {
-		my $style
-			= blessed $value && $value->isa('Term::Fabulous::Enum::BorderStyle') ? $value
-			: defined $value && !ref $value                                      ? Term::Fabulous::Enum::BorderStyle->from_name($value)
-			:                                                                      undef;
-		die ref($self)
-			. ": line_style must be a border style with joints or its name (known: "
-			. join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->get_grid_styles )
-			. "), got "
-			. describe($value)
-			unless defined $style && $style->joints;
-		return $style;
-	}
-
-	method _optional_color ( $name, $value ) {
-		return defined $value ? color( $self, $name => $value ) : undef;
+	# The tabs and the line read the looks; they paint again
+	# (Term::Fabulous::Role::Themed).
+	method looks_changed (@names) {
+		$self->_restyle;
+		return;
 	}
 
 	# ---------------------------------------------------------------------
@@ -231,33 +192,34 @@ class Term::Fabulous::Widget::Tabs::Bar
 		return $self;
 	}
 
-	method remove_child :override ($target_id) {
-		my @gone = grep { defined $_->id && $_->id eq $target_id } $self->buttons;
-		$_row->remove_child($target_id);
-		$self->_dropped(@gone);
+	method remove_child :override (@kids) {
+		$_row->remove_child(@kids);
+		$self->_dropped;
+		return $self;
+	}
+
+	method remove_child_with_id :override ($target_id) {
+		$_row->remove_child_with_id($target_id);
+		$self->_dropped;
 		return $self;
 	}
 
 	method remove_children_with :override ($predicate) {
-		my @gone = grep { $predicate->($_) } $self->buttons;
 		$_row->remove_children_with($predicate);
-		$self->_dropped(@gone);
+		$self->_dropped;
 		return $self;
 	}
 
 	method clear_children :override () {
-		my @gone = $self->buttons;
 		$_row->clear_children;
-		$self->_dropped(@gone);
+		$self->_dropped;
 		return $self;
 	}
 
 	# After tabs left the bar: when the active one did, the first enabled
 	# tab left takes its place.
-	method _dropped (@gone) {
-		if ( defined $_active && grep { refaddr($_) == refaddr($_active) } @gone ) {
-			$self->_activate( first { $_->is_enabled } $self->buttons );
-		}
+	method _dropped () {
+		$self->_activate( first { $_->is_enabled } $self->buttons ) if defined $_active && !$_row->has_child($_active);
 		$self->_restyle;
 		return;
 	}
@@ -374,42 +336,30 @@ class Term::Fabulous::Widget::Tabs::Bar
 		return $$field_ref;
 	}
 
-	method _set_look ( $name, $value ) {
-		$self->set_look( $name => $value );
-		$self->_restyle;
-		return $value;
+	method side          (@new) { return @new ? $self->_set( \$side, one_of( $self, side => $new[0], keys %SIDE ), 1 )                      : $side }
+	method orientation   (@new) { return @new ? $self->_set( \$orientation, one_of( $self, orientation => $new[0], @ORIENTATIONS ), 1 )     : $orientation }
+	method tab_alignment (@new) { return @new ? $self->_set( \$tab_alignment, one_of( $self, tab_alignment => $new[0], keys %ALIGN_X ), 1 ) : $tab_alignment }
+	method tab_gap       (@new) { return @new ? $self->_set( \$tab_gap, non_negative_integer( $self, tab_gap => $new[0] ), 1 )              : $tab_gap }
+	method tab_margin    (@new) { return @new ? $self->_set( \$tab_margin, non_negative_integer( $self, tab_margin => $new[0] ), 1 )        : $tab_margin }
+	method tab_padding   (@new) { return @new ? $self->_set( \$tab_padding, non_negative_integer( $self, tab_padding => $new[0] ) )         : $tab_padding }
+	method active_bold   (@new) { return @new ? $self->_set( \$active_bold, boolean( $self, active_bold => $new[0] ) )                      : $active_bold }
+	method page_border   (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                      : $page_border }
+
+	method line_style (@new) {
+		return @new ? $self->set_look( line_style => $new[0] ) : border_style( $self, line_style => $self->look_value('line_style'), grid => 1 );
 	}
+	method line_color             (@new) { return @new ? $self->set_look( line_color             => $new[0] ) : $self->look_value('line_color') }
+	method text_color             (@new) { return @new ? $self->set_look( text_color             => $new[0] ) : $self->look_value('text_color') }
+	method active_text_color      (@new) { return @new ? $self->set_look( active_text_color      => $new[0] ) : $self->look_value('active_text_color') }
+	method hover_background_color (@new) { return @new ? $self->set_look( hover_background_color => $new[0] ) : $self->look_value('hover_background_color') }
+	method focus_border_color     (@new) { return @new ? $self->set_look( focus_border_color     => $new[0] ) : $self->look_value('focus_border_color') }
+	method disabled_color         (@new) { return @new ? $self->set_look( disabled_color         => $new[0] ) : $self->look_value('disabled_color') }
 
-	method look_reset :override ($name) {
-		$self->SUPER::look_reset($name);
-		$self->_restyle;
-		return;
-	}
-
-	method side              (@new) { return @new ? $self->_set( \$side, $self->_checked_side( $new[0] ), 1 )                             : $side }
-	method orientation       (@new) { return @new ? $self->_set( \$orientation, $self->_checked_orientation( $new[0] ), 1 )               : $orientation }
-	method tab_alignment     (@new) { return @new ? $self->_set( \$tab_alignment, $self->_checked_alignment( $new[0] ), 1 )               : $tab_alignment }
-	method tab_gap           (@new) { return @new ? $self->_set( \$tab_gap, non_negative_integer( $self, tab_gap => $new[0] ), 1 )        : $tab_gap }
-	method tab_margin        (@new) { return @new ? $self->_set( \$tab_margin, non_negative_integer( $self, tab_margin => $new[0] ), 1 )  : $tab_margin }
-	method tab_padding       (@new) { return @new ? $self->_set( \$tab_padding, non_negative_integer( $self, tab_padding => $new[0] ) )   : $tab_padding }
-	method active_bold       (@new) { return @new ? $self->_set( \$active_bold, boolean( $self, active_bold => $new[0] ) )                : $active_bold }
-	method page_border       (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                : $page_border }
-	method line_style        (@new) { return @new ? $self->_set_look( line_style => $self->_checked_style( $new[0] ) )                    : $self->_checked_style( $self->look_value('line_style') ) }
-	method line_color        (@new) { return @new ? $self->_set_look( line_color => color( $self, line_color => $new[0] ) )               : $self->look_value('line_color') }
-	method text_color        (@new) { return @new ? $self->_set_look( text_color => color( $self, text_color => $new[0] ) )               : $self->look_value('text_color') }
-	method active_text_color (@new) { return @new ? $self->_set_look( active_text_color => color( $self, active_text_color => $new[0] ) ) : $self->look_value('active_text_color') }
-	method hover_background_color (@new) { return @new ? $self->_set_look( hover_background_color => color( $self, hover_background_color => $new[0] ) ) : $self->look_value('hover_background_color') }
-	method focus_border_color     (@new) { return @new ? $self->_set_look( focus_border_color => $self->_optional_color( focus_border_color => $new[0] ) ) : $self->look_value('focus_border_color') }
-	method disabled_color         (@new) { return @new ? $self->_set_look( disabled_color => color( $self, disabled_color => $new[0] ) )                   : $self->look_value('disabled_color') }
-
-	# The focus color is not a plain color: #null switches the focus look
-	# off, and the line style may be a name.
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding line_style focus_border_color) ),
+			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding) ),
 			( map { $_ => 'boolean' } qw(active_bold page_border) ),
-			( map { $_ => 'color' } qw(line_color text_color active_text_color hover_background_color disabled_color) ),
 		);
 	}
 
@@ -419,21 +369,11 @@ class Term::Fabulous::Widget::Tabs::Bar
 	# ---------------------------------------------------------------------
 
 	method _handle_key ($event) {
-		my $name = $event->main_key_name // return 0;
-		return 0 unless exists $STEP_BY_KEY{$name} || $name eq 'Home' || $name eq 'End';
-		return 0 unless grep { $_->is_focused } $self->buttons;
-		my @enabled = grep { $_->is_enabled } $self->buttons or return 0;
-
-		my $target;
-		if ( exists $STEP_BY_KEY{$name} ) {
-			my $step = $STEP_BY_KEY{$name};
-			my ($at) = grep { _same( $enabled[$_], $_active ) } 0 .. $#enabled;
-			$target = defined $at ? $enabled[ ( $at + $step ) % @enabled ] : $step > 0 ? $enabled[0] : $enabled[-1];
-		}
-		else {
-			$target = $name eq 'Home' ? $enabled[0] : $enabled[-1];
-		}
-		$self->_chosen($target);
+		my @buttons = $self->buttons;
+		return 0 unless grep { $_->is_focused } @buttons;
+		my @enabled = grep { $buttons[$_]->is_enabled } 0 .. $#buttons;
+		my $target  = roving_target( \@enabled, $self->active_index, $event->main_key_name ) // return 0;
+		$self->_chosen( $buttons[$target] );
 		return 1;
 	}
 }
@@ -612,7 +552,7 @@ Appends tabs. Dies for anything but a
 L<Term::Fabulous::Widget::Tabs::Button>. While no tab is active, the
 first enabled tab added becomes the active one. Returns the bar.
 
-=head2 remove_child, remove_children_with, clear_children
+=head2 remove_child, remove_child_with_id, remove_children_with, clear_children
 
 As in L<Term::Fabulous::Widget>, for the tabs. When the active tab is
 removed, the first enabled tab left becomes the active one.

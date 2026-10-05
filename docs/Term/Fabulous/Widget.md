@@ -82,8 +82,8 @@ empty; add children afterwards with ["add\_child"](#add_child).
 
 - `id`
 
-    A non-empty string. Default: none. Names the widget: ["remove\_child"](#remove_child)
-    removes children by id, listeners can tell widgets apart with
+    A non-empty string. Default: none. Names the widget:
+    ["remove\_child\_with\_id"](#remove_child_with_id) removes children by id, listeners can tell widgets apart with
     `$event->target->id`, and Clay keeps state (such as a scroll
     position) for it between frames. ["find\_by\_id"](#find_by_id) finds a widget in a
     tree by its id. Ids must be unique in a widget tree: two widgets with
@@ -260,7 +260,8 @@ empty; add children afterwards with ["add\_child"](#add_child).
 - `border_style`
 
     A [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item, such as
-    `Term::Fabulous::Enum::BorderStyle->Round`, used for every side
+    `Term::Fabulous::Enum::BorderStyle->Round`, or its name
+    (`'Round'`), used for every side
     that has no side parameter of its own. Default: none; a side that has a
     width but no style is drawn with the `Blank` style (spaces). See
     [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
@@ -270,8 +271,8 @@ empty; add children afterwards with ["add\_child"](#add_child).
 - `border_style_bottom`
 - `border_style_left`
 
-    The style of one side, a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item. It
-    wins over `border_style` for that side; see
+    The style of one side, a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item or
+    its name. It wins over `border_style` for that side; see
     [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
 - `border_corners`
@@ -348,18 +349,32 @@ remove it from its parent first. See
 ## remove\_child
 
 ```perl
-$box->remove_child('status');
+$box->remove_child($status);
+$box->remove_child( $spinner, $label );
 ```
 
-Removes every direct child whose `id` equals the argument. Unknown ids
-are ignored. Text widgets are never removed this way, even when they
-have an `id` (use ["remove\_children\_with"](#remove_children_with)). A removed widget keeps
-its children and its state and can be added again. Returns the widget.
+Removes each given widget that is a direct child of this one (the very
+object; widgets without an id and Text widgets included). A widget that
+is not a direct child is ignored. Dies, removing nothing, for anything
+but a widget, an id included (use ["remove\_child\_with\_id"](#remove_child_with_id)). A removed
+widget keeps its children and its state and can be added again. Returns
+the widget.
 
 Removing a subtree that holds the focused widget or a hovered widget
 fires `OnBlur` or `OnHoverStopped` on it during the call; `OnBlur`
 still bubbles through the old parents. When an `OnBlur` listener dies,
 the removal is completed first and the error is rethrown afterwards.
+
+## remove\_child\_with\_id
+
+```perl
+$box->remove_child_with_id('status');
+```
+
+Removes every direct child whose `id` equals the argument. Unknown ids
+are ignored. Text widgets are never removed this way, even when they
+have an `id` (use ["remove\_child"](#remove_child) or ["remove\_children\_with"](#remove_children_with)).
+Returns the widget. Removal works as described in ["remove\_child"](#remove_child).
 
 ## remove\_children\_with
 
@@ -410,6 +425,15 @@ my @kids = @{ $box->children };
 
 A new array reference with the direct children, in order. Changing the
 array does not change the widget.
+
+## has\_child
+
+```perl
+$box->add_child($status) unless $box->has_child($status);
+```
+
+1 when the widget is a direct child of this one (the very object), else
+0\. Dies for anything but a widget.
 
 ## get\_children\_with
 
@@ -534,6 +558,31 @@ constructor parameter accepts, and returns the stored `[r, g, b, a]`.
 same). An invalid value dies like the constructor parameter of the
 same name. The change shows in the next frame.
 
+## background\_below
+
+```perl
+my $rgba = $widget->background_below;                     # opaque backgrounds only
+my $seen = $widget->background_below( translucent => 1 );
+```
+
+The color the widget lies on, as a new `[r, g, b, a]`: the
+["background\_color"](#background_color) of the widget itself or of its nearest ancestor
+that has an opaque one, else the screen background of the
+[Term::Fabulous](../../../README.md) object the widget is shown in (the theme's
+`background` token, returned with alpha 255 because it is painted
+opaque; see ["SCREEN BACKGROUND" in Term::Fabulous::Render](Render.md#screen-background)), else
+`undef`: for a widget that is in no UI, in a
+[Term::Fabulous::Static](Static.md) (which paints no screen) or under a
+`background` token with alpha 0. Widgets that draw on what lies below
+them use it: a [Term::Fabulous::Widget::Table](Widget/Table.md) paints the cells that
+have no color of their own in it, and a chart mixes its ink from it.
+
+A translucent background (alpha from 1 to 254) lets the colors below
+show through, so it is skipped. With `translucent => 1` it counts
+as well: that is the color a painter blends a widget's own cells over,
+which is how the unset cells of a [Term::Fabulous::Widget::Canvas](Widget/Canvas.md) are
+painted. Other options die.
+
 ## glyphs\_show\_through
 
 ```perl
@@ -579,9 +628,13 @@ frame. Changing it changes the layout, because borders take space.
 $box->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
 ```
 
-Accessor for the style of the top side. Returns and takes `undef`
-or a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the top side. The writer takes `undef`
+(no style of its own), a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else `Blank`; see
+["border\_style\_of" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#border_style_of). The change
+shows in the next frame.
 There is no `border_style` accessor; set the sides one by one. See
 [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
@@ -591,9 +644,13 @@ There is no `border_style` accessor; set the sides one by one. See
 $box->border_style_right( Term::Fabulous::Enum::BorderStyle->Heavy );
 ```
 
-Accessor for the style of the right side. Returns and takes `undef`
-or a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the right side. The writer takes `undef`
+(no style of its own), a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else `Blank`; see
+["border\_style\_of" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#border_style_of). The change
+shows in the next frame.
 There is no `border_style` accessor; set the sides one by one. See
 [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
@@ -603,9 +660,13 @@ There is no `border_style` accessor; set the sides one by one. See
 $box->border_style_bottom( Term::Fabulous::Enum::BorderStyle->Heavy );
 ```
 
-Accessor for the style of the bottom side. Returns and takes `undef`
-or a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the bottom side. The writer takes `undef`
+(no style of its own), a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else `Blank`; see
+["border\_style\_of" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#border_style_of). The change
+shows in the next frame.
 There is no `border_style` accessor; set the sides one by one. See
 [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
@@ -615,9 +676,13 @@ There is no `border_style` accessor; set the sides one by one. See
 $box->border_style_left( Term::Fabulous::Enum::BorderStyle->Heavy );
 ```
 
-Accessor for the style of the left side. Returns and takes `undef`
-or a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item; the writer returns the
-new value and anything else dies. The change shows in the next frame.
+Accessor for the style of the left side. The writer takes `undef`
+(no style of its own), a [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item or
+its name, returns the new value, and anything else dies. The reader
+returns the style the side is drawn in: its own, else the theme's (or
+one the widget derives), else `Blank`; see
+["border\_style\_of" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#border_style_of). The change
+shows in the next frame.
 There is no `border_style` accessor; set the sides one by one. See
 [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
@@ -746,8 +811,11 @@ $button->reset_look( 'background_color', 'focus_border_color' );
 Drops the colors or border styles the program gave for the named
 parameters, so the theme supplies them again. Takes the names of
 the widget's themed parameters (`background_color`, `border_color`
-and the ones a subclass lists); an unknown name dies naming the known
-ones. Returns the widget. The change shows in the next frame. From
+and the ones a subclass lists), including the looks a widget keeps on
+its parts (the colors of a [Term::Fabulous::Widget::Tabs](Widget/Tabs.md) live on its
+bar, the scrollbar colors of a [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md) on
+both scrollbars); an unknown name dies naming the known ones. Returns
+the widget. The change shows in the next frame. From
 [Term::Fabulous::Role::Themed](Role/Themed.md), which also has [look](Role/Themed.md#look)
 and [look\_value](Role/Themed.md#look_value) for widget
 authors.

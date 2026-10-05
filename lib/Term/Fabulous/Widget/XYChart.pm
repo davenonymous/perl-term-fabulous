@@ -22,7 +22,7 @@ class Term::Fabulous::Widget::XYChart
 	use List::Util qw(any first max min sum0 uniq);
 	use POSIX qw(ceil floor strftime);
 	use Scalar::Util qw(blessed looks_like_number);
-	use Term::Fabulous::Check qw(boolean describe glyph);
+	use Term::Fabulous::Check qw(boolean describe glyph one_of);
 	use Term::Fabulous::Chart::Curve qw(curve_points y_at check_curve);
 	use Term::Fabulous::Chart::Format qw(number_formatter format_value format_values check_number_format check_time_format time_formatter);
 	use Term::Fabulous::Chart::Marker;
@@ -52,8 +52,8 @@ class Term::Fabulous::Widget::XYChart
 		dashed => [ "\x{254C}", "\x{254E}" ],
 		dotted => [ "\x{2508}", "\x{250A}" ],
 	);
-	my %IS_X_TYPE       = map { $_ => 1 } qw(auto linear log time category);
-	my %IS_Y_TYPE       = map { $_ => 1 } qw(linear log);
+	my @X_TYPES         = qw(auto linear log time category);
+	my @Y_TYPES         = qw(linear log);
 	my @AXIS_KEYS       = qw(type min max title format ticks step grid visible zero utc span base nice);
 	my @SERIES_DEFAULTS = qw(marker curve tension line line_style points point fill_opacity transform max_points span_gaps value_labels);
 
@@ -117,9 +117,8 @@ class Term::Fabulous::Widget::XYChart
 		my %allowed = map  { $_ => 1 } @AXIS_KEYS;
 		my @unknown = grep { !$allowed{$_} } sort keys %axis;
 		croak "$owner: $which does not take @unknown (known: @AXIS_KEYS)" if @unknown;
-		my $types = $which eq 'x_axis' ? \%IS_X_TYPE : \%IS_Y_TYPE;
 		$axis{type} //= $which eq 'x_axis' ? 'auto' : 'linear';
-		croak "$owner: the type of $which must be one of " . join( ', ', sort keys %$types ) . ", got " . describe( $axis{type} ) unless !ref $axis{type} && $types->{ $axis{type} };
+		one_of( $owner, "$which type", $axis{type}, $which eq 'x_axis' ? @X_TYPES : @Y_TYPES );
 
 		foreach my $key (qw(visible utc nice)) {
 			$axis{$key} = boolean( $self, "$which $key", $axis{$key} ) if exists $axis{$key};

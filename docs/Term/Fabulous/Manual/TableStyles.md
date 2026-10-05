@@ -72,10 +72,13 @@ background_color          see below        background of the data cells
 
 The cells always have a background of their own; that is what makes
 them receive the mouse. A cell without a color from a style or a state
-(cursor, selected, hover, stripe) gets the table's `background_color`
-when it has one, else the background of the nearest ancestor widget
-with an opaque background, else `[22, 25, 31]`. So a table without a
-`background_color` blends into the box it is in.
+(cursor, selected, hover, stripe) gets what the table lies on (see
+["background\_below" in Term::Fabulous::Widget](../Widget.md#background_below)): the table's
+`background_color` when it has one, else the background of the
+nearest ancestor widget with an opaque background, else the screen
+color of the theme, else (in a [Term::Fabulous::Static](../Static.md), which paints
+no screen) `[22, 25, 31]`. So a table without a `background_color`
+blends into the box or the screen it is on.
 
 `hover` (default 1) turns the hover highlight on or off.
 

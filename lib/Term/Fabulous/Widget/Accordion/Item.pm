@@ -19,8 +19,8 @@ class Term::Fabulous::Widget::Accordion::Item
 {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean string);
+	use Scalar::Util qw(blessed weaken);
+	use Term::Fabulous::Check qw(boolean optional string);
 	use Term::Fabulous::Theme;
 
 	# The settings an item shows while it has no accordion to take them
@@ -48,7 +48,7 @@ class Term::Fabulous::Widget::Accordion::Item
 
 	ADJUST :params ( :$open = 0, :$disabled = 0 ) {
 		$title = string( $self, title => $title );
-		$icon  = defined $icon ? string( $self, icon => $icon ) : undef;
+		$icon  = optional( \&string, $self, icon => $icon );
 		$self->layout( { %{ $self->layout }, layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), %{ $self->layout->{sizing} // {} } } } );
 
 		weaken( my $weak_self = $self );
@@ -88,8 +88,13 @@ class Term::Fabulous::Widget::Accordion::Item
 		return $self;
 	}
 
-	method remove_child :override ($target_id) {
-		$_body->remove_child($target_id);
+	method remove_child :override (@kids) {
+		$_body->remove_child(@kids);
+		return $self;
+	}
+
+	method remove_child_with_id :override ($target_id) {
+		$_body->remove_child_with_id($target_id);
 		return $self;
 	}
 
@@ -122,7 +127,7 @@ class Term::Fabulous::Widget::Accordion::Item
 			$self->SUPER::add_child($_body);
 		}
 		else {
-			$self->SUPER::remove_children_with( sub ($child) { refaddr($child) == refaddr($_body) } );
+			$self->SUPER::remove_child($_body);
 		}
 		$self->refresh_look;
 		return $_is_open;
@@ -148,7 +153,7 @@ class Term::Fabulous::Widget::Accordion::Item
 
 	method icon (@new) {
 		return $icon unless @new;
-		$icon = defined $new[0] ? string( $self, icon => $new[0] ) : undef;
+		$icon = optional( \&string, $self, icon => $new[0] );
 		$_icon_text->text( $icon // '' );
 		$self->refresh_look;
 		return $icon;
@@ -193,7 +198,7 @@ class Term::Fabulous::Widget::Accordion::Item
 		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
 		require Term::Fabulous::Widget::Accordion;
 		my %themed = Term::Fabulous::Widget::Accordion->themed_params;
-		return Term::Fabulous::Theme->default->look( 'accordion', @{ $themed{$name} } );
+		return Term::Fabulous::Theme->default->look( 'accordion', @{ $themed{$name} }[ 0, 1 ] );    # slot and state
 	}
 
 	# Updates the header's texts, order and colors from the state and the
@@ -309,9 +314,9 @@ C<disabled_color>; its body stays as it is.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget>, of which C<add_child>,
-C<remove_child>, C<remove_children_with> and C<clear_children> act on
-the body (C<children> returns the header and, while open, the body),
-plus:
+C<remove_child>, C<remove_child_with_id>, C<remove_children_with> and
+C<clear_children> act on the body (C<children> and C<has_child> see the
+header and, while open, the body), plus:
 
 =head2 open
 

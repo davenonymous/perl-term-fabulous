@@ -7,34 +7,30 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::HasOptions;
 use Term::Fabulous::Widget::Input;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::SegmentedControl
 	:isa(Term::Fabulous::Widget::Input)
+	:does(Term::Fabulous::Role::HasOptions)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
 	use List::Util qw(first sum0);
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(boolean cell_color describe non_negative_integer);
+	use Term::Fabulous::Check qw(boolean non_negative_integer);
+	use Term::Fabulous::OptionList;
+	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT);
 	use Term::Fabulous::Unicode qw(string_columns);
 
-	# Key name => step through the enabled segments.
-	my %STEP_BY_KEY = ( Left => -1, Up => -1, Right => 1, Down => 1 );
-
-	field @options;    # { label, value, disabled }
-	field $selected;    # index into @options, or undef
+	field $option_list = Term::Fabulous::OptionList->new( owner => __CLASS__ );
 
 	field $vertical        :param = 0;
 	field $segment_padding :param = 1;
 	field $separator       :param = "\x{2502}";
-
-	# The colors of the selected label, the separators and the hovered
-	# segment come from the theme's input family unless given.
-	my @COLOR_NAMES = qw(selected_text_color separator_color hover_background_color);
 
 	# The segment the pointer is over while it hovers.
 	field $_hover_index;
@@ -61,85 +57,45 @@ class Term::Fabulous::Widget::SegmentedControl
 		return Term::Fabulous::Check::glyph( $self, separator => $glyph );
 	}
 
-	# An option is a label (its own value), [ label, value ] or
-	# { label => ..., value => ..., disabled => ... }.
-	method _parse_option ($option) {
-		my ( $label, $value, $disabled )
-			= ref $option eq 'ARRAY' && @$option == 2 ? @$option
-			: ref $option eq 'HASH'                   ? @{$option}{qw(label value disabled)}
-			: !ref $option                            ? ( $option, $option )
-			:                                           ();
-		die ref($self) . ": an option must be a label, [ label, value ] or { label => ..., value => ..., disabled => ... }, got " . describe($option)
-			unless defined $label && !ref $label && !ref $value;
-		die ref($self) . ": a hash option takes only the keys 'label', 'value' and 'disabled'"
-			if ref $option eq 'HASH' && grep { !/\A(?:label|value|disabled)\z/ } keys %$option;
-		return { label => "$label", value => $value // $label, disabled => boolean( $self, 'option disabled' => $disabled ) };
-	}
-
 	# ---------------------------------------------------------------------
-	# Options and value
+	# Options and value (Term::Fabulous::OptionList)
 	# ---------------------------------------------------------------------
 
 	method options (@new) {
-		return map { +{%$_} } @options unless @new;
-		my ($list_of_options) = @new;
-		die ref($self) . ": options must be an array reference" unless ref $list_of_options eq 'ARRAY';
-		my @parsed = map { $self->_parse_option($_) } @$list_of_options;
-
-		my $kept_value = defined $selected ? $options[$selected]{value} : undef;
-		@options  = @parsed;
-		$selected = defined $kept_value ? $self->_index_of_value($kept_value) : undef;
+		return $option_list->options unless @new;
+		$option_list->set_options( $new[0] );
 		$self->mark_changed;
-		return map { +{%$_} } @options;
-	}
-
-	method _index_of_value ($wanted) {
-		return first { defined $options[$_]{value} && $options[$_]{value} eq $wanted } 0 .. $#options;
+		return $option_list->options;
 	}
 
 	method value (@new) {
-		return defined $selected ? $options[$selected]{value} : undef unless @new;
-		my ($wanted) = @new;
-		my $index = defined $wanted ? $self->_index_of_value($wanted) : undef;
-		die ref($self) . ": no option has the value '$wanted'" if defined $wanted && !defined $index;
-		$self->_select($index);
-		return $self->value;
+		return $option_list->value unless @new;
+		$option_list->set_value( $new[0] );
+		$self->mark_changed;
+		return $option_list->value;
 	}
 
 	method selected_index (@new) {
-		return $selected unless @new;
-		my ($index) = @new;
-		die ref($self) . ": selected_index must be undef or an index in 0.." . $#options . ", got " . describe($index)
-			if defined $index && !( !ref $index && $index =~ /\A[0-9]+\z/ && $index < @options );
-		$self->_select($index);
-		return $selected;
-	}
-
-	method _select ($index) {
-		$selected = defined $index ? $index + 0 : undef;
+		return $option_list->selected_index unless @new;
+		$option_list->set_selected_index( $new[0] );
 		$self->mark_changed;
-		return;
+		return $option_list->selected_index;
 	}
 
 	# Selects a segment as the user does: fires Change when the selection
 	# changes. A disabled segment cannot be chosen.
 	method choose ($index) {
-		die ref($self) . ": choose needs an option index in 0.." . $#options . ", got " . describe($index)
-			unless defined $index && !ref $index && $index =~ /\A[0-9]+\z/ && $index < @options;
-		return $self if $options[$index]{disabled};
-		return $self if defined $selected && $selected == $index;
-		$self->_select($index);
-		$self->fire_change( $self->value );
+		return $self unless $option_list->choose($index);
+		$self->mark_changed;
+		$self->fire_change( $option_list->value );
 		return $self;
 	}
 
 	method option_disabled ( $index, @new ) {
-		die ref($self) . ": option_disabled needs an option index in 0.." . $#options . ", got " . describe($index)
-			unless defined $index && !ref $index && $index =~ /\A[0-9]+\z/ && $index < @options;
-		return $options[$index]{disabled} unless @new;
-		$options[$index]{disabled} = boolean( $self, 'option disabled' => $new[0] );
+		return $option_list->is_disabled($index) unless @new;
+		$option_list->set_disabled( $index, $new[0] );
 		$self->mark_changed;
-		return $options[$index]{disabled};
+		return $option_list->is_disabled($index);
 	}
 
 	# ---------------------------------------------------------------------
@@ -152,60 +108,33 @@ class Term::Fabulous::Widget::SegmentedControl
 		return $$field_ref;
 	}
 
-	method vertical            (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                              : $vertical }
-	method segment_padding     (@new) { return @new ? $self->_set( \$segment_padding, non_negative_integer( $self, segment_padding => $new[0] ) )   : $segment_padding }
-	method separator           (@new) { return @new ? $self->_set( \$separator, $self->_checked_separator( $new[0] ) )                              : $separator }
-	method selected_text_color (@new) { return @new ? $self->set_look( selected_text_color => cell_color( $self, selected_text_color => $new[0] ) ) : $self->look_value('selected_text_color') }
-	method separator_color     (@new) { return @new ? $self->set_look( separator_color => cell_color( $self, separator_color => $new[0] ) )         : $self->look_value('separator_color') }
+	method vertical            (@new) { return @new ? $self->_set( \$vertical, boolean( $self, vertical => $new[0] ) )                            : $vertical }
+	method segment_padding     (@new) { return @new ? $self->_set( \$segment_padding, non_negative_integer( $self, segment_padding => $new[0] ) ) : $segment_padding }
+	method separator           (@new) { return @new ? $self->_set( \$separator, $self->_checked_separator( $new[0] ) )                            : $separator }
+	method selected_text_color (@new) { return @new ? $self->set_look( selected_text_color => $new[0] )                                           : $self->look_value('selected_text_color') }
+	method separator_color     (@new) { return @new ? $self->set_look( separator_color => $new[0] )                                               : $self->look_value('separator_color') }
 
 	method hover_background_color (@new) {
-		return @new ? $self->set_look( hover_background_color => cell_color( $self, hover_background_color => $new[0] ) ) : $self->look_value('hover_background_color');
-	}
-
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, @COLOR_NAMES );
+		return @new ? $self->set_look( hover_background_color => $new[0] ) : $self->look_value('hover_background_color');
 	}
 
 	method themed_params :common () {
 		return (
-			$class->SUPER::themed_params, selected_text_color => [ 'selected_text', 'normal' ], separator_color => [ 'separator', 'normal' ],
-			hover_background_color => [ 'hover_background', 'normal' ]
+			$class->SUPER::themed_params,
+			selected_text_color    => [ 'selected_text',    'normal', 'cell_color' ],
+			separator_color        => [ 'separator',        'normal', 'cell_color' ],
+			hover_background_color => [ 'hover_background', 'normal', 'cell_color' ],
 		);
 	}
 
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			options => \&_parse_options,
-			option  => \&_parse_options,
+			options => \&add_layout_options,
+			option  => \&add_layout_options,
 			( map { $_ => 'scalar' } qw(value selected_index segment_padding separator) ),
 			vertical => 'boolean',
-			( map { $_ => 'color' } @COLOR_NAMES ),
 		);
-	}
-
-	# options "Day" "Week" "Month"
-	# option "Year" value="y" disabled=#true
-	method _parse_options ($kid) {
-		my $name = $kid->name;
-		die ref($self) . ": layout property '$name' takes no children" if $kid->children->@*;
-
-		my @labels = map { $_->as_perl } $kid->args->@*;
-		if ( $name eq 'options' ) {
-			die ref($self) . ": layout property 'options' takes one or more labels and no properties" if !@labels || $kid->props->@*;
-			return $self->options( [ $self->options, @labels ] );
-		}
-
-		my %props   = map  { $_->[0] => $_->[1]->as_perl } $kid->props->@*;
-		my @unknown = grep { !/\A(?:value|disabled)\z/ } sort keys %props;
-		die ref($self) . ": layout property 'option' takes one label and optional value=... and disabled=..." if @labels != 1 || @unknown;
-		return $self->options( [ $self->options, { label => $labels[0], value => $props{value} // $labels[0], disabled => $props{disabled} // 0 } ] );
-	}
-
-	# The options of a layout are added before its value is set.
-	method apply_layout_settings :override (@settings) {
-		my %is_option = ( options => 1, option => 1 );
-		return $self->SUPER::apply_layout_settings( ( grep { $is_option{ $_->[0] } } @settings ), ( grep { !$is_option{ $_->[0] } } @settings ) );
 	}
 
 	# ---------------------------------------------------------------------
@@ -219,14 +148,14 @@ class Term::Fabulous::Widget::SegmentedControl
 	# The cells each segment needs along the control: its label with the
 	# padding on both sides; a row each when vertical.
 	method _natural_lengths () {
-		return map { $vertical ? 1 : string_columns( $_->{label} ) + 2 * $segment_padding } @options;
+		return map { $vertical ? 1 : string_columns( $_->{label} ) + 2 * $segment_padding } $option_list->options;
 	}
 
 	# The [start, length] of every segment along the control: the natural
 	# lengths, with any extra space shared out from the first segment on.
 	method _spans ($length) {
 		my @lengths = $self->_natural_lengths or return ();
-		my $extra   = $length - sum0(@lengths) - $self->_separator_cells * $#options;
+		my $extra   = $length - sum0(@lengths) - $self->_separator_cells * $#lengths;
 		if ( $extra > 0 ) {
 			my $share = int( $extra / @lengths );
 			my $left  = $extra % @lengths;
@@ -242,6 +171,7 @@ class Term::Fabulous::Widget::SegmentedControl
 	}
 
 	method natural_size () {
+		my @options = $option_list->options;
 		my @lengths = $self->_natural_lengths;
 		return ( List::Util::max( 1, map { string_columns( $_->{label} ) + 2 * $segment_padding } @options ),   List::Util::max( 1, scalar @options ) ) if $vertical;
 		return ( List::Util::max( 1, sum0(@lengths) + $self->_separator_cells * ( @options ? $#options : 0 ) ), 1 );
@@ -270,21 +200,16 @@ class Term::Fabulous::Widget::SegmentedControl
 
 	method handle_key ($event) {
 		my $name    = $event->main_key_name // return 0;
-		my @enabled = grep { !$options[$_]{disabled} } 0 .. $#options;
+		my @enabled = $option_list->enabled_indexes;
 		return 0 unless @enabled;
 
 		if ( $name =~ /\A[1-9]\z/ ) {
-			return 0 if $name > @options;
+			return 0 if $name > $option_list->count;
 			$self->choose( $name - 1 );
 			return 1;
 		}
-		my %target = ( Home => $enabled[0], End => $enabled[-1] );
-		if ( exists $STEP_BY_KEY{$name} ) {
-			my ($at) = grep { $enabled[$_] == ( $selected // -1 ) } 0 .. $#enabled;
-			$target{$name} = defined $at ? $enabled[ ( $at + $STEP_BY_KEY{$name} ) % @enabled ] : $STEP_BY_KEY{$name} > 0 ? $enabled[0] : $enabled[-1];
-		}
-		return 0 unless exists $target{$name};
-		$self->choose( $target{$name} );
+		my $target = roving_target( \@enabled, $option_list->selected_index, $name ) // return 0;
+		$self->choose($target);
 		return 1;
 	}
 
@@ -309,11 +234,13 @@ class Term::Fabulous::Widget::SegmentedControl
 		my $across  = $vertical ? $self->columns : $self->rows;
 		my @spans   = $self->_spans($length);
 		my $enabled = $self->is_enabled;
+		my @options = $option_list->options;
+		my $chosen  = $option_list->selected_index;
 
 		foreach my $index ( 0 .. $#spans ) {
 			my ( $start, $segment_length ) = $spans[$index]->@*;
 			my $option      = $options[$index];
-			my $is_selected = defined $selected && $selected == $index;
+			my $is_selected = defined $chosen && $chosen == $index;
 			my $is_hovered  = $enabled && !$option->{disabled} && defined $_hover_index && $_hover_index == $index;
 			my $segment_bg  = $is_selected ? $self->accent_attr                              : $is_hovered         ? $self->color_attr( $self->hover_background_color ) : $bg;
 			my $fg          = $is_selected ? $self->color_attr( $self->selected_text_color ) : $option->{disabled} ? $self->color_attr( $self->disabled_color )         : $self->foreground_attr;

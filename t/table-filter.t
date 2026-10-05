@@ -124,8 +124,8 @@ subtest 'invalid filters' => sub {
 	like dies {
 		$F->new( column => 'age', op => '>', value => 1, test => sub { 1 } )
 	}, qr/give 'op', 'test' or a combination/, 'op and test';
-	like dies { $F->new( on     => 'value' ) },                           qr/a filter needs 'op'/,                        'nothing to do';
-	like dies { $F->new( column => 'age', op => 'empty', on => 'raw' ) }, qr/on must be 'value' or 'display', got 'raw'/, 'on';
+	like dies { $F->new( on     => 'value' ) },                           qr/a filter needs 'op'/,                         'nothing to do';
+	like dies { $F->new( column => 'age', op => 'empty', on => 'raw' ) }, qr/on must be one of display, value, got 'raw'/, 'on';
 	like dies { $F->any('x') }, qr/any takes Term::Fabulous::Widget::Table::Filter objects or code references, got 'x'/, 'combination of junk';
 };
 

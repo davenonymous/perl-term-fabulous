@@ -7,69 +7,64 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::HasRange;
 use Term::Fabulous::Widget::Input;
 
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::StarRating
 	:isa(Term::Fabulous::Widget::Input)
+	:does(Term::Fabulous::Role::HasRange)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
 	use List::Util ();    # max is a method here
 	use Scalar::Util qw(refaddr weaken);
-	use Term::Fabulous::Check qw(boolean cell_color describe non_negative_integer number positive_integer);
+	use Term::Fabulous::Check qw(boolean non_negative_integer optional positive_integer);
 	use Term::Fabulous::Color;
+	use Term::Fabulous::Range;
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN TB_MOD_SHIFT);
 	use Term::Fabulous::Unicode qw(string_columns);
 
-	# Key name => the stars the value moves by, or the end it goes to.
-	my %MOVE_BY_KEY = (
-		Left  => [ step => -1 ],
-		Down  => [ step => -1 ],
-		Right => [ step =>  1 ],
-		Up    => [ step =>  1 ],
-		Home  => [ end  =>  0 ],
-		End   => [ end  =>  1 ],
-	);
+	field $half        :param = 0;
+	field $read_only   :param = 0;
+	field $show_value  :param = 0;
+	field $gap         :param = 1;
+	field $full_glyph  :param = "\x{2605}";
+	field $empty_glyph :param = "\x{2606}";
+	field $half_glyph  :param = undef;
 
-	field $max          :param = 5;
-	field $half         :param = 0;
-	field $read_only    :param = 0;
-	field $show_value   :param = 0;
-	field $value_format :param = undef;
-	field $gap          :param = 1;
-	field $full_glyph   :param = "\x{2605}";
-	field $empty_glyph  :param = "\x{2606}";
-	field $half_glyph   :param = undef;
-
-	field $current = 0;
+	field $range;    # a Term::Fabulous::Range from 0 to max, in steps of a (half) star
 
 	# The star the pointer is over, counted from 1, while it hovers.
 	field $_hover_star;
 
-	# The stars are drawn in the theme's input.star (a yellow in the
-	# built-in themes), the empty ones in input.inactive and the half star
-	# in input.half, unless told otherwise.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, qw(inactive_color half_color) );
-	}
-
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, accent_color => [ 'star', 'normal' ], inactive_color => [ 'inactive', 'normal' ], half_color => [ 'half', 'normal' ] );
+		return (
+			$class->SUPER::themed_params,
+			accent_color   => [ 'star',     'normal', 'cell_color' ],
+			inactive_color => [ 'inactive', 'normal', 'cell_color' ],
+			half_color     => [ 'half',     'normal', 'optional_cell_color' ],
+		);
 	}
 
-	ADJUST :params ( :$value = 0 ) {
-		$max          = positive_integer( $self, max => $max );
-		$half         = boolean( $self, half       => $half );
-		$read_only    = boolean( $self, read_only  => $read_only );
-		$show_value   = boolean( $self, show_value => $show_value );
-		$value_format = $self->_checked_format($value_format);
-		$gap          = non_negative_integer( $self, gap => $gap );
-		$full_glyph   = Term::Fabulous::Check::glyph( $self, full_glyph  => $full_glyph );
-		$empty_glyph  = Term::Fabulous::Check::glyph( $self, empty_glyph => $empty_glyph );
-		$half_glyph   = $self->_checked_half_glyph($half_glyph);
-		$self->value($value);
+	ADJUST :params ( :$max = 5, :$value_format = undef, :$value = 0 ) {
+		$half        = boolean( $self, half       => $half );
+		$read_only   = boolean( $self, read_only  => $read_only );
+		$show_value  = boolean( $self, show_value => $show_value );
+		$gap         = non_negative_integer( $self, gap => $gap );
+		$full_glyph  = Term::Fabulous::Check::glyph( $self, full_glyph  => $full_glyph );
+		$empty_glyph = Term::Fabulous::Check::glyph( $self, empty_glyph => $empty_glyph );
+		$half_glyph  = $self->_checked_half_glyph($half_glyph);
+		$range       = Term::Fabulous::Range->new(
+			owner          => ref $self,
+			max            => positive_integer( $self, max => $max ),
+			step           => $half ? 0.5 : 1,
+			paging         => 0,
+			value_format   => $value_format,
+			default_format => \&_stars_of,
+			value          => $value,
+		);
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
@@ -77,58 +72,57 @@ class Term::Fabulous::Widget::StarRating
 		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
 	}
 
-	method _checked_format ($format) {
-		return undef unless defined $format;
-		die ref($self) . ": value_format must be a sprintf format string or a code reference, got " . describe($format) unless ref $format eq 'CODE' || !ref $format;
-		return $format;
-	}
-
 	method _checked_half_glyph ($value) {
-		return defined $value ? Term::Fabulous::Check::glyph( $self, half_glyph => $value ) : undef;
-	}
-
-	method _checked_half_color ($value) {
-		return defined $value ? cell_color( $self, half_color => $value ) : undef;
+		return optional( \&Term::Fabulous::Check::glyph, $self, half_glyph => $value );
 	}
 
 	# ---------------------------------------------------------------------
 	# Value
 	# ---------------------------------------------------------------------
 
-	# The nearest value on the grid of whole (or half) stars inside 0..max.
-	method _snapped ($number) {
-		my $unit = $half ? 0.5 : 1;
-		return List::Util::min( $max, List::Util::max( 0, int( $number / $unit + 0.5 ) * $unit ) );
-	}
-
 	method value (@new) {
-		return $current unless @new;
-		my $number = number( $self, value => $new[0] );
-		die ref($self) . ": value must be in 0..$max, got $number" if $number < 0 || $number > $max;
-		$current = $self->_snapped($number);
+		return $range->value unless @new;
+		$range->set_value( $new[0] );
 		$self->mark_changed;
-		return $current;
+		return $range->value;
 	}
 
-	# The user moved the value: snap, and fire Change if it moved. Returns
-	# 1 when the value changed.
-	method _move_to ($number) {
-		my $snapped = $self->_snapped($number);
-		return 0 if $snapped == $current;
-		$current = $snapped;
+	# The user moved the value: fire Change if it moved. Returns 1 when the
+	# value changed.
+	method _moved ($changed) {
+		return 0 unless $changed;
 		$self->mark_changed;
-		$self->fire_change($current);
+		$self->fire_change( $range->value );
 		return 1;
 	}
 
 	method step () {
-		return $half ? 0.5 : 1;
+		return $range->step;
+	}
+
+	# The default text of a value: 3/5, or 3.5/5 with half stars.
+	sub _stars_of ( $number, $range ) {
+		return sprintf '%s/%d', ( $range->step < 1 ? sprintf( '%.1f', $number ) : $number ), $range->max;
 	}
 
 	method format_value ($number) {
-		return $value_format->($number) if ref $value_format eq 'CODE';
-		return sprintf $value_format, $number if defined $value_format;
-		return sprintf '%s/%d', ( $half ? sprintf( '%.1f', $number ) : $number ), $max;
+		return $range->format_value($number);
+	}
+
+	# max and half decide the grid the value snaps to; a layout gives them
+	# in one go (Term::Fabulous::Role::HasRange).
+	method set_range (%parts) {
+		my @unknown = grep { $_ ne 'max' && $_ ne 'half' } sort keys %parts;
+		die ref($self) . ": set_range takes max and half, got @unknown" if @unknown;
+		my $stars = exists $parts{max} ? positive_integer( $self, max => $parts{max} ) : $range->max;
+		$half = boolean( $self, half => $parts{half} ) if exists $parts{half};
+		$range->set_range( max => $stars, step => $half ? 0.5 : 1 );
+		$self->mark_changed;
+		return $self;
+	}
+
+	method range_properties :common () {
+		return qw(max half);
 	}
 
 	# ---------------------------------------------------------------------
@@ -141,17 +135,19 @@ class Term::Fabulous::Widget::StarRating
 		return $$field_ref;
 	}
 
+	method _set_value_format ($format) {
+		$range->set_value_format($format);
+		$self->mark_changed;
+		return $range->value_format;
+	}
+
 	method max (@new) {
-		return $max unless @new;
-		$self->_set( \$max, positive_integer( $self, max => $new[0] ) );
-		$current = $self->_snapped($current);
-		return $max;
+		$self->set_range( max => $new[0] ) if @new;
+		return $range->max;
 	}
 
 	method half (@new) {
-		return $half unless @new;
-		$self->_set( \$half, boolean( $self, half => $new[0] ) );
-		$current = $self->_snapped($current);
+		$self->set_range( half => $new[0] ) if @new;
 		return $half;
 	}
 
@@ -164,13 +160,13 @@ class Term::Fabulous::Widget::StarRating
 	}
 
 	method show_value     (@new) { return @new ? $self->_set( \$show_value, boolean( $self, show_value => $new[0] ) )                        : $show_value }
-	method value_format   (@new) { return @new ? $self->_set( \$value_format, $self->_checked_format( $new[0] ) )                            : $value_format }
+	method value_format   (@new) { return @new ? $self->_set_value_format( $new[0] )                                                         : $range->value_format }
 	method gap            (@new) { return @new ? $self->_set( \$gap, non_negative_integer( $self, gap => $new[0] ) )                         : $gap }
 	method full_glyph     (@new) { return @new ? $self->_set( \$full_glyph, Term::Fabulous::Check::glyph( $self, full_glyph => $new[0] ) )   : $full_glyph }
 	method empty_glyph    (@new) { return @new ? $self->_set( \$empty_glyph, Term::Fabulous::Check::glyph( $self, empty_glyph => $new[0] ) ) : $empty_glyph }
 	method half_glyph     (@new) { return @new ? $self->_set( \$half_glyph, $self->_checked_half_glyph( $new[0] ) )                          : $half_glyph }
-	method inactive_color (@new) { return @new ? $self->set_look( inactive_color => cell_color( $self, inactive_color => $new[0] ) )         : $self->look_value('inactive_color') }
-	method half_color     (@new) { return @new ? $self->set_look( half_color => $self->_checked_half_color( $new[0] ) )                      : $self->look_value('half_color') }
+	method inactive_color (@new) { return @new ? $self->set_look( inactive_color => $new[0] )                                                : $self->look_value('inactive_color') }
+	method half_color     (@new) { return @new ? $self->set_look( half_color => $new[0] )                                                    : $self->look_value('half_color') }
 
 	# A read-only rating never takes the focus.
 	method accepts_focus :override () {
@@ -182,14 +178,7 @@ class Term::Fabulous::Widget::StarRating
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(max value value_format gap full_glyph empty_glyph half_glyph) ),
 			( map { $_ => 'boolean' } qw(half read_only show_value) ),
-			( map { $_ => 'color' } qw(inactive_color half_color) ),
 		);
-	}
-
-	# max and half decide the grid the value snaps to, so they come first.
-	method apply_layout_settings :override (@settings) {
-		my %is_grid = map { $_ => 1 } qw(max half);
-		return $self->SUPER::apply_layout_settings( ( grep { $is_grid{ $_->[0] } } @settings ), ( grep { !$is_grid{ $_->[0] } } @settings ) );
 	}
 
 	# ---------------------------------------------------------------------
@@ -204,7 +193,7 @@ class Term::Fabulous::Widget::StarRating
 		my $pitch = 1 + $gap;
 		return undef if $column % $pitch != 0;
 		my $star = $column / $pitch + 1;
-		return $star <= $max ? $star : undef;
+		return $star <= $range->max ? $star : undef;
 	}
 
 	method _hover_at ($star) {
@@ -219,13 +208,12 @@ class Term::Fabulous::Widget::StarRating
 		return 0 if $read_only;
 		my $name = $event->main_key_name // return 0;
 		if ( $name =~ /\A[0-9]\z/ ) {
-			return 0 if $name > $max;
-			$self->_move_to($name);
+			return 0 if $name > $range->max;
+			$self->_moved( $range->move_to($name) );
 			return 1;
 		}
-		my $move = $MOVE_BY_KEY{$name} // return 0;
-		my ( $unit, $direction ) = @$move;
-		$self->_move_to( $unit eq 'step' ? $current + $direction * $self->step : $direction * $max );
+		my $changed = $range->move_by_key($name) // return 0;
+		$self->_moved($changed);
 		return 1;
 	}
 
@@ -235,13 +223,13 @@ class Term::Fabulous::Widget::StarRating
 		if ( $key == TB_KEY_MOUSE_WHEEL_UP || $key == TB_KEY_MOUSE_WHEEL_DOWN ) {
 
 			# At 0 or max the notch is left to a scroll box.
-			return 0 unless $self->_move_to( $current + ( $key == TB_KEY_MOUSE_WHEEL_UP ? 1 : -1 ) * $self->step );
+			return 0 unless $self->_moved( $range->move_by( $key == TB_KEY_MOUSE_WHEEL_UP ? 1 : -1 ) );
 			$event->use_wheel;
 			return 1;
 		}
 		return 0 unless $key == TB_KEY_MOUSE_LEFT;
 		my $star = $self->_star_at($event) // return 1;
-		$self->_move_to( $half && $event->modifiers & TB_MOD_SHIFT ? $star - 0.5 : $star );
+		$self->_moved( $range->move_to( $half && $event->modifiers & TB_MOD_SHIFT ? $star - 0.5 : $star ) );
 		return 1;
 	}
 
@@ -253,11 +241,11 @@ class Term::Fabulous::Widget::StarRating
 	# stars stay in place while the value changes.
 	method _label_columns () {
 		return 0 unless $show_value;
-		return List::Util::max map { string_columns( $self->format_value($_) ) } 0, $max, $current, ( $half ? 0.5 : () );
+		return List::Util::max map { string_columns( $self->format_value($_) ) } 0, $range->max, $range->value, ( $half ? 0.5 : () );
 	}
 
 	method _stars_columns () {
-		return $max + ( $max - 1 ) * $gap;
+		return $range->max + ( $range->max - 1 ) * $gap;
 	}
 
 	method natural_size () {
@@ -279,12 +267,12 @@ class Term::Fabulous::Widget::StarRating
 
 	method paint () {
 		my $bg       = $self->paint_focus_background;
-		my $shown    = defined $_hover_star ? $_hover_star : $current;
+		my $shown    = $_hover_star // $range->value;
 		my $full_fg  = $self->accent_attr;
 		my $empty_fg = $self->color_attr( $self->is_enabled ? $self->inactive_color : $self->disabled_color );
 		my $half_fg  = $self->_half_attr;
 
-		foreach my $star ( 1 .. $max ) {
+		foreach my $star ( 1 .. $range->max ) {
 			my $x = ( $star - 1 ) * ( 1 + $gap );
 			my ( $glyph, $fg )
 				= $star <= $shown       ? ( $full_glyph, $full_fg )
@@ -493,6 +481,14 @@ and returns the new C<max>. Dies unless it is a positive integer.
 
 Accessor for the C<half> parameter. Writing rounds the value to the new
 grid (without a C<Change> event) and returns 1 or 0.
+
+=head2 set_range
+
+	$rating->set_range( max => 10, half => 1 );
+
+Changes C<max> and C<half> together, as a layout does (see
+L<Term::Fabulous::Role::HasRange>): the value moves onto the new grid
+without a C<Change> event. Unknown parts die. Returns the rating.
 
 =head2 step
 

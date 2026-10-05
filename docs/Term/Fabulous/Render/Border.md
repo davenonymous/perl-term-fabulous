@@ -44,9 +44,11 @@ the right side are to be drawn. A side with the `Hidden` style arrives
 with a width of 0 (see [Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md)), so it
 is not painted and the neighboring sides treat it like a side without a
 width.
-- Each side uses the style of that side (`border_style_top`, ...). A
-side without a style is drawn in the theme's style for the widget's
-family, or with the `Blank` style (spaces) when the theme has none. A corner
+- Each side uses the style it is drawn in, as
+["border\_style\_of" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#border_style_of) answers: the
+widget's own style for that side, else the one the widget derives,
+else the theme's style for the widget's family, else the `Blank`
+style (spaces). A corner
 the widget names in `border_corners` is drawn with that glyph instead
 (see ["border\_corners" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#border_corners)), in the
 colors of the style's corner.

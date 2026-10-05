@@ -419,12 +419,12 @@ C<border>) takes a color string:
 	text_color "rgb(97, 175, 239)"             // red, green, blue 0..255
 	text_color "rgba(97, 175, 239, 0.5)"       // with alpha
 	text_color "hsl(207, 82%, 66%)"            // hue, saturation, lightness
+	text_color "SteelBlue"                     // a web color name, in any case
 
 All formats are described in
 L<the color formats section|Term::Fabulous::Manual::Looks/Color formats>
-of the looks page.
-Color names such as C<"red"> are not color strings; look up their values
-in L<Term::Fabulous::Enum::WebColor>. Note that the alpha of C<rgba()>
+of the looks page, the grammar in L<Term::Fabulous::Color/A string>.
+Note that the alpha of C<rgba()>
 is read by how it is written: C<1.0> is opaque, while C<1> is the
 channel value 1, almost transparent.
 

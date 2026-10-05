@@ -136,8 +136,8 @@ my $log = Term::Fabulous::Widget::ScrollBox->new( id => 'log' );
 
 Ids serve three purposes. Clay uses them to keep per-widget state
 between frames (a [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) therefore
-requires one). `remove_child` removes children by id (except Text
-widgets, see ["Changing the tree"](#changing-the-tree)). And your own code uses them to find
+requires one). `remove_child_with_id` removes children by id (except
+Text widgets, see ["Changing the tree"](#changing-the-tree)). And your own code uses them to find
 a widget again, or to tell widgets apart in a listener
 (`$event->target->id`).
 
@@ -174,15 +174,19 @@ The methods that change the children (from
 
 ```perl
 $box->add_child(@widgets);                          # append, returns $box
-$box->remove_child('status');                       # remove children with that id (not Text widgets)
+$box->remove_child(@widgets);                       # remove these children
+$box->remove_child_with_id('status');               # remove children with that id (not Text widgets)
 $box->remove_children_with( sub ($child) { ... } ); # remove where the code returns true
 $box->clear_children;                               # remove all children
 my $children = $box->children;                      # arrayref (a copy)
+my $is_child = $box->has_child($widget);            # 1 or 0
 my $parent   = $widget->parent;                     # undef for the root
 ```
 
-`remove_child` never removes Text widgets, even when they have that id;
-remove them with `remove_children_with`, for example
+`remove_child` takes the widgets themselves and ignores those that
+are not children of the box; it dies for an id. `remove_child_with_id`
+never removes Text widgets, even when they have that id; remove them
+with `remove_child`, or with `remove_children_with`, for example
 `$box->remove_children_with( sub ($child) { ( $child->id // '' ) eq 'status' } )`.
 
 **A widget has at most one parent at a time.** Adding a widget that is

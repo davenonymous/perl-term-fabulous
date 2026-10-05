@@ -166,7 +166,7 @@ Appends tabs. Dies for anything but a
 [Term::Fabulous::Widget::Tabs::Button](Button.md). While no tab is active, the
 first enabled tab added becomes the active one. Returns the bar.
 
-## remove\_child, remove\_children\_with, clear\_children
+## remove\_child, remove\_child\_with\_id, remove\_children\_with, clear\_children
 
 As in [Term::Fabulous::Widget](../../Widget.md), for the tabs. When the active tab is
 removed, the first enabled tab left becomes the active one.

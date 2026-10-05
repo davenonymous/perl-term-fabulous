@@ -25,8 +25,7 @@ class Term::Fabulous::Widget::Box
 		CLAY_POINTER_CAPTURE_MODE_CAPTURE CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 		CLAY_CLIP_TO_NONE CLAY_CLIP_TO_ATTACHED_PARENT
 	);
-	use Term::Fabulous::Check qw(integer non_negative_integer sizing);
-	use Term::Fabulous::Enum::BorderStyle;
+	use Term::Fabulous::Check qw(border_style describe integer non_negative_integer one_of sizing);
 
 	my %DIRECTION_BY_NAME = (
 		top_to_bottom      => CLAY_TOP_TO_BOTTOM,
@@ -84,31 +83,21 @@ class Term::Fabulous::Widget::Box
 		clip_to         => [ ['clip_to'],                    sub ( $box, $value ) { _named( 'floating clip_to', \%CLIP_TO_BY_NAME, $value ) } ],
 	);
 
-	sub _describe ($value) {
-		return defined $value ? "'$value'" : 'null';
-	}
-
 	# The value a name stands for in %$value_by_name; an unknown name dies
 	# with the known ones.
 	sub _named ( $what, $value_by_name, $name ) {
-		return $value_by_name->{$name} if defined $name && exists $value_by_name->{$name};
-		die "Term::Fabulous::Widget::Box: invalid $what " . _describe($name) . " (known: " . join( ', ', sort keys %$value_by_name ) . ")";
+		return $value_by_name->{ one_of( 'Term::Fabulous::Widget::Box', $what, $name, keys %$value_by_name ) };
 	}
 
 	# The Clay element id number of the widget with the id $id, hashed the
 	# way Clay::UI hashes widget ids.
 	sub _element_id ( $what, $id ) {
-		die "Term::Fabulous::Widget::Box: $what must be a widget id, got " . _describe($id) unless defined $id && length $id;
+		die "Term::Fabulous::Widget::Box: $what must be a widget id, got " . describe($id) unless defined $id && length $id;
 		return Clay_GetElementId($id)->{id};
 	}
 
 	sub _sizing ( $axis, $spec ) {
 		return sizing( 'Term::Fabulous::Widget::Box', "sizing $axis", $spec // '' );
-	}
-
-	sub _border_style ($name) {
-		return Term::Fabulous::Enum::BorderStyle->from_name( $name // '' )
-			// die "Term::Fabulous::Widget::Box: invalid border style " . _describe($name) . " (known: " . join( ', ', map { $_->name } Term::Fabulous::Enum::BorderStyle->values ) . ")";
 	}
 
 	method layout_properties :common () {
@@ -141,9 +130,7 @@ class Term::Fabulous::Widget::Box
 
 		my %layout = %{ $self->layout };
 		if ( exists $props->{direction} ) {
-			my $direction = $props->{direction} // '';
-			$layout{layout_direction} = $DIRECTION_BY_NAME{$direction}
-				// die "Term::Fabulous::Widget::Box: invalid layout direction '$direction' (known: " . join( ', ', sort keys %DIRECTION_BY_NAME ) . ")";
+			$layout{layout_direction} = _named( 'layout direction', \%DIRECTION_BY_NAME, $props->{direction} );
 		}
 		foreach my $gap_name ( grep { exists $props->{$_} } qw(child_gap gap) ) {
 			$layout{child_gap} = non_negative_integer( $self, "layout $gap_name", $props->{$gap_name} );
@@ -162,7 +149,7 @@ class Term::Fabulous::Widget::Box
 			my ($style_key) = grep { exists $props->{$_} } ( "style-$side", 'style' );    # the side key wins
 			next unless defined $style_key;
 			my $accessor = "border_style_$side";
-			$self->$accessor( _border_style( $props->{$style_key} ) );
+			$self->$accessor( border_style( $self, "border $style_key", $props->{$style_key} ) );
 		}
 		$self->border_color( $props->{color} ) if exists $props->{color};
 		return;
@@ -339,10 +326,10 @@ L<Term::Fabulous::Manual::Looks/THEMES>).
 
 =item C<border_style>
 
-A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of
-every side that has no side parameter of its own. Default: the
-theme's C<box.border.style>, C<Round> in the built-in themes (see
-L<Term::Fabulous::Manual::Looks/THEMES>).
+A L<Term::Fabulous::Enum::BorderStyle> item or its name (C<'Round'>)
+that sets the style of every side that has no side parameter of its
+own. Default: the theme's C<box.border.style>, C<Round> in the
+built-in themes (see L<Term::Fabulous::Manual::Looks/THEMES>).
 
 =item C<border_style_top>
 
@@ -352,8 +339,9 @@ L<Term::Fabulous::Manual::Looks/THEMES>).
 
 =item C<border_style_left>
 
-A L<Term::Fabulous::Enum::BorderStyle> item that sets the style of one
-side. Default: C<undef>. It wins over C<border_style> for that side.
+A L<Term::Fabulous::Enum::BorderStyle> item or its name that sets the
+style of one side. Default: C<undef>. It wins over C<border_style> for
+that side.
 
 =item C<border_corners>
 

@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::Text
 {
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use Clay::UI::Revision qw(bump_revision);
-	use Term::Fabulous::Check qw(boolean class_names color);
+	use Term::Fabulous::Check qw(boolean class_names color one_of);
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
@@ -70,8 +70,7 @@ class Term::Fabulous::Widget::Text
 	# The value a name stands for in %$value_by_name; an unknown name dies
 	# with the known ones.
 	sub _named ( $what, $value_by_name, $name ) {
-		return $value_by_name->{$name} if defined $name && exists $value_by_name->{$name};
-		die "Term::Fabulous::Widget::Text: invalid $what " . ( defined $name ? "'$name'" : 'null' ) . " (known: " . join( ', ', sort keys %$value_by_name ) . ")";
+		return $value_by_name->{ one_of( 'Term::Fabulous::Widget::Text', $what, $name, keys %$value_by_name ) };
 	}
 
 	# The reader returns the color the text is drawn in: the explicit one,
@@ -311,8 +310,9 @@ L<Term::Fabulous::Manual::Looks/Bold, italic and underline>.
 A string naming the widget, for your own use (for example to find a
 Text in a tree built from a layout). Default: none. Unlike a Box's id,
 it is not passed to Clay and does not need to be unique, and
-L<Term::Fabulous::Widget/remove_child> does not remove Text widgets by
-id. Read it with C<< $text->id >>; there is no writer.
+L<Term::Fabulous::Widget/remove_child_with_id> does not remove Text
+widgets by id (L<Term::Fabulous::Widget/remove_child> removes the widget
+itself). Read it with C<< $text->id >>; there is no writer.
 L<C<find_by_id>|Term::Fabulous::Widget/find_by_id> finds Text widgets by this id.
 
 =item C<wrap_mode>

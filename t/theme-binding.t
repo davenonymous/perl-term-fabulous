@@ -6,6 +6,8 @@ no warnings 'experimental::signatures';
 
 use Test2::V0;
 
+use Object::Pad 0.825;
+
 use Clay::XS qw(sizing_fixed);
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous;
@@ -15,7 +17,11 @@ use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
+use Term::Fabulous::Widget::Display;
 use Term::Fabulous::Widget::Divider;
+use Term::Fabulous::Widget::LineChart;
+use Term::Fabulous::Widget::ScrollBox;
+use Term::Fabulous::Widget::Tabs;
 use Term::Fabulous::Widget::Text;
 
 my $Theme = 'Term::Fabulous::Theme';
@@ -111,7 +117,7 @@ subtest 'explicit values win and reset_look returns to the theme' => sub {
 	is $box->background_color,               undef, 'the box has no background of its own any more';
 	is $box->to_config->{background_color},  undef, 'and the dark theme gives a box none';
 	is $box->look_value('background_color'), undef, 'look_value says so';
-	like dies { $box->look_value('glow') }, qr/'glow' is not a themed parameter \(known: background_color, border_color\)/, 'look_value checks the name';
+	like dies { $box->look_value('glow') }, qr/look_value does not know 'glow' \(known: background_color, border_color\)/, 'look_value checks the name';
 };
 
 subtest 'the theme fills what a box left open' => sub {
@@ -333,6 +339,151 @@ subtest 'painted widgets repaint after a switch' => sub {
 	my @before  = $divider->paint_key;
 	Term::Fabulous::Theme::bump_generation();
 	isnt [ $divider->paint_key ], \@before, 'the paint key changes with the theme generation';
+};
+
+# A chart that counts how often it paints.
+my $chart_paints = 0;
+
+class CountingChart :isa(Term::Fabulous::Widget::LineChart) {
+
+	method paint :override () {
+		$chart_paints++;
+		return $self->SUPER::paint;
+	}
+}
+
+subtest 'a theme switch repaints a chart' => sub {
+	my $chart = CountingChart->new( labels => [qw(a b)], series => [ { name => 'cpu', data => [ 1, 2 ] } ] );
+	my $root  = Term::Fabulous::Widget::Box->new( background_color => '#202020', layout => { sizing => { width => sizing_fixed(20), height => sizing_fixed(6) } } );    # the same in both themes
+	$root->add_child($chart);
+	my $ui = Term::Fabulous->new( root => $root, width => 20, height => 6, terminal => Term::Fabulous::Terminal::Memory->new( width => 20, height => 6 ) );
+	$ui->step;
+	is $chart_paints, 1, 'the first frame paints the chart';
+	$ui->step;
+	is $chart_paints, 1, 'a frame that changes nothing does not';
+	$ui->theme('light');
+	$ui->step;
+	is $chart_paints, 2, 'a theme switch does, like every Display';
+};
+
+# A gauge with a themed parameter of two kinds that records what its
+# looks_changed hook hears.
+class Gauge :isa(Term::Fabulous::Widget::Display) {
+	field @heard;
+
+	method theme_family :common () { return 'progress' }
+
+	method themed_params :common () {
+		return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal', 'cell_color' ], track_color => [ 'track', 'normal', 'optional_color' ] );
+	}
+
+	method fill_color  (@new) { return @new ? $self->set_look( fill_color  => $new[0] ) : $self->look_value('fill_color') }
+	method track_color (@new) { return @new ? $self->set_look( track_color => $new[0] ) : $self->look_value('track_color') }
+
+	method looks_changed (@names) {
+		push @heard, [@names];
+		return;
+	}
+
+	method heard () {
+		my @all = @heard;
+		@heard = ();
+		return \@all;
+	}
+
+	method natural_size () { return ( 4, 1 ) }
+	method paint ()        { return }
+}
+$INC{'Gauge.pm'} = __FILE__;    # for the layout's use
+
+subtest 'looks_changed hears every change of a look' => sub {
+	my $gauge = Gauge->new( fill_color => '#ff0000' );
+	is $gauge->heard,                                                   [],                        'the constructor records a given look without calling it';
+	is [ $gauge->fill_color, $gauge->has_look_override('fill_color') ], [ [ 255, 0, 0, 255 ], 1 ], 'the given look is explicit';
+
+	$gauge->fill_color('#00ff00');
+	is $gauge->heard, [ ['fill_color'] ], 'set_look, through the accessor: the name';
+	$gauge->reset_look( 'fill_color', 'track_color' );
+	is $gauge->heard, [ [ 'fill_color', 'track_color' ] ], 'reset_look: the names, in one call';
+	$gauge->forget_looks;
+	is $gauge->heard, [], 'forget_looks outside a UI: nothing (the looks are read when the widget is drawn)';
+
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child($gauge);
+	my $all = [ [qw(background_color border_color fill_color track_color)] ];
+	my $ui  = Term::Fabulous->new( root => $root, width => 10, height => 2, terminal => Term::Fabulous::Terminal::Memory->new( width => 10, height => 2 ) );
+	is $gauge->heard, $all, 'a new UI: every look, once';
+	$ui->theme('light');
+	is $gauge->heard, $all, 'a theme switch: every look, once';
+	$root->remove_child($gauge);
+	is $gauge->heard, [], 'leaving the tree: nothing';
+	$root->add_child($gauge);
+	is $gauge->heard, $all, 'joining a tree in a UI (forget_looks): every look';
+};
+
+subtest 'a themed parameter of a kind' => sub {
+	like dies { Gauge->new( fill_color => 'nope' ) }, qr/\AGauge: fill_color must be a color, got 'nope'/, 'the constructor checks by the kind';
+	my $gauge = Gauge->new;
+	like dies { $gauge->fill_color(undef) }, qr/\AGauge: fill_color must be a color, got undef \(reset_look\('fill_color'\) returns it to the theme\)/,
+		'undef is no color; the message names reset_look';
+	is $gauge->fill_color,                                                                            $dark->look( progress => 'color' ), 'and leaves the look';
+	is [ $gauge->track_color(undef), $gauge->track_color, $gauge->has_look_override('track_color') ], [ undef, undef, 1 ],                'an optional kind takes undef: none';
+	like dies { $gauge->track_color('nope') }, qr/\AGauge: track_color must be a color, got 'nope'/, 'and checks the rest';
+
+	is { Gauge->themed_layout_properties }, { fill_color => 'color', track_color => 'scalar' }, 'the kinds declare the layout properties (an optional color takes #null)';
+	my $built = Term::Fabulous::Layout->new( string => qq{use Gauge as Gauge\nGauge { fill_color "#0000ff"; track_color #null; }\n} )->build;
+	is [ $built->fill_color, $built->track_color, $built->has_look_override('track_color') ], [ [ 0, 0, 255, 255 ], undef, 1 ], 'so a layout sets them';
+};
+
+class BadKind :isa(Term::Fabulous::Widget::Display) {
+	method theme_family :common () { return 'progress' }
+	method themed_params :common () { return ( $class->SUPER::themed_params, fill_color => [ 'color', 'normal', 'shade' ] ) }
+	method natural_size () { return ( 1, 1 ) }
+	method paint () { return }
+}
+
+class StrayForward :isa(Term::Fabulous::Widget::Box) {
+	method forwarded_looks :common () { return ( children => [ 'Term::Fabulous::Widget::Tabs::Bar', 'glow_color' ] ) }
+}
+
+class DoubleForward :isa(Term::Fabulous::Widget::Box) {
+	method forwarded_looks :common () { return ( children => [ 'Term::Fabulous::Widget::Box', 'background_color' ] ) }
+}
+
+subtest 'declarations are checked once, when the class is first used' => sub {
+	like dies { BadKind->new },
+		qr/BadKind: themed parameter 'fill_color' has an unknown kind 'shade' \(known: border_style, cell_color, color, grid_border_style, optional_cell_color, optional_color, or a code reference\)/,
+		'an unknown kind dies';
+	like dies { StrayForward->new }, qr/StrayForward: forwarded look 'glow_color' is not a themed parameter of Term::Fabulous::Widget::Tabs::Bar with a kind/,
+		'a forwarded look the part does not have dies';
+	like dies { DoubleForward->new }, qr/DoubleForward: forwarded look 'background_color' is not a themed parameter of Term::Fabulous::Widget::Box with a kind/,
+		'so does one the part keeps outside the role';
+};
+
+subtest 'forwarded looks live on the parts' => sub {
+	my $tabs = Term::Fabulous::Widget::Tabs->new( line_color => '#ff0000' );
+	is [ $tabs->line_color, $tabs->has_look_override('line_color') ], [ [ 255, 0, 0, 255 ], 1 ], 'Tabs: the constructor gives the look to the bar';
+	ok lives { $tabs->reset_look('line_color') }, 'reset_look takes a look of the bar';
+	is [ $tabs->line_color, $tabs->has_look_override('line_color'), $tabs->bar->has_look_override('line_color') ], [ $dark->look( tabs => 'line.color' ), 0, 0 ],
+		'and returns it to the theme';
+	is $tabs->text_color('#00ff00'), [ 0, 255, 0, 255 ], 'the writer returns the checked look';
+	is $tabs->bar->text_color,       [ 0, 255, 0, 255 ], 'which the bar keeps';
+	like dies { $tabs->reset_look('glow') }, qr/reset_look does not know 'glow' \(known: active_text_color, background_color, border_color, disabled_color, focus_border_color, /,
+		'the known names include the forwarded ones';
+
+	my $box  = Term::Fabulous::Widget::ScrollBox->new( id => 'log', thumb_color => '#ff0000' );
+	my @bars = $box->_scrollbars;
+	is [ map { $_->thumb_color } @bars ], [ ( [ 255, 0, 0, 255 ] ) x 2 ], 'ScrollBox: both scrollbars take the color';
+	ok lives { $box->reset_look('thumb_color') }, 'reset_look takes a look of the scrollbars';
+	is [ $box->thumb_color, $box->has_look_override('thumb_color'), map { $_->has_look_override('thumb_color') } @bars ], [ $dark->look( scrollbar => 'thumb' ), 0, 0, 0 ],
+		'and returns both to the theme';
+	like dies { $box->thumb_color(undef) }, qr/\ATerm::Fabulous::Widget::ScrollBox: thumb_color must be a color, got undef \(reset_look\('thumb_color'\) returns it to the theme\)/,
+		'undef dies in the name of the box, naming reset_look';
+	like dies { Term::Fabulous::Widget::ScrollBox->new( id => 'x', track_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::ScrollBox: track_color must be a color, got 'nope'/,
+		'so does a bad color given to the constructor';
+
+	my $ui = static( $box, theme => 'light' );
+	is $box->thumb_color, $light->look( scrollbar => 'thumb' ), 'returned to the theme, the scrollbars follow it';
 };
 
 done_testing;

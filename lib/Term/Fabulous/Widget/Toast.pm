@@ -21,8 +21,9 @@ class Term::Fabulous::Widget::Toast
 	use Clay::XS qw(sizing_fit sizing_grow CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_WORDS);
 	use IO::Async::Loop;
 	use IO::Async::Timer::Countdown;
+	use List::Util qw(any);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean describe integer non_negative_integer number string);
+	use Term::Fabulous::Check qw(boolean integer non_negative_integer number one_of optional string);
 	use Term::Fabulous::Event::Close;
 
 	use constant STACK_CLASS => 'Term::Fabulous::Widget::Toast::Stack';
@@ -75,17 +76,17 @@ class Term::Fabulous::Widget::Toast
 	}
 
 	ADJUST {
-		$kind      = $self->_checked_kind($kind);
+		$kind      = one_of( $self, kind => $kind, keys %KIND );
 		$title     = string( $self, title   => $title );
 		$message   = string( $self, message => $message );
-		$icon      = defined $icon ? string( $self, icon => $icon ) : undef;
+		$icon      = optional( \&string, $self, icon => $icon );
 		$closable  = boolean( $self, closable => $closable );
 		$timeout   = $self->_checked_timeout($timeout);
 		$important = boolean( $self, important => $important );
-		$position  = $self->_checked_position($position);
+		$position  = one_of( $self, position => $position, STACK_CLASS->positions );
 		$z_index   = integer( $self, z_index => $z_index );
 		$margin    = non_negative_integer( $self, margin => $margin );
-		$color     = defined $color ? Term::Fabulous::Check::color( $self, color => $color ) : undef;
+		$color     = optional( \&Term::Fabulous::Check::color, $self, color => $color );
 
 		weaken( my $weak_self = $self );
 		$_icon_text    = Term::Fabulous::Widget::Text->new( text => '' );
@@ -107,35 +108,20 @@ class Term::Fabulous::Widget::Toast
 		return $result;
 	}
 
-	# The text color comes from the theme's toast family unless given, and
-	# so do the colors of the kinds.
-	ADJUSTPARAMS($params) {
-		$self->adopt_look_params( $params, 'text_color' );
-	}
-
 	method theme_family :common () {
 		return 'toast';
 	}
 
+	# The text color comes from the theme's toast family unless given, and
+	# so do the colors of the kinds.
 	method themed_params :common () {
-		return ( $class->SUPER::themed_params, text_color => [ 'text', 'normal' ] );
+		return ( $class->SUPER::themed_params, text_color => [ 'text', 'normal', 'color' ] );
 	}
 
-	# The parts copy the colors; they take them again after a switch.
-	method theme_changed () {
+	# The parts copy the looks (Term::Fabulous::Role::Themed).
+	method looks_changed (@names) {
 		$self->_refresh_look;
 		return;
-	}
-
-	method look_reset :override ($name) {
-		$self->SUPER::look_reset($name);
-		$self->_refresh_look;
-		return;
-	}
-
-	method _checked_kind ($name) {
-		die ref($self) . ": kind must be info, success, warning or danger, got " . describe($name) unless defined $name && !ref $name && $KIND{$name};
-		return $name;
 	}
 
 	method _checked_timeout ($seconds) {
@@ -143,12 +129,6 @@ class Term::Fabulous::Widget::Toast
 		$seconds = number( $self, timeout => $seconds );
 		die ref($self) . ": timeout must be positive, or undef for no timeout, got $seconds" unless $seconds > 0;
 		return $seconds;
-	}
-
-	method _checked_position ($name) {
-		my %is_position = map { $_ => 1 } STACK_CLASS->positions;
-		die ref($self) . ": position must be one of " . join( ', ', STACK_CLASS->positions ) . ", got " . describe($name) unless defined $name && !ref $name && $is_position{$name};
-		return $name;
 	}
 
 	# ---------------------------------------------------------------------
@@ -162,14 +142,26 @@ class Term::Fabulous::Widget::Toast
 		return $self;
 	}
 
-	method remove_child :override ($target_id) {
-		$_body->remove_child($target_id);
+	# The title and the message stay: they are the toast's own parts.
+	method remove_child :override (@kids) {
+		$_body->remove_child( grep { !$self->_is_message_part($_) } @kids );
+		return $self;
+	}
+
+	method remove_child_with_id :override ($target_id) {
+		$_body->remove_child_with_id($target_id);
 		return $self;
 	}
 
 	method remove_children_with :override ($predicate) {
-		$_body->remove_children_with( sub ($child) { refaddr($child) != refaddr($_title_text) && refaddr($child) != refaddr($_message_text) && $predicate->($child) } );
+		$_body->remove_children_with( sub ($child) { !$self->_is_message_part($child) && $predicate->($child) } );
 		return $self;
+	}
+
+	# Anything but a widget is no part; the body's remove_child rejects it.
+	method _is_message_part ($widget) {
+		my $address = refaddr($widget) // return 0;
+		return any { $address == refaddr($_) } $_title_text, $_message_text;
 	}
 
 	method clear_children :override () {
@@ -205,7 +197,7 @@ class Term::Fabulous::Widget::Toast
 		$_close_button->children->[0]->text_color( $important ? $dark : $text_color );
 
 		$self->_order_body( ( length $title ? $_title_text : () ), ( length $message ? $_message_text : () ) );
-		$self->SUPER::remove_children_with( sub ($child) { refaddr($child) == refaddr($_close_button) } );
+		$self->SUPER::remove_child($_close_button);
 		$self->SUPER::add_child($_close_button) if $closable;
 		return;
 	}
@@ -230,20 +222,14 @@ class Term::Fabulous::Widget::Toast
 		return $$field_ref;
 	}
 
-	method kind       (@new) { return @new ? $self->_set( \$kind, $self->_checked_kind( $new[0] ) )                                                    : $kind }
-	method title      (@new) { return @new ? $self->_set( \$title, string( $self, title => $new[0] ) )                                                 : $title }
-	method message    (@new) { return @new ? $self->_set( \$message, string( $self, message => $new[0] ) )                                             : $message }
-	method icon       (@new) { return @new ? $self->_set( \$icon, defined $new[0] ? string( $self, icon => $new[0] ) : undef )                         : $icon }
-	method closable   (@new) { return @new ? $self->_set( \$closable, boolean( $self, closable => $new[0] ) )                                          : $closable }
-	method important  (@new) { return @new ? $self->_set( \$important, boolean( $self, important => $new[0] ) )                                        : $important }
-	method color      (@new) { return @new ? $self->_set( \$color, defined $new[0] ? Term::Fabulous::Check::color( $self, color => $new[0] ) : undef ) : $color }
-	method text_color (@new) { return @new ? $self->_set_look( text_color => Term::Fabulous::Check::color( $self, text_color => $new[0] ) )            : $self->look_value('text_color') }
-
-	method _set_look ( $name, $value ) {
-		$self->set_look( $name => $value );
-		$self->_refresh_look;
-		return $value;
-	}
+	method kind       (@new) { return @new ? $self->_set( \$kind, one_of( $self, kind => $new[0], keys %KIND ) )                         : $kind }
+	method title      (@new) { return @new ? $self->_set( \$title, string( $self, title => $new[0] ) )                                   : $title }
+	method message    (@new) { return @new ? $self->_set( \$message, string( $self, message => $new[0] ) )                               : $message }
+	method icon       (@new) { return @new ? $self->_set( \$icon, optional( \&string, $self, icon => $new[0] ) )                         : $icon }
+	method closable   (@new) { return @new ? $self->_set( \$closable, boolean( $self, closable => $new[0] ) )                            : $closable }
+	method important  (@new) { return @new ? $self->_set( \$important, boolean( $self, important => $new[0] ) )                          : $important }
+	method color      (@new) { return @new ? $self->_set( \$color, optional( \&Term::Fabulous::Check::color, $self, color => $new[0] ) ) : $color }
+	method text_color (@new) { return @new ? $self->set_look( text_color => $new[0] )                                                    : $self->look_value('text_color') }
 
 	method timeout (@new) {
 		return $timeout unless @new;
@@ -254,7 +240,7 @@ class Term::Fabulous::Widget::Toast
 
 	method position (@new) {
 		return $position unless @new;
-		my $wanted = $self->_checked_position( $new[0] );
+		my $wanted = one_of( $self, position => $new[0], STACK_CLASS->positions );
 		die ref($self) . ": position cannot change while the toast is shown; hide it first" if $self->is_shown && $wanted ne $position;
 		return $position = $wanted;
 	}
@@ -277,7 +263,6 @@ class Term::Fabulous::Widget::Toast
 			$class->SUPER::layout_properties,
 			( map { $_ => 'scalar' } qw(kind title message icon timeout position z_index margin color) ),
 			( map { $_ => 'boolean' } qw(closable important) ),
-			text_color => 'color',
 		);
 	}
 
@@ -323,9 +308,9 @@ class Term::Fabulous::Widget::Toast
 	method hide () {
 		my $stack = $self->stack // return $self;
 		$self->_stop_timer;
-		$stack->remove_children_with( sub ($child) { refaddr($child) == refaddr($self) } );
+		$stack->remove_child($self);
 		my $holder = $stack->parent;
-		$holder->remove_children_with( sub ($child) { refaddr($child) == refaddr($stack) } ) if defined $holder && !$stack->children->@*;
+		$holder->remove_child($stack) if defined $holder && !$stack->children->@*;
 		$self->fire_event( Term::Fabulous::Event::Close->new );
 		return $self;
 	}
@@ -534,8 +519,8 @@ toast writes in the theme's C<toast.important_text> instead.
 =head1 METHODS
 
 The methods of L<Term::Fabulous::Widget>, of which C<add_child>,
-C<remove_child>, C<remove_children_with> and C<clear_children> act on
-the widgets below the message, plus:
+C<remove_child>, C<remove_child_with_id>, C<remove_children_with> and
+C<clear_children> act on the widgets below the message, plus:
 
 =head2 show
 

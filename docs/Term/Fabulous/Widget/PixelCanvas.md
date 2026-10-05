@@ -54,7 +54,8 @@ square. An image is `columns` pixels wide and `2 * rows` pixels high.
 Everything else works as for a Canvas: the layout decides the size,
 `CanvasResize` tells you when it changes (draw then), only changed
 cells are sent to the terminal, and unset pixels show the canvas's
-background (or that of its nearest ancestor with one).
+background (or that of its nearest ancestor with one, or the screen
+color).
 
 ## Pixels and cells
 
