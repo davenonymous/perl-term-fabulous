@@ -1,6 +1,31 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget, ::Widget::Text and ::Widget::VirtualList
+          react to a new place in a tree through Clay::UI's tree_changed
+          hook, which reaches every widget of a moved subtree, instead of
+          overriding Clay::UI's private _set_parent and _detach_parent: a
+          VirtualList is prepared again also when a subtree holding it
+          moves, each widget forgets only its own looks, and
+          Term::Fabulous::Role::Themed's forget_looks and forget_tree_looks
+          walk the tree once (Clay::UI's descendants)
+        - Fixed: Tab and Shift+Tab inside an open
+          Term::Fabulous::Widget::Dialog skipped the focusable items of a
+          VirtualList (and every widget below an internal child). The
+          backdrop steps with Clay::UI's default order limited to the
+          dialog (default_next_focus( within => $dialog )), and its
+          focus_order method is gone
+        - Term::Fabulous::Widget's find_by_id and RadioGroup's buttons walk
+          the tree in layout order (Clay::UI's descendants), so they also
+          find the widgets below an internal child, such as the items of a
+          VirtualList
+        - Term::Fabulous::Widget documents descendants and contains, the
+          subtree queries every widget inherits from Clay::UI
+        - The layout, floating, border_width and other Clay attributes
+          read back with snake_case keys whatever spelling was set
+          (Clay::UI stores them that way), so a VirtualList given
+          childGap or childAlignment in camelCase uses them, and a
+          RadioGroup reads only layout_direction
         - Term::Fabulous::Render::Geometry gains line_steps, the one
           clipped Bresenham stepper: PixelCanvas's draw_line and the chart
           raster's lines step through it (same pixels as before)

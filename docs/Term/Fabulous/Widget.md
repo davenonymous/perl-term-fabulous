@@ -412,10 +412,13 @@ my $volume = $root->find_by_id('volume');
 
 The first widget, in depth-first pre-order, whose `id` equals the
 argument: the widget itself, then its first child and that child's
-descendants, then the second child, and so on. Text widgets with an id
-are found too. Returns `undef` when there is none. Dies when the
-argument is `undef`. The tree is walked on every call; keep the result
-instead of searching in every event.
+descendants, then the second child, and so on, the order in which the
+frame lays them out (["descendants" in Clay::UI::Role::Core::Element](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ACore%3A%3AElement#descendants)).
+Text widgets with an id are found too, and so are the widgets a widget
+keeps below an internal child, such as the items of a
+[Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md). Returns `undef` when there is
+none. Dies when the argument is `undef`. The tree is walked on every
+call; keep the result instead of searching in every event.
 
 ## children
 
@@ -444,6 +447,18 @@ my @buttons = $box->get_children_with( sub { $_->isa('Term::Fabulous::Widget::Bu
 The direct children for which the code reference returns true (as a
 list). Does not look at grandchildren.
 
+## descendants
+
+```perl
+my @fields = grep { $_->isa('Term::Fabulous::Widget::TextField') } $form->descendants;
+```
+
+Every widget below this one, not the widget itself, as a list in the
+order the frame lays them out: each child followed by the widgets below
+it, including those a widget keeps below an internal child (the items
+of a [Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md)). See
+["descendants" in Clay::UI::Role::Core::Element](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ACore%3A%3AElement#descendants).
+
 ## parent
 
 ```perl
@@ -471,6 +486,17 @@ my $ui = $widget->ui;
 The [Term::Fabulous](../../../README.md) (or [Term::Fabulous::Static](Static.md)) object whose tree
 contains the widget, or `undef` when it is not part of one. Useful in
 listeners, for example `$widget->ui->interaction->set_focused_widget(...)`.
+
+## contains
+
+```perl
+return if $popup->contains( $event->target );
+```
+
+1 when the argument is this widget or a widget below it, else 0. Dies
+for anything but a widget. To ask whether the focus is inside a
+widget, use `$widget->ui->interaction->has_focus_within($widget)`.
+See ["contains" in Clay::UI::Role::Layout::HasParent](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasParent#contains).
 
 ## on
 
@@ -832,6 +858,31 @@ widget draws), so that the next frame is drawn. The built-in accessors
 call it themselves. Returns the widget. See
 ["mark\_changed" in Clay::UI::Role::Core::Element](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ACore%3A%3AElement#mark_changed) and
 [Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md).
+
+## tree\_changed
+
+```perl
+class My::Counter :isa(Term::Fabulous::Widget::Box) {
+        field $clicks = 0;
+
+        method tree_changed :override () {
+                $self->SUPER::tree_changed;
+                $clicks = 0;    # counts again from its new place
+                return;
+        }
+}
+```
+
+For widget authors: Clay::UI calls it on every widget of a subtree
+that joined a tree, left one or became the root of a UI, once the
+change is complete (see
+["tree\_changed" in Clay::UI::Role::Layout::HasParent](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasParent#tree_changed)). Here the widget
+forgets the looks it fetched, since its new place may be in a UI with
+another theme, and when that place is in a UI, calls
+[looks\_changed](Role/Themed.md#looks_changed) with all
+its looks. An override calls `$self->SUPER::tree_changed` first,
+as [Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md) does to rebuild its items for
+the new place.
 
 ## reverse\_video
 

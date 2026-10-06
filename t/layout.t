@@ -256,6 +256,9 @@ KDL
 	is $root->find_by_id('title')->text, 'Title', 'a nested Text is found';
 	is $root->find_by_id('missing'),     undef,   'undef for a missing id';
 	like dies { $root->find_by_id(undef) }, qr/find_by_id needs an id/, 'an undefined id dies';
+	my $helper = Term::Fabulous::Widget::Text->new( id => 'helper', text => 'Helper' );
+	$root->find_by_id('panel')->add_internal_children($helper);
+	ref_is $root->find_by_id('helper'), $helper, 'an internal child is found too';
 };
 
 done_testing;

@@ -327,6 +327,13 @@ Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
 like the constructor parameter. It has no effect in a terminal.
 
+## tree\_changed
+
+Clay::UI calls it on every widget of a subtree whose place in a tree
+changed (see ["tree\_changed" in Clay::UI::Role::Layout::HasParent](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasParent#tree_changed)). A Text
+forgets the looks it fetched here, as
+["tree\_changed" in Term::Fabulous::Widget](../Widget.md#tree_changed) does.
+
 # KDL PROPERTIES
 
 ```kdl

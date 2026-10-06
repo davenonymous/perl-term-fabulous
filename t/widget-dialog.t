@@ -20,6 +20,7 @@ use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
 use Term::Fabulous::Widget::Dropdown;
 use Term::Fabulous::Widget::TextField;
+use Term::Fabulous::Widget::VirtualList;
 
 sub button () {
 	return Term::Fabulous::Widget::Button->new( background_color => [ 2, 2, 2, 255 ], layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
@@ -130,6 +131,28 @@ subtest 'the focus stays inside when the focused widget loses it' => sub {
 	press( $editor->backdrop, 'Escape' );
 	ok !$editor->is_open, 'Escape still closes it';
 	ref_is $ui->interaction->get_focused_widget, $behind, 'and the focus goes back behind it';
+};
+
+subtest 'Tab reaches the items of a VirtualList inside the dialog' => sub {
+	my @items = map { button() } 0 .. 2;
+	my $list  = Term::Fabulous::Widget::VirtualList->new(
+		id     => 'dialog-list',
+		count  => scalar @items,
+		build  => sub ($index) { return $items[$index] },
+		layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },
+	);
+	my $first   = button();
+	my $chooser = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width => sizing_fixed(12) } } );
+	$chooser->add_child( $first, $list );
+	$chooser->open($ui);
+	$ui->step;
+	ref_is $ui->interaction->get_focused_widget, $first, 'the button before the list has the focus';
+	press_key('Tab');
+	ref_is $ui->interaction->get_focused_widget, $items[0], 'Tab moves to the first item of the list';
+	press_key('BackTab');
+	press_key('BackTab');
+	ref_is $ui->interaction->get_focused_widget, $items[-1], 'Shift+Tab wraps around to the last item';
+	$chooser->close;
 };
 
 subtest 'a dropdown list opens over its dialog' => sub {

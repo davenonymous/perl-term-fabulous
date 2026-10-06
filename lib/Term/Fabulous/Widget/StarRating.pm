@@ -154,8 +154,7 @@ class Term::Fabulous::Widget::StarRating
 	method read_only (@new) {
 		return $read_only unless @new;
 		$self->_set( \$read_only, boolean( $self, read_only => $new[0] ) );
-		my $ui = $self->ui;
-		$ui->interaction->release_ineligible($self) if defined $ui;    # a read-only rating gives the focus up
+		$self->focus_eligibility_changed;    # a read-only rating gives the focus up
 		return $read_only;
 	}
 

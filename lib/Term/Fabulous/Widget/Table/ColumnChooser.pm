@@ -16,7 +16,7 @@ use Term::Fabulous::Widget::Text;
 class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::Box) :strict(params) {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_RIGHT_TOP);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	# The highest z_index Clay has: the chooser belongs to the focused
@@ -81,9 +81,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 
 	method _close_unless_focused () {
 		my $ui = $self->ui // return;
-		for ( my $node = $ui->interaction->get_focused_widget; defined $node; $node = $node->parent ) {
-			return if refaddr($node) == refaddr($self);
-		}
+		return if $ui->interaction->has_focus_within($self);
 		$on_close->();
 		return;
 	}

@@ -652,7 +652,10 @@ that cannot take the focus right now (a disabled one) also keeps it
 where it is; anything that is not a focusable widget of the same UI
 dies. The helpers `default_next_focus` and `default_previous_focus`
 return what the default order would pick, for everything you do not
-want to change.
+want to change. Given `within => $self`, they step through the
+focusable widgets inside the container only, wrapping around: that
+keeps Tab inside it, the way a Dialog does. To ask whether the focus is
+inside a widget, use `$ui->interaction->has_focus_within($widget)`.
 
 This form moves the focus through its fields in a fixed order, whatever
 order they have in the tree:

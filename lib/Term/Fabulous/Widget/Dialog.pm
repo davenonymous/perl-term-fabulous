@@ -108,7 +108,7 @@ class Term::Fabulous::Widget::Dialog
 		$ui->root->add_child($backdrop);
 		weaken( $_backdrop = $backdrop );
 		$_is_open = 1;
-		$interaction->set_focused_widget( ( $backdrop->focus_order )[0] );
+		$interaction->set_focused_widget( $backdrop->get_next_focus );
 		return $self;
 	}
 

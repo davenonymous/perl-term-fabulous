@@ -32,8 +32,7 @@ class Term::Fabulous::Widget::RadioGroup
 
 	ADJUST {
 		my $layout = $self->layout;
-		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } )
-			unless exists $layout->{layout_direction} || exists $layout->{layoutDirection};
+		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } ) unless exists $layout->{layout_direction};
 
 		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
@@ -60,16 +59,7 @@ class Term::Fabulous::Widget::RadioGroup
 	# The radio buttons of the group in tree order: its descendants, except
 	# those of nested groups.
 	method buttons () {
-		my @buttons;
-		my @stack = @{ $self->children };
-		while (@stack) {
-			my $node = shift @stack;
-			next unless blessed $node;
-			next if $node->isa(__PACKAGE__);
-			push @buttons, $node if $node->isa(BUTTON_CLASS);
-			unshift @stack, @{ $node->children } if $node->DOES('Clay::UI::Role::Core::Element');
-		}
-		return @buttons;
+		return grep { $_->isa(BUTTON_CLASS) && refaddr( $_->group ) == refaddr($self) } $self->descendants;
 	}
 
 	method holds_value ($candidate) {

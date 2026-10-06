@@ -41,21 +41,18 @@ widget, so an `OnBlur` listener inside the dialog must let it bubble
 
 The [Term::Fabulous::Widget::Dialog](../Dialog.md) this Backdrop belongs to.
 
-## focus\_order
-
-```perl
-my @widgets = $backdrop->focus_order;
-```
-
-The focusable widgets inside the dialog, in tree order, or the Backdrop
-itself when there are none.
-
 ## get\_next\_focus, get\_previous\_focus
 
 The [Clay::UI::Role::Interaction::HasFocusOrder](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AInteraction%3A%3AHasFocusOrder) methods: the widget
-after or before the focused one in ["focus\_order"](#focus_order), wrapping around.
-From the Backdrop itself, Tab goes to the first widget and Shift+Tab to
-the last.
+after or before the focused one among the widgets inside the dialog
+that can take the focus now, in tree order (also those a widget keeps
+below an internal child, such as the items of a
+[Term::Fabulous::Widget::VirtualList](../VirtualList.md)), wrapping around. They are the
+tracker's default order limited to the dialog
+(`default_next_focus( within => $dialog )`, see
+["default\_next\_focus" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#default_next_focus)). From the Backdrop itself,
+Tab goes to the first widget and Shift+Tab to the last; with no
+focusable widget inside, both return the Backdrop.
 
 # SEE ALSO
 

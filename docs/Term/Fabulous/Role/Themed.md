@@ -197,11 +197,13 @@ method looks_changed (@names) {
 Optional. Called with the names of the looks that may have changed:
 after ["set\_look"](#set_look) (the name), after ["reset\_look"](#reset_look) (the names given),
 and with every look of the widget (its themed parameters and its
-forwarded looks) when ["forget\_looks"](#forget_looks) runs while the widget is in a
-UI, which is when the UI is created, when its theme is set to another
-one and when the widget joins a tree that is in a UI. Not called
-during construction (see ["themed\_params"](#themed_params)), nor for a widget outside
-a UI, which reads its looks when it is drawn.
+forwarded looks) while the widget is in a UI: when the UI is created,
+when its theme is set to another one, when ["forget\_looks"](#forget_looks) runs (the
+widget's classes changed) and when the widget joins a tree that is in
+a UI (its `tree_changed` hook, see
+["tree\_changed" in Term::Fabulous::Widget](../Widget.md#tree_changed)). Not called during construction
+(see ["themed\_params"](#themed_params)), nor for a widget outside a UI, which reads its
+looks when it is drawn.
 
 Most widgets need none, because they read their looks when a frame is
 drawn. A widget that copies looks into the parts it builds
@@ -315,8 +317,10 @@ $widget->forget_looks;
 Drops the fetched looks of the widget and of every widget below it;
 the next read fetches them from the theme of the UI the widget is in
 now. When the widget is in a UI, calls ["looks\_changed"](#looks_changed) with all its
-looks. Term::Fabulous calls it when a widget joins or leaves a tree or
-changes its classes.
+looks. Term::Fabulous calls it when a widget changes its classes. A
+widget that joins or leaves a tree forgets its own looks from its
+`tree_changed` hook instead, which Clay::UI calls on every widget of
+the moved subtree (see ["tree\_changed" in Term::Fabulous::Widget](../Widget.md#tree_changed)).
 
 # FUNCTIONS
 
@@ -326,7 +330,8 @@ changes its classes.
 Term::Fabulous::Role::Themed::forget_tree_looks( $ui->root );
 ```
 
-["forget\_looks"](#forget_looks) for a node and every themed widget below it, also
+["forget\_looks"](#forget_looks) for a node and every themed widget below it, in
+layout pre-order (["descendants" in Clay::UI::Role::Core::Element](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ACore%3A%3AElement#descendants)), also
 below nodes that are not themed (the rows of a grid). The UI calls it
 when it is created and when its theme changes.
 

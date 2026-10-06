@@ -193,9 +193,9 @@ class Term::Fabulous::Widget::VirtualList
 		return ref($self) . ": $method is not supported; a VirtualList builds its children from build, set count and build instead";
 	}
 
-	# A list that joins a tree is prepared for it.
-	method _set_parent :override ($new_parent) {
-		$self->SUPER::_set_parent($new_parent);
+	# A list whose place in a tree changed is prepared for its new place.
+	method tree_changed :override () {
+		$self->SUPER::tree_changed;
 		$self->request_prepare;
 		return;
 	}

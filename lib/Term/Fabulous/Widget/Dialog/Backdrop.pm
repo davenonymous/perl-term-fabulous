@@ -24,8 +24,7 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_CENTER_CENTER
 		CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER sizing_grow
 	);
-	use List::Util qw(any first);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(weaken);
 
 	field $dialog :param :weak :reader;
 	field $z_index :param;
@@ -83,44 +82,27 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 	# keys and Tab stay inside the dialog.
 	method _keep_focus () {
 		return unless defined $dialog && $dialog->is_open;
-		my $ui = $self->ui // return;
-		return if defined $ui->interaction->get_focused_widget || $self->_is_leaving_tree;
-		$ui->interaction->set_focused_widget($self);
+		my $ui          = $self->ui // return;
+		my $interaction = $ui->interaction;
+
+		# A backdrop that is being removed (its OnBlur fires while it
+		# leaves) cannot take the focus.
+		return if defined $interaction->get_focused_widget || !$interaction->can_take_focus($self);
+		$interaction->set_focused_widget($self);
 		return;
 	}
 
-	# Clay::UI fires the OnBlur of a removal while the parent slots of the
-	# leaving widgets are still set, after their parent dropped them from
-	# its children.
-	method _is_leaving_tree () {
-		for ( my $node = $self; defined( my $parent = $node->parent ); $node = $parent ) {
-			return 1 unless any { refaddr($_) == refaddr($node) } $parent->children->@*;
-		}
-		return 0;
+	# Tab and Shift-Tab step through the focusable widgets inside the
+	# dialog, wrapping around; the backdrop itself takes the focus when
+	# there are none, so the focus has somewhere to stay.
+	method get_next_focus () {
+		return $self unless defined $dialog;
+		return $self->default_next_focus( within => $dialog ) // $self;
 	}
 
-	# The focusable widgets inside the dialog, in tree order; the backdrop
-	# itself when there are none, so the focus has somewhere to stay.
-	method focus_order () {
-		my $ui     = $self->ui // return ($self);
-		my @inside = _focusables_below( $ui->interaction, $self->dialog );
-		return @inside ? @inside : ($self);
-	}
-
-	sub _focusables_below ( $interaction, $node ) {
-		return () unless defined $node && $node->can('children');
-		return map { ( ( $interaction->can_take_focus($_) ? $_ : () ), _focusables_below( $interaction, $_ ) ) } $node->children->@*;
-	}
-
-	method get_next_focus ()     { return $self->_step_focus(1) }
-	method get_previous_focus () { return $self->_step_focus(-1) }
-
-	method _step_focus ($step) {
-		my @order   = $self->focus_order;
-		my $focused = $self->ui->interaction->get_focused_widget;
-		my $index   = defined $focused ? first { refaddr( $order[$_] ) == refaddr($focused) } 0 .. $#order : undef;
-		return $step > 0 ? $order[0] : $order[-1] unless defined $index;
-		return $order[ ( $index + $step ) % @order ];
+	method get_previous_focus () {
+		return $self unless defined $dialog;
+		return $self->default_previous_focus( within => $dialog ) // $self;
 	}
 }
 
@@ -192,19 +174,18 @@ widget, so an C<OnBlur> listener inside the dialog must let it bubble
 
 The L<Term::Fabulous::Widget::Dialog> this Backdrop belongs to.
 
-=head2 focus_order
-
-	my @widgets = $backdrop->focus_order;
-
-The focusable widgets inside the dialog, in tree order, or the Backdrop
-itself when there are none.
-
 =head2 get_next_focus, get_previous_focus
 
 The L<Clay::UI::Role::Interaction::HasFocusOrder> methods: the widget
-after or before the focused one in L</focus_order>, wrapping around.
-From the Backdrop itself, Tab goes to the first widget and Shift+Tab to
-the last.
+after or before the focused one among the widgets inside the dialog
+that can take the focus now, in tree order (also those a widget keeps
+below an internal child, such as the items of a
+L<Term::Fabulous::Widget::VirtualList>), wrapping around. They are the
+tracker's default order limited to the dialog
+(C<< default_next_focus( within => $dialog ) >>, see
+L<Clay::UI::Interaction/default_next_focus>). From the Backdrop itself,
+Tab goes to the first widget and Shift+Tab to the last; with no
+focusable widget inside, both return the Backdrop.
 
 =head1 SEE ALSO
 

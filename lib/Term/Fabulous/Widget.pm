@@ -15,6 +15,7 @@ class Term::Fabulous::Widget
 	:does(Term::Fabulous::Role::Themed)
 	:abstract
 {
+	use List::Util qw(first);
 	use Term::Fabulous::Check qw(boolean class_names color);
 
 	my @COLOR_PARAMS = qw(background_color border_color);
@@ -101,15 +102,9 @@ class Term::Fabulous::Widget
 
 	# A widget that joins or leaves a tree may be in another UI, with
 	# another theme, from now on.
-	method _set_parent :override ($new_parent) {
-		$self->SUPER::_set_parent($new_parent);
-		$self->forget_looks;
-		return;
-	}
-
-	method _detach_parent :override () {
-		$self->SUPER::_detach_parent;
-		$self->forget_looks;
+	method tree_changed :override () {
+		$self->SUPER::tree_changed;
+		$self->_forget_own_looks;
 		return;
 	}
 
@@ -129,22 +124,17 @@ class Term::Fabulous::Widget
 		return;
 	}
 
-	# The first node at or below $node, in depth-first pre-order, whose id
-	# is $id. Text leaves have an id but no children.
-	sub _first_with_id ( $node, $id ) {
-		my $node_id = $node->can('id') ? $node->id : undef;
-		return $node if defined $node_id && $node_id eq $id;
-		return undef unless $node->can('children');
-		foreach my $child ( $node->children->@* ) {
-			my $found = _first_with_id( $child, $id );
-			return $found if defined $found;
-		}
-		return undef;
-	}
-
+	# The first widget at or below this one, in layout pre-order, whose id
+	# is $id.
 	method find_by_id ($id) {
 		die "Term::Fabulous::Widget: find_by_id needs an id, got undef" unless defined $id;
-		return _first_with_id( $self, $id );
+		return first { _has_id( $_, $id ) } $self, $self->descendants;
+	}
+
+	# Text leaves have an id too.
+	sub _has_id ( $widget, $id ) {
+		my $widget_id = $widget->can('id') ? $widget->id : undef;
+		return defined $widget_id && $widget_id eq $id;
 	}
 
 	method get_classes () {
@@ -596,10 +586,13 @@ The C<id> given to the constructor, or C<undef> when none was given
 
 The first widget, in depth-first pre-order, whose C<id> equals the
 argument: the widget itself, then its first child and that child's
-descendants, then the second child, and so on. Text widgets with an id
-are found too. Returns C<undef> when there is none. Dies when the
-argument is C<undef>. The tree is walked on every call; keep the result
-instead of searching in every event.
+descendants, then the second child, and so on, the order in which the
+frame lays them out (L<Clay::UI::Role::Core::Element/descendants>).
+Text widgets with an id are found too, and so are the widgets a widget
+keeps below an internal child, such as the items of a
+L<Term::Fabulous::Widget::VirtualList>. Returns C<undef> when there is
+none. Dies when the argument is C<undef>. The tree is walked on every
+call; keep the result instead of searching in every event.
 
 =head2 children
 
@@ -622,6 +615,16 @@ array does not change the widget.
 The direct children for which the code reference returns true (as a
 list). Does not look at grandchildren.
 
+=head2 descendants
+
+	my @fields = grep { $_->isa('Term::Fabulous::Widget::TextField') } $form->descendants;
+
+Every widget below this one, not the widget itself, as a list in the
+order the frame lays them out: each child followed by the widgets below
+it, including those a widget keeps below an internal child (the items
+of a L<Term::Fabulous::Widget::VirtualList>). See
+L<Clay::UI::Role::Core::Element/descendants>.
+
 =head2 parent
 
 	my $owner = $widget->parent;
@@ -643,6 +646,15 @@ parent).
 The L<Term::Fabulous> (or L<Term::Fabulous::Static>) object whose tree
 contains the widget, or C<undef> when it is not part of one. Useful in
 listeners, for example C<< $widget->ui->interaction->set_focused_widget(...) >>.
+
+=head2 contains
+
+	return if $popup->contains( $event->target );
+
+1 when the argument is this widget or a widget below it, else 0. Dies
+for anything but a widget. To ask whether the focus is inside a
+widget, use C<< $widget->ui->interaction->has_focus_within($widget) >>.
+See L<Clay::UI::Role::Layout::HasParent/contains>.
 
 =head2 on
 
@@ -948,6 +960,29 @@ widget draws), so that the next frame is drawn. The built-in accessors
 call it themselves. Returns the widget. See
 L<Clay::UI::Role::Core::Element/mark_changed> and
 L<Term::Fabulous::Manual::CustomWidgets>.
+
+=head2 tree_changed
+
+	class My::Counter :isa(Term::Fabulous::Widget::Box) {
+		field $clicks = 0;
+
+		method tree_changed :override () {
+			$self->SUPER::tree_changed;
+			$clicks = 0;    # counts again from its new place
+			return;
+		}
+	}
+
+For widget authors: Clay::UI calls it on every widget of a subtree
+that joined a tree, left one or became the root of a UI, once the
+change is complete (see
+L<Clay::UI::Role::Layout::HasParent/tree_changed>). Here the widget
+forgets the looks it fetched, since its new place may be in a UI with
+another theme, and when that place is in a UI, calls
+L<looks_changed|Term::Fabulous::Role::Themed/looks_changed> with all
+its looks. An override calls C<< $self->SUPER::tree_changed >> first,
+as L<Term::Fabulous::Widget::VirtualList> does to rebuild its items for
+the new place.
 
 =head2 reverse_video
 

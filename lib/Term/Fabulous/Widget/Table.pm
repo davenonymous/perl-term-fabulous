@@ -40,7 +40,7 @@ class Term::Fabulous::Widget::Table
 		CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE
 		CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT
 	);
-	use List::Util qw(any first max min);
+	use List::Util qw(any first max min none);
 	use Term::Fabulous::Viewport qw(reveal_range);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Time::HiRes ();
@@ -764,14 +764,12 @@ class Term::Fabulous::Widget::Table
 	}
 
 	# Whether the keyboard is in the table: the table or a widget of its
-	# body has the focus.
+	# body has the focus, not the header, the column chooser or the pager.
 	method _has_focus_within () {
-		my $ui = $self->ui // return 0;
-		for ( my $node = $ui->interaction->get_focused_widget; defined $node; $node = $node->parent ) {
-			return 1 if refaddr($node) == refaddr($self);
-			return 0 if refaddr($node) == refaddr($_header_view) || ( defined $_chooser && refaddr($node) == refaddr($_chooser) ) || refaddr($node) == refaddr($_pager);
-		}
-		return 0;
+		my $ui          = $self->ui // return 0;
+		my $interaction = $ui->interaction;
+		return 0 unless $interaction->has_focus_within($self);
+		return ( none { $interaction->has_focus_within($_) } grep { defined } $_header_view, $_chooser, $_pager ) ? 1 : 0;
 	}
 
 	method _row_style_for ($id) {
@@ -1808,10 +1806,7 @@ class Term::Fabulous::Widget::Table
 
 	method _focus_is_inside ($widget) {
 		my $ui = $self->ui // return 0;
-		for ( my $node = $ui->interaction->get_focused_widget; defined $node; $node = $node->parent ) {
-			return 1 if refaddr($node) == refaddr($widget);
-		}
-		return 0;
+		return $ui->interaction->has_focus_within($widget);
 	}
 
 	method is_column_chooser_open () {

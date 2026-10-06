@@ -112,15 +112,11 @@ class Term::Fabulous::Widget::Text
 		return [@$classes];
 	}
 
-	method _set_parent :override ($new_parent) {
-		$self->SUPER::_set_parent($new_parent);
-		$self->forget_looks;
-		return;
-	}
-
-	method _detach_parent :override () {
-		$self->SUPER::_detach_parent;
-		$self->forget_looks;
+	# A text that joins or leaves a tree may be in another UI, with
+	# another theme, from now on.
+	method tree_changed :override () {
+		$self->SUPER::tree_changed;
+		$self->_forget_own_looks;
 		return;
 	}
 
@@ -490,6 +486,13 @@ default is 16.
 Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
 like the constructor parameter. It has no effect in a terminal.
+
+=head2 tree_changed
+
+Clay::UI calls it on every widget of a subtree whose place in a tree
+changed (see L<Clay::UI::Role::Layout::HasParent/tree_changed>). A Text
+forgets the looks it fetched here, as
+L<Term::Fabulous::Widget/tree_changed> does.
 
 =head1 KDL PROPERTIES
 

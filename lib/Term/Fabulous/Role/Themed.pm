@@ -10,6 +10,7 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 role Term::Fabulous::Role::Themed {
+	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Check qw(border_style cell_color color describe optional);
 	use Term::Fabulous::Theme;
 
@@ -199,25 +200,40 @@ role Term::Fabulous::Role::Themed {
 	}
 
 	# Forgets the fetched looks of the widget and of everything below it,
-	# for when the widget joins or leaves a tree or the theme of its UI
-	# changes; in a UI, every look may have changed.
+	# for when the theme of its UI or the widget's classes change; in a UI,
+	# every look may have changed.
 	method forget_looks () {
-		$_look_generation = -1;
-		$self->_looks_changed( $self->_all_look_names ) if defined $self->ui;
-		forget_tree_looks($_) foreach _layout_children_of($self);
+		forget_tree_looks($self);
 		return;
+	}
+
+	# Forgets the fetched looks of the widget alone: the tree_changed hook
+	# of Term::Fabulous::Widget and ::Text calls it on every widget of a
+	# subtree that joined or left a tree.
+	method _forget_own_looks () {
+		$_look_generation = -1;
+		$self->_looks_changed( $self->_all_look_names ) if $self->_in_themed_ui;
+		return;
+	}
+
+	# True in a UI that gives the widget its looks: a Clay::UI without
+	# themes (the default theme), or a Term::Fabulous whose theme is a
+	# theme. Clay::UI announces a new UI to its widgets from its own
+	# constructor, before Term::Fabulous has turned its theme argument into
+	# a theme; Term::Fabulous tells them itself once it has.
+	method _in_themed_ui () {
+		my $ui = $self->ui // return 0;
+		return 1 unless $ui->can('theme');
+		my $theme = $ui->theme;
+		return blessed $theme && $theme->isa('Term::Fabulous::Theme') ? 1 : 0;
 	}
 
 	# A node and every themed widget below it forget their looks; the walk
 	# goes on below nodes that are not themed (the rows of a grid).
 	sub forget_tree_looks ($node) {
-		return $node->forget_looks if $node->DOES(__PACKAGE__);
-		forget_tree_looks($_) foreach _layout_children_of($node);
+		my @below = $node->can('descendants') ? $node->descendants : ();
+		$_->_forget_own_looks foreach grep { $_->DOES(__PACKAGE__) } $node, @below;
 		return;
-	}
-
-	sub _layout_children_of ($node) {
-		return $node->can('layout_children') ? @{ $node->layout_children } : ();
 	}
 
 	# The theme's value of a slot in a state: a state the theme gives no
@@ -495,11 +511,13 @@ L<Term::Fabulous::Widget/classes>.
 Optional. Called with the names of the looks that may have changed:
 after L</set_look> (the name), after L</reset_look> (the names given),
 and with every look of the widget (its themed parameters and its
-forwarded looks) when L</forget_looks> runs while the widget is in a
-UI, which is when the UI is created, when its theme is set to another
-one and when the widget joins a tree that is in a UI. Not called
-during construction (see L</themed_params>), nor for a widget outside
-a UI, which reads its looks when it is drawn.
+forwarded looks) while the widget is in a UI: when the UI is created,
+when its theme is set to another one, when L</forget_looks> runs (the
+widget's classes changed) and when the widget joins a tree that is in
+a UI (its C<tree_changed> hook, see
+L<Term::Fabulous::Widget/tree_changed>). Not called during construction
+(see L</themed_params>), nor for a widget outside a UI, which reads its
+looks when it is drawn.
 
 Most widgets need none, because they read their looks when a frame is
 drawn. A widget that copies looks into the parts it builds
@@ -595,8 +613,10 @@ L</forwarded_looks>, before anything changes.
 Drops the fetched looks of the widget and of every widget below it;
 the next read fetches them from the theme of the UI the widget is in
 now. When the widget is in a UI, calls L</looks_changed> with all its
-looks. Term::Fabulous calls it when a widget joins or leaves a tree or
-changes its classes.
+looks. Term::Fabulous calls it when a widget changes its classes. A
+widget that joins or leaves a tree forgets its own looks from its
+C<tree_changed> hook instead, which Clay::UI calls on every widget of
+the moved subtree (see L<Term::Fabulous::Widget/tree_changed>).
 
 =head1 FUNCTIONS
 
@@ -604,7 +624,8 @@ changes its classes.
 
 	Term::Fabulous::Role::Themed::forget_tree_looks( $ui->root );
 
-L</forget_looks> for a node and every themed widget below it, also
+L</forget_looks> for a node and every themed widget below it, in
+layout pre-order (L<Clay::UI::Role::Core::Element/descendants>), also
 below nodes that are not themed (the rows of a grid). The UI calls it
 when it is created and when its theme changes.
 
