@@ -35,7 +35,7 @@ This dist uses plain `ExtUtils::MakeMaker` plus
    because MetaCPAN shows images with relative paths as gray
    placeholders. `make docs` sets `vVERSION` to the tag of the current
    `$VERSION`, so each release on MetaCPAN shows its own screenshots
-   once its tag is pushed (step 7). The Markdown files point to the
+   once its tag is pushed (step 8). The Markdown files point to the
    same files in the `master` branch instead. Keep `screenshots/` in
    `MANIFEST`: the POD names the files in the dist for readers without
    HTML.
@@ -61,7 +61,24 @@ This dist uses plain `ExtUtils::MakeMaker` plus
    make test
    ```
 
-6. Cut and upload the release:
+6. Commit the release, push it and wait for CI to pass on that commit.
+   `make release` refuses to run on a dirty tree, so this has to happen
+   first anyway:
+
+   ```sh
+   git commit -am "Release v$(perl -Ilib -MTerm::Fabulous -e 'print $Term::Fabulous::VERSION')"
+   git push
+   gh run watch --exit-status \
+       "$(gh run list --workflow ci.yml --commit "$(git rev-parse HEAD)" --limit 1 --json databaseId --jq '.[0].databaseId')"
+   ```
+
+   If `gh run list` finds no run yet, wait a few seconds: GitHub
+   creates it shortly after the push. Upload only when every job is
+   green, on every Perl and in the distribution check; `make release`
+   refuses to upload otherwise. If one fails, fix the cause, commit,
+   push and watch again.
+
+7. Cut and upload the release:
 
    ```sh
    make release
@@ -76,15 +93,16 @@ This dist uses plain `ExtUtils::MakeMaker` plus
      create one) and refuses to upload if it is missing.
    - Refuses to proceed if the git working tree is dirty.
    - Refuses to proceed if a tag `v$(VERSION)` already exists.
+   - Refuses to proceed unless the GitHub CI run of `HEAD` has passed
+     (`make ci-check`, which needs an authenticated `gh`).
    - Refuses to proceed if the code blocks, screenshot URLs,
      screenshots, `README.md` or `docs/` are out of date
      (`make docs-check`).
    - Runs `cpan-upload` on the freshly built tarball.
 
-7. Tag and push:
+8. Tag and push:
 
    ```sh
-   git commit -am "Release v$(perl -Ilib -MTerm::Fabulous -e 'print $Term::Fabulous::VERSION')"
    git tag -a "v$(perl -Ilib -MTerm::Fabulous -e 'print $Term::Fabulous::VERSION')" \
           -m "Release v$(perl -Ilib -MTerm::Fabulous -e 'print $Term::Fabulous::VERSION')"
    git push --follow-tags
@@ -94,7 +112,7 @@ This dist uses plain `ExtUtils::MakeMaker` plus
    pushes annotated tags, so a lightweight tag would silently stay
    local.
 
-8. Wait ~1 hour, then verify on
+9. Wait ~1 hour, then verify on
    [MetaCPAN](https://metacpan.org/dist/Term-Fabulous).
 
 ## Recovery
