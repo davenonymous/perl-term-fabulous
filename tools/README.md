@@ -103,6 +103,28 @@ one, the tool stops and names the character instead of drawing a gap.
 Emoji need a monochrome emoji font, because Imager cannot draw color
 fonts.
 
+## The example pictures
+
+Two tools draw the 16x16 pictures in `examples/images/`; both need
+Imager with PNG support.
+
+`tools/rainbow-circle` draws `rainbow_circle.png`, the picture of
+`examples/widgets/image.pl`, the embedded logo of
+`examples/cookbook/embedded-logo.pl` and the tests of
+`Term::Fabulous::Widget::Image`: six concentric rainbow bands that
+blend into each other, with a hard outer edge.
+
+`tools/translucent-circles` draws `translucent_circles.png`, the
+picture of `examples/cookbook/picture-viewer.pl`: three overlapping
+translucent circles, red, green and blue, whose colors mix where they
+overlap.
+
+```sh
+perl tools/rainbow-circle                        # rewrites examples/images/rainbow_circle.png
+perl tools/translucent-circles                   # rewrites examples/images/translucent_circles.png
+perl tools/rainbow-circle --output circle.png
+```
+
 ## The modules
 
 All under `tools/lib/Term/Fabulous/Screenshot/`:

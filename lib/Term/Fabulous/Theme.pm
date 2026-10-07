@@ -199,7 +199,8 @@ class Term::Fabulous::Theme :strict(params) {
 				'inside_text' => _color_slot('text_inverse'),
 			}
 		},
-		spinner => { extends => 'box', slots => { color => _color_slot('accent'), label => _color_slot('text') } },
+		spinner => { extends => 'box', slots => { color  => _color_slot('accent'), label => _color_slot('text') } },
+		image   => { extends => 'box', slots => { notice => _color_slot('text_dim') } },
 		divider => {
 			extends => 'box',
 			slots   => {
@@ -773,7 +774,7 @@ C<rgba(0, 0, 0, 0)>. L<Term::Fabulous::Static> does not paint it.
 A family is the kind of a widget: C<text>, C<box>, C<button>,
 C<input>, C<text_input>, C<dropdown>, C<table>, C<scrollbar>, C<tabs>,
 C<accordion>, C<dialog>, C<toast>, C<progress>, C<spinner>,
-C<divider>. A widget class says which family it belongs to
+C<image>, C<divider>. A widget class says which family it belongs to
 (L<Term::Fabulous::Role::Themed/theme_family>), and a family may
 extend another: C<button> extends C<box>, so it has the box's slots
 too.

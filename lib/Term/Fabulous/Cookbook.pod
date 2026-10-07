@@ -437,6 +437,14 @@ L<Paint with the mouse (Canvas, clicks and drags)|Term::Fabulous::Cookbook::Canv
 
 L<Plot data on a pixel canvas (PixelCanvas)|Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>
 
+=item *
+
+L<Show a picture file (Image, fit)|Term::Fabulous::Cookbook::Canvases/Show a picture file (Image, fit)>
+
+=item *
+
+L<Embed a logo in the program (Image, base64)|Term::Fabulous::Cookbook::Canvases/Embed a logo in the program (Image, base64)>
+
 =back
 
 =item L<Term::Fabulous::Cookbook::Output>

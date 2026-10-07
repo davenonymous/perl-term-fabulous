@@ -206,6 +206,8 @@ The pages, in reading order, each with its recipes:
 
     - [Paint with the mouse (Canvas, clicks and drags)](Cookbook/Canvases.md#paint-with-the-mouse-canvas-clicks-and-drags)
     - [Plot data on a pixel canvas (PixelCanvas)](Cookbook/Canvases.md#plot-data-on-a-pixel-canvas-pixelcanvas)
+    - [Show a picture file (Image, fit)](Cookbook/Canvases.md#show-a-picture-file-image-fit)
+    - [Embed a logo in the program (Image, base64)](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64)
 
 - [Term::Fabulous::Cookbook::Output](Cookbook/Output.md)
 

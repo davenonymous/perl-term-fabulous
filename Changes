@@ -1,6 +1,15 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Image: a picture read with Imager from a
+          file, bytes, base64 or base64url text or a data URL, drawn in
+          half-block pixels, two per cell. Its natural size is the
+          picture's, and it keeps that size in a larger or smaller
+          widget unless fit (contain, stretch) scales it.
+          Transparent pixels show the background, translucent ones are
+          mixed with it. Imager is a recommended, not a required,
+          dependency: without it the widget shows a notice in its place.
+          New theme family image with the slot notice
         - Fixed: Term::Fabulous::Termbox's tb_cluster_width,
           tb_set_cell_ex, tb_set_cell and tb_extend_cell wrote past their
           codepoint buffer and never returned when given a string that

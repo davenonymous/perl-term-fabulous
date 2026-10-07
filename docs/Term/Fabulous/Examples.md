@@ -483,6 +483,20 @@ The picture shows a red wave painted with the mouse over the shapes.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-pixel-paint.svg" alt="A pixel canvas with a frame, a line, a circle, a filled rectangle and a red wave painted with the mouse"></p>
 </div>
 
+### examples/widgets/image.pl
+
+[Term::Fabulous::Widget::Image](Widget/Image.md): a 16x16 PNG in three frames of the
+same fixed size, one per `fit`: `none` (the default) keeps its
+natural size, `contain` scales it to fit and keeps its proportions,
+`stretch` fills the frame. Three smaller frames show the same fits
+when the picture does not fit: `none` cuts it, `contain` shrinks it
+and keeps its proportions, `stretch` shrinks it to fill the frame. Needs [Imager](https://metacpan.org/pod/Imager); without it, each frame shows a
+notice instead.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-image.svg" alt="A 16x16 circle of rainbow-colored rings in three frames of 32x24 cells: at its natural size and centered (none), scaled up twice with its proportions kept (contain) and stretched twice wide and three times high to fill the frame (stretch); three frames of 12x4 cells below each other cut it (none), shrink it to half its size (contain) and shrink it to fill the frame (stretch)"></p>
+</div>
+
 ## Output without a terminal
 
 ### examples/static-report.pl
@@ -1498,6 +1512,28 @@ The programs of [Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-pixel-canvas-plot.svg" alt="A line chart of temperatures on a pixel canvas, red above 20 degrees"></p>
+    </div>
+
+- `picture-viewer.pl`
+
+    ["Show a picture file (Image, fit)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#show-a-picture-file-image-fit):
+    the picture file named as the argument, or the example picture of three
+    translucent circles, in the whole window; n, c and s switch the fit
+    between none, contain and stretch, b the background between the
+    screen's and white. Needs [Imager](https://metacpan.org/pod/Imager).
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-picture-viewer.svg" alt="Three overlapping translucent circles, red, green and blue, scaled twice in a frame on the dark screen, their colors mixed where they overlap, with the file name, the picture size, the fit and the keys above them"></p>
+    </div>
+
+- `embedded-logo.pl`
+
+    ["Embed a logo in the program (Image, base64)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64):
+    an about box with a logo kept in the program as base64 text. Needs
+    [Imager](https://metacpan.org/pod/Imager).
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-embedded-logo.svg" alt="An about box with a rainbow circle logo next to the program name, a description and a hint to press q"></p>
     </div>
 
 ## Output without a terminal

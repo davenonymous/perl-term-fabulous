@@ -33,6 +33,7 @@ examples/cookbook/clock.pl
 examples/cookbook/confirm-dialog.pl      
 examples/cookbook/custom-events.pl       
 examples/cookbook/disable-inputs.pl      
+examples/cookbook/embedded-logo.pl
 examples/cookbook/first-program.pl
 examples/cookbook/focus-help-line.pl     
 examples/cookbook/follow-log.pl          
@@ -45,6 +46,7 @@ examples/cookbook/minimal-program.pl
 examples/cookbook/non-ascii-text.pl      
 examples/cookbook/paint-with-the-mouse.pl 
 examples/cookbook/pixel-canvas-plot.pl   
+examples/cookbook/picture-viewer.pl
 examples/cookbook/report-to-file.pl      
 examples/cookbook/resize-aware-layout.pl 
 examples/cookbook/scrolling-log.pl       
@@ -75,6 +77,8 @@ examples/custom-widget.pl
 examples/event-monitor.pl
 examples/flow.pl
 examples/form.pl
+examples/images/rainbow_circle.png
+examples/images/translucent_circles.png
 examples/kdl-form.pl
 examples/kdl-layout.kdl
 examples/kdl-layout.pl
@@ -228,6 +232,7 @@ lib/Term/Fabulous/Widget/Dropdown.pm
 lib/Term/Fabulous/Widget/Element.pm
 lib/Term/Fabulous/Widget/Dropdown/List.pm
 lib/Term/Fabulous/Widget/Histogram.pm
+lib/Term/Fabulous/Widget/Image.pm
 lib/Term/Fabulous/Widget/Input.pm
 lib/Term/Fabulous/Widget/LineChart.pm
 lib/Term/Fabulous/Widget/PieChart.pm
@@ -335,6 +340,8 @@ t/widget-dialog.t
 t/widget-divider.t
 t/widget-dropdown.t
 t/widget-histogram.t
+t/widget-image.t
+t/widget-image-without-imager.t
 t/widget-inset.t
 t/widget-pie-chart.t
 t/widget-pixel-canvas.t
@@ -374,6 +381,7 @@ examples/widgets/donut-chart-centers.pl
 examples/widgets/dropdown.pl             
 examples/widgets/histogram.pl
 examples/widgets/histogram-measures.pl
+examples/widgets/image.pl
 examples/widgets/line-chart.pl
 examples/widgets/pie-chart.pl
 examples/widgets/pie-chart-styles.pl
@@ -420,6 +428,7 @@ screenshots/cookbook-choose-options.svg
 screenshots/cookbook-clock.svg           
 screenshots/cookbook-confirm-dialog.svg  
 screenshots/cookbook-disable-inputs.svg  
+screenshots/cookbook-embedded-logo.svg
 screenshots/cookbook-first-program.svg
 screenshots/cookbook-focus-help-line.svg 
 screenshots/cookbook-follow-log.svg
@@ -431,6 +440,7 @@ screenshots/cookbook-minimal-program.svg
 screenshots/cookbook-non-ascii-text.svg  
 screenshots/cookbook-paint-with-the-mouse.svg 
 screenshots/cookbook-pixel-canvas-plot.svg 
+screenshots/cookbook-picture-viewer.svg
 screenshots/cookbook-report-to-file.svg  
 screenshots/cookbook-resize-aware-layout-narrow.svg
 screenshots/cookbook-resize-aware-layout.svg 
@@ -508,6 +518,7 @@ screenshots/widget-donut-chart-centers.svg
 screenshots/widget-dropdown.svg          
 screenshots/widget-histogram.svg
 screenshots/widget-histogram-measures.svg
+screenshots/widget-image.svg
 screenshots/widget-line-chart.svg
 screenshots/widget-pie-chart.svg
 screenshots/widget-pie-chart-styles.svg
@@ -541,7 +552,9 @@ tools/lib/Term/Fabulous/Screenshot/Screen.pm
 tools/lib/Term/Fabulous/Screenshot/Theme.pm 
 tools/lib/Term/Fabulous/Screenshot/VirtualLoop.pm 
 tools/pod2markdown
+tools/rainbow-circle
 tools/README.md                          
 tools/screenshot                         
 tools/tidy
+tools/translucent-circles
 tools/update-docs                        

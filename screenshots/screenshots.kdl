@@ -462,6 +462,16 @@ screenshot "cookbook-pixel-canvas-plot" {
 	size 80 16
 }
 
+screenshot "cookbook-picture-viewer" {
+	script "examples/cookbook/picture-viewer.pl"
+	size 80 23
+}
+
+screenshot "cookbook-embedded-logo" {
+	script "examples/cookbook/embedded-logo.pl"
+	size 56 13
+}
+
 screenshot "cookbook-report-to-file" {
 	script "examples/cookbook/report-to-file.pl"
 	size 52 8
@@ -802,6 +812,11 @@ screenshot "widget-spinner" {
 	steps {
 		wait 1
 	}
+}
+
+screenshot "widget-image" {
+	script "examples/widgets/image.pl"
+	size 129 30
 }
 
 screenshot "widget-divider" {

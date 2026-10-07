@@ -267,6 +267,10 @@ such as CJK text and emoji cannot be placed correctly, and [run](../../../README
 it when it starts.
 - For mouse support, a terminal that reports mouse events. Nearly all do;
 see ["MOUSE" in Term::Fabulous::Manual::Events](Manual/Events.md#mouse) for what is reported.
+- Optional: [Imager](https://metacpan.org/pod/Imager), for pictures in [Term::Fabulous::Widget::Image](Widget/Image.md),
+with the image libraries (libpng, libjpeg, ...) of the formats you
+want to show. Installing Term::Fabulous does not require it; without
+it, an image widget shows a notice in its place.
 
 # YOUR FIRST PROGRAM
 
@@ -732,6 +736,12 @@ program, and the class pages with the reference.
     ["CANVASES" in Term::Fabulous::Manual::Charts](Manual/Charts.md#canvases),
     [Term::Fabulous::Widget::Canvas](Widget/Canvas.md), [Term::Fabulous::Widget::PixelCanvas](Widget/PixelCanvas.md),
     ["Plot data on a pixel canvas (PixelCanvas)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#plot-data-on-a-pixel-canvas-pixelcanvas).
+
+- Show a picture (PNG, JPEG, GIF, ...)
+
+    [Term::Fabulous::Widget::Image](Widget/Image.md),
+    ["Show a picture file (Image, fit)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#show-a-picture-file-image-fit),
+    ["Embed a logo in the program (Image, base64)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64).
 
 - Charts that draw themselves from data
 

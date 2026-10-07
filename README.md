@@ -167,7 +167,8 @@ start with the manual's first page and its first program.
 
 Perl 5.32.1 or later, a C compiler to build [Term::Fabulous::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Termbox.md)
 (termbox2 is compiled into the distribution), a terminal with 24-bit
-colors and a UTF-8 locale. See ["REQUIREMENTS" in Term::Fabulous::Manual](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual.md#requirements).
+colors and a UTF-8 locale. [Imager](https://metacpan.org/pod/Imager) is recommended, for
+[Term::Fabulous::Widget::Image](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Image.md). See ["REQUIREMENTS" in Term::Fabulous::Manual](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual.md#requirements).
 
 # CONSTRUCTOR
 
@@ -962,6 +963,12 @@ Term::Fabulous, and programs do not use them directly.
 
     A canvas that draws pixels, two per cell, with lines, rectangles and
     circles.
+
+- [Term::Fabulous::Widget::Image](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Image.md)
+
+    A picture (PNG, JPEG, GIF, ...) from a file, bytes, base64 text or a
+    data URL, drawn in pixels two per cell and scaled to fit. Needs
+    [Imager](https://metacpan.org/pod/Imager); without it, the widget shows a notice in its place.
 
 - [Term::Fabulous::Widget](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget.md)
 

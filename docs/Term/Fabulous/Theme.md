@@ -82,7 +82,7 @@ background instead gives the token a color with alpha 0, such as
 A family is the kind of a widget: `text`, `box`, `button`,
 `input`, `text_input`, `dropdown`, `table`, `scrollbar`, `tabs`,
 `accordion`, `dialog`, `toast`, `progress`, `spinner`,
-`divider`. A widget class says which family it belongs to
+`image`, `divider`. A widget class says which family it belongs to
 (["theme\_family" in Term::Fabulous::Role::Themed](Role/Themed.md#theme_family)), and a family may
 extend another: `button` extends `box`, so it has the box's slots
 too.

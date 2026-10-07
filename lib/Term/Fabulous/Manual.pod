@@ -316,6 +316,13 @@ it when it starts.
 For mouse support, a terminal that reports mouse events. Nearly all do;
 see L<Term::Fabulous::Manual::Events/MOUSE> for what is reported.
 
+=item *
+
+Optional: L<Imager>, for pictures in L<Term::Fabulous::Widget::Image>,
+with the image libraries (libpng, libjpeg, ...) of the formats you
+want to show. Installing Term::Fabulous does not require it; without
+it, an image widget shows a notice in its place.
+
 =back
 
 =head1 YOUR FIRST PROGRAM
@@ -838,6 +845,12 @@ L<Term::Fabulous::Cookbook::Tables/Print a table as a report (Static)>.
 L<Term::Fabulous::Manual::Charts/CANVASES>,
 L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::PixelCanvas>,
 L<Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>.
+
+=item Show a picture (PNG, JPEG, GIF, ...)
+
+L<Term::Fabulous::Widget::Image>,
+L<Term::Fabulous::Cookbook::Canvases/Show a picture file (Image, fit)>,
+L<Term::Fabulous::Cookbook::Canvases/Embed a logo in the program (Image, base64)>.
 
 =item Charts that draw themselves from data
 

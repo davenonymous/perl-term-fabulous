@@ -8,6 +8,7 @@ requires 'Feature::Compat::Try';
 requires 'I18N::Langinfo';
 requires 'IO::Async';
 requires 'List::Util', '1.33';    # any, all (1.33), pairmap (1.29)
+requires 'MIME::Base64';
 requires 'Object::Pad', '0.825';
 requires 'Object::Pad::FieldAttr::Checked';
 requires 'Object::PadX::Enum';
@@ -18,6 +19,8 @@ requires 'Time::HiRes';
 requires 'Time::Local', '1.30';    # timelocal_posix
 requires 'Unicode::GCString';
 requires 'XSLoader';
+
+recommends 'Imager';    # Term::Fabulous::Widget::Image; shows a notice without it
 
 on test => sub {
 	requires 'Test2::V0';
@@ -31,5 +34,5 @@ on develop => sub {
 	requires 'Perl::Critic';
 	requires 'Perl::Tidy', '20250214';
 	requires 'Pod::Markdown';
-	recommends 'Imager';    # PNG output of tools/screenshot
+	recommends 'Imager';    # PNG output of tools/screenshot, the example pictures of tools/
 };

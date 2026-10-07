@@ -79,6 +79,7 @@ WriteMakefile(
 		'I18N::Langinfo'                  => '0',
 		'IO::Async'                       => '0',
 		'List::Util'                      => '1.33',
+		'MIME::Base64'                    => '0',
 		'Object::Pad'                     => '0.825',
 		'Object::Pad::FieldAttr::Checked' => '0',
 		'Object::PadX::Enum'              => '0',
@@ -107,6 +108,12 @@ WriteMakefile(
 		# The maintainer tools in tools/ (make docs, make docs-check,
 		# tools/tidy) and perlcritic.
 		prereqs => {
+
+			# Term::Fabulous::Widget::Image draws pictures with Imager
+			# and shows a notice in their place without it.
+			runtime => {
+				recommends => { 'Imager' => '0' },
+			},
 			develop => {
 				requires   => { 'IO::Pty' => '0', 'JSON::PP' => '0', 'Perl::Critic' => '0', 'Perl::Tidy' => '20250214', 'Pod::Markdown' => '0' },
 				recommends => { 'Imager'  => '0' },

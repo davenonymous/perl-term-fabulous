@@ -9,7 +9,9 @@ This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: 
 This page shows how to draw freely, without a chart widget: on a
 [Term::Fabulous::Widget::Canvas](../Widget/Canvas.md), which holds a character in every
 cell, with the mouse, and on a [Term::Fabulous::Widget::PixelCanvas](../Widget/PixelCanvas.md),
-which has two pixels per cell, from data. Canvases, their size and the
+which has two pixels per cell, from data; and how to show pictures
+with [Term::Fabulous::Widget::Image](../Widget/Image.md), which draws them in the same
+pixels. Canvases, their size and the
 `CanvasResize` event are explained in
 [the canvases chapter of the manual](../Manual/Charts.md#canvases); the mouse events in
 [the mouse section of the events chapter](../Manual/Events.md#mouse). For charts that draw
@@ -19,6 +21,8 @@ The recipes on this page:
 
 - ["Paint with the mouse (Canvas, clicks and drags)"](#paint-with-the-mouse-canvas-clicks-and-drags)
 - ["Plot data on a pixel canvas (PixelCanvas)"](#plot-data-on-a-pixel-canvas-pixelcanvas)
+- ["Show a picture file (Image, fit)"](#show-a-picture-file-image-fit)
+- ["Embed a logo in the program (Image, base64)"](#embed-a-logo-in-the-program-image-base64)
 
 # Paint with the mouse (Canvas, clicks and drags)
 
@@ -195,6 +199,205 @@ not bytes). A cell with text shows no pixels.
 [Term::Fabulous::Widget::Canvas](../Widget/Canvas.md) and its `put`, `put_text` and
 `fill`; `examples/canvas.pl` animates a plot with a timer and redraws
 only the cells that changed.
+
+# Show a picture file (Image, fit)
+
+Goal: show a picture file in the whole window and let the user choose
+how it is scaled and what is behind it.
+
+This program is shipped as `examples/cookbook/picture-viewer.pl`. It
+shows the file named as its argument, or the example picture:
+`perl examples/cookbook/picture-viewer.pl photo.jpg`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use FindBin;
+use Term::Fabulous;
+use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Image;
+use Term::Fabulous::Widget::Text;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+# The picture to show: the first argument, or the example picture.
+my $file = shift // "$FindBin::Bin/../images/translucent_circles.png";
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+my $header = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+my $status = Term::Fabulous::Widget::Text->new( text_color => [ 230, 230, 230, 255 ] );
+$header->add_child( $status, Term::Fabulous::Widget::Text->new( text => 'n, c, s: fit    b: background    q: quit', text_color => [ 150, 160, 180, 255 ] ) );
+
+# The picture fills a frame; its background is the area inside the frame.
+my $frame = Term::Fabulous::Widget::Box->new(
+        border_width => 1,
+        border_style => Term::Fabulous::Enum::BorderStyle->Round,
+        border_color => [ 120, 160, 220, 255 ],
+        layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+);
+my $picture = Term::Fabulous::Widget::Image->new(
+        file   => $file,
+        fit    => 'contain',
+        layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+);
+$frame->add_child($picture);
+$root->add_child( $header, $frame );
+
+sub show_status () {
+        my $size = defined $picture->image_width ? $picture->image_width . 'x' . $picture->image_height : 'unknown size';
+        $status->text( sprintf '%s  %s  fit: %s', $file =~ s{.*/}{}r, $size, $picture->fit );
+        return;
+}
+show_status();
+
+my %fit_by_key = ( n => 'none', c => 'contain', s => 'stretch' );
+
+# b switches between the screen's background and a white one: the
+# transparent parts of the picture show it, the translucent ones are
+# mixed with it.
+my $white = 0;
+
+sub toggle_background () {
+        $white = !$white;
+        $picture->background_color( $white ? [ 255, 255, 255, 255 ] : undef );
+        return;
+}
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+$root->on(
+        KeyPress => sub ($event) {
+                my $key = $event->key_name // return;
+                $ui->loop->stop if $key eq 'q';
+                toggle_background() if $key eq 'b';
+                my $fit = $fit_by_key{$key} or return;
+                $picture->fit($fit);
+                show_status();
+                return;
+        }
+);
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-picture-viewer.svg" alt="Three overlapping translucent circles, red, green and blue, scaled twice in a frame on the dark screen, their colors mixed where they overlap, with the file name, the picture size, the fit and the keys above them"></p>
+</div>
+
+- [Term::Fabulous::Widget::Image](../Widget/Image.md) reads the picture when it is given:
+in `new` here, or later with `$picture->file($other)`. A file
+that cannot be read (missing, or of a format your [Imager](https://metacpan.org/pod/Imager) was built
+without) dies right there, with a message that names the file; wrap
+the call in `try` to show an error instead.
+- Without `fit`, a picture keeps its natural size, one column per pixel
+and one row per two rows of pixels, and a smaller widget cuts it.
+`contain` scales it to the largest size that fits and keeps its
+proportions, `stretch` fills the widget. `fit` is an accessor, so the
+keys change it and the next frame draws the picture again.
+- Enlarging repeats pixels, which keeps pixel art crisp. A whole-number
+factor makes every pixel the same size: in the picture, a terminal of
+80x23 leaves 16 rows, 32 pixels, for the 16x16 picture, so it is
+scaled exactly twice. Other factors make some rows and columns of pixels
+wider than others. Shrinking mixes pixels.
+- The example picture is translucent: transparent pixels are not drawn,
+so they show the background, and translucent ones are mixed with it.
+That is the background of the image itself, or the nearest one behind
+it. **b** sets the image's `background_color` to white and back to
+`undef`, the screen behind it; the next frame draws the picture
+again, mixed with the new color. The image sits in a frame of its own,
+so its background fills the area inside the border.
+- `image_width` and `image_height` are the size of the picture in
+pixels, `undef` when [Imager](https://metacpan.org/pod/Imager) is not installed. Without Imager, the
+widget shows a notice in place of the picture, so the program still
+runs.
+
+# Embed a logo in the program (Image, base64)
+
+Goal: show a small logo without shipping or finding a picture file.
+
+This program is shipped as `examples/cookbook/embedded-logo.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Image;
+use Term::Fabulous::Widget::Text;
+use Clay::XS qw(CLAY_TOP_TO_BOTTOM CLAY_ALIGN_Y_CENTER);
+
+# The logo, a 16x16 PNG as base64 text: no file to ship or to find.
+# The line breaks are ignored.
+my $LOGO = <<'BASE64';
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABiklEQVQ4ja2TwUoCURSGvzujwQRh
+JIOBLoSE7AFmIRK0aBXYMqNo2QO09x16AJdiZJsgoZW7iIJ5gAoMWxhUg9LdKJR6W9xJJ5tN0lme
+y/9xz/+fIwiptmmqsH5qOBTTvR+Nb2E0p7CyEIlpzkAK+vfweSN+gURQbKzA4vYIa1lBDLD9Rw+Q
+0H8RvF8YjB4nEBEU23sjIkkFeSAx9ddX4BoGzwLvZAIZA5aORlirCrag8zlPzbWpNOcAOMh8UHQ8
+4tEeXEL/QdA9NkgNhyLSNk0VzSn97bwW754laXT3oVMA4FbWOW9VOd15Jp7vYUlFNKdo35jKALCy
+6JkTUHNtLb4r4TylcZ7ScFei0d2n5tp6tJivAQzw3fYNqzTnoFPA6Uk2rspsXJVxehI6hfFI2JOE
+jLC8/1IR0DnjqbFht7KO+1aC9UMA3PkYxOscZD7GsQ6kmAD697CQ1VEVHY/zVpXGGri+icTrbC5V
+KTqejlNqDQT2YNYY/2eRgpCZVjkIgRmPKQw0XWHn/AWQfdWh/qecnAAAAABJRU5ErkJggg==
+BASE64
+
+my $about = Term::Fabulous::Widget::Box->new(
+        border_width => 1,
+        border_style => Term::Fabulous::Enum::BorderStyle->Round,
+        border_color => [ 120, 160, 220, 255 ],
+        layout       => {
+                padding         => { left => 2, right => 2, top => 1, bottom => 1 },
+                child_gap       => 3,
+                child_alignment => { y => CLAY_ALIGN_Y_CENTER },
+        },
+);
+my $text = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, child_gap => 1 } );
+$text->add_child(
+        Term::Fabulous::Widget::Text->new( text => 'Prism 2.4',                text_color => [ 255, 255, 255, 255 ] ),
+        Term::Fabulous::Widget::Text->new( text => 'Colors for your terminal', text_color => [ 150, 160, 180, 255 ] ),
+        Term::Fabulous::Widget::Text->new( text => 'Press q to quit.',         text_color => [ 150, 160, 180, 255 ] ),
+);
+$about->add_child( Term::Fabulous::Widget::Image->new( base64 => $LOGO ), $text );
+
+my $root = Term::Fabulous::Widget::Box->new( layout => { padding => { left => 2, top => 1 } } );
+$root->add_child($about);
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+$root->on(
+        KeyPress => sub ($event) {
+                $ui->loop->stop if ( $event->key_name // '' ) eq 'q';
+                return;
+        }
+);
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-embedded-logo.svg" alt="An about box with a rainbow circle logo next to the program name, a description and a hint to press q"></p>
+</div>
+
+- `base64` takes the bytes of a picture as base64 text, in the standard
+alphabet or in base64url; line breaks, indentation and missing `=`
+padding do not matter. Make the text with
+`perl -MMIME::Base64 -0777 -ne 'print encode_base64($_)' logo.png`.
+`data_url` takes a data URL (`data:image/png;base64,...`), and
+`data` the bytes themselves.
+- The image has no `layout` sizing, so it is as big as the picture: a
+16x16 PNG takes 16 columns and 8 rows, and `child_alignment` centers
+the text next to it.
+- Transparent pixels are not drawn, so the corners around the circle
+show the background of the box; half-transparent ones are mixed with
+it.
 
 # SEE ALSO
 

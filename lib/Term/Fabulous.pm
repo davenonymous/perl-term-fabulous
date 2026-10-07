@@ -709,7 +709,8 @@ it handles itself, inline mode and wheel scrolling.
 
 Perl 5.32.1 or later, a C compiler to build L<Term::Fabulous::Termbox>
 (termbox2 is compiled into the distribution), a terminal with 24-bit
-colors and a UTF-8 locale. See L<Term::Fabulous::Manual/REQUIREMENTS>.
+colors and a UTF-8 locale. L<Imager> is recommended, for
+L<Term::Fabulous::Widget::Image>. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 
 =head1 CONSTRUCTOR
 
@@ -1535,6 +1536,12 @@ A box with a grid of character cells that you draw into.
 
 A canvas that draws pixels, two per cell, with lines, rectangles and
 circles.
+
+=item L<Term::Fabulous::Widget::Image>
+
+A picture (PNG, JPEG, GIF, ...) from a file, bytes, base64 text or a
+data URL, drawn in pixels two per cell and scaled to fit. Needs
+L<Imager>; without it, the widget shows a notice in its place.
 
 =item L<Term::Fabulous::Widget>
 
