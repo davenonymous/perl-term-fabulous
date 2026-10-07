@@ -157,6 +157,68 @@ subtest 'kitty keyboard query' => sub {
 	tb_shutdown();
 };
 
+subtest 'sixel query' => sub {
+	pipe my $read, my $write or die "pipe: $!";
+	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
+	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
+	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
+
+	syswrite $write, "a\x1b[6;20;10t\x1b[?64;1;4;22c";
+	is tf_sixel_query( 1000, \my $supported, \my $width, \my $height ), TB_OK,         'the terminal answers';
+	is [ $supported, $width, $height ],                                 [ 1, 10, 20 ], 'attribute 4: sixel, and the reported cell size';
+	my $event = Term::Fabulous::Termbox::Event->new;
+	is [ tb_peek_event( $event, 100 ), $event->ch ], [ TB_OK, ord 'a' ], 'the key before the answers stays queued';
+	is tb_peek_event( $event, 50 ),                  TB_ERR_NO_EVENT,    'the answers do not';
+
+	syswrite $write, "\x1b[?62;14;22c";
+	is [ tf_sixel_query( 1000, \$supported, \$width, \$height ), $supported, $width, $height ], [ TB_OK, 0, 0, 0 ], 'no 4 (the 4 in 14 does not count), no cell size';
+	is tf_sixel_query( 50, \$supported, \$width, \$height ),                                    TB_ERR_NO_EVENT,    'no answer in time';
+	like dies { tf_sixel_query( 50, \$supported, 1, \$height ) }, qr/tf_sixel_query needs a scalar reference/, 'tf_sixel_query wants references';
+	tb_shutdown();
+};
+
+subtest 'the cell size from the window size' => sub {
+	try { require IO::Pty }
+	catch ($error) { skip_all 'IO::Pty is not installed' }
+	my $pty     = IO::Pty->new;
+	my $display = $pty->slave;
+	$display->set_winsize( 3, 10, 80, 48 );
+	pipe my $read, my $write or die "pipe: $!";
+	my $rc = tb_init_rwfd( fileno $read, fileno $display );
+	skip_all "termbox2 cannot start on a pty here: " . tb_strerror($rc) unless $rc == TB_OK;
+
+	syswrite $write, "\x1b[?62;4c";
+	my ( $supported, $width, $height );
+	is [ tf_sixel_query( 1000, \$supported, \$width, \$height ), $supported, $width, $height ], [ TB_OK, 1, 8, 16 ], 'the pixels of the window divided by its cells';
+	tb_shutdown();
+};
+
+subtest 'cells tb_present would draw' => sub {
+	try { require IO::Pty }
+	catch ($error) { skip_all 'IO::Pty is not installed' }
+	my $pty     = IO::Pty->new;
+	my $display = $pty->slave;
+	$display->set_winsize( 3, 10 );
+	pipe my $read, my $write or die "pipe: $!";
+	my $rc = tb_init_rwfd( fileno $read, fileno $display );
+	skip_all "termbox2 cannot start on a pty here: " . tb_strerror($rc) unless $rc == TB_OK;
+
+	my $differ = sub (@rect) {
+		tf_cells_differ( @rect, \my $answer ) == TB_OK or die 'tf_cells_differ failed';
+		return $answer;
+	};
+	tb_present();
+	tb_set_cell( 4, 1, 'x', TB_DEFAULT, TB_DEFAULT );
+	is [ $differ->( 3, 0, 2, 2 ), $differ->( 5, 0, 5, 3 ) ], [ 1, 0 ], 'a changed cell inside the rectangle, none outside';
+	is $differ->( -5, -5, 100, 100 ),                        1,        'the part outside the screen is ignored';
+	tb_present();
+	is $differ->( 0, 0, 10, 3 ),                             0,        'none after tb_present';
+	is tf_invalidate_cells( 8, 2, 5, 5 ),                    TB_OK,    'tf_invalidate_cells';
+	is [ $differ->( 8, 2, 2, 1 ), $differ->( 0, 0, 8, 3 ) ], [ 1, 0 ], 'only its cells are drawn again';
+	like dies { tf_cells_differ( 0, 0, 1, 1, 1 ) }, qr/tf_cells_differ needs a scalar reference/, 'tf_cells_differ wants a reference';
+	tb_shutdown();
+};
+
 # The terminal is a pty, so termbox2 knows its size; what it writes is read
 # back from the master side.
 subtest 'cells and raw output after tb_init' => sub {

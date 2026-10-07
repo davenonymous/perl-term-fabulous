@@ -10,6 +10,7 @@ use FindBin;
 use lib "$FindBin::Bin/../tools/lib";
 
 use Encode qw(encode);
+use MIME::Base64 qw(encode_base64);
 use Module::Load::Conditional qw(can_load);
 use Term::Fabulous::Render::Attr qw(STYLE_FLAGS);
 use Term::Fabulous::Render::Target::Grid;
@@ -67,6 +68,22 @@ subtest 'the renderers draw every style' => sub {
 		map { $_ => scalar @{ $lines{$_} } } keys %lines
 	}, { 3 => 1, 7 => 1, 8 => 2, 9 => 1 }, 'underline, strikeout, double underline and overline are lines';
 	ok $lines{9}[0] < $lines{7}[0] && $lines{7}[0] < $lines{3}[0], 'overline above strikeout above underline';
+};
+
+subtest 'sixel pictures lie over the cells' => sub {
+	my $blank   = [ ' ', 1, 0, 0 ];
+	my $capture = { columns => 3, rows => 2, cells => [ [ ($blank) x 3 ], [ ($blank) x 3 ] ], pictures => [ { x => 1, y => 1, columns => 2, rows => 1, png => encode_base64( 'PNG', '' ) } ] };
+	my $screen  = Term::Fabulous::Screenshot::Screen->from_capture($capture);
+	is [ $screen->pictures ], [ { x => 1, y => 1, columns => 2, rows => 1, png => 'PNG' } ], 'the capture holds the PNG data in base64';
+
+	my $scene = Term::Fabulous::Screenshot::Scene->new( screen => $screen, theme => Term::Fabulous::Screenshot::Theme->new );
+	my ( $x, $y ) = ( $scene->layout->{terminal_x} + $scene->cell_width, $scene->layout->{terminal_y} + $scene->cell_height );
+	my ( $width, $height ) = ( 2 * $scene->cell_width, $scene->cell_height );
+	like render_svg($scene), qr{<image x="$x" y="$y" width="$width" height="$height" preserveAspectRatio="none" href="data:image/png;base64,UE5H"/>\n</svg>\n\z},
+		'the SVG shows it last, over the cells it covers';
+
+	$capture->{pictures}[0]{x} = 2;
+	like dies { Term::Fabulous::Screenshot::Screen->from_capture($capture) }, qr/is not inside the 3x2 screen/, 'a picture beyond the screen dies';
 };
 
 subtest 'the PNG renderer draws every style' => sub {

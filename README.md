@@ -168,7 +168,8 @@ start with the manual's first page and its first program.
 Perl 5.32.1 or later, a C compiler to build [Term::Fabulous::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Termbox.md)
 (termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. [Imager](https://metacpan.org/pod/Imager) is recommended, for
-[Term::Fabulous::Widget::Image](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Image.md). See ["REQUIREMENTS" in Term::Fabulous::Manual](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual.md#requirements).
+[Term::Fabulous::Widget::Image](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Image.md), and [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL) with it,
+for [Term::Fabulous::Widget::Sixel](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Sixel.md). See ["REQUIREMENTS" in Term::Fabulous::Manual](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual.md#requirements).
 
 # CONSTRUCTOR
 
@@ -970,6 +971,13 @@ Term::Fabulous, and programs do not use them directly.
     data URL, drawn in pixels two per cell and scaled to fit. Needs
     [Imager](https://metacpan.org/pod/Imager); without it, the widget shows a notice in its place.
 
+- [Term::Fabulous::Widget::Sixel](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Sixel.md)
+
+    A picture like Image's, drawn by the terminal in its own pixels as
+    sixel graphics. Needs [Imager](https://metacpan.org/pod/Imager), [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL) and a terminal
+    that shows sixel graphics; otherwise, the widget shows a notice in its
+    place.
+
 - [Term::Fabulous::Widget](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget.md)
 
     The abstract base class of all widgets except Text. Its page describes
@@ -1368,6 +1376,12 @@ from layout files, or your own terminal or output class.
 
     The base role of the cell targets: lets a frame keep cells of the
     previous frame, so unchanged canvases are not drawn again.
+
+- [Term::Fabulous::Render::Target::Sixel](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Target/Sixel.md)
+
+    The optional role of the cell targets that show sixel pictures: they
+    report the size of a cell in pixels and are handed the pictures of
+    every frame.
 
 - [Term::Fabulous::Render::Rectangle](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Rectangle.md), [Term::Fabulous::Render::Border](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Border.md), [Term::Fabulous::Render::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Text.md), [Term::Fabulous::Render::Canvas](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Canvas.md)
 

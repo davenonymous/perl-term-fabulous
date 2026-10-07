@@ -24,8 +24,8 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		tb_init tb_init_rwfd tf_init_inline tf_init_inline_rwfd tb_shutdown tb_width tb_height tb_hide_cursor tb_clear
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
 		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
-		tf_cursor_position tf_reset_attrs tf_kitty_keyboard_query
-		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL
+		tf_cursor_position tf_reset_attrs tf_kitty_keyboard_query tf_sixel_query
+		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL TB_ERR_READ
 		TB_INPUT_ESC TB_INPUT_MOUSE TB_OUTPUT_TRUECOLOR
 	);
 	use Term::Fabulous::Termbox::Event;
@@ -43,6 +43,7 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	use constant KITTY_KEYBOARD_QUERY_TIMEOUT_MS => 500;
 
 	use constant CURSOR_REPORT_TIMEOUT_MS => 1000;
+	use constant SIXEL_QUERY_TIMEOUT_MS   => 500;
 	use constant ERASE_BELOW              => "\x1b[J";
 
 	use constant OPEN_OPTIONS => qw(inline mouse kitty_keyboard);
@@ -55,7 +56,8 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	field $is_open               :reader = 0;
 	field $kitty_keyboard_active :reader = 0;
 	field $inline;    # the rows asked for, or undef for the full screen
-	field $mouse = 0;
+	field $mouse        = 0;
+	field $_shows_sixel = 0;
 	field @_size;    # the layout's [columns, rows]
 	field @_read_handles;    # duplicates of termbox's input descriptors
 
@@ -107,6 +109,7 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		die "Term::Fabulous::Terminal::Termbox: the terminal reports an unusable size of ${width}x${height}\n"
 			if $width < 1 || $height < 1;
 		@_size = ( $width, defined $inline ? $self->_anchor_inline_region($height) : $height );
+		$self->_detect_sixel;
 
 		_check_termbox( 'tb_get_fds', tb_get_fds( \my $tty_fd, \my $resize_fd ) );
 		@_read_handles = map { _duplicate_for_reading($_) } $tty_fd, $resize_fd;
@@ -119,6 +122,9 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		tb_send(STOP_MOUSE_MOTION_REPORT) if $mouse;    # termbox2 switches off only the modes it switched on
 		tb_send(POP_KITTY_KEYBOARD) if $kitty_keyboard_active;    # before termbox2 leaves the alternate screen, which has a stack of its own
 		$kitty_keyboard_active = 0;
+		$_shows_sixel          = 0;
+		$cell_target->set_sixel_cell_size;
+		$cell_target->forget_sixels;
 		$self->_leave_inline_region if defined $cell_target->region_top;
 		CORE::close($_) foreach @_read_handles;
 		@_read_handles = ();
@@ -144,6 +150,7 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	method apply_resize ( $width, $height ) {
 		die "Term::Fabulous::Terminal::Termbox: the terminal is not open" unless $is_open;
 		@_size = ( $width, defined $inline ? $self->_anchor_inline_region($height) : $height );
+		$self->_detect_sixel if $_shows_sixel;    # a new font size changes the cell size
 		return @_size;
 	}
 
@@ -190,6 +197,17 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		return unless $supported;
 		_check_termbox( 'tb_send', tb_send(PUSH_KITTY_KEYBOARD) );
 		$kitty_keyboard_active = 1;
+		return;
+	}
+
+	# A terminal that does not answer shows no sixel; one that does not
+	# tell the size of its cells shows none Term::Fabulous could place.
+	# Input that cannot be read is no answer either: next_event reports it.
+	method _detect_sixel () {
+		my $rc = tf_sixel_query( SIXEL_QUERY_TIMEOUT_MS, \my $supported, \my $cell_width, \my $cell_height );
+		_check_termbox( 'tf_sixel_query', $rc ) unless $rc == TB_ERR_NO_EVENT || $rc == TB_ERR_READ;
+		$_shows_sixel = $rc == TB_OK && $supported ? 1 : 0;
+		$cell_target->set_sixel_cell_size( $_shows_sixel && $cell_width > 0 ? ( $cell_width, $cell_height ) : () );
 		return;
 	}
 
@@ -308,7 +326,17 @@ hides the cursor;
 in inline mode, asks the terminal for the cursor position (C<ESC [ 6 n>,
 at most a second), places the region on the cursor's line or the line
 below it, scrolls the terminal up when the region does not fit below,
-and erases the region's rows.
+and erases the region's rows;
+
+=item *
+
+asks the terminal whether it shows sixel graphics and how many pixels
+a cell has (C<tf_sixel_query> of L<Term::Fabulous::Termbox>), waiting
+at most half a second, and tells its cell target
+(L<Term::Fabulous::Terminal::Termbox::Cells/set_sixel_cell_size>), so
+that L<Term::Fabulous::Widget::Sixel> can show pictures. A terminal
+that does not answer, does not list sixel graphics in its device
+attributes or does not tell the size of its cells shows none.
 
 =back
 
@@ -385,7 +413,9 @@ Takes the size of a resize event. In inline mode it finds the region
 again: it asks the terminal where the cursor is (between frames the
 hidden cursor waits at the start of the region's first row, and a
 terminal that rewraps its lines moves it along), erases from there down
-and places the region there. Returns the new size, like L</size>.
+and places the region there. A terminal that shows sixel graphics is
+asked for the size of its cells again, which a new font size changes.
+Returns the new size, like L</size>.
 
 =head2 read_handles
 

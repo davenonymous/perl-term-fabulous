@@ -249,7 +249,7 @@ class Term::Fabulous
 		$self->_fire_start if $opened;
 		$_draw_timer->start;
 		$self->_watch_terminal_input;
-		$self->_read_input if defined $inline || $kitty_keyboard;    # keys the terminal queries read ahead
+		$self->_read_input;    # keys the terminal read ahead while the terminal queries waited for their answers
 		return;
 	}
 
@@ -466,7 +466,7 @@ class Term::Fabulous
 		$self->height($height);
 		$self->root->fire_event( Term::Fabulous::Event::Resize->new( width => $width, height => $height, is_post_event => 1 ) );
 		$_frame_requested = 1;
-		$self->_read_input if defined $inline;    # keys the cursor position query read ahead
+		$self->_read_input;    # keys the terminal read ahead while the terminal queries waited for their answers
 		return;
 	}
 
@@ -710,7 +710,8 @@ it handles itself, inline mode and wheel scrolling.
 Perl 5.32.1 or later, a C compiler to build L<Term::Fabulous::Termbox>
 (termbox2 is compiled into the distribution), a terminal with 24-bit
 colors and a UTF-8 locale. L<Imager> is recommended, for
-L<Term::Fabulous::Widget::Image>. See L<Term::Fabulous::Manual/REQUIREMENTS>.
+L<Term::Fabulous::Widget::Image>, and L<Imager::File::SIXEL> with it,
+for L<Term::Fabulous::Widget::Sixel>. See L<Term::Fabulous::Manual/REQUIREMENTS>.
 
 =head1 CONSTRUCTOR
 
@@ -1543,6 +1544,13 @@ A picture (PNG, JPEG, GIF, ...) from a file, bytes, base64 text or a
 data URL, drawn in pixels two per cell and scaled to fit. Needs
 L<Imager>; without it, the widget shows a notice in its place.
 
+=item L<Term::Fabulous::Widget::Sixel>
+
+A picture like Image's, drawn by the terminal in its own pixels as
+sixel graphics. Needs L<Imager>, L<Imager::File::SIXEL> and a terminal
+that shows sixel graphics; otherwise, the widget shows a notice in its
+place.
+
 =item L<Term::Fabulous::Widget>
 
 The abstract base class of all widgets except Text. Its page describes
@@ -1969,6 +1977,12 @@ Collects the drawn cells in memory.
 
 The base role of the cell targets: lets a frame keep cells of the
 previous frame, so unchanged canvases are not drawn again.
+
+=item L<Term::Fabulous::Render::Target::Sixel>
+
+The optional role of the cell targets that show sixel pictures: they
+report the size of a cell in pixels and are handed the pictures of
+every frame.
 
 =item L<Term::Fabulous::Render::Rectangle>, L<Term::Fabulous::Render::Border>, L<Term::Fabulous::Render::Text>, L<Term::Fabulous::Render::Canvas>
 

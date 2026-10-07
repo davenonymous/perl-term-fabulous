@@ -22,11 +22,12 @@ class Term::Fabulous::Terminal::Memory :does(Term::Fabulous::Role::Terminal) :st
 
 	use constant OPEN_OPTIONS => qw(inline mouse kitty_keyboard);
 
-	field $width  :param :reader;
-	field $height :param :reader;
-	field $kitty_keyboard :param :reader = 0;    # whether the terminal speaks the protocol
+	field $width           :param :reader;
+	field $height          :param :reader;
+	field $kitty_keyboard  :param :reader = 0;    # whether the terminal speaks the protocol
+	field $sixel_cell_size :param = undef;    # [width, height] in pixels when the terminal shows sixel
 
-	field $cell_target           :reader = Term::Fabulous::Render::Target::Grid->new;
+	field $cell_target           :reader = Term::Fabulous::Render::Target::Grid->new( sixel_cell_size => $sixel_cell_size );
 	field $is_open               :reader = 0;
 	field $session_count         :reader = 0;
 	field $mouse_enabled         :reader = 0;
@@ -249,11 +250,17 @@ L</kitty_keyboard_active>.
 
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24 );
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24, kitty_keyboard => 1 );
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24, sixel_cell_size => [ 10, 20 ] );
 
 C<width> and C<height> are the size of the screen, whole numbers of at
 least 1; required. C<kitty_keyboard> says whether the terminal speaks
 the kitty keyboard protocol, so that an application that asks for it
-gets it; default 0. Unknown parameters die.
+gets it; default 0. C<sixel_cell_size>, C<[width, height]> in pixels,
+makes it a terminal that shows sixel graphics with cells of that size:
+the pictures of L<Term::Fabulous::Widget::Sixel> are recorded, and
+L<Term::Fabulous::Render::Target::Grid/sixels> on L</cell_target>
+returns those of the last frame. Without it, the default, the terminal
+shows no sixel graphics. Unknown parameters die.
 
 =head1 INPUT
 

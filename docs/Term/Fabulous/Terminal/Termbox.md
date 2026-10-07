@@ -42,7 +42,14 @@ flags 1 (disambiguate escape codes) and 4 (report alternate keys);
 - in inline mode, asks the terminal for the cursor position (`ESC [ 6 n`,
 at most a second), places the region on the cursor's line or the line
 below it, scrolls the terminal up when the region does not fit below,
-and erases the region's rows.
+and erases the region's rows;
+- asks the terminal whether it shows sixel graphics and how many pixels
+a cell has (`tf_sixel_query` of [Term::Fabulous::Termbox](../Termbox.md)), waiting
+at most half a second, and tells its cell target
+(["set\_sixel\_cell\_size" in Term::Fabulous::Terminal::Termbox::Cells](Termbox/Cells.md#set_sixel_cell_size)), so
+that [Term::Fabulous::Widget::Sixel](../Widget/Sixel.md) can show pictures. A terminal
+that does not answer, does not list sixel graphics in its device
+attributes or does not tell the size of its cells shows none.
 
 ["close"](#close) undoes all of it in reverse: mouse motion reporting off, the
 kitty flags popped, the cursor placed below the inline region, and
@@ -127,7 +134,9 @@ Takes the size of a resize event. In inline mode it finds the region
 again: it asks the terminal where the cursor is (between frames the
 hidden cursor waits at the start of the region's first row, and a
 terminal that rewraps its lines moves it along), erases from there down
-and places the region there. Returns the new size, like ["size"](#size).
+and places the region there. A terminal that shows sixel graphics is
+asked for the size of its cells again, which a new font size changes.
+Returns the new size, like ["size"](#size).
 
 ## read\_handles
 

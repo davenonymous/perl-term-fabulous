@@ -1,6 +1,27 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::Sixel: a subclass of Image with the same
+          sources and fits, whose picture the terminal draws in its own
+          pixels as sixel graphics over the widget's cells. Its natural
+          size is the cells its pixels cover. Cells painted over it
+          (dialogs, dropdowns, toasts, floating boxes) are cut out of the
+          picture, a ScrollBox shows it only in its visible cells, and it
+          never covers the terminal's last row. It needs Imager and
+          Imager::File::SIXEL (recommended, not required) and a terminal
+          that shows sixel graphics and reports its cell size; otherwise
+          it shows a notice in its place.
+          Term::Fabulous::Terminal::Termbox asks the terminal for sixel
+          support and its cell size when it opens and after a resize. New
+          optional cell target role Term::Fabulous::Render::Target::Sixel,
+          composed by Term::Fabulous::Terminal::Termbox::Cells and
+          Term::Fabulous::Render::Target::Grid;
+          Term::Fabulous::Terminal::Memory takes sixel_cell_size.
+          Term::Fabulous::Termbox gains tf_sixel_query, tf_cells_differ and
+          tf_invalidate_cells, Term::Fabulous::Widget::Canvas the
+          sixel_data hook and Term::Fabulous::Render::Frame painted_over.
+          tools/screenshot emulates a sixel terminal with 10x20 pixel cells;
+          tools/mandelbrot draws the example picture of the Sixel programs
         - Term::Fabulous::Widget::Image: a picture read with Imager from a
           file, bytes, base64 or base64url text or a data URL, drawn in
           half-block pixels, two per cell. Its natural size is the

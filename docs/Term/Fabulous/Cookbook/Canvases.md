@@ -11,7 +11,8 @@ This page shows how to draw freely, without a chart widget: on a
 cell, with the mouse, and on a [Term::Fabulous::Widget::PixelCanvas](../Widget/PixelCanvas.md),
 which has two pixels per cell, from data; and how to show pictures
 with [Term::Fabulous::Widget::Image](../Widget/Image.md), which draws them in the same
-pixels. Canvases, their size and the
+pixels, and with [Term::Fabulous::Widget::Sixel](../Widget/Sixel.md), which has the
+terminal draw them in its own pixels. Canvases, their size and the
 `CanvasResize` event are explained in
 [the canvases chapter of the manual](../Manual/Charts.md#canvases); the mouse events in
 [the mouse section of the events chapter](../Manual/Events.md#mouse). For charts that draw
@@ -23,6 +24,7 @@ The recipes on this page:
 - ["Plot data on a pixel canvas (PixelCanvas)"](#plot-data-on-a-pixel-canvas-pixelcanvas)
 - ["Show a picture file (Image, fit)"](#show-a-picture-file-image-fit)
 - ["Embed a logo in the program (Image, base64)"](#embed-a-logo-in-the-program-image-base64)
+- ["Show a photo in sixel graphics (Sixel)"](#show-a-photo-in-sixel-graphics-sixel)
 
 # Paint with the mouse (Canvas, clicks and drags)
 
@@ -398,6 +400,121 @@ the text next to it.
 - Transparent pixels are not drawn, so the corners around the circle
 show the background of the box; half-transparent ones are mixed with
 it.
+
+# Show a photo in sixel graphics (Sixel)
+
+Goal: show a picture file sharply, in the terminal's own pixels, with
+a help box over it.
+
+This program is shipped as `examples/cookbook/sixel-viewer.pl`. It
+shows the file named as its argument, or the example picture:
+`perl examples/cookbook/sixel-viewer.pl photo.jpg`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use FindBin;
+use Term::Fabulous;
+use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Sixel;
+use Term::Fabulous::Widget::Text;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_CENTER_TOP);
+
+# The picture to show: the first argument, or the example picture.
+my $file = shift // "$FindBin::Bin/../images/mandelbrot.png";
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+my $status = Term::Fabulous::Widget::Text->new( text => 'n, c, s: fit    h: help    q: quit', text_color => [ 150, 160, 180, 255 ] );
+
+my $frame = Term::Fabulous::Widget::Box->new(
+        border_width => 1,
+        border_style => Term::Fabulous::Enum::BorderStyle->Round,
+        border_color => [ 120, 160, 220, 255 ],
+        layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+);
+my $picture = Term::Fabulous::Widget::Sixel->new(
+        file   => $file,
+        fit    => 'contain',
+        layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+);
+$frame->add_child($picture);
+$root->add_child( $status, $frame );
+
+# The help floats over the top of the picture, which leaves those cells
+# out.
+my $help = Term::Fabulous::Widget::Box->new(
+        layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, padding => { left => 1, right => 1 } },
+        background_color => [ 40, 44, 52, 255 ],
+        border_width     => 1,
+        border_color     => [ 229, 192, 123, 255 ],
+        floating         => { attach_to => CLAY_ATTACH_TO_PARENT, attach_points => { element => CLAY_ATTACH_POINT_CENTER_TOP, parent => CLAY_ATTACH_POINT_CENTER_TOP } },
+);
+$help->add_child( map { Term::Fabulous::Widget::Text->new( text => $_ ) } 'n  natural size', 'c  contain', 's  stretch', 'h  this help' );
+
+sub toggle_help () {
+        $help->parent ? $frame->remove_child($help) : $frame->add_child($help);
+        return;
+}
+
+my %fit_by_key = ( n => 'none', c => 'contain', s => 'stretch' );
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+$root->on(
+        KeyPress => sub ($event) {
+                my $key = $event->key_name // return;
+                $ui->loop->stop if $key eq 'q';
+                toggle_help() if $key eq 'h';
+                my $fit = $fit_by_key{$key} or return;
+                $picture->fit($fit);
+                return;
+        }
+);
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-sixel-viewer.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, scaled to fit a rounded frame on the dark screen in sixel graphics, with a help box of the four keys over the top of the picture, which leaves those cells out, and the keys above the frame"></p>
+</div>
+
+- [Term::Fabulous::Widget::Sixel](../Widget/Sixel.md) needs [Imager](https://metacpan.org/pod/Imager), [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL)
+and a terminal that shows sixel graphics and reports the size of its
+cells: xterm started with `-ti vt340`, foot, WezTerm, mlterm, Konsole
+and others. Term::Fabulous asks the terminal when it opens it and again
+after a resize. Without the modules, or in another terminal, the widget
+shows a notice in place of the picture, so the program still runs.
+- Without `fit`, a picture keeps its natural size: as many columns and
+rows as its pixels cover, with the size of a cell the terminal reports.
+`contain` and `stretch` scale it in the widget's pixels, its columns
+and rows times the size of a cell, so it comes out much finer than in
+half blocks. `fit` is an accessor, so the keys change it and the next
+frame sends the picture again.
+- The help is a box floating over the top center of the frame, and so of
+the picture; **h** adds it to the frame and removes it again.
+Everything painted over the picture hides it, cell by cell: the cells
+of the help box are cut out of the picture (its pixels there are
+transparent), so they show the box. Dialogs, dropdown lists and toasts
+work the same way, and in a [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) only
+the visible cells show the picture.
+- The terminal keeps a picture on the screen. Term::Fabulous sends it
+again only when it changes, moves or is resized, or when the cells
+below it are drawn again, for example when the help box opens or
+closes. A picture that disappears gets its cells drawn again, which
+erases it.
+- A picture never covers the last row of the terminal: the terminal would
+scroll the screen up to place its cursor below it. Here the bottom
+padding keeps the frame off that row; a picture that reaches it leaves
+its cells there empty.
 
 # SEE ALSO
 

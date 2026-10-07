@@ -20,7 +20,8 @@ requires 'Time::Local', '1.30';    # timelocal_posix
 requires 'Unicode::GCString';
 requires 'XSLoader';
 
-recommends 'Imager';    # Term::Fabulous::Widget::Image; shows a notice without it
+recommends 'Imager';                # Term::Fabulous::Widget::Image; shows a notice without it
+recommends 'Imager::File::SIXEL';    # Term::Fabulous::Widget::Sixel; shows a notice without it
 
 on test => sub {
 	requires 'Test2::V0';
@@ -34,5 +35,6 @@ on develop => sub {
 	requires 'Perl::Critic';
 	requires 'Perl::Tidy', '20250214';
 	requires 'Pod::Markdown';
-	recommends 'Imager';    # PNG output of tools/screenshot, the example pictures of tools/
+	recommends 'Imager';                 # PNG output of tools/screenshot, the example pictures of tools/
+	recommends 'Imager::File::SIXEL';    # the sixel pictures in the screenshots of tools/screenshot
 };

@@ -6,6 +6,7 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use JSON::PP ();
+use MIME::Base64 qw(encode_base64);
 use Term::Fabulous::Screenshot::Clock;
 
 # The configuration, written by Term::Fabulous::Screenshot::Runner.
@@ -49,6 +50,10 @@ my $input = _open_input( $config->{input_fd} );
 my $region_top;
 _watch_inline_region() if @{ $config->{shell} // [] };
 
+# The sixel pictures of the last frame, at terminal rows.
+my @pictures;
+_watch_pictures();
+
 # The steps start when the program's event loop does, which for a
 # Term::Fabulous program is after the terminal has been opened.
 $loop->watch_time(
@@ -73,6 +78,19 @@ sub _watch_inline_region () {
 	*Term::Fabulous::Terminal::Termbox::Cells::place_region = sub ( $cells, $top, $rows ) {
 		$region_top = $top if defined $top;
 		return $cells->$place_region( $top, $rows );
+	};
+	return;
+}
+
+# Term::Fabulous hands the pictures of every frame to the cell target
+# before presenting it; the terminal shows those of the last one.
+sub _watch_pictures () {
+	my $show_sixels = \&Term::Fabulous::Terminal::Termbox::Cells::show_sixels;
+	no warnings 'redefine';
+	*Term::Fabulous::Terminal::Termbox::Cells::show_sixels = sub ( $cells, @placements ) {
+		my $top = $cells->region_top // 0;
+		@pictures = map { +{ %$_, y => $_->{y} + $top } } @placements;
+		return $cells->$show_sixels(@placements);
 	};
 	return;
 }
@@ -138,7 +156,7 @@ sub _capture_screen () {
 
 	my @screen = map { _capture_row( $_, $columns ) } 0 .. $rows - 1;
 	_show_shell_lines( \@screen, $columns ) if @{ $config->{shell} // [] };
-	my $capture = { columns => $columns, rows => $rows, cells => \@screen };
+	my $capture = { columns => $columns, rows => $rows, cells => \@screen, pictures => [ map { _capture_picture($_) } @pictures ] };
 
 	open my $file, '>', $config->{capture_file} or die "Term::Fabulous::Screenshot::Harness: cannot write $config->{capture_file}: $!\n";
 	print {$file} JSON::PP->new->utf8->canonical->encode($capture);
@@ -146,6 +164,16 @@ sub _capture_screen () {
 
 	$loop->stop;
 	return;
+}
+
+# A sixel picture as the cells it covers and the picture as PNG, in
+# base64. Only programs that show pictures need Imager.
+sub _capture_picture ($placement) {
+	require Imager;
+	require Imager::File::SIXEL;
+	my $image = Imager->new( data => $placement->{data}, type => 'sixel' ) or die "Term::Fabulous::Screenshot::Harness: cannot read a sixel picture: " . Imager->errstr . "\n";
+	$image->write( data => \my $png, type => 'png' ) or die "Term::Fabulous::Screenshot::Harness: cannot write a sixel picture as PNG: " . $image->errstr . "\n";
+	return { ( map { $_ => $placement->{$_} } qw(x y columns rows) ), png => encode_base64( $png, '' ) };
 }
 
 # The shell's lines go on the rows directly above the inline region, as
@@ -235,6 +263,11 @@ gives the program 0.1 virtual seconds before the next step.
 
 =back
 
+The harness records the sixel pictures of every frame (by wrapping
+C<Term::Fabulous::Terminal::Termbox::Cells::show_sixels>): they are not
+cells, so termbox2's buffer does not hold them. Those of the last frame
+are added to the capture, on the terminal rows they cover.
+
 When the scenario has C<shell> lines, the harness also records where
 the program places its inline region (by wrapping
 C<Term::Fabulous::Terminal::Termbox::Cells::place_region>): termbox2's
@@ -278,9 +311,13 @@ input to.
 =item C<capture_file>
 
 Where to write the captured screen (and, next to it with C<.started>
-appended, an empty file once the event loop runs): C<{ columns, rows, cells }>, with
-one array per row of C<[ glyph, columns, fg, bg ]> arrays, the
-attributes as termbox2 stores them.
+appended, an empty file once the event loop runs):
+C<{ columns, rows, cells, pictures }>, with one array per row of
+C<[ glyph, columns, fg, bg ]> arrays, the attributes as termbox2 stores
+them, and the sixel pictures of the last frame as
+C<{ x, y, columns, rows, png }> objects: the first cell (C<y> a
+terminal row) and the cells each covers, and the picture as PNG in
+base64.
 
 =back
 

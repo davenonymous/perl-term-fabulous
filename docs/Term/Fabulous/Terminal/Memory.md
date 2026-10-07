@@ -63,12 +63,18 @@ open session: ["mouse\_enabled"](#mouse_enabled), ["inline\_rows"](#inline_rows)
 ```perl
 my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24 );
 my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24, kitty_keyboard => 1 );
+my $terminal = Term::Fabulous::Terminal::Memory->new( width => 80, height => 24, sixel_cell_size => [ 10, 20 ] );
 ```
 
 `width` and `height` are the size of the screen, whole numbers of at
 least 1; required. `kitty_keyboard` says whether the terminal speaks
 the kitty keyboard protocol, so that an application that asks for it
-gets it; default 0. Unknown parameters die.
+gets it; default 0. `sixel_cell_size`, `[width, height]` in pixels,
+makes it a terminal that shows sixel graphics with cells of that size:
+the pictures of [Term::Fabulous::Widget::Sixel](../Widget/Sixel.md) are recorded, and
+["sixels" in Term::Fabulous::Render::Target::Grid](../Render/Target/Grid.md#sixels) on ["cell\_target"](#cell_target)
+returns those of the last frame. Without it, the default, the terminal
+shows no sixel graphics. Unknown parameters die.
 
 # INPUT
 

@@ -252,6 +252,20 @@ int
 tf_flush()
 
 int
+tf_cells_differ(int x, int y, int width, int height, SV *differ_ref)
+	PREINIT:
+		int differ = 0;
+	CODE:
+		scalar_ref_or_croak(aTHX_ differ_ref, "tf_cells_differ", "answer");
+		RETVAL = tf_cells_differ(x, y, width, height, &differ);
+		if (RETVAL == TB_OK) sv_setiv(SvRV(differ_ref), differ);
+	OUTPUT:
+		RETVAL
+
+int
+tf_invalidate_cells(int x, int y, int width, int height)
+
+int
 tb_send(SV *bytes)
 	PREINIT:
 		STRLEN length;
@@ -316,6 +330,25 @@ tf_kitty_keyboard_query(int timeout_ms, SV *supported_ref)
 		scalar_ref_or_croak(aTHX_ supported_ref, "tf_kitty_keyboard_query", "answer");
 		RETVAL = tf_kitty_keyboard_query(timeout_ms, &supported);
 		if (RETVAL == TB_OK) sv_setiv(SvRV(supported_ref), supported);
+	OUTPUT:
+		RETVAL
+
+int
+tf_sixel_query(int timeout_ms, SV *supported_ref, SV *cell_width_ref, SV *cell_height_ref)
+	PREINIT:
+		int supported   = 0;
+		int cell_width  = 0;
+		int cell_height = 0;
+	CODE:
+		scalar_ref_or_croak(aTHX_ supported_ref, "tf_sixel_query", "answer");
+		scalar_ref_or_croak(aTHX_ cell_width_ref, "tf_sixel_query", "cell width");
+		scalar_ref_or_croak(aTHX_ cell_height_ref, "tf_sixel_query", "cell height");
+		RETVAL = tf_sixel_query(timeout_ms, &supported, &cell_width, &cell_height);
+		if (RETVAL == TB_OK) {
+			sv_setiv(SvRV(supported_ref), supported);
+			sv_setiv(SvRV(cell_width_ref), cell_width);
+			sv_setiv(SvRV(cell_height_ref), cell_height);
+		}
 	OUTPUT:
 		RETVAL
 

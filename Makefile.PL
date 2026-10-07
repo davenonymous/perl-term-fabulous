@@ -110,13 +110,15 @@ WriteMakefile(
 		prereqs => {
 
 			# Term::Fabulous::Widget::Image draws pictures with Imager
-			# and shows a notice in their place without it.
+			# and shows a notice in their place without it;
+			# Term::Fabulous::Widget::Sixel shows pictures in sixel
+			# graphics with Imager::File::SIXEL and a notice without it.
 			runtime => {
-				recommends => { 'Imager' => '0' },
+				recommends => { 'Imager' => '0', 'Imager::File::SIXEL' => '0' },
 			},
 			develop => {
 				requires   => { 'IO::Pty' => '0', 'JSON::PP' => '0', 'Perl::Critic' => '0', 'Perl::Tidy' => '20250214', 'Pod::Markdown' => '0' },
-				recommends => { 'Imager'  => '0' },
+				recommends => { 'Imager'  => '0', 'Imager::File::SIXEL' => '0' },
 			},
 		},
 

@@ -22,8 +22,9 @@ $EXPORT_TAGS{api} = [
 		tb_width tb_height tb_set_input_mode tb_set_output_mode
 		tb_clear tb_set_clear_attrs tb_present tb_invalidate tb_set_cursor tb_hide_cursor
 		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send tf_reset_attrs tf_flush
+		tf_cells_differ tf_invalidate_cells
 		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_cursor_position tf_kitty_keyboard_query
-		tf_readable_bytes
+		tf_sixel_query tf_readable_bytes
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -330,6 +331,27 @@ otherwise skip when it believes the terminal still has them.
 A Term::Fabulous addition. Writes what L</tb_send> and the drawing
 functions queued, without waiting for the next C<tb_present>.
 
+=head3 tf_cells_differ
+
+	my $rc = tf_cells_differ( $x, $y, $width, $height, \my $differ );
+
+A Term::Fabulous addition. Sets C<$differ> to 1 when the next
+C<tb_present> would draw a cell of the rectangle, because the cell was
+set to something other than what the terminal shows, else to 0. The
+part of the rectangle outside the screen is ignored. Returns C<TB_OK>
+or an error; C<$differ> is untouched unless the result is C<TB_OK>.
+Dies unless the last argument is a scalar reference.
+
+=head3 tf_invalidate_cells
+
+	my $rc = tf_invalidate_cells( $x, $y, $width, $height );
+
+A Term::Fabulous addition. Makes the next C<tb_present> draw every
+cell of the rectangle, like C<tb_invalidate> does for the whole screen:
+for cells the terminal shows differently from what termbox2 believes,
+such as the cells a sixel image covered. The part of the rectangle
+outside the screen is ignored.
+
 =head2 Events
 
 =head3 tb_peek_event
@@ -454,6 +476,25 @@ C<TB_ERR_NO_EVENT> when no answer arrived in time (the terminal is
 taken not to speak the protocol), or another error; C<$supported> is
 untouched unless the result is C<TB_OK>. Dies unless the argument is
 a scalar reference.
+
+=head3 tf_sixel_query
+
+	my $rc = tf_sixel_query( $timeout_ms, \my $supported, \my $cell_width, \my $cell_height );
+
+A Term::Fabulous addition. Asks the terminal whether it shows sixel
+graphics and how many pixels a cell has: it sends the query for the
+size of a cell (C<ESC [ 16 t>) followed by the one for the primary
+device attributes (C<ESC [ c>), which every terminal answers, and
+waits up to C<$timeout_ms> milliseconds for that answer. C<$supported>
+is then 1 when the device attributes list C<4> (sixel graphics), else
+0. C<$cell_width> and C<$cell_height> are the pixels of a cell the
+terminal reported, else the ones the window size of the terminal
+device gives (C<ioctl TIOCGWINSZ>), else both 0. Both answers are
+taken out of the input; keys that arrive meanwhile stay queued for
+L</tb_peek_event>, as with L</tf_cursor_position>. Returns C<TB_OK>,
+C<TB_ERR_NO_EVENT> when no device attributes arrived in time, or
+another error; the references are untouched unless the result is
+C<TB_OK>. Dies unless the last three arguments are scalar references.
 
 =head3 tf_readable_bytes
 

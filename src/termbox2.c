@@ -613,6 +613,163 @@ int tf_kitty_keyboard_query(int timeout_ms, int *supported) {
 	return attributes_arrived || *supported ? TB_OK : TB_ERR_NO_EVENT;
 }
 
+/*
+ * Whether the parameters of a primary device attributes answer, the
+ * ESC [ ? 62;4;22 c at `at` with `length` bytes, list the number 4:
+ * the terminal shows sixel graphics.
+ */
+static int tf_lists_sixel(size_t at, size_t length) {
+	const char *buf = global.in.buf;
+	size_t i;
+	int number = 0, digits = 0;
+
+	for (i = at + 3; i < at + length; i++) {
+		if (buf[i] >= '0' && buf[i] <= '9') {
+			if (number <= TF_CURSOR_NUMBER_LIMIT) number = number * 10 + (buf[i] - '0');
+			digits++;
+			continue;
+		}
+		if (digits > 0 && number == 4) return 1;
+		number = digits = 0;
+	}
+	return 0;
+}
+
+/*
+ * Finds a cell size report, ESC [ 6 ; height ; width t, in the input
+ * buffer from offset `from` on: TB_OK with its offset, length and
+ * numbers, or TB_ERR while there is no complete one.
+ */
+static int tf_find_cell_size_report(size_t from, size_t *at, size_t *length, int *height, int *width) {
+	const char *buf = global.in.buf;
+	size_t len      = global.in.len;
+	size_t start, i;
+
+	for (start = from; start + 3 < len; start++) {
+		int numbers[2] = {0, 0};
+		int count      = 0;
+		int digits     = 0;
+
+		if (buf[start] != '\x1b' || buf[start + 1] != '[' || buf[start + 2] != '6' || buf[start + 3] != ';') continue;
+		for (i = start + 4; i < len; i++) {
+			char c = buf[i];
+			if (c >= '0' && c <= '9') {
+				numbers[count] = numbers[count] * 10 + (c - '0');
+				if (numbers[count] > TF_CURSOR_NUMBER_LIMIT) break;
+				digits++;
+			} else if (c == ';' && count == 0 && digits > 0) {
+				count  = 1;
+				digits = 0;
+			} else if (c == 't' && count == 1 && digits > 0) {
+				*at     = start;
+				*length = i + 1 - start;
+				*height = numbers[0];
+				*width  = numbers[1];
+				return TB_OK;
+			} else {
+				break;
+			}
+		}
+	}
+	return TB_ERR;
+}
+
+/* The cell size the tty's window size gives, 0 x 0 when it has no pixels. */
+static void tf_window_cell_size(int *cell_width, int *cell_height) {
+	struct winsize size;
+
+	*cell_width = *cell_height = 0;
+	memset(&size, 0, sizeof(size));
+	if (global.ttyfd < 0 || ioctl(global.ttyfd, TIOCGWINSZ, &size) != 0) return;
+	if (size.ws_col == 0 || size.ws_row == 0) return;
+	*cell_width  = size.ws_xpixel / size.ws_col;
+	*cell_height = size.ws_ypixel / size.ws_row;
+	if (*cell_width == 0 || *cell_height == 0) *cell_width = *cell_height = 0;
+}
+
+int tf_sixel_query(int timeout_ms, int *supported, int *cell_width, int *cell_height) {
+	struct timeval deadline;
+	size_t from, at, length;
+	int rv, attributes_arrived, reported_height, reported_width;
+
+	*supported   = 0;
+	*cell_width  = 0;
+	*cell_height = 0;
+	if_not_init_return();
+	from = global.in.len; /* input from before the question cannot hold the answer */
+	if_err_return(rv, tf_ask_terminal("\x1b[16t\x1b[c", timeout_ms, &deadline));
+
+	for (;;) {
+		attributes_arrived = tf_find_private_answer(from, 'c', &at, &length) == TB_OK;
+		if (attributes_arrived) break;
+		rv = tf_read_input_before(&deadline);
+		if (rv == TB_ERR_NO_EVENT) break;
+		if (rv != TB_OK) return rv;
+	}
+	if (attributes_arrived) {
+		*supported = tf_lists_sixel(at, length);
+		tf_drop_input(at, length);
+	}
+
+	if (tf_find_cell_size_report(from, &at, &length, &reported_height, &reported_width) == TB_OK) {
+		tf_drop_input(at, length);
+		if (reported_width > 0 && reported_height > 0) {
+			*cell_width  = reported_width;
+			*cell_height = reported_height;
+		}
+	}
+	if (*cell_width == 0) tf_window_cell_size(cell_width, cell_height);
+	return attributes_arrived ? TB_OK : TB_ERR_NO_EVENT;
+}
+
+int tf_cells_differ(int x, int y, int width, int height, int *differ) {
+	struct tb_cell *back, *front;
+	int rv, column, row;
+	int right  = x + width;
+	int bottom = y + height;
+
+	*differ = 0;
+	if_not_init_return();
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
+	if (right > global.front.width) right = global.front.width;
+	if (bottom > global.front.height) bottom = global.front.height;
+
+	for (row = y; row < bottom; row++) {
+		for (column = x; column < right; column++) {
+			if_err_return(rv, cellbuf_get(&global.back, column, row, &back));
+			if_err_return(rv, cellbuf_get(&global.front, column, row, &front));
+			if (cell_cmp(back, front) != 0) {
+				*differ = 1;
+				return TB_OK;
+			}
+		}
+	}
+	return TB_OK;
+}
+
+int tf_invalidate_cells(int x, int y, int width, int height) {
+	struct tb_cell *front;
+	uint32_t invalid = (uint32_t)-1; /* what tb_present marks the hidden cells of a wide glyph with */
+	int rv, column, row;
+	int right  = x + width;
+	int bottom = y + height;
+
+	if_not_init_return();
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
+	if (right > global.front.width) right = global.front.width;
+	if (bottom > global.front.height) bottom = global.front.height;
+
+	for (row = y; row < bottom; row++) {
+		for (column = x; column < right; column++) {
+			if_err_return(rv, cellbuf_get(&global.front, column, row, &front));
+			if_err_return(rv, cell_set(front, &invalid, 1, (uintattr_t)-1, (uintattr_t)-1));
+		}
+	}
+	return TB_OK;
+}
+
 int tf_reset_attrs(void) {
 	if_not_init_return();
 	global.last_fg = ~global.fg;

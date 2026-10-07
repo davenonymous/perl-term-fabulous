@@ -36,6 +36,7 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 	field @shapes      :reader;    # { type => 'rect', x, y, width, height, color }, { type => 'polyline', points, width, color } or { type => 'circle', cx, cy, r, color }
 	field @texts       :reader;    # { x, y, width, glyphs => [ [ x, glyph ] ], text, color, bold, italic, anchor }
 	field @lines       :reader;    # decorations (underline, strikeout, overline): { x, y, width, height, color }
+	field @pictures    :reader;    # sixel pictures over all of these: { x, y, width, height, png }
 
 	ADJUST {
 		croak "Term::Fabulous::Screenshot::Scene: the scale must be a positive whole number, got '$scale'" unless $scale =~ /\A[1-9][0-9]*\z/;
@@ -53,6 +54,7 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 		@backgrounds = _merge_rects(@backgrounds);
 		@shapes      = ( _merge_rects( grep { $_->{type} eq 'rect' } @shapes ), grep { $_->{type} ne 'rect' } @shapes );
 		@lines       = _merge_rects(@lines);
+		@pictures    = map { $self->_picture($_) } $screen->pictures;
 	}
 
 	# The title, shortened with '...' when it is wider than the room the
@@ -197,6 +199,16 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 		return map { { x => $left, y => $_, width => $width, height => $thickness, color => $cell->{fg} } } @offsets;
 	}
 
+	method _picture ($picture) {
+		return {
+			x      => $self->_cell_x( $picture->{x} ),
+			y      => $self->_cell_y( $picture->{y} ),
+			width  => $picture->{columns} * $self->cell_width,
+			height => $picture->{rows} * $self->cell_height,
+			png    => $picture->{png},
+		};
+	}
+
 	# Joins rectangles of one color that continue each other, first along
 	# rows, then down columns; the picture stays the same with fewer shapes.
 	sub _merge_rects (@rects) {
@@ -296,7 +308,12 @@ glyph on its own, centered in its cells;
 
 =item *
 
-underline, double underline, strikeout and overline as rectangles.
+underline, double underline, strikeout and overline as rectangles;
+
+=item *
+
+sixel pictures over everything else, each stretched to the cells it
+covers.
 
 =back
 
@@ -340,7 +357,7 @@ on the right, empty when not even a few characters fit.
 The theme's layout (see L<Term::Fabulous::Screenshot::Theme/layout>),
 scaled.
 
-=head2 backgrounds, shapes, texts, lines
+=head2 backgrounds, shapes, texts, lines, pictures
 
 The parts of the picture, back to front. Colors are C<0xRRGGBB>.
 Backgrounds and lines are C<{ x, y, width, height, color }>. Shapes are
@@ -350,7 +367,10 @@ r, color }>. Texts are C<{ x, y, width, text,
 glyphs, color, bold, italic, anchor }>: C<y> is the baseline, C<width>
 the width of the cells the text covers, C<glyphs> the left edge of each
 character's cell with the character, and C<anchor> C<start> for a run
-or C<middle> for a single glyph centered in C<width>.
+or C<middle> for a single glyph centered in C<width>. Pictures are
+C<{ x, y, width, height, png }>: the box of the cells a sixel picture
+covers and the picture as PNG data, in the order the terminal drew
+them.
 
 =head2 cell_width, cell_height, font_size
 

@@ -24,6 +24,18 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 	use constant READ_SIZE       => 65536;
 	use constant POLL_SECONDS    => 0.05;
 
+	# The terminal shows sixel graphics in cells of this many pixels.
+	use constant CELL_WIDTH_PIXELS  => 10;
+	use constant CELL_HEIGHT_PIXELS => 20;
+
+	# The answers that never change, by the end of their query: the
+	# primary device attributes (ESC [ c) of a VT220 that shows sixel
+	# (attribute 4) and the cell size in pixels (ESC [ 16 t).
+	use constant FIXED_ANSWERS => {
+		'c'   => "\e[?62;4;22c",
+		'16t' => sprintf( "\e[6;%d;%dt", CELL_HEIGHT_PIXELS, CELL_WIDTH_PIXELS ),
+	};
+
 	# The library directories the program is run with; the harness must be
 	# found in one of them. Relative directories are made absolute, since
 	# the program runs in a directory of its own.
@@ -49,7 +61,8 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		my $work_dir     = File::Temp->newdir( 'tf-screenshot-XXXXXX', TMPDIR => 1 );
 		my $capture_file = "$work_dir/.capture.json";
 		my $pty          = IO::Pty->new;
-		$pty->slave->set_winsize( $job{rows}, $job{columns} ) or croak "Term::Fabulous::Screenshot::Runner: cannot set the terminal size: $!";
+		$pty->slave->set_winsize( $job{rows}, $job{columns}, $job{columns} * CELL_WIDTH_PIXELS, $job{rows} * CELL_HEIGHT_PIXELS )
+			or croak "Term::Fabulous::Screenshot::Runner: cannot set the terminal size: $!";
 		pipe( my $error_reader, my $error_writer ) or croak "Term::Fabulous::Screenshot::Runner: pipe failed: $!";
 
 		my $shell  = $job{shell} // [];
@@ -133,8 +146,8 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 
 	# Reads the terminal's output and the program's STDERR until the
 	# program ends, so the program never blocks writing to either, and
-	# answers the cursor position queries in the output. $cursor is the
-	# [ row, column ] the cursor starts at.
+	# answers the queries in the output. $cursor is the [ row, column ]
+	# the cursor starts at.
 	method _wait_for ( $pid, $pty, $error_reader, $name, $cursor ) {
 		my %buffer_of = ( $pty => '', $error_reader => '' );
 		my $select    = IO::Select->new( $pty, $error_reader );
@@ -144,7 +157,7 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 
 		while (1) {
 			_read_ready( $select, \%buffer_of, POLL_SECONDS );
-			_answer_cursor_queries( $pty, \$buffer_of{$pty}, \$scanned, $cursor );
+			_answer_queries( $pty, \$buffer_of{$pty}, \$scanned, $cursor );
 			my $reaped = waitpid( $pid, WNOHANG );
 			if ( $reaped == $pid ) {
 				$status = $?;
@@ -161,21 +174,23 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 		return ( $status, $buffer_of{$pty}, $buffer_of{$error_reader} );
 	}
 
-	# Answers each cursor position query (ESC [ 6 n, which inline mode
-	# sends) with where the cursor is, as a terminal does. The cursor is
+	# Answers the queries in the output as a terminal that shows sixel
+	# does: the cursor position query (ESC [ 6 n, which inline mode sends)
+	# with where the cursor is, the others with FIXED_ANSWERS. The cursor is
 	# followed through absolute moves (ESC [ row ; column H) only, which is
 	# how termbox2 and inline mode place it; a sequence the output has not
 	# completed yet is found on a later call.
-	sub _answer_cursor_queries ( $pty, $output, $scanned, $cursor ) {
+	sub _answer_queries ( $pty, $output, $scanned, $cursor ) {
 		pos($$output) = $$scanned;
-		while ( $$output =~ /\e\[(?:(6n)|([0-9]*)(?:;([0-9]*))?H)/g ) {
+		while ( $$output =~ /\e\[(?:([0-9]*)(?:;([0-9]*))?H|(6n|16t|c))/g ) {
 			$$scanned = pos $$output;
-			if ( !defined $1 ) {
-				@$cursor = map { ( $_ || 1 ) - 1 } $2, $3;
+			my ( $row, $column, $query ) = ( $1, $2, $3 );
+			if ( !defined $query ) {
+				@$cursor = map { ( $_ || 1 ) - 1 } $row, $column;
 				next;
 			}
-			my $answer = sprintf "\e[%d;%dR", $cursor->[0] + 1, $cursor->[1] + 1;
-			defined syswrite( $pty, $answer ) or croak "Term::Fabulous::Screenshot::Runner: cannot answer the cursor position query: $!";
+			my $answer = $query eq '6n' ? sprintf( "\e[%d;%dR", $cursor->[0] + 1, $cursor->[1] + 1 ) : FIXED_ANSWERS->{$query};
+			defined syswrite( $pty, $answer ) or croak "Term::Fabulous::Screenshot::Runner: cannot answer the query ESC [ $query: $!";
 		}
 		return;
 	}
@@ -262,12 +277,31 @@ would show it.
 =back
 
 The runner also plays the part of the terminal where a program asks it
-something: it answers the cursor position query C<ESC [ 6 n> that
-L<Term::Fabulous/INLINE MODE> sends, so inline programs can be captured.
-The cursor starts on the row below the C<shell> lines (see L</capture>)
-and follows the absolute cursor moves (C<ESC [ row ; column H>) in the
-program's output. Other questions (such as the kitty keyboard protocol
-query) get no answer, as from a terminal that does not know them.
+something, as a terminal that shows sixel graphics in cells of 10 x 20
+pixels:
+
+=over
+
+=item *
+
+it answers the cursor position query C<ESC [ 6 n> that
+L<Term::Fabulous/INLINE MODE> sends, so inline programs can be
+captured. The cursor starts on the row below the C<shell> lines (see
+L</capture>) and follows the absolute cursor moves
+(C<ESC [ row ; column H>) in the program's output;
+
+=item *
+
+it answers the primary device attributes query C<ESC [ c> with
+C<ESC [ ? 62 ; 4 ; 22 c> (attribute 4 is sixel) and the cell size query
+C<ESC [ 16 t> with C<ESC [ 6 ; 20 ; 10 t>, and the terminal's window
+size has the pixel size of its cells too, so
+L<Term::Fabulous::Widget::Sixel> shows its pictures.
+
+=back
+
+Other questions (such as the kitty keyboard protocol query) get no
+answer, as from a terminal that does not know them.
 
 The capture dies when the program writes anything to STDERR (warnings
 included), ends with a non-zero exit status, ends before the screenshot

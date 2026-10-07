@@ -10,6 +10,7 @@ changed cells when possible
 my @kept_rects = $ui->plan_canvases($frame);         # before begin_frame
 $ui->cell_target->begin_frame(@kept_rects);
 $ui->render_custom( $command, $canvas, $buffer );     # for each canvas command
+$ui->cell_target->show_sixels( $ui->sixel_placements( $frame, $ui->cell_target ) );
 $ui->cell_target->end_frame;
 $ui->finish_canvases;                                 # after a complete frame
 ```
@@ -94,6 +95,23 @@ rectangle, painted before the cells, is blended. A wide glyph that
 would cross the visible right edge is painted as spaces. Every painted
 cell records its background in `$buffer`, so text drawn over the canvas
 later in the frame keeps it.
+
+## sixel\_placements
+
+```perl
+my @placements = $ui->sixel_placements( $frame, $target );
+```
+
+Called after the frame's commands are painted, for a target that
+composes [Term::Fabulous::Render::Target::Sixel](Target/Sixel.md): the sixel pictures
+of the frame's canvases, in paint order, as placements for the
+target's `show_sixels`. Empty when the target's `sixel_cell_size` is.
+For every visible canvas it asks
+["sixel\_data" in Term::Fabulous::Widget::Canvas](../Widget/Canvas.md#sixel_data) for the picture of the
+cells the canvas shows inside the target's `sixel_area`, with the
+cells a later command paints over them
+(["painted\_over" in Term::Fabulous::Render::Frame](Frame.md#painted_over)) as covered. A canvas
+without a picture (`undef`) gets no placement.
 
 ## finish\_canvases
 

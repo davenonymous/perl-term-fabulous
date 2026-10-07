@@ -208,6 +208,7 @@ The pages, in reading order, each with its recipes:
     - [Plot data on a pixel canvas (PixelCanvas)](Cookbook/Canvases.md#plot-data-on-a-pixel-canvas-pixelcanvas)
     - [Show a picture file (Image, fit)](Cookbook/Canvases.md#show-a-picture-file-image-fit)
     - [Embed a logo in the program (Image, base64)](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64)
+    - [Show a photo in sixel graphics (Sixel)](Cookbook/Canvases.md#show-a-photo-in-sixel-graphics-sixel)
 
 - [Term::Fabulous::Cookbook::Output](Cookbook/Output.md)
 

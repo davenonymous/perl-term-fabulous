@@ -161,7 +161,9 @@ reading the events of a readable handle.
 
 The object L<Term::Fabulous::Render> paints into: a cell target, see
 L<Term::Fabulous::Render/CELL TARGET>. It is the same object for the
-lifetime of the terminal.
+lifetime of the terminal. A terminal that shows sixel graphics gives it
+the role L<Term::Fabulous::Render::Target::Sixel> and keeps its cell
+size up to date while the session is open.
 
 =head1 SEE ALSO
 

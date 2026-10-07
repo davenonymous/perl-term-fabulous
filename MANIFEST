@@ -50,7 +50,8 @@ examples/cookbook/picture-viewer.pl
 examples/cookbook/report-to-file.pl      
 examples/cookbook/resize-aware-layout.pl 
 examples/cookbook/scrolling-log.pl       
-examples/cookbook/show-output.pl         
+examples/cookbook/show-output.pl
+examples/cookbook/sixel-viewer.pl
 examples/cookbook/states-and-classes.pl  
 examples/cookbook/tab-order.pl           
 examples/cookbook/table-basics.pl
@@ -77,6 +78,7 @@ examples/custom-widget.pl
 examples/event-monitor.pl
 examples/flow.pl
 examples/form.pl
+examples/images/mandelbrot.png
 examples/images/rainbow_circle.png
 examples/images/translucent_circles.png
 examples/kdl-form.pl
@@ -186,6 +188,7 @@ lib/Term/Fabulous/Render/Geometry.pm
 lib/Term/Fabulous/Render/Rectangle.pm
 lib/Term/Fabulous/Render/Target/Grid.pm
 lib/Term/Fabulous/Render/Target/Mask.pm
+lib/Term/Fabulous/Render/Target/Sixel.pm
 lib/Term/Fabulous/Render/Text.pm
 lib/Term/Fabulous/Role/CanParseLayout.pm
 lib/Term/Fabulous/Role/HasBorderStyle.pm
@@ -247,6 +250,7 @@ lib/Term/Fabulous/Widget/ScatterPlot.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Scrollbar.pm
 lib/Term/Fabulous/Widget/SegmentedControl.pm
+lib/Term/Fabulous/Widget/Sixel.pm
 lib/Term/Fabulous/Widget/Slider.pm
 lib/Term/Fabulous/Widget/Sparkline.pm
 lib/Term/Fabulous/Widget/Spinner.pm
@@ -352,6 +356,8 @@ t/widget-revision.t
 t/widget-rich-text.t
 t/widget-scroll-box.t
 t/widget-segmented-control.t
+t/widget-sixel.t
+t/widget-sixel-without-module.t
 t/widget-slider.t
 t/widget-sparkline.t
 t/widget-spinner.t
@@ -392,6 +398,7 @@ examples/widgets/radio.pl
 examples/widgets/rich-text.pl
 examples/widgets/scatter-plot.pl
 examples/widgets/segmented-control.pl
+examples/widgets/sixel.pl
 examples/widgets/slider.pl               
 examples/widgets/sparkline.pl
 examples/widgets/spinner.pl
@@ -445,7 +452,8 @@ screenshots/cookbook-report-to-file.svg
 screenshots/cookbook-resize-aware-layout-narrow.svg
 screenshots/cookbook-resize-aware-layout.svg 
 screenshots/cookbook-scrolling-log.svg   
-screenshots/cookbook-show-output.svg     
+screenshots/cookbook-show-output.svg
+screenshots/cookbook-sixel-viewer.svg
 screenshots/cookbook-states-and-classes.svg
 screenshots/cookbook-tab-order.svg
 screenshots/cookbook-table-basics.svg
@@ -528,6 +536,7 @@ screenshots/widget-radar-chart.svg
 screenshots/widget-radio.svg             
 screenshots/widget-scatter-plot.svg
 screenshots/widget-segmented-control.svg
+screenshots/widget-sixel.svg
 screenshots/widget-slider.svg            
 screenshots/widget-sparkline.svg
 screenshots/widget-spinner.svg
@@ -551,6 +560,7 @@ tools/lib/Term/Fabulous/Screenshot/Scene.pm
 tools/lib/Term/Fabulous/Screenshot/Screen.pm 
 tools/lib/Term/Fabulous/Screenshot/Theme.pm 
 tools/lib/Term/Fabulous/Screenshot/VirtualLoop.pm 
+tools/mandelbrot
 tools/pod2markdown
 tools/rainbow-circle
 tools/README.md                          

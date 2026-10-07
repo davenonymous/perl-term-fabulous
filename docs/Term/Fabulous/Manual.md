@@ -271,6 +271,10 @@ see ["MOUSE" in Term::Fabulous::Manual::Events](Manual/Events.md#mouse) for what
 with the image libraries (libpng, libjpeg, ...) of the formats you
 want to show. Installing Term::Fabulous does not require it; without
 it, an image widget shows a notice in its place.
+- Optional: [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL) with [Imager](https://metacpan.org/pod/Imager), for pictures in sixel
+graphics in [Term::Fabulous::Widget::Sixel](Widget/Sixel.md), and a terminal that shows
+sixel graphics and reports the size of its cells. Without them, a sixel
+widget shows a notice in its place.
 
 # YOUR FIRST PROGRAM
 
@@ -742,6 +746,11 @@ program, and the class pages with the reference.
     [Term::Fabulous::Widget::Image](Widget/Image.md),
     ["Show a picture file (Image, fit)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#show-a-picture-file-image-fit),
     ["Embed a logo in the program (Image, base64)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64).
+
+- Show a picture in the terminal's own pixels (sixel graphics)
+
+    [Term::Fabulous::Widget::Sixel](Widget/Sixel.md),
+    ["Show a photo in sixel graphics (Sixel)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#show-a-photo-in-sixel-graphics-sixel).
 
 - Charts that draw themselves from data
 

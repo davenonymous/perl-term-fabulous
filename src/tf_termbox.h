@@ -170,6 +170,37 @@ int tf_cursor_position(int timeout_ms, int *x, int *y);
 int tf_kitty_keyboard_query(int timeout_ms, int *supported);
 
 /*
+ * Asks whether the terminal shows sixel graphics and how many pixels a
+ * cell has: the query for the size of a cell (ESC [ 16 t) followed by
+ * the one for the primary device attributes (ESC [ c), which every
+ * terminal answers and which lists 4 for sixel. Waits up to timeout_ms
+ * milliseconds for that answer and sets *supported to 1 when it lists
+ * 4, else to 0. The cell size is the one the terminal reported, else
+ * the one the tty's window size gives (TIOCGWINSZ), else 0 x 0. Input
+ * that arrives meanwhile stays queued for tb_peek_event. Returns
+ * TB_ERR_NO_EVENT when no device attributes arrived in time, else a
+ * termbox2 status code.
+ */
+int tf_sixel_query(int timeout_ms, int *supported, int *cell_width, int *cell_height);
+
+/*
+ * Sets *differ to 1 when tb_present() would draw a cell of the
+ * rectangle, because the cell differs between the back and the front
+ * buffer, else to 0. The part of the rectangle outside the screen is
+ * ignored. Returns a termbox2 status code.
+ */
+int tf_cells_differ(int x, int y, int width, int height, int *differ);
+
+/*
+ * Makes the next tb_present() draw every cell of the rectangle, like
+ * tb_invalidate() does for the whole screen: for cells whose content
+ * the terminal shows differently from what termbox2 believes, such as
+ * the cells a sixel image covered. The part of the rectangle outside
+ * the screen is ignored. Returns a termbox2 status code.
+ */
+int tf_invalidate_cells(int x, int y, int width, int height);
+
+/*
  * Queues the reset of all colors and styles (SGR 0), and makes the next
  * cell tb_present() draws set its colors again: termbox2 otherwise
  * skips colors it believes the terminal still has.

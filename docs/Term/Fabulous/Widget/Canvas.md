@@ -405,6 +405,39 @@ Calls ["refresh"](#refresh) as the renderer does
 (["plan\_canvases" in Term::Fabulous::Render::Canvas](../Render/Canvas.md#plan_canvases)); you do not call it
 yourself.
 
+## sixel\_data
+
+```perl
+method sixel_data :override (%frame) { ... }
+```
+
+A hook for subclasses that show a sixel picture over their cells, as
+[Term::Fabulous::Widget::Sixel](Sixel.md) does. On a cell target that shows
+sixel ([Term::Fabulous::Render::Target::Sixel](../Render/Target/Sixel.md)), the renderer calls it
+for every visible canvas of a frame, after the frame's cells are
+painted (["sixel\_placements" in Term::Fabulous::Render::Canvas](../Render/Canvas.md#sixel_placements)), with:
+
+- `shown`
+
+    The `[x0, y0, x1, y1]` cells of the content box the picture covers,
+    counted from the content box's top left cell: the visible ones the
+    target can show.
+
+- `covered`
+
+    The `[x0, y0, x1, y1]` rectangles among them that the frame paints
+    over, in the same coordinates; they may overlap.
+
+- `cell_size`
+
+    `[width, height]`, the pixels of a cell.
+
+Returns the picture of the `shown` cells as SIXEL data,
+`(x1 - x0) * width` pixels wide and `(y1 - y0) * height` pixels
+high, transparent in the `covered` cells; or `undef` for none, which a plain canvas returns.
+The renderer calls it every frame, so a subclass keeps the data of the
+last call while nothing changed.
+
 ## take\_changed\_spans
 
 ```perl

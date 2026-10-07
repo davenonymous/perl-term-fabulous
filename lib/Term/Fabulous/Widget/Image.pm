@@ -151,6 +151,9 @@ class Term::Fabulous::Widget::Image
 
 	method notice_color (@new) { return @new ? $self->set_look( notice_color => $new[0] ) : $self->look_value('notice_color') }
 
+	# The decoded picture as 8-bit RGBA, undef without one, for subclasses.
+	method _picture () { return $picture }
+
 	method image_width ()  { return defined $picture ? $picture->getwidth  : undef }
 	method image_height () { return defined $picture ? $picture->getheight : undef }
 
@@ -162,8 +165,14 @@ class Term::Fabulous::Widget::Image
 	# Painting
 	# ---------------------------------------------------------------------
 
+	# What the widget shows instead of the image, undef when it can show it.
+	method _notice () {
+		return HAS_IMAGER ? undef : NOTICE;
+	}
+
 	method natural_size () {
-		return $self->_notice_size unless HAS_IMAGER;
+		my $notice = $self->_notice;
+		return $self->_notice_size($notice) if defined $notice;
 		return ( 0,                  0 ) unless defined $picture;
 		return ( $picture->getwidth, ceil( $picture->getheight / 2 ) );
 	}
@@ -174,10 +183,11 @@ class Term::Fabulous::Widget::Image
 	}
 
 	method paint () {
-		return $self->_paint_notice unless HAS_IMAGER;
+		my $notice = $self->_notice;
+		return $self->_paint_notice($notice) if defined $notice;
 		return unless defined $picture;
 
-		my ( $width, $height, $x0, $y0 ) = $self->_placement;
+		my ( $width, $height, $x0, $y0 ) = $self->_placement( $self->columns, 2 * $self->rows );
 		my $shown      = $self->_scaled( $width, $height );
 		my $background = $self->background_below( translucent => 1 );
 		my $first      = List::Util::max( 0, $x0 );
@@ -190,19 +200,18 @@ class Term::Fabulous::Widget::Image
 	}
 
 	# The size the image is drawn in, in pixels, and the pixel its top left
-	# corner lands on. It is centered, so with fit 'none' an image larger
-	# than the widget is cut on every side.
-	method _placement () {
-		my ( $columns, $pixel_rows ) = ( $self->columns,     2 * $self->rows );
-		my ( $width,   $height )     = ( $picture->getwidth, $picture->getheight );
+	# corner lands on, in an area of the given pixels. It is centered, so
+	# with fit 'none' an image larger than the area is cut on every side.
+	method _placement ( $area_width, $area_height ) {
+		my ( $width, $height ) = ( $picture->getwidth, $picture->getheight );
 		if ( $fit eq 'stretch' ) {
-			( $width, $height ) = ( $columns, $pixel_rows );
+			( $width, $height ) = ( $area_width, $area_height );
 		}
 		elsif ( $fit eq 'contain' ) {
-			my $factor = List::Util::min( $columns / $width, $pixel_rows / $height );
+			my $factor = List::Util::min( $area_width / $width, $area_height / $height );
 			( $width, $height ) = map { List::Util::max( 1, int( $_ * $factor + 0.5 ) ) } $width, $height;
 		}
-		return ( $width, $height, int( ( $columns - $width ) / 2 ), int( ( $pixel_rows - $height ) / 2 ) );
+		return ( $width, $height, int( ( $area_width - $width ) / 2 ), int( ( $area_height - $height ) / 2 ) );
 	}
 
 	# Enlarging repeats pixels, which keeps pixel art crisp; shrinking
@@ -240,16 +249,16 @@ class Term::Fabulous::Widget::Image
 	}
 
 	# ---------------------------------------------------------------------
-	# The notice shown without Imager
+	# The notice shown instead of the image
 	# ---------------------------------------------------------------------
 
-	method _notice_size () {
-		my @lines = _wrapped( NOTICE, NOTICE_WIDTH );
+	method _notice_size ($notice) {
+		my @lines = _wrapped( $notice, NOTICE_WIDTH );
 		return ( List::Util::max( map { string_columns($_) } @lines ), scalar @lines );
 	}
 
-	method _paint_notice () {
-		my @lines = _wrapped( NOTICE, $self->columns );
+	method _paint_notice ($notice) {
+		my @lines = _wrapped( $notice, $self->columns );
 		my $fg    = $self->color_attr( $self->notice_color );
 		$self->paint_text( 0, $_, $lines[$_], $fg, undef ) foreach 0 .. List::Util::min( $#lines, $self->rows - 1 );
 		return;

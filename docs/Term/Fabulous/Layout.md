@@ -317,6 +317,7 @@ the ["Box properties"](#box-properties).
 | Canvas           | Term::Fabulous::Widget::Canvas           | Box                              |
 | PixelCanvas      | Term::Fabulous::Widget::PixelCanvas      | Box                              |
 | Image            | Term::Fabulous::Widget::Image            | Box + file, base64, fit, ...     |
+| Sixel            | Term::Fabulous::Widget::Sixel            | Box + file, base64, fit, ...     |
 | TextField        | Term::Fabulous::Widget::TextField        | input widget + text options      |
 | TextArea         | Term::Fabulous::Widget::TextArea         | input widget + text options      |
 | Checkbox         | Term::Fabulous::Widget::Checkbox         | input widget + label, checked    |
@@ -358,6 +359,7 @@ The properties of each class:
 - [Canvas](Widget/Canvas.md#kdl-properties)
 - [PixelCanvas](Widget/PixelCanvas.md#kdl-properties)
 - [Image](Widget/Image.md#kdl-properties)
+- [Sixel](Widget/Sixel.md#kdl-properties)
 - [TextField](Widget/TextField.md#kdl-properties)
 - [TextArea](Widget/TextArea.md#kdl-properties)
 - [Checkbox](Widget/Checkbox.md#kdl-properties)

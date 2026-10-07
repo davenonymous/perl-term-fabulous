@@ -145,7 +145,9 @@ my $target = $terminal->cell_target;
 
 The object [Term::Fabulous::Render](../Render.md) paints into: a cell target, see
 ["CELL TARGET" in Term::Fabulous::Render](../Render.md#cell-target). It is the same object for the
-lifetime of the terminal.
+lifetime of the terminal. A terminal that shows sixel graphics gives it
+the role [Term::Fabulous::Render::Target::Sixel](../Render/Target/Sixel.md) and keeps its cell
+size up to date while the session is open.
 
 # SEE ALSO
 

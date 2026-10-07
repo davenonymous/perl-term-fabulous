@@ -150,6 +150,18 @@ my $covered = $frame->painted_after( $index, [ $x0, $y0, $x1, $y1 ] );
 given rectangle, otherwise 0. A canvas that something is painted over
 cannot keep its cells from the last frame.
 
+## painted\_over
+
+```perl
+my @rects = $frame->painted_over( $index, [ $x0, $y0, $x1, $y1 ] );
+```
+
+The parts of the given rectangle that commands painted after the one at
+`$index` paint into, as `[x0, y0, x1, y1]` rectangles, one per
+painted rectangle of those commands; they may overlap. Empty when
+nothing is painted over the rectangle. A sixel picture leaves these
+cells out.
+
 ## topmost\_at
 
 ```perl

@@ -147,4 +147,34 @@ subtest 'Term::Fabulous runs on it' => sub {
 	is $terminal->is_open, 0, 'the terminal is closed when run returns';
 };
 
+subtest 'sixel pictures' => sub {
+	skip_all 'Imager and Imager::File::SIXEL are not installed' unless eval { require Imager; require Imager::File::SIXEL; 1 };
+	require Term::Fabulous::Widget::Sixel;
+	my ( $pty, $input, $answers ) = pseudo_terminal( 6, 3 );
+	my $terminal = Term::Fabulous::Terminal::Termbox->new( input => $input, output => $pty->slave );
+	my $red      = Imager->new( xsize => 4, ysize => 8, channels => 4 );
+	$red->box( filled => 1, color => Imager::Color->new( 255, 0, 0, 255 ) );
+	$red->write( data => \my $png, type => 'png' ) or die $red->errstr;
+	my $sixel = Term::Fabulous::Widget::Sixel->new( data => $png );
+	my $root  = Term::Fabulous::Widget::Box->new;
+	$root->add_child($sixel);
+	my $ui = Term::Fabulous->new( root => $root, width => 1, height => 1, terminal => $terminal, mouse => 0, kitty_keyboard => 0 );
+
+	print {$answers} "\e[6;4;2t\e[?62;4;22c";    # cells of 2x4 pixels, then the device attributes with sixel
+	$ui->step;
+	is [ $terminal->cell_target->sixel_cell_size ], [ 2, 4 ], 'the cell size the terminal reported';
+	is $terminal->cell_target->sixel_area( 6, 3 ), [ 0, 0, 6, 2 ], 'pictures leave out the last row';
+	like written($pty), qr/\e\[16t\e\[c.*\e\[1;1H\eP[^\e]*\e\\/s, 'the picture is sent at its cell after the cells';
+
+	$ui->invalidate;
+	$ui->step;
+	unlike written($pty), qr/\eP/, 'an unchanged picture is not sent again';
+
+	$sixel->data(undef);
+	$ui->step;
+	like written($pty), qr/\e\[1;1H/, 'the cells of a picture that is gone are drawn again';
+	$terminal->close;
+	is [ $terminal->cell_target->sixel_cell_size ], [], 'a closed terminal shows no sixel';
+};
+
 done_testing;

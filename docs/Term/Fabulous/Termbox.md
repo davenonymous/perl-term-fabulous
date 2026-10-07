@@ -280,6 +280,31 @@ my $rc = tf_flush();
 A Term::Fabulous addition. Writes what ["tb\_send"](#tb_send) and the drawing
 functions queued, without waiting for the next `tb_present`.
 
+### tf\_cells\_differ
+
+```perl
+my $rc = tf_cells_differ( $x, $y, $width, $height, \my $differ );
+```
+
+A Term::Fabulous addition. Sets `$differ` to 1 when the next
+`tb_present` would draw a cell of the rectangle, because the cell was
+set to something other than what the terminal shows, else to 0. The
+part of the rectangle outside the screen is ignored. Returns `TB_OK`
+or an error; `$differ` is untouched unless the result is `TB_OK`.
+Dies unless the last argument is a scalar reference.
+
+### tf\_invalidate\_cells
+
+```perl
+my $rc = tf_invalidate_cells( $x, $y, $width, $height );
+```
+
+A Term::Fabulous addition. Makes the next `tb_present` draw every
+cell of the rectangle, like `tb_invalidate` does for the whole screen:
+for cells the terminal shows differently from what termbox2 believes,
+such as the cells a sixel image covered. The part of the rectangle
+outside the screen is ignored.
+
 ## Events
 
 ### tb\_peek\_event
@@ -396,6 +421,27 @@ are taken out of the input; keys that arrive meanwhile stay queued for
 taken not to speak the protocol), or another error; `$supported` is
 untouched unless the result is `TB_OK`. Dies unless the argument is
 a scalar reference.
+
+### tf\_sixel\_query
+
+```perl
+my $rc = tf_sixel_query( $timeout_ms, \my $supported, \my $cell_width, \my $cell_height );
+```
+
+A Term::Fabulous addition. Asks the terminal whether it shows sixel
+graphics and how many pixels a cell has: it sends the query for the
+size of a cell (`ESC [ 16 t`) followed by the one for the primary
+device attributes (`ESC [ c`), which every terminal answers, and
+waits up to `$timeout_ms` milliseconds for that answer. `$supported`
+is then 1 when the device attributes list `4` (sixel graphics), else
+0\. `$cell_width` and `$cell_height` are the pixels of a cell the
+terminal reported, else the ones the window size of the terminal
+device gives (`ioctl TIOCGWINSZ`), else both 0. Both answers are
+taken out of the input; keys that arrive meanwhile stay queued for
+["tb\_peek\_event"](#tb_peek_event), as with ["tf\_cursor\_position"](#tf_cursor_position). Returns `TB_OK`,
+`TB_ERR_NO_EVENT` when no device attributes arrived in time, or
+another error; the references are untouched unless the result is
+`TB_OK`. Dies unless the last three arguments are scalar references.
 
 ### tf\_readable\_bytes
 

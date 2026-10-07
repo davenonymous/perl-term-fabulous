@@ -497,6 +497,20 @@ notice instead.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-image.svg" alt="A 16x16 circle of rainbow-colored rings in three frames of 32x24 cells: at its natural size and centered (none), scaled up twice with its proportions kept (contain) and stretched twice wide and three times high to fill the frame (stretch); three frames of 12x4 cells below each other cut it (none), shrink it to half its size (contain) and shrink it to fill the frame (stretch)"></p>
 </div>
 
+### examples/widgets/sixel.pl
+
+[Term::Fabulous::Widget::Sixel](Widget/Sixel.md): a 480x320 PNG of the Mandelbrot set
+in three frames of the same fixed size, one per `fit`, drawn by the
+terminal in its own pixels as sixel graphics: `none` (the default)
+keeps its natural size and cuts it to the frame, `contain` scales it
+to fit and keeps its proportions, `stretch` fills the frame. Needs [Imager](https://metacpan.org/pod/Imager), [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL) and a terminal
+that shows sixel graphics; otherwise, each frame shows a notice
+instead.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-sixel.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, in sixel graphics in three frames of 28x10 cells: cut to the frame at its natural size (none), scaled down to fit the frame with its proportions kept (contain) and stretched to fill the frame (stretch)"></p>
+</div>
+
 ## Output without a terminal
 
 ### examples/static-report.pl
@@ -1534,6 +1548,19 @@ The programs of [Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-embedded-logo.svg" alt="An about box with a rainbow circle logo next to the program name, a description and a hint to press q"></p>
+    </div>
+
+- `sixel-viewer.pl`
+
+    ["Show a photo in sixel graphics (Sixel)" in Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md#show-a-photo-in-sixel-graphics-sixel):
+    the picture file named as the argument, or a detail of the Mandelbrot
+    set, in sixel graphics in the whole window; n, c and s switch the fit between
+    none, contain and stretch, h shows and hides a help box over the
+    picture. The picture shows it after pressing h. Needs [Imager](https://metacpan.org/pod/Imager),
+    [Imager::File::SIXEL](https://metacpan.org/pod/Imager%3A%3AFile%3A%3ASIXEL) and a terminal that shows sixel graphics.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-sixel-viewer.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, scaled to fit a rounded frame on the dark screen in sixel graphics, with a help box of the four keys over the top of the picture, which leaves those cells out, and the keys above the frame"></p>
     </div>
 
 ## Output without a terminal

@@ -10,8 +10,13 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 use Term::Fabulous::Render::Target::Mask;
+use Term::Fabulous::Render::Target::Sixel;
 
-class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::Mask) :strict(params) {
+class Term::Fabulous::Render::Target::Grid
+	:does(Term::Fabulous::Render::Target::Mask)
+	:does(Term::Fabulous::Render::Target::Sixel)
+	:strict(params)
+{
 	use Term::Fabulous::Render::Attr qw(STYLE_FLAGS);
 	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE);
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -27,6 +32,38 @@ class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target:
 	# the cell it starts in; its continuation cells keep whatever was
 	# painted there before (undef on a cleared grid).
 	field @rows;
+
+	# The pixels of a cell, for a grid that stands for a terminal showing
+	# sixel; the pictures of the last frame.
+	field @_cell_size;
+	field @_sixels;
+
+	ADJUST :params ( :$sixel_cell_size = undef ) {
+		die "Term::Fabulous::Render::Target::Grid: sixel_cell_size must be [width, height] in pixels, both at least 1"
+			if defined $sixel_cell_size && !( ref $sixel_cell_size eq 'ARRAY' && @$sixel_cell_size == 2 && !grep { !defined || !/\A[1-9][0-9]*\z/ } @$sixel_cell_size );
+		@_cell_size = @{ $sixel_cell_size // [] };
+	}
+
+	method sixel_cell_size () {
+		return @_cell_size;
+	}
+
+	method sixel_area ( $width, $height ) {
+		return [ 0, 0, $width, $height ];
+	}
+
+	method show_sixels (@placements) {
+		@_sixels = map {
+			{ %$_ }
+		} @placements;
+		return;
+	}
+
+	method sixels () {
+		return map {
+			{ %$_ }
+		} @_sixels;
+	}
 
 	method clear_cells (@kept_rects) {
 		my @kept_rows;
@@ -175,9 +212,15 @@ empty grid, except for the kept rectangles of unchanged canvases.
 =head2 new
 
 	my $grid = Term::Fabulous::Render::Target::Grid->new;
+	my $grid = Term::Fabulous::Render::Target::Grid->new( sixel_cell_size => [ 10, 20 ] );
 
-An empty grid. It takes no parameters; the grid grows to whatever is
-painted into it.
+An empty grid; it grows to whatever is painted into it. With
+C<sixel_cell_size>, C<[width, height]> in pixels, both whole numbers of
+at least 1, it stands for a terminal that shows sixel graphics with
+cells of that size, and records the pictures of every frame (see
+L</sixels>); without it, the default, it shows none, and
+L<Term::Fabulous::Widget::Sixel> shows a notice. Unknown parameters
+die.
 
 =head1 METHODS
 
@@ -275,6 +318,17 @@ a row nothing was painted in.
 The contents of L</cell> as a list, or an empty list when the cell is
 C<undef>. See L<Term::Fabulous::Render/painted_cell>.
 
+=head2 sixels
+
+	foreach my $picture ( $grid->sixels ) {
+		my ( $x, $y, $columns, $rows, $data ) = @{$picture}{qw(x y columns rows data)};
+	}
+
+The sixel pictures of the last frame, as copies of the placements
+L<Term::Fabulous::Render::Target::Sixel/show_sixels> describes: the
+cell of the top left corner, the cells covered and the SIXEL data.
+Empty without C<sixel_cell_size>.
+
 =head2 Cell target methods
 
 C<begin_frame>, C<end_frame>, C<release_rect>, C<set_cell>,
@@ -311,6 +365,13 @@ nothing was stored there.
 	$grid->put_row( $x, $y, $columns, $bg );
 
 Primitive: stores C<$columns> spaces with the background C<$bg>.
+
+=head2 sixel_cell_size, sixel_area, show_sixels
+
+The methods of L<Term::Fabulous::Render::Target::Sixel>:
+C<sixel_cell_size> is the C<sixel_cell_size> given to L</new>, or empty;
+C<sixel_area> is the whole frame; C<show_sixels> records the pictures
+L</sixels> returns.
 
 =head1 SEE ALSO
 

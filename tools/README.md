@@ -58,11 +58,15 @@ termbox2 as it would a real one. The harness
   a second;
 - writes the scenario's input into the terminal as an xterm would send it,
   and waits until the program has received it;
-- reads what the terminal shows from termbox2's front buffer.
+- reads what the terminal shows: the cells from termbox2's front
+  buffer and the sixel pictures of the program's last frame.
 
 The runner itself answers the cursor position query (`ESC [ 6 n`) that
 inline mode (`inline => ROWS`) sends when it starts, as a terminal
-would. A scenario's `shell` lines stand for what a shell printed before
+would. It also plays a terminal that shows sixel graphics in cells of
+10 x 20 pixels: it answers the device attributes query (`ESC [ c`)
+with sixel support and the cell size query (`ESC [ 16 t`), so
+`Term::Fabulous::Widget::Sixel` shows its pictures. A scenario's `shell` lines stand for what a shell printed before
 the program started: the cursor starts below them, and the screenshot
 shows them above the program's inline region, so an inline program
 looks as it does in a real terminal.
@@ -78,8 +82,10 @@ while the virtual clock waits for them.
 The cells are then drawn as an SVG image in a window frame. Box drawing
 and block characters are drawn as shapes, like terminals do, so borders
 join without gaps and half-block pixels are square; text is placed cell
-by cell, so the columns line up with any monospace font. The SVG uses
-the viewer's fonts and needs no other files, which is what MetaCPAN and
+by cell, so the columns line up with any monospace font. Sixel pictures
+are drawn over the cells they cover, stretched to them, in SVG as
+embedded PNG images and in PNG output as well. The SVG uses the
+viewer's fonts and needs no other files, which is what MetaCPAN and
 GitHub require of images in documentation.
 
 ## Screenshots of any program
@@ -105,8 +111,8 @@ fonts.
 
 ## The example pictures
 
-Two tools draw the 16x16 pictures in `examples/images/`; both need
-Imager with PNG support.
+Three tools draw the pictures in `examples/images/`; all need Imager
+with PNG support.
 
 `tools/rainbow-circle` draws `rainbow_circle.png`, the picture of
 `examples/widgets/image.pl`, the embedded logo of
@@ -119,9 +125,16 @@ picture of `examples/cookbook/picture-viewer.pl`: three overlapping
 translucent circles, red, green and blue, whose colors mix where they
 overlap.
 
+`tools/mandelbrot` draws `mandelbrot.png`, the picture of
+`examples/widgets/sixel.pl` and `examples/cookbook/sixel-viewer.pl`: a
+480x320 detail of the Mandelbrot set with smooth color bands and fine
+detail, which shows what sixel graphics can do that half blocks cannot.
+It takes some seconds.
+
 ```sh
 perl tools/rainbow-circle                        # rewrites examples/images/rainbow_circle.png
 perl tools/translucent-circles                   # rewrites examples/images/translucent_circles.png
+perl tools/mandelbrot                            # rewrites examples/images/mandelbrot.png
 perl tools/rainbow-circle --output circle.png
 ```
 
@@ -133,9 +146,9 @@ All under `tools/lib/Term/Fabulous/Screenshot/`:
 |---|---|
 | `Scenario` | parses `screenshots.kdl` |
 | `Input` | key names, text and mouse actions as terminal bytes |
-| `Runner` | runs a program in a pseudo terminal, answers its cursor position queries and returns its screen |
+| `Runner` | runs a program in a pseudo terminal, answers its cursor position, device attributes and cell size queries and returns its screen |
 | `Harness`, `Clock`, `VirtualLoop` | run inside the program: input, virtual time, capture |
-| `Screen` | the captured cells |
+| `Screen` | the captured cells and sixel pictures |
 | `Scene`, `BoxDrawing`, `Theme` | what the image shows, independent of the format |
 | `Render::SVG`, `Render::PNG` | draw a scene |
 | `PodSync` | the code blocks marked with `=for code-from` and the screenshot URLs |

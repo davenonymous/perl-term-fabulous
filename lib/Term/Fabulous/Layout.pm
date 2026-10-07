@@ -518,6 +518,7 @@ the L</Box properties>.
 	Canvas            Term::Fabulous::Widget::Canvas            Box
 	PixelCanvas       Term::Fabulous::Widget::PixelCanvas       Box
 	Image             Term::Fabulous::Widget::Image             Box + file, base64, fit, ...
+	Sixel             Term::Fabulous::Widget::Sixel             Box + file, base64, fit, ...
 	TextField         Term::Fabulous::Widget::TextField         input widget + text options
 	TextArea          Term::Fabulous::Widget::TextArea          input widget + text options
 	Checkbox          Term::Fabulous::Widget::Checkbox          input widget + label, checked
@@ -568,6 +569,8 @@ The properties of each class:
 =item * L<PixelCanvas|Term::Fabulous::Widget::PixelCanvas/KDL PROPERTIES>
 
 =item * L<Image|Term::Fabulous::Widget::Image/KDL PROPERTIES>
+
+=item * L<Sixel|Term::Fabulous::Widget::Sixel/KDL PROPERTIES>
 
 =item * L<TextField|Term::Fabulous::Widget::TextField/KDL PROPERTIES>
 

@@ -34,10 +34,16 @@ empty grid, except for the kept rectangles of unchanged canvases.
 
 ```perl
 my $grid = Term::Fabulous::Render::Target::Grid->new;
+my $grid = Term::Fabulous::Render::Target::Grid->new( sixel_cell_size => [ 10, 20 ] );
 ```
 
-An empty grid. It takes no parameters; the grid grows to whatever is
-painted into it.
+An empty grid; it grows to whatever is painted into it. With
+`sixel_cell_size`, `[width, height]` in pixels, both whole numbers of
+at least 1, it stands for a terminal that shows sixel graphics with
+cells of that size, and records the pictures of every frame (see
+["sixels"](#sixels)); without it, the default, it shows none, and
+[Term::Fabulous::Widget::Sixel](../../Widget/Sixel.md) shows a notice. Unknown parameters
+die.
 
 # METHODS
 
@@ -129,6 +135,19 @@ my ( $glyph, $fg, $bg ) = $grid->painted_cell( $x, $y );
 The contents of ["cell"](#cell) as a list, or an empty list when the cell is
 `undef`. See ["painted\_cell" in Term::Fabulous::Render](../../Render.md#painted_cell).
 
+## sixels
+
+```perl
+foreach my $picture ( $grid->sixels ) {
+        my ( $x, $y, $columns, $rows, $data ) = @{$picture}{qw(x y columns rows data)};
+}
+```
+
+The sixel pictures of the last frame, as copies of the placements
+["show\_sixels" in Term::Fabulous::Render::Target::Sixel](Sixel.md#show_sixels) describes: the
+cell of the top left corner, the cells covered and the SIXEL data.
+Empty without `sixel_cell_size`.
+
 ## Cell target methods
 
 `begin_frame`, `end_frame`, `release_rect`, `set_cell`,
@@ -173,6 +192,13 @@ $grid->put_row( $x, $y, $columns, $bg );
 ```
 
 Primitive: stores `$columns` spaces with the background `$bg`.
+
+## sixel\_cell\_size, sixel\_area, show\_sixels
+
+The methods of [Term::Fabulous::Render::Target::Sixel](Sixel.md):
+`sixel_cell_size` is the `sixel_cell_size` given to ["new"](#new), or empty;
+`sixel_area` is the whole frame; `show_sixels` records the pictures
+["sixels"](#sixels) returns.
 
 # SEE ALSO
 

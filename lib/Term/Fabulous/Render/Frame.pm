@@ -181,6 +181,12 @@ class Term::Fabulous::Render::Frame :strict(params) {
 		return 0;
 	}
 
+	method painted_over ( $index, $rect ) {
+		$self->_check_index($index);
+		my $painted = $self->_all_painted_rects;
+		return grep { rects_overlap( $_, $_ ) } map { intersect_cell_rects( $_, $rect ) } map { @$_ } @{$painted}[ $index + 1 .. $#_commands ];
+	}
+
 	method topmost_at ( $x, $y ) {
 		my $painted = $self->_all_painted_rects;
 		return grep {
@@ -331,6 +337,16 @@ rect, up to four (one per edge) for a border.
 1 when a command painted after the one at C<$index> paints into the
 given rectangle, otherwise 0. A canvas that something is painted over
 cannot keep its cells from the last frame.
+
+=head2 painted_over
+
+	my @rects = $frame->painted_over( $index, [ $x0, $y0, $x1, $y1 ] );
+
+The parts of the given rectangle that commands painted after the one at
+C<$index> paint into, as C<[x0, y0, x1, y1]> rectangles, one per
+painted rectangle of those commands; they may overlap. Empty when
+nothing is painted over the rectangle. A sixel picture leaves these
+cells out.
 
 =head2 topmost_at
 

@@ -18,8 +18,12 @@ it feeds raw escape sequences through the parser.
 Inline mode (tf_init_inline_rwfd() in termbox2.c) repeats the steps of
 tb_init_rwfd() with termbox2's static init functions and empties the
 TB_CAP_ENTER_CA, TB_CAP_EXIT_CA and TB_CAP_CLEAR_SCREEN entries of
-global.caps; tf_cursor_position() and tf_kitty_keyboard_query() append
-to global.in, and
+global.caps; tf_cursor_position(), tf_kitty_keyboard_query() and
+tf_sixel_query() append to global.in, tf_cells_differ() and
+tf_invalidate_cells() read and write the cells of global.back and
+global.front through termbox2's static cellbuf_get(), cell_cmp() and
+cell_set() (tf_invalidate_cells() marks a cell the way tb_present()
+marks the hidden cells of a wide glyph), and
 tf_reset_attrs() resets global.last_fg and global.last_bg. After
 updating termbox2.h, compare tb_init_rwfd() with tf_init_inline_rwfd()
 and check that tb_deinit() and resize_cellbufs() still take the screen

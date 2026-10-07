@@ -192,6 +192,7 @@ role Term::Fabulous::Render
 		$buffer = [];
 		$self->_paint_screen_background($target) if defined $screen_background;
 		$self->_paint_commands($_last_frame);
+		$target->show_sixels( $self->sixel_placements( $_last_frame, $target ) ) if $target->DOES('Term::Fabulous::Render::Target::Sixel');
 		$target->end_frame;
 		$self->finish_canvases;
 
@@ -363,7 +364,8 @@ C<CanvasResize> here.
 
 Calls the cell target's C<begin_frame>, paints the screen background
 (see L</SCREEN BACKGROUND>), paints every render command in paint
-order and calls C<end_frame>.
+order, hands a target that shows sixel the frame's pictures (see
+L</show_sixels>) and calls C<end_frame>.
 
 =item 5.
 
@@ -621,6 +623,18 @@ its foreground and its background attribute. Returns an empty list when
 nothing was painted there. The cell to the right of a wide glyph is
 not written for it, so reading it gives what was painted there before
 the glyph. Kept rectangles do not affect reading.
+
+=head2 show_sixels
+
+	$target->show_sixels(@placements);
+
+Only for a target that composes L<Term::Fabulous::Render::Target::Sixel>,
+which both targets of the distribution do. The renderer calls it once
+per frame, after the render commands are painted and before
+L</end_frame>, with the sixel pictures of the frame's canvases
+(L<Term::Fabulous::Render::Canvas/sixel_placements>), none when its
+C<sixel_cell_size> is empty. The role describes the placements and the
+other two methods it requires.
 
 =head1 SEE ALSO
 

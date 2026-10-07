@@ -445,6 +445,10 @@ L<Show a picture file (Image, fit)|Term::Fabulous::Cookbook::Canvases/Show a pic
 
 L<Embed a logo in the program (Image, base64)|Term::Fabulous::Cookbook::Canvases/Embed a logo in the program (Image, base64)>
 
+=item *
+
+L<Show a photo in sixel graphics (Sixel)|Term::Fabulous::Cookbook::Canvases/Show a photo in sixel graphics (Sixel)>
+
 =back
 
 =item L<Term::Fabulous::Cookbook::Output>

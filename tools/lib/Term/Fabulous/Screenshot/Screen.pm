@@ -10,6 +10,7 @@ use Object::Pad 0.825;
 class Term::Fabulous::Screenshot::Screen :strict(params) {
 	use Carp qw(croak);
 	use Encode qw(decode);
+	use MIME::Base64 qw(decode_base64);
 	use Term::Fabulous::Render::Attr qw(STYLE_FLAGS);
 	use Term::Fabulous::Termbox qw(TB_HI_BLACK);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
@@ -30,10 +31,23 @@ class Term::Fabulous::Screenshot::Screen :strict(params) {
 	# styles is a hash of the style names that apply.
 	field $cells :param;
 
+	# The sixel pictures over the cells: { x, y, columns, rows, png }, the
+	# first cell, the cells covered and the PNG data.
+	field $pictures :param = [];
+
 	ADJUST {
 		croak "Term::Fabulous::Screenshot::Screen: the screen needs at least one column and one row, got ${columns}x$rows"
 			unless $columns >= 1 && $rows >= 1;
 		croak "Term::Fabulous::Screenshot::Screen: $rows rows declared, " . scalar(@$cells) . " given" unless @$cells == $rows;
+		foreach my $picture (@$pictures) {
+			my ( $x, $y, $picture_columns, $picture_rows ) = @$picture{qw(x y columns rows)};
+			croak "Term::Fabulous::Screenshot::Screen: the picture of ${picture_columns}x$picture_rows cells at $x,$y is not inside the ${columns}x$rows screen"
+				unless $x >= 0 && $y >= 0 && $picture_columns >= 1 && $picture_rows >= 1 && $x + $picture_columns <= $columns && $y + $picture_rows <= $rows;
+		}
+	}
+
+	method pictures () {
+		return @$pictures;
 	}
 
 	method row ($y) {
@@ -42,7 +56,8 @@ class Term::Fabulous::Screenshot::Screen :strict(params) {
 	}
 
 	# A screen read from termbox2's front buffer by the harness:
-	# { columns, rows, cells => [ [ [ glyph, columns, fg, bg ], ... ], ... ] }.
+	# { columns, rows, cells => [ [ [ glyph, columns, fg, bg ], ... ], ... ],
+	# pictures => [ { x, y, columns, rows, png => BASE64 }, ... ] }.
 	sub from_capture ( $class, $capture ) {
 		my ( $width, $height ) = @$capture{qw(columns rows)};
 		my @rows;
@@ -56,7 +71,10 @@ class Term::Fabulous::Screenshot::Screen :strict(params) {
 			croak "Term::Fabulous::Screenshot::Screen: captured row " . scalar(@rows) . " covers $x columns instead of $width" unless $x == $width;
 			push @rows, \@row;
 		}
-		return $class->new( columns => $width, rows => $height, cells => \@rows );
+		my @pictures = map {
+			{ %$_, png => decode_base64( $_->{png} ) }
+		} @{ $capture->{pictures} // [] };
+		return $class->new( columns => $width, rows => $height, cells => \@rows, pictures => \@pictures );
 	}
 
 	# A screen from what a program printed into a terminal $width columns
@@ -170,7 +188,8 @@ L<Term::Fabulous::Screenshot::Render::PNG>) draw it.
 
 Every row covers exactly C<columns> columns. A wide character is one
 cell that spans two columns; the column it covers is not a cell of its
-own.
+own. Sixel pictures the terminal shows lie over the cells; see
+L</pictures>.
 
 =head1 CONSTRUCTORS
 
@@ -179,8 +198,8 @@ own.
 	my $screen = Term::Fabulous::Screenshot::Screen->from_capture($capture);
 
 From the screen L<Term::Fabulous::Screenshot::Harness> read from
-termbox2's front buffer. Dies when a row does not cover the width of the
-screen.
+termbox2's front buffer, with the sixel pictures of the program's last
+frame. Dies when a row does not cover the width of the screen.
 
 =head2 from_output
 
@@ -192,13 +211,15 @@ L<Term::Fabulous::Static> writes (reset, 24-bit colors and the style
 parameters of L<Term::Fabulous::Render::Attr/STYLE_FLAGS>). Each line becomes a row, padded with blank cells;
 trailing empty lines are dropped. Dies on invalid UTF-8, on any other
 control character or escape sequence, on a line wider than C<$columns>,
-and when nothing was printed.
+and when nothing was printed. Such a screen has no pictures.
 
 =head2 new
 
-	Term::Fabulous::Screenshot::Screen->new( columns => $c, rows => $r, cells => \@rows );
+	Term::Fabulous::Screenshot::Screen->new( columns => $c, rows => $r, cells => \@rows, pictures => \@pictures );
 
-From cells directly; see L</row> for their form.
+From cells directly; see L</row> for their form. C<pictures> is
+optional; see L</pictures> for its form. Dies when a picture is not
+inside the screen.
 
 =head1 METHODS
 
@@ -237,6 +258,29 @@ A hash whose keys are the styles that apply, the names of
 L<Term::Fabulous::Render::Attr/STYLE_FLAGS>: C<bold>, C<dim>,
 C<italic>, C<underline>, C<blink>, C<reverse>, C<invisible>,
 C<strikeout>, C<double_underline>, C<overline>.
+
+=back
+
+=head2 pictures
+
+	foreach my $picture ( $screen->pictures ) { ... }
+
+The sixel pictures the terminal shows over the cells, in the order
+they were drawn. Each is a hash reference:
+
+=over
+
+=item C<x>, C<y>
+
+The cell the picture's top left corner covers.
+
+=item C<columns>, C<rows>
+
+The cells the picture covers; the picture is stretched to them.
+
+=item C<png>
+
+The picture as PNG data, a byte string.
 
 =back
 

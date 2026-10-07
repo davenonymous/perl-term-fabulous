@@ -74,11 +74,36 @@ role Term::Fabulous::Render::Canvas {
 			my $plan   = $self->_plan_canvas( $commands[$index], $frame->clip_rect($index) ) // next;
 			my $before = $painted{ refaddr $plan->{canvas} };
 
+			$plan->{index}                              = $index;
 			$plan->{covered}                            = $frame->painted_after( $index, $plan->{visible} );
 			$plan->{intact}                             = !$plan->{covered} && defined $before && !$before->{covered} && _same_place( $before, $plan );
 			$_plan_by_canvas{ refaddr $plan->{canvas} } = $plan;
 		}
 		return map { $_->{visible} } grep { $_->{intact} } values %_plan_by_canvas;
+	}
+
+	# The sixel pictures of the frame's canvases, in paint order: each
+	# covers the visible cells of its canvas the target can show, and is
+	# transparent where the frame paints over it.
+	method sixel_placements ( $frame, $target ) {
+		my @cell_size = $target->sixel_cell_size;
+		return () unless @cell_size;
+		my $area = $target->sixel_area( $frame->width, $frame->height );
+		my @placements;
+		foreach my $plan ( sort { $a->{index} <=> $b->{index} } values %_plan_by_canvas ) {
+			my $shown = intersect_cell_rects( $plan->{visible}, $area );
+			next unless rects_overlap( $shown, $shown );
+			my $to_canvas = sub ($rect) {
+				[ map { $rect->[$_] - $plan->{origin}[ $_ % 2 ] } 0 .. 3 ]
+			};
+			my $data = $plan->{canvas}->sixel_data(
+				shown     => $to_canvas->($shown),
+				covered   => [ map { $to_canvas->($_) } $frame->painted_over( $plan->{index}, $shown ) ],
+				cell_size => [@cell_size],
+			) // next;
+			push @placements, { x => $shown->[0], y => $shown->[1], columns => $shown->[2] - $shown->[0], rows => $shown->[3] - $shown->[1], data => $data };
+		}
+		return @placements;
 	}
 
 	method finish_canvases () {
@@ -170,6 +195,7 @@ changed cells when possible
 	my @kept_rects = $ui->plan_canvases($frame);         # before begin_frame
 	$ui->cell_target->begin_frame(@kept_rects);
 	$ui->render_custom( $command, $canvas, $buffer );     # for each canvas command
+	$ui->cell_target->show_sixels( $ui->sixel_placements( $frame, $ui->cell_target ) );
 	$ui->cell_target->end_frame;
 	$ui->finish_canvases;                                 # after a complete frame
 
@@ -273,6 +299,21 @@ rectangle, painted before the cells, is blended. A wide glyph that
 would cross the visible right edge is painted as spaces. Every painted
 cell records its background in C<$buffer>, so text drawn over the canvas
 later in the frame keeps it.
+
+=head2 sixel_placements
+
+	my @placements = $ui->sixel_placements( $frame, $target );
+
+Called after the frame's commands are painted, for a target that
+composes L<Term::Fabulous::Render::Target::Sixel>: the sixel pictures
+of the frame's canvases, in paint order, as placements for the
+target's C<show_sixels>. Empty when the target's C<sixel_cell_size> is.
+For every visible canvas it asks
+L<Term::Fabulous::Widget::Canvas/sixel_data> for the picture of the
+cells the canvas shows inside the target's C<sixel_area>, with the
+cells a later command paints over them
+(L<Term::Fabulous::Render::Frame/painted_over>) as covered. A canvas
+without a picture (C<undef>) gets no placement.
 
 =head2 finish_canvases
 

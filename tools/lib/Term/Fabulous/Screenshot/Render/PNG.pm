@@ -51,6 +51,9 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 		$self->_draw_text( $image, $scene, $_ ) foreach $scene->texts;
 		$image->box( filled => 1, color => _color( $_->{color} ), _box_bounds($_) ) foreach $scene->lines;
 
+		# The terminal draws sixel pictures over the cells.
+		_draw_picture( $image, $_ ) foreach $scene->pictures;
+
 		$image->write( data => \my $png, type => 'png' ) or croak 'Term::Fabulous::Screenshot::Render::PNG: ' . $image->errstr;
 		return $png;
 	}
@@ -61,6 +64,14 @@ class Term::Fabulous::Screenshot::Render::PNG :strict(params) {
 
 	sub _box_bounds ($rect) {
 		return ( xmin => $rect->{x}, ymin => $rect->{y}, xmax => $rect->{x} + $rect->{width} - 1, ymax => $rect->{y} + $rect->{height} - 1 );
+	}
+
+	# A sixel picture stretched to its box, over what is drawn there.
+	sub _draw_picture ( $image, $picture ) {
+		my $source = Imager->new( data => $picture->{png}, type => 'png' ) or croak 'Term::Fabulous::Screenshot::Render::PNG: cannot read a picture: ' . Imager->errstr;
+		my $scaled = $source->scale( xpixels => $picture->{width}, ypixels => $picture->{height}, type => 'nonprop' ) or croak 'Term::Fabulous::Screenshot::Render::PNG: ' . $source->errstr;
+		$image->compose( src => $scaled, tx => $picture->{x}, ty => $picture->{y} ) or croak 'Term::Fabulous::Screenshot::Render::PNG: ' . $image->errstr;
+		return;
 	}
 
 	# The window: a shadow (blurred on a layer of its own), the rounded
@@ -269,6 +280,9 @@ missing glyph.
 Characters are placed cell by cell, without text shaping: scripts that
 need shaping (Thai vowel marks, for example) look better in SVG, where
 the viewer's browser shapes them.
+
+Sixel pictures are stretched to the cells they cover and drawn over
+everything else, their transparent pixels showing what is below.
 
 =head1 CONSTRUCTOR
 

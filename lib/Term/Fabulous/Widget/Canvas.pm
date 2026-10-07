@@ -163,6 +163,13 @@ class Term::Fabulous::Widget::Canvas
 		return;
 	}
 
+	# A sixel picture the terminal draws over the cells; called by the
+	# renderer after it painted them, on a target that shows sixel. A
+	# plain canvas has none.
+	method sixel_data (%frame) {
+		return undef;
+	}
+
 	method refresh_for_frame () {
 		$_refreshing = 1;
 		try {
@@ -721,6 +728,41 @@ canvas changed and make no further frame due.
 Calls L</refresh> as the renderer does
 (L<Term::Fabulous::Render::Canvas/plan_canvases>); you do not call it
 yourself.
+
+=head2 sixel_data
+
+	method sixel_data :override (%frame) { ... }
+
+A hook for subclasses that show a sixel picture over their cells, as
+L<Term::Fabulous::Widget::Sixel> does. On a cell target that shows
+sixel (L<Term::Fabulous::Render::Target::Sixel>), the renderer calls it
+for every visible canvas of a frame, after the frame's cells are
+painted (L<Term::Fabulous::Render::Canvas/sixel_placements>), with:
+
+=over
+
+=item C<shown>
+
+The C<[x0, y0, x1, y1]> cells of the content box the picture covers,
+counted from the content box's top left cell: the visible ones the
+target can show.
+
+=item C<covered>
+
+The C<[x0, y0, x1, y1]> rectangles among them that the frame paints
+over, in the same coordinates; they may overlap.
+
+=item C<cell_size>
+
+C<[width, height]>, the pixels of a cell.
+
+=back
+
+Returns the picture of the C<shown> cells as SIXEL data,
+C<(x1 - x0) * width> pixels wide and C<(y1 - y0) * height> pixels
+high, transparent in the C<covered> cells; or C<undef> for none, which a plain canvas returns.
+The renderer calls it every frame, so a subclass keeps the data of the
+last call while nothing changed.
 
 =head2 take_changed_spans
 

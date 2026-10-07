@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Carp qw(croak);
 use Exporter qw(import);
+use MIME::Base64 qw(encode_base64);
 
 our @EXPORT_OK = qw(render_svg);
 
@@ -40,6 +41,7 @@ sub render_svg ($scene) {
 		'<g shape-rendering="crispEdges">',
 		( map { _rect( $_, $_->{color} ) } $scene->lines ),
 		'</g>',
+		( map { _image($_) } $scene->pictures ),
 		'</svg>',
 	);
 	return join( "\n", @svg ) . "\n";
@@ -133,6 +135,13 @@ sub _text ( $text, $scene ) {
 	return sprintf '<text x="%s" y="%s" textLength="%s"%s fill="%s">%s</text>', _n( $text->{x} ), _n( $text->{y} ), _n( $text->{width} ), $class, $fill, _escape( $text->{text} );
 }
 
+# The picture is embedded as a data URL: an SVG shown in an <img>
+# element may load nothing else.
+sub _image ($picture) {
+	return sprintf '<image x="%s" y="%s" width="%s" height="%s" preserveAspectRatio="none" href="data:image/png;base64,%s"/>', ( map { _n($_) } @$picture{qw(x y width height)} ),
+		encode_base64( $picture->{png}, '' );
+}
+
 sub _color ($rgb) {
 	return sprintf '#%06x', $rgb;
 }
@@ -181,6 +190,8 @@ C<textLength>, and other glyphs are centered in their cells, so columns
 line up whatever font the viewer has. Box drawing and block characters
 are shapes, not text. Background and line rectangles use
 C<shape-rendering="crispEdges">, so adjacent cells join without seams.
+Sixel pictures are C<< <image> >> elements over everything else, with
+the PNG data embedded, stretched to the cells they cover.
 
 The output is deterministic: the same scene gives the same bytes.
 

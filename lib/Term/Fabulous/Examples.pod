@@ -563,6 +563,22 @@ notice instead.
 
 =end html
 
+=head3 examples/widgets/sixel.pl
+
+L<Term::Fabulous::Widget::Sixel>: a 480x320 PNG of the Mandelbrot set
+in three frames of the same fixed size, one per C<fit>, drawn by the
+terminal in its own pixels as sixel graphics: C<none> (the default)
+keeps its natural size and cuts it to the frame, C<contain> scales it
+to fit and keeps its proportions, C<stretch> fills the frame. Needs L<Imager>, L<Imager::File::SIXEL> and a terminal
+that shows sixel graphics; otherwise, each frame shows a notice
+instead.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-sixel.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, in sixel graphics in three frames of 28x10 cells: cut to the frame at its natural size (none), scaled down to fit the frame with its proportions kept (contain) and stretched to fill the frame (stretch)"></p>
+
+=end html
+
 =head2 Output without a terminal
 
 =head3 examples/static-report.pl
@@ -1843,6 +1859,21 @@ L<Imager>.
 =begin html
 
 <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-embedded-logo.svg" alt="An about box with a rainbow circle logo next to the program name, a description and a hint to press q"></p>
+
+=end html
+
+=item F<sixel-viewer.pl>
+
+L<Term::Fabulous::Cookbook::Canvases/Show a photo in sixel graphics (Sixel)>:
+the picture file named as the argument, or a detail of the Mandelbrot
+set, in sixel graphics in the whole window; n, c and s switch the fit between
+none, contain and stretch, h shows and hides a help box over the
+picture. The picture shows it after pressing h. Needs L<Imager>,
+L<Imager::File::SIXEL> and a terminal that shows sixel graphics.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-sixel-viewer.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, scaled to fit a rounded frame on the dark screen in sixel graphics, with a help box of the four keys over the top of the picture, which leaves those cells out, and the keys above the frame"></p>
 
 =end html
 

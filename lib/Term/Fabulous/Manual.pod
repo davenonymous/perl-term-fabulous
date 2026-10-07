@@ -323,6 +323,13 @@ with the image libraries (libpng, libjpeg, ...) of the formats you
 want to show. Installing Term::Fabulous does not require it; without
 it, an image widget shows a notice in its place.
 
+=item *
+
+Optional: L<Imager::File::SIXEL> with L<Imager>, for pictures in sixel
+graphics in L<Term::Fabulous::Widget::Sixel>, and a terminal that shows
+sixel graphics and reports the size of its cells. Without them, a sixel
+widget shows a notice in its place.
+
 =back
 
 =head1 YOUR FIRST PROGRAM
@@ -851,6 +858,11 @@ L<Term::Fabulous::Cookbook::Canvases/Plot data on a pixel canvas (PixelCanvas)>.
 L<Term::Fabulous::Widget::Image>,
 L<Term::Fabulous::Cookbook::Canvases/Show a picture file (Image, fit)>,
 L<Term::Fabulous::Cookbook::Canvases/Embed a logo in the program (Image, base64)>.
+
+=item Show a picture in the terminal's own pixels (sixel graphics)
+
+L<Term::Fabulous::Widget::Sixel>,
+L<Term::Fabulous::Cookbook::Canvases/Show a photo in sixel graphics (Sixel)>.
 
 =item Charts that draw themselves from data
 

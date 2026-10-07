@@ -472,6 +472,14 @@ screenshot "cookbook-embedded-logo" {
 	size 56 13
 }
 
+screenshot "cookbook-sixel-viewer" {
+	script "examples/cookbook/sixel-viewer.pl"
+	size 80 23
+	steps {
+		key "h"
+	}
+}
+
 screenshot "cookbook-report-to-file" {
 	script "examples/cookbook/report-to-file.pl"
 	size 52 8
@@ -817,6 +825,11 @@ screenshot "widget-spinner" {
 screenshot "widget-image" {
 	script "examples/widgets/image.pl"
 	size 129 30
+}
+
+screenshot "widget-sixel" {
+	script "examples/widgets/sixel.pl"
+	size 100 17
 }
 
 screenshot "widget-divider" {

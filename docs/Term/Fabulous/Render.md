@@ -117,7 +117,8 @@ can keep the cells of the previous frame
 `CanvasResize` here.
 4. Calls the cell target's `begin_frame`, paints the screen background
 (see ["SCREEN BACKGROUND"](#screen-background)), paints every render command in paint
-order and calls `end_frame`.
+order, hands a target that shows sixel the frame's pictures (see
+["show\_sixels"](#show_sixels)) and calls `end_frame`.
 5. Calls ["finish\_canvases" in Term::Fabulous::Render::Canvas](Render/Canvas.md#finish_canvases), which
 remembers this completely painted frame for the comparison in step 3 of
 the next frame. If painting died, this step is skipped and the next
@@ -385,6 +386,20 @@ its foreground and its background attribute. Returns an empty list when
 nothing was painted there. The cell to the right of a wide glyph is
 not written for it, so reading it gives what was painted there before
 the glyph. Kept rectangles do not affect reading.
+
+## show\_sixels
+
+```perl
+$target->show_sixels(@placements);
+```
+
+Only for a target that composes [Term::Fabulous::Render::Target::Sixel](Render/Target/Sixel.md),
+which both targets of the distribution do. The renderer calls it once
+per frame, after the render commands are painted and before
+["end\_frame"](#end_frame), with the sixel pictures of the frame's canvases
+(["sixel\_placements" in Term::Fabulous::Render::Canvas](Render/Canvas.md#sixel_placements)), none when its
+`sixel_cell_size` is empty. The role describes the placements and the
+other two methods it requires.
 
 # SEE ALSO
 
