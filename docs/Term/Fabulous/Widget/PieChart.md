@@ -195,7 +195,8 @@ $chart->set_data( \@data, \@labels, \@colors );
 ```
 
 Replaces all slices; see ["Data"](#data). Dies without changing anything for
-invalid data.
+invalid data. When the mouse pointer is on a slice whose label is gone,
+the hover ends (see ["Hover and emphasis" in Term::Fabulous::Widget::Chart](Chart.md#hover-and-emphasis)).
 
 ## set\_value
 
@@ -217,7 +218,8 @@ $chart->clear_slices;
 `add_slice` adds a slice at the end (the color is optional) and dies
 when the label exists already. `remove_slice` removes the slices with
 these labels and dies, removing none, when one of them does not exist.
-`clear_slices` removes all. They return the chart.
+`clear_slices` removes all. They return the chart. Removing the slice
+the mouse pointer is on ends the hover.
 
 ## set\_slice\_color
 

@@ -68,6 +68,7 @@ with complete programs and their screenshots. This is
 ```perl
 my $layout = Term::Fabulous::Layout->new( string => $kdl_text );
 my $layout = Term::Fabulous::Layout->new( file   => $path );
+my $layout = Term::Fabulous::Layout->new( file   => $path, allowed_namespaces => ['Term::Fabulous::Widget'] );
 ```
 
 Parses the document, checks its `use` instructions, loads the widget
@@ -76,7 +77,7 @@ built later, by ["build"](#build). Every problem dies with a message that starts
 with `Term::Fabulous::Layout:` (see ["ERRORS"](#errors)). Unknown parameters
 die.
 
-Give exactly one of these parameters; giving none or both dies.
+Give exactly one of `string` and `file`; giving none or both dies.
 
 - `string`
 
@@ -87,6 +88,18 @@ Give exactly one of these parameters; giving none or both dies.
 
     The path of a layout file. The file is read as UTF-8 encoded bytes.
     Dies if it cannot be opened.
+
+- `allowed_namespaces`
+
+    Optional. An array reference of package names, such as
+    `[ 'Term::Fabulous::Widget', 'My::App::Widget' ]`: the layout may
+    `use` only these packages and the modules below them
+    (`Term::Fabulous::Widget::Box` is below `Term::Fabulous::Widget`,
+    `Term::Fabulous::WidgetKit` is not). Every `use` is checked before
+    any module is loaded, so a refused one runs no code; it dies with
+    `'use MODULE' is not allowed; allowed_namespaces permits only modules
+    in ...`. Default: `undef`, any module. Anything but a non-empty array
+    reference of valid package names dies. See ["SECURITY"](#security).
 
 # METHODS
 
@@ -635,6 +648,7 @@ Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widge
 - neither or both of `string` and `file`, or a file that cannot be opened;
 - KDL syntax errors (`failed to parse KDL: KDL parse error`; the parser does not report a line number);
 - a malformed `use`, an invalid module name or alias, or an alias declared twice;
+- a module outside the `allowed_namespaces`, or an invalid `allowed_namespaces`;
 - a module that cannot be loaded, or that does not compose [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md);
 - a top-level node that is neither `use` nor a declared widget, no root widget, or more than one.
 
@@ -655,6 +669,12 @@ is rejected, but only after it has been loaded, so its top-level code
 has already run. A layout can therefore load and run any module
 installed on the system. Treat layout files like program code: do not
 load layouts from untrusted sources.
+
+A program that loads layouts its users write can restrict them with
+["new"](#new)'s `allowed_namespaces`: a `use` of any module outside these
+namespaces dies before any module of the layout is loaded. Choose
+namespaces that hold only widget classes; every module in them can
+still be loaded and run.
 
 Properties can only call the accessors a widget class declares in its
 `layout_properties` (see [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md)), so a

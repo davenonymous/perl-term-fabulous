@@ -72,7 +72,8 @@ class Term::Fabulous::Screenshot::Scene :strict(params) {
 	method font_size ()   { return $theme->font_size * $scale }
 
 	# The final colors of a cell: defaults filled in, reverse video applied,
-	# dim text mixed towards the background, invisible text dropped.
+	# dim text mixed towards the background (half opaque), invisible text
+	# dropped. Blink has no picture; it is ignored.
 	method _resolve ($cell) {
 		my $styles = $cell->{styles};
 		my $fg     = $cell->{fg} // $theme->default_foreground;
@@ -274,7 +275,8 @@ the same picture and differ only in how they paint:
 =item *
 
 the terminal's default colors filled in, reverse video applied, dim
-text mixed towards its background;
+text mixed half way towards its background (as if drawn at half
+opacity), invisible text left out and blink ignored;
 
 =item *
 

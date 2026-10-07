@@ -235,7 +235,8 @@ empty list.
 
 - `remove_rows(@ids)`
 
-    Removes rows and their children; they also leave the selection.
+    Removes rows and their children; they also leave the selection. A row
+    and one of its descendants may both be given, in any order.
 
 - `clear_rows`
 
@@ -276,8 +277,12 @@ empty list.
 
 - `row_revision($id)`
 
-    Counts the changes of a row's data (`update_row`, `replace_row`,
-    `set_value`); the table rebuilds a row's widgets when it changes.
+    Goes up by one with every change of a row's data (`update_row`,
+    `replace_row`, `set_value`); the table refreshes a row's widgets when
+    it changes. A row that `set_rows` or `add_rows` stores starts at the
+    model's `revision`, so a row given again with an id the table showed
+    before (by `set_rows`, or removed and added again) never has a revision
+    that row had, and the table shows the new data.
 
 ## Cells
 

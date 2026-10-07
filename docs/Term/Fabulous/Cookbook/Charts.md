@@ -567,7 +567,9 @@ the right chart. `[ x, y ]` points are an error here.
 their width follows the spread of the values (the Freedman-Diaconis
 rule), rounded to 1, 2, 2.5 or 5 times a power of ten, with at most
 about 50 bins. `bins => 20` asks for 20 equal bins between the
-smallest and the largest value; `bin_width` fixes the width.
+smallest and the largest value; `bin_width` fixes the width. A
+histogram has at most 1000 bins: a `bin_width` too small for the data
+widens to a round width that needs no more.
 - `range => [ 0, 100 ]` fixes where the bins start and end, so the
 chart covers all possible scores, also those nobody reached. Values
 outside the range are not counted.

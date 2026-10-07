@@ -33,6 +33,7 @@ class Term::Fabulous::Widget::Table
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
+	use Feature::Compat::Try;
 	use Clay::XS qw(
 		sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
 		CLAY__SIZING_TYPE_GROW CLAY__SIZING_TYPE_PERCENT
@@ -1597,15 +1598,13 @@ class Term::Fabulous::Widget::Table
 		$_filter_text{$key} = $text;
 		delete $_filter_error{$key};
 		my $filter;
-		my $ok = eval {
+		try {
 			$filter = Term::Fabulous::Widget::Table::Filter->parse( $text, column => $key, type => $column->type, on => $column->filter_on );
-			1;
-		};
-		unless ($ok) {
-			( $_filter_error{$key} = $@ ) =~ s/\ATerm::Fabulous::Widget::Table::Filter: //;
-			$_filter_error{$key} =~ s/\s+\z//;
 		}
-		$model->set_filter( "column:$key" => $ok ? $filter : undef );
+		catch ($error) {
+			$_filter_error{$key} = $error =~ s/\ATerm::Fabulous::Widget::Table::Filter: //r =~ s/\s+\z//r;
+		}
+		$model->set_filter( "column:$key" => $filter );
 		$model->expand_to_matches;
 		$_reveal_cursor = 1;
 		$self->_changed;

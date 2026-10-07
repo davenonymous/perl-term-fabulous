@@ -8,10 +8,13 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(color_attr clay_color cell_color_attr blended_bg_attr blended_fg_attr);
+our @EXPORT_OK = qw(color_attr clay_color cell_color_attr blended_bg_attr blended_fg_attr STYLE_FLAGS);
 
 use Scalar::Util qw(blessed);
-use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK);
+use Term::Fabulous::Termbox qw(
+	TB_DEFAULT TB_HI_BLACK
+	TB_BOLD TB_DIM TB_ITALIC TB_UNDERLINE TB_BLINK TB_REVERSE TB_INVISIBLE TB_STRIKEOUT TB_UNDERLINE_2 TB_OVERLINE
+);
 
 use Term::Fabulous::Color;
 
@@ -20,6 +23,21 @@ use constant MAX_RGB     => 0xFFFFFF;
 
 # The bits of an attribute that hold its color; the rest are style flags.
 use constant COLOR_BITS => MAX_RGB | TB_HI_BLACK;
+
+# Every style flag: [ flag, SGR parameter, name ], by SGR parameter. The
+# one table of what a flag means on a terminal.
+use constant STYLE_FLAGS => (
+	[ TB_BOLD,        1,  'bold' ],
+	[ TB_DIM,         2,  'dim' ],
+	[ TB_ITALIC,      3,  'italic' ],
+	[ TB_UNDERLINE,   4,  'underline' ],
+	[ TB_BLINK,       5,  'blink' ],
+	[ TB_REVERSE,     7,  'reverse' ],
+	[ TB_INVISIBLE,   8,  'invisible' ],
+	[ TB_STRIKEOUT,   9,  'strikeout' ],
+	[ TB_UNDERLINE_2, 21, 'double_underline' ],
+	[ TB_OVERLINE,    53, 'overline' ],
+);
 
 my %attr_by_rgba;
 my %color_by_clay_rgba;
@@ -121,13 +139,15 @@ Term::Fabulous::Render::Attr - Turn colors into termbox2 truecolor attributes
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr blended_bg_attr);
+	use Term::Fabulous::Render::Attr qw(color_attr clay_color cell_color_attr blended_bg_attr STYLE_FLAGS);
 	use Term::Fabulous::Color;
 
 	my $fg = color_attr( Term::Fabulous::Color->rgb( 0, 0, 0 ) );               # TB_HI_BLACK
 	my $bg = color_attr( clay_color( { r => 20, g => 25, b => 35, a => 255 } ) );  # 0x141923
 	my $cell_fg = cell_color_attr( fg => '#ffcc00' );                             # 0xFFCC00
 	my $dimmed  = blended_bg_attr( Term::Fabulous::Color->rgba( 0, 0, 0, 128 ), 0xFFFFFF );  # 0x7F7F7F
+
+	my %name_of_sgr = map { $_->[1] => $_->[2] } STYLE_FLAGS;                   # 1 => 'bold', ...
 
 =head1 DESCRIPTION
 
@@ -167,7 +187,8 @@ distribution with 64-bit attributes (see L<Term::Fabulous::Termbox>).
 
 =head1 FUNCTIONS
 
-Nothing is exported by default. Import the functions you need by name.
+Nothing is exported by default. Import the functions you need by name,
+and L</STYLE_FLAGS> likewise.
 
 =head2 color_attr
 
@@ -242,6 +263,35 @@ The same mix for the foreground attribute C<$under> of a glyph that a
 translucent background is painted over, so that the glyph shows through
 tinted. A terminal-default foreground cannot be blended and is returned
 unchanged; style flags such as C<TB_REVERSE> are kept.
+
+=head1 CONSTANTS
+
+=head2 STYLE_FLAGS
+
+	foreach my $style (STYLE_FLAGS) {
+		my ( $flag, $sgr, $name ) = @$style;
+		...
+	}
+
+Every style flag of an attribute, as a list of array references
+C<[ $flag, $sgr, $name ]> in the order of their SGR parameters (they are
+shared; do not change them): the termbox2 flag of L<Term::Fabulous::Termbox>, the SGR
+parameter that switches it on in a terminal, and its name:
+
+	TB_BOLD          1  bold
+	TB_DIM           2  dim
+	TB_ITALIC        3  italic
+	TB_UNDERLINE     4  underline
+	TB_BLINK         5  blink
+	TB_REVERSE       7  reverse
+	TB_INVISIBLE     8  invisible
+	TB_STRIKEOUT     9  strikeout
+	TB_UNDERLINE_2  21  double_underline
+	TB_OVERLINE     53  overline
+
+The parameters are the ones termbox2 writes for these flags.
+L<Term::Fabulous::Render::Target::Grid/row_text> writes them, and the
+screenshot tools read them back, from this one table.
 
 =head1 SEE ALSO
 

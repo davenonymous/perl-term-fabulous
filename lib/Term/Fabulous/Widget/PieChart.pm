@@ -73,7 +73,7 @@ class Term::Fabulous::Widget::PieChart
 		$gap           = boolean( $self, gap => $gap );
 		$format        = check_number_format( ref $self, 'format', $format );
 		$self->_check_title( center_text => $center_text );
-		$self->_check_title( other_label => $other_label );
+		$other_label = $self->_check_title( other_label => $other_label ) // 'Other';
 		$self->set_data( $initial_data, $initial_labels, $initial_colors );
 		( $initial_data, $initial_labels, $initial_colors ) = ();
 	}
@@ -124,8 +124,16 @@ class Term::Fabulous::Widget::PieChart
 		$_->{slot} //= $_next_slot++ foreach @slices;
 		@_slices         = @slices;
 		%_slice_by_label = map { $_->{label} => $_ } @_slices;
+		$self->_end_gone_hover;
 		$self->mark_changed;
 		return $self;
+	}
+
+	# A hover on a slice the chart no longer has ends; the folded slice
+	# stays while small slices can fold.
+	method _end_gone_hover () {
+		$self->end_hover_unless_shown( ( map { $_->{label} } @_slices ), ( $other > 0 ? $other_label : () ) );
+		return;
 	}
 
 	# data: numbers (named by labels), [ label, value ] pairs, or
@@ -177,6 +185,7 @@ class Term::Fabulous::Widget::PieChart
 		my %gone = map { $_ => 1 } @labels;
 		@_slices = grep { !$gone{ $_->{label} } } @_slices;
 		delete @_slice_by_label{@labels};
+		$self->_end_gone_hover;
 		$self->mark_changed;
 		return $self;
 	}
@@ -184,6 +193,7 @@ class Term::Fabulous::Widget::PieChart
 	method clear_slices () {
 		@_slices         = ();
 		%_slice_by_label = ();
+		$self->_end_gone_hover;
 		$self->mark_changed;
 		return $self;
 	}
@@ -633,7 +643,8 @@ change in the next frame.
 	$chart->set_data( \@data, \@labels, \@colors );
 
 Replaces all slices; see L</Data>. Dies without changing anything for
-invalid data.
+invalid data. When the mouse pointer is on a slice whose label is gone,
+the hover ends (see L<Term::Fabulous::Widget::Chart/Hover and emphasis>).
 
 =head2 set_value
 
@@ -651,7 +662,8 @@ the chart.
 C<add_slice> adds a slice at the end (the color is optional) and dies
 when the label exists already. C<remove_slice> removes the slices with
 these labels and dies, removing none, when one of them does not exist.
-C<clear_slices> removes all. They return the chart.
+C<clear_slices> removes all. They return the chart. Removing the slice
+the mouse pointer is on ends the hover.
 
 =head2 set_slice_color
 

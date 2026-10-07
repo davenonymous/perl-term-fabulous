@@ -33,6 +33,8 @@ class Term::Fabulous::Widget::RadarChart
 
 	use constant {
 		FILL_OPACITY => 0.25,
+		DOT_POINT    => 'dot',
+		SQUARE_POINT => 'square',
 		POINT        => "\x{2022}",
 		LEGEND_POINT => "\x{25CF}",
 	};
@@ -53,8 +55,7 @@ class Term::Fabulous::Widget::RadarChart
 		my %given = ( marker => $marker, line_style => $line_style, points => $points, point => $point, fill_opacity => $fill_opacity, transform => $transform );
 		$self->_set_default( $_ => $given{$_} ) foreach grep { defined $given{$_} } @DEFAULTS;
 		$labels = $self->_checked_labels($labels);
-		$self->_checked_end( min => $min );
-		$self->_checked_end( max => $max );
+		$self->_check_ends( $self->_checked_end( min => $min ), $self->_checked_end( max => $max ) );
 		$self->_fail( 'ticks', 'a positive integer or undef', $ticks ) if defined $ticks && ( ref $ticks || $ticks !~ /\A[1-9][0-9]*\z/ );
 		one_of( $self, grid => $grid, @GRID );
 		$format = check_number_format( ref $self, 'format', $format );
@@ -94,6 +95,14 @@ class Term::Fabulous::Widget::RadarChart
 		return $value;
 	}
 
+	# Dies unless a min and a max, when both are given, leave room between
+	# them.
+	method _check_ends ( $low, $high ) {
+		return unless defined $low && defined $high;
+		croak ref($self) . ": min ($low) must be less than max ($high)" unless $low < $high;
+		return;
+	}
+
 	# ---------------------------------------------------------------------
 	# Accessors
 	# ---------------------------------------------------------------------
@@ -104,8 +113,18 @@ class Term::Fabulous::Widget::RadarChart
 		return $value;
 	}
 
-	method min          (@new) { return @new ? $self->_set( \$min, $self->_checked_end( min => $new[0] ) ) : $min }
-	method max          (@new) { return @new ? $self->_set( \$max, $self->_checked_end( max => $new[0] ) ) : $max }
+	method min (@new) {
+		return $min unless @new;
+		$self->_check_ends( $self->_checked_end( min => $new[0] ), $max );
+		return $self->_set( \$min, $new[0] );
+	}
+
+	method max (@new) {
+		return $max unless @new;
+		$self->_check_ends( $min, $self->_checked_end( max => $new[0] ) );
+		return $self->_set( \$max, $new[0] );
+	}
+
 	method grid         (@new) { return @new ? $self->_set( \$grid, one_of( $self, grid => $new[0], @GRID ) ) : $grid }
 	method format       (@new) { return @new ? $self->_set( \$format, check_number_format( ref $self, 'format', $new[0] ) ) : $format }
 	method marker       (@new) { return $self->series_default( marker       => @new ) }
@@ -261,8 +280,14 @@ class Term::Fabulous::Widget::RadarChart
 			}
 			$lines->start_pattern(undef);
 			if ( $self->series_option( $series, 'points' ) ) {
-				my $glyph = $self->series_option( $series, 'point' ) // POINT;
-				push @points, map { [ floor( $corners[$_][0] ), floor( $corners[$_][1] ), $glyph, $color, $targets[$_] ] } grep { defined $entry->{values}[$_] } 0 .. $count - 1;
+				my $glyph  = $self->series_option( $series, 'point' ) // POINT;
+				my @valued = grep { defined $entry->{values}[$_] } 0 .. $count - 1;
+				if ( $glyph eq DOT_POINT || $glyph eq SQUARE_POINT ) {
+					_raster_point( $lines, $glyph, $corners[$_], $color, $targets[$_] ) foreach @valued;
+				}
+				else {
+					push @points, map { [ floor( $corners[$_][0] ), floor( $corners[$_][1] ), $glyph, $color, $targets[$_] ] } @valued;
+				}
 			}
 		}
 		$surface->composite( $fills{$_}, 'fill',   $x, $y ) foreach @fill_order;
@@ -270,7 +295,6 @@ class Term::Fabulous::Widget::RadarChart
 		$surface->composite( $lines,     'stroke', $x, $y );
 		foreach my $point (@points) {
 			my ( $column, $row, $glyph, $color, $owner ) = @$point;
-			next if $glyph eq 'dot' || $glyph eq 'square';
 			$surface->put( $x + $column, $y + $row, $glyph, $color );
 			$surface->set_owner( $x + $column, $y + $row, 'stroke', $owner );
 		}
@@ -309,6 +333,19 @@ class Term::Fabulous::Widget::RadarChart
 			$surface->text( $x + $column, $y + $row, $tick->{label}, $look->{label}, max => $width - $column );
 			push @taken, [ $row, $column, $last ];
 		}
+		return;
+	}
+
+	# A dot or square point drawn into a raster: the subpixel at the
+	# corner, or the two by two around it.
+	sub _raster_point ( $raster, $glyph, $corner, $color, $owner ) {
+		my ( $sx, $sy ) = ( $raster->marker->columns, $raster->marker->rows );
+		if ( $glyph eq DOT_POINT ) {
+			$raster->set( floor( $corner->[0] * $sx ), floor( $corner->[1] * $sy ), $color, $owner );
+			return;
+		}
+		my ( $left, $top ) = ( floor( $corner->[0] * $sx - 0.5 ), floor( $corner->[1] * $sy - 0.5 ) );
+		$raster->set( $left + $_ % 2, $top + int( $_ / 2 ), $color, $owner ) foreach 0 .. 3;
 		return;
 	}
 
@@ -484,8 +521,11 @@ L<Term::Fabulous::Widget::XYChart/Series keys> for the common keys.
 
 =item C<min>, C<max>
 
-Numbers: the values at the center and at the outer ring. Default:
-C<undef>, from the data (the center is 0 unless the data goes below).
+Numbers: the values at the center and at the outer ring; with both
+given, C<min> must be less than C<max>. Default: C<undef>, from the data
+(the center is 0 unless the data goes below). A C<min> not below the
+C<max> dies when it is given, also through the accessors, and changes
+nothing.
 
 =item C<ticks>
 
@@ -528,8 +568,9 @@ The outline: C<solid> (the default), C<dashed> or C<dotted>.
 =item C<points>, C<point>
 
 C<points> true marks every value; C<point> is the mark: a single
-character (a bullet, C<U+2022>, by default), or C<dot> or C<square> as
-in L<Term::Fabulous::Widget::XYChart/Points>.
+character (a bullet, C<U+2022>, by default), or C<dot> (one Braille dot
+at the corner) or C<square> (two by two Braille dots around it), drawn
+with the outlines as in L<Term::Fabulous::Widget::XYChart/Points>.
 
 =item C<fill_opacity>
 

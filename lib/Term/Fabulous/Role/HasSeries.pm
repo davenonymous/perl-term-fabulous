@@ -42,6 +42,10 @@ role Term::Fabulous::Role::HasSeries {
 	# series stores them.
 	method check_series_points;
 
+	# Ends a hover on a series that is not among the names given; the
+	# role calls it when series go or are hidden.
+	method end_hover_unless_shown;
+
 	# The chart's point check as a series calls it: with the series and
 	# its new points. The series must not keep the chart alive.
 	method _point_check () {
@@ -116,7 +120,7 @@ role Term::Fabulous::Role::HasSeries {
 	method add_series (@specs) {
 		croak ref($self) . ": add_series needs a hash reference or key-value pairs" if @specs != 1 && @specs % 2;
 		my %spec = @specs == 1 && ref $specs[0] eq 'HASH' ? $specs[0]->%* : @specs;
-		my $name = delete $spec{name} // 'Series ' . ( @_series + 1 );
+		my $name = delete $spec{name} // $self->_free_series_name;
 		croak ref($self) . ": a series named '$name' exists already" if $_series_by_name{$name};
 		my $type = $self->_check_type( delete $spec{type} // $self->default_series_type );
 		$self->check_series_type( $name, $type );
@@ -136,6 +140,13 @@ role Term::Fabulous::Role::HasSeries {
 		return $self;
 	}
 
+	# The first of 'Series N' no series has, from N = the count + 1.
+	method _free_series_name () {
+		my $number = @_series + 1;
+		$number++ while $_series_by_name{"Series $number"};
+		return "Series $number";
+	}
+
 	method _series ($name) {
 		return $_series_by_name{ $name // '' } // croak ref($self) . ": no series named " . describe($name);
 	}
@@ -144,6 +155,7 @@ role Term::Fabulous::Role::HasSeries {
 		my %gone = map { $self->_series($_)->name => 1 } @names;
 		@_series = grep { !$gone{ $_->name } } @_series;
 		delete @_series_by_name{ keys %gone };
+		$self->_end_hidden_hover;
 		$self->mark_changed;
 		return $self;
 	}
@@ -151,8 +163,15 @@ role Term::Fabulous::Role::HasSeries {
 	method clear_series () {
 		@_series         = ();
 		%_series_by_name = ();
+		$self->_end_hidden_hover;
 		$self->mark_changed;
 		return $self;
+	}
+
+	# A hover on a series the chart no longer shows ends.
+	method _end_hidden_hover () {
+		$self->end_hover_unless_shown( map { $_->name } $self->visible_series );
+		return;
 	}
 
 	method series_names () {
@@ -200,6 +219,7 @@ role Term::Fabulous::Role::HasSeries {
 			$key eq 'color' ? $series->set_color( $options{$key} ) : $key eq 'data' ? $series->set_data( $options{$key} ) : $series->set_option( $key => $options{$key} );
 		}
 		$self->_limit($series);
+		$self->_end_hidden_hover;
 		$self->mark_changed;
 		return $self;
 	}
@@ -231,10 +251,16 @@ role Term::Fabulous::Role::HasSeries {
 	method append ( $x, $values ) {
 		croak ref($self) . ": append needs a hash reference of values by series name, got " . describe($values) unless ref $values eq 'HASH';
 		my @series = map { $self->_series($_) } sort keys $values->%*;
-		foreach my $series (@series) {
-			my $value = $values->{ $series->name };
-			$series->add_points( defined $x ? [ $x, $value ] : $value );
-			$self->_limit($series);
+
+		# Every value is parsed before any series changes, so a bad one
+		# leaves all of them as they were.
+		my @parsed = map {
+			my $value = $values->{ $_->name };
+			[ $_->parsed_points( defined $x ? [ $x, $value ] : $value ) ]
+		} @series;
+		foreach my $index ( 0 .. $#series ) {
+			$series[$index]->push_parsed( $parsed[$index]->@* );
+			$self->_limit( $series[$index] );
 		}
 		$self->mark_changed;
 		return $self;
@@ -248,6 +274,7 @@ role Term::Fabulous::Role::HasSeries {
 
 	method hide_series (@names) {
 		$self->_series($_)->set_option( visible => 0 ) foreach @names;
+		$self->_end_hidden_hover;
 		$self->mark_changed;
 		return $self;
 	}
@@ -298,8 +325,9 @@ series that has none of its own.
 	$chart->add_series( name => $name, data => \@data );
 
 Adds a series at the end; see L<Term::Fabulous::Widget::XYChart/SERIES>
-for its keys. A series without a name is called C<Series 1>, C<Series 2>,
-and so on. Dies for a name the chart has already, a type the chart cannot
+for its keys. A series without a name is called C<Series N>, with the
+number after the count of series (C<Series 1>, C<Series 2>, ...), or the
+next one no series has yet when that name is taken. Dies for a name the chart has already, a type the chart cannot
 draw, invalid options or data, and data the chart cannot show (a radar
 chart: a value for a label it does not have); nothing is added then.
 
@@ -309,7 +337,9 @@ chart: a value for a label it does not have); nothing is added then.
 	$chart->clear_series;
 
 Remove the named series, or all of them. An unknown name dies before any
-series is removed. The remaining series keep their colors.
+series is removed. The remaining series keep their colors. When the
+mouse pointer is on a series that goes, the hover ends as if the pointer
+had moved off it (see L<Term::Fabulous::Widget::Chart/Hover and emphasis>).
 
 =head2 series_names, has_series
 
@@ -352,13 +382,16 @@ or data the chart cannot show, dies and changes nothing.
 
 Adds one point to each series named in the hash, all at the same x (with
 C<undef>: each at its next position): the way to feed several series from
-one measurement. An unknown name or an invalid value dies and adds no
-point to any series.
+one measurement. Every value is checked before any series changes: an
+unknown name or an invalid value for one series dies and adds no point
+to any series, so the series stay in step.
 
 =head2 show_series, hide_series, is_series_visible
 
 A hidden series is not drawn, has no legend entry and does not count for
-the axes; its data is kept.
+the axes; its data is kept. Hiding the series the mouse pointer is on
+ends the hover, as removing it does; so does C<< set_series( $name,
+visible =E<gt> 0 ) >>.
 
 =head2 series_default
 
@@ -385,6 +418,9 @@ for the chart's own drawing code.
 
 C<default_series_type>, C<series_types> (the types the chart draws),
 C<series_default_names> (the options it takes for all its series),
+C<< end_hover_unless_shown(@names) >> (which
+L<Term::Fabulous::Widget::Chart> provides: the role calls it with the
+names of the visible series after series go or are hidden),
 C<< check_series_type( $name, $type ) >>, which dies when the chart cannot
 show a series of that type in its current state (the role calls it
 before a series is added or changes its type), and

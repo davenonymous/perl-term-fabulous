@@ -48,6 +48,12 @@ subtest 'junction' => sub {
 	like dies { $Style->junction( up     => 'Solid' ) }, qr/the up arm style must be a Term::Fabulous::Enum::BorderStyle/, 'a style name dies';
 };
 
+subtest 'junction: an arm without joints is no line, also next to one with joints' => sub {
+	my ( $S, $Hidden ) = map { $Style->$_ } qw(Solid Hidden);
+	is $Style->junction( right => $Hidden, left => $S, down => $S ), "\x{2510}", 'a hidden right arm leaves the corner of the left and the down arm';
+	is $Style->junction( down => $Hidden, up => $S, right => $S, left => $S ), "\x{2534}", 'a hidden down arm leaves the T of the other three';
+};
+
 subtest 'style list' => sub {
 	is $Style->from_name('Tab'), undef, 'Tab is gone';
 	isa_ok $Style->from_name('Hidden'), [$Style], 'Hidden exists';

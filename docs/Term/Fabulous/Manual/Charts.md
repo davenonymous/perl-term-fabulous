@@ -471,7 +471,8 @@ $chart->on(
 ```
 
 When the pointer leaves the series, the chart fires one more event,
-without a series. `$chart->highlight($name)` emphasizes a series
+without a series; so it does when the program removes or hides the
+series (or slice) under the pointer. `$chart->highlight($name)` emphasizes a series
 from the program, for example the one selected in a list;
 `hover => 0` turns the hover effects and events off.
 `examples/cookbook/chart-hover.pl` shows the hovered point below the

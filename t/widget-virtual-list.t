@@ -6,6 +6,7 @@ no warnings 'experimental::signatures';
 
 use Test2::V0;
 
+use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow);
 use Scalar::Util qw(refaddr);
 use Term::Fabulous;
@@ -153,6 +154,28 @@ subtest 'count and rebuild' => sub {
 	isnt refaddr( $list->item(0) ), refaddr($first), 'rebuild builds the items again';
 	is $h->{built}[0],              2,               'once more';
 	is row( $h, 0 ),                'Item 0',        'and shows them';
+};
+
+subtest 'OnScroll bubbles to the ancestors' => sub {
+	my ( $list, $h ) = list_ui(1000);
+	my %scrolls = ( list => 0, root => 0 );
+	$list->on( OnScroll => sub { $scrolls{list}++; return Clay::UI::Enum::Result->CONTINUE } );
+	$h->{ui}->root->on( OnScroll => sub { $scrolls{root}++; return Clay::UI::Enum::Result->CONTINUE } );
+	wheel( $h, 1 );
+	is \%scrolls, { list => 1, root => 1 }, 'a wheel notch over the list reaches the list and the root';
+};
+
+subtest 'a smaller count forgets the heights of the dropped items' => sub {
+	my $rows = 3;
+	my ( $list, $h ) = list_ui( 100, build => sub ($index) { Term::Fabulous::Widget::Text->new( text => join "\n", ("Item $index") x $rows ) } );
+	$list->scroll_to_item(50);
+	$h->{ui}->step;
+	$list->count(2);
+	$h->{ui}->step;
+	$rows = 1;
+	$list->count(100);
+	$h->{ui}->step;
+	is $h->{ui}->scroll_state($list)->{content}{height}, 2 * 3 + 98, 'the two kept items are three rows tall, the 98 new ones one row';
 };
 
 done_testing;

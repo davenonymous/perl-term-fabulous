@@ -108,6 +108,45 @@ subtest 'hover and hover_fade' => sub {
 	is [ hovers($h), $chart->hovered ], [ [ {} ], undef ], 'turning hover off ends the hover';
 };
 
+subtest 'the hovered series goes away' => sub {
+	my %gone = (
+		remove_series => sub ($chart) { $chart->remove_series('one') },
+		hide_series   => sub ($chart) { $chart->hide_series('one') },
+		set_series    => sub ($chart) { $chart->set_series( one => ( visible => 0 ) ) },
+		clear_series  => sub ($chart) { $chart->clear_series },
+	);
+	foreach my $method ( sort keys %gone ) {
+		my $h     = hover_ui( bars() );
+		my $chart = $h->{chart};
+		pointer_to( $h, 1, 0 );
+		hovers($h);
+		$gone{$method}->($chart);
+		$h->{ui}->step;
+		is [ hovers($h), $chart->hovered ], [ [ {} ], undef ], "$method ends the hover";
+		next if $method eq 'clear_series';
+		ok scalar( cells_with( $chart, sub ( $c, $x, $y ) { ( bg_at( $c, $x, $y ) // -1 ) == $BLUE } ) ), 'and the series left is not faded';
+	}
+
+	my $h = hover_ui( bars() );
+	pointer_to( $h, 1, 0 );
+	hovers($h);
+	$h->{chart}->hide_series('two');
+	is [ hovers($h), $h->{chart}->hovered->{series} ], [ [], 'one' ], 'hiding another series keeps the hover';
+
+	my %slices_gone = (
+		remove_slice => sub ($chart) { $chart->remove_slice('B') },
+		set_data     => sub ($chart) { $chart->set_data( [ [ A => 1 ], [ C => 2 ] ] ) },
+		clear_slices => sub ($chart) { $chart->clear_slices },
+	);
+	foreach my $method ( sort keys %slices_gone ) {
+		my $donut = hover_ui( sized( 'Term::Fabulous::Widget::DonutChart', 40, 14, data => [ [ A => 50 ], [ B => 30 ], [ C => 20 ] ] ) );
+		pointer_to( $donut, 33, 6 );
+		hovers($donut);
+		$slices_gone{$method}->( $donut->{chart} );
+		is [ hovers($donut), $donut->{chart}->hovered ], [ [ {} ], undef ], "$method ends the hover on a slice";
+	}
+};
+
 subtest 'slices' => sub {
 	my $h     = hover_ui( sized( 'Term::Fabulous::Widget::DonutChart', 40, 14, data => [ [ A => 50 ], [ B => 30 ], [ C => 20 ] ] ) );
 	my $chart = $h->{chart};

@@ -62,12 +62,19 @@ class Term::Fabulous::Theme :strict(params) {
 	# A slot: its kind (color or style), its default for the normal state
 	# and for every state it has. A state default of 'normal' means the
 	# state looks like the normal state unless a theme says otherwise.
+	# Flags added to a slot: reverse (it may be 'reverse'), required (it
+	# cannot be 'none', its widget draws with the value) and grid (a style
+	# with joints).
 	sub _color_slot ( $default, %by_state ) {
 		return { kind => 'color', default => { normal => $default, %by_state } };
 	}
 
 	sub _style_slot ($default) {
 		return { kind => 'style', default => { normal => $default } };
+	}
+
+	sub _required ( $slot, %flags ) {
+		return { %$slot, required => 1, %flags };
 	}
 
 	my %FAMILY = (
@@ -94,11 +101,11 @@ class Term::Fabulous::Theme :strict(params) {
 				'border.color'     => _color_slot( 'border', focused  => 'normal',           disabled => 'normal' ),
 				'text'             => _color_slot( 'text',   disabled => 'disabled' ),
 				'accent'           => _color_slot('accent'),
-				'star'             => _color_slot('warning'),
+				'star'             => _required( _color_slot('warning') ),
 				'placeholder'      => _color_slot('placeholder'),
 				'selection'        => _color_slot('selection'),
 				'track'            => _color_slot('outline'),
-				'inactive'         => _color_slot('outline'),
+				'inactive'         => _required( _color_slot('outline') ),
 				'half'             => _color_slot('none'),
 				'separator'        => _color_slot('outline'),
 				'selected_text'    => _color_slot('text_inverse'),
@@ -123,28 +130,28 @@ class Term::Fabulous::Theme :strict(params) {
 		table => {
 			extends => 'box',
 			slots   => {
-				'text'              => _color_slot('text'),
-				'header.text'       => _color_slot('text_bright'),
+				'text'              => _required( _color_slot('text') ),
+				'header.text'       => _required( _color_slot('text_bright') ),
 				'header.background' => _color_slot('surface_raised'),
 				'group.text'        => _color_slot('accent'),
 				'group.background'  => _color_slot('group_background'),
-				'cursor'            => _color_slot('focus_background'),
+				'cursor'            => _required( _color_slot('focus_background') ),
 				'selected'          => _color_slot('selected'),
 				'hover'             => _color_slot('hover_low'),
 				'filter.background' => _color_slot('surface_low'),
 				'error'             => _color_slot('danger'),
-				'muted'             => _color_slot('text_muted'),
-				'line.color'        => _color_slot('line'),
+				'muted'             => _required( _color_slot('text_muted') ),
+				'line.color'        => _required( _color_slot('line') ),
 				'stripe'            => _color_slot('none'),
-				'pager.button'      => _color_slot('button_face'),
+				'pager.button'      => _required( _color_slot('button_face') ),
 			}
 		},
-		scrollbar => { extends => 'box', slots => { track => _color_slot('track_scroll'), thumb => _color_slot('accent') } },
+		scrollbar => { extends => 'box', slots => { track => _required( _color_slot('track_scroll') ), thumb => _required( _color_slot('accent') ) } },
 		tabs      => {
 			extends => 'box',
 			slots   => {
 				'line.color'       => _color_slot('outline'),
-				'line.style'       => _style_slot('Round'),
+				'line.style'       => _required( _style_slot('Round'), grid => 1 ),
 				'text'             => _color_slot( 'text_dim', active => 'text', disabled => 'disabled' ),
 				'hover_background' => _color_slot('hover_background'),
 				'focus_border'     => _color_slot('accent'),
@@ -153,10 +160,10 @@ class Term::Fabulous::Theme :strict(params) {
 		accordion => {
 			extends => 'box',
 			slots   => {
-				'title'             => _color_slot('text'),
-				'accent'            => _color_slot('accent'),
+				'title'             => _required( _color_slot('text') ),
+				'accent'            => _required( _color_slot('accent') ),
 				'header.background' => _color_slot( 'none', focused => 'focus_background', hovered => 'hover_background' ),
-				'disabled'          => _color_slot('disabled'),
+				'disabled'          => _required( _color_slot('disabled') ),
 				'border.color'      => _color_slot('disabled'),
 				'border.style'      => _style_slot('Round'),
 			}
@@ -175,12 +182,12 @@ class Term::Fabulous::Theme :strict(params) {
 			slots   => {
 				'background'     => _color_slot('surface'),
 				'border.style'   => _style_slot('Round'),
-				'text'           => _color_slot('text'),
-				'important_text' => _color_slot('text_inverse'),
-				'info'           => _color_slot('accent'),
-				'success'        => _color_slot('success'),
-				'warning'        => _color_slot('warning'),
-				'danger'         => _color_slot('danger'),
+				'text'           => _required( _color_slot('text') ),
+				'important_text' => _required( _color_slot('text_inverse') ),
+				'info'           => _required( _color_slot('accent') ),
+				'success'        => _required( _color_slot('success') ),
+				'warning'        => _required( _color_slot('warning') ),
+				'danger'         => _required( _color_slot('danger') ),
 			}
 		},
 		progress => {
@@ -377,18 +384,25 @@ class Term::Fabulous::Theme :strict(params) {
 		die "Term::Fabulous::Theme: $what: the family $family has no slot '$name' (known: " . join( ', ', sort keys %$slots ) . ")";
 	}
 
-	# A raw spec a theme may give: undef or 'none' (no color or style), a
-	# token name, 'reverse' where the slot allows it, a style name or item
-	# for a style slot, any color for a color slot. Returned normalized.
+	# A raw spec a theme may give: undef or 'none' (no color or style)
+	# unless the slot is required, a token name, 'reverse' where the slot
+	# allows it, a style name or item for a style slot (one with joints for
+	# a grid slot), any color for a color slot. Returned normalized.
 	sub _checked_spec ( $family, $slot, $state, $value ) {
 		my $definition = _slots_of($family)->{$slot};
 		my $what       = "$family.$slot" . ( $state eq 'normal' ? '' : ".$state" );
-		return 'none' if !defined $value || ( !ref $value && $value eq 'none' );
+		if ( !defined $value || ( !ref $value && $value eq 'none' ) ) {
+			die "Term::Fabulous::Theme: $what cannot be 'none'" if $definition->{required};
+			return 'none';
+		}
 		if ( !ref $value && $value eq 'reverse' ) {
 			die "Term::Fabulous::Theme: $what cannot be 'reverse' (only button.background can)" unless $definition->{reverse};
 			return 'reverse';
 		}
-		return border_style( __PACKAGE__, $what, $value, none => 'none' ) if $definition->{kind} eq 'style';
+		if ( $definition->{kind} eq 'style' ) {
+			my %allowed = ( ( $definition->{required} ? () : ( none => 'none' ) ), ( $definition->{grid} ? ( grid => 1 ) : () ) );
+			return border_style( __PACKAGE__, $what, $value, %allowed );
+		}
 		return $value if !ref $value && exists $PALETTE{$value};
 		return color( __PACKAGE__, $what, $value );
 	}
@@ -613,13 +627,15 @@ class Term::Fabulous::Theme :strict(params) {
 		foreach my $kid ( $node->children->@* ) {
 			my $token = $kid->name;
 			die "palette: unknown token '$token' (known: " . join( ', ', tokens() ) . ")" unless exists $PALETTE{$token};
+			die "palette: the token '$token' is set twice" if exists $palette{$token};
 			$palette{$token} = _single_string( $kid, "palette token '$token'" );
 		}
 		return \%palette;
 	}
 
 	# The nodes of a family block, or of a state or variant block in it:
-	# state blocks, variant blocks and slot nodes.
+	# state blocks, variant blocks and slot nodes. A slot set twice in one
+	# document is a mistake (usually a copy), not an override.
 	sub _parse_block ( $nodes, $family, $state, $slots, $variants, $variant = undef ) {
 		foreach my $kid (@$nodes) {
 			my $kid_name = $kid->name;
@@ -638,13 +654,11 @@ class Term::Fabulous::Theme :strict(params) {
 			}
 			foreach my $pair ( _slot_values( $kid, $family ) ) {
 				my ( $slot, $value ) = @$pair;
-				my $key = $state eq 'normal' ? $slot : "$slot.$state";
-				if ( defined $variant ) {
-					$variants->{"$family.$variant"}{$key} = $value;
-				}
-				else {
-					$slots->{"$family.$key"} = $value;
-				}
+				my $key    = $state eq 'normal' ? $slot                                      : "$slot.$state";
+				my $target = defined $variant   ? ( $variants->{"$family.$variant"} //= {} ) : $slots;
+				my $name   = defined $variant   ? $key                                       : "$family.$key";
+				die "$family: " . ( defined $variant ? "variant '$variant': " : '' ) . "the slot '$key' is set twice" if exists $target->{$name};
+				$target->{$name} = $value;
 			}
 		}
 		return;
@@ -785,11 +799,26 @@ Where a theme sets a slot, it gives one of:
 
 =item * a border style name, such as C<Round> (a style slot; see L<Term::Fabulous::Enum::BorderStyle>);
 
-=item * C<none>: no color or no style, as if the widget had been given none;
+=item * C<none>: no color or no style, as if the widget had been given none (not for a required slot, see below);
 
 =item * C<reverse>: for C<button.background> in the C<pressed> state only, the button is drawn in reverse video.
 
 =back
+
+Some slots are I<required>: their widgets draw with the value, or hand
+it to a part that needs one, so C<none> (and C<undef> or C<#null>) dies
+where the theme is built, with C<Term::Fabulous::Theme: SLOT cannot be
+'none'>, in every state the slot has. The required slots are
+C<scrollbar.track> and C<scrollbar.thumb>; C<tabs.line.style>;
+C<input.star> and C<input.inactive> (in every family extending
+C<input>); C<table.text>, C<table.header.text>, C<table.cursor>,
+C<table.muted>, C<table.line.color> and C<table.pager.button>;
+C<accordion.title>, C<accordion.accent> and C<accordion.disabled>;
+C<toast.text>, C<toast.important_text>, C<toast.info>,
+C<toast.success>, C<toast.warning> and C<toast.danger>.
+C<tabs.line.style> also needs a style with joints (see
+L<Term::Fabulous::Enum::BorderStyle/get_grid_styles>), because the tab
+bar's line joins the tab borders; another style dies.
 
 =head1 THEME FILES
 
@@ -830,7 +859,12 @@ C<border style=Round color="border"> sets C<border.style> and
 C<border.color>. A node named after a state holds the slots of that
 state. A C<variant "NAME"> node holds the slots and states of a
 variant. C<#null> means C<none>. An unknown family, slot, state, token
-or style dies with the known names.
+or style dies with the known names, and so does C<none> or C<#null> for
+a required slot (see L</Values>). A palette token, or a slot of a family,
+state or variant, that is set twice in one document dies too (C<palette:
+the token 'accent' is set twice>, C<button: the slot 'text.focused' is
+set twice>), also when the two settings are in two nodes of the same
+family.
 
 =head1 CONSTRUCTORS
 

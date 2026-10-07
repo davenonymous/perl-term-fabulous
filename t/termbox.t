@@ -6,6 +6,7 @@ use utf8;
 
 use Test2::V0;
 use Feature::Compat::Try;
+use Encode ();
 
 use Term::Fabulous::Termbox qw(:all);
 use Term::Fabulous::Termbox::Event;
@@ -57,6 +58,15 @@ subtest 'before tb_init' => sub {
 	my $event = Term::Fabulous::Termbox::Event->new;
 	is tb_peek_event( $event, 0 ), TB_ERR_NOT_INIT, 'tb_peek_event reports the status';
 	is $event->type,               0,               'and leaves the event untouched';
+};
+
+subtest 'malformed UTF-8' => sub {
+	my $malformed = "\xC3A";
+	Encode::_utf8_on($malformed);
+	like dies { tb_cluster_width($malformed) },                               qr/tb_cluster_width needs well-formed UTF-8/, 'tb_cluster_width dies';
+	like dies { tb_set_cell_ex( 0, 0, $malformed, TB_DEFAULT, TB_DEFAULT ) }, qr/tb_set_cell_ex needs well-formed UTF-8/,   'tb_set_cell_ex dies';
+	like dies { tb_set_cell( 0, 0, $malformed, TB_DEFAULT, TB_DEFAULT ) },    qr/tb_set_cell needs well-formed UTF-8/,      'tb_set_cell dies';
+	like dies { tb_extend_cell( 0, 0, $malformed ) },                         qr/tb_extend_cell needs well-formed UTF-8/,   'tb_extend_cell dies';
 };
 
 subtest 'event object' => sub {

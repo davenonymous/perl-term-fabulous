@@ -279,10 +279,9 @@ enum Term::Fabulous::Enum::BorderStyle {
 
 		my @directions = grep { defined $arms{$_} && $arms{$_}->joints } qw(up right down left);
 		return undef unless @directions;
-		my $horizontal = $arms{right} // $arms{left};
-		my $vertical   = $arms{down}  // $arms{up};
-		$horizontal = undef if defined $horizontal && !$horizontal->joints;
-		$vertical   = undef if defined $vertical   && !$vertical->joints;
+		my %joining    = map { $_ => $arms{$_} } @directions;    # an arm in a style without joints counts as no line
+		my $horizontal = $joining{right} // $joining{left};
+		my $vertical   = $joining{down}  // $joining{up};
 
 		my $shape = join ' ', @directions;
 		return $horizontal->glyphs->[1] unless defined $vertical;

@@ -252,6 +252,29 @@ subtest 'step outside run' => sub {
 	like dies { $nested->run }, qr/step cannot be called while run is active/, 'step inside run dies';
 };
 
+subtest 'run inside run' => sub {
+	my $handler = sub { };
+	local $SIG{INT} = $handler;
+	my ( $outer, $outer_terminal ) = memory_ui();
+	my ( $nested_error, $open_after_nested );
+	$outer->root->on(
+		Start => sub {
+			$outer_terminal->press_key('Ctrl+C');    # ends the nested run, should one start
+			$nested_error      = dies { $outer->run };
+			$open_after_nested = $outer_terminal->is_open;
+			$outer->loop->stop;
+			return;
+		}
+	);
+
+	ok lives { $outer->run }, 'the outer run returns';
+	like $nested_error, qr/^Term::Fabulous: run is active already; it cannot be called again until it returns/, 'run inside run dies';
+	ok $open_after_nested, 'and leaves the terminal of the outer run open';
+	is [ $outer_terminal->is_open, $outer_terminal->session_count ], [ 0, 1 ], 'the outer run closes the terminal';
+	ref_is $SIG{INT}, $handler, 'and gives back the INT handler it found';
+	is scalar( $loop->notifiers ), $notifiers_before, 'no notifier is left on the loop';
+};
+
 subtest 'nothing pins the object after run' => sub {
 	weaken( my $weak = $ui );
 	undef $ui;

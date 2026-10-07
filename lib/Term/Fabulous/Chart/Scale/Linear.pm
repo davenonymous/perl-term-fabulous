@@ -17,7 +17,10 @@ class Term::Fabulous::Chart::Scale::Linear :isa(Term::Fabulous::Chart::Scale) {
 	use POSIX qw(ceil floor);
 	use Term::Fabulous::Chart::Format qw(number_formatter);
 
-	use constant EPSILON => 1e-9;
+	use constant {
+		EPSILON    => 1e-9,
+		MOST_TICKS => 10_000,    # more never fit an axis; a step that needs them is skipped
+	};
 
 	field $step :param :reader;
 
@@ -46,10 +49,13 @@ class Term::Fabulous::Chart::Scale::Linear :isa(Term::Fabulous::Chart::Scale) {
 		return @steps;
 	}
 
-	# The multiples of $step from $low to $high.
+	# The multiples of $step from $low to $high; none when there would be
+	# more than MOST_TICKS.
 	sub _multiples ( $low, $high, $step ) {
+		my $first = ceil( $low / $step - EPSILON );
+		return () if floor( $high / $step + EPSILON ) - $first + 1 > MOST_TICKS;
 		my @values;
-		for ( my $index = ceil( $low / $step - EPSILON ); $index * $step <= $high + $step * EPSILON; $index++ ) {
+		for ( my $index = $first; $index * $step <= $high + $step * EPSILON; $index++ ) {
 			my $value = $index * $step;
 			push @values, abs($value) < $step * EPSILON ? 0 : $value;
 		}
@@ -80,6 +86,7 @@ class Term::Fabulous::Chart::Scale::Linear :isa(Term::Fabulous::Chart::Scale) {
 
 		my $best;
 		foreach my $step (@steps) {
+			next if ( $high - $low ) / $step > $cells;    # more intervals than cells: no tick could get a cell of its own
 			my $candidate = _candidate( $low, $high, $step, $fixed_low, $fixed_high, $options{nice} // 1 ) // next;
 			my ( $domain_low, $domain_high, $values ) = @$candidate{qw(low high values)};
 			my $intervals = @$values - 1;
@@ -222,7 +229,9 @@ The label format (see L<Term::Fabulous::Chart::Format>).
 
 =item C<step>
 
-A fixed distance between ticks.
+A fixed distance between ticks. A step too small for the cells (more
+intervals across the data than the axis has cells) gives no ticks
+between the two ends, as when nothing else fits.
 
 =item C<ticks>
 

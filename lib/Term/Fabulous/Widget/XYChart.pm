@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::XYChart
 {
 	use Carp qw(croak);
 	use Feature::Compat::Try;
-	use List::Util qw(any first max min sum0 uniq);
+	use List::Util qw(all any first max min sum0 uniq);
 	use POSIX qw(ceil floor strftime);
 	use Scalar::Util qw(blessed looks_like_number);
 	use Term::Fabulous::Check qw(boolean describe glyph one_of);
@@ -66,6 +66,7 @@ class Term::Fabulous::Widget::XYChart
 	field $bar_width      :param         = 0.7;
 
 	field @_kdl_chart_steps;    # the transform steps a layout gave so far
+	field %_ends;    # x_axis and y_axis => { min, max } as the scales take them
 
 	method series_types ()         { return qw(line area bar scatter) }
 	method series_default_names () { return @SERIES_DEFAULTS }
@@ -81,9 +82,9 @@ class Term::Fabulous::Widget::XYChart
 			transform  => $transform,  max_points => $max_points, span_gaps => $span_gaps, value_labels => $value_labels,
 		);
 		$self->_set_default( $_ => $given{$_} ) foreach grep { defined $given{$_} } @SERIES_DEFAULTS;
-		$labels     = $self->_checked_labels($labels) if defined $labels;
-		$x_axis     = $self->_checked_axis( x_axis => $x_axis );
-		$y_axis     = $self->_checked_axis( y_axis => $y_axis );
+		$labels = $self->_checked_labels($labels) if defined $labels;
+		( $x_axis, $_ends{x_axis} ) = $self->_checked_axis( x_axis => $x_axis );
+		( $y_axis, $_ends{y_axis} ) = $self->_checked_axis( y_axis => $y_axis );
 		$stacked    = $self->_checked_stacked($stacked);
 		$horizontal = boolean( $self, horizontal => $horizontal );
 		$bar_width  = $self->_checked_fraction( bar_width => $bar_width );
@@ -149,15 +150,39 @@ class Term::Fabulous::Widget::XYChart
 		elsif ( defined $axis{format} && !ref $axis{format} && $axis{format} !~ /%/ ) {
 			check_number_format( $owner, "the format of $which", $axis{format} );
 		}
-		if ( $which eq 'y_axis' ) {
-			foreach my $end (qw(min max)) {
-				croak "$owner: the $end of $which must be a number, got " . describe( $axis{$end} ) if defined $axis{$end} && !defined number_of( $axis{$end} );
+		return ( \%axis, $self->_parsed_ends( $which, \%axis ) );
+	}
+
+	# The ends an axis is given, as the numbers its scale takes: numbers
+	# on y, linear and log axes, epoch seconds on time axes, either on an
+	# automatic x axis (whose kind the data decides later); a category
+	# axis has no ends. Dies for an end its axis cannot have.
+	method _parsed_ends ( $which, $axis ) {
+		my ( $owner, $type ) = ( ref $self, $axis->{type} );
+		my %given = map { defined $axis->{$_} ? ( $_ => $axis->{$_} ) : () } qw(min max);
+		if ( $type eq 'category' ) {
+			foreach my $end ( sort keys %given ) {
+				croak "$owner: the $end of $which must be a value, got " . describe( $given{$end} ) if ref $given{$end} && !( blessed $given{$end} && $given{$end}->can('epoch') );
 			}
+			return {};
 		}
-		foreach my $end (qw(min max)) {
-			croak "$owner: the $end of $which must be a value, got " . describe( $axis{$end} ) if ref $axis{$end} && !( blessed $axis{$end} && $axis{$end}->can('epoch') );
+		my ( $parse, $expected )
+			= $type eq 'time' ? ( \&date_epoch, 'a date on a time axis' )
+			: $type eq 'auto' ? ( \&date_epoch, 'a number or a date' )
+			:                   ( \&number_of, 'a number' );
+		my %ends;
+		foreach my $end ( sort keys %given ) {
+			$ends{$end} = $parse->( $given{$end} ) // croak "$owner: the $end of $which must be $expected, got " . describe( $given{$end} );
+			croak "$owner: the $end of $which must be greater than 0 on a log axis, got " . describe( $given{$end} ) if $type eq 'log' && $ends{$end} <= 0;
 		}
-		return \%axis;
+		croak "$owner: the min of $which (" . _end_text( $given{min} ) . ") must be less than its max (" . _end_text( $given{max} ) . ")"
+			if defined $ends{min} && defined $ends{max} && $ends{min} >= $ends{max};
+		return \%ends;
+	}
+
+	# An axis end as messages show it: as it was given.
+	sub _end_text ($end) {
+		return ref $end ? describe($end) : $end;
 	}
 
 	# ---------------------------------------------------------------------
@@ -173,14 +198,14 @@ class Term::Fabulous::Widget::XYChart
 
 	method x_axis (@new) {
 		return {%$x_axis} unless @new;
-		$x_axis = $self->_checked_axis( x_axis => $new[0] // {} );
+		( $x_axis, $_ends{x_axis} ) = $self->_checked_axis( x_axis => $new[0] // {} );
 		$self->mark_changed;
 		return {%$x_axis};
 	}
 
 	method y_axis (@new) {
 		return {%$y_axis} unless @new;
-		$y_axis = $self->_checked_axis( y_axis => $new[0] // {} );
+		( $y_axis, $_ends{y_axis} ) = $self->_checked_axis( y_axis => $new[0] // {} );
 		$self->mark_changed;
 		return {%$y_axis};
 	}
@@ -496,7 +521,7 @@ class Term::Fabulous::Widget::XYChart
 
 		my $fit_value = sub ( $cells, $orientation ) {
 			my %common = ( cells => $cells, orientation => $orientation, measure => $measure, extent => $y_extent, format => $self->value_format );
-			return Term::Fabulous::Chart::Scale::Log->fit( %common, map { defined $value_axis->{$_} ? ( $_ => $value_axis->{$_} ) : () } qw(min max base) )
+			return Term::Fabulous::Chart::Scale::Log->fit( %common, $_ends{y_axis}->%*, map { defined $value_axis->{$_} ? ( $_ => $value_axis->{$_} ) : () } qw(base) )
 				if $value_axis->{type} eq 'log';
 			my $integer = $y_extent && !grep { defined && $_ != int } map { $_->{ys}->@* } @$prepared;
 			return Term::Fabulous::Chart::Scale::Linear->fit(
@@ -505,14 +530,15 @@ class Term::Fabulous::Widget::XYChart
 				zero    => $value_axis->{zero} // $bar_like,
 				integer => $integer && !$percent,
 				( $percent ? ( min => 0, max => 1 ) : () ),
-				map { defined $value_axis->{$_} ? ( $_ => $value_axis->{$_} ) : () } qw(min max ticks step nice),
+				$_ends{y_axis}->%*,
+				map { defined $value_axis->{$_} ? ( $_ => $value_axis->{$_} ) : () } qw(ticks step nice),
 			);
 		};
 		my $band      = $kind eq 'category' && ( any { $_->{type} eq 'bar' } @$prepared ) ? 1 : 0;
 		my $fit_index = sub ( $cells, $orientation ) {
 			my %common = ( cells => $cells, orientation => $orientation, measure => $measure, format => $index_axis->{format} );
 			return Term::Fabulous::Chart::Scale::Category->fit( %common, labels => $categories, band => $band ) if $kind eq 'category';
-			my %ends = map { defined $index_axis->{$_} ? ( $_ => $self->_x_number( $kind, $index_axis->{$_}, 'x_axis', {} ) ) : () } qw(min max);
+			my %ends = $_ends{x_axis}->%*;
 			return Term::Fabulous::Chart::Scale::Time->fit( %common, extent => $x_extent, utc => $index_axis->{utc}, %ends ) if $kind eq 'time';
 			return Term::Fabulous::Chart::Scale::Log->fit( %common, extent => $x_extent, base => $index_axis->{base}, %ends ) if $kind eq 'log';
 			return Term::Fabulous::Chart::Scale::Linear->fit(
@@ -799,7 +825,7 @@ class Term::Fabulous::Widget::XYChart
 		my $scale = $frame->{index_scale};
 		my $label
 			= $entry->{labels}           ? $entry->{labels}[$index]
-			: $scale->kind eq 'category' ? ( [ $scale->labels ]->[$x] // $x )
+			: $scale->kind eq 'category' ? ( $scale->label_at($x) // $x )
 			: $scale->kind eq 'time'     ? strftime( $x_axis->{format} && !ref $x_axis->{format} ? $x_axis->{format} : '%Y-%m-%d %H:%M', $x_axis->{utc} ? gmtime $x : localtime $x )
 			:                              format_value($x);
 		return $self->register_target( series => $entry->{name}, index => $index, label => $label, value => $entry->{ys}[$index], x => $x );
@@ -807,7 +833,10 @@ class Term::Fabulous::Widget::XYChart
 
 	# The runs of drawable points of a series, as [ x, y, target ] in plot
 	# cells: gaps (undef, or values a log axis cannot show) end a run
-	# unless the series spans them.
+	# unless the series spans them. A run is { points => [...], sorted =>
+	# whether x never falls }; the points of a sorted run are found by
+	# halving it (line and area series are sorted unless on a category
+	# axis).
 	method _runs ( $frame, $entry, $values ) {
 		my $span = $self->series_option( $entry->{series}, 'span_gaps' );
 		my ( @runs, @run );
@@ -817,23 +846,56 @@ class Term::Fabulous::Widget::XYChart
 			my $y     = defined $value ? $self->_value_position( $frame, $value ) : undef;
 			if ( !defined $x || !defined $y ) {
 				next if $span;
-				push @runs, [@run] if @run;
+				push @runs, _run(@run) if @run;
 				@run = ();
 				next;
 			}
 			push @run, [ $x, $y, $entry->{targets}[$index] ];
 		}
-		push @runs, [@run] if @run;
+		push @runs, _run(@run) if @run;
 		return @runs;
 	}
 
+	# A run of points, and whether it is sorted by x.
+	sub _run (@points) {
+		my $sorted = all { $points[ $_ - 1 ][0] <= $points[$_][0] } 1 .. $#points;
+		return { points => \@points, sorted => $sorted ? 1 : 0 };
+	}
+
+	# How many of the first $count points pass $test, which a point passes
+	# only when every point before it does.
+	sub _leading ( $points, $count, $test ) {
+		my ( $low, $high ) = ( 0, $count );
+		while ( $low < $high ) {
+			my $middle = int( ( $low + $high ) / 2 );
+			$test->( $points->[$middle] ) ? ( $low = $middle + 1 ) : ( $high = $middle );
+		}
+		return $low;
+	}
+
 	# The polyline of a run along the series' curve, cut to from .. to.
-	method _run_polyline ( $frame, $entry, $run, $step ) {
+	# Of a sorted run, only the segments that reach into the plot (or the
+	# cell around it) are made, so a long history beside the plot costs
+	# nothing; the shape there is the shape of the whole curve. With
+	# whole, every segment is made: a dashed line counts the steps before
+	# the plot for its dashes.
+	method _run_polyline ( $frame, $entry, $run, $step, %options ) {
+		my $points   = $run->{points};
 		my $curve    = $self->series_option( $entry->{series}, 'curve' ) // 'linear';
-		my $polyline = curve_points( $run, $curve, step => $step, tension => $self->series_option( $entry->{series}, 'tension' ) // 0 );
+		my @between  = $run->{sorted} && !$options{whole} ? ( between => [ _points_around( $points, -1, $frame->{columns} + 1 ) ] ) : ();
+		my $polyline = curve_points( $points, $curve, step => $step, tension => $self->series_option( $entry->{series}, 'tension' ) // 0, @between );
 		my ( $from, $to ) = map { defined $entry->{$_} ? $self->_index_position( $frame, $entry->{$_} ) : undef } qw(from to);
 		return $polyline unless defined $from || defined $to;
 		return _clip_polyline( $polyline, $from, $to );
+	}
+
+	# The first and last index of the points of a sorted run whose
+	# segments reach into $left .. $right: from the last point left of it
+	# to the first point right of it.
+	sub _points_around ( $points, $left, $right ) {
+		my $before_left = _leading( $points, scalar @$points, sub ($point) { $point->[0] < $left } );
+		my $up_to_right = _leading( $points, scalar @$points, sub ($point) { $point->[0] <= $right } );
+		return ( max( 0, $before_left - 1 ), min( $#$points, $up_to_right ) );
 	}
 
 	# The part of a polyline between two x positions, with the ends
@@ -849,10 +911,23 @@ class Term::Fabulous::Widget::XYChart
 		return \@kept;
 	}
 
-	# The target of the point of a run nearest to x.
+	# The target of the point of a run nearest to x; of points as near,
+	# the first. A sorted run is searched by halving it: the nearest point
+	# is the first one at or right of x, or among those just left of it.
 	sub _nearest_target ( $run, $x ) {
+		my $points = $run->{points};
+		return _nearest_target_by_scan( $points, $x ) unless $run->{sorted};
+		my $right = _leading( $points, scalar @$points, sub ($point) { $point->[0] < $x } );
+		return $points->[0][2] if $right == 0;
+		my $left_distance = abs( $points->[ $right - 1 ][0] - $x );
+		return $points->[$right][2] if $right < @$points && abs( $points->[$right][0] - $x ) < $left_distance;
+		my $first_as_near = _leading( $points, $right, sub ($point) { abs( $point->[0] - $x ) > $left_distance } );
+		return $points->[$first_as_near][2];
+	}
+
+	sub _nearest_target_by_scan ( $points, $x ) {
 		my ( $best, $distance );
-		foreach my $point (@$run) {
+		foreach my $point (@$points) {
 			my $away = abs( $point->[0] - $x );
 			( $best, $distance ) = ( $point->[2], $away ) if !defined $distance || $away < $distance;
 		}
@@ -861,13 +936,14 @@ class Term::Fabulous::Widget::XYChart
 
 	method _draw_line ( $raster, $frame, $entry ) {
 		my ( $sx, $sy ) = ( $raster->marker->columns, $raster->marker->rows );
-		my $series = $entry->{series};
-		$raster->start_pattern( $series->dash_pattern( $self->series_option( $series, 'line_style' ) // 'solid' ) );
+		my $series  = $entry->{series};
+		my $pattern = $series->dash_pattern( $self->series_option( $series, 'line_style' ) // 'solid' );
+		$raster->start_pattern($pattern);
 		foreach my $run ( $self->_runs( $frame, $entry, $entry->{highs} ) ) {
-			my $polyline = $self->_run_polyline( $frame, $entry, $run, 1 / $sx );
+			my $polyline = $self->_run_polyline( $frame, $entry, $run, 1 / $sx, whole => defined $pattern );
 			next unless @$polyline;
 			if ( @$polyline == 1 ) {
-				$raster->set( floor( $polyline->[0][0] * $sx ), floor( $polyline->[0][1] * $sy ), $entry->{color}, $run->[0][2] );
+				$raster->set( floor( $polyline->[0][0] * $sx ), floor( $polyline->[0][1] * $sy ), $entry->{color}, $run->{points}[0][2] );
 				next;
 			}
 			foreach my $index ( 1 .. $#$polyline ) {
@@ -888,9 +964,10 @@ class Term::Fabulous::Widget::XYChart
 		foreach my $run ( $self->_runs( $frame, $entry, $entry->{highs} ) ) {
 			my $top = $self->_run_polyline( $frame, $entry, $run, 1 / $sx );
 			next if @$top < 2;
-			my $low    = first { $_->[0][0] <= $run->[0][0] && $_->[-1][0] >= $run->[-1][0] } @lows;
+			my ( $run_start, $run_end ) = ( $run->{points}[0][0], $run->{points}[-1][0] );
+			my $low    = first { $_->{points}[0][0] <= $run_start && $_->{points}[-1][0] >= $run_end } @lows;
 			my $bottom = defined $entry->{group} && $low ? $self->_run_polyline( $frame, $entry, $low, 1 / $sx ) : undef;
-			foreach my $column ( floor( $top->[0][0] * $sx ) .. ceil( $top->[-1][0] * $sx ) ) {
+			foreach my $column ( max( 0, floor( $top->[0][0] * $sx ) ) .. min( $raster->width - 1, ceil( $top->[-1][0] * $sx ) ) ) {
 				my $center = ( $column + 0.5 ) / $sx;
 				my $high_y = y_at( $top, $center ) // next;
 				my $low_y  = $bottom ? y_at( $bottom, $center ) // $base_y : $base_y;
@@ -999,7 +1076,7 @@ class Term::Fabulous::Widget::XYChart
 		my ( $sx, $sy ) = ( $raster->marker->columns, $raster->marker->rows );
 		my @points;
 		foreach my $run ( $self->_runs( $frame, $entry, $entry->{highs} ) ) {
-			foreach my $point (@$run) {
+			foreach my $point ( $run->{points}->@* ) {
 				my ( $x, $y, $owner ) = @$point;
 				next if defined $entry->{from} && $x < $self->_index_position( $frame, $entry->{from} );
 				next if defined $entry->{to}   && $x > $self->_index_position( $frame, $entry->{to} );
@@ -1037,14 +1114,15 @@ class Term::Fabulous::Widget::XYChart
 	}
 
 	# A line of box drawing characters, one row per column (as the
-	# asciichart program draws them).
+	# asciichart program draws them), in the columns of the plot only: it
+	# is drawn into the cells, where nothing clips it.
 	method _draw_box_line ( $surface, $frame, $entry ) {
 		my ( $left, $top ) = @$frame{qw(left top)};
 		foreach my $run ( $self->_runs( $frame, $entry, $entry->{highs} ) ) {
 			my $polyline = $self->_run_polyline( $frame, $entry, $run, 1 );
 			next unless @$polyline;
 			my $previous;
-			foreach my $column ( floor( $polyline->[0][0] ) .. floor( $polyline->[-1][0] ) ) {
+			foreach my $column ( max( 0, floor( $polyline->[0][0] ) ) .. min( $frame->{columns} - 1, floor( $polyline->[-1][0] ) ) ) {
 				my $y     = y_at( $polyline, $column + 0.5 ) // y_at( $polyline, $polyline->[0][0] ) // next;
 				my $row   = min( $frame->{rows} - 1, max( 0, floor($y) ) );
 				my $owner = _nearest_target( $run, $column + 0.5 );
@@ -1591,10 +1669,13 @@ C<linear> (the default) or C<log>.
 =item C<min>, C<max>
 
 Fixed ends: numbers on a linear or logarithmic axis (greater than 0 on
-a logarithmic one), numbers or dates on a time axis; C<min> must be
-less than C<max>. Without them the axis covers the data, rounded out to
-the next ticks (see C<nice>); a linear y axis of bars or areas includes
-0 (see C<zero>). A category axis has no ends to set.
+a logarithmic one), dates or epoch seconds on a time axis, and either
+on an C<auto> x axis (a date counts as its epoch seconds there, whatever
+kind the data makes the axis); C<min> must be less than C<max>. An end
+that breaks these rules dies when the axis is given, so a chart never
+fails while it is drawn. Without them the axis covers the data, rounded
+out to the next ticks (see C<nice>); a linear y axis of bars or areas
+includes 0 (see C<zero>). A category axis has no ends to set.
 
 =item C<title>
 
@@ -1836,7 +1917,8 @@ pixel look. Not every font has the sextants.
 
 For lines: box drawing characters, one row per column, as text charts
 have been drawn for decades. Coarse, but every terminal and font shows
-it.
+it. Like the other markers it stays inside the plot, also when a fixed
+x range or a span leaves points outside.
 
 =back
 
@@ -2004,8 +2086,9 @@ C<span> of the x axis shows only the last so much of x (in the unit of
 the axis: seconds for a time axis), counted from the newest point of all
 series, so a live chart scrolls with its data; the points that scrolled
 out do not count for the y axis either, so a peak leaves the axis when
-it leaves the plot. The points stay in the series; use C<max_points> to
-drop them.
+it leaves the plot. The points stay in the series, where they take
+memory but little drawing time (lines and areas are drawn only where
+they reach into the plot); use C<max_points> to drop them.
 
 =head2 Live data
 

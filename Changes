@@ -1,6 +1,160 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Fixed: Term::Fabulous::Termbox's tb_cluster_width,
+          tb_set_cell_ex, tb_set_cell and tb_extend_cell wrote past their
+          codepoint buffer and never returned when given a string that
+          carries the UTF8 flag over malformed bytes (Encode::_utf8_on, a
+          :utf8 read layer); they die "needs well-formed UTF-8" now, and
+          Term::Fabulous::Unicode's sanitize_text dies with a
+          Term::Fabulous message instead of Perl's "Malformed UTF-8
+          character (fatal)"
+        - Fixed: Term::Fabulous's run called from inside a running run (a
+          listener or a timer) closed the terminal under the outer run,
+          removed its timers and input watcher, and left IO::Async's
+          handlers for SIGINT, SIGTERM and SIGHUP in %SIG for good; such a
+          call dies now ("run is active already; it cannot be called again
+          until it returns") and leaves the active run as it was
+        - Fixed: a Term::Fabulous::Theme accepted 'none' (or undef, #null)
+          for slots whose widgets cannot draw without a value, and any
+          border style for tabs.line.style, and the first frame then died
+          deep inside the widget (a Perl dereference error in the
+          scrollbar, a tab bar or table part rejecting undef). These slots
+          are required now: scrollbar.track and scrollbar.thumb,
+          tabs.line.style, input.star and input.inactive, table.text,
+          table.header.text, table.cursor, table.muted, table.line.color
+          and table.pager.button, accordion.title, accordion.accent and
+          accordion.disabled, and the text, important_text and kind colors
+          of toast. 'none' for them dies where the theme is built ("SLOT
+          cannot be 'none'"), and tabs.line.style must be a style with
+          joints
+        - Fixed: Term::Fabulous::Widget::VirtualList stopped OnScroll at
+          the list (its internal listener returned undef), so listeners on
+          its ancestors never saw a scroll of the list; it bubbles on like
+          the OnScroll of a ScrollBox
+        - Fixed: after Term::Fabulous::Widget::VirtualList's count shrank
+          and grew again, the new items at the old indices were counted
+          with the measured heights of the dropped items until each was
+          shown, so the content height, the scrollbar and scroll_to_item
+          were off
+        - Fixed: Term::Fabulous::Enum::BorderStyle's junction dropped a
+          whole axis when the arm it looked at first had no joints (Hidden,
+          Blank, ...), although the opposite arm had them, and drew a
+          straight line where a corner or a T belongs
+        - Fixed: Term::Fabulous::Widget::XYChart's box line marker drew the
+          part of a line outside the plot (points before a fixed x min or
+          the span, after a fixed x max) over the labels of the y axis and
+          right of the plot, and walked every column of that part; it
+          draws in the columns of the plot only
+        - Fixed: lines of Term::Fabulous::Widget::XYChart (LineChart,
+          AreaChart, Sparkline, ...) took time with the square of their
+          points (4000 points: a second per frame), and an area with a
+          span or a fixed x range filled every subpixel column of its whole
+          history (a span of 60 over 1001 points: 9 s per frame). The point
+          under each part of a line is found by halving the sorted points,
+          and lines and areas are made only where they reach into the plot
+          (with the shape the whole curve has there), so they draw the same
+          in a fraction of the time
+        - Fixed: Term::Fabulous::Chart::Scale::Linear's fit with a step far
+          too small for the data (y_axis => { step => 1 } over millions)
+          listed every multiple before giving up on it, seconds per frame;
+          such a step is skipped at once, and the axis shows its two ends
+          as before
+        - Fixed: Term::Fabulous::Chart::Scale::Log's fit ignored a fixed max
+          below the data and ran the axis over the data; the max is kept
+          and the min moves a power of the base below it, as Linear does
+        - Fixed: the hover labels of a chart on a category axis copied all
+          labels for every point (4000 categories: 1.5 s per frame);
+          Term::Fabulous::Chart::Scale::Category gains label_at
+        - Fixed: Term::Fabulous::Chart::Curve's natural curve died
+          "Illegal division by zero" for three or more points at one x
+          (repeated samples), and with it every frame of a LineChart or
+          AreaChart with curve => 'natural' and such data; a point between
+          two others at its x is held straight like the ends, and the curve
+          through points at distinct x is unchanged
+        - Fixed: the min and max of an XYChart axis (LineChart, BarChart,
+          Sparkline, Histogram, ...) were checked only when a frame was
+          drawn, so a log axis from 0, a min not below the max or a time
+          axis from no date died in the first frame after the change; they
+          die when the axis is given now, naming the axis and the end,
+          also for the ends of a linear x axis and of an automatic one,
+          which take a number or a date
+        - Fixed: Term::Fabulous::Widget::RadarChart accepted a min not
+          below its max, and its first frame died; that dies when it is
+          given, also through the min and max accessors
+        - Fixed: a Term::Fabulous::Widget::Histogram series accepted
+          [ x, y ] points and its frame died; they die when they are given
+          (constructor, set_data, add_points, append), as documented, and
+          the data stays as it was
+        - Fixed: Term::Fabulous::Widget::Histogram made as many bins as a
+          bin_width asked for (0.01 over 0 .. 10000: a million bins, 12 s
+          per frame) and took any number of bins; a histogram has at most
+          1000 bins now: bins dies above 1000, and a bin_width too small for
+          the data widens to the smallest round width that needs at most
+          1000 bins
+        - Fixed: removing or hiding the series (or the pie, donut or polar
+          area slice) under the mouse pointer left the chart faded and
+          hovered() reporting it until the pointer moved; the hover ends
+          as if the pointer had moved off it, with a SeriesHover event
+          without a series
+        - Fixed: an unnamed series added after another was removed could
+          get the name of a series still there ("Series 2" twice) and died;
+          it takes the next free "Series N"
+        - Fixed: append changed the series before the one whose value was
+          invalid, so the series fell out of step; every value is checked
+          before any series changes, as documented
+        - Fixed: Term::Fabulous::Widget::RadarChart drew no points for
+          point => 'dot' and point => 'square'; they are Braille dots at
+          the corners now, as on the XY charts
+        - Fixed: Term::Fabulous::Widget::PieChart (and DonutChart,
+          PolarAreaChart) made with other_label => undef labeled the
+          folded slice with nothing and warned; undef means 'Other', as
+          for the other_label accessor
+        - Fixed: Term::Fabulous::Widget::Table kept showing the old cell
+          texts and data-dependent styles of a row given again with an id
+          it had shown: rows() with the same row_id values (a monitor that
+          refreshes its rows every second showed the first values for
+          good), or a row removed and added again with its id before the
+          next frame. A row the model stores starts at the model's
+          revision now, so its revision always differs from that of the
+          row shown before
+        - Fixed: Term::Fabulous::Widget::Table's remove_rows (and
+          Table::Model's) took time quadratic in the number of rows:
+          removing 10000 of 20000 rows took 21 s, it takes 0.04 s now
+        - Fixed: every selection change of a Term::Fabulous::Widget::Table
+          walked and sorted all rows (about 55 ms per Space press on 20000
+          rows); the data order is kept until rows are set, added or
+          removed, and select and deselect sort only the rows they change
+        - Fixed: tools/screenshot died ("unsupported SGR parameters") on a
+          printed report with dim, italic, blink, concealed, struck out or
+          overlined text, which Term::Fabulous::Static writes; it reads
+          every style Static writes now
+        - Term::Fabulous::Terminal::Termbox closes an open session when it
+          is destroyed, also when the program ends or dies, so a program
+          that opened the terminal through step or open and died outside
+          run no longer leaves the shell in raw mode, on the alternate
+          screen and with mouse reporting on
+        - Term::Fabulous::Layout's new takes allowed_namespaces, a list of
+          package names a layout may load modules from (the namespaces and
+          the modules below them); a use of any other module dies before
+          anything of the layout is loaded. Without it, any module loads
+          as before
+        - A Term::Fabulous::Theme file that sets a palette token twice, or a
+          slot of a family, state or variant twice, dies naming the token
+          or slot instead of keeping the last value
+        - Term::Fabulous::Chart::Curve's curve_points takes between =>
+          [ first, last ], which makes only the part of the polyline from
+          one point to another, with the shape of the whole curve there
+        - Term::Fabulous::Chart::Series's add_points comes in two steps,
+          parsed_points (parse and check, store nothing) and push_parsed
+          (store), for callers that change several series at once
+        - Term::Fabulous::Widget::Chart gains end_hover_unless_shown, which
+          a chart calls after it took series or slices away
+        - Term::Fabulous::Render::Attr exports STYLE_FLAGS, the one table of
+          the style flags with their SGR parameters and names; the
+          ::Render::Target::Grid row_text and the screenshot tools both
+          use it, and row_text writes 21 for TB_UNDERLINE_2, as termbox2
+          does
         - Term::Fabulous::Widget, ::Widget::Text and ::Widget::VirtualList
           react to a new place in a tree through Clay::UI's tree_changed
           hook, which reaches every widget of a moved subtree, instead of

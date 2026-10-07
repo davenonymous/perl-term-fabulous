@@ -22,6 +22,7 @@ use constant CACHE_LIMIT => 4096;
 my ( %clusters_by_text, %columns_by_cluster, %columns_by_text );
 
 sub sanitize_text ($text) {
+	die "Term::Fabulous::Unicode: sanitize_text needs well-formed UTF-8" unless utf8::valid($text);
 	return $text =~ tr/\t\x00-\x08\x0A-\x1F\x7F-\x9F/ \x{FFFD}/r;
 }
 
@@ -155,6 +156,12 @@ CHARACTER.
 Everything else is unchanged.
 
 =back
+
+Dies with "Term::Fabulous::Unicode: sanitize_text needs well-formed UTF-8"
+when C<$text> carries the UTF8 flag over bytes that are not well-formed
+UTF-8 (made by C<Encode::_utf8_on> or read through a C<:utf8> layer
+instead of C<:encoding(UTF-8)>). Every function below that sanitizes its
+argument dies the same way.
 
 Without this, text from a file or a user could contain escape sequences
 that change the terminal's title, colors or clipboard, or move the

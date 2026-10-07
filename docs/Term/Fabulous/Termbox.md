@@ -48,8 +48,10 @@ not set), so widths are the same on every platform. ["tb\_wcwidth"](#tb_wcwidth)
 Every function keeps its termbox2 name and returns its status code, `TB_OK`
 or one of the `TB_ERR_*` constants; nothing dies on a terminal error.
 The exceptions are arguments the binding cannot translate at all, such as
-an empty string where a character is needed, which die before termbox2 is
-called.
+an empty string where a character is needed or a string that carries the
+UTF8 flag over bytes that are not well-formed UTF-8 (made by
+`Encode::_utf8_on` or read through a `:utf8` layer), which die before
+termbox2 is called.
 
 # EXPORTS
 
@@ -207,7 +209,7 @@ tb_set_cell( $x, $y, $character, $fg, $bg );
 
 Writes one cell. `$character` is a Perl string whose first codepoint is
 used; an integer that was never a string is taken as the codepoint itself.
-An empty string dies.
+An empty string or malformed UTF-8 dies.
 
 ### tb\_extend\_cell
 
@@ -216,7 +218,7 @@ tb_extend_cell( $x, $y, $character );
 ```
 
 Appends the first codepoint of `$character` to the cell's grapheme
-cluster.
+cluster. An empty string or malformed UTF-8 dies.
 
 ### tb\_set\_cell\_ex
 
@@ -225,6 +227,7 @@ tb_set_cell_ex( $x, $y, $cluster, $fg, $bg );
 ```
 
 Writes a whole grapheme cluster at once: every codepoint of `$cluster`.
+An empty string or malformed UTF-8 dies.
 
 ### tb\_get\_cell
 
@@ -444,7 +447,7 @@ the widest codepoint's width, forced to 1 when the cluster holds a
 variation selector 15 (text presentation) and to 2 when it holds a
 variation selector 16 (emoji presentation), a zero-width joiner or two
 regional indicators. Clusters below width 1 still occupy one cell when
-drawn. Dies on an empty string.
+drawn. Dies on an empty string or malformed UTF-8.
 
 ## Diagnostics
 

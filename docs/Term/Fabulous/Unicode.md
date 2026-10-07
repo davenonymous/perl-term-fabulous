@@ -76,6 +76,12 @@ control character (U+0080 to U+009F) becomes U+FFFD REPLACEMENT
 CHARACTER.
 - Everything else is unchanged.
 
+Dies with "Term::Fabulous::Unicode: sanitize\_text needs well-formed UTF-8"
+when `$text` carries the UTF8 flag over bytes that are not well-formed
+UTF-8 (made by `Encode::_utf8_on` or read through a `:utf8` layer
+instead of `:encoding(UTF-8)`). Every function below that sanitizes its
+argument dies the same way.
+
 Without this, text from a file or a user could contain escape sequences
 that change the terminal's title, colors or clipboard, or move the
 cursor. Every text Term::Fabulous measures or draws is sanitized this

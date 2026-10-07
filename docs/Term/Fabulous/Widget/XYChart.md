@@ -280,10 +280,13 @@ value dies when the hash is given, with the known keys in the message.
 - `min`, `max`
 
     Fixed ends: numbers on a linear or logarithmic axis (greater than 0 on
-    a logarithmic one), numbers or dates on a time axis; `min` must be
-    less than `max`. Without them the axis covers the data, rounded out to
-    the next ticks (see `nice`); a linear y axis of bars or areas includes
-    0 (see `zero`). A category axis has no ends to set.
+    a logarithmic one), dates or epoch seconds on a time axis, and either
+    on an `auto` x axis (a date counts as its epoch seconds there, whatever
+    kind the data makes the axis); `min` must be less than `max`. An end
+    that breaks these rules dies when the axis is given, so a chart never
+    fails while it is drawn. Without them the axis covers the data, rounded
+    out to the next ticks (see `nice`); a linear y axis of bars or areas
+    includes 0 (see `zero`). A category axis has no ends to set.
 
 - `title`
 
@@ -519,7 +522,8 @@ the character set and so the resolution:
 
     For lines: box drawing characters, one row per column, as text charts
     have been drawn for decades. Coarse, but every terminal and font shows
-    it.
+    it. Like the other markers it stays inside the plot, also when a fixed
+    x range or a span leaves points outside.
 
 Lines take `braille`, `half`, `quadrant`, `sextant` and `box`;
 areas and bars `block`, `braille`, `half`, `quadrant` and
@@ -689,8 +693,9 @@ this way.
 the axis: seconds for a time axis), counted from the newest point of all
 series, so a live chart scrolls with its data; the points that scrolled
 out do not count for the y axis either, so a peak leaves the axis when
-it leaves the plot. The points stay in the series; use `max_points` to
-drop them.
+it leaves the plot. The points stay in the series, where they take
+memory but little drawing time (lines and areas are drawn only where
+they reach into the plot); use `max_points` to drop them.
 
 ## Live data
 

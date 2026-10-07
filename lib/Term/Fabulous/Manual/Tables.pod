@@ -415,6 +415,14 @@ styles are forgotten.
 
 =item *
 
+C<rows> replaces all rows. Rows whose id stays keep their selection and
+their row and cell styles, and show their new data: a program that
+gives a table with C<row_id> fresh rows every second sees the new
+values. A row removed and added again with its id shows its new data
+as well.
+
+=item *
+
 None of these fire an event. The cursor stays on its row as long as
 the row is shown; when it is gone, the cursor moves to the line that
 takes its place (see L<Term::Fabulous::Manual::TableRows/The cursor>).

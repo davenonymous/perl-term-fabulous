@@ -12,6 +12,7 @@ use Object::Pad 0.825;
 class Term::Fabulous::Layout :strict(params) {
 	use Feature::Compat::Try;
 	use Text::KDL::XS qw(parse_kdl);
+	use Term::Fabulous::Check qw(describe);
 
 	my $MODULE_NAME = qr/\A[A-Za-z_]\w*(?:::\w+)*\z/a;
 	my $ALIAS       = qr/\A[A-Z]\w*\z/a;
@@ -22,10 +23,11 @@ class Term::Fabulous::Layout :strict(params) {
 	field $required_modules :reader = {};
 	field $_root_node;
 
-	ADJUST :params ( :$string = undef, :$file = undef ) {
+	ADJUST :params ( :$string = undef, :$file = undef, :$allowed_namespaces = undef ) {
 		die "Term::Fabulous::Layout: provide either 'string' or 'file'"
 			if !defined $string && !defined $file;
 		die "Term::Fabulous::Layout: provide 'string' or 'file', not both" if defined $string && defined $file;
+		my $allowed = _checked_namespaces($allowed_namespaces);
 
 		my $source = $string // _open_file($file);
 		try {
@@ -35,7 +37,7 @@ class Term::Fabulous::Layout :strict(params) {
 			die "Term::Fabulous::Layout: failed to parse KDL: $error";
 		}
 
-		$required_modules = _use_instructions($raw);
+		$required_modules = _use_instructions( $raw, $allowed );
 		_load_widget_class( $_, $required_modules->{$_} ) foreach sort keys %$required_modules;
 		$_root_node = _root_node( $raw, $required_modules );
 	}
@@ -46,12 +48,28 @@ class Term::Fabulous::Layout :strict(params) {
 		return $handle;
 	}
 
+	# The namespaces a layout may load modules from, or undef for any.
+	sub _checked_namespaces ($namespaces) {
+		return undef unless defined $namespaces;
+		die "Term::Fabulous::Layout: allowed_namespaces must be an array reference of package names, got " . describe($namespaces)
+			unless ref $namespaces eq 'ARRAY';
+		die "Term::Fabulous::Layout: allowed_namespaces needs at least one package name; leave it out to allow any module" unless @$namespaces;
+		foreach my $namespace (@$namespaces) {
+			die "Term::Fabulous::Layout: allowed_namespaces holds an invalid package name " . describe($namespace)
+				unless defined $namespace && !ref $namespace && $namespace =~ $MODULE_NAME;
+		}
+		return [@$namespaces];
+	}
+
 	# Maps every alias declared by a top-level 'use' node to its module.
-	sub _use_instructions ($document) {
+	# Every module is checked against the allowed namespaces before any is
+	# loaded, because loading runs its code.
+	sub _use_instructions ( $document, $allowed ) {
 		my %module_by_alias;
 		foreach my $node ( $document->nodes->@* ) {
 			next unless $node->name eq 'use';
 			my ( $alias, $module ) = _parse_use($node);
+			_check_allowed( $module, $allowed );
 			die "Term::Fabulous::Layout: widget alias '$alias' is declared twice" if exists $module_by_alias{$alias};
 			$module_by_alias{$alias} = $module;
 		}
@@ -82,6 +100,13 @@ class Term::Fabulous::Layout :strict(params) {
 	sub _check_module_name ($module) {
 		die "Term::Fabulous::Layout: invalid module name '$module' in 'use'" unless $module =~ $MODULE_NAME;
 		return;
+	}
+
+	# A module is in a namespace when it is the namespace or below it.
+	sub _check_allowed ( $module, $allowed ) {
+		return unless defined $allowed;
+		return if grep { $module eq $_ || index( $module, "${_}::" ) == 0 } @$allowed;
+		die "Term::Fabulous::Layout: 'use $module' is not allowed; allowed_namespaces permits only modules in " . join( ', ', @$allowed );
 	}
 
 	sub _load_widget_class ( $alias, $module ) {
@@ -235,6 +260,7 @@ F<examples/kdl-layout.kdl>:
 
 	my $layout = Term::Fabulous::Layout->new( string => $kdl_text );
 	my $layout = Term::Fabulous::Layout->new( file   => $path );
+	my $layout = Term::Fabulous::Layout->new( file   => $path, allowed_namespaces => ['Term::Fabulous::Widget'] );
 
 Parses the document, checks its C<use> instructions, loads the widget
 classes and finds the root widget node. The widgets themselves are
@@ -242,7 +268,7 @@ built later, by L</build>. Every problem dies with a message that starts
 with C<Term::Fabulous::Layout:> (see L</ERRORS>). Unknown parameters
 die.
 
-Give exactly one of these parameters; giving none or both dies.
+Give exactly one of C<string> and C<file>; giving none or both dies.
 
 =over
 
@@ -255,6 +281,18 @@ in a source file with C<use utf8> is such a string.
 
 The path of a layout file. The file is read as UTF-8 encoded bytes.
 Dies if it cannot be opened.
+
+=item C<allowed_namespaces>
+
+Optional. An array reference of package names, such as
+C<< [ 'Term::Fabulous::Widget', 'My::App::Widget' ] >>: the layout may
+C<use> only these packages and the modules below them
+(C<Term::Fabulous::Widget::Box> is below C<Term::Fabulous::Widget>,
+C<Term::Fabulous::WidgetKit> is not). Every C<use> is checked before
+any module is loaded, so a refused one runs no code; it dies with
+C<'use MODULE' is not allowed; allowed_namespaces permits only modules
+in ...>. Default: C<undef>, any module. Anything but a non-empty array
+reference of valid package names dies. See L</SECURITY>.
 
 =back
 
@@ -864,6 +902,8 @@ L</new> dies for:
 
 =item * a malformed C<use>, an invalid module name or alias, or an alias declared twice;
 
+=item * a module outside the C<allowed_namespaces>, or an invalid C<allowed_namespaces>;
+
 =item * a module that cannot be loaded, or that does not compose L<Term::Fabulous::Role::CanParseLayout>;
 
 =item * a top-level node that is neither C<use> nor a declared widget, no root widget, or more than one.
@@ -895,6 +935,12 @@ is rejected, but only after it has been loaded, so its top-level code
 has already run. A layout can therefore load and run any module
 installed on the system. Treat layout files like program code: do not
 load layouts from untrusted sources.
+
+A program that loads layouts its users write can restrict them with
+L</new>'s C<allowed_namespaces>: a C<use> of any module outside these
+namespaces dies before any module of the layout is loaded. Choose
+namespaces that hold only widget classes; every module in them can
+still be loaded and run.
 
 Properties can only call the accessors a widget class declares in its
 C<layout_properties> (see L<Term::Fabulous::Role::CanParseLayout>), so a

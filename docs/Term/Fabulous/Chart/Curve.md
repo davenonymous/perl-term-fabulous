@@ -88,7 +88,16 @@ of `[x, y]`. Straight lines return the points, steps the corners of
 the steps. Smooth curves and easings get a vertex every `$step` along x
 (default 1, a positive number) besides the points; the chart passes the
 width of one subpixel. `tension` (0 to 1, default 0) is used by
-`catmull-rom`. Dies for an unknown curve.
+`catmull-rom`. Several points may share an x (repeated samples): the
+polyline runs straight up or down through them, for every curve. Dies
+for an unknown curve.
+
+`between => [ $first, $last ]` (two point indexes, `$first` not
+after `$last`) returns only the part of the polyline from point
+`$first` to point `$last`: the vertices the whole polyline has there,
+as the slopes of smooth curves are worked out from all points. A chart
+passes the points around its plot, so a long series outside the plot
+costs no vertices. Dies for indexes outside the points.
 
 ## y\_at
 

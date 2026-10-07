@@ -47,6 +47,15 @@ Those of [Term::Fabulous::Chart::Scale](../Scale.md), and:
 
 The labels and their number.
 
+## label\_at
+
+```perl
+my $label = $scale->label_at($index);
+```
+
+The label of category number `$index` (from 0), or `undef` when there
+is no such category.
+
 ## slot\_cells
 
 The cells one category takes along the axis; it can be a fraction.

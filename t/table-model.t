@@ -81,6 +81,28 @@ subtest 'changing rows' => sub {
 	is $model->row_count, 0, 'clear_rows';
 };
 
+subtest 'a row given again gets a new revision' => sub {
+	my $model = model( row_id => 'id' );
+	$model->set_rows( [@PEOPLE] );
+	my $first = $model->row_revision(2);
+	$model->set_rows( [@PEOPLE] );
+	my $second = $model->row_revision(2);
+	isnt $second, $first, 'set_rows with the same id';
+	$model->remove_rows(2);
+	$model->add_rows( [ $PEOPLE[1] ] );
+	isnt $model->row_revision(2), $_, 'removed and added again' foreach $first, $second;
+};
+
+subtest 'removing a parent and its child in one call' => sub {
+	foreach my $order ( [qw(lib x.pm)], [qw(x.pm lib)] ) {
+		my $model = model( row_id => 'name', children_key => 'kids' );
+		$model->set_rows( [ { name => 'src', kids => [ { name => 'lib', kids => [ { name => 'x.pm' } ] }, { name => 'a.c' } ] }, { name => 'README' } ] );
+		$model->remove_rows(@$order);
+		is [ $model->row_ids ],            [qw(src a.c README)], "the rest stays, in data order (@$order)";
+		is [ $model->children_of('src') ], ['a.c'],              "the parent's children (@$order)";
+	}
+};
+
 subtest 'trees' => sub {
 	my $model = model( row_id => 'name', children_key => 'kids' );
 	$model->set_rows( [ { name => 'src', kids => [ { name => 'lib', kids => [ { name => 'x.pm' } ] }, { name => 'a.c' } ] }, { name => 'README' } ] );
@@ -269,6 +291,22 @@ subtest 'selection' => sub {
 	is [ $model->set_selection( 5, 1, 3 ) ], [ [ 1, 3, 5 ], [2] ], 'added and removed ids come in data order';
 	is scalar( $model->selected_ids ),       3, 'selected_ids counts in scalar context';
 	like dies { $model->select(42) }, qr/there is no row with the id '42'/, 'unknown ids die';
+};
+
+subtest 'selection in data order after the rows change' => sub {
+	my $model = model( row_id => 'id' );
+	$model->set_rows( [@PEOPLE] );
+	$model->select( 1, 5 );
+	$model->remove_rows(3);
+	$model->add_rows( [ { id => 9, name => 'Ida' } ], index => 0 );
+	is [ $model->select( 5, 4, 9, 4 ) ], [ [ 9, 4 ], [] ], 'select after a removal and an insertion';
+	is [ $model->selected_ids ],         [ 9, 1, 4, 5 ],   'selected_ids';
+	is [ $model->deselect( 5, 9, 2 ) ],  [ [], [ 9, 5 ] ], 'deselect';
+	like dies { $model->deselect( 1, 42 ) }, qr/there is no row with the id '42'/, 'deselect checks the ids';
+	is [ $model->selected_ids ], [ 1, 4 ], 'and changes nothing when it dies';
+	$model->set_rows( [ reverse @PEOPLE ] );
+	is [ $model->select(5) ], [ [5], [] ], 'select after set_rows';
+	is [ $model->selected_ids ], [ 5, 4, 1 ], 'in the new data order';
 };
 
 done_testing;

@@ -5,6 +5,7 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Test2::V0;
+use Time::HiRes ();
 
 use FindBin;
 use lib "$FindBin::Bin/lib";
@@ -239,6 +240,37 @@ subtest 'lines, points and markers' => sub {
 	like join( '', @lines ), qr/\x{256D}.*\x{256E}.*\x{256F}.*\x{2570}/s, 'but box drawing lines and corners';
 };
 
+subtest 'the box marker stays in the plot' => sub {
+	my @data   = map { [ $_, $_ % 10 ] } 0 .. 100;
+	my $gutter = sub (@lines) {
+		[ map { sprintf '%-3s', substr( $_, 0, 3 ) } @lines[ 0 .. 8 ] ]
+	};
+	my @labels = ( '10 ', ('   ') x 3, ' 5 ', ('   ') x 3, ' 0 ' );
+	my $fixed  = sized( 'Term::Fabulous::Widget::LineChart', 40, 10, marker => 'box', x_axis => { min => 50, max => 100 }, series => [ { name => 'p', data => [@data] } ] );
+	is $gutter->( draw($fixed) ), \@labels, 'points left of a fixed x min leave the labels of the y axis alone';
+	my $spanned = sized( 'Term::Fabulous::Widget::LineChart', 40, 10, marker => 'box', x_axis => { span => 50 }, series => [ { name => 'p', data => [@data] } ] );
+	is $gutter->( draw($spanned) ), \@labels, 'so do points older than the span';
+	my @lines = draw( sized( 'Term::Fabulous::Widget::LineChart', 40, 10, marker => 'box', x_axis => { min => 0, max => 50 }, series => [ { name => 'p', data => [@data] } ] ) );
+	is [ grep { length > length $lines[0] } @lines[ 1 .. 8 ] ], [], 'and points right of a fixed x max end at the right edge of the plot, where its grid lines end';
+};
+
+subtest 'thousands of points draw fast' => sub {
+	my $line  = sized( 'Term::Fabulous::Widget::LineChart', 80, 20, series => [ { name => 'p', data => [ map { sin( $_ / 50 ) * 10 } 1 .. 4000 ] } ] );
+	my $start = Time::HiRes::time();
+	draw($line);
+	ok Time::HiRes::time() - $start < 0.5, 'a line of 4000 points draws in well under a second';
+
+	my $area      = sized( 'Term::Fabulous::Widget::AreaChart', 40, 10, x_axis => { span => 300 }, series => [ { name => 'p', data => [ map { [ $_ * 100, sin($_) + 2 ] } 0 .. 1000 ] } ] );
+	my $looked_up = 0;
+	{
+		no warnings 'redefine';
+		my $y_at = \&Term::Fabulous::Widget::XYChart::y_at;
+		local *Term::Fabulous::Widget::XYChart::y_at = sub { $looked_up++; goto &$y_at };
+		draw($area);
+	}
+	ok $looked_up <= 40, "an area with a short span over a long history fills only the columns of the plot ($looked_up lookups)";
+};
+
 subtest 'scatter points and trend lines' => sub {
 	my $chart = sized( 'Term::Fabulous::Widget::ScatterPlot', 30, 8, series => [ { name => 'p', data => [ [ 1, 1 ], [ 2, 4 ], [ 3, 2 ] ] } ] );
 	draw($chart);
@@ -376,6 +408,44 @@ subtest 'max_points' => sub {
 	$window->append( 4, { a => 4 } );
 	my @after = draw($window);
 	is [ $before[-1], $after[-1] ], [ match qr/\A  1 +2 +3\z/, match qr/\A  2 +3 +4\z/ ], 'the axis follows the newest points';
+};
+
+subtest 'unnamed series after a removal' => sub {
+	my $chart = line_chart();
+	$chart->add_series( data => [1] )->add_series( data => [2] );
+	$chart->remove_series('Series 1');
+	$chart->add_series( data => [3] );
+	is [ $chart->series_names ], [ 'Series 2', 'Series 3' ], 'a new unnamed series takes the first free number';
+};
+
+subtest 'append is all or nothing' => sub {
+	my $chart = line_chart( series => [ { name => 'a', data => [ 1, 2 ] }, { name => 'b', data => [ 3, 4 ] } ] );
+	like dies { $chart->append( undef, { a => 5, b => 'x' } ) }, qr/the y value of data point 2 of series 'b' must be a finite number or undef, got 'x'/, 'a bad value for one series dies';
+	is [ map { $chart->series($_)->{data} } qw(a b) ], [ [ 1, 2 ], [ 3, 4 ] ], 'and no series gains a point';
+};
+
+subtest 'axis ends are checked when they are given' => sub {
+	my @cases = (
+		[ { y_axis => { type => 'log', min => 0 } },                                  qr/the min of y_axis must be greater than 0 on a log axis, got '0'/,           'a log y axis from 0' ],
+		[ { x_axis => { type => 'log', max => -1 } },                                 qr/the max of x_axis must be greater than 0 on a log axis, got '-1'/,          'a log x axis to -1' ],
+		[ { y_axis => { min => 10, max => 5 } },                                      qr/the min of y_axis \(10\) must be less than its max \(5\)/,                  'a min above the max' ],
+		[ { x_axis => { min => 3, max => 3 } },                                       qr/the min of x_axis \(3\) must be less than its max \(3\)/,                   'a min at the max' ],
+		[ { x_axis => { type => 'time', min => 'garbage' } },                         qr/the min of x_axis must be a date on a time axis, got 'garbage'/,            'a time axis from no date' ],
+		[ { x_axis => { type => 'time', min => '2026-06-12', max => '2026-06-10' } }, qr/the min of x_axis \(2026-06-12\) must be less than its max \(2026-06-10\)/, 'dates in the wrong order' ],
+		[ { x_axis => { type => 'linear', max => 'end' } },                           qr/the max of x_axis must be a number, got 'end'/,                             'a linear axis to no number' ],
+		[ { x_axis => { max => 'end' } },                                             qr/the max of x_axis must be a number or a date, got 'end'/,                   'an automatic axis to neither' ],
+	);
+	foreach my $case (@cases) {
+		like dies { line_chart( $case->[0]->%* ) }, $case->[1], "$case->[2] dies when the chart is made";
+	}
+
+	my $chart = line_chart( y_axis => { min => 0 }, series => [ { data => [ 1, 2 ] } ] );
+	like dies { $chart->y_axis( { type => 'log', min => 0 } ) }, qr/the min of y_axis must be greater than 0 on a log axis/, 'the accessor checks the same';
+	is $chart->y_axis, { type => 'linear', min => 0 }, 'and keeps the axis it had';
+
+	my $dated = line_chart( x_axis => { type => 'time', min => '2026-06-10', max => '2026-06-12' }, series => [ { data => [ [ '2026-06-11', 1 ] ] } ] );
+	ok lives { draw($dated) }, 'dates as the ends of a time axis';
+	is $dated->x_axis->{min}, '2026-06-10', 'which the accessor returns as given';
 };
 
 subtest 'invalid input dies' => sub {

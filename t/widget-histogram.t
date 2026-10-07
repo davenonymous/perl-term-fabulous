@@ -49,6 +49,14 @@ subtest 'bin edges' => sub {
 	is [ $chart->bin_edges( [ 3, 90 ] ) ], [ 0, 20, 40, 60 ], 'bins divide the range';
 };
 
+subtest 'at most 1000 bins' => sub {
+	my $chart = Term::Fabulous::Widget::Histogram->new( bin_width => 0.01 );
+	my @edges = $chart->bin_edges( [ 0, 10_000 ] );
+	is [ scalar @edges, $edges[1] - $edges[0], $edges[-1] ], [ 1001, 10, 10_000 ], 'a bin width too small for the data widens to a round width';
+	$chart->range( [ 0, 2 ] );
+	is [ $chart->bin_edges( [1] ) ], [ map { $_ / 100 } 0 .. 200 ], 'and is kept where it makes few enough bins';
+};
+
 subtest 'a range drops values outside it' => sub {
 	my $chart = histogram( bins => 2, range => [ 0, 2 ], series => [ { data => [ -1, 0, 0.5, 1, 2, 2.5, undef ] } ] );
 	is bin_values($chart), [ 2, 2 ], 'the high end belongs to the last bin';
@@ -83,10 +91,13 @@ subtest 'several series' => sub {
 };
 
 subtest 'invalid input dies' => sub {
-	my $chart = histogram( series => [ { name => 'xy', data => [ [ 1, 2 ] ] } ] );
-	like dies { $chart->prepare_series }, qr/series 'xy' of a histogram takes plain numbers, not \[ x, y \] points/, 'points';
+	like dies { histogram( series => [ { name => 'xy', data => [ [ 1, 2 ] ] } ] ) }, qr/series 'xy' of a histogram takes plain numbers, not \[ x, y \] points/, 'points die when they are given';
+	my $chart = histogram( series => [ { name => 'h', data => [ 1, 2 ] } ] );
+	like dies { $chart->add_points( h => { x => 3, y => 4 } ) }, qr/series 'h' of a histogram takes plain numbers/, 'also when they are added';
+	is $chart->series('h')->{data}, [ 1, 2 ], 'which leaves the data as it was';
+	like dies { histogram( bins      => 1001 ) },                   qr/bins must be 'auto' or a positive integer up to 1000, got '1001'/,     'more than 1000 bins';
 	like dies { histogram( series    => [ { type => 'line' } ] ) }, qr/draws series of the types bar, not 'line'/,                            'a line series';
-	like dies { histogram( bins      =>  0 ) },                     qr/bins must be 'auto' or a positive integer, got '0'/,                   'zero bins';
+	like dies { histogram( bins      =>  0 ) },                     qr/bins must be 'auto' or a positive integer up to 1000, got '0'/,        'zero bins';
 	like dies { histogram( bin_width => -1 ) },                     qr/bin_width must be a positive number or undef, got '-1'/,               'a negative bin width';
 	like dies { histogram( range     => [ 5, 1 ] ) },               qr/range must be an array reference \[ low, high \] with low below high/, 'a reversed range';
 	like dies { histogram( range     => [1] ) },                    qr/range must be an array reference/,                                     'a range of one value';

@@ -118,8 +118,10 @@ L</tb_cluster_width> expose exactly the functions C<tb_present> uses.
 Every function keeps its termbox2 name and returns its status code, C<TB_OK>
 or one of the C<TB_ERR_*> constants; nothing dies on a terminal error.
 The exceptions are arguments the binding cannot translate at all, such as
-an empty string where a character is needed, which die before termbox2 is
-called.
+an empty string where a character is needed or a string that carries the
+UTF8 flag over bytes that are not well-formed UTF-8 (made by
+C<Encode::_utf8_on> or read through a C<:utf8> layer), which die before
+termbox2 is called.
 
 =head1 EXPORTS
 
@@ -271,20 +273,21 @@ C<TB_OK> or an error code; the change shows with the next C<tb_present>.
 
 Writes one cell. C<$character> is a Perl string whose first codepoint is
 used; an integer that was never a string is taken as the codepoint itself.
-An empty string dies.
+An empty string or malformed UTF-8 dies.
 
 =head3 tb_extend_cell
 
 	tb_extend_cell( $x, $y, $character );
 
 Appends the first codepoint of C<$character> to the cell's grapheme
-cluster.
+cluster. An empty string or malformed UTF-8 dies.
 
 =head3 tb_set_cell_ex
 
 	tb_set_cell_ex( $x, $y, $cluster, $fg, $bg );
 
 Writes a whole grapheme cluster at once: every codepoint of C<$cluster>.
+An empty string or malformed UTF-8 dies.
 
 =head3 tb_get_cell
 
@@ -492,7 +495,7 @@ the widest codepoint's width, forced to 1 when the cluster holds a
 variation selector 15 (text presentation) and to 2 when it holds a
 variation selector 16 (emoji presentation), a zero-width joiner or two
 regional indicators. Clusters below width 1 still occupy one cell when
-drawn. Dies on an empty string.
+drawn. Dies on an empty string or malformed UTF-8.
 
 =head2 Diagnostics
 

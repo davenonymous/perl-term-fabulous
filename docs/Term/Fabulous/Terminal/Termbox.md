@@ -96,6 +96,14 @@ $terminal->close;
 Ends the session as described above. Does nothing when no session is
 open, so calling it twice is harmless.
 
+A terminal object that is destroyed while its session is open closes
+it first, also when the program ends or dies with the object still
+around, so a program that drives the terminal itself (with
+["step" in Term::Fabulous](../../../../README.md#step) or ["open"](#open)) and dies never leaves the shell in
+raw mode, on the alternate screen or with mouse reporting switched on.
+Closing explicitly is still the way to restore the terminal at a moment
+of your choosing.
+
 ## is\_open
 
 1 while a session is open.

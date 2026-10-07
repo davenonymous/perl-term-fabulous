@@ -34,7 +34,9 @@ my $scale = Term::Fabulous::Chart::Scale::Log->fit(%options);
 Takes `cells`, `extent`, `min`, `max`, `orientation`, `measure` and
 `format` like ["fit" in Term::Fabulous::Chart::Scale::Linear](Linear.md#fit) (the format
 defaults to `si`), and `base`, a number greater than 1 (default 10).
-`min` and `max` must be greater than 0.
+`min` and `max` must be greater than 0. A fixed end is kept also when
+the data lies beyond it: the other end then moves a power of the base
+away from it.
 
 # METHODS
 

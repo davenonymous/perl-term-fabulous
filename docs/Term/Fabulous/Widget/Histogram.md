@@ -53,6 +53,12 @@ edge up to, but not including, its right edge; the last bin includes
 its right edge too. With `range` and a `bin_width` that does not
 divide it, the last bin is narrower.
 
+A histogram has at most 1000 bins, more than any terminal shows. `bins`
+takes no more, and a `bin_width` is a lower bound: when the data (or
+the `range`) would need more than 1000 bins of that width, the chart
+uses the smallest round width (1, 2, 2.5 or 5 times a power of ten) that
+needs at most 1000.
+
 With several series, the same bins count every series, and the bars of
 different series overlap, translucent (60% opaque), so both
 distributions are visible; with `stacked` (see
@@ -98,13 +104,14 @@ The parameters of ["CONSTRUCTOR" in Term::Fabulous::Widget::XYChart](XYChart.md#
 
 - `bins`
 
-    `auto` (the default) or a positive integer: the number of bins of
-    equal width from the smallest to the largest observation (or over
-    `range`). `auto` chooses a round bin width; see ["Bins"](#bins).
+    `auto` (the default) or a positive integer up to 1000: the number of
+    bins of equal width from the smallest to the largest observation (or
+    over `range`). `auto` chooses a round bin width; see ["Bins"](#bins).
 
 - `bin_width`
 
-    A positive number: the width of every bin. Default: `undef`, which lets
+    A positive number: the width of every bin, widened for data that would
+    need more than 1000 bins (see ["Bins"](#bins)). Default: `undef`, which lets
     `bins` decide. When given, `bins` is not used.
 
 - `range`

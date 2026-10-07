@@ -103,8 +103,23 @@ Where a theme sets a slot, it gives one of:
 - a token name, such as `accent`: the palette's color;
 - a color, in any format [Term::Fabulous::Color](Color.md) accepts (a color slot);
 - a border style name, such as `Round` (a style slot; see [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md));
-- `none`: no color or no style, as if the widget had been given none;
+- `none`: no color or no style, as if the widget had been given none (not for a required slot, see below);
 - `reverse`: for `button.background` in the `pressed` state only, the button is drawn in reverse video.
+
+Some slots are _required_: their widgets draw with the value, or hand
+it to a part that needs one, so `none` (and `undef` or `#null`) dies
+where the theme is built, with `Term::Fabulous::Theme: SLOT cannot be
+'none'`, in every state the slot has. The required slots are
+`scrollbar.track` and `scrollbar.thumb`; `tabs.line.style`;
+`input.star` and `input.inactive` (in every family extending
+`input`); `table.text`, `table.header.text`, `table.cursor`,
+`table.muted`, `table.line.color` and `table.pager.button`;
+`accordion.title`, `accordion.accent` and `accordion.disabled`;
+`toast.text`, `toast.important_text`, `toast.info`,
+`toast.success`, `toast.warning` and `toast.danger`.
+`tabs.line.style` also needs a style with joints (see
+["get\_grid\_styles" in Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md#get_grid_styles)), because the tab
+bar's line joins the tab borders; another style dies.
 
 # THEME FILES
 
@@ -145,7 +160,12 @@ Inside a family node, `name "value"` sets the slot `name` and
 `border.color`. A node named after a state holds the slots of that
 state. A `variant "NAME"` node holds the slots and states of a
 variant. `#null` means `none`. An unknown family, slot, state, token
-or style dies with the known names.
+or style dies with the known names, and so does `none` or `#null` for
+a required slot (see ["Values"](#values)). A palette token, or a slot of a family,
+state or variant, that is set twice in one document dies too (`palette:
+the token 'accent' is set twice`, `button: the slot 'text.focused' is
+set twice`), also when the two settings are in two nodes of the same
+family.
 
 # CONSTRUCTORS
 

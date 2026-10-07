@@ -17,6 +17,7 @@ class Term::Fabulous::Widget::VirtualList
 	:does(Clay::UI::Role::Core::Preparable)
 	:strict(params)
 {
+	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_LEFT);
 	use List::Util qw(max min);
 	use Scalar::Util qw(blessed refaddr weaken);
@@ -72,7 +73,7 @@ class Term::Fabulous::Widget::VirtualList
 		$self->add_internal_children($_column);
 
 		weaken( my $weak = $self );
-		$self->on( OnScroll => sub { $weak->request_prepare if defined $weak; return } );
+		$self->on( OnScroll => sub { $weak->request_prepare if defined $weak; return Clay::UI::Enum::Result->CONTINUE } );    # the event bubbles on
 		$self->request_prepare;
 	}
 
@@ -233,12 +234,15 @@ class Term::Fabulous::Widget::VirtualList
 		return $slot;
 	}
 
-	# Forgets the widgets of the items from $from on; those still attached
-	# leave the column at the next preparation.
+	# Forgets the widgets and the heights of the items from $from on: when
+	# the list grows again, the items at these indices are new ones. Those
+	# still attached leave the column at the next preparation.
 	method _drop_items_from ($from) {
 		delete @_index_by_widget{ map { refaddr $_ } grep { defined } @_built[ $from .. $#_built ] };
-		$#_built = $from - 1;
-		$#_slot  = $from - 1;
+		$#_built     = $from - 1;
+		$#_slot      = $from - 1;
+		$#_measured  = $from - 1 if $#_measured >= $from;
+		$#_estimated = $from - 1 if $#_estimated >= $from;
 		( $_first, $_last ) = ( undef, undef ) if defined $_first && $_first >= $from;
 		$_last   = min( $_last, $from - 1 ) if defined $_last;
 		$_target = undef if defined $_target && $_target >= $from;

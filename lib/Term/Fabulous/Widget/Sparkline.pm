@@ -253,8 +253,10 @@ C<undef>, the first color of the C<palette>.
 =item C<min>, C<max>
 
 Numbers: the fixed ends of the value range; values beyond them are cut
-off. Default: C<undef>, from the data. An invalid value dies with a
-message that names C<min> or C<max>.
+off. With both given, C<min> must be less than C<max>. Default:
+C<undef>, from the data. An invalid value, or a C<min> not below the
+C<max>, dies when it is given, with a message that names C<min> or
+C<max>.
 
 =item C<zero>
 

@@ -85,6 +85,13 @@ subtest 'values' => sub {
 	like shown($bars), qr/\x{2584}/, 'each change shows in the next frame';
 };
 
+subtest 'the min must be below the max' => sub {
+	like dies { sparkline( 8, min => 5, max => 1 ) }, qr/the min of y_axis \(5\) must be less than its max \(1\)/, 'a min above the max dies';
+	my $sparkline = sparkline( 8, min => 1, values => [ 1, 2 ] );
+	like dies { $sparkline->max(0) }, qr/the min of y_axis \(1\) must be less than its max \(0\)/, 'also when the max is set later';
+	is $sparkline->max, undef, 'which leaves the max as it was';
+};
+
 subtest 'invalid input dies' => sub {
 	like dies { sparkline( 8, type => 'scatter' ) }, qr/type must be one of area, bar, line, got 'scatter'/, 'an unknown type';
 	my $sparkline = sparkline( 8, values => [ 1, 2 ] );

@@ -37,6 +37,11 @@ class Term::Fabulous::Chart::Scale::Category :isa(Term::Fabulous::Chart::Scale) 
 		return scalar @$labels;
 	}
 
+	# The label of category number $index (from 0); undef past the last.
+	method label_at ($index) {
+		return $labels->[$index];
+	}
+
 	# The position of category number $index (from 0).
 	method position ($index) {
 		my $count = @$labels || 1;
@@ -142,6 +147,13 @@ Those of L<Term::Fabulous::Chart::Scale>, and:
 =head2 labels, count
 
 The labels and their number.
+
+=head2 label_at
+
+	my $label = $scale->label_at($index);
+
+The label of category number C<$index> (from 0), or C<undef> when there
+is no such category.
 
 =head2 slot_cells
 

@@ -58,7 +58,7 @@ parameters serve the charts:
 
     A code reference called with the series and an array reference of its
     new points (as ["points, count"](#points-count) holds them) before they are stored: from
-    the constructor, `set_data` and `add_points`. It dies for points the
+    the constructor, `set_data`, `add_points` and `parsed_points`. It dies for points the
     chart cannot show (a radar chart: a label it does not have), and the
     data stays as it was. Default: none.
 
@@ -103,6 +103,20 @@ its x is its position in the series), `undef` (a gap), `[ $x, $y ]` or
 `{ x => $x, y => $y }`. With `max_points`, the oldest points
 are dropped. An invalid point, or one `check_points` refuses, dies and
 changes nothing.
+
+## parsed\_points, push\_parsed
+
+```perl
+my @parsed = $series->parsed_points( 4, [ 5, 6 ] );    # dies for invalid points
+$series->push_parsed(@parsed);
+```
+
+`add_points` in two steps, for a caller that adds to several series at
+once and must not change any of them when one refuses its points.
+`parsed_points` parses and checks new points as `add_points` does
+(their numbers in messages follow the points the series has) and returns
+them, storing nothing; `push_parsed` stores what it returned, drops the
+oldest points with `max_points` and returns the series.
 
 ## points, count
 

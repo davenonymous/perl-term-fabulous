@@ -217,7 +217,18 @@ class Term::Fabulous::Chart::Series :strict(params) {
 	}
 
 	method add_points (@items) {
-		push @points, $self->_parsed_points( \@items, scalar @points );
+		return $self->push_parsed( $self->parsed_points(@items) );
+	}
+
+	# New points as add_points would store them: parsed and checked, and
+	# numbered on from the points the series has. Stores nothing.
+	method parsed_points (@items) {
+		return $self->_parsed_points( \@items, scalar @points );
+	}
+
+	# Stores points parsed_points made.
+	method push_parsed (@parsed) {
+		push @points, @parsed;
 		$self->_trim;
 		$revision++;
 		return $self;
@@ -317,7 +328,7 @@ takes for all of its series.
 
 A code reference called with the series and an array reference of its
 new points (as L</points, count> holds them) before they are stored: from
-the constructor, C<set_data> and C<add_points>. It dies for points the
+the constructor, C<set_data>, C<add_points> and C<parsed_points>. It dies for points the
 chart cannot show (a radar chart: a label it does not have), and the
 data stays as it was. Default: none.
 
@@ -360,6 +371,18 @@ its x is its position in the series), C<undef> (a gap), C<[ $x, $y ]> or
 C<< { x =E<gt> $x, y =E<gt> $y } >>. With C<max_points>, the oldest points
 are dropped. An invalid point, or one C<check_points> refuses, dies and
 changes nothing.
+
+=head2 parsed_points, push_parsed
+
+	my @parsed = $series->parsed_points( 4, [ 5, 6 ] );    # dies for invalid points
+	$series->push_parsed(@parsed);
+
+C<add_points> in two steps, for a caller that adds to several series at
+once and must not change any of them when one refuses its points.
+C<parsed_points> parses and checks new points as C<add_points> does
+(their numbers in messages follow the points the series has) and returns
+them, storing nothing; C<push_parsed> stores what it returned, drops the
+oldest points with C<max_points> and returns the series.
 
 =head2 points, count
 

@@ -370,6 +370,11 @@ filtered as it is set up.
 - `remove_row` and `remove_rows` remove rows and, in a tree, all their
 child rows. Removed rows leave the selection, and their row and cell
 styles are forgotten.
+- `rows` replaces all rows. Rows whose id stays keep their selection and
+their row and cell styles, and show their new data: a program that
+gives a table with `row_id` fresh rows every second sees the new
+values. A row removed and added again with its id shows its new data
+as well.
 - None of these fire an event. The cursor stays on its row as long as
 the row is shown; when it is gone, the cursor moves to the line that
 takes its place (see ["The cursor" in Term::Fabulous::Manual::TableRows](TableRows.md#the-cursor)).

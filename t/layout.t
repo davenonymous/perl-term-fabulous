@@ -52,6 +52,23 @@ subtest 'use instructions' => sub {
 		'a class without CanParseLayout is rejected';
 };
 
+subtest 'allowed_namespaces' => sub {
+	my %allowed = ( allowed_namespaces => [ 'My::App', 'Term::Fabulous::Widget' ] );
+	my $root    = Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox", %allowed )->build;
+	isa_ok $root, ['Term::Fabulous::Widget::Box'], 'a module below an allowed namespace loads';
+	like dies { Term::Fabulous::Layout->new( string => "use Some::Module::With::Side::Effects as Box\nBox", %allowed ) },
+		qr/'use Some::Module::With::Side::Effects' is not allowed; allowed_namespaces permits only modules in My::App, Term::Fabulous::Widget/,
+		'another module is refused before it is loaded (it does not exist, so loading it would fail differently)';
+	like dies { Term::Fabulous::Layout->new( string => "use My::Application as Box\nBox", %allowed ) }, qr/'use My::Application' is not allowed/,
+		'a namespace is matched by whole package name parts';
+	like dies { Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox", allowed_namespaces => 'Term::Fabulous' ) },
+		qr/allowed_namespaces must be an array reference of package names, got 'Term::Fabulous'/, 'the namespaces are a list';
+	like dies { Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox", allowed_namespaces => ['Term/Fabulous'] ) },
+		qr/allowed_namespaces holds an invalid package name 'Term\/Fabulous'/, 'of package names';
+	like dies { Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::Box as Box\nBox", allowed_namespaces => [] ) },
+		qr/allowed_namespaces needs at least one package name/, 'an empty list dies';
+};
+
 subtest 'document structure' => sub {
 	like dies { layout("use Term::Fabulous::Widget::Box as Box\nBox\nstray 1") },      qr/unexpected top-level node 'stray'/, 'stray top-level node';
 	like dies { layout("use Term::Fabulous::Widget::Box as Box\nBox\nBox") },          qr/multiple root widgets/,             'two roots';

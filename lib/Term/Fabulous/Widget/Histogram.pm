@@ -25,6 +25,7 @@ class Term::Fabulous::Widget::Histogram
 
 	use constant {
 		MOST_AUTO_BINS  => 50,
+		MOST_BINS       => 1000,
 		OVERLAP_OPACITY => 0.6,
 	};
 
@@ -49,8 +50,14 @@ class Term::Fabulous::Widget::Histogram
 
 	method _checked_bins ($value) {
 		return 'auto' if defined $value && !ref $value && $value eq 'auto';
-		$self->_fail( 'bins', "'auto' or a positive integer", $value ) unless defined $value && !ref $value && $value =~ /\A[1-9][0-9]*\z/;
+		$self->_fail( 'bins', "'auto' or a positive integer up to " . MOST_BINS, $value ) unless defined $value && !ref $value && $value =~ /\A[1-9][0-9]*\z/ && $value <= MOST_BINS;
 		return $value + 0;
+	}
+
+	# A histogram counts plain numbers: it has no x values of its own.
+	method check_series_points :override ( $name, $points ) {
+		croak ref($self) . ": series '$name' of a histogram takes plain numbers, not [ x, y ] points" if grep { defined $_->[0] } @$points;
+		return;
 	}
 
 	method _checked_bin_width ($value) {
@@ -92,7 +99,6 @@ class Term::Fabulous::Widget::Histogram
 	method _observations ($series) {
 		my @values;
 		foreach my $point ( $series->points->@* ) {
-			croak ref($self) . ": series '" . $series->name . "' of a histogram takes plain numbers, not [ x, y ] points" if defined $point->[0];
 			push @values, $point->[1] if defined $point->[1];
 		}
 		if ( my $steps = $self->series_option( $series, 'transform' ) ) {
@@ -111,20 +117,38 @@ class Term::Fabulous::Widget::Histogram
 		return 10 * $power;
 	}
 
+	# The next nice width above $width.
+	sub _wider_nice_width ($width) {
+		my $power = 10**floor( log($width) / log(10) );
+		foreach my $mantissa ( 1, 2, 2.5, 5, 10 ) {
+			return $mantissa * $power if $mantissa * $power > $width * ( 1 + 1e-9 );
+		}
+		return 20 * $power;
+	}
+
 	# The edges of the bins over all observations.
 	method bin_edges (@samples) {
 		my @all = map { @$_ } @samples;
 		my ( $low, $high ) = $range ? @$range : @all ? ( List::Util::min(@all), List::Util::max(@all) ) : ( 0, 1 );
 		$high = $low + 1 if $high <= $low;
-		if ( defined $bin_width || $bins eq 'auto' ) {
-			my $width = $bin_width // _nice_width( _auto_width( \@all, $low, $high ) );
-			my $first = $range ? $low  : floor( $low / $width + 1e-9 ) * $width;
-			my $last  = $range ? $high : ceil( $high / $width - 1e-9 ) * $width;
-			$last += $width if $last <= $first;
-			my $count = List::Util::max( 1, ceil( ( $last - $first ) / $width - 1e-9 ) );
-			return map { List::Util::min( $first + $_ * $width, $last ) } 0 .. $count;
-		}
-		return map { $low + ( $high - $low ) * $_ / $bins } 0 .. $bins;
+		return map { $low + ( $high - $low ) * $_ / $bins } 0 .. $bins unless defined $bin_width || $bins eq 'auto';
+
+		# A given width too small for the data widens to a nice width that
+		# makes at most MOST_BINS bins.
+		my $width = $bin_width // _nice_width( _auto_width( \@all, $low, $high ) );
+		$width = _nice_width( ( $high - $low ) / MOST_BINS ) if ( $high - $low ) / $width > MOST_BINS;
+		my ( $first, $last, $count ) = $self->_bins_of_width( $low, $high, $width );
+		( $first, $last, $count ) = $self->_bins_of_width( $low, $high, $width = _wider_nice_width($width) ) while $count > MOST_BINS;
+		return map { List::Util::min( $first + $_ * $width, $last ) } 0 .. $count;
+	}
+
+	# The first and the last edge and the number of bins $width wide from
+	# $low to $high: rounded out to multiples of the width without a range.
+	method _bins_of_width ( $low, $high, $width ) {
+		my $first = $range ? $low  : floor( $low / $width + 1e-9 ) * $width;
+		my $last  = $range ? $high : ceil( $high / $width - 1e-9 ) * $width;
+		$last += $width if $last <= $first;
+		return ( $first, $last, List::Util::max( 1, ceil( ( $last - $first ) / $width - 1e-9 ) ) );
 	}
 
 	# Freedman-Diaconis (twice the interquartile range over the cube root
@@ -279,6 +303,12 @@ edge up to, but not including, its right edge; the last bin includes
 its right edge too. With C<range> and a C<bin_width> that does not
 divide it, the last bin is narrower.
 
+A histogram has at most 1000 bins, more than any terminal shows. C<bins>
+takes no more, and a C<bin_width> is a lower bound: when the data (or
+the C<range>) would need more than 1000 bins of that width, the chart
+uses the smallest round width (1, 2, 2.5 or 5 times a power of ten) that
+needs at most 1000.
+
 With several series, the same bins count every series, and the bars of
 different series overlap, translucent (60% opaque), so both
 distributions are visible; with C<stacked> (see
@@ -326,13 +356,14 @@ L<Term::Fabulous::Widget::Chart/CONSTRUCTOR>, and:
 
 =item C<bins>
 
-C<auto> (the default) or a positive integer: the number of bins of
-equal width from the smallest to the largest observation (or over
-C<range>). C<auto> chooses a round bin width; see L</Bins>.
+C<auto> (the default) or a positive integer up to 1000: the number of
+bins of equal width from the smallest to the largest observation (or
+over C<range>). C<auto> chooses a round bin width; see L</Bins>.
 
 =item C<bin_width>
 
-A positive number: the width of every bin. Default: C<undef>, which lets
+A positive number: the width of every bin, widened for data that would
+need more than 1000 bins (see L</Bins>). Default: C<undef>, which lets
 C<bins> decide. When given, C<bins> is not used.
 
 =item C<range>

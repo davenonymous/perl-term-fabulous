@@ -10,29 +10,17 @@ use Object::Pad 0.825;
 class Term::Fabulous::Screenshot::Screen :strict(params) {
 	use Carp qw(croak);
 	use Encode qw(decode);
-	use Term::Fabulous::Termbox qw(
-		TB_HI_BLACK TB_BOLD TB_DIM TB_ITALIC TB_UNDERLINE TB_UNDERLINE_2
-		TB_STRIKEOUT TB_OVERLINE TB_REVERSE TB_INVISIBLE
-	);
+	use Term::Fabulous::Render::Attr qw(STYLE_FLAGS);
+	use Term::Fabulous::Termbox qw(TB_HI_BLACK);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
 	use constant RGB_MASK => 0xFFFFFF;
 
-	# termbox2 attribute flags and the style each stands for.
-	use constant STYLE_BY_FLAG => (
-		TB_BOLD,        'bold',
-		TB_DIM,         'dim',
-		TB_ITALIC,      'italic',
-		TB_UNDERLINE,   'underline',
-		TB_UNDERLINE_2, 'double_underline',
-		TB_STRIKEOUT,   'strikeout',
-		TB_OVERLINE,    'overline',
-		TB_REVERSE,     'reverse',
-		TB_INVISIBLE,   'invisible',
-	);
-
-	# SGR parameters Term::Fabulous::Static writes, and the style each sets.
-	use constant STYLE_BY_SGR => ( 1 => 'bold', 4 => 'underline', 7 => 'reverse' );
+	# termbox2 attribute flags and SGR parameters, and the style each
+	# stands for; Term::Fabulous::Static writes the parameters from the
+	# same table.
+	use constant STYLE_BY_FLAG => map { $_->[0] => $_->[2] } STYLE_FLAGS;
+	use constant STYLE_BY_SGR  => map { $_->[1] => $_->[2] } STYLE_FLAGS;
 
 	field $columns :param :reader;
 	field $rows    :param :reader;
@@ -200,8 +188,8 @@ screen.
 
 From the bytes a program printed into a terminal C<$columns> wide: UTF-8
 text, lines ending in CR LF, and the SGR sequences
-L<Term::Fabulous::Static> writes (reset, bold, underline, reverse and
-24-bit colors). Each line becomes a row, padded with blank cells;
+L<Term::Fabulous::Static> writes (reset, 24-bit colors and the style
+parameters of L<Term::Fabulous::Render::Attr/STYLE_FLAGS>). Each line becomes a row, padded with blank cells;
 trailing empty lines are dropped. Dies on invalid UTF-8, on any other
 control character or escape sequence, on a line wider than C<$columns>,
 and when nothing was printed.
@@ -245,9 +233,10 @@ terminal's default color.
 
 =item C<styles>
 
-A hash whose keys are the styles that apply: C<bold>, C<dim>, C<italic>,
-C<underline>, C<double_underline>, C<strikeout>, C<overline>,
-C<reverse>, C<invisible>.
+A hash whose keys are the styles that apply, the names of
+L<Term::Fabulous::Render::Attr/STYLE_FLAGS>: C<bold>, C<dim>,
+C<italic>, C<underline>, C<blink>, C<reverse>, C<invisible>,
+C<strikeout>, C<double_underline>, C<overline>.
 
 =back
 

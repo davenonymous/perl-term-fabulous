@@ -728,7 +728,9 @@ Without C<bins> or C<bin_width>, the bins are chosen from the data:
 their width follows the spread of the values (the Freedman-Diaconis
 rule), rounded to 1, 2, 2.5 or 5 times a power of ten, with at most
 about 50 bins. C<< bins => 20 >> asks for 20 equal bins between the
-smallest and the largest value; C<bin_width> fixes the width.
+smallest and the largest value; C<bin_width> fixes the width. A
+histogram has at most 1000 bins: a C<bin_width> too small for the data
+widens to a round width that needs no more.
 
 =item *
 

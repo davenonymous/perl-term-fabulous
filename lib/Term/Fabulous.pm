@@ -144,6 +144,7 @@ class Term::Fabulous
 	}
 
 	method run () {
+		die "Term::Fabulous: run is active already; it cannot be called again until it returns" if $_running;
 		warn "Term::Fabulous: the locale's character set is not UTF-8; wide characters will be misaligned\n"
 			unless terminal_is_utf8();
 
@@ -225,6 +226,7 @@ class Term::Fabulous
 			on_tick  => sub { $self->_draw_frame },
 		);
 
+		die "Term::Fabulous: the signal handlers of an earlier run were not restored" if %_signals_before;
 		%_signals_before = map { $_ => $SIG{$_} } WATCHED_SIGNALS;
 		$self->_add_notifiers(
 			( map { IO::Async::Signal->new( name => $_, on_receipt => $stop ) } WATCHED_SIGNALS ),
@@ -959,7 +961,10 @@ without a C<SIGHUP> reaching the process (a terminal that went away
 while the process is not in its session, or input from a pipe), C<run>
 dies with C<Term::Fabulous: the terminal was closed>.
 After C<run> has returned or died, the object can be used again and
-C<run> can be called again.
+C<run> can be called again. While C<run> is active, a second call (from a
+listener or a timer inside the loop) dies with C<Term::Fabulous: run is
+active already; it cannot be called again until it returns> and leaves
+the active run as it was, just as L</step> refuses to run inside it.
 
 C<run> dies with the terminal's error when the terminal cannot be
 opened. For the real terminal, these start with
@@ -1019,7 +1024,10 @@ the C<clock> of L</new>.
 
 Returns the number of frames it drew, 0 when nothing was due. The
 terminal stays open; C<run> closes it, or close it with
-C<< $ui->terminal->close >>. Unknown options die, and so does a call
+C<< $ui->terminal->close >>. The real terminal
+(L<Term::Fabulous::Terminal::Termbox>) also closes itself when it is
+destroyed while open, so a program that steps and then dies or ends
+gets its shell back as it was. Unknown options die, and so does a call
 from inside C<run>. When frames keep being due after 100 rounds,
 because a widget changes in every frame, C<step> dies. When the
 terminal input has ended (L<Term::Fabulous::Terminal::Memory/end_input>),

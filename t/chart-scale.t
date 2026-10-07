@@ -3,6 +3,7 @@ use warnings;
 use utf8;
 
 use Test2::V0;
+use Time::HiRes ();
 
 use Term::Fabulous::Chart::Scale::Category;
 use Term::Fabulous::Chart::Scale::Linear;
@@ -63,6 +64,14 @@ subtest 'linear: options' => sub {
 	like dies { $Linear->fit( cells  => 5, min => 3, max => 3 ) }, qr/min \(3\) must be less than max \(3\)/,   'min must be less than max';
 };
 
+subtest 'linear: a fixed step too small for the cells' => sub {
+	my $start = Time::HiRes::time();
+	my $scale = $Linear->fit( extent => [ 0, 5e6 ], step => 1, cells => 17 );
+	ok Time::HiRes::time() - $start < 0.5, 'is given up at once, without listing its five million multiples';
+	is [ labels($scale), domain($scale) ],                                            [ [qw(0 5M)], [ 0, 5e6, 17 ] ], 'the axis shows its two ends';
+	is labels( $Linear->fit( extent => [ 0, 20_000 ], step => 1, cells => 30_000 ) ), [qw(0 20k)],                    'more than 10 000 ticks are never listed, whatever the cells';
+};
+
 subtest 'linear: horizontal axes space ticks by their labels' => sub {
 	my $scale = $Linear->fit( extent => [ 0, 1000 ], cells => 40, orientation => 'horizontal' );
 	is [ labels($scale), $scale->used ], [ [ 0, 250, 500, 750, 1000 ], 40 ], 'ticks need not fall on whole cells';
@@ -91,6 +100,13 @@ subtest 'log' => sub {
 	like dies { $Log->fit( cells => 5, base => 1 ) }, qr/base must be a number greater than 1, got 1/,             'base 1 dies';
 	like dies { $Log->fit( cells => 5, min  => 0 ) }, qr/min of a logarithmic axis must be greater than 0, got 0/, 'min 0 dies';
 	like dies { $Log->fit( cells => 5, min => 10, max => 1 ) }, qr/min \(10\) must be less than max \(1\)/, 'min must be less than max';
+};
+
+subtest 'log: fixed ends beyond the data' => sub {
+	my $below = $Log->fit( extent => [ 10, 1000 ], max => 5, cells => 10 );
+	is [ $below->min, $below->max ], [ 0.1, float(5) ], 'a fixed max below the data is kept; the min moves a decade below it';
+	my $above = $Log->fit( extent => [ 10, 1000 ], min => 5000, cells => 10 );
+	is [ $above->min, $above->max ], [ 5000, 1e5 ], 'a fixed min above the data is kept; the max moves a decade above it';
 };
 
 subtest 'time' => sub {
@@ -129,6 +145,7 @@ subtest 'category' => sub {
 	is [ $scale->kind, $scale->is_band, [ $scale->labels ], $scale->count, $scale->min, $scale->max ], [ 'category', 1, [qw(Jan Feb Mar)], 3, 0, 2 ], 'labels and their numbers';
 	is [ $scale->slot_cells, $scale->position(1), $scale->value_at(0.5) ],                             [ 10, 0.5, 1 ],                                'each category in the middle of its slot';
 	is labels($scale),                                                                                 [qw(Jan Feb Mar)],                             'every category is a tick';
+	is [ map { $scale->label_at($_) } 0, 2, 3 ],                                                       [ 'Jan', 'Mar', undef ],                       'label_at: the label of a category number';
 
 	$scale = $Category->fit( labels => [qw(Jan Feb Mar)], cells => 32 );
 	is [ $scale->slot_cells, $scale->position(0), $scale->value_at( $scale->position(2) ) ], [ 10, 0.1875, 2 ], 'slots of whole cells; the cells left over go to both ends';

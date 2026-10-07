@@ -135,6 +135,11 @@ Each time the pointer moves onto something else, the chart fires a
 series, the data point and its value: charts have no tooltips, so this
 is how a program shows details, for example in a status line.
 
+When the program removes or hides the series (or slice) the pointer is
+on, the hover ends as if the pointer had moved off it: nothing is
+faded, `hovered` returns `undef` and the chart fires a `SeriesHover`
+event without a series.
+
 `highlight` emphasizes a series from the program the same way, for
 example the one selected in a list; the pointer wins while it is on a
 series. `hover => 0` turns hover effects and events off;
@@ -317,6 +322,12 @@ is emphasized), `is_emphasized( $look, $series )` and
 `register_target( series => ..., index => ..., label => ..., value
 &#x3d;> ..., x => ... )`, which returns an owner id to record in the
 surface's owner maps, so the pointer finds what was drawn there.
+
+A chart whose program can take series or slices away calls
+`end_hover_unless_shown(@names)` after it did, with the names
+(the `series` of the targets) of everything still shown: when the
+pointer is on something that is not among them, the hover ends as
+described in ["Hover and emphasis"](#hover-and-emphasis).
 
 # SEE ALSO
 

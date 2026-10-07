@@ -611,7 +611,19 @@ The
 
 A layout names the Perl modules it loads, and loading a module runs its
 code. Treat layout files like program code: do not load layouts from
-untrusted sources. See ["SECURITY" in Term::Fabulous::Layout](../Layout.md#security).
+untrusted sources. A program that lets its users edit layouts (a
+dashboard configuration, say) can limit the modules to the namespaces of
+its widgets with `allowed_namespaces`; any other `use` dies before
+anything is loaded:
+
+```text
+my $layout = Term::Fabulous::Layout->new(
+        file               => $user_layout,
+        allowed_namespaces => [ 'Term::Fabulous::Widget', 'My::App::Widget' ],
+);
+```
+
+See ["SECURITY" in Term::Fabulous::Layout](../Layout.md#security).
 
 # MORE EXAMPLES
 

@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Tabs::Bar
 	);
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of);
+	use Term::Fabulous::Check qw(boolean describe non_negative_integer one_of);
 	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::Select;
@@ -346,7 +346,7 @@ class Term::Fabulous::Widget::Tabs::Bar
 	method page_border   (@new) { return @new ? $self->_set( \$page_border, boolean( $self, page_border => $new[0] ) )                      : $page_border }
 
 	method line_style (@new) {
-		return @new ? $self->set_look( line_style => $new[0] ) : border_style( $self, line_style => $self->look_value('line_style'), grid => 1 );
+		return @new ? $self->set_look( line_style => $new[0] ) : $self->look_value('line_style');    # set_look and the theme both check for joints
 	}
 	method line_color             (@new) { return @new ? $self->set_look( line_color             => $new[0] ) : $self->look_value('line_color') }
 	method text_color             (@new) { return @new ? $self->set_look( text_color             => $new[0] ) : $self->look_value('text_color') }

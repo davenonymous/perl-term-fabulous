@@ -400,6 +400,16 @@ class Term::Fabulous::Widget::Chart
 		return;
 	}
 
+	# Ends the hover when the program took away what the pointer is on:
+	# the hovered series or slice is none of the names still shown.
+	method end_hover_unless_shown (@shown_names) {
+		my $series = defined $_hovered ? $_hovered->{series} : undef;
+		return unless defined $series;
+		return if grep { $_ eq $series } @shown_names;
+		$self->_hover_target(undef);
+		return;
+	}
+
 	method hovered () {
 		return undef unless defined $_hovered;
 		return { map { $_ => $_hovered->{$_} } grep { defined $_hovered->{$_} } qw(series index label value x) };
@@ -656,6 +666,11 @@ C<SeriesHover> event (L<Term::Fabulous::Event::SeriesHover>) with the
 series, the data point and its value: charts have no tooltips, so this
 is how a program shows details, for example in a status line.
 
+When the program removes or hides the series (or slice) the pointer is
+on, the hover ends as if the pointer had moved off it: nothing is
+faded, C<hovered> returns C<undef> and the chart fires a C<SeriesHover>
+event without a series.
+
 C<highlight> emphasizes a series from the program the same way, for
 example the one selected in a list; the pointer wins while it is on a
 series. C<< hover =E<gt> 0 >> turns hover effects and events off;
@@ -846,6 +861,12 @@ is emphasized), C<< is_emphasized( $look, $series ) >> and
 C<< register_target( series => ..., index => ..., label => ..., value
 => ..., x => ... ) >>, which returns an owner id to record in the
 surface's owner maps, so the pointer finds what was drawn there.
+
+A chart whose program can take series or slices away calls
+C<< end_hover_unless_shown(@names) >> after it did, with the names
+(the C<series> of the targets) of everything still shown: when the
+pointer is on something that is not among them, the hover ends as
+described in L</Hover and emphasis>.
 
 =head1 SEE ALSO
 

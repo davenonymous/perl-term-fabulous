@@ -845,8 +845,12 @@ divider {
 
 `none` switches a color or a style off, and `reverse` (for
 `button.background` in the `pressed` state) draws the button in
-reverse video. Unknown tokens, families, slots, states and styles die
-with the known names. The program loads the file and gives the theme
+reverse video. A few slots cannot be switched off, because their
+widget draws with the value, such as the scrollbar's `track` and
+`thumb` and the tab bar's `line style`, which also needs a style
+with joints; ["Values" in Term::Fabulous::Theme](../Theme.md#values) lists them. Unknown
+tokens, families, slots, states and styles die with the known names,
+and so does `none` for such a slot, or a token or slot set twice. The program loads the file and gives the theme
 to the UI:
 
 ```perl

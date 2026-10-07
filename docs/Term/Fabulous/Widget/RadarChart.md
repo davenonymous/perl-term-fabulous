@@ -94,8 +94,11 @@ The parameters of ["CONSTRUCTOR" in Term::Fabulous::Widget::Chart](Chart.md#cons
 
 - `min`, `max`
 
-    Numbers: the values at the center and at the outer ring. Default:
-    `undef`, from the data (the center is 0 unless the data goes below).
+    Numbers: the values at the center and at the outer ring; with both
+    given, `min` must be less than `max`. Default: `undef`, from the data
+    (the center is 0 unless the data goes below). A `min` not below the
+    `max` dies when it is given, also through the accessors, and changes
+    nothing.
 
 - `ticks`
 
@@ -136,8 +139,9 @@ The parameters of ["CONSTRUCTOR" in Term::Fabulous::Widget::Chart](Chart.md#cons
     - `points`, `point`
 
         `points` true marks every value; `point` is the mark: a single
-        character (a bullet, `U+2022`, by default), or `dot` or `square` as
-        in ["Points" in Term::Fabulous::Widget::XYChart](XYChart.md#points).
+        character (a bullet, `U+2022`, by default), or `dot` (one Braille dot
+        at the corner) or `square` (two by two Braille dots around it), drawn
+        with the outlines as in ["Points" in Term::Fabulous::Widget::XYChart](XYChart.md#points).
 
     - `fill_opacity`
 

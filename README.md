@@ -389,7 +389,10 @@ without a `SIGHUP` reaching the process (a terminal that went away
 while the process is not in its session, or input from a pipe), `run`
 dies with `Term::Fabulous: the terminal was closed`.
 After `run` has returned or died, the object can be used again and
-`run` can be called again.
+`run` can be called again. While `run` is active, a second call (from a
+listener or a timer inside the loop) dies with `Term::Fabulous: run is
+active already; it cannot be called again until it returns` and leaves
+the active run as it was, just as ["step"](#step) refuses to run inside it.
 
 `run` dies with the terminal's error when the terminal cannot be
 opened. For the real terminal, these start with
@@ -436,7 +439,10 @@ the `clock` of ["new"](#new).
 
 Returns the number of frames it drew, 0 when nothing was due. The
 terminal stays open; `run` closes it, or close it with
-`$ui->terminal->close`. Unknown options die, and so does a call
+`$ui->terminal->close`. The real terminal
+([Term::Fabulous::Terminal::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Terminal/Termbox.md)) also closes itself when it is
+destroyed while open, so a program that steps and then dies or ends
+gets its shell back as it was. Unknown options die, and so does a call
 from inside `run`. When frames keep being due after 100 rounds,
 because a widget changes in every frame, `step` dies. When the
 terminal input has ended (["end\_input" in Term::Fabulous::Terminal::Memory](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Terminal/Memory.md#end_input)),

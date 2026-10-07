@@ -126,6 +126,16 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		return;
 	}
 
+	# The safety net for a terminal that is dropped while open, by a program
+	# that dies outside Term::Fabulous's run (step leaves the terminal open)
+	# or never closes it: the shell gets its screen, modes and input back.
+	# No ${^GLOBAL_PHASE} guard, because global destruction is when a
+	# file-scoped object goes, and close needs only XS calls and fields.
+	method DESTROY {
+		$self->close if $is_open;
+		return;
+	}
+
 	method size () {
 		die "Term::Fabulous::Terminal::Termbox: the terminal is not open" unless $is_open;
 		return @_size;
@@ -347,6 +357,14 @@ terminal is closed again.
 
 Ends the session as described above. Does nothing when no session is
 open, so calling it twice is harmless.
+
+A terminal object that is destroyed while its session is open closes
+it first, also when the program ends or dies with the object still
+around, so a program that drives the terminal itself (with
+L<Term::Fabulous/step> or L</open>) and dies never leaves the shell in
+raw mode, on the alternate screen or with mouse reporting switched on.
+Closing explicitly is still the way to restore the terminal at a moment
+of your choosing.
 
 =head2 is_open
 

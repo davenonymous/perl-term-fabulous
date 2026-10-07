@@ -37,8 +37,9 @@ $chart->add_series( name => $name, data => \@data );
 ```
 
 Adds a series at the end; see ["SERIES" in Term::Fabulous::Widget::XYChart](../Widget/XYChart.md#series)
-for its keys. A series without a name is called `Series 1`, `Series 2`,
-and so on. Dies for a name the chart has already, a type the chart cannot
+for its keys. A series without a name is called `Series N`, with the
+number after the count of series (`Series 1`, `Series 2`, ...), or the
+next one no series has yet when that name is taken. Dies for a name the chart has already, a type the chart cannot
 draw, invalid options or data, and data the chart cannot show (a radar
 chart: a value for a label it does not have); nothing is added then.
 
@@ -50,7 +51,9 @@ $chart->clear_series;
 ```
 
 Remove the named series, or all of them. An unknown name dies before any
-series is removed. The remaining series keep their colors.
+series is removed. The remaining series keep their colors. When the
+mouse pointer is on a series that goes, the hover ends as if the pointer
+had moved off it (see ["Hover and emphasis" in Term::Fabulous::Widget::Chart](../Widget/Chart.md#hover-and-emphasis)).
 
 ## series\_names, has\_series
 
@@ -101,13 +104,16 @@ $chart->append( undef, { web => 12 } );    # the next index
 
 Adds one point to each series named in the hash, all at the same x (with
 `undef`: each at its next position): the way to feed several series from
-one measurement. An unknown name or an invalid value dies and adds no
-point to any series.
+one measurement. Every value is checked before any series changes: an
+unknown name or an invalid value for one series dies and adds no point
+to any series, so the series stay in step.
 
 ## show\_series, hide\_series, is\_series\_visible
 
 A hidden series is not drawn, has no legend entry and does not count for
-the axes; its data is kept.
+the axes; its data is kept. Hiding the series the mouse pointer is on
+ends the hover, as removing it does; so does `set_series( $name,
+visible => 0 )`.
 
 ## series\_default
 
@@ -138,6 +144,9 @@ for the chart's own drawing code.
 
 `default_series_type`, `series_types` (the types the chart draws),
 `series_default_names` (the options it takes for all its series),
+`end_hover_unless_shown(@names)` (which
+[Term::Fabulous::Widget::Chart](../Widget/Chart.md) provides: the role calls it with the
+names of the visible series after series go or are hidden),
 `check_series_type( $name, $type )`, which dies when the chart cannot
 show a series of that type in its current state (the role calls it
 before a series is added or changes its type), and

@@ -326,6 +326,27 @@ subtest 'data changes in a filtered tree show new matches' => sub {
 	is [ $tree->page_row_ids ], [qw(a a2 zz)], 'the parent of a new match opens';
 };
 
+subtest 'rows given again with the same ids show their new values' => sub {
+	my ( $table, $h ) = table_ui();
+	$table->rows(
+		[
+			map {
+				{ %$_, name => uc $_->{name} }
+			} @PEOPLE
+		]
+	);
+	$h->{ui}->step;
+	my $shown = join "\n", @{ screen($h) };
+	like $shown,   qr/ANN.*BOB.*CID.*DAN.*EVE/s, 'rows() with the same ids';
+	unlike $shown, qr/Ann|Bob/,                  'no old text is left';
+
+	$table->remove_row(2);
+	$table->add_row( { id => 2, name => 'Zed', dept => 'Ops', age => 99 }, index => 1 );
+	$h->{ui}->step;
+	my ($second) = grep { /Zed/ } @{ screen($h) };
+	like $second, qr/Zed\s.*Ops\s.*99/, 'a row removed and added again with its id between two frames';
+};
+
 subtest 'colors and checks after construction' => sub {
 	my ( $table, $h ) = table_ui( page_size => 2, size => [ 50, 14 ] );
 	$table->muted_color('#ff0000');

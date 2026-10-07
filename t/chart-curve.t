@@ -77,6 +77,28 @@ subtest 'smooth curves' => sub {
 	like dies { curve_points( \@peak, 'zigzag' ) }, qr/unknown curve 'zigzag'/, 'an unknown curve dies';
 };
 
+subtest 'natural: several points at one x' => sub {
+	my @tower    = ( [ 0, 1 ], [ 1, 2 ], [ 1, 3 ], [ 1, 4 ], [ 2, 0 ] );
+	my $polyline = curve_points( \@tower, 'natural', step => 0.5 );
+	is [ grep { $_->[0] == int $_->[0] } @$polyline ], \@tower, 'three points at one x: the curve runs through all of them';
+	is curve_points( [ [ 0, 0 ], [ 1, 3 ], [ 3, 1 ], [ 4, 4 ] ], 'natural', step => 0.5 ),
+		[ [ 0, 0 ], [ 0.5, 1.875 ], [ 1, 3 ], [ 1.5, 2.875 ], [ 2, 2 ], [ 2.5, 1.125 ], [ 3, 1 ], [ 3.5, 2.125 ], [ 4, 4 ] ], 'points at distinct x give the spline they always gave';
+};
+
+subtest 'between: a part of the curve' => sub {
+	my @peak = ( [ 0, 0 ], [ 2, 10 ], [ 4, 0 ], [ 6, 10 ], [ 8, 10 ], [ 10, 3 ] );
+	foreach my $curve (qw(linear step-middle monotone catmull-rom natural ease-in-out-sine)) {
+		my $whole = curve_points( \@peak, $curve, step => 0.25 );
+		my $part  = curve_points( \@peak, $curve, step => 0.25, between => [ 2, 4 ] );
+		is $part, [ grep { $_->[0] >= 4 && $_->[0] <= 8 } @$whole ], "$curve: the vertices the whole curve has from point 2 to point 4";
+	}
+	is curve_points( \@peak, 'monotone', between => [ 3, 3 ] ), [ [ 6, 10 ] ], 'one point';
+	like dies { curve_points( \@peak, 'linear', between => [  4, 2 ] ) }, qr/between \[ 4, 2 \] must run forward within the points 0 \.\. 5/,            'backwards dies';
+	like dies { curve_points( \@peak, 'linear', between => [  0, 6 ] ) }, qr/must run forward within the points/,                                        'past the last point dies';
+	like dies { curve_points( \@peak, 'linear', between => [ -1, 2 ] ) }, qr/between must be \[ first, last \], two point indexes, got \[ '-1', '2' \]/, 'a negative index dies';
+	like dies { curve_points( \@peak, 'linear', between => 2 ) }, qr/two point indexes, got '2'/, 'so does a plain value';
+};
+
 subtest 'y_at' => sub {
 	my $polyline = [ [ 0, 0 ], [ 2, 4 ], [ 2, 8 ], [ 4, 8 ] ];
 	is [ map { y_at( $polyline, $_ ) } 0, 1, 3, 4 ],                       [ 0, 2, 8, 8 ],          'between the vertices around x';

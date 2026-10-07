@@ -159,6 +159,29 @@ subtest 'invalid themes die' => sub {
 	like dies { $Theme->default->look_table('lamp') },                qr/unknown family 'lamp'/,                             'look_table of an unknown family';
 };
 
+subtest 'required slots cannot be none' => sub {
+	my @required = qw(
+		scrollbar.track scrollbar.thumb tabs.line.style
+		input.star input.inactive
+		table.text table.header.text table.cursor table.muted table.line.color table.pager.button
+		accordion.title accordion.accent accordion.disabled
+		toast.text toast.important_text toast.info toast.success toast.warning toast.danger
+	);
+	foreach my $slot (@required) {
+		like dies { $Theme->new( slots => { $slot => 'none' } ) }, qr/\ATerm::Fabulous::Theme: \Q$slot\E cannot be 'none'/, "$slot 'none' dies";
+		like dies { $Theme->new( slots => { $slot => undef } ) },  qr/\ATerm::Fabulous::Theme: \Q$slot\E cannot be 'none'/, "$slot undef dies";
+	}
+	like dies { $Theme->new( variants => { 'scrollbar.slim' => { thumb => 'none' } } ) }, qr/scrollbar.thumb cannot be 'none'/, 'in a variant too';
+	ok lives { $Theme->new( slots => { 'scrollbar.border.style' => 'none', 'tabs.text' => 'none' } ) }, 'the other slots of the families still take none';
+};
+
+subtest 'tabs.line.style needs joints' => sub {
+	like dies { $Theme->new( slots => { 'tabs.line.style' => 'Thick' } ) }, qr/tabs.line.style must be a border style with joints or its name, got 'Thick' \(known: /,
+		'a style without joints dies';
+	my $theme = $Theme->new( slots => { 'tabs.line.style' => 'Double' } );
+	is $theme->look( 'tabs', 'line.style' )->name, 'Double', 'a style with joints is taken';
+};
+
 subtest 'the generation' => sub {
 	my $before = Term::Fabulous::Theme::generation();
 	is Term::Fabulous::Theme::bump_generation(), $before + 1, 'bump_generation returns the new generation';

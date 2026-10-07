@@ -13,6 +13,7 @@ our @EXPORT_OK = qw(curve_points curve_names is_curve check_curve y_at);
 use Carp qw(croak);
 use List::Util qw(max min);
 use Term::Fabulous::Chart::Easing qw(easing easing_names is_easing_name);
+use Term::Fabulous::Check qw(describe);
 
 my %SHAPES = map { $_ => 1 } qw(linear step step-after step-before step-middle monotone catmull-rom natural);
 
@@ -38,11 +39,14 @@ sub check_curve ( $owner, $name, $curve ) {
 # The polyline that draws a curve through points ([x, y], x ascending):
 # the points themselves for straight lines, the corners of steps, and
 # for smooth curves a point every $step along x besides the data points.
+# With between => [ first, last ] only the part from point first to
+# point last is made; the shape there is the shape of the whole curve.
 sub curve_points ( $points, $curve, %options ) {
 	my $step = $options{step} // 1;
 	croak "Term::Fabulous::Chart::Curve: step must be positive" unless $step > 0;
-	return [ map { [@$_] } @$points ] if @$points < 2 || $curve eq 'linear';
-	return _steps( $points, $curve ) if !ref $curve && $curve =~ /\Astep/;
+	my ( $first, $last ) = _checked_between( $options{between}, $points );
+	return [ map { [@$_] } @$points[ $first .. $last ] ] if @$points < 2 || $curve eq 'linear';
+	return _steps( $points, $curve, $first, $last ) if !ref $curve && $curve =~ /\Astep/;
 
 	my $segment
 		= ref $curve eq 'CODE'    ? _eased($curve)
@@ -52,8 +56,8 @@ sub curve_points ( $points, $curve, %options ) {
 		: $curve eq 'natural'     ? _natural($points)
 		:                           croak "Term::Fabulous::Chart::Curve: unknown curve '$curve'";
 
-	my @polyline = ( [ @{ $points->[0] } ] );
-	foreach my $index ( 0 .. $#$points - 1 ) {
+	my @polyline = ( [ @{ $points->[$first] } ] );
+	foreach my $index ( $first .. $last - 1 ) {
 		my ( $from, $to ) = ( $points->[$index], $points->[ $index + 1 ] );
 		my $width = $to->[0] - $from->[0];
 		my $count = $width > 0 ? int( $width / $step ) : 0;
@@ -67,9 +71,22 @@ sub curve_points ( $points, $curve, %options ) {
 	return \@polyline;
 }
 
-sub _steps ( $points, $curve ) {
-	my @polyline = ( [ @{ $points->[0] } ] );
-	foreach my $index ( 1 .. $#$points ) {
+# The indexes of the first and last point the polyline runs through: all
+# points, or the two of between => [ first, last ].
+sub _checked_between ( $between, $points ) {
+	return ( 0, $#$points ) unless defined $between;
+	my $valid = ref $between eq 'ARRAY' && @$between == 2 && !grep { !defined || ref || !/\A[0-9]+\z/ } @$between;
+	croak "Term::Fabulous::Chart::Curve: between must be [ first, last ], two point indexes, got "
+		. ( ref $between eq 'ARRAY' ? '[ ' . join( ', ', map { describe($_) } @$between ) . ' ]' : describe($between) )
+		unless $valid;
+	my ( $first, $last ) = @$between;
+	croak "Term::Fabulous::Chart::Curve: between [ $first, $last ] must run forward within the points 0 .. $#$points" unless $first <= $last && $last <= $#$points;
+	return ( $first, $last );
+}
+
+sub _steps ( $points, $curve, $first, $last ) {
+	my @polyline = ( [ @{ $points->[$first] } ] );
+	foreach my $index ( $first + 1 .. $last ) {
 		my ( $from, $to ) = ( $points->[ $index - 1 ], $points->[$index] );
 		if ( $curve eq 'step-before' ) {
 			push @polyline, [ $from->[0], $to->[1] ];
@@ -139,7 +156,9 @@ sub _cardinal_tangents ( $points, $tension ) {
 }
 
 # The natural cubic spline: smooth second derivatives, straight at the
-# ends. It may overshoot between points.
+# ends. It may overshoot between points. A point between two others at
+# its x (three or more points at one x) is pinned straight like the ends:
+# its equation would be all zeros.
 sub _natural ($points) {
 	my $last  = $#$points;
 	my @width = map { $points->[ $_ + 1 ][0] - $points->[$_][0] } 0 .. $last - 1;
@@ -148,6 +167,10 @@ sub _natural ($points) {
 	@right[ 0, $last ] = ( 0, 0 );
 	foreach my $index ( 1 .. $last - 1 ) {
 		my ( $before, $after ) = ( $width[ $index - 1 ], $width[$index] );
+		if ( $before == 0 && $after == 0 ) {
+			( $lower[$index], $diagonal[$index], $upper[$index], $right[$index] ) = ( 0, 1, 0, 0 );
+			next;
+		}
 		( $lower[$index], $diagonal[$index], $upper[$index] ) = ( $before, 2 * ( $before + $after ), $after );
 		$right[$index] = 6 * ( ( $points->[ $index + 1 ][1] - $points->[$index][1] ) / ( $after || 1 ) - ( $points->[$index][1] - $points->[ $index - 1 ][1] ) / ( $before || 1 ) );
 	}
@@ -281,7 +304,16 @@ of C<[x, y]>. Straight lines return the points, steps the corners of
 the steps. Smooth curves and easings get a vertex every C<$step> along x
 (default 1, a positive number) besides the points; the chart passes the
 width of one subpixel. C<tension> (0 to 1, default 0) is used by
-C<catmull-rom>. Dies for an unknown curve.
+C<catmull-rom>. Several points may share an x (repeated samples): the
+polyline runs straight up or down through them, for every curve. Dies
+for an unknown curve.
+
+C<< between =E<gt> [ $first, $last ] >> (two point indexes, C<$first> not
+after C<$last>) returns only the part of the polyline from point
+C<$first> to point C<$last>: the vertices the whole polyline has there,
+as the slopes of smooth curves are worked out from all points. A chart
+passes the points around its plot, so a long series outside the plot
+costs no vertices. Dies for indexes outside the points.
 
 =head2 y_at
 

@@ -138,6 +138,22 @@ subtest 'check_points' => sub {
 	is $seen[-1], [3], 'the check gets the new points only';
 };
 
+subtest 'parsed_points and push_parsed' => sub {
+	my $series = series(
+		data         => [1],
+		check_points => sub {
+			die "no tens\n" if grep { ( $_->[1] // 0 ) >= 10 } $_[1]->@*;
+		}
+	);
+	my $revision = $series->revision;
+	my @parsed   = $series->parsed_points( 2, [ 9, 3 ] );
+	is [ \@parsed, $series->count, $series->revision ], [ [ [ undef, 2 ], [ 9, 3 ] ], 1, $revision ], 'parsed_points parses new points and stores nothing';
+	like dies { $series->parsed_points('x') }, qr/data point 1 of series 'CPU'/, 'it counts on from the stored points';
+	like dies { $series->parsed_points(10) },  qr/\Ano tens\n\z/,                'and runs check_points';
+	ref_is $series->push_parsed(@parsed), $series, 'push_parsed returns the series';
+	is [ $series->points, $series->revision ], [ [ [ undef, 1 ], [ undef, 2 ], [ 9, 3 ] ], $revision + 1 ], 'and stores the points';
+};
+
 subtest 'max_points and keep_last' => sub {
 	my $series = series( max_points => 3, data => [ 1 .. 5 ] );
 	is [ map { $_->[1] } $series->points->@* ], [ 3, 4, 5 ], 'the newest points are kept';

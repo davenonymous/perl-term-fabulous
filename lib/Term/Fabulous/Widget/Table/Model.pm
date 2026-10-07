@@ -13,7 +13,7 @@ use Term::Fabulous::Widget::Table::Column;
 use Term::Fabulous::Widget::Table::Filter;
 
 class Term::Fabulous::Widget::Table::Model :strict(params) {
-	use List::Util qw(any first max min);
+	use List::Util qw(any first max min uniq);
 	use POSIX ();
 	use Scalar::Util qw(blessed refaddr);
 	use Term::Fabulous::Check qw(describe one_of);
@@ -38,6 +38,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	field %_row;
 	field @_roots;
 	field $_next_id = 1;
+	field %_rank;    # row id => its place in data order; empty until asked for
 
 	# Per row id: a copy of the data for callbacks, raw values and display
 	# texts by column key. Dropped when the row or the column changes.
@@ -286,7 +287,11 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 					if defined $nested && ref $nested ne 'ARRAY';
 				my $id = $self->_id_for( \%data );
 				die "Term::Fabulous::Widget::Table::Model: two rows have the id '$id'" if exists $by_id{$id} || exists $taken->{$id};
-				my $record = { id => $id, data => \%data, parent => $parent_id, children => [], revision => 0 };
+
+				# A record starts at the model's revision, which is above the
+				# revision of every earlier row with its id (a row's change
+				# counts in both), so the table refreshes what it showed.
+				my $record = { id => $id, data => \%data, parent => $parent_id, children => [], revision => $revision };
 				$by_id{$id} = $record;
 				push @records, $record;
 				push @ids,     $id;
@@ -306,6 +311,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		%_copy     = %_raw = %_display = %_id_of_copy = %_search_text = ();
 		%_expanded = $expand_new ? map { $_->{id} => 1 } grep { @{ $_->{children} } } values %_row : ();
 		%_selected = map               { $_       => 1 } grep { exists $_row{$_} } keys %_selected;
+		%_rank     = ();
 		$self->_changed;
 		return $top_ids;
 	}
@@ -325,6 +331,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		if ($expand_new) {
 			$_expanded{ $_->{id} } = 1 foreach grep { @{ $_->{children} } } values %$by_id;
 		}
+		%_rank = ();
 		$self->_changed;
 		return @$top_ids;
 	}
@@ -385,16 +392,24 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		return $self->update_row( $id, { $key => $value } );
 	}
 
+	# Every sibling list loses its removed rows in one pass, then the rows
+	# and their descendants are forgotten.
 	method remove_rows (@ids) {
 		my @records = map { $self->_record($_) } @ids;
+		my %gone    = map { $_->{id} => 1 } @records;
+		my %lists   = map { my $siblings = $self->_siblings_of($_); ( refaddr $siblings => $siblings ) } @records;
+		@$_ = grep { !$gone{$_} } @$_ foreach values %lists;
 		foreach my $record (@records) {
-			next unless exists $_row{ $record->{id} };    # removed with an ancestor
-			my $siblings = defined $record->{parent} ? $_row{ $record->{parent} }{children} : \@_roots;
-			@$siblings = grep { $_ ne $record->{id} } @$siblings;
-			$self->_forget($record);
+			$self->_forget($record) if exists $_row{ $record->{id} };    # not removed with an ancestor
 		}
+		%_rank = ();
 		$self->_changed;
 		return;
+	}
+
+	# The list of ids a row is in: its parent's children or the top level.
+	method _siblings_of ($record) {
+		return defined $record->{parent} ? $_row{ $record->{parent} }{children} : \@_roots;
 	}
 
 	method _forget ($record) {
@@ -412,7 +427,7 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 	}
 
 	method clear_rows () {
-		%_row   = %_copy = %_raw = %_display = %_id_of_copy = %_search_text = %_expanded = %_selected = ();
+		%_row   = %_copy = %_raw = %_display = %_id_of_copy = %_search_text = %_expanded = %_selected = %_rank = ();
 		@_roots = ();
 		$self->_changed;
 		return;
@@ -1009,11 +1024,14 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		return $self->_in_data_order( keys %_selected );
 	}
 
+	# Sorts row ids by data order (row_ids), whose ranks are kept until
+	# rows are set, added or removed.
 	method _in_data_order (@ids) {
-		my %rank;
-		my @order = $self->row_ids;
-		@rank{@order} = 0 .. $#order;
-		my @sorted = sort { $rank{$a} <=> $rank{$b} } @ids;
+		unless (%_rank) {
+			my @order = $self->row_ids;
+			@_rank{@order} = 0 .. $#order;
+		}
+		my @sorted = sort { $_rank{$a} <=> $_rank{$b} } @ids;
 		return @sorted;
 	}
 
@@ -1034,14 +1052,24 @@ class Term::Fabulous::Widget::Table::Model :strict(params) {
 		return ( [ $self->_in_data_order(@added) ], [ $self->_in_data_order(@removed) ] );
 	}
 
+	# Like set_selection, select and deselect return ( [ added ], [ removed ] )
+	# with the ids as strings, but sort only the rows they change.
 	method select (@ids) {
-		return $self->set_selection( keys %_selected, @ids );
+		$self->_record($_) foreach @ids;
+		my @added = grep { !$_selected{$_} } uniq map { "$_" } @ids;
+		return ( [], [] ) unless @added;
+		@_selected{@added} = (1) x @added;
+		$revision++;
+		return ( [ $self->_in_data_order(@added) ], [] );
 	}
 
 	method deselect (@ids) {
 		$self->_record($_) foreach @ids;
-		my %leaving = map { $_ => 1 } @ids;
-		return $self->set_selection( grep { !$leaving{$_} } keys %_selected );
+		my @removed = grep { $_selected{$_} } uniq map { "$_" } @ids;
+		return ( [], [] ) unless @removed;
+		delete @_selected{@removed};
+		$revision++;
+		return ( [], [ $self->_in_data_order(@removed) ] );
 	}
 
 	method toggle_selected ($id) {
@@ -1415,7 +1443,8 @@ be a column key.
 
 =item C<remove_rows(@ids)>
 
-Removes rows and their children; they also leave the selection.
+Removes rows and their children; they also leave the selection. A row
+and one of its descendants may both be given, in any order.
 
 =item C<clear_rows>
 
@@ -1456,8 +1485,12 @@ A row's level in the tree: 0 for a top-level row.
 
 =item C<row_revision($id)>
 
-Counts the changes of a row's data (C<update_row>, C<replace_row>,
-C<set_value>); the table rebuilds a row's widgets when it changes.
+Goes up by one with every change of a row's data (C<update_row>,
+C<replace_row>, C<set_value>); the table refreshes a row's widgets when
+it changes. A row that C<set_rows> or C<add_rows> stores starts at the
+model's C<revision>, so a row given again with an id the table showed
+before (by C<set_rows>, or removed and added again) never has a revision
+that row had, and the table shows the new data.
 
 =back
 

@@ -21,9 +21,9 @@ BEGIN {
 
 use IO::Async::Loop;
 use Term::Fabulous::Screenshot::VirtualLoop;
-use Term::Fabulous::Termbox qw(tb_width tb_height tb_get_cell tb_cluster_width TB_DEFAULT TB_OK);
+use Term::Fabulous::Termbox qw(tb_width tb_height tb_get_cell TB_DEFAULT TB_OK);
 use Term::Fabulous::Terminal::Termbox::Cells;
-use Term::Fabulous::Unicode qw(grapheme_clusters);
+use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters);
 
 # Virtual seconds the program gets after each input before the next step,
 # enough for several frames at Term::Fabulous's 30 frames per second.
@@ -164,17 +164,12 @@ sub _show_shell_lines ( $screen, $columns ) {
 
 # A line of text in the terminal's default colors, as captured cells.
 sub _text_row ( $line, $columns ) {
-	my @cells = map { [ $_, _glyph_width($_), TB_DEFAULT, TB_DEFAULT ] } grapheme_clusters($line);
+	my @cells = map { [ $_, cluster_columns($_), TB_DEFAULT, TB_DEFAULT ] } grapheme_clusters($line);
 	my $width = 0;
 	$width += $_->[1] foreach @cells;
 	die "Term::Fabulous::Screenshot::Harness: the shell line '$line' is $width columns wide, the terminal only $columns\n" if $width > $columns;
 	push @cells, [ ' ', 1, TB_DEFAULT, TB_DEFAULT ] foreach $width + 1 .. $columns;
 	return \@cells;
-}
-
-sub _glyph_width ($glyph) {
-	my $width = tb_cluster_width($glyph);
-	return $width < 1 ? 1 : $width;
 }
 
 # One row as [ glyph, columns, fg, bg ] per visible character. termbox2
@@ -187,7 +182,7 @@ sub _capture_row ( $y, $columns ) {
 		die "Term::Fabulous::Screenshot::Harness: tb_get_cell($x, $y) failed with status $status\n" unless $status == TB_OK;
 		$glyph = ' ' unless length $glyph;
 
-		my $width = _glyph_width($glyph);
+		my $width = cluster_columns($glyph);
 		if ( $x + $width > $columns ) {
 			push @cells, [ ' ', 1, $fg, $bg ] foreach $x .. $columns - 1;
 			last;

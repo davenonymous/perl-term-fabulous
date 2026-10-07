@@ -12,7 +12,8 @@ use Object::Pad 0.825;
 use Term::Fabulous::Render::Target::Mask;
 
 class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target::Mask) :strict(params) {
-	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE TB_BOLD TB_ITALIC TB_UNDERLINE TB_DIM TB_BLINK TB_INVISIBLE TB_STRIKEOUT TB_OVERLINE);
+	use Term::Fabulous::Render::Attr qw(STYLE_FLAGS);
+	use Term::Fabulous::Termbox qw(TB_DEFAULT TB_HI_BLACK TB_REVERSE);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant RESET => "\e[0m";
@@ -119,19 +120,11 @@ class Term::Fabulous::Render::Target::Grid :does(Term::Fabulous::Render::Target:
 		return $glyph eq ' ' && $bg == TB_DEFAULT && !( $fg & TB_REVERSE );
 	}
 
+	# The style flags count on the foreground, reverse video on either
+	# color, as termbox2 has it.
 	sub _sgr ( $fg, $bg ) {
-		my @codes;
-		push @codes, 1 if $fg & TB_BOLD;
-		push @codes, 2 if $fg & TB_DIM;
-		push @codes, 3 if $fg & TB_ITALIC;
-		push @codes, 4 if $fg & TB_UNDERLINE;
-		push @codes, 5 if $fg & TB_BLINK;
-		push @codes, 7 if ( $fg | $bg ) & TB_REVERSE;
-		push @codes, 8 if $fg & TB_INVISIBLE;
-		push @codes, 9 if $fg & TB_STRIKEOUT;
-		push @codes, 53 if $fg & TB_OVERLINE;
-		push @codes, _color_codes( 38, $fg );
-		push @codes, _color_codes( 48, $bg );
+		my $flags = $fg | ( $bg & TB_REVERSE );
+		my @codes = ( ( map { $_->[1] } grep { $flags & $_->[0] } STYLE_FLAGS ), _color_codes( 38, $fg ), _color_codes( 48, $bg ) );
 		return @codes ? "\e[" . join( ';', @codes ) . 'm' : '';
 	}
 
@@ -241,8 +234,10 @@ colors is preceded by an ANSI SGR sequence with 24-bit colors
 (C<ESC [ 38;2;R;G;B m> for the foreground, C<48;2;...> for the
 background), C<7> (reverse video) for cells in reverse video, and C<1>
 (bold), C<2> (dim), C<3> (italic), C<4> (underline), C<5> (blink), C<8>
-(conceal), C<9> (strikeout) and C<53> (overline) for those termbox2
-flags; the line ends with C<ESC [ 0 m> when it set any. The terminal's default colors get no
+(conceal), C<9> (strikeout), C<21> (double underline) and C<53>
+(overline) for those termbox2 flags (the table
+L<Term::Fabulous::Render::Attr/STYLE_FLAGS>); the line ends with
+C<ESC [ 0 m> when it set any. The terminal's default colors get no
 sequence.
 
 =item C<trim_trailing_whitespace>

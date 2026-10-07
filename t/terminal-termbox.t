@@ -103,6 +103,14 @@ subtest 'the end of the input' => sub {
 	$live->close;
 };
 
+subtest 'an open terminal that is dropped closes itself' => sub {
+	my ( $pty, $input, $answers ) = pseudo_terminal( 10, 3 );
+	my $terminal = Term::Fabulous::Terminal::Termbox->new( input => $input, output => $pty->slave );
+	$terminal->open( inline => undef, mouse => 1, kitty_keyboard => 0 );
+	undef $terminal;
+	like written($pty), qr/\e\[\?1003l.*\e\[\?1049l/s, 'mouse reporting and the alternate screen are switched off';
+};
+
 subtest 'errors' => sub {
 	my ( $pty, $input ) = pseudo_terminal( 10, 3 );
 	open my $write_only, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) the terminal reads from it

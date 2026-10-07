@@ -86,6 +86,14 @@ subtest 'small slices fold into Other' => sub {
 	is legend( draw($chart) ), [ 'A  100%', 'B   <1%' ], 'empty slices are left out, tiny shares shown as <1%';
 };
 
+subtest 'other_label undef is Other' => sub {
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, @_ };
+	my $chart = pie( other => 0.2, other_label => undef, data => [ [ A => 80 ], [ B => 5 ], [ C => 5 ], [ D => 10 ] ] );
+	is [ $chart->other_label, legend( draw($chart) )->@* ], [ 'Other', 'A      80%', 'Other  20%' ], 'as with the accessor';
+	is \@warnings,                                          [],                                      'without warnings';
+};
+
 subtest 'donuts' => sub {
 	my $chart = donut();
 	is [ $chart->hole, Term::Fabulous::Widget::PieChart->new->hole ], [ 0.6, 0 ], 'a donut has a hole, a pie none';

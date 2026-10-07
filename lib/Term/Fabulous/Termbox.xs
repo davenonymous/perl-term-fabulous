@@ -19,37 +19,69 @@
 #include "tf_termbox.h"
 
 /*
+ * The UTF-8 bytes of a string, or a croak when the string carries the UTF8
+ * flag over bytes that are not well-formed UTF-8 (Encode::_utf8_on, a
+ * ":utf8" read layer). Decoding such bytes would let the codepoint count and
+ * the bytes consumed disagree.
+ */
+static const U8 *well_formed_utf8(pTHX_ SV *text, const char *function, STRLEN *length) {
+	const U8 *bytes = (const U8 *)SvPVutf8(text, *length);
+
+	if (!is_utf8_string(bytes, *length)) croak("Term::Fabulous::Termbox: %s needs well-formed UTF-8", function);
+	return bytes;
+}
+
+/*
+ * True when the decoder consumed no bytes: 0, or (STRLEN)-1 for a
+ * malformation with utf8 warnings enabled. A decode loop that went on would
+ * stall or walk backwards.
+ */
+static bool decoder_stalled(STRLEN consumed) {
+	return consumed == 0 || consumed == (STRLEN)-1;
+}
+
+/*
  * The first codepoint of a one-character string. An integer that was
  * never a string is taken as the codepoint itself, so the C form of the
  * call stays reachable.
  */
 static uint32_t first_codepoint(pTHX_ SV *glyph, const char *function) {
 	STRLEN length;
+	STRLEN consumed;
 	const U8 *bytes;
+	uint32_t codepoint;
 
 	if (SvIOK(glyph) && !SvPOK(glyph)) return (uint32_t)SvUV(glyph);
 
-	bytes = (const U8 *)SvPVutf8(glyph, length);
+	bytes = well_formed_utf8(aTHX_ glyph, function, &length);
 	if (length == 0) croak("Term::Fabulous::Termbox: %s needs a non-empty character", function);
-	return (uint32_t)utf8_to_uvchr_buf(bytes, bytes + length, NULL);
+	codepoint = (uint32_t)utf8_to_uvchr_buf(bytes, bytes + length, &consumed);
+	if (decoder_stalled(consumed)) croak("Term::Fabulous::Termbox: %s needs well-formed UTF-8", function);
+	return codepoint;
 }
 
 /*
  * Every codepoint of a string, in an array the caller releases with
- * Safefree. Returns the number of codepoints.
+ * Safefree. Returns the number of codepoints. The array has room for one
+ * codepoint per byte, an upper bound the loop cannot pass because every
+ * step consumes at least one byte.
  */
 static size_t decode_codepoints(pTHX_ SV *text, const char *function, uint32_t **codepoints) {
 	STRLEN length;
-	const U8 *bytes = (const U8 *)SvPVutf8(text, length);
+	const U8 *bytes = well_formed_utf8(aTHX_ text, function, &length);
 	const U8 *end   = bytes + length;
 	size_t count    = 0;
 
 	if (length == 0) croak("Term::Fabulous::Termbox: %s needs a non-empty string", function);
 
-	Newx(*codepoints, utf8_length(bytes, end), uint32_t);
+	Newx(*codepoints, length, uint32_t);
 	while (bytes < end) {
 		STRLEN consumed;
 		(*codepoints)[count++] = (uint32_t)utf8_to_uvchr_buf(bytes, end, &consumed);
+		if (decoder_stalled(consumed)) {
+			Safefree(*codepoints);
+			croak("Term::Fabulous::Termbox: %s needs well-formed UTF-8", function);
+		}
 		bytes += consumed;
 	}
 	return count;

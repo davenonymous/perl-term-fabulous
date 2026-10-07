@@ -100,8 +100,10 @@ sparkline never shows a legend, whatever `legend` says, and shows a
 - `min`, `max`
 
     Numbers: the fixed ends of the value range; values beyond them are cut
-    off. Default: `undef`, from the data. An invalid value dies with a
-    message that names `min` or `max`.
+    off. With both given, `min` must be less than `max`. Default:
+    `undef`, from the data. An invalid value, or a `min` not below the
+    `max`, dies when it is given, with a message that names `min` or
+    `max`.
 
 - `zero`
 

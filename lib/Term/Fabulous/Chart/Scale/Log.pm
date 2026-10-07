@@ -54,7 +54,7 @@ class Term::Fabulous::Chart::Scale::Log :isa(Term::Fabulous::Chart::Scale) {
 		my ( $low, $high ) = $options{extent} ? $options{extent}->@* : ( 1, $base );
 		$low  = $fixed_low if defined $fixed_low;
 		$high = $fixed_high if defined $fixed_high;
-		$high = $low * $base if $high <= $low;
+		( $low, $high ) = defined $fixed_high && !defined $fixed_low ? ( $high / $base, $high ) : ( $low, $low * $base ) if $high <= $low;    # a fixed end stays
 
 		my $first = defined $fixed_low  ? $logarithm->($low)  : floor( $logarithm->($low) + EPSILON );
 		my $last  = defined $fixed_high ? $logarithm->($high) : ceil( $logarithm->($high) - EPSILON );
@@ -129,7 +129,9 @@ leave them out (a line has a gap there).
 Takes C<cells>, C<extent>, C<min>, C<max>, C<orientation>, C<measure> and
 C<format> like L<Term::Fabulous::Chart::Scale::Linear/fit> (the format
 defaults to C<si>), and C<base>, a number greater than 1 (default 10).
-C<min> and C<max> must be greater than 0.
+C<min> and C<max> must be greater than 0. A fixed end is kept also when
+the data lies beyond it: the other end then moves a power of the base
+away from it.
 
 =head1 METHODS
 

@@ -70,7 +70,9 @@ my $scale = Term::Fabulous::Chart::Scale::Linear->fit(%options);
 
 - `step`
 
-    A fixed distance between ticks.
+    A fixed distance between ticks. A step too small for the cells (more
+    intervals across the data than the axis has cells) gives no ticks
+    between the two ends, as when nothing else fits.
 
 - `ticks`
 
