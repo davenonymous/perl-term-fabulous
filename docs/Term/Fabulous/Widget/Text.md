@@ -40,8 +40,13 @@ of its own: every cell shows the background that was painted below it.
 
 A Text widget is a leaf: it cannot have children, and it has no
 border, padding or background. To give text a background, a border or
-a fixed size, put it in a Box. Text widgets do not receive mouse or key
-events: a click on text is delivered to the box behind it.
+a fixed size, put it in a Box. Mouse events (`Mouse`, `MouseMove`)
+go to the box behind a text, and a Text never has the keyboard focus
+(a [Term::Fabulous::Widget::RichText](RichText.md) with links does). A mouse button
+pressed on a character of the text also fires
+[TextClick](../Event/TextClick.md) on the Text, with the
+character and the word under the pointer, so that the widgets around
+it can react to the words that were clicked (see ["click\_at"](#click_at)).
 
 `examples/text-features.pl` shows the wrap modes, line height, bold,
 italic and underlined text, wide characters and control characters:
@@ -333,6 +338,32 @@ Clay::UI calls it on every widget of a subtree whose place in a tree
 changed (see ["tree\_changed" in Clay::UI::Role::Layout::HasParent](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasParent#tree_changed)). A Text
 forgets the looks it fetched here, as
 ["tree\_changed" in Term::Fabulous::Widget](../Widget.md#tree_changed) does.
+
+## click\_at
+
+```perl
+use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT);
+
+$text->click_at( $offset, TB_KEY_MOUSE_LEFT, $x, $y );
+```
+
+Fires [TextClick](../Event/TextClick.md) on the widget for a
+press of the mouse button (`TB_KEY_MOUSE_LEFT`, `TB_KEY_MOUSE_MIDDLE`
+or `TB_KEY_MOUSE_RIGHT`) on the character at `$offset` of the text,
+with the pointer at the cell `$x`, `$y`. The event carries the word
+the character belongs to (the run of non-blank characters around it).
+[Term::Fabulous](../../../../README.md) calls it after the `Mouse` event of every button
+press on a character of the text; call it yourself to click a text in
+a test. An offset that is not a character of the text dies. Returns
+the widget.
+
+# EVENTS
+
+A Text fires `TextClick` ([Term::Fabulous::Event::TextClick](../Event/TextClick.md)) when a
+mouse button is pressed on one of its characters; it bubbles to the
+widgets around the text. A Text can fire events of your own with
+`fire_event` ([Clay::UI::Role::Events::Emitter](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AEmitter)), and `on` adds
+listeners to it.
 
 # KDL PROPERTIES
 

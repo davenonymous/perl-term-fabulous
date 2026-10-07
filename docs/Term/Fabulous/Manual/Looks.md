@@ -276,6 +276,24 @@ the base look that the spans change. The program
 `examples/widgets/rich-text.pl` shows markup, spans, every style word
 and a wrapped paragraph side by side.
 
+## Links inside a text
+
+A RichText can also hold _links_, ranges of its text that the user
+follows with a click, or with `Tab`, `Left`/`Right` and `Enter`. The
+widget fires [LinkActivate](../Event/LinkActivate.md) with
+the link's target and leaves the rest to the program:
+
+```perl
+my $help = Term::Fabulous::Widget::RichText->new(
+        markup => 'Read the [link=faq]FAQ[/link] or [link=https://perl.org]perl.org[/link].',
+);
+$help->on( LinkActivate => sub ($event) { show_page( $event->link ); return } );
+```
+
+Links are drawn over the spans in the theme's link look: underlined in
+the accent color, highlighted under the pointer and when selected. See
+["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links).
+
 ## Wide characters and emoji
 
 A terminal cell holds one character. Some characters, most CJK

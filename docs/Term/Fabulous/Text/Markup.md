@@ -1,7 +1,7 @@
 # NAME
 
-Term::Fabulous::Text::Markup - Parse "\[bold red\]text\[/\]" markup into text
-and styled spans
+Term::Fabulous::Text::Markup - Parse "\[bold red\]text\[/\]" markup into text,
+styled spans and links
 
 # SYNOPSIS
 
@@ -11,6 +11,10 @@ use Term::Fabulous::Text::Markup qw(parse_markup);
 my ( $text, $spans ) = parse_markup('Press [bold]Enter[/] to [green on #202020]save[/green on #202020].');
 # $text  is 'Press Enter to save.'
 # $spans is [ [ 6, 11, { set => TB_BOLD, ... } ], [ 15, 19, { color => [ 0, 128, 0, 255 ], ... } ] ]
+
+my ( $see, undef, $links ) = parse_markup('See [link=https://perl.org]perl.org[/link].');
+# $see   is 'See perl.org.'
+# $links is [ [ 4, 12, 'https://perl.org' ] ]
 ```
 
 # DESCRIPTION
@@ -25,9 +29,19 @@ as its `markup` parameter; this module does the parsing.
     `[bold]`, `[italic SteelBlue on #202020]`, `[not bold]`. An invalid
     style dies.
 
+- `[link=TARGET]`
+
+    Opens a link to `TARGET`: everything after the `=`, without the
+    blanks around it, up to the closing bracket (`[link=https://perl.org]`,
+    `[link=perlfunc/open]`). What the target means is the program's
+    business (see ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links)). A link tag
+    without a target, and a link inside another link, die. Close it with
+    `[/link]` or `[/]`. A link is no span: style the words with a style
+    tag inside or around it.
+
 - `[/]`
 
-    Closes the innermost open span.
+    Closes the innermost open span or link.
 
 - `[/STYLE]`
 
@@ -51,7 +65,7 @@ Nothing is exported by default.
 ## parse\_markup
 
 ```perl
-my ( $text, $spans ) = parse_markup($markup);
+my ( $text, $spans, $links ) = parse_markup($markup);
 ```
 
 Returns the text without its tags and the spans as an array reference
@@ -59,7 +73,9 @@ of `[ $start, $end, $style ]`: the character offsets of the span in
 `$text` (`$end` is the offset after its last character) and its
 normalized style hash (see ["Style hashes" in Term::Fabulous::Text::Style](Style.md#style-hashes)).
 Spans are ordered by their start, outer spans before inner ones that
-start at the same offset; empty spans are dropped. `undef` and
+start at the same offset; empty spans are dropped. The links are an
+array reference of `[ $start, $end, $target ]`, ordered by their start;
+empty links are dropped as well. `undef` and
 references die with a message starting with
 `Term::Fabulous::Text::Markup:`.
 

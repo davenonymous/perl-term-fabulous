@@ -1552,7 +1552,8 @@ Shows text in one color; wraps and aligns it.
 =item L<Term::Fabulous::Widget::RichText>
 
 A Text whose spans set bold, colors and other styles on ranges of it,
-from markup such as C<[bold]Enter[/]>.
+from markup such as C<[bold]Enter[/]>, and whose links the user follows
+with a click or the keyboard.
 
 =item L<Term::Fabulous::Widget::Button>
 
@@ -1633,10 +1634,11 @@ own state (the divider, the progress bar, the charts, the scrollbar,
 the input widgets), with the
 animation helpers; derive from it to write your own.
 
-=item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
+=item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>, L<Term::Fabulous::Widget::FocusableText>
 
-The L<Clay::UI> roles behind Term::Fabulous::Widget and
-Term::Fabulous::Widget::Text. Used internally.
+The L<Clay::UI> roles behind Term::Fabulous::Widget,
+Term::Fabulous::Widget::Text and Term::Fabulous::Widget::RichText.
+Used internally.
 
 =item L<Term::Fabulous::Widget::Dialog::Backdrop>
 
@@ -1891,6 +1893,15 @@ The user pressed Enter in a text field.
 =item L<Term::Fabulous::Event::Activate>
 
 The user activated a button, by click or key.
+
+=item L<Term::Fabulous::Event::TextClick>
+
+A mouse button was pressed on a character of a text; says which
+character, word, spans and link.
+
+=item L<Term::Fabulous::Event::LinkActivate>
+
+The user followed a link of a RichText, by click or key.
 
 =item L<Term::Fabulous::Event::Close>
 

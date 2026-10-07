@@ -296,6 +296,22 @@ the sections below it describe each event.
     [Term::Fabulous::Widget::Tabs::Bar](../Widget/Tabs/Bar.md) on its own fires it with the tab.
     Fields: `item`, `index`, `open`.
 
+- `TextClick` ([Term::Fabulous::Event::TextClick](../Event/TextClick.md))
+
+    A mouse button was pressed on a character of a
+    [Term::Fabulous::Widget::Text](../Widget/Text.md) or [Term::Fabulous::Widget::RichText](../Widget/RichText.md).
+    Fired on the text, after the `Mouse` event of the press. Fields:
+    `button`, `x`, `y`, `offset`, `word`, `word_start`, `word_end`,
+    `spans`, `link`, `link_index`. See ["Clicks on text and links"](#clicks-on-text-and-links).
+
+- `LinkActivate` ([Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md))
+
+    The user followed a link of a [Term::Fabulous::Widget::RichText](../Widget/RichText.md):
+    clicked it, or pressed `Enter` while the RichText had the focus and
+    the link was selected. Also fired by `$rich_text->activate_link`.
+    Fired on the RichText. Fields: `link` (the link's target), `index`,
+    `start`, `end`.
+
 - `SeriesHover` ([Term::Fabulous::Event::SeriesHover](../Event/SeriesHover.md))
 
     The pointer moved onto another part of a chart (a line, a bar, a
@@ -575,7 +591,9 @@ in which the widgets appear when you walk the tree depth first, parents
 before their children. Widgets that cannot take the focus right now are
 skipped. The order wraps around at the end.
 - when the user presses the left mouse button: the clicked widget, or its
-nearest ancestor that can take the focus, gets it. Clicking where no
+nearest ancestor that can take the focus, gets it. On text, the
+clicked widget is the Text itself, so a click on a
+[Term::Fabulous::Widget::RichText](../Widget/RichText.md) with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
 - from your code, through the _interaction tracker_ of the UI
@@ -753,7 +771,9 @@ listeners cheap.
 
 The event is fired on the topmost widget that drew something in that cell
 in the last frame: its background, its border or its canvas. Text widgets
-do not receive mouse events; a click on text goes to the box behind it.
+do not receive `Mouse` and `MouseMove` events; a click on text goes to
+the box behind it, and then fires `TextClick` on the text (see
+["Clicks on text and links"](#clicks-on-text-and-links)).
 A box without a background color and without a border draws nothing, so
 clicks go through it to the widget behind it. When no widget drew the
 cell, the event is fired on the root widget. A left press moves the
@@ -813,6 +833,31 @@ press. The two events can go to different widgets: `Mouse` goes to the
 widget that drew the cell, `OnPress` to the innermost pressable widget
 whose box contains the pointer, even if it draws nothing there. A
 disabled widget is not pressed.
+
+## Clicks on text and links
+
+A button press on a character of a text (the left, middle or right
+button; not a drag, a release or the wheel) fires `TextClick` on the
+[Term::Fabulous::Widget::Text](../Widget/Text.md) after the `Mouse` event, which still
+goes to the widget behind the text. The event says which character was
+clicked (`offset` in the text, also on a wrapped line), the word it
+belongs to, and for a [Term::Fabulous::Widget::RichText](../Widget/RichText.md) the spans and
+the link there. It bubbles, so a container can react to clicks on any
+text inside it:
+
+```perl
+$article->on(
+        TextClick => sub ($event) {
+                look_up( $event->word ) if defined $event->word;
+                return;
+        }
+);
+```
+
+A left click on a link of a RichText then selects the link and fires
+`LinkActivate` on the RichText; the pointer over a link gives it its
+hovered look. See ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links) for links,
+their looks and their keys.
 
 # SCROLLING
 

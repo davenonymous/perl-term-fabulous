@@ -1,6 +1,22 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Links in Term::Fabulous::Widget::RichText: ranges of the text
+          with a target, from [link=TARGET]...[/link] markup or from the
+          links parameter and add_link (any value is a target). They are
+          painted over the spans in the new theme slots text.link and
+          text.link.background (normal, hovered, selected). A click on a
+          link, or Enter on the selected one, fires the new event
+          Term::Fabulous::Event::LinkActivate. A RichText with links is a
+          Tab stop (can_focus => 0 opts out) whose Left and Right select
+          the previous and next link. Term::Fabulous::Text::Markup's
+          parse_markup returns the links as a third value.
+        - Term::Fabulous::Event::TextClick: a mouse button pressed on a
+          character of a Text or RichText fires it on the text, after the
+          Mouse event that still goes to the widget behind it, with the
+          character's offset, its word, and the spans and link there.
+          Term::Fabulous::Widget::Text composes the event emitter role
+          and gains click_at, so a Text may also be the root widget.
         - Term::Fabulous::Widget::Sixel: a subclass of Image with the same
           sources and fits, whose picture the terminal draws in its own
           pixels as sixel graphics over the widget's cells. Its natural

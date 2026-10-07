@@ -197,7 +197,7 @@ add timers first. Unknown parameters die
     where no widget is drawn, and every `Start` and `Resize`. It must
     therefore be able to fire events (compose
     [Clay::UI::Role::Events::Emitter](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AEmitter), as all Term::Fabulous widgets
-    except Text do); otherwise `new` dies
+    do); otherwise `new` dies
     (`Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got ...`).
     The root must not have a parent (`new` dies with
     `Clay::UI: 'root' must not have a parent; ...`); a widget that was
@@ -748,11 +748,21 @@ widget it is fired on to the root, as described in
     [Term::Fabulous::Widget::ScrollBox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ScrollBox.md) is not drawn and never receives
     the event.
 
+- `TextClick` ([Term::Fabulous::Event::TextClick](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/TextClick.md))
+
+    For every button press (not a drag) whose cell holds a character of a
+    text that is the topmost thing drawn there, on the
+    [Term::Fabulous::Widget::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Text.md), after the `Mouse` event. A left press
+    on a link of a [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md) then fires
+    `LinkActivate` ([Term::Fabulous::Event::LinkActivate](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/LinkActivate.md)) on it. See
+    ["Clicks on text and links" in Term::Fabulous::Manual::Events](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Events.md#clicks-on-text-and-links).
+
 - `MouseMove` ([Term::Fabulous::Event::MouseMove](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/MouseMove.md))
 
     For every report of the pointer moving with no button held, on the same
-    widget a `Mouse` event would go to. The hover state of the widgets
-    follows these moves.
+    widget a `Mouse` event would go to. The hover state of the widgets,
+    and the hovered link of a [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md), follow
+    these moves.
 
 - `Start` ([Term::Fabulous::Event::Start](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Start.md))
 
@@ -803,7 +813,8 @@ for any other key, and then:
 Listeners cannot prevent these actions.
 
 When the left mouse button is pressed (not dragged), the widget under
-the pointer gets the focus, or its nearest ancestor that can take it.
+the pointer (on text, the Text widget) gets the focus, or its nearest
+ancestor that can take it.
 When there is none, the focus is cleared; so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
 `Mouse` event is fired.
@@ -909,7 +920,8 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md)
 
     A Text whose spans set bold, colors and other styles on ranges of it,
-    from markup such as `[bold]Enter[/]`.
+    from markup such as `[bold]Enter[/]`, and whose links the user follows
+    with a click or the keyboard.
 
 - [Term::Fabulous::Widget::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Button.md)
 
@@ -990,10 +1002,11 @@ Term::Fabulous, and programs do not use them directly.
     the input widgets), with the
     animation helpers; derive from it to write your own.
 
-- [Term::Fabulous::Widget::Element](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Element.md), [Term::Fabulous::Widget::TextNode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextNode.md)
+- [Term::Fabulous::Widget::Element](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Element.md), [Term::Fabulous::Widget::TextNode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextNode.md), [Term::Fabulous::Widget::FocusableText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FocusableText.md)
 
-    The [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) roles behind Term::Fabulous::Widget and
-    Term::Fabulous::Widget::Text. Used internally.
+    The [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) roles behind Term::Fabulous::Widget,
+    Term::Fabulous::Widget::Text and Term::Fabulous::Widget::RichText.
+    Used internally.
 
 - [Term::Fabulous::Widget::Dialog::Backdrop](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog/Backdrop.md)
 
@@ -1228,6 +1241,15 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Event::Activate](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Activate.md)
 
     The user activated a button, by click or key.
+
+- [Term::Fabulous::Event::TextClick](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/TextClick.md)
+
+    A mouse button was pressed on a character of a text; says which
+    character, word, spans and link.
+
+- [Term::Fabulous::Event::LinkActivate](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/LinkActivate.md)
+
+    The user followed a link of a RichText, by click or key.
 
 - [Term::Fabulous::Event::Close](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Close.md)
 
