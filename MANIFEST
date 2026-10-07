@@ -150,6 +150,7 @@ lib/Term/Fabulous/Event/CursorMove.pm
 lib/Term/Fabulous/Event/Expand.pm
 lib/Term/Fabulous/Event/FilterChange.pm
 lib/Term/Fabulous/Event/KeyPress.pm
+lib/Term/Fabulous/Event/LinkActivate.pm
 lib/Term/Fabulous/Event/Mouse.pm
 lib/Term/Fabulous/Event/MouseMove.pm
 lib/Term/Fabulous/Event/PageChange.pm
@@ -161,6 +162,7 @@ lib/Term/Fabulous/Event/SeriesHover.pm
 lib/Term/Fabulous/Event/SortChange.pm
 lib/Term/Fabulous/Event/Start.pm
 lib/Term/Fabulous/Event/Submit.pm
+lib/Term/Fabulous/Event/TextClick.pm
 lib/Term/Fabulous/Layout.pm
 lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Manual/Charts.pod
@@ -234,6 +236,7 @@ lib/Term/Fabulous/Widget/DonutChart.pm
 lib/Term/Fabulous/Widget/Dropdown.pm
 lib/Term/Fabulous/Widget/Element.pm
 lib/Term/Fabulous/Widget/Dropdown/List.pm
+lib/Term/Fabulous/Widget/FocusableText.pm
 lib/Term/Fabulous/Widget/Histogram.pm
 lib/Term/Fabulous/Widget/Image.pm
 lib/Term/Fabulous/Widget/Input.pm

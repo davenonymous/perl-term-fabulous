@@ -3,6 +3,8 @@ use warnings;
 
 use Test2::V0;
 
+use Object::Pad 0.825;
+
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_BACK_TO_FRONT CLAY_RENDER_COMMAND_TYPE_RECTANGLE);
 use Scalar::Util qw(refaddr);
@@ -23,7 +25,12 @@ use Term::Fabulous::Widget::Canvas;
 use Term::Fabulous::Widget::Checkbox;
 use Term::Fabulous::Widget::TextArea;
 use Term::Fabulous::Widget::ScrollBox;
+use Term::Fabulous::Widget::RichText;
 use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextNode;
+
+# A Clay::UI text node that fires no events.
+class Test::PlainTextNode :isa(Term::Fabulous::Widget::TextNode) { }
 
 # A Term::Fabulous on a 20x5 memory terminal, and the terminal.
 sub memory_ui {
@@ -417,9 +424,69 @@ subtest 'a click within one frame toggles a check box' => sub {
 	is $box->checked, 1, 'press and release reported before the same frame';
 };
 
+subtest 'clicks on text fire TextClick, clicks on links LinkActivate' => sub {
+	my $text_root = Term::Fabulous::Widget::Box->new(
+		background_color => [ 1, 1, 1, 255 ],
+		layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(10), height => sizing_grow() } },
+	);
+	my $plain = Term::Fabulous::Widget::Text->new( text => 'one two three' );    # wraps after 'two'
+	my $rich = Term::Fabulous::Widget::RichText->new( markup => 'see [link=perl.org]perl[/]' );
+	$text_root->add_child( $plain, $rich );
+	my ($text_ui) = memory_ui( root => $text_root );
+	my ( @mouse_targets, @clicks, @activated );
+	$text_root->on( Mouse        => sub { push @mouse_targets, $_[0]->target;                  return } );
+	$text_root->on( TextClick    => sub { push @clicks,        $_[0];                          return } );
+	$text_root->on( LinkActivate => sub { push @activated,     [ $_[0]->target, $_[0]->link ]; return } );
+	$text_ui->step;
+
+	mouse( $text_ui, key => TB_KEY_MOUSE_RIGHT, x => 2, y => 1 );
+	ref_is $mouse_targets[0], $text_root, 'Mouse still goes to the box behind the text';
+	is scalar @clicks, 1, 'and TextClick bubbles up from the text';
+	ref_is $clicks[0]->target, $plain, 'fired on the text';
+	is [ map { $clicks[0]->$_ } qw(button offset word word_start word_end) ], [ TB_KEY_MOUSE_RIGHT, 10, 'three', 8, 13 ], 'with the character of the wrapped line and its word';
+	is \@activated,                                                           [],                                         'no link there';
+
+	mouse( $text_ui, key => TB_KEY_MOUSE_LEFT, x => 7, y => 1 );
+	is scalar @clicks, 1, 'the empty rest of a line is no text';
+	mouse( $text_ui, key => TB_KEY_MOUSE_LEFT, x => 5, y => 2 );
+	is [ $clicks[-1]->link, $clicks[-1]->link_index ],      [ 'perl.org', 0 ],                 'TextClick names the link under the pointer';
+	is [ map { [ refaddr $_->[0], $_->[1] ] } @activated ], [ [ refaddr $rich, 'perl.org' ] ], 'a left click on a link activates it';
+	ref_is $text_ui->interaction->get_focused_widget, $rich, 'and focuses the RichText';
+	is $rich->selected_link, 0, 'which selects the clicked link';
+
+	mouse( $text_ui, key => TF_KEY_MOUSE_MOVE, x => 4, y => 2, mod => TB_MOD_MOTION );
+	is $rich->hovered_link, 0, 'the pointer over a link hovers it';
+	mouse( $text_ui, key => TF_KEY_MOUSE_MOVE, x => 1, y => 2, mod => TB_MOD_MOTION );
+	is $rich->hovered_link, undef, 'and leaving it drops the hover';
+};
+
+subtest 'a focused RichText moves between its links with the keyboard' => sub {
+	my $key_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $rich     = Term::Fabulous::Widget::RichText->new( markup => '[link=a]A[/] [link=b]B[/]' );
+	my $next     = Term::Fabulous::Widget::Button->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
+	$key_root->add_child( $rich, $next );
+	my ( $key_ui,    $key_terminal ) = memory_ui( root => $key_root );
+	my ( @activated, @passed );
+	$key_root->on( LinkActivate => sub { push @activated, $_[0]->link;          return } );
+	$key_root->on( KeyPress     => sub { push @passed,    $_[0]->main_key_name; return } );
+	my $press = sub { $key_terminal->press_key( $_[0] ); $key_ui->step; return };
+	$key_ui->step;
+
+	$press->('Tab');
+	ref_is $key_ui->interaction->get_focused_widget, $rich, 'Tab focuses a RichText with links';
+	is $rich->selected_link, 0, 'which selects its first link';
+	$press->($_) foreach qw(Right Enter Right);
+	is \@activated, ['b'],              'Right selects the next link, Enter follows it';
+	is \@passed,    [ 'Tab', 'Right' ], 'a key that moves nothing goes on to the ancestors';
+	$press->('Tab');
+	ref_is $key_ui->interaction->get_focused_widget, $next, 'Tab moves on';
+	is $rich->selected_link, undef, 'and losing the focus drops the selection';
+};
+
 subtest 'root must be an event emitter' => sub {
-	like dies { Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Text->new ) },
-		qr/root must consume Clay::UI::Role::Events::Emitter/, 'a Text root is rejected';
+	like dies { Term::Fabulous->new( width => 20, height => 5, root => Test::PlainTextNode->new ) },
+		qr/root must consume Clay::UI::Role::Events::Emitter/, 'a root that cannot fire events is rejected';
+	ok lives { Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Text->new ) }, 'a Text can be the root';
 	like dies { Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, use_termbox => 1 ) },
 		qr/Unrecognised parameters.*use_termbox/, 'unknown constructor parameters are rejected';
 	like dies { Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, terminal => 'tty' ) },

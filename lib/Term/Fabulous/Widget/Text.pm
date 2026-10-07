@@ -7,17 +7,21 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Clay::UI::Role::Events::Emitter;
+
 our $VERSION = '0.01';
 
 class Term::Fabulous::Widget::Text
 	:isa(Term::Fabulous::Widget::TextNode)
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:does(Term::Fabulous::Role::Themed)
+	:does(Clay::UI::Role::Events::Emitter)
 	:strict(params)
 {
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use Clay::UI::Revision qw(bump_revision);
-	use Term::Fabulous::Check qw(boolean class_names color one_of);
+	use Term::Fabulous::Check qw(boolean class_names color non_negative_integer one_of);
+	use Term::Fabulous::Event::TextClick;
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
@@ -134,6 +138,42 @@ class Term::Fabulous::Widget::Text
 		return { %$config, text_color => $explicit // $self->look('color') };
 	}
 
+	# ---------------------------------------------------------------------
+	# Clicks
+	# ---------------------------------------------------------------------
+
+	method click_at ( $offset, $button, $x, $y ) {
+		$offset = non_negative_integer( $self, offset => $offset );
+		my $text = $self->text;
+		die ref($self) . ": offset $offset lies past the text (" . length($text) . " characters)" if $offset >= length $text;
+		$self->fire_event(
+			Term::Fabulous::Event::TextClick->new(
+				button => $button,
+				x      => $x,
+				y      => $y,
+				offset => $offset,
+				_word_around( $text, $offset ),
+				$self->_click_details($offset),
+			)
+		);
+		return $self;
+	}
+
+	# The run of non-blank characters around the offset, as the word,
+	# word_start and word_end parameters of a TextClick; none on a blank.
+	sub _word_around ( $text, $offset ) {
+		return () if substr( $text, $offset, 1 ) =~ /\s/;
+		my ($head) = substr( $text, 0, $offset ) =~ /(\S*)\z/;
+		my ($tail) = substr( $text, $offset ) =~ /\A(\S*)/;
+		return ( word => $head . $tail, word_start => $offset - length $head, word_end => $offset + length $tail );
+	}
+
+	# What a subclass adds to a TextClick at the offset: a RichText its
+	# spans and its link there.
+	method _click_details ($offset) {
+		return ();
+	}
+
 	method layout_properties :common () {
 		return (
 			font_id        => 'scalar',
@@ -222,8 +262,13 @@ of its own: every cell shows the background that was painted below it.
 
 A Text widget is a leaf: it cannot have children, and it has no
 border, padding or background. To give text a background, a border or
-a fixed size, put it in a Box. Text widgets do not receive mouse or key
-events: a click on text is delivered to the box behind it.
+a fixed size, put it in a Box. Mouse events (C<Mouse>, C<MouseMove>)
+go to the box behind a text, and a Text never has the keyboard focus
+(a L<Term::Fabulous::Widget::RichText> with links does). A mouse button
+pressed on a character of the text also fires
+L<TextClick|Term::Fabulous::Event::TextClick> on the Text, with the
+character and the word under the pointer, so that the widgets around
+it can react to the words that were clicked (see L</click_at>).
 
 F<examples/text-features.pl> shows the wrap modes, line height, bold,
 italic and underlined text, wide characters and control characters:
@@ -493,6 +538,30 @@ Clay::UI calls it on every widget of a subtree whose place in a tree
 changed (see L<Clay::UI::Role::Layout::HasParent/tree_changed>). A Text
 forgets the looks it fetched here, as
 L<Term::Fabulous::Widget/tree_changed> does.
+
+=head2 click_at
+
+	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT);
+
+	$text->click_at( $offset, TB_KEY_MOUSE_LEFT, $x, $y );
+
+Fires L<TextClick|Term::Fabulous::Event::TextClick> on the widget for a
+press of the mouse button (C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE>
+or C<TB_KEY_MOUSE_RIGHT>) on the character at C<$offset> of the text,
+with the pointer at the cell C<$x>, C<$y>. The event carries the word
+the character belongs to (the run of non-blank characters around it).
+L<Term::Fabulous> calls it after the C<Mouse> event of every button
+press on a character of the text; call it yourself to click a text in
+a test. An offset that is not a character of the text dies. Returns
+the widget.
+
+=head1 EVENTS
+
+A Text fires C<TextClick> (L<Term::Fabulous::Event::TextClick>) when a
+mouse button is pressed on one of its characters; it bubbles to the
+widgets around the text. A Text can fire events of your own with
+C<fire_event> (L<Clay::UI::Role::Events::Emitter>), and C<on> adds
+listeners to it.
 
 =head1 KDL PROPERTIES
 

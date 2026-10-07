@@ -32,15 +32,25 @@ sub _closes ( $tag, $open, $markup ) {
 	return splice @$open, $index, 1;
 }
 
+# A link tag: 'link=' and the target, which may not be empty.
+sub _link_target ( $tag_text, $markup ) {
+	my ($target) = $tag_text =~ /\Alink\s*=\s*(.*)\z/s;
+	return undef unless defined $target;
+	_fail( "link tag [$tag_text] without a target", $markup ) unless length $target;
+	return $target;
+}
+
 sub parse_markup ($markup) {
 	die 'Term::Fabulous::Text::Markup: markup is a string' if !defined $markup || ref $markup;
 
 	my $plain = '';
-	my @open;    # [ $style_text, $style, $start ] of every open tag, outermost first
+	my @open;    # [ $name, $style, $start, $link_target ] of every open tag, outermost first
 	my @closed;    # [ $start, $end, $style ] in closing order
+	my @links;    # [ $start, $end, $target ] in closing order
 	my $close = sub ($tag) {
-		my ( undef, $style, $start ) = @$tag;
-		push @closed, [ $start, length $plain, $style ] if $start < length $plain;
+		my ( undef, $style, $start, $target ) = @$tag;
+		return unless $start < length $plain;
+		push @{ defined $target ? \@links : \@closed }, [ $start, length $plain, $target // $style ];
 		return;
 	};
 
@@ -56,15 +66,21 @@ sub parse_markup ($markup) {
 			$close->( _closes( $tag, \@open, $markup ) );
 		}
 		else {
-			my $style_text = $tag =~ s/\A\s+|\s+\z//gr;
-			push @open, [ $style_text, parse_style($style_text), length $plain ];
+			my $tag_text = $tag =~ s/\A\s+|\s+\z//gr;
+			my $target   = _link_target( $tag_text, $markup );
+			if ( !defined $target ) {
+				push @open, [ $tag_text, parse_style($tag_text), length $plain, undef ];
+				next;
+			}
+			_fail( "link tag [$tag_text] inside another link", $markup ) if grep { defined $_->[3] } @open;
+			push @open, [ 'link', undef, length $plain, $target ];
 		}
 	}
 	$close->($_) foreach reverse @open;
 
 	# Outer spans first, so that an inner span wins where they overlap.
 	my @spans = sort { $a->[0] <=> $b->[0] } reverse @closed;
-	return ( $plain, \@spans );
+	return ( $plain, \@spans, [ sort { $a->[0] <=> $b->[0] } @links ] );
 }
 
 1;
@@ -75,8 +91,8 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Text::Markup - Parse "[bold red]text[/]" markup into text
-and styled spans
+Term::Fabulous::Text::Markup - Parse "[bold red]text[/]" markup into text,
+styled spans and links
 
 =head1 SYNOPSIS
 
@@ -85,6 +101,10 @@ and styled spans
 	my ( $text, $spans ) = parse_markup('Press [bold]Enter[/] to [green on #202020]save[/green on #202020].');
 	# $text  is 'Press Enter to save.'
 	# $spans is [ [ 6, 11, { set => TB_BOLD, ... } ], [ 15, 19, { color => [ 0, 128, 0, 255 ], ... } ] ]
+
+	my ( $see, undef, $links ) = parse_markup('See [link=https://perl.org]perl.org[/link].');
+	# $see   is 'See perl.org.'
+	# $links is [ [ 4, 12, 'https://perl.org' ] ]
 
 =head1 DESCRIPTION
 
@@ -100,9 +120,19 @@ Opens a span with a style string of L<Term::Fabulous::Text::Style>:
 C<[bold]>, C<[italic SteelBlue on #202020]>, C<[not bold]>. An invalid
 style dies.
 
+=item C<[link=TARGET]>
+
+Opens a link to C<TARGET>: everything after the C<=>, without the
+blanks around it, up to the closing bracket (C<[link=https://perl.org]>,
+C<[link=perlfunc/open]>). What the target means is the program's
+business (see L<Term::Fabulous::Widget::RichText/LINKS>). A link tag
+without a target, and a link inside another link, die. Close it with
+C<[/link]> or C<[/]>. A link is no span: style the words with a style
+tag inside or around it.
+
 =item C<[/]>
 
-Closes the innermost open span.
+Closes the innermost open span or link.
 
 =item C<[/STYLE]>
 
@@ -127,14 +157,16 @@ Nothing is exported by default.
 
 =head2 parse_markup
 
-	my ( $text, $spans ) = parse_markup($markup);
+	my ( $text, $spans, $links ) = parse_markup($markup);
 
 Returns the text without its tags and the spans as an array reference
 of C<[ $start, $end, $style ]>: the character offsets of the span in
 C<$text> (C<$end> is the offset after its last character) and its
 normalized style hash (see L<Term::Fabulous::Text::Style/Style hashes>).
 Spans are ordered by their start, outer spans before inner ones that
-start at the same offset; empty spans are dropped. C<undef> and
+start at the same offset; empty spans are dropped. The links are an
+array reference of C<[ $start, $end, $target ]>, ordered by their start;
+empty links are dropped as well. C<undef> and
 references die with a message starting with
 C<Term::Fabulous::Text::Markup:>.
 

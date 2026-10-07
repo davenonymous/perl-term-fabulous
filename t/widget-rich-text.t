@@ -3,6 +3,8 @@ use warnings;
 use utf8;
 
 use Test2::V0;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 
 use Clay::XS qw(sizing_fixed);
 use Term::Fabulous::Layout;
@@ -10,8 +12,15 @@ use Term::Fabulous::Static;
 use Term::Fabulous::Termbox qw(TB_BOLD TB_UNDERLINE TB_DEFAULT);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::RichText;
+use Term::Fabulous::Color;
+use Term::Fabulous::Render::Attr qw(color_attr);
+use Term::Fabulous::Theme;
 
 my $plain = { set => 0, clear => 0, color => undef, background => undef };
+
+sub _attr ($rgba) {
+	return defined $rgba ? color_attr( Term::Fabulous::Color->new( color => $rgba ) ) : undef;
+}
 
 subtest 'spans and markup' => sub {
 	my $text = Term::Fabulous::Widget::RichText->new( text => 'error: file', spans => [ [ 0, 5, 'bold red' ], [ 7, 11, { set => TB_UNDERLINE } ] ] );
@@ -57,6 +66,66 @@ subtest 'line_styles' => sub {
 	is $unstyled->line_styles( 0, 2 ), [ [ 2, 0, 0, undef, undef ] ], 'one plain run without spans';
 	my $default = Term::Fabulous::Widget::RichText->new( text => 'ab', spans => [ [ 0, 2, 'default' ] ] );
 	is $default->line_styles( 0, 2 ), [ [ 2, 0, 0, TB_DEFAULT, undef ] ], 'default is the terminal color, not an untouched one';
+};
+
+subtest 'links' => sub {
+	my $text = Term::Fabulous::Widget::RichText->new( markup => 'See [link=perlfunc]perlfunc[/] and [bold][link=perlop]perlop[/][/].' );
+	is $text->text,                                     'See perlfunc and perlop.',                      'markup gives the text';
+	is $text->links,                                    [ [ 4, 12, 'perlfunc' ], [ 17, 23, 'perlop' ] ], 'and the links, in order';
+	is $text->spans,                                    [ [ 17, 23, { %$plain, set => TB_BOLD } ] ],     'the style is a span, the link is none';
+	is [ map { $text->link_at($_) } 3, 4, 11, 12, 17 ], [ undef, 0, 0, undef, 1 ],                       'link_at';
+
+	my $target = { page => 'perlvar' };
+	ref_is $text->add_link( $target, 0, 3 ), $text,   'add_link chains';
+	ref_is $text->links->[0][2],             $target, 'any value is a target, kept as it is';
+	is $text->markup, undef, 'and the markup no longer says what the text is';
+	like dies { $text->add_link( 'x',   10, 14 ) }, qr/the link 10 to 14 overlaps the link 4 to 12/, 'links do not overlap';
+	like dies { $text->add_link( 'x',   2,  2 ) },  qr/a link must not be empty/,                    'nor are they empty';
+	like dies { $text->add_link( undef, 13, 14 ) }, qr/a link needs a target/,                       'a target is required';
+	like dies { Term::Fabulous::Widget::RichText->new( text => 'ab', links => [ [ 0, 3, 'x' ] ] ) }, qr/link end 3 lies past the text/, 'offsets are checked';
+
+	$text->text('plain');
+	is $text->links,              [], 'setting the text drops the links';
+	is $text->clear_links->links, [], 'clear_links';
+};
+
+subtest 'selecting and activating links' => sub {
+	my $text = Term::Fabulous::Widget::RichText->new( markup => '[link=a]A[/] [link=b]B[/]' );
+	my @activated;
+	$text->on( LinkActivate => sub ($event) { push @activated, [ $event->link, $event->index, $event->start, $event->end ]; return } );
+
+	is $text->selected_link,                                  undef,                'nothing selected at first';
+	is [ $text->select_next_link, $text->selected_link ],     [ 1, 0 ],             'next selects the first link';
+	is [ $text->select_next_link, $text->selected_link ],     [ 1, 1 ],             'then the next one';
+	is [ $text->select_next_link, $text->selected_link ],     [ 0, 1 ],             'and stops at the last';
+	is $text->activate_link,                                  1,                    'activate_link follows the selected link';
+	is \@activated,                                           [ [ 'b', 1, 2, 3 ] ], 'LinkActivate with the target and the range';
+	is [ $text->select_previous_link, $text->selected_link ], [ 1, 0 ],             'previous goes back';
+	is [ $text->select_previous_link, $text->selected_link ], [ 0, 0 ],             'and stops at the first';
+
+	$text->add_link( 'c', 1, 2 );
+	is $text->selected_link, 0, 'a link added after the selected one keeps the selection';
+	$text->select_link(undef);
+	is $text->activate_link, 0, 'nothing to activate without a selection';
+	like dies { $text->select_link(3) }, qr/link 3 is not a link; the text has 3 links/, 'select_link checks the index';
+};
+
+subtest 'link looks and focus' => sub {
+	my $theme = Term::Fabulous::Theme->default;
+	my %attr  = map { my ( $slot, $state ) = @$_; ( "$slot.$state" => _attr( $theme->look( 'text', $slot, $state ) ) ) } map {
+		my $slot = $_;
+		map { [ $slot, $_ ] } qw(normal hovered selected)
+	} 'link', 'link.background';
+	my $text = Term::Fabulous::Widget::RichText->new( markup => 'a [link=x]bc[/]' );
+	is $text->line_styles( 0, 4 ), [ [ 2, 0, 0, undef, undef ], [ 2, TB_UNDERLINE, 0, $attr{'link.normal'}, $attr{'link.background.normal'} ] ], 'a link is underlined in the theme\'s link color';
+	$text->hover_link(0);
+	is $text->line_styles( 2, 2 ), [ [ 2, TB_UNDERLINE, 0, $attr{'link.hovered'}, $attr{'link.background.hovered'} ] ], 'the hovered look';
+	$text->select_link(0);
+	is $text->line_styles( 2, 2 ), [ [ 2, 0, TB_UNDERLINE, $attr{'link.selected'}, $attr{'link.background.selected'} ] ], 'the selected look wins and is not underlined';
+
+	is $text->accepts_focus, 1, 'a RichText with links takes the focus';
+	is( Term::Fabulous::Widget::RichText->new( text   => 'x' )->accepts_focus,                        0, 'one without links does not' );
+	is( Term::Fabulous::Widget::RichText->new( markup => '[link=x]y[/]', can_focus => 0 )->can_focus, 0, 'can_focus => 0 opts out' );
 };
 
 subtest 'wrapped lines keep their styles' => sub {

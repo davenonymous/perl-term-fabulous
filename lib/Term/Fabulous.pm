@@ -19,6 +19,7 @@ class Term::Fabulous
 	:strict(params)
 {
 	use Clay::UI::Revision qw(current_revision);
+	use Clay::XS qw(CLAY_RENDER_COMMAND_TYPE_TEXT);
 	use Feature::Compat::Try;
 	use IO::Async::Handle;
 	use IO::Async::Loop;
@@ -26,11 +27,11 @@ class Term::Fabulous
 	use IO::Async::Timer::Countdown;
 	use IO::Async::Timer::Periodic;
 	use List::Util qw(any);
-	use Scalar::Util qw(blessed looks_like_number refaddr);
+	use Scalar::Util qw(blessed looks_like_number refaddr weaken);
 	use Time::HiRes ();
 	use Term::Fabulous::Termbox qw(
 		TB_EVENT_KEY TB_EVENT_MOUSE TB_EVENT_RESIZE
-		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
+		TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN
 		TF_KEY_MOUSE_MOVE TF_KEY_MOUSE_WHEEL_LEFT TF_KEY_MOUSE_WHEEL_RIGHT
 		TB_KEY_CTRL_C TB_KEY_TAB TB_KEY_BACK_TAB TB_MOD_MOTION
 	);
@@ -40,7 +41,10 @@ class Term::Fabulous
 	use Term::Fabulous::Event::Resize;
 	use Term::Fabulous::Event::Start;
 	use Term::Fabulous::Color;
-	use Term::Fabulous::Unicode qw(terminal_is_utf8);
+	use Term::Fabulous::Render::Geometry qw(cell_rect);
+	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters terminal_is_utf8);
+
+	my %IS_BUTTON = map { $_ => 1 } TB_KEY_MOUSE_LEFT, TB_KEY_MOUSE_MIDDLE, TB_KEY_MOUSE_RIGHT;
 
 	use constant WATCHED_SIGNALS     => qw(TERM INT HUP);
 	use constant WHEEL_NOTCH_ROWS    => 3;
@@ -75,6 +79,7 @@ class Term::Fabulous
 	field $_shown_down     = 0;    # the button state the last frame showed Clay
 	field $_frame_seconds  = 0;    # how long the last frame took to draw
 	field $_frame_ended_at = 0;    # when it was drawn, on the clock
+	field $_hovered_text;    # the RichText whose link is under the pointer, weakened
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -393,17 +398,25 @@ class Term::Fabulous
 		$_pointer = { x => $x, y => $y, down => $down };
 		$self->_queue_pointer($_pointer);
 
-		my $target = $self->_emitter_at( $x, $y ) // $self->root;
+		my $frame   = $self->last_frame;
+		my @topmost = $frame->topmost_at( $x, $y );
+		my $target  = $self->_emitter_among( $frame, @topmost ) // $self->root;
+		my ( $text, $offset ) = $self->_text_at( $frame, $topmost[0], $x );
 		if ( $key == TF_KEY_MOUSE_MOVE ) {
+			$self->_hover_link_at( $text, $offset );
 			$target->fire_event( Term::Fabulous::Event::MouseMove->of($event) );
 			return;
 		}
 
 		$_frame_requested = 1;    # listeners may change anything
-		$self->interaction->set_focused_widget( $self->_focusable_at_or_above($target) )
-			if $key == TB_KEY_MOUSE_LEFT && !( $event->mod & TB_MOD_MOTION );
+		my $is_press = $IS_BUTTON{$key} && !( $event->mod & TB_MOD_MOTION );
+		$self->interaction->set_focused_widget( $self->_focusable_at_or_above( $text // $target ) )
+			if $is_press && $key == TB_KEY_MOUSE_LEFT;
 		my $mouse_event = Term::Fabulous::Event::Mouse->of($event);
 		$target->fire_event($mouse_event);
+
+		# A Mouse listener may have taken the text out of the tree.
+		$text->click_at( $offset, $key, $x, $y ) if $is_press && defined $text && $self->_owns($text);
 
 		# A widget that scrolled itself has used the wheel notch.
 		return if $mouse_event->wheel_used;
@@ -470,15 +483,61 @@ class Term::Fabulous
 		return;
 	}
 
-	# Topmost event emitter painted at the cell in the last frame that is
-	# still part of this UI: a listener may have removed it since.
-	method _emitter_at ( $x, $y ) {
-		my $frame = $self->last_frame;
-		foreach my $index ( $frame->topmost_at( $x, $y ) ) {
-			my $widget = $self->widget_for( $frame->command($index)->{userData} );
+	# Topmost event emitter among the commands of the frame painted at a
+	# cell (topmost first) that is still part of this UI: a listener may
+	# have removed it since. Text widgets fire events but are skipped: a
+	# click on text goes to the widget behind it (and fires TextClick on
+	# the text, see _text_at).
+	method _emitter_among ( $frame, @topmost ) {
+		foreach my $index (@topmost) {
+			my $command = $frame->command($index);
+			next if $command->{commandType} == CLAY_RENDER_COMMAND_TYPE_TEXT;
+			my $widget = $self->widget_for( $command->{userData} );
 			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter') && $self->_owns($widget);
 		}
 		return undef;
+	}
+
+	# The Text whose line is the topmost command painted at a cell, and the
+	# offset in its text of the character in the cell's column; an empty
+	# list when the cell holds none.
+	method _text_at ( $frame, $index, $x ) {
+		return () unless defined $index;
+		my $command = $frame->command($index);
+		return () unless $command->{commandType} == CLAY_RENDER_COMMAND_TYPE_TEXT;
+		my $widget = $self->widget_for( $command->{userData} );
+		return () unless defined $widget && $widget->isa('Term::Fabulous::Widget::Text') && $self->_owns($widget);
+		my $offset = _offset_at_column( $command, $x ) // return ();
+		return ( $widget, $offset );
+	}
+
+	# Where the character drawn at the column lies in the widget's text:
+	# the line's clusters advance as Term::Fabulous::Render::Text draws
+	# them, from the left edge of the line's box.
+	sub _offset_at_column ( $command, $x ) {
+		my ($column) = cell_rect( $command->{boundingBox} );
+		return undef if $x < $column;
+		my $data   = $command->{renderData};
+		my $offset = $data->{stringOffset} // 0;
+		foreach my $cluster ( grapheme_clusters( $data->{stringContents} ) ) {
+			$column += cluster_columns($cluster);
+			return $offset if $x < $column;
+			$offset += length $cluster;
+		}
+		return undef;
+	}
+
+	# The link under the pointer looks hovered; the one it was over before
+	# no longer does.
+	method _hover_link_at ( $text, $offset ) {
+		my $link    = defined $text && $text->can('hover_link') ? $text->link_at($offset) : undef;
+		my $hovered = defined $link                             ? $text                   : undef;
+		$_hovered_text->hover_link(undef) if defined $_hovered_text && !( defined $hovered && refaddr($hovered) == refaddr($_hovered_text) );
+		$_hovered_text = $hovered;
+		return unless defined $hovered;
+		weaken $_hovered_text;
+		$hovered->hover_link($link);
+		return;
 	}
 
 	method _owns ($widget) {
@@ -739,7 +798,7 @@ widget receives: key presses while nothing has the focus, mouse events
 where no widget is drawn, and every C<Start> and C<Resize>. It must
 therefore be able to fire events (compose
 L<Clay::UI::Role::Events::Emitter>, as all Term::Fabulous widgets
-except Text do); otherwise C<new> dies
+do); otherwise C<new> dies
 (C<Term::Fabulous: root must consume Clay::UI::Role::Events::Emitter to receive input events, got ...>).
 The root must not have a parent (C<new> dies with
 C<Clay::UI: 'root' must not have a parent; ...>); a widget that was
@@ -1291,11 +1350,21 @@ widget. Content that is scrolled out of view in a
 L<Term::Fabulous::Widget::ScrollBox> is not drawn and never receives
 the event.
 
+=item C<TextClick> (L<Term::Fabulous::Event::TextClick>)
+
+For every button press (not a drag) whose cell holds a character of a
+text that is the topmost thing drawn there, on the
+L<Term::Fabulous::Widget::Text>, after the C<Mouse> event. A left press
+on a link of a L<Term::Fabulous::Widget::RichText> then fires
+C<LinkActivate> (L<Term::Fabulous::Event::LinkActivate>) on it. See
+L<Term::Fabulous::Manual::Events/Clicks on text and links>.
+
 =item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
 
 For every report of the pointer moving with no button held, on the same
-widget a C<Mouse> event would go to. The hover state of the widgets
-follows these moves.
+widget a C<Mouse> event would go to. The hover state of the widgets,
+and the hovered link of a L<Term::Fabulous::Widget::RichText>, follow
+these moves.
 
 =item C<Start> (L<Term::Fabulous::Event::Start>)
 
@@ -1352,7 +1421,8 @@ moves the focus to the previous one, in the same order.
 Listeners cannot prevent these actions.
 
 When the left mouse button is pressed (not dragged), the widget under
-the pointer gets the focus, or its nearest ancestor that can take it.
+the pointer (on text, the Text widget) gets the focus, or its nearest
+ancestor that can take it.
 When there is none, the focus is cleared; so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
 C<Mouse> event is fired.

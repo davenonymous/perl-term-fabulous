@@ -323,6 +323,22 @@ C<< $tabs->choose >>. Fired on the Tabs, with the page as the item; a
 L<Term::Fabulous::Widget::Tabs::Bar> on its own fires it with the tab.
 Fields: C<item>, C<index>, C<open>.
 
+=item C<TextClick> (L<Term::Fabulous::Event::TextClick>)
+
+A mouse button was pressed on a character of a
+L<Term::Fabulous::Widget::Text> or L<Term::Fabulous::Widget::RichText>.
+Fired on the text, after the C<Mouse> event of the press. Fields:
+C<button>, C<x>, C<y>, C<offset>, C<word>, C<word_start>, C<word_end>,
+C<spans>, C<link>, C<link_index>. See L</Clicks on text and links>.
+
+=item C<LinkActivate> (L<Term::Fabulous::Event::LinkActivate>)
+
+The user followed a link of a L<Term::Fabulous::Widget::RichText>:
+clicked it, or pressed C<Enter> while the RichText had the focus and
+the link was selected. Also fired by C<< $rich_text->activate_link >>.
+Fired on the RichText. Fields: C<link> (the link's target), C<index>,
+C<start>, C<end>.
+
 =item C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>)
 
 The pointer moved onto another part of a chart (a line, a bar, a
@@ -647,7 +663,9 @@ skipped. The order wraps around at the end.
 =item *
 
 when the user presses the left mouse button: the clicked widget, or its
-nearest ancestor that can take the focus, gets it. Clicking where no
+nearest ancestor that can take the focus, gets it. On text, the
+clicked widget is the Text itself, so a click on a
+L<Term::Fabulous::Widget::RichText> with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
 
@@ -826,7 +844,9 @@ listeners cheap.
 
 The event is fired on the topmost widget that drew something in that cell
 in the last frame: its background, its border or its canvas. Text widgets
-do not receive mouse events; a click on text goes to the box behind it.
+do not receive C<Mouse> and C<MouseMove> events; a click on text goes to
+the box behind it, and then fires C<TextClick> on the text (see
+L</Clicks on text and links>).
 A box without a background color and without a border draws nothing, so
 clicks go through it to the widget behind it. When no widget drew the
 cell, the event is fired on the root widget. A left press moves the
@@ -882,6 +902,29 @@ press. The two events can go to different widgets: C<Mouse> goes to the
 widget that drew the cell, C<OnPress> to the innermost pressable widget
 whose box contains the pointer, even if it draws nothing there. A
 disabled widget is not pressed.
+
+=head2 Clicks on text and links
+
+A button press on a character of a text (the left, middle or right
+button; not a drag, a release or the wheel) fires C<TextClick> on the
+L<Term::Fabulous::Widget::Text> after the C<Mouse> event, which still
+goes to the widget behind the text. The event says which character was
+clicked (C<offset> in the text, also on a wrapped line), the word it
+belongs to, and for a L<Term::Fabulous::Widget::RichText> the spans and
+the link there. It bubbles, so a container can react to clicks on any
+text inside it:
+
+	$article->on(
+		TextClick => sub ($event) {
+			look_up( $event->word ) if defined $event->word;
+			return;
+		}
+	);
+
+A left click on a link of a RichText then selects the link and fires
+C<LinkActivate> on the RichText; the pointer over a link gives it its
+hovered look. See L<Term::Fabulous::Widget::RichText/LINKS> for links,
+their looks and their keys.
 
 =head1 SCROLLING
 

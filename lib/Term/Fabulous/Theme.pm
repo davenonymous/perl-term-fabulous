@@ -78,8 +78,14 @@ class Term::Fabulous::Theme :strict(params) {
 	}
 
 	my %FAMILY = (
-		text => { slots => { color => _color_slot('text') } },
-		box  => {
+		text => {
+			slots => {
+				'color'           => _color_slot('text'),
+				'link'            => _color_slot( 'accent', hovered => 'text_bright',      selected => 'text_inverse' ),
+				'link.background' => _color_slot( 'none',   hovered => 'hover_background', selected => 'accent' ),
+			}
+		},
+		box => {
 			slots => {
 				'background'   => _color_slot('none'),
 				'border.color' => _color_slot('border'),
