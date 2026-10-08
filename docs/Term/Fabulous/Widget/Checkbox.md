@@ -127,7 +127,9 @@ change the state. This is the value `Change` events carry.
 
 A `required` checkbox (see ["required" in Term::Fabulous::Widget::Input](Input.md#required))
 counts as empty while it is unchecked, so it is invalid until the user
-checks it: the way to insist on accepted terms.
+checks it: the way to insist on accepted terms. While it is invalid,
+its box and its label are drawn in `invalid_color`, a red by default
+(see ["Invalid values" in Term::Fabulous::Widget::Input](Input.md#invalid-values)).
 
 ## indeterminate
 

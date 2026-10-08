@@ -114,6 +114,7 @@ The offset after the link's last character.
 
 L<Term::Fabulous::Widget::RichText/LINKS>,
 L<Term::Fabulous::Event::TextClick>,
-L<Term::Fabulous::Manual::Events>.
+L<Term::Fabulous::Manual::Events>, and the recipe
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>.
 
 =cut

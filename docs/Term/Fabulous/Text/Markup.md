@@ -31,13 +31,17 @@ as its `markup` parameter; this module does the parsing.
 
 - `[link=TARGET]`
 
-    Opens a link to `TARGET`: everything after the `=`, without the
-    blanks around it, up to the closing bracket (`[link=https://perl.org]`,
-    `[link=perlfunc/open]`). What the target means is the program's
-    business (see ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links)). A link tag
-    without a target, and a link inside another link, die. Close it with
-    `[/link]` or `[/]`. A link is no span: style the words with a style
-    tag inside or around it.
+    Opens a link to `TARGET`: everything after the `=` up to the closing
+    bracket, without the blanks at its ends (`[link=https://perl.org]`,
+    `[link=perlfunc/open]`, `[link=page two]` for the target
+    `page two`). The target is always a string, and cannot contain `[`
+    or `]`; give other targets from Perl with
+    [add\_link](../Widget/RichText.md#add_link). What the target
+    means is the program's business (see
+    ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links)). A link tag without a
+    target, and a link inside another link, die. Close it with `[/link]`
+    or `[/]`. A link is no span: style the words with a style tag inside
+    or around it, as in `[bold][link=faq]FAQ[/link][/]`.
 
 - `[/]`
 

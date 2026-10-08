@@ -279,10 +279,12 @@ B<Disabled>: everything in C<disabled_color>.
 
 =item *
 
-B<Invalid>: the text in C<invalid_color> and the border, where there
-is one, in the theme's red, while the value is empty but C<required>
-or rejected by the C<validator> (see L</Checking input>). A disabled
-input shows the disabled look instead.
+B<Invalid>: while the value is empty but C<required>, or rejected by
+the C<validator>, the text is drawn in C<invalid_color> and the
+border, where there is one, in the theme's C<danger> color (a red in
+the built-in themes). An empty text field or dropdown has no text to
+color and keeps its gray placeholder. A disabled input shows the
+disabled look instead. See L</Checking input>.
 
 =item *
 
@@ -357,8 +359,10 @@ separate on purpose: C<accept> is an editing rule, applied as the user
 types and pastes, C<validator> is a rule about the whole value.
 
 B<Restricting characters.> C<accept> takes the body of a character
-class (C<'0-9'>, C<'a-zA-Z '>), a regular expression every character
-must match (C<qr/\p{L}/>) or a code reference. A key the spec rejects
+class (C<'0-9'>, C<'a-zA-Z '>, C<'^0-9'> for everything but digits), a
+regular expression every character must match (C<qr/\p{L}/>) or a
+code reference; see L<Term::Fabulous::Widget::TextInput/accept> for
+the details. A key the spec rejects
 does nothing; pasted text keeps its accepted characters and drops the
 rest, so pasting C<+49 170 1234> into a digits-only field inserts the
 digits. Setting C<value> from the program to a text with a rejected
@@ -390,10 +394,22 @@ C<integer> lets the user type digits and a minus sign only, unless the
 field has an C<accept> of its own.
 
 B<What the user sees.> An input whose value is invalid shows the
-invalid look at once, while the user types: its text in
-C<invalid_color> and its border, where it has one, in the theme's
-C<danger> red. It does not show the message; the message is yours to
-place. C<< $input->error >> is the message right now (C<undef> when
+invalid look at once, while the user types, not only when the user
+leaves the field: its text in C<invalid_color> and its border, where it
+has one, in the theme's C<danger> color. An empty text field or
+dropdown has no text to color and keeps its gray placeholder, so an
+empty required field looks invalid only when it has a border, which
+turns red. The picture shows every case (see
+L<Term::Fabulous::Widget::Input/Invalid values>):
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-input-validation.svg" alt="Eleven inputs: a focused e-mail field with ada@exa in red, a valid address in white, ada@ in red without and with a red border, an empty required field that looks normal and one whose border is red, a red unchecked check box, a dropdown showing its gray placeholder, ada@ in purple, ada@ in yellow with a yellow border, and a disabled field in gray"></p>
+
+=end html
+
+The input does not show the message; the message is yours to place.
+C<< $input->error >> is the message right now (C<undef> when
 the value is fine), C<< $input->is_valid >> the same as a boolean, and
 the input fires L<Term::Fabulous::Event::ValidityChange> after every
 C<Change> whose message differs from the last one reported:
@@ -435,6 +451,11 @@ option of every validator (L<Term::Fabulous::Validator/CONSTRUCTORS>).
 The recipe
 L<A login form|Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>
 checks a whole form this way when the user presses C<Enter>.
+L<Check the values of a form|Term::Fabulous::Cookbook::Forms/Check the values of a form (required, validator)>
+uses every built-in validator and shows each message next to its
+field, and
+L<Write your own checks and restrict typing|Term::Fabulous::Cookbook::Forms/Write your own checks and restrict typing (accept, pattern, code)>
+shows C<accept>, patterns, code and lists of validators.
 
 =head1 THE INPUT WIDGETS ONE BY ONE
 

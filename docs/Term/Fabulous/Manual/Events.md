@@ -866,7 +866,11 @@ $article->on(
 A left click on a link of a RichText then selects the link and fires
 `LinkActivate` on the RichText; the pointer over a link gives it its
 hovered look. See ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links) for links,
-their looks and their keys.
+their looks and their keys. The recipes
+["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+and
+["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick)
+are complete programs.
 
 # SCROLLING
 

@@ -86,4 +86,5 @@ The offset after the link's last character.
 
 ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links),
 [Term::Fabulous::Event::TextClick](TextClick.md),
-[Term::Fabulous::Manual::Events](../Manual/Events.md).
+[Term::Fabulous::Manual::Events](../Manual/Events.md), and the recipe
+["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links).

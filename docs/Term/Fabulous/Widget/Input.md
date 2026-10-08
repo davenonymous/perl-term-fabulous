@@ -91,20 +91,26 @@ application shortcuts on an outer box keep working while the user types.
 Each widget's KEYS section lists the keys it uses. See
 ["KEYBOARD" in Term::Fabulous::Manual::Events](../Manual/Events.md#keyboard).
 - It works with the mouse: clicks, drags and the mouse wheel, as described
-in each widget's MOUSE section. The terminal reports the mouse only when
-a button is pressed or released, while it is dragged, and when the wheel
-turns; plain pointer movement is not reported. The hover state of an
-input (`is_hovered`, the `OnHoverStart` and `OnHoverStopped` events)
-therefore changes only at those moments, not while the pointer merely
-moves.
+in each widget's MOUSE section. [Term::Fabulous](../../../../README.md) asks the terminal to
+report the pointer as it moves, too, so the hover state of an input
+(`is_hovered`, the `OnHoverStart` and `OnHoverStopped` events)
+follows the pointer. A terminal that does not report plain movement
+changes the hover state only when a button is pressed or released,
+while it is dragged and when the wheel turns.
 - It fires a [Term::Fabulous::Event::Change](../Event/Change.md) when the user changes its
 value (see ["EVENTS"](#events)).
+- It can check its value: `required` rejects an empty value,
+`validator` a wrong one. An invalid value is drawn in the invalid look
+and reported by ["error"](#error), ["is\_valid"](#is_valid) and the `ValidityChange` event
+(see ["Invalid values"](#invalid-values)).
 - It sizes itself to its content unless the `layout` says otherwise (see
 ["SIZE"](#size)).
 - It can be disabled (see ["disabled"](#disabled)).
 - It has the derived states `focused`, `hovered`, `pressed` and
 `disabled`, which `$input->has_state('focused')` and
 `$input->states` report (see ["has\_state" in Term::Fabulous::Widget](../Widget.md#has_state)).
+Whether the value is valid is not one of these states; ask
+["is\_valid"](#is_valid).
 - It can be built from a KDL layout file (see ["KDL PROPERTIES"](#kdl-properties)).
 
 Technically, an input is a [Term::Fabulous::Widget::Display](Display.md), a
@@ -132,6 +138,68 @@ another widget, and a frame that changes nothing about an input paints
 nothing of it. The cells read with `cell` show the state of the last
 frame. This is how every [Term::Fabulous::Widget::Display](Display.md) paints; see
 ["Painting" in Term::Fabulous::Widget::Display](Display.md#painting).
+
+## Invalid values
+
+An input's value is invalid while it is empty and the input is
+`required`, or while its `validator` rejects it (see ["required"](#required)
+and ["validator"](#validator)). An invalid input looks different as soon as its
+value is invalid, without waiting for the user to leave it:
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-input-validation.svg" alt="Eleven inputs: a focused e-mail field with ada@exa in red, a valid address in white, ada@ in red without and with a red border, an empty required field that looks normal and one whose border is red, a red unchecked check box, a dropdown showing its gray placeholder, ada@ in purple, ada@ in yellow with a yellow border, and a disabled field in gray"></p>
+</div>
+
+The picture shows `examples/widgets/input-validation.pl` in the dark
+theme. From the top:
+
+- **Typing, focused**: an e-mail field after typing `ada@exa`. The look
+changes with every key, so the text stays red until the address is
+complete. The cursor takes the color of the text.
+- **Valid**, **invalid**: the text of an invalid value is drawn in
+`invalid_color`, by default the theme's `danger` red.
+- **Invalid, border**: an input with a border (`border_width => 1`)
+also draws its border in the `danger` red, unless it was given a
+`border_color` of its own.
+- **Required, empty**: an empty text field shows its placeholder in the
+usual gray, required or not. So a required field without a border does
+not look invalid while it is empty, only when the user types something
+wrong. With a border, the border is red.
+- **Required check box**: an unchecked required box draws its box and its
+label in `invalid_color`.
+- **Required dropdown**: a dropdown without a choice shows its
+placeholder in gray, like an empty text field.
+- **invalid\_color**: the color of an invalid value set for one input,
+here `'#c678dd'`, a purple.
+- **Theme variant**: a theme can draw invalid values in other colors, for
+every input or only for the inputs with a class. The program's theme
+draws the text inputs of the class `calm` in the `warning` color:
+
+    ```perl
+    my $theme = Term::Fabulous::Theme->new(
+            name     => 'calm-invalid',
+            extends  => 'dark',
+            variants => { 'text_input.calm' => { 'text.invalid' => 'warning', 'border.color.invalid' => 'warning' } },
+    );
+    my $field = Term::Fabulous::Widget::TextField->new( validator => 'email', classes => ['calm'] );
+    ```
+
+    The slots are `text` and `border.color` in the state `invalid`. They
+    belong to the family `input`, which the families `text_input` (text
+    fields and text areas) and `dropdown` extend; a variant names the
+    family of the widget, as `text_input.calm` does. To change every
+    input, set the slots `input.text.invalid` and
+    `input.border.color.invalid` instead. See [Term::Fabulous::Theme](../Theme.md).
+
+- **Disabled**: a disabled input shows the disabled look, valid or not.
+
+The input does not draw the message that says what is wrong. Read it
+from ["error"](#error) or from the `ValidityChange` event, and show it where it
+suits your program; the recipes
+["Check the values of a form (required, validator)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#check-the-values-of-a-form-required-validator)
+and
+["Write your own checks and restrict typing (accept, pattern, code)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#write-your-own-checks-and-restrict-typing-accept-pattern-code)
+show two ways.
 
 # CONSTRUCTOR
 
@@ -418,15 +486,22 @@ input shows the disabled look instead.
 my $message = $input->validate;
 ```
 
-Checks the value, fires [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md) on the
-input when the message differs from the one the last `ValidityChange`
-reported (until the first, the input counts as reported valid), and
-returns the message or `undef`. The input calls it after every
-`Change` and when `required`, `required_message` or `validator`
-is written; call it yourself after setting the value from the program,
-or once after building a form to report its initial state. To check a
-whole form, ["invalid\_inputs" in Term::Fabulous::Widget](../Widget.md#invalid_inputs) lists the inputs
-below a widget that are not valid.
+Checks the value and returns the message, or `undef` when the value
+is fine. When the message differs from the one the input reported last,
+it also fires [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md) on the input.
+
+The input calls it after every `Change` and when `required`,
+`required_message` or `validator` is written. Call it yourself after
+setting the value from the program, which fires no events.
+
+Before its first `ValidityChange`, an input counts as having reported
+a valid value. An input that is invalid from the start, such as an
+empty required field, therefore reports nothing until the user changes
+it or something calls `validate`. To show the messages of such inputs,
+call `validate` on them: once after building the form
+(`$_->validate foreach $form->invalid_inputs`), or when the user
+sends the form. ["invalid\_inputs" in Term::Fabulous::Widget](../Widget.md#invalid_inputs) lists the
+inputs below a widget that are not valid, reported or not.
 
 ## accent\_color
 
@@ -854,5 +929,6 @@ dropdown list that cannot move any further.
 # SEE ALSO
 
 ["FORMS AND INPUT WIDGETS" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#forms-and-input-widgets),
-[Term::Fabulous::Event::Change](../Event/Change.md), [Term::Fabulous::Widget::Display](Display.md),
+[Term::Fabulous::Event::Change](../Event/Change.md), [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md),
+[Term::Fabulous::Validator](../Validator.md), [Term::Fabulous::Widget::Display](Display.md),
 [Term::Fabulous::Widget::Canvas](Canvas.md), [Term::Fabulous::Widget::TextInput](TextInput.md).

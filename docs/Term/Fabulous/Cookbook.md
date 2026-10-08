@@ -95,10 +95,12 @@ The pages, in reading order, each with its recipes:
 
 - [Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md)
 
-    Key bindings and buttons:
+    Key bindings, buttons, links and clicks on text:
 
     - [Bind a key to an action](Cookbook/KeyboardAndMouse.md#bind-a-key-to-an-action)
     - [Add buttons for the mouse and the keyboard (Button)](Cookbook/KeyboardAndMouse.md#add-buttons-for-the-mouse-and-the-keyboard-button)
+    - [Follow links in a text (RichText links)](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+    - [React to a click on a word (TextClick)](Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick)
 
 - [Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md)
 
@@ -114,6 +116,8 @@ The pages, in reading order, each with its recipes:
     Forms, dialogs and input widgets:
 
     - [A login form (centered dialog, masked password)](Cookbook/Forms.md#a-login-form-centered-dialog-masked-password)
+    - [Check the values of a form (required, validator)](Cookbook/Forms.md#check-the-values-of-a-form-required-validator)
+    - [Write your own checks and restrict typing (accept, pattern, code)](Cookbook/Forms.md#write-your-own-checks-and-restrict-typing-accept-pattern-code)
     - [Ask a question in a dialog (Dialog widget)](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget)
     - [Ask for input below the shell's output (inline mode)](Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode)
     - [Choose from options in Perl (Dropdown, RadioGroup, Slider)](Cookbook/Forms.md#choose-from-options-in-perl-dropdown-radiogroup-slider)

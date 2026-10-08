@@ -19,7 +19,8 @@ $form->on( ValidityChange => sub ($event) {
         return;
 } );
 
-# Report the state the form starts in:
+# Report the inputs that are invalid from the start, such as empty
+# required fields, which have fired nothing yet:
 $_->validate foreach $form->invalid_inputs;
 ```
 
@@ -36,10 +37,14 @@ it with `$widget->on( ValidityChange => sub ($event) { ... } )`.
 - It is fired by ["validate" in Term::Fabulous::Widget::Input](../Widget/Input.md#validate), which the
 input runs after every `Change` event and whenever its `required`,
 `required_message` or `validator` is written. It fires only when the
-message differs from the one the last `ValidityChange` reported; until
-the first one, the input counts as reported valid. Setting the value
-from the program fires nothing, as with `Change`; call `validate` to
-report it.
+message differs from the one the input reported last: typing a second
+wrong character into an e-mail field fires nothing new.
+- Before its first `ValidityChange`, an input counts as having reported
+a valid value. An input that is invalid from the start (an empty
+required field, a field created with a wrong `value`) therefore fires
+nothing until the user changes it or something calls `validate`.
+Setting the value from the program fires nothing either, as with
+`Change`; call `validate` to report it.
 - It is fired on the input, right after the `Change` event it follows,
 and bubbles to the input's ancestors in the same way (see
 [Term::Fabulous::Event::Change](Change.md)).
@@ -95,4 +100,5 @@ The input the event was fired on, inherited from
 
 [Term::Fabulous::Widget::Input](../Widget/Input.md), [Term::Fabulous::Validator](../Validator.md),
 [Term::Fabulous::Event::Change](Change.md),
-["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input).
+["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input),
+["Check the values of a form (required, validator)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#check-the-values-of-a-form-required-validator).

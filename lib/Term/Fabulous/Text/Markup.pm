@@ -122,13 +122,17 @@ style dies.
 
 =item C<[link=TARGET]>
 
-Opens a link to C<TARGET>: everything after the C<=>, without the
-blanks around it, up to the closing bracket (C<[link=https://perl.org]>,
-C<[link=perlfunc/open]>). What the target means is the program's
-business (see L<Term::Fabulous::Widget::RichText/LINKS>). A link tag
-without a target, and a link inside another link, die. Close it with
-C<[/link]> or C<[/]>. A link is no span: style the words with a style
-tag inside or around it.
+Opens a link to C<TARGET>: everything after the C<=> up to the closing
+bracket, without the blanks at its ends (C<[link=https://perl.org]>,
+C<[link=perlfunc/open]>, C<[link=page two]> for the target
+C<page two>). The target is always a string, and cannot contain C<[>
+or C<]>; give other targets from Perl with
+L<add_link|Term::Fabulous::Widget::RichText/add_link>. What the target
+means is the program's business (see
+L<Term::Fabulous::Widget::RichText/LINKS>). A link tag without a
+target, and a link inside another link, die. Close it with C<[/link]>
+or C<[/]>. A link is no span: style the words with a style tag inside
+or around it, as in C<[bold][link=faq]FAQ[/link][/]>.
 
 =item C<[/]>
 

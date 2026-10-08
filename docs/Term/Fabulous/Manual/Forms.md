@@ -233,10 +233,12 @@ shows the cursor as a block (the character under it in reverse video),
 a slider paints its thumb in `text_color`, and a radio group highlights
 the button the keyboard is on.
 - **Disabled**: everything in `disabled_color`.
-- **Invalid**: the text in `invalid_color` and the border, where there
-is one, in the theme's red, while the value is empty but `required`
-or rejected by the `validator` (see ["Checking input"](#checking-input)). A disabled
-input shows the disabled look instead.
+- **Invalid**: while the value is empty but `required`, or rejected by
+the `validator`, the text is drawn in `invalid_color` and the
+border, where there is one, in the theme's `danger` color (a red in
+the built-in themes). An empty text field or dropdown has no text to
+color and keeps its gray placeholder. A disabled input shows the
+disabled look instead. See ["Checking input"](#checking-input).
 - **Placeholder**: an empty text input, or a dropdown without a selection,
 shows its `placeholder` in `placeholder_color`.
 - **Masked**: a text field with a `mask` shows the mask character for
@@ -299,8 +301,10 @@ separate on purpose: `accept` is an editing rule, applied as the user
 types and pastes, `validator` is a rule about the whole value.
 
 **Restricting characters.** `accept` takes the body of a character
-class (`'0-9'`, `'a-zA-Z '`), a regular expression every character
-must match (`qr/\p{L}/`) or a code reference. A key the spec rejects
+class (`'0-9'`, `'a-zA-Z '`, `'^0-9'` for everything but digits), a
+regular expression every character must match (`qr/\p{L}/`) or a
+code reference; see ["accept" in Term::Fabulous::Widget::TextInput](../Widget/TextInput.md#accept) for
+the details. A key the spec rejects
 does nothing; pasted text keeps its accepted characters and drops the
 rest, so pasting `+49 170 1234` into a digits-only field inserts the
 digits. Setting `value` from the program to a text with a rejected
@@ -336,10 +340,20 @@ The validators that know their characters also restrict typing:
 field has an `accept` of its own.
 
 **What the user sees.** An input whose value is invalid shows the
-invalid look at once, while the user types: its text in
-`invalid_color` and its border, where it has one, in the theme's
-`danger` red. It does not show the message; the message is yours to
-place. `$input->error` is the message right now (`undef` when
+invalid look at once, while the user types, not only when the user
+leaves the field: its text in `invalid_color` and its border, where it
+has one, in the theme's `danger` color. An empty text field or
+dropdown has no text to color and keeps its gray placeholder, so an
+empty required field looks invalid only when it has a border, which
+turns red. The picture shows every case (see
+["Invalid values" in Term::Fabulous::Widget::Input](../Widget/Input.md#invalid-values)):
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-input-validation.svg" alt="Eleven inputs: a focused e-mail field with ada@exa in red, a valid address in white, ada@ in red without and with a red border, an empty required field that looks normal and one whose border is red, a red unchecked check box, a dropdown showing its gray placeholder, ada@ in purple, ada@ in yellow with a yellow border, and a disabled field in gray"></p>
+</div>
+
+The input does not show the message; the message is yours to place.
+`$input->error` is the message right now (`undef` when
 the value is fine), `$input->is_valid` the same as a boolean, and
 the input fires [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md) after every
 `Change` whose message differs from the last one reported:
@@ -385,6 +399,11 @@ option of every validator (["CONSTRUCTORS" in Term::Fabulous::Validator](../Vali
 The recipe
 [A login form](../Cookbook/Forms.md#a-login-form-centered-dialog-masked-password)
 checks a whole form this way when the user presses `Enter`.
+[Check the values of a form](../Cookbook/Forms.md#check-the-values-of-a-form-required-validator)
+uses every built-in validator and shows each message next to its
+field, and
+[Write your own checks and restrict typing](../Cookbook/Forms.md#write-your-own-checks-and-restrict-typing-accept-pattern-code)
+shows `accept`, patterns, code and lists of validators.
 
 # THE INPUT WIDGETS ONE BY ONE
 

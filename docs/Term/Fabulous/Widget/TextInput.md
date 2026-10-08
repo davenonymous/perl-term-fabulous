@@ -87,16 +87,29 @@ parameters die.
 
 - `accept`
 
-    Which characters the user may enter: the body of a character class
-    (`'0-9'`, `'a-zA-Z '`), a regular expression every grapheme cluster
-    must match (`qr/\p{L}/`), a code reference called with each cluster
-    that returns true to accept it, or `undef`. Default: `undef`, which
-    takes what the `validator` suggests, if anything (`'integer'`
-    suggests `'0-9-'`), else every character. Typing a rejected
-    character does nothing; pasted text keeps its accepted characters and
-    drops the rest, and when nothing of it is accepted, nothing happens.
-    Line breaks in a text area are never subject to it. Dies if the initial
-    `value` has a rejected character. See ["accept"](#accept).
+    Which characters the user may type or paste. One of:
+
+    - a string: the body of a character class, written as between the
+    brackets of `[...]` in a regular expression. `'0-9'` accepts digits,
+    `'a-zA-Z '` letters and blanks, `'^0-9'` everything but digits. A
+    `-` that is not part of a range goes first or last (`'0-9-'`), and
+    `]` and `\` are written `\]` and `\\`;
+    - a regular expression, matched against each character (strictly,
+    each grapheme cluster: a letter with its accents, an emoji with its
+    modifiers): `qr/\p{L}/` accepts letters of every script;
+    - a code reference, called with each grapheme cluster, that
+    returns true to accept it: `sub ($cluster) { $cluster ne ' ' }`;
+    - `undef`, the default: what the `validator` suggests, if
+    anything (`integer` suggests `'0-9-'`, see
+    ["accept" in Term::Fabulous::Validator](../Validator.md#accept)), else every character.
+
+    Typing a rejected character does nothing. Pasted text keeps its
+    accepted characters and drops the rest; when none is accepted, the
+    paste does nothing, and does not replace the selection either. Line
+    breaks in a text area are always accepted. Dies if the initial `value`
+    has a rejected character. To let the user type every character into a
+    field whose validator suggests a restriction, give `accept => qr/./`.
+    See ["accept"](#accept).
 
 - `read_only`
 
@@ -167,7 +180,9 @@ $input->accept(undef);
 
 Accessor for the `accept` spec (see the `accept` parameter). The
 reader returns the spec as it was given, `undef` included: what the
-editor actually uses then is the validator's suggestion, or nothing.
+input actually uses then is the validator's suggestion, or nothing.
+Writing `undef` goes back to the validator's suggestion; writing
+`qr/./` accepts every character, whatever the validator suggests.
 Writing returns the new spec. Dies, and keeps the old spec, for a
 string that is not a valid character class body, for a reference of
 another kind, and when the current text has a character the new spec

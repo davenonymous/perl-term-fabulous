@@ -317,6 +317,24 @@ screenshot "cookbook-key-bindings" {
 	}
 }
 
+screenshot "cookbook-follow-links" {
+	script "examples/cookbook/follow-links.pl"
+	size 72 11
+	steps {
+		key "Tab" "Enter" "Right"
+		move 10 7
+	}
+}
+
+screenshot "cookbook-click-a-word" {
+	script "examples/cookbook/click-a-word.pl"
+	size 80 11
+	steps {
+		click 4 2
+		click 5 4 button="right"
+	}
+}
+
 screenshot "cookbook-paint-with-the-mouse" {
 	script "examples/cookbook/paint-with-the-mouse.pl"
 	size 72 14
@@ -369,6 +387,51 @@ screenshot "cookbook-login-form" {
 		key "Tab"
 		type "difference engine"
 		key "Tab" "Space" "BackTab" "Enter"
+	}
+}
+
+screenshot "cookbook-check-form" {
+	script "examples/cookbook/check-form.pl"
+	size 90 15
+	steps {
+		key "Tab"
+		type "Ada"
+		key "Tab"
+		type "ada@example"
+		key "Tab"
+		type "perl.org"
+		key "Tab"
+		type "db.example.com"
+		key "Tab"
+		type "192.0.2.300"
+		key "Tab"
+		type "07:30"
+		key "Tab" "Backspace" "Backspace" "Backspace" "Backspace"
+		type "x70000"
+		key "Tab"
+		type "9.99"
+		key "Tab"
+		type "2026-02-29"
+		key "Enter"
+	}
+}
+
+screenshot "cookbook-own-checks" {
+	script "examples/cookbook/own-checks.pl"
+	size 72 19
+	steps {
+		key "Tab"
+		type "abcABC12"
+		key "Tab"
+		type "José2 Saramago"
+		key "Tab"
+		type "7"
+		key "Tab"
+		type "mail.perl.org"
+		key "Tab"
+		type "db1.example.com"
+		key "Enter"
+		type "bad_host"
 	}
 }
 
@@ -728,7 +791,11 @@ screenshot "widget-text" {
 
 screenshot "widget-rich-text" {
 	script "examples/widgets/rich-text.pl"
-	size 80 13
+	size 80 17
+	steps {
+		key "Tab" "Right"
+		move 43 13
+	}
 }
 
 screenshot "widget-virtual-list" {
@@ -787,6 +854,14 @@ screenshot "widget-text-field" {
 	steps {
 		type "Ada Lovelace"
 		key "Ctrl+Shift+Left"
+	}
+}
+
+screenshot "widget-input-validation" {
+	script "examples/widgets/input-validation.pl"
+	size 64 29
+	steps {
+		type "ada@exa"
 	}
 }
 

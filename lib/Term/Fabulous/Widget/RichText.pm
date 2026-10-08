@@ -161,9 +161,16 @@ class Term::Fabulous::Widget::RichText
 	}
 
 	method _drop_links () {
+		$self->_forget_links;
+		$self->_links_changed;
+		return;
+	}
+
+	# Without telling the focus: a RichText that gets new links at once
+	# keeps the focus.
+	method _forget_links () {
 		@links = ();
 		( $selected_link, $hovered_link ) = ();
-		$self->_links_changed;
 		return;
 	}
 
@@ -172,7 +179,7 @@ class Term::Fabulous::Widget::RichText
 		my ( $text, $spans, $links ) = parse_markup( $new[0] );
 		$self->SUPER::text($text);
 		@spans = @$spans;
-		$self->_drop_links;
+		$self->_forget_links;
 		$self->_insert_link($_) foreach @$links;
 		$markup = $new[0];
 		$self->_links_changed;
@@ -436,6 +443,16 @@ words, colored phrases, highlighted ranges, links to follow
 		return;
 	} );
 
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, a wrapped paragraph whose italic green span and highlighted span continue on the next line, and a line of three links: FAQ underlined in blue, guide selected in dark text on blue, perl.org hovered in white on gray"></p>
+
+=end html
+
+The program is F<examples/widgets/rich-text.pl>. The last two rows show
+links in their three looks: C<FAQ> as every link looks, C<guide>
+selected with Tab and Right, and C<perl.org> under the mouse pointer.
+
 =head1 DESCRIPTION
 
 A RichText is a L<Term::Fabulous::Widget::Text> whose characters can
@@ -516,7 +533,8 @@ The methods of L<Term::Fabulous::Widget::Text>, plus:
 	$text->text('Plain again');
 
 As for a Text, and setting it drops every span, every link and the
-markup, because they pointed into the old text.
+markup, because they pointed into the old text. A RichText that has the
+focus loses it, since it has no links left.
 
 =head2 markup
 
@@ -526,9 +544,11 @@ markup, because they pointed into the old text.
 Accessor. Without an argument it returns the markup the text, spans
 and links were last set from, or C<undef> when they were given or
 changed directly. With an argument it replaces the text, the spans and
-the links with what the markup says (the selected and the hovered link
-are dropped), and returns the markup. Invalid markup dies and
-leaves the widget as it was. The change shows in the next frame.
+the links with what the markup says, and returns the markup. No link is
+selected or hovered afterwards. A RichText that has the focus keeps it
+when the new markup has links, and loses it when it has none. Invalid
+markup dies and leaves the widget as it was. The change shows in the
+next frame.
 
 =head2 spans
 
@@ -675,29 +695,63 @@ event, which bubbles from the RichText to its ancestors.
 
 =head2 Looks
 
-Links are painted over the spans, so a link looks like a link whatever
-style the words have. The theme gives the look, from the slots
-C<text.link> (the text color) and C<text.link.background> of the
-C<text> family (see L<Term::Fabulous::Theme/Families, slots and states>):
+A link has one of three looks: I<normal>, I<hovered> while the mouse
+pointer is over it, and I<selected> while it is the link C<Enter>
+follows (a selected link under the pointer looks selected). The picture
+under L</SYNOPSIS> shows all three. The theme gives the colors, from
+the slots C<link> (the color of the words) and C<link.background> of
+the C<text> family (see
+L<Term::Fabulous::Theme/Families, slots and states>); the default
+themes use these tokens:
 
 =over
 
-=item * normal: underlined, in C<accent>;
+=item * normal: underlined, in C<accent>, on the background below the
+text;
 
-=item * C<hovered>, under the mouse pointer: underlined, in
-C<text_bright> on C<hover_background>;
+=item * C<hovered>: underlined, in C<text_bright> on
+C<hover_background>;
 
-=item * C<selected>, the link C<Enter> follows: C<text_inverse> on
-C<accent>, not underlined.
+=item * C<selected>: C<text_inverse> on C<accent>, not underlined.
 
 =back
+
+A link sets only the color of its words, their underline and, where the
+theme gives the link a background, their background, over whatever the
+spans give them; the other styles of the spans stay. So
+C<[bold][link=x]word[/link][/]> is a bold link, and a red span over a
+link is drawn in the link color.
+
+A theme of your own changes the looks for every RichText. This one
+draws links in the C<success> green, and the selected link as dark
+text on that green, as in the picture of
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>:
+
+	my $theme = Term::Fabulous::Theme->new(
+		name    => 'green-links',
+		extends => 'dark',
+		slots   => {
+			'text.link'                     => 'success',
+			'text.link.selected'            => 'text_inverse',
+			'text.link.background.selected' => 'success',
+		},
+	);
+	my $ui = Term::Fabulous->new( root => $root, theme => $theme );
+
+A slot name without a state (C<text.link>) sets the normal look; the
+hovered and the selected look keep their own defaults until you set
+them too. Set C<text.link.background> to a token or color to give
+every link a background. The underline is not a theme setting.
 
 =head2 Mouse
 
 A left click on a link focuses the RichText (when it can take the
 focus), selects the link and fires C<LinkActivate>, after the
 C<TextClick> of the same press (see L<Term::Fabulous::Event::TextClick>).
-The pointer over a link gives it the hovered look.
+The middle and the right button fire only C<TextClick>. The pointer
+over a link gives it the hovered look. L<Term::Fabulous> asks the
+terminal to report the pointer as it moves; on a terminal that does not
+report plain movement, links never look hovered.
 
 =head2 Keyboard
 
@@ -708,7 +762,9 @@ the next link, C<Left> the previous one, and C<Enter> fires
 C<LinkActivate> for the selected link; a key that moves nothing (C<Right>
 on the last link, C<Enter> without a selected link) goes on to the
 ancestors, and every other key does too. When it loses the focus, the
-selection is dropped.
+selection is dropped. When its markup is replaced while it has the
+focus, it keeps the focus but selects no link until the user presses
+C<Right> (the first link) or C<Left> (the last).
 
 =head2 Links in a bigger widget
 
@@ -716,10 +772,18 @@ A widget that shows many RichTexts (a document view, a help browser)
 may rather keep the focus itself and move one selection across all of
 them: create the RichTexts with C<< can_focus => 0 >>, show the
 selection with L</select_link> on the RichText that has it (and
-C<undef> on the others), and fire C<LinkActivate> from the widget's
-own key handling. Clicks still select the clicked link and fire
-C<LinkActivate> from the RichText, so the widget can listen for it to
-move its selection along.
+C<undef> on the others), and follow the selected link from the
+widget's own key handling with L</activate_link>, which fires
+C<LinkActivate> on that RichText:
+
+	# $block is the RichText with the selected link, $index the link's index.
+	$block->select_link($index);
+	...
+	$block->activate_link;    # on Enter: LinkActivate bubbles up from $block
+
+Clicks still select the clicked link and fire C<LinkActivate> from the
+RichText, so the widget can listen for it to move its selection
+along.
 
 =head1 KDL PROPERTIES
 
@@ -739,6 +803,8 @@ Spans and links cannot be given in KDL other than through markup.
 
 L<Term::Fabulous::Widget::Text>, L<Term::Fabulous::Text::Style>,
 L<Term::Fabulous::Text::Markup>, L<Term::Fabulous::Event::LinkActivate>,
-L<Term::Fabulous::Event::TextClick>, L<Term::Fabulous::Manual::Looks/TEXT>.
+L<Term::Fabulous::Event::TextClick>, L<Term::Fabulous::Manual::Looks/TEXT>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>.
 
 =cut

@@ -42,7 +42,8 @@ Term::Fabulous::Event::ValidityChange - The value of an input widget became vali
 		return;
 	} );
 
-	# Report the state the form starts in:
+	# Report the inputs that are invalid from the start, such as empty
+	# required fields, which have fired nothing yet:
 	$_->validate foreach $form->invalid_inputs;
 
 =head1 DESCRIPTION
@@ -62,10 +63,17 @@ it with C<< $widget->on( ValidityChange => sub ($event) { ... } ) >>.
 It is fired by L<Term::Fabulous::Widget::Input/validate>, which the
 input runs after every C<Change> event and whenever its C<required>,
 C<required_message> or C<validator> is written. It fires only when the
-message differs from the one the last C<ValidityChange> reported; until
-the first one, the input counts as reported valid. Setting the value
-from the program fires nothing, as with C<Change>; call C<validate> to
-report it.
+message differs from the one the input reported last: typing a second
+wrong character into an e-mail field fires nothing new.
+
+=item *
+
+Before its first C<ValidityChange>, an input counts as having reported
+a valid value. An input that is invalid from the start (an empty
+required field, a field created with a wrong C<value>) therefore fires
+nothing until the user changes it or something calls C<validate>.
+Setting the value from the program fires nothing either, as with
+C<Change>; call C<validate> to report it.
 
 =item *
 
@@ -122,6 +130,7 @@ L<Clay::UI::Events::Event>.
 
 L<Term::Fabulous::Widget::Input>, L<Term::Fabulous::Validator>,
 L<Term::Fabulous::Event::Change>,
-L<Term::Fabulous::Manual::Forms/Checking input>.
+L<Term::Fabulous::Manual::Forms/Checking input>,
+L<Term::Fabulous::Cookbook::Forms/Check the values of a form (required, validator)>.
 
 =cut

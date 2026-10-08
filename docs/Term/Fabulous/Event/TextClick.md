@@ -184,4 +184,6 @@ The index of that link among the widget's links, or `undef`.
 
 ["click\_at" in Term::Fabulous::Widget::Text](../Widget/Text.md#click_at),
 [Term::Fabulous::Event::LinkActivate](LinkActivate.md), [Term::Fabulous::Event::Mouse](Mouse.md),
-[Term::Fabulous::Manual::Events](../Manual/Events.md).
+[Term::Fabulous::Manual::Events](../Manual/Events.md), and the recipe
+["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick),
+which shows every field of the event.

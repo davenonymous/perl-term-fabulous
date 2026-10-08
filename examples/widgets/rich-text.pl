@@ -3,7 +3,8 @@
 # Term::Fabulous::Widget::RichText: bold words, colored phrases and
 # highlighted ranges inside one text, given as markup in the syntax of
 # Python's rich library or as spans over the text, wrapped like any
-# Text. Ctrl+C quits.
+# Text, and links to follow with a click or with Tab, Left/Right and
+# Enter. Ctrl+C quits.
 #
 #     perl examples/widgets/rich-text.pl
 
@@ -66,5 +67,12 @@ $panel->add_child(
 	)
 );
 state_row( 'wrapped', $panel );
+
+# Links: underlined in the accent color, highlighted under the mouse
+# pointer and when selected. Following one fires LinkActivate; what the
+# target means is up to the program.
+my $links    = state_row( 'links',    Term::Fabulous::Widget::RichText->new( markup => 'Read the [link=faq]FAQ[/link], the [link=guide]guide[/link] or [link=https://perl.org]perl.org[/link].' ) );
+my $followed = state_row( 'followed', Term::Fabulous::Widget::Text->new( text => 'Tab selects a link, Left and Right move, Enter follows it.' ) );
+$links->on( LinkActivate => sub ($event) { $followed->text( 'You followed the link to ' . $event->link . '.' ); return } );
 
 Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

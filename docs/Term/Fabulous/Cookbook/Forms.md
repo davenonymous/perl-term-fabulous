@@ -19,6 +19,7 @@ The recipes use the input widgets
 [Term::Fabulous::Widget::Checkbox](../Widget/Checkbox.md), [Term::Fabulous::Widget::RadioGroup](../Widget/RadioGroup.md)
 with [Term::Fabulous::Widget::RadioButton](../Widget/RadioButton.md),
 [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md) and [Term::Fabulous::Widget::Slider](../Widget/Slider.md),
+the checks of [Term::Fabulous::Validator](../Validator.md),
 the dialog [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md), the clipboard of
 [Term::Fabulous::Editor](../Editor.md), and [Term::Fabulous::Layout](../Layout.md) for a form
 described in KDL.
@@ -33,6 +34,8 @@ layout files.
 The recipes on this page:
 
 - ["A login form (centered dialog, masked password)"](#a-login-form-centered-dialog-masked-password)
+- ["Check the values of a form (required, validator)"](#check-the-values-of-a-form-required-validator)
+- ["Write your own checks and restrict typing (accept, pattern, code)"](#write-your-own-checks-and-restrict-typing-accept-pattern-code)
 - ["Ask a question in a dialog (Dialog widget)"](#ask-a-question-in-a-dialog-dialog-widget)
 - ["Ask for input below the shell's output (inline mode)"](#ask-for-input-below-the-shell-s-output-inline-mode)
 - ["Choose from options in Perl (Dropdown, RadioGroup, Slider)"](#choose-from-options-in-perl-dropdown-radiogroup-slider)
@@ -141,14 +144,18 @@ it. Events bubble up the tree, so one listener on the dialog box
 handles Enter in both fields. The check box fires no `Submit`: Enter
 and Space toggle it.
 - Both fields are `required`, with a message of their own. An empty
-required field is invalid: it is painted in the input's
-`invalid_color` while it is empty, and
-`$dialog->invalid_inputs` lists it. The `Submit` listener shows
-the first invalid field's `error` and moves the focus to it; see
-["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input).
-- `accept` restricts what the user can type into the user name: the
-characters of a login name. Other keys do nothing; a validator
-(`validator => 'email'`, say) would check the whole value instead.
+required field is invalid, so `$dialog->invalid_inputs` lists it,
+even though it looks like any empty field: it still shows its
+placeholder in gray, because these fields have no border to draw in
+red (see ["Invalid values" in Term::Fabulous::Widget::Input](../Widget/Input.md#invalid-values)). The
+`Submit` listener shows the first invalid field's `error` and moves
+the focus to it; see ["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input)
+and the next recipe.
+- `accept` restricts what the user can type into the user name to the
+characters of a login name: letters, digits, `_`, `.` and `-`.
+Typing any other character does nothing. A validator
+(`validator => 'email'`, say) would check the whole value instead;
+see ["Write your own checks and restrict typing (accept, pattern, code)"](#write-your-own-checks-and-restrict-typing-accept-pattern-code).
 - The inputs size themselves: a text field is one row high and
 `preferred_columns` (default 20) wide unless the `layout` says
 otherwise. Here `sizing_grow()` makes the fields as wide as the dialog.
@@ -159,6 +166,319 @@ first invalid field when the input is incomplete. See
 - This dialog is the whole screen. For a dialog that opens over a running
 screen and closes again, use [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md); see
 ["Ask a question in a dialog (Dialog widget)"](#ask-a-question-in-a-dialog-dialog-widget).
+
+# Check the values of a form (required, validator)
+
+Goal: a sign-up form that insists on some fields, checks e-mail
+addresses, URLs, host names, IP addresses, times, numbers and dates,
+shows what is wrong next to each field while the user types, and
+refuses to be sent until everything is right.
+
+This program is shipped as `examples/cookbook/check-form.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Validator;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Checkbox;
+use Term::Fabulous::Widget::Dropdown;
+use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextField;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+my $form = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+$root->add_child($form);
+
+# One row per input: a label, the input and a message beside it, which
+# the ValidityChange listener below fills in. The width groups line up
+# the inputs and the messages.
+my %message_of;
+
+sub row ( $label, $input ) {
+        my $label_box = Term::Fabulous::Widget::Box->new( width_group => 1 );
+        $label_box->add_child( Term::Fabulous::Widget::Text->new( text => $label, text_color => [ 150, 160, 180, 255 ] ) );
+        my $input_box = Term::Fabulous::Widget::Box->new( width_group => 2 );
+        $input_box->add_child($input);
+        $message_of{ $input->id } = Term::Fabulous::Widget::Text->new( text => ' ', text_color => [ 224, 108, 117, 255 ] );
+        my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+        $row->add_child( $label_box, $input_box, $message_of{ $input->id } );
+        $form->add_child($row);
+        return $input;
+}
+
+sub text_field ( $id, %parameters ) {
+        return Term::Fabulous::Widget::TextField->new( id => $id, preferred_columns => 22, %parameters );
+}
+
+# Required fields, and fields checked by a named validator. An optional
+# field may stay empty; its validator only checks what the user typed.
+row( 'Name', text_field( 'name', required => 1, required_message => 'Please tell us your name.' ) );
+row( 'E-mail', text_field( 'email', required => 1, validator => 'email', placeholder => 'name@example.com' ) );
+
+row( 'Website', text_field( 'website', validator => 'url',      placeholder => 'https://...' ) );
+row( 'Server',  text_field( 'server',  validator => 'hostname', placeholder => 'db.example.com' ) );
+row( 'Address', text_field( 'address', validator => 'ip',       placeholder => '192.0.2.1 or 2001:db8::1' ) );
+row( 'Alarm',   text_field( 'alarm',   validator => 'time',     placeholder => 'HH:MM' ) );
+
+# Validators with options are objects. integer, number and date also
+# restrict what the user can type: integer lets through only digits and
+# the minus sign.
+my $port_validator     = Term::Fabulous::Validator->integer( min => 1, max => 65535 );
+my $price_validator    = Term::Fabulous::Validator->number( min => 0 );
+my $birthday_validator = Term::Fabulous::Validator->date( message => 'Please enter your birthday as YYYY-MM-DD.' );
+row( 'Port',     text_field( 'port',     validator => $port_validator,     value       => '8080' ) );
+row( 'Price',    text_field( 'price',    validator => $price_validator,    placeholder => '9.99' ) );
+row( 'Birthday', text_field( 'birthday', validator => $birthday_validator, placeholder => 'YYYY-MM-DD' ) );
+
+# A dropdown without a choice and an unchecked check box count as empty.
+row( 'Color', Term::Fabulous::Widget::Dropdown->new( id => 'color', required => 1, options => [qw(Red Green Blue)], placeholder => 'Choose one' ) );
+
+row( 'Terms', Term::Fabulous::Widget::Checkbox->new( id => 'terms', required => 1, required_message => 'Please accept the terms.', label => 'I accept the terms' ) );
+
+my $status = Term::Fabulous::Widget::Text->new( text => 'Enter in a text field sends the form.' );
+$root->add_child($status);
+
+# Every input reports a change of its message; the event bubbles up to
+# the form. A valid value reports undef as its error.
+$form->on(
+        ValidityChange => sub ($event) {
+                $message_of{ $event->target->id }->text( $event->error // ' ' );
+                return;
+        }
+);
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+# Enter in a text field fires Submit, which bubbles up to the form. An
+# input that was never changed has reported nothing yet: validate makes
+# it report its message now.
+$form->on(
+        Submit => sub ($event) {
+                my @invalid = $form->invalid_inputs;
+                if ( !@invalid ) {
+                        $status->text('Thank you, the form is complete.');
+                        return;
+                }
+                $_->validate foreach @invalid;
+                $status->text( sprintf '%d fields need your attention.', scalar @invalid );
+                $ui->interaction->set_focused_widget( $invalid[0] );
+                return;
+        }
+);
+
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-check-form.svg" alt="A form of eleven inputs; ada@example, perl.org, 192.0.2.300, 70000 and 2026-02-29 are red with a message beside each, the empty color dropdown and the unchecked terms box have messages too, and the status line says 7 fields need your attention"></p>
+</div>
+
+The picture shows the form after the user typed a value into every
+text field and pressed Enter in the last one. The fields with an
+accepted value (`Ada`, `db.example.com`, `07:30`, `9.99`) look
+normal; the others are red and have a message. The `x` typed into the
+port was dropped, because an `integer` field only takes digits and a
+minus sign.
+
+- `required => 1` makes an empty value invalid. What counts as
+empty depends on the widget: an empty text, a dropdown without a
+choice, an unchecked check box. Its message is `required_message`,
+by default `Please fill in this field.`
+- `validator` checks a value that is not empty. A string names one of
+the built-in validators: `email`, `integer`, `number`, `url`,
+`hostname`, `ip`, `date` and `time`. A field that is not
+`required` may stay empty, whatever its validator says: the website,
+server, address and alarm fields are optional. A field that must be
+filled in and must be an e-mail address needs both, like the e-mail
+field here.
+- The validators that take options, such as the range of `integer` and
+`number` or a message of your own, are built as objects with
+[Term::Fabulous::Validator](../Validator.md). Each message names what is expected,
+including the range: `Please enter a whole number between 1 and 65535.`
+`integer`, `number`, `date` and `time` also restrict typing to the
+characters their values are made of; see
+["accept" in Term::Fabulous::Widget::TextInput](../Widget/TextInput.md#accept).
+- An input checks its value after every change the user makes. When the
+result differs from what it reported last, it fires
+[ValidityChange](../Event/ValidityChange.md), which bubbles
+up to the form: `$event->error` is the new message, or `undef`
+once the value is fine. One listener on the form keeps all messages up
+to date.
+- `$form->invalid_inputs` lists the invalid inputs inside a widget,
+in the order of the widget tree: here from the top of the form down. An input that the user never touched has
+not reported anything yet, even when it is invalid (the color dropdown
+and the terms box here). `$input->validate` makes it report now;
+the `Submit` listener calls it for every invalid input, and then moves
+the focus to the first one.
+- The invalid look of the inputs (red text, a red check box) comes from
+the theme, see ["Invalid values" in Term::Fabulous::Widget::Input](../Widget/Input.md#invalid-values). The
+messages are ordinary Text widgets: where and how they are shown is up
+to the program.
+- A KDL layout takes `required #true`, `required_message "..."`,
+`validator "email"` and, for a text input, `accept "0-9"` as properties
+(see ["KDL PROPERTIES" in Term::Fabulous::Widget::Input](../Widget/Input.md#kdl-properties)); validators with
+options and patterns are set from Perl.
+
+# Write your own checks and restrict typing (accept, pattern, code)
+
+Goal: fields that accept only some characters, checks the built-in
+validators do not have (a product code, an even number, a host in one
+domain), and a check of every line of a text area.
+
+This program is shipped as `examples/cookbook/own-checks.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Validator;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextArea;
+use Term::Fabulous::Widget::TextField;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+
+# A label, the input and its message below it.
+sub row ( $label, $input ) {
+        my $label_box = Term::Fabulous::Widget::Box->new( width_group => 1 );
+        $label_box->add_child( Term::Fabulous::Widget::Text->new( text => $label, text_color => [ 150, 160, 180, 255 ] ) );
+        my $message = Term::Fabulous::Widget::Text->new( text => ' ', text_color => [ 224, 108, 117, 255 ] );
+        my $column  = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+        $column->add_child( $input, $message );
+        my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+        $row->add_child( $label_box, $column );
+        $root->add_child($row);
+
+        $input->on( ValidityChange => sub ($event) { $message->text( $event->error // ' ' ); return } );
+        return $input;
+}
+
+# accept with a character class body: only capital letters and digits
+# can be typed; a pattern checks the whole value, with its own message.
+row(
+        'Product code',
+        Term::Fabulous::Widget::TextField->new(
+                accept     => 'A-Z0-9',
+                max_length => 6,
+                validator  => Term::Fabulous::Validator->pattern( qr/\A[A-Z]{3}[0-9]{3}\z/, message => 'Three letters and three digits, such as ABC123.' ),
+        )
+);
+
+# accept with a regular expression, tested on every typed character:
+# letters of any script, blanks, hyphens and apostrophes.
+row( 'Name', Term::Fabulous::Widget::TextField->new( accept => qr/[\p{L} '-]/, placeholder => 'José Saramago' ) );
+
+# A code reference returns what is wrong with the value, or nothing.
+row(
+        'Even number',
+        Term::Fabulous::Widget::TextField->new(
+                validator => sub ($value) {
+                        return 'Please enter a whole number.' unless $value =~ /\A-?[0-9]+\z/;
+                        return 'Please enter an even number.' if $value % 2;
+                        return;
+                },
+        )
+);
+
+# A list: every validator must pass, the first message wins.
+row(
+        'Mail server',
+        Term::Fabulous::Widget::TextField->new(
+                validator   => [ 'hostname', Term::Fabulous::Validator->pattern( qr/\.example\.com\z/i, message => 'Please use a host in example.com.' ) ],
+                placeholder => 'mail.example.com',
+        )
+);
+
+# A validator object can check values outside of a widget too: here
+# each line of a text area.
+my $hostname = Term::Fabulous::Validator->hostname;
+row(
+        'Hosts',
+        Term::Fabulous::Widget::TextArea->new(
+                preferred_rows => 3,
+                validator      => sub ($value) {
+                        my @lines = split /\n/, $value;
+                        foreach my $number ( 1 .. @lines ) {
+                                my $error = $hostname->check( $lines[ $number - 1 ] ) // next;
+                                return "Line $number: $error";
+                        }
+                        return;
+                },
+        )
+);
+
+$root->add_child( Term::Fabulous::Widget::Text->new( text => 'Tab moves to the next field, Escape quits.', text_color => [ 150, 160, 180, 255 ] ) );
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+$root->on( KeyPress => sub ($event) { $ui->loop->stop if ( $event->key_name // '' ) eq 'Escape'; return } );
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-own-checks.svg" alt="Five fields with messages below them: ABC12 with Three letters and three digits, such as ABC123; the name José Saramago without a message; 7 with Please enter an even number; mail.perl.org with Please use a host in example.com; and a text area of two hosts with Line 2: Please enter a host name"></p>
+</div>
+
+The picture shows the program after the user typed `abcABC12` into the
+product code, `José2 Saramago` into the name, `7`, `mail.perl.org`
+and two lines of hosts. The lower-case `abc` and the `2` were
+dropped while typing; every other field shows its message.
+
+- `accept` decides which characters the user can type or paste into a
+text input. A string is what goes between the brackets of a character
+class in a regular expression: `'A-Z0-9'` means `[A-Z0-9]`,
+`'^0-9'` everything but digits. A regular expression (`qr/[\p{L} '-]/`)
+is matched against each typed character, and a code reference gets
+each character and returns true to let it in. A rejected key does
+nothing; pasted text keeps only its accepted characters. Setting
+`value` from Perl to a text with a rejected character dies.
+- `accept` and `validator` do different jobs: `accept` looks at one
+character at a time while the user types, `validator` looks at the
+whole value. The product code needs both: `accept` keeps out
+lower-case letters, and the pattern says that `ABC12` is not complete
+yet.
+- A regular expression as a `validator` must match the whole value, so
+anchor it with `\A` and `\z`. Given directly
+(`validator => qr/.../`) its message is `Please match the
+expected format.`; `Term::Fabulous::Validator->pattern` takes a
+`message` of your own.
+- A code reference gets the value and returns what is wrong with it: a
+message string, or nothing (`return;`) for a valid value. It is never
+called with an empty value.
+- An array reference of validators checks them in order; all must pass,
+and the first one that fails gives the message. The mail server must be
+a host name and end in `.example.com`.
+- A [Term::Fabulous::Validator](../Validator.md) object works without a widget too:
+`$validator->check($value)` returns the message or `undef`. The
+text area checks each of its lines with the `hostname` validator and
+names the first bad line.
+- Each input here has its own `ValidityChange` listener that writes the
+message below it; compare the single listener on the form in
+["Check the values of a form (required, validator)"](#check-the-values-of-a-form-required-validator).
 
 # Ask a question in a dialog (Dialog widget)
 

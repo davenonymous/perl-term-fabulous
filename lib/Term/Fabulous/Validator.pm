@@ -256,9 +256,11 @@ input uses as long as it was not given one of its own.
 
 =head1 CONSTRUCTORS
 
-Every constructor is a class method and takes a C<message> option, the
-error text L</check> returns instead of the default. Unknown options
-die.
+Every constructor is a class method. The named validators,
+L</pattern> and L</code> take a C<message> option: the error text
+L</check> returns instead of the default. L</all> and L</coerce> take
+no options; give the validators they combine a message of their own.
+Unknown options die.
 
 =head2 email
 
@@ -273,55 +275,95 @@ enter an e-mail address."
 	Term::Fabulous::Validator->integer;
 	Term::Fabulous::Validator->integer( min => 1, max => 65535 );
 
-A whole number, with an optional minus sign, within C<min> and C<max>
-when they are given. Default message: "Please enter a whole number
-between 1 and 65535." (or "at least 1", "at most 65535", or without a
-range). Suggests the accept spec C<'0-9-'>. Dies if C<min> or C<max> is
-not a number or C<min> is above C<max>.
+A whole number: digits with an optional minus sign in front, nothing
+else (C<42>, C<-7>, C<007>; not C<+42>, C<4.0> or C<1e3>). With C<min>
+or C<max>, the number must lie in that range, the limits included. The
+default message names the range:
+
+=over
+
+=item * with C<min> and C<max>: "Please enter a whole number between 1 and 65535."
+
+=item * with C<min> only: "Please enter a whole number at least 1."
+
+=item * with C<max> only: "Please enter a whole number at most 65535."
+
+=item * without a range: "Please enter a whole number."
+
+=back
+
+Suggests the accept spec C<'0-9-'>: digits and the minus sign, which a
+text input lets the user type anywhere, so C<4-2> can be typed and is
+then rejected. Dies if C<min> or C<max> is not a number or C<min> is
+above C<max>.
 
 =head2 number
 
 	Term::Fabulous::Validator->number( min => 0 );
 
-A decimal number: an optional minus sign, digits, an optional fraction
-(C<3>, C<3.>, C<3.5>, C<.5>), within C<min> and C<max> as for
-L</integer>. Default message: "Please enter a number ...". Suggests
-C<'0-9.-'>.
+A decimal number with a point as its decimal separator: an optional
+minus sign and digits with an optional fraction (C<3>, C<3.>, C<3.5>,
+C<.5>, C<-0.25>; not C<3,5>, C<1e3> or C<+3>), within C<min> and C<max>
+as for L</integer>. The default message is built like that of
+L</integer> with "a number" in place of "a whole number", such as
+"Please enter a number at least 0." Suggests C<'0-9.-'>.
 
 =head2 url
 
-A scheme, C<://> and anything without whitespace after it. Default
-message: "Please enter a URL, such as https://example.com."
+	Term::Fabulous::Validator->url;
+
+A scheme (a letter, then letters, digits, C<+>, C<.> or C<->), C<://>
+and at least one more character, without whitespace anywhere:
+C<https://example.com>, C<ftp://host/file>. It does not check the
+scheme or the host, and C<example.com> without a scheme is rejected.
+Default message: "Please enter a URL, such as https://example.com."
 
 =head2 hostname
 
-Labels of letters, digits and hyphens (not at the ends, up to 63 each)
-separated by dots, at most 253 characters, an optional trailing dot.
-Default message: "Please enter a host name."
+	Term::Fabulous::Validator->hostname;
+
+Labels of ASCII letters, digits and hyphens, separated by dots: each
+label 1 to 63 characters long and not starting or ending with a hyphen,
+the whole name at most 253 characters, with an optional trailing dot.
+C<localhost>, C<db-1.example.com> and C<example.com.> pass;
+C<bad_host>, C<-db.example.com> and C<a..b> do not. Default message:
+"Please enter a host name."
 
 =head2 ip
 
-An IPv4 address in dotted quad form, or an IPv6 address as
-L<Socket/inet_pton> parses it. Default message: "Please enter an IP
-address."
+	Term::Fabulous::Validator->ip;
+
+An IPv4 address in dotted quad form (C<192.0.2.1>), or an IPv6 address
+(C<2001:db8::1>, C<::1>), as L<Socket/inet_pton> parses them. Host
+names, ports (C<192.0.2.1:80>) and networks (C<192.0.2.0/24>) are
+rejected. Default message: "Please enter an IP address."
 
 =head2 date
 
-A calendar day as C<YYYY-MM-DD> that exists (C<2026-02-29> does not).
-Default message: "Please enter a date as YYYY-MM-DD." Suggests
-C<'0-9-'>.
+	Term::Fabulous::Validator->date( message => 'Please enter your birthday as YYYY-MM-DD.' );
+
+A calendar day as C<YYYY-MM-DD>, with four digits for the year and two
+each for the month and the day, that exists: C<2024-02-29> passes,
+C<2026-02-29> and C<2026-4-1> do not. Default message: "Please enter a
+date as YYYY-MM-DD." Suggests C<'0-9-'>.
 
 =head2 time
 
-C<HH:MM> or C<HH:MM:SS> on the 24-hour clock. Default message: "Please
-enter a time as HH:MM." Suggests C<'0-9:'>.
+	Term::Fabulous::Validator->time;
+
+C<HH:MM> or C<HH:MM:SS> on the 24-hour clock, with two digits each:
+C<07:30> and C<23:59:59> pass, C<7:30>, C<24:00> and C<12:60> do not.
+Default message: "Please enter a time as HH:MM." Suggests C<'0-9:'>.
 
 =head2 pattern
 
 	Term::Fabulous::Validator->pattern( qr/\A[A-Z]{3}\z/, message => 'Three capital letters, please.' );
 
-The value must match the regular expression. Default message: "Please
-match the expected format." Dies for anything but a regular expression.
+The value must match the regular expression. The expression is not
+anchored for you: C<qr/[0-9]/> accepts any value with a digit in it, so
+anchor it with C<\A> and C<\z> to describe the whole value. Default
+message: "Please match the expected format." Dies for anything but a
+regular expression.
 
 =head2 code
 
@@ -331,18 +373,36 @@ match the expected format." Dies for anything but a regular expression.
 	} );
 
 Your own check. The code is called with the value and returns what is
-wrong with it: a message, which becomes the error, or any other true
-value for the validator's C<message> (default: "Invalid value."); it
-returns false for a value it accepts. The code never sees an empty
-value (see L<Term::Fabulous::Widget::Input/required>).
+wrong with it:
+
+=over
+
+=item * a string other than C<"1">: the error message;
+
+=item * C<1> (as from a true comparison) or a reference: the validator's
+C<message>, by default "Invalid value.";
+
+=item * a false value (C<undef>, an empty list, C<''> or C<0>): the value
+is fine.
+
+=back
+
+So C<< sub ($value) { $value % 2 } >> rejects odd numbers with the
+validator's C<message>. An input never calls the code with an empty
+value (see L<Term::Fabulous::Widget::Input/required>); L</check> does,
+if you pass one.
 
 =head2 all
 
 	Term::Fabulous::Validator->all( 'hostname', qr/\.example\.com\z/ );
 
-Every validator must pass; the first error message wins. Each argument
-is coerced as L</coerce> does. A single argument returns that validator
-itself; no argument dies.
+Every validator must pass; they are checked in the given order and the
+message of the first one that fails is the error. Each argument is
+coerced as L</coerce> does, so names, regular expressions and code
+references work too. The combined validator suggests the C<accept> spec
+of the first validator that has one, and its L</message> is that of the
+first validator. A single argument returns that validator itself; no
+argument dies. C<all> takes no C<message> option.
 
 =head2 coerce
 
@@ -357,12 +417,43 @@ C<undef> stays C<undef>. Any other kind of value dies.
 
 =head2 new
 
-	Term::Fabulous::Validator->new( name => 'odd', message => 'Please enter an odd number.', check => sub ($value) { $value % 2 ? undef : 'Please enter an odd number.' } );
+	my $message = 'Please enter a hexadecimal number.';
+	my $hex     = Term::Fabulous::Validator->new(
+		name    => 'hex',
+		message => $message,
+		accept  => '0-9a-fA-F',
+		check   => sub ($value) { $value =~ /\A[0-9a-fA-F]+\z/ ? undef : $message },
+	);
 
-The general form the constructors above use: a C<name>, the C<message>
-L</message> reports, C<check> code that is called with the value and
-returns the error message or false, and an optional suggested
-C<accept>. L</code> is the shorter way to the same thing.
+The general form the constructors above use, for a validator that also
+suggests an C<accept> spec. It takes:
+
+=over
+
+=item C<name>
+
+Required. A string, returned by L</name>.
+
+=item C<message>
+
+Required. A string, returned by L</message>. C<check> decides what
+L</check> returns; C<message> is only reported, so C<check> usually
+returns it.
+
+=item C<check>
+
+Required. Code called with the value that returns the error message,
+or a false value for a valid one. Unlike L</code>, a true value is
+always used as the message as it is.
+
+=item C<accept>
+
+Optional. The accept spec suggested to a text input (see
+L<Term::Fabulous::Widget::TextInput/accept>), or C<undef>.
+
+=back
+
+Without an C<accept>, L</code> is the shorter way to the same thing.
 
 =head1 METHODS
 
@@ -400,6 +491,10 @@ L<Term::Fabulous::Widget::Input/validator> and
 L<Term::Fabulous::Widget::Input/required>, where validators are used;
 L<Term::Fabulous::Widget::TextInput/accept> for restricting the
 characters of a text input;
-L<the checking input section of the forms guide|Term::Fabulous::Manual::Forms/Checking input>.
+L<the checking input section of the forms guide|Term::Fabulous::Manual::Forms/Checking input>;
+the recipes
+L<Term::Fabulous::Cookbook::Forms/Check the values of a form (required, validator)>
+(every named validator in one form) and
+L<Term::Fabulous::Cookbook::Forms/Write your own checks and restrict typing (accept, pattern, code)>.
 
 =cut

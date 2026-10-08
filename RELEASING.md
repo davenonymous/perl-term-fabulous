@@ -84,21 +84,28 @@ This dist uses plain `ExtUtils::MakeMaker` plus
    make release
    ```
 
-   The `release` target:
+   The `release` target first runs `make release-check`, which stops
+   before anything is built when
 
-   - Runs `make disttest` (builds the dist directory, configures it,
-     and runs its tests - this is what catches missing `MANIFEST`
-     entries before they reach CPAN).
-   - Runs `make dist` to build the tarball (`disttest` alone does not
-     create one) and refuses to upload if it is missing.
-   - Refuses to proceed if the git working tree is dirty.
-   - Refuses to proceed if a tag `v$(VERSION)` already exists.
-   - Refuses to proceed unless the GitHub CI run of `HEAD` has passed
-     (`make ci-check`, which needs an authenticated `gh`).
-   - Refuses to proceed if the code blocks, screenshot URLs,
-     screenshots, `README.md` or `docs/` are out of date
-     (`make docs-check`).
-   - Runs `cpan-upload` on the freshly built tarball.
+   - a module's `$VERSION` differs from the one in
+     `lib/Term/Fabulous.pm` (`make version-check`);
+   - the code blocks, screenshot URLs, screenshots, `README.md` or
+     `docs/` are out of date (`make docs-check`);
+   - the GitHub CI run of `HEAD` has not finished or did not pass, or
+     there is none (`make ci-check`, which needs an authenticated `gh`);
+   - the git working tree is dirty;
+   - a tag `v$(VERSION)` already exists;
+   - `cpan-upload` is not installed, or `~/.pause` is missing.
+
+   Then it
+
+   - runs `make disttest`, which builds the dist directory, configures
+     it and runs its tests: this catches missing `MANIFEST` entries
+     before they reach CPAN;
+   - runs `make dist` to build the tarball (`disttest` alone does not
+     create one), and stops if the tarball is missing or contains build
+     artefacts such as `blib/` or `Makefile`;
+   - runs `cpan-upload` on that tarball.
 
 8. Tag and push:
 

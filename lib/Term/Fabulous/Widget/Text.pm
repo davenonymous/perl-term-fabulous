@@ -559,7 +559,9 @@ the widget.
 
 A Text fires C<TextClick> (L<Term::Fabulous::Event::TextClick>) when a
 mouse button is pressed on one of its characters; it bubbles to the
-widgets around the text. A Text can fire events of your own with
+widgets around the text. The recipe
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>
+looks up the clicked word. A Text can fire events of your own with
 C<fire_event> (L<Clay::UI::Role::Events::Emitter>), and C<on> adds
 listeners to it.
 

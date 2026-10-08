@@ -335,17 +335,24 @@ L<Term::Fabulous::Manual::Events/KEYBOARD>.
 =item *
 
 It works with the mouse: clicks, drags and the mouse wheel, as described
-in each widget's MOUSE section. The terminal reports the mouse only when
-a button is pressed or released, while it is dragged, and when the wheel
-turns; plain pointer movement is not reported. The hover state of an
-input (C<is_hovered>, the C<OnHoverStart> and C<OnHoverStopped> events)
-therefore changes only at those moments, not while the pointer merely
-moves.
+in each widget's MOUSE section. L<Term::Fabulous> asks the terminal to
+report the pointer as it moves, too, so the hover state of an input
+(C<is_hovered>, the C<OnHoverStart> and C<OnHoverStopped> events)
+follows the pointer. A terminal that does not report plain movement
+changes the hover state only when a button is pressed or released,
+while it is dragged and when the wheel turns.
 
 =item *
 
 It fires a L<Term::Fabulous::Event::Change> when the user changes its
 value (see L</EVENTS>).
+
+=item *
+
+It can check its value: C<required> rejects an empty value,
+C<validator> a wrong one. An invalid value is drawn in the invalid look
+and reported by L</error>, L</is_valid> and the C<ValidityChange> event
+(see L</Invalid values>).
 
 =item *
 
@@ -361,6 +368,8 @@ It can be disabled (see L</disabled>).
 It has the derived states C<focused>, C<hovered>, C<pressed> and
 C<disabled>, which C<< $input->has_state('focused') >> and
 C<< $input->states >> report (see L<Term::Fabulous::Widget/has_state>).
+Whether the value is valid is not one of these states; ask
+L</is_valid>.
 
 =item *
 
@@ -393,6 +402,97 @@ another widget, and a frame that changes nothing about an input paints
 nothing of it. The cells read with C<cell> show the state of the last
 frame. This is how every L<Term::Fabulous::Widget::Display> paints; see
 L<Term::Fabulous::Widget::Display/Painting>.
+
+=head2 Invalid values
+
+An input's value is invalid while it is empty and the input is
+C<required>, or while its C<validator> rejects it (see L</required>
+and L</validator>). An invalid input looks different as soon as its
+value is invalid, without waiting for the user to leave it:
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-input-validation.svg" alt="Eleven inputs: a focused e-mail field with ada@exa in red, a valid address in white, ada@ in red without and with a red border, an empty required field that looks normal and one whose border is red, a red unchecked check box, a dropdown showing its gray placeholder, ada@ in purple, ada@ in yellow with a yellow border, and a disabled field in gray"></p>
+
+=end html
+
+The picture shows F<examples/widgets/input-validation.pl> in the dark
+theme. From the top:
+
+=over
+
+=item *
+
+B<Typing, focused>: an e-mail field after typing C<ada@exa>. The look
+changes with every key, so the text stays red until the address is
+complete. The cursor takes the color of the text.
+
+=item *
+
+B<Valid>, B<invalid>: the text of an invalid value is drawn in
+C<invalid_color>, by default the theme's C<danger> red.
+
+=item *
+
+B<Invalid, border>: an input with a border (C<< border_width => 1 >>)
+also draws its border in the C<danger> red, unless it was given a
+C<border_color> of its own.
+
+=item *
+
+B<Required, empty>: an empty text field shows its placeholder in the
+usual gray, required or not. So a required field without a border does
+not look invalid while it is empty, only when the user types something
+wrong. With a border, the border is red.
+
+=item *
+
+B<Required check box>: an unchecked required box draws its box and its
+label in C<invalid_color>.
+
+=item *
+
+B<Required dropdown>: a dropdown without a choice shows its
+placeholder in gray, like an empty text field.
+
+=item *
+
+B<invalid_color>: the color of an invalid value set for one input,
+here C<'#c678dd'>, a purple.
+
+=item *
+
+B<Theme variant>: a theme can draw invalid values in other colors, for
+every input or only for the inputs with a class. The program's theme
+draws the text inputs of the class C<calm> in the C<warning> color:
+
+	my $theme = Term::Fabulous::Theme->new(
+		name     => 'calm-invalid',
+		extends  => 'dark',
+		variants => { 'text_input.calm' => { 'text.invalid' => 'warning', 'border.color.invalid' => 'warning' } },
+	);
+	my $field = Term::Fabulous::Widget::TextField->new( validator => 'email', classes => ['calm'] );
+
+The slots are C<text> and C<border.color> in the state C<invalid>. They
+belong to the family C<input>, which the families C<text_input> (text
+fields and text areas) and C<dropdown> extend; a variant names the
+family of the widget, as C<text_input.calm> does. To change every
+input, set the slots C<input.text.invalid> and
+C<input.border.color.invalid> instead. See L<Term::Fabulous::Theme>.
+
+=item *
+
+B<Disabled>: a disabled input shows the disabled look, valid or not.
+
+=back
+
+The input does not draw the message that says what is wrong. Read it
+from L</error> or from the C<ValidityChange> event, and show it where it
+suits your program; the recipes
+L<Term::Fabulous::Cookbook::Forms/Check the values of a form (required, validator)>
+and
+L<Term::Fabulous::Cookbook::Forms/Write your own checks and restrict typing (accept, pattern, code)>
+show two ways.
 
 =head1 CONSTRUCTOR
 
@@ -661,15 +761,22 @@ input shows the disabled look instead.
 
 	my $message = $input->validate;
 
-Checks the value, fires L<Term::Fabulous::Event::ValidityChange> on the
-input when the message differs from the one the last C<ValidityChange>
-reported (until the first, the input counts as reported valid), and
-returns the message or C<undef>. The input calls it after every
-C<Change> and when C<required>, C<required_message> or C<validator>
-is written; call it yourself after setting the value from the program,
-or once after building a form to report its initial state. To check a
-whole form, L<Term::Fabulous::Widget/invalid_inputs> lists the inputs
-below a widget that are not valid.
+Checks the value and returns the message, or C<undef> when the value
+is fine. When the message differs from the one the input reported last,
+it also fires L<Term::Fabulous::Event::ValidityChange> on the input.
+
+The input calls it after every C<Change> and when C<required>,
+C<required_message> or C<validator> is written. Call it yourself after
+setting the value from the program, which fires no events.
+
+Before its first C<ValidityChange>, an input counts as having reported
+a valid value. An input that is invalid from the start, such as an
+empty required field, therefore reports nothing until the user changes
+it or something calls C<validate>. To show the messages of such inputs,
+call C<validate> on them: once after building the form
+(C<< $_->validate foreach $form->invalid_inputs >>), or when the user
+sends the form. L<Term::Fabulous::Widget/invalid_inputs> lists the
+inputs below a widget that are not valid, reported or not.
 
 =head2 accent_color
 
@@ -1063,7 +1170,8 @@ dropdown list that cannot move any further.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual::Forms/FORMS AND INPUT WIDGETS>,
-L<Term::Fabulous::Event::Change>, L<Term::Fabulous::Widget::Display>,
+L<Term::Fabulous::Event::Change>, L<Term::Fabulous::Event::ValidityChange>,
+L<Term::Fabulous::Validator>, L<Term::Fabulous::Widget::Display>,
 L<Term::Fabulous::Widget::Canvas>, L<Term::Fabulous::Widget::TextInput>.
 
 =cut

@@ -557,11 +557,14 @@ in boxes, and in several scripts.
 
 [Term::Fabulous::Widget::RichText](Widget/RichText.md): bold words, colored phrases and
 highlighted ranges inside one text, from markup and from spans, every
-text style the terminal has, and spans that run across the line breaks
-of a wrapped text.
+text style the terminal has, spans that run across the line breaks of
+a wrapped text, and links in their three looks. The picture shows it
+after Tab and Right selected the second link, with the mouse pointer
+over the third: the first link looks as every link does, underlined in
+the accent color.
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, and a wrapped paragraph whose italic green span and highlighted span continue on the next line"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, a wrapped paragraph whose italic green span and highlighted span continue on the next line, and a line of three links: FAQ underlined in blue, guide selected in dark text on blue, perl.org hovered in white on gray"></p>
 </div>
 
 ### examples/widgets/virtual-list.pl
@@ -711,6 +714,21 @@ the position. Shift with the arrow keys selects text, Ctrl+Z undoes.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-text-area.svg" alt="A text area with a shopping list, a wrapped long line and a scrollbar"></p>
+</div>
+
+### examples/widgets/input-validation.pl
+
+The invalid look of the input widgets (see
+["Invalid values" in Term::Fabulous::Widget::Input](Widget/Input.md#invalid-values)): e-mail fields that
+are valid, invalid and invalid with a border, required inputs that are
+still empty (a field without and with a border, a check box and a
+dropdown), an `invalid_color` of its own, a theme variant that draws
+invalid values in the warning color, and a disabled field. Type into
+the first field to see the look follow the value. The picture shows it
+after typing `ada@exa` into the first field.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-input-validation.svg" alt="Eleven inputs: a focused e-mail field with ada@exa in red, a valid address in white, ada@ in red without and with a red border, an empty required field that looks normal and one whose border is red, a red unchecked check box, a dropdown showing its gray placeholder, ada@ in purple, ada@ in yellow with a yellow border, and a disabled field in gray"></p>
 </div>
 
 ### examples/widgets/dialog.pl
@@ -998,6 +1016,30 @@ The programs of [Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAn
     ["Add buttons for the mouse and the keyboard (Button)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#add-buttons-for-the-mouse-and-the-keyboard-button);
     see [its entry among the demo programs](#examples-buttons-and-keys-pl).
 
+- `follow-links.pl`
+
+    ["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links):
+    a help text of three pages whose links lead to each other, a footer
+    whose links go back and quit, and a theme that draws links in green.
+    The picture shows the second page, after Tab and Enter followed the
+    first link and Right selected the link on the new page, with the mouse
+    pointer over Quit.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-follow-links.svg" alt="The Keys page of the help text: its link the start page selected in dark text on green, and the footer links Back in green and Quit hovered in white on gray"></p>
+    </div>
+
+- `click-a-word.pl`
+
+    ["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick):
+    a left click on a word looks it up in a glossary, a right click shows
+    everything the click reports. The picture shows it after a left click
+    on terminal and a right click on the bold word span.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-click-a-word.svg" alt="Two paragraphs, the second with the word span in bold yellow; below them the line terminal: the program that shows this one, and the line right button at column 5, row 4: offset 3, word span (2 to 6), spans [2-6]"></p>
+    </div>
+
 ## Timers and live data
 
 The programs of [Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md).
@@ -1056,6 +1098,31 @@ The programs of [Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-login-form.svg" alt="A centered login dialog with a user name, a masked password, a checked box and the welcome message"></p>
+    </div>
+
+- `check-form.pl`
+
+    ["Check the values of a form (required, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#check-the-values-of-a-form-required-validator):
+    a sign-up form with required fields, a field for every built-in
+    validator, a required dropdown and a required check box, with each
+    field's message beside it; Enter in a text field sends the form. The
+    picture shows it after filling in some fields wrongly and pressing
+    Enter.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-check-form.svg" alt="A form of eleven inputs; ada@example, perl.org, 192.0.2.300, 70000 and 2026-02-29 are red with a message beside each, the empty color dropdown and the unchecked terms box have messages too, and the status line says 7 fields need your attention"></p>
+    </div>
+
+- `own-checks.pl`
+
+    ["Write your own checks and restrict typing (accept, pattern, code)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#write-your-own-checks-and-restrict-typing-accept-pattern-code):
+    fields that accept only some characters, a pattern with a message of
+    its own, a check in Perl code, two validators at once and a text area
+    whose lines are checked one by one. The picture shows it after typing
+    into every field.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-own-checks.svg" alt="Five fields with messages below them: ABC12 with Three letters and three digits, such as ABC123; the name José Saramago without a message; 7 with Please enter an even number; mail.perl.org with Please use a host in example.com; and a text area of two hosts with Line 2: Please enter a host name"></p>
     </div>
 
 - `confirm-dialog.pl`

@@ -222,6 +222,8 @@ The index of that link among the widget's links, or C<undef>.
 
 L<Term::Fabulous::Widget::Text/click_at>,
 L<Term::Fabulous::Event::LinkActivate>, L<Term::Fabulous::Event::Mouse>,
-L<Term::Fabulous::Manual::Events>.
+L<Term::Fabulous::Manual::Events>, and the recipe
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>,
+which shows every field of the event.
 
 =cut

@@ -31,6 +31,14 @@ $help->on( LinkActivate => sub ($event) {
 } );
 ```
 
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, a wrapped paragraph whose italic green span and highlighted span continue on the next line, and a line of three links: FAQ underlined in blue, guide selected in dark text on blue, perl.org hovered in white on gray"></p>
+</div>
+
+The program is `examples/widgets/rich-text.pl`. The last two rows show
+links in their three looks: `FAQ` as every link looks, `guide`
+selected with Tab and Right, and `perl.org` under the mouse pointer.
+
 # DESCRIPTION
 
 A RichText is a [Term::Fabulous::Widget::Text](Text.md) whose characters can
@@ -111,7 +119,8 @@ $text->text('Plain again');
 ```
 
 As for a Text, and setting it drops every span, every link and the
-markup, because they pointed into the old text.
+markup, because they pointed into the old text. A RichText that has the
+focus loses it, since it has no links left.
 
 ## markup
 
@@ -123,9 +132,11 @@ $text->markup('[bold]New[/] text');
 Accessor. Without an argument it returns the markup the text, spans
 and links were last set from, or `undef` when they were given or
 changed directly. With an argument it replaces the text, the spans and
-the links with what the markup says (the selected and the hovered link
-are dropped), and returns the markup. Invalid markup dies and
-leaves the widget as it was. The change shows in the next frame.
+the links with what the markup says, and returns the markup. No link is
+selected or hovered afterwards. A RichText that has the focus keeps it
+when the new markup has links, and loses it when it has none. Invalid
+markup dies and leaves the widget as it was. The change shows in the
+next frame.
 
 ## spans
 
@@ -304,23 +315,59 @@ event, which bubbles from the RichText to its ancestors.
 
 ## Looks
 
-Links are painted over the spans, so a link looks like a link whatever
-style the words have. The theme gives the look, from the slots
-`text.link` (the text color) and `text.link.background` of the
-`text` family (see ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states)):
+A link has one of three looks: _normal_, _hovered_ while the mouse
+pointer is over it, and _selected_ while it is the link `Enter`
+follows (a selected link under the pointer looks selected). The picture
+under ["SYNOPSIS"](#synopsis) shows all three. The theme gives the colors, from
+the slots `link` (the color of the words) and `link.background` of
+the `text` family (see
+["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states)); the default
+themes use these tokens:
 
-- normal: underlined, in `accent`;
-- `hovered`, under the mouse pointer: underlined, in
-`text_bright` on `hover_background`;
-- `selected`, the link `Enter` follows: `text_inverse` on
-`accent`, not underlined.
+- normal: underlined, in `accent`, on the background below the
+text;
+- `hovered`: underlined, in `text_bright` on
+`hover_background`;
+- `selected`: `text_inverse` on `accent`, not underlined.
+
+A link sets only the color of its words, their underline and, where the
+theme gives the link a background, their background, over whatever the
+spans give them; the other styles of the spans stay. So
+`[bold][link=x]word[/link][/]` is a bold link, and a red span over a
+link is drawn in the link color.
+
+A theme of your own changes the looks for every RichText. This one
+draws links in the `success` green, and the selected link as dark
+text on that green, as in the picture of
+["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links):
+
+```perl
+my $theme = Term::Fabulous::Theme->new(
+        name    => 'green-links',
+        extends => 'dark',
+        slots   => {
+                'text.link'                     => 'success',
+                'text.link.selected'            => 'text_inverse',
+                'text.link.background.selected' => 'success',
+        },
+);
+my $ui = Term::Fabulous->new( root => $root, theme => $theme );
+```
+
+A slot name without a state (`text.link`) sets the normal look; the
+hovered and the selected look keep their own defaults until you set
+them too. Set `text.link.background` to a token or color to give
+every link a background. The underline is not a theme setting.
 
 ## Mouse
 
 A left click on a link focuses the RichText (when it can take the
 focus), selects the link and fires `LinkActivate`, after the
 `TextClick` of the same press (see [Term::Fabulous::Event::TextClick](../Event/TextClick.md)).
-The pointer over a link gives it the hovered look.
+The middle and the right button fire only `TextClick`. The pointer
+over a link gives it the hovered look. [Term::Fabulous](../../../../README.md) asks the
+terminal to report the pointer as it moves; on a terminal that does not
+report plain movement, links never look hovered.
 
 ## Keyboard
 
@@ -331,7 +378,9 @@ the next link, `Left` the previous one, and `Enter` fires
 `LinkActivate` for the selected link; a key that moves nothing (`Right`
 on the last link, `Enter` without a selected link) goes on to the
 ancestors, and every other key does too. When it loses the focus, the
-selection is dropped.
+selection is dropped. When its markup is replaced while it has the
+focus, it keeps the focus but selects no link until the user presses
+`Right` (the first link) or `Left` (the last).
 
 ## Links in a bigger widget
 
@@ -339,10 +388,20 @@ A widget that shows many RichTexts (a document view, a help browser)
 may rather keep the focus itself and move one selection across all of
 them: create the RichTexts with `can_focus => 0`, show the
 selection with ["select\_link"](#select_link) on the RichText that has it (and
-`undef` on the others), and fire `LinkActivate` from the widget's
-own key handling. Clicks still select the clicked link and fire
-`LinkActivate` from the RichText, so the widget can listen for it to
-move its selection along.
+`undef` on the others), and follow the selected link from the
+widget's own key handling with ["activate\_link"](#activate_link), which fires
+`LinkActivate` on that RichText:
+
+```perl
+# $block is the RichText with the selected link, $index the link's index.
+$block->select_link($index);
+...
+$block->activate_link;    # on Enter: LinkActivate bubbles up from $block
+```
+
+Clicks still select the clicked link and fire `LinkActivate` from the
+RichText, so the widget can listen for it to move its selection
+along.
 
 # KDL PROPERTIES
 
@@ -362,4 +421,6 @@ Spans and links cannot be given in KDL other than through markup.
 
 [Term::Fabulous::Widget::Text](Text.md), [Term::Fabulous::Text::Style](../Text/Style.md),
 [Term::Fabulous::Text::Markup](../Text/Markup.md), [Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md),
-[Term::Fabulous::Event::TextClick](../Event/TextClick.md), ["TEXT" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#text).
+[Term::Fabulous::Event::TextClick](../Event/TextClick.md), ["TEXT" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#text),
+["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links),
+["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick).

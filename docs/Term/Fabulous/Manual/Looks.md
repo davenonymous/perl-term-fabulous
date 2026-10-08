@@ -291,8 +291,15 @@ $help->on( LinkActivate => sub ($event) { show_page( $event->link ); return } );
 ```
 
 Links are drawn over the spans in the theme's link look: underlined in
-the accent color, highlighted under the pointer and when selected. See
-["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links).
+the accent color, highlighted under the pointer and when selected. A
+theme changes the look with the slots `text.link` (the color of the
+words) and `text.link.background`, each in the states normal,
+`hovered` and `selected`, such as
+`'text.link.selected' => 'text_inverse'`. See
+["Looks" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#looks) for the defaults and a
+picture, and
+["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+for a program with links in colors of its own.
 
 ## Wide characters and emoji
 

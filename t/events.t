@@ -481,6 +481,14 @@ subtest 'a focused RichText moves between its links with the keyboard' => sub {
 	$press->('Tab');
 	ref_is $key_ui->interaction->get_focused_widget, $next, 'Tab moves on';
 	is $rich->selected_link, undef, 'and losing the focus drops the selection';
+
+	$key_ui->interaction->set_focused_widget($rich);
+	$rich->markup('[link=c]C[/]');
+	$key_ui->step;
+	ref_is $key_ui->interaction->get_focused_widget, $rich, 'new markup with links keeps the focus';
+	$rich->markup('no links');
+	$key_ui->step;
+	isnt $key_ui->interaction->get_focused_widget, $rich, 'markup without links gives it up';
 };
 
 subtest 'root must be an event emitter' => sub {

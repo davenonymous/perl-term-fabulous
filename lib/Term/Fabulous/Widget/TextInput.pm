@@ -497,16 +497,36 @@ limit: pasted text is cut to fit. Dies if the initial C<value> is longer.
 
 =item C<accept>
 
-Which characters the user may enter: the body of a character class
-(C<'0-9'>, C<'a-zA-Z '>), a regular expression every grapheme cluster
-must match (C<qr/\p{L}/>), a code reference called with each cluster
-that returns true to accept it, or C<undef>. Default: C<undef>, which
-takes what the C<validator> suggests, if anything (C<'integer'>
-suggests C<'0-9-'>), else every character. Typing a rejected
-character does nothing; pasted text keeps its accepted characters and
-drops the rest, and when nothing of it is accepted, nothing happens.
-Line breaks in a text area are never subject to it. Dies if the initial
-C<value> has a rejected character. See L</accept>.
+Which characters the user may type or paste. One of:
+
+=over
+
+=item * a string: the body of a character class, written as between the
+brackets of C<[...]> in a regular expression. C<'0-9'> accepts digits,
+C<'a-zA-Z '> letters and blanks, C<'^0-9'> everything but digits. A
+C<-> that is not part of a range goes first or last (C<'0-9-'>), and
+C<]> and C<\> are written C<\]> and C<\\>;
+
+=item * a regular expression, matched against each character (strictly,
+each grapheme cluster: a letter with its accents, an emoji with its
+modifiers): C<qr/\p{L}/> accepts letters of every script;
+
+=item * a code reference, called with each grapheme cluster, that
+returns true to accept it: C<< sub ($cluster) { $cluster ne ' ' } >>;
+
+=item * C<undef>, the default: what the C<validator> suggests, if
+anything (C<integer> suggests C<'0-9-'>, see
+L<Term::Fabulous::Validator/accept>), else every character.
+
+=back
+
+Typing a rejected character does nothing. Pasted text keeps its
+accepted characters and drops the rest; when none is accepted, the
+paste does nothing, and does not replace the selection either. Line
+breaks in a text area are always accepted. Dies if the initial C<value>
+has a rejected character. To let the user type every character into a
+field whose validator suggests a restriction, give C<< accept => qr/./ >>.
+See L</accept>.
 
 =item C<read_only>
 
@@ -573,7 +593,9 @@ was.
 
 Accessor for the C<accept> spec (see the C<accept> parameter). The
 reader returns the spec as it was given, C<undef> included: what the
-editor actually uses then is the validator's suggestion, or nothing.
+input actually uses then is the validator's suggestion, or nothing.
+Writing C<undef> goes back to the validator's suggestion; writing
+C<qr/./> accepts every character, whatever the validator suggests.
 Writing returns the new spec. Dies, and keeps the old spec, for a
 string that is not a valid character class body, for a reference of
 another kind, and when the current text has a character the new spec

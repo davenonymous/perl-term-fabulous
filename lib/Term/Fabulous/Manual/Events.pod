@@ -933,7 +933,11 @@ text inside it:
 A left click on a link of a RichText then selects the link and fires
 C<LinkActivate> on the RichText; the pointer over a link gives it its
 hovered look. See L<Term::Fabulous::Widget::RichText/LINKS> for links,
-their looks and their keys.
+their looks and their keys. The recipes
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>
+and
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>
+are complete programs.
 
 =head1 SCROLLING
 
