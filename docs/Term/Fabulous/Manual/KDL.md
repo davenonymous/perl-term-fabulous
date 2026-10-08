@@ -373,8 +373,8 @@ The properties are applied after the widget was created, with the same
 checks as the Perl accessors, in the order they appear. Values that
 depend on each other are applied together, wherever they stand: a
 dropdown's options before its `value`, a slider's `min`, `max` and
-`step` as one range before its `value`, a text field's `max_length`
-before its `value`.
+`step` as one range before its `value`, a text field's `max_length`,
+`accept` and `validator` before its `value`.
 
 ## Numbers, booleans and text
 

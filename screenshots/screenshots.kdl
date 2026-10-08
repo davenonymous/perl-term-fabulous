@@ -156,12 +156,14 @@ screenshot "example-flow" {
 
 screenshot "example-form" {
 	script "examples/form.pl"
-	size 80 19
+	size 80 23
 	steps {
 		type "Ada Lovelace"
 		key "Tab" "Tab"
 		type "Please call after 6 pm."
 		key "Tab" "Enter" "Down" "Down" "Enter"
+		key "Tab" "Tab" "Tab" "Tab" "Tab"
+		type "ada@"
 	}
 }
 

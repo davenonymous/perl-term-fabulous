@@ -778,8 +778,9 @@ widget it is fired on to the root, as described in
     and a size with zero columns or rows is ignored. The starting size
     fires `Start` instead; see [Term::Fabulous::Event::Resize](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Resize.md).
 
-Widgets fire further events themselves: `Change` from the input
-widgets, `Submit` from [Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md),
+Widgets fire further events themselves: `Change` and
+`ValidityChange` from the input widgets, `Submit` from
+[Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md),
 `Activate` from [Term::Fabulous::Widget::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Button.md), `Close` from
 [Term::Fabulous::Widget::Dialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog.md), `CanvasResize` from canvases,
 `SeriesHover` from charts, the table events (`CursorMove`,
@@ -1234,6 +1235,10 @@ Term::Fabulous, and programs do not use them directly.
 
     The user changed the value of an input widget.
 
+- [Term::Fabulous::Event::ValidityChange](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/ValidityChange.md)
+
+    The value of an input widget became valid or invalid.
+
 - [Term::Fabulous::Event::Submit](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Submit.md)
 
     The user pressed Enter in a text field.
@@ -1326,6 +1331,12 @@ Term::Fabulous, and programs do not use them directly.
     A value in a range on a grid of steps (snapping, keys, formats), behind
     the slider, the star rating and the progress bar; and how such a widget
     takes its range from a layout in one piece.
+
+- [Term::Fabulous::Validator](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Validator.md), [Term::Fabulous::Role::Validatable](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/Validatable.md)
+
+    The checks behind the `validator` and `required` parameters of the
+    inputs: e-mail addresses, numbers in a range, patterns, your own code;
+    and the role that gives a widget `error`, `is_valid` and `validate`.
 
 - [Term::Fabulous::Unicode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Unicode.md)
 

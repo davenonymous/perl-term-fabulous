@@ -47,7 +47,8 @@ The recipes on this page:
 # A login form (centered dialog, masked password)
 
 Goal: a centered dialog with a user name, a masked password and a
-check box, which validates the input when the user presses Enter.
+check box, which checks that both fields are filled in when the user
+presses Enter.
 
 This program is shipped as `examples/cookbook/login-form.pl`.
 
@@ -90,8 +91,22 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
         return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 }
 
-my $user     = Term::Fabulous::Widget::TextField->new( id => 'user', placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
-my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password', layout => { sizing => { width => sizing_grow() } }, mask => '*' );
+my $user = Term::Fabulous::Widget::TextField->new(
+        id               => 'user',
+        placeholder      => 'User name',
+        required         => 1,
+        required_message => 'Please enter your user name.',
+        accept           => 'a-zA-Z0-9_.-',
+        layout           => { sizing => { width => sizing_grow() } },
+);
+my $password = Term::Fabulous::Widget::TextField->new(
+        id               => 'password',
+        placeholder      => 'Password',
+        required         => 1,
+        required_message => 'Please enter your password.',
+        mask             => '*',
+        layout           => { sizing => { width => sizing_grow() } },
+);
 my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
 my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );
 $dialog->add_child( text('Log in'), $user, $password, $remember, $message );
@@ -99,9 +114,9 @@ $dialog->add_child( text('Log in'), $user, $password, $remember, $message );
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
 sub log_in () {
-        if ( $user->value eq '' || $password->value eq '' ) {
-                $message->text('Please fill in both fields.');
-                $ui->interaction->set_focused_widget( $user->value eq '' ? $user : $password );
+        if ( my @invalid = $dialog->invalid_inputs ) {
+                $message->text( $invalid[0]->error );
+                $ui->interaction->set_focused_widget( $invalid[0] );
                 return;
         }
         $message->text( sprintf 'Welcome, %s!%s', $user->value, $remember->checked ? ' (remembered)' : '' );
@@ -125,12 +140,21 @@ for every character. `value` still returns the real text.
 it. Events bubble up the tree, so one listener on the dialog box
 handles Enter in both fields. The check box fires no `Submit`: Enter
 and Space toggle it.
+- Both fields are `required`, with a message of their own. An empty
+required field is invalid: it is painted in the input's
+`invalid_color` while it is empty, and
+`$dialog->invalid_inputs` lists it. The `Submit` listener shows
+the first invalid field's `error` and moves the focus to it; see
+["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input).
+- `accept` restricts what the user can type into the user name: the
+characters of a login name. Other keys do nothing; a validator
+(`validator => 'email'`, say) would check the whole value instead.
 - The inputs size themselves: a text field is one row high and
 `preferred_columns` (default 20) wide unless the `layout` says
 otherwise. Here `sizing_grow()` makes the fields as wide as the dialog.
 - `$ui->interaction->set_focused_widget($widget)` moves the keyboard
 focus from code: here to the first field at the start, and to the
-empty field when the input is incomplete. See
+first invalid field when the input is incomplete. See
 ["Moving the focus" in Term::Fabulous::Manual::Events](../Manual/Events.md#moving-the-focus).
 - This dialog is the whole screen. For a dialog that opens over a running
 screen and closes again, use [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md); see
@@ -536,7 +560,7 @@ Box "root" {
                 Box {
                         layout gap=1
                         Box { width_group 1; Text { text "Name"; text_color "#96a0b4"; } }
-                        TextField "name" { placeholder "Your name"; preferred_columns 30; }
+                        TextField "name" { placeholder "Your name"; preferred_columns 30; required #true; }
                 }
                 Box {
                         layout gap=1
@@ -606,7 +630,8 @@ $root->find_by_id('form')->on(
 $root->on(
         KeyPress => sub ($event) {
                 return unless ( $event->key_name // '' ) eq 'F2';
-                $status->text( values_text() );
+                my ($invalid) = $root->invalid_inputs;
+                $status->text( defined $invalid ? sprintf( '%s: %s', $invalid->id, $invalid->error ) : values_text() );
                 return;
         }
 );
@@ -636,6 +661,11 @@ KDL is a character string and is used as is.
 - Properties are applied in the order they appear. Give what a value
 depends on first: the dropdown's options before a `value`, the
 slider's range before its `value`.
+- `required #true` on the name makes an empty name invalid: the status
+line shows the message of the first invalid input on F2, and
+`$form->invalid_inputs` would list it (see
+["Checking input" in Term::Fabulous::Manual::Forms](../Manual/Forms.md#checking-input)). KDL takes the name of
+a validator too: `validator "email"`.
 - To load the layout from a file, use
 `Term::Fabulous::Layout->new( file => 'form.kdl' )`; the file is
 read as UTF-8.

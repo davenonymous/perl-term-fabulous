@@ -131,6 +131,12 @@ class Term::Fabulous::Widget
 		return first { _has_id( $_, $id ) } $self, $self->descendants;
 	}
 
+	# The inputs at or below this one, in layout pre-order, whose value is
+	# not valid.
+	method invalid_inputs () {
+		return grep { $_->DOES('Term::Fabulous::Role::Validatable') && !$_->is_valid } $self, $self->descendants;
+	}
+
 	# Text leaves have an id too.
 	sub _has_id ( $widget, $id ) {
 		my $widget_id = $widget->can('id') ? $widget->id : undef;
@@ -579,6 +585,21 @@ in L</remove_child>.
 
 The C<id> given to the constructor, or C<undef> when none was given
 (the generated id is not returned). There is no writer.
+
+=head2 invalid_inputs
+
+	if ( my @invalid = $form->invalid_inputs ) {
+		$message->text( $invalid[0]->error );
+		$ui->interaction->set_focused_widget( $invalid[0] );
+		return;
+	}
+
+The input widgets at or below this one, in the same order as
+L</find_by_id> walks, whose value is not valid (see
+L<Term::Fabulous::Widget::Input/is_valid>): empty while C<required>,
+or rejected by their C<validator>. The widget itself is included when
+it is such an input. Returns an empty list when every input is fine,
+also when there is none. The tree is walked on every call.
 
 =head2 find_by_id
 

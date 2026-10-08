@@ -393,8 +393,8 @@ The properties are applied after the widget was created, with the same
 checks as the Perl accessors, in the order they appear. Values that
 depend on each other are applied together, wherever they stand: a
 dropdown's options before its C<value>, a slider's C<min>, C<max> and
-C<step> as one range before its C<value>, a text field's C<max_length>
-before its C<value>.
+C<step> as one range before its C<value>, a text field's C<max_length>,
+C<accept> and C<validator> before its C<value>.
 
 =head2 Numbers, booleans and text
 

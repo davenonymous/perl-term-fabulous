@@ -13,6 +13,7 @@ my $field = Term::Fabulous::Widget::TextField->new(
         value             => 'initial text',
         placeholder       => 'Type here',
         max_length        => 40,
+        accept            => 'a-zA-Z ',    # the characters the user may type
         read_only         => 0,
         placeholder_color => '#787e8a',
         selection_color   => [ 38, 79, 120 ],
@@ -84,6 +85,19 @@ parameters die.
     text area every line break counts as one. Typing and pasting stop at the
     limit: pasted text is cut to fit. Dies if the initial `value` is longer.
 
+- `accept`
+
+    Which characters the user may enter: the body of a character class
+    (`'0-9'`, `'a-zA-Z '`), a regular expression every grapheme cluster
+    must match (`qr/\p{L}/`), a code reference called with each cluster
+    that returns true to accept it, or `undef`. Default: `undef`, which
+    takes what the `validator` suggests, if anything (`'integer'`
+    suggests `'0-9-'`), else every character. Typing a rejected
+    character does nothing; pasted text keeps its accepted characters and
+    drops the rest, and when nothing of it is accepted, nothing happens.
+    Line breaks in a text area are never subject to it. Dies if the initial
+    `value` has a rejected character. See ["accept"](#accept).
+
 - `read_only`
 
     A boolean, stored as 1 or 0. Default: 0. A read-only input can still
@@ -141,6 +155,25 @@ Accessor for the length limit (see the `max_length` parameter). Returns
 the new limit. Dies if the limit is not a non-negative integer or
 `undef`, or if the current text is already longer; the limit then stays as it
 was.
+
+## accept
+
+```perl
+my $spec = $input->accept;         # as given; undef means the validator's suggestion
+$input->accept('0-9');
+$input->accept(qr/[^\s]/);
+$input->accept(undef);
+```
+
+Accessor for the `accept` spec (see the `accept` parameter). The
+reader returns the spec as it was given, `undef` included: what the
+editor actually uses then is the validator's suggestion, or nothing.
+Writing returns the new spec. Dies, and keeps the old spec, for a
+string that is not a valid character class body, for a reference of
+another kind, and when the current text has a character the new spec
+rejects. Setting `value` to a text with a rejected character dies
+too: the restriction is for the user, the program is expected to know
+better.
 
 ## placeholder
 
@@ -349,16 +382,22 @@ and bubble: hidden text is not copied to the clipboard.
 # KDL PROPERTIES
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Input](Input.md#kdl-properties), plus
-`value`, `placeholder`, `max_length`, `read_only` (`#true` /
-`#false`), `placeholder_color` and `selection_color`. `max_length`
-is applied before `value`, wherever it stands, so a too long value
-dies.
+`value`, `placeholder`, `max_length`, `accept` (a character class
+body), `read_only` (`#true` / `#false`), `placeholder_color` and
+`selection_color`. `max_length`, `accept` and `validator` are
+applied before `value`, wherever they stand, so a value that is too
+long or has a rejected character dies.
 
 ```kdl
 TextField "nick" {
         max_length 12
+        accept "a-zA-Z0-9_"
         value "guest"
         placeholder "Nickname"
+}
+TextField "port" {
+        validator "integer"
+        required #true
 }
 ```
 

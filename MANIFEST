@@ -163,6 +163,7 @@ lib/Term/Fabulous/Event/SortChange.pm
 lib/Term/Fabulous/Event/Start.pm
 lib/Term/Fabulous/Event/Submit.pm
 lib/Term/Fabulous/Event/TextClick.pm
+lib/Term/Fabulous/Event/ValidityChange.pm
 lib/Term/Fabulous/Layout.pm
 lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Manual/Charts.pod
@@ -199,6 +200,7 @@ lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/Terminal.pm
 lib/Term/Fabulous/Role/Themed.pm
+lib/Term/Fabulous/Role/Validatable.pm
 lib/Term/Fabulous/Roving.pm
 lib/Term/Fabulous/Static.pm
 lib/Term/Fabulous/Termbox.pm
@@ -212,6 +214,7 @@ lib/Term/Fabulous/Text/Style.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Unicode.pm
+lib/Term/Fabulous/Validator.pm
 lib/Term/Fabulous/Viewport.pm
 lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
@@ -335,6 +338,7 @@ t/theme-binding.t
 t/theme-file.t
 t/theme.t
 t/unicode.t
+t/validator.t
 t/viewport.t
 t/web-color.t
 t/widget-accordion.t

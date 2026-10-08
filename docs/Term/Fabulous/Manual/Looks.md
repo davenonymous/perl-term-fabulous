@@ -776,10 +776,12 @@ scrollbar thumbs and the group headers of tables at once, while a
 theme that sets `button.border.color` changes buttons only.
 
 A slot can have a different value in a _state_ of the widget:
-`hovered`, `focused`, `pressed`, `disabled`, `selected` or
-`active`, where the widget shows such a state. `button.border.color`
-in the `focused` state is the accent by default; a state a theme
-does not set looks like the normal state.
+`hovered`, `focused`, `pressed`, `disabled`, `selected`,
+`active` or `invalid`, where the widget shows such a state.
+`button.border.color` in the `focused` state is the accent by
+default, `input.text` and `input.border.color` in the `invalid`
+state are the `danger` token; a state a theme does not set looks like
+the normal state.
 ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states) lists every
 family with its slots and their states, and the parameter of each
 widget class says which slot it reads (for example

@@ -14,6 +14,7 @@ requires 'Object::Pad::FieldAttr::Checked';
 requires 'Object::PadX::Enum';
 requires 'POSIX';
 requires 'Scalar::Util';
+requires 'Socket';
 requires 'Text::KDL::XS', '0.002';    # parse_kdl reads strings as characters
 requires 'Time::HiRes';
 requires 'Time::Local', '1.30';    # timelocal_posix

@@ -55,4 +55,13 @@ subtest 'invalid parameters die' => sub {
 	like dies { Term::Fabulous::Widget::Checkbox->new( checkd     => 1 ) },      qr/Unrecognised parameters/, 'an unknown parameter';
 };
 
+subtest 'required means checked' => sub {
+	my $box = Term::Fabulous::Widget::Checkbox->new( label => 'Terms', required => 1 );
+	my $ui  = layout_ui($box);
+	is $box->error, 'Please fill in this field.', 'an unchecked required box is invalid';
+	press( $box, 'Space' );
+	ok $box->is_valid, 'a checked one is valid';
+	ok( Term::Fabulous::Widget::Checkbox->new( label => 'x' )->is_valid, 'an optional unchecked box is valid' );
+};
+
 done_testing;

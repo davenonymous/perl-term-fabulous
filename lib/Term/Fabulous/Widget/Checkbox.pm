@@ -66,6 +66,11 @@ class Term::Fabulous::Widget::Checkbox
 		return $checked;
 	}
 
+	# A required checkbox must be checked.
+	method value_is_empty :override () {
+		return $checked ? 0 : 1;
+	}
+
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
@@ -249,6 +254,10 @@ unchanged.
 
 The same as reading C<checked>: 1 or 0. Read-only; use C<checked> to
 change the state. This is the value C<Change> events carry.
+
+A C<required> checkbox (see L<Term::Fabulous::Widget::Input/required>)
+counts as empty while it is unchecked, so it is invalid until the user
+checks it: the way to insist on accepted terms.
 
 =head2 indeterminate
 

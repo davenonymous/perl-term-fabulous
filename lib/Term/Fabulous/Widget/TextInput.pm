@@ -80,6 +80,9 @@ class Term::Fabulous::Widget::TextInput
 	field $placeholder :param = '';
 	field $read_only   :param = 0;
 
+	# The explicit accept spec; undef takes the validator's suggestion.
+	field $accept :param = undef;
+
 	# How the text is laid out in the buffer: one row without wrapping
 	# unless a subclass says otherwise.
 	field $view :reader;
@@ -96,6 +99,7 @@ class Term::Fabulous::Widget::TextInput
 		$read_only   = boolean( $self, read_only => $read_only );
 		$placeholder = string( $self, placeholder => $placeholder );
 		$self->max_length($max_length) if defined $max_length;
+		$self->_apply_accept;
 		$self->value($value) if defined $value;
 	}
 
@@ -137,6 +141,34 @@ class Term::Fabulous::Widget::TextInput
 		return $editor->max_length;
 	}
 
+	method accept (@new) {
+		return $accept unless @new;
+		my $previous = $accept;
+		$accept = $new[0];
+		try {
+			$self->_apply_accept;
+		}
+		catch ($error) {
+			$accept = $previous;
+			die $error;
+		}
+		return $accept;
+	}
+
+	# The editor takes the explicit accept spec, or the validator's
+	# suggestion.
+	method _apply_accept () {
+		my $validator = $self->validator;
+		my $spec      = $accept // ( defined $validator ? $validator->accept : undef );
+		$self->_in_editor( sub { $editor->set_accept($spec) } );
+		return;
+	}
+
+	method validator_changed :override () {
+		$self->_apply_accept;
+		return;
+	}
+
 	method placeholder (@new) {
 		return $placeholder unless @new;
 		$placeholder = string( $self, placeholder => $new[0] );
@@ -172,14 +204,17 @@ class Term::Fabulous::Widget::TextInput
 			value       => 'scalar',
 			placeholder => 'scalar',
 			max_length  => 'scalar',
+			accept      => 'scalar',
 			read_only   => 'boolean',
 		);
 	}
 
-	# The max_length of a layout comes first, so it limits the value
-	# wherever it stands.
+	# The max_length, accept and validator of a layout come first, so they
+	# limit the value wherever it stands.
+	my %LIMITS_VALUE = map { $_ => 1 } qw(max_length accept validator);
+
 	method apply_layout_settings :override (@settings) {
-		return $self->SUPER::apply_layout_settings( ( grep { $_->[0] eq 'max_length' } @settings ), ( grep { $_->[0] ne 'max_length' } @settings ) );
+		return $self->SUPER::apply_layout_settings( ( grep { $LIMITS_VALUE{ $_->[0] } } @settings ), ( grep { !$LIMITS_VALUE{ $_->[0] } } @settings ) );
 	}
 
 	# ---------------------------------------------------------------------
@@ -389,6 +424,7 @@ Term::Fabulous::Widget::TextInput - Common base class of the text input widgets
 		value             => 'initial text',
 		placeholder       => 'Type here',
 		max_length        => 40,
+		accept            => 'a-zA-Z ',    # the characters the user may type
 		read_only         => 0,
 		placeholder_color => '#787e8a',
 		selection_color   => [ 38, 79, 120 ],
@@ -459,6 +495,19 @@ most characters the text may hold, counted in grapheme clusters; in a
 text area every line break counts as one. Typing and pasting stop at the
 limit: pasted text is cut to fit. Dies if the initial C<value> is longer.
 
+=item C<accept>
+
+Which characters the user may enter: the body of a character class
+(C<'0-9'>, C<'a-zA-Z '>), a regular expression every grapheme cluster
+must match (C<qr/\p{L}/>), a code reference called with each cluster
+that returns true to accept it, or C<undef>. Default: C<undef>, which
+takes what the C<validator> suggests, if anything (C<'integer'>
+suggests C<'0-9-'>), else every character. Typing a rejected
+character does nothing; pasted text keeps its accepted characters and
+drops the rest, and when nothing of it is accepted, nothing happens.
+Line breaks in a text area are never subject to it. Dies if the initial
+C<value> has a rejected character. See L</accept>.
+
 =item C<read_only>
 
 A boolean, stored as 1 or 0. Default: 0. A read-only input can still
@@ -514,6 +563,23 @@ Accessor for the length limit (see the C<max_length> parameter). Returns
 the new limit. Dies if the limit is not a non-negative integer or
 C<undef>, or if the current text is already longer; the limit then stays as it
 was.
+
+=head2 accept
+
+	my $spec = $input->accept;         # as given; undef means the validator's suggestion
+	$input->accept('0-9');
+	$input->accept(qr/[^\s]/);
+	$input->accept(undef);
+
+Accessor for the C<accept> spec (see the C<accept> parameter). The
+reader returns the spec as it was given, C<undef> included: what the
+editor actually uses then is the validator's suggestion, or nothing.
+Writing returns the new spec. Dies, and keeps the old spec, for a
+string that is not a valid character class body, for a reference of
+another kind, and when the current text has a character the new spec
+rejects. Setting C<value> to a text with a rejected character dies
+too: the restriction is for the user, the program is expected to know
+better.
 
 =head2 placeholder
 
@@ -722,17 +788,23 @@ L<Term::Fabulous::Event::Submit> on C<Enter>.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Input/KDL PROPERTIES>, plus
-C<value>, C<placeholder>, C<max_length>, C<read_only> (C<#true> /
-C<#false>), C<placeholder_color> and C<selection_color>. C<max_length>
-is applied before C<value>, wherever it stands, so a too long value
-dies.
+C<value>, C<placeholder>, C<max_length>, C<accept> (a character class
+body), C<read_only> (C<#true> / C<#false>), C<placeholder_color> and
+C<selection_color>. C<max_length>, C<accept> and C<validator> are
+applied before C<value>, wherever they stand, so a value that is too
+long or has a rejected character dies.
 
 =for highlighter language=kdl
 
 	TextField "nick" {
 		max_length 12
+		accept "a-zA-Z0-9_"
 		value "guest"
 		placeholder "Nickname"
+	}
+	TextField "port" {
+		validator "integer"
+		required #true
 	}
 
 =head1 SUBCLASS INTERFACE

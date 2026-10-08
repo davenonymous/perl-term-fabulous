@@ -46,7 +46,7 @@ Box "root" {
 		Box {
 			layout gap=1
 			Box { width_group 1; Text { text "Name"; text_color "#96a0b4"; } }
-			TextField "name" { placeholder "Your name"; preferred_columns 30; }
+			TextField "name" { placeholder "Your name"; preferred_columns 30; required #true; }
 		}
 		Box {
 			layout gap=1
@@ -116,7 +116,8 @@ $root->find_by_id('form')->on(
 $root->on(
 	KeyPress => sub ($event) {
 		return unless ( $event->key_name // '' ) eq 'F2';
-		$status->text( values_text() );
+		my ($invalid) = $root->invalid_inputs;
+		$status->text( defined $invalid ? sprintf( '%s: %s', $invalid->id, $invalid->error ) : values_text() );
 		return;
 	}
 );

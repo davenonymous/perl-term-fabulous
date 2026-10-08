@@ -1,5 +1,7 @@
 use v5.32;
 use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
 use utf8;
 
 use Test2::V0;
@@ -9,6 +11,12 @@ use Term::Fabulous::Editor;
 sub editor {
 	my (%options) = @_;
 	return Term::Fabulous::Editor->new(%options);
+}
+
+sub text_after_insert ( $text, %options ) {
+	my $editor = editor(%options);
+	$editor->insert($text);
+	return $editor->text;
 }
 
 subtest 'text and lines' => sub {
@@ -101,6 +109,31 @@ subtest 'max_length' => sub {
 	like dies { $editor->set_text('abcde') }, qr/more than max_length 4/, 'a longer text dies';
 	like dies { $editor->set_max_length(2) }, qr/more than max_length 2/, 'a limit below the length dies';
 	like dies { editor( max_length => -1 ) }, qr/non-negative integer/,   'an invalid limit dies';
+};
+
+subtest 'accept' => sub {
+	my $editor = editor( accept => '0-9' );
+	$editor->type('a');
+	is $editor->text, '', 'a rejected cluster is not typed';
+	$editor->insert('+49 170 1234');
+	is $editor->text, '491701234', 'rejected clusters are dropped from inserted text, the rest is kept';
+	$editor->select_all;
+	$editor->type('x');
+	is $editor->text,   '491701234', 'typing only rejected clusters leaves the selection alone';
+	is $editor->accept, '0-9',       'the spec is kept as given';
+
+	is text_after_insert( "1\n2", accept => qr/\p{L}/, text => "ab\ncd" ),         "ab\ncd\n", 'a regular expression is matched per cluster, line breaks pass';
+	is text_after_insert( 'xyzzy', accept => sub ($cluster) { $cluster eq 'z' } ), 'zz',       'a code reference is a predicate';
+	is text_after_insert( 'a1b2c3', accept => '0-9', max_length => 2 ),            '12',       'max_length counts what is accepted';
+
+	like dies { $editor->set_text('12a') }, qr/accept rejects: "a"/, 'set_text with a rejected cluster dies';
+	like dies { editor( text   => 'abc12', accept => '0-9' ) }, qr/accept rejects: "abc"/,             'the constructor dies the same way';
+	like dies { editor( text   => '42' )->set_accept('a-z') },  qr/accept rejects: "42"/,              'a spec that rejects the current text dies';
+	like dies { editor( accept => 'z-a' ) },                    qr/not the body of a character class/, 'a bad character class dies';
+	like dies { editor( accept => [] ) },                       qr/accept must be/,                    'a reference of another kind dies';
+	my $lifted = editor( accept => '0-9' )->set_accept(undef);
+	$lifted->insert('ok');
+	is $lifted->text, 'ok', 'undef lifts the restriction';
 };
 
 subtest 'undo and redo' => sub {

@@ -63,6 +63,7 @@ my $editor = Term::Fabulous::Editor->new(
         text       => '',
         multi_line => 1,
         max_length => undef,
+        accept     => undef,
 );
 ```
 
@@ -87,6 +88,12 @@ Through a text input, the message names the input's class instead (see
     most grapheme clusters the text may hold; every line break counts as
     one. Inserted and typed text is cut to fit. Dies if it is not a
     non-negative integer or `undef`.
+
+- `accept`
+
+    Which grapheme clusters may enter the text, as for ["set\_accept"](#set_accept).
+    Default: `undef` (every cluster). Dies, as `set_accept` does, if the
+    initial text has a cluster the spec rejects.
 
 # POSITIONS
 
@@ -190,6 +197,39 @@ $editor->set_max_length(undef);
 
 Sets the length limit. Returns the editor. Dies if the limit is not a
 non-negative integer or `undef`, or if the text is already longer.
+
+## accept
+
+```perl
+my $spec = $editor->accept;
+```
+
+The accept spec as it was given to ["set\_accept"](#set_accept), or `undef` for
+none.
+
+## set\_accept
+
+```perl
+$editor->set_accept('0-9');                             # digits only
+$editor->set_accept(qr/\p{L}/);                         # letters of any script
+$editor->set_accept( sub ($cluster) { $cluster ne ' ' } );
+$editor->set_accept(undef);                             # everything again
+```
+
+Restricts which grapheme clusters may enter the text. The spec is the
+body of a character class (what a KDL layout writes; `'0-9'` means
+`qr/[0-9]/`), a regular expression that every cluster must match, a
+code reference called with each cluster that returns true to accept
+it, or `undef` for no restriction. Returns the editor.
+
+["insert"](#insert) and ["type"](#type) drop the clusters the spec rejects and keep
+the rest, so pasting `+49 170 1234` into a digits-only editor inserts
+the digits; an insertion of which nothing is accepted does nothing at
+all, not even replace the selection. Line breaks are never subject to
+the spec. ["set\_text"](#set_text) is for the program and dies instead, as it does
+for `max_length`; so does `set_accept` itself when the text already
+has a rejected cluster. Dies for a string that is not a valid
+character class body and for any other kind of value.
 
 ## revision
 
@@ -404,9 +444,11 @@ $editor->insert('text');
 ```
 
 Inserts a character string at the cursor, replacing the selection. Line
-breaks are converted as in ["set\_text"](#set_text). With `max_length`, only as
-much of the text as fits is inserted. Inserting an empty string with a
-selection deletes the selection.
+breaks are converted as in ["set\_text"](#set_text). With an ["accept"](#accept) spec, the
+clusters it rejects are left out; when that leaves nothing of a
+non-empty string, nothing happens and 0 is returned. With
+`max_length`, only as much of the text as fits is inserted. Inserting
+an empty string with a selection deletes the selection.
 
 ## type
 

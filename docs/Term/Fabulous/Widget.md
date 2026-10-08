@@ -404,6 +404,23 @@ my $id = $widget->id;
 The `id` given to the constructor, or `undef` when none was given
 (the generated id is not returned). There is no writer.
 
+## invalid\_inputs
+
+```perl
+if ( my @invalid = $form->invalid_inputs ) {
+        $message->text( $invalid[0]->error );
+        $ui->interaction->set_focused_widget( $invalid[0] );
+        return;
+}
+```
+
+The input widgets at or below this one, in the same order as
+["find\_by\_id"](#find_by_id) walks, whose value is not valid (see
+["is\_valid" in Term::Fabulous::Widget::Input](Widget/Input.md#is_valid)): empty while `required`,
+or rejected by their `validator`. The widget itself is included when
+it is such an input. Returns an empty list when every input is fine,
+also when there is none. The tree is walked on every call.
+
 ## find\_by\_id
 
 ```perl

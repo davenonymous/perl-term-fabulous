@@ -11,14 +11,19 @@ use Term::Fabulous::Widget::TextField;
 my $field = Term::Fabulous::Widget::TextField->new(
         id                     => 'name',
         disabled               => 0,
+        required               => 1,
+        validator              => 'email',
         text_color             => '#dcdfe4',
         accent_color           => [ 97, 175, 239, 255 ],
         disabled_color         => 0x6c7078,
+        invalid_color          => 'Tomato',
         focus_background_color => 'rgb(52, 58, 72)',
 );
 
 $field->disabled(1);                   # gray, ignores input, loses the focus
 $field->accent_color('#ff8800');      # shows in the next frame
+my $message = $field->error;           # what is wrong with the value, or undef
+$field->on( ValidityChange => sub ($event) { $hint->text( $event->error // '' ); return } );
 
 # A widget of your own (see SUBCLASS INTERFACE):
 use Object::Pad;
@@ -118,8 +123,9 @@ the renderer calls the input's `refresh`
 (["refresh" in Term::Fabulous::Widget::Canvas](Canvas.md#refresh)), which compares the input's
 _paint key_ (see ["paint\_key"](#paint_key)) with the one it last painted for: the
 size of its buffer, how often the input was marked changed, whether it
-has the focus and whether it is enabled, and what a subclass adds, such
-as the state of its radio group. Only when the key differs does it
+has the focus, whether it is enabled, whether its value is valid, and
+what a subclass adds, such as the state of its radio group. Only when
+the key differs does it
 clear the buffer and call ["paint"](#paint). So the cells always show the state
 of the frame they are drawn in, also when the state was changed by
 another widget, and a frame that changes nothing about an input paints
@@ -187,6 +193,26 @@ dies.
     takes the focus (it does not accept it, see ["accepts\_focus"](#accepts_focus)), so for
     it the parameter has no effect.
 
+- `required`
+
+    A boolean, stored as 1 or 0. Default: 0. Whether an empty value is
+    invalid: empty text, a dropdown without a selection, an unchecked
+    checkbox (see ["value\_is\_empty"](#value_is_empty)). See ["required"](#required).
+
+- `required_message`
+
+    A string. Default: `'Please fill in this field.'`. What ["error"](#error)
+    reports for an empty required value.
+
+- `validator`
+
+    What checks a non-empty value: the name of a named validator
+    (`'email'`, `'integer'`, `'number'`, `'url'`, `'hostname'`,
+    `'ip'`, `'date'`, `'time'`), a regular expression the whole value
+    must match, a code reference that returns what is wrong with the value
+    (or false), a list of those, or a [Term::Fabulous::Validator](../Validator.md) for one
+    with options. Default: `undef`, any value is fine. See ["validator"](#validator).
+
 - `text_color`
 
     The color of the input's text. Default: the theme's `input.text`,
@@ -198,6 +224,15 @@ dies.
     such as scrollbar tracks. Default: the theme's `input.text` in the
     `disabled` state, `[108, 112, 120, 255]` in the dark theme, a
     medium gray.
+
+- `invalid_color`
+
+    The color of the text while the value is invalid (see ["is\_valid"](#is_valid)).
+    Default: the theme's `input.text` in the `invalid` state, the
+    `danger` token, `[224, 108, 117, 255]` in the dark theme, a red. The
+    border of an invalid input takes `input.border.color` in the
+    `invalid` state, the same red, unless the input has a
+    `border_color` of its own.
 
 - `accent_color`
 
@@ -212,13 +247,13 @@ dies.
     the theme's `input.background` in the `focused` state,
     `[52, 58, 72, 255]` in the dark theme, a dark blue-gray.
 
-    The four colors return to the theme with
+    The five colors return to the theme with
     ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look); the input's own
     `background_color`, `border_color` and border style come from the
     theme's `input` family too when they are not given. See
     ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes).
 
-The four colors accept every color format of the canvas: a packed
+The five colors accept every color format of the canvas: a packed
 `0xRRGGBB` integer, an `[r, g, b]` or `[r, g, b, a]` array reference,
 a `{ r, g, b }` hash reference, a string such as `'#ff8800'`,
 `'rgb(255, 136, 0)'` or `'hsl(32, 100%, 50%)'`, or a
@@ -302,6 +337,96 @@ $input->disabled_color([ 90, 90, 90 ]);
 
 Accessor for the `disabled_color` parameter; works like
 ["text\_color"](#text_color).
+
+## invalid\_color
+
+```perl
+$input->invalid_color('#ff5555');
+```
+
+Accessor for the `invalid_color` parameter; works like
+["text\_color"](#text_color).
+
+## required
+
+```perl
+my $is_required = $input->required;
+$input->required(1);
+```
+
+Accessor for the `required` parameter. Returns 1 or 0; a reference
+dies. Writing runs ["validate"](#validate), so a `ValidityChange` is fired when
+the message changed with it.
+
+## required\_message
+
+```perl
+$input->required_message('Please enter your name.');
+```
+
+Accessor for the `required_message` parameter. A value that is not a
+string dies. Writing runs ["validate"](#validate).
+
+## validator
+
+```perl
+my $validator = $input->validator;    # a Term::Fabulous::Validator, or undef
+$input->validator('email');
+$input->validator( qr/\A[A-Z]{3}\z/ );
+$input->validator( sub ($value) { $value % 2 ? 'Please enter an even number.' : undef } );
+$input->validator( [ 'hostname', qr/\.example\.com\z/ ] );
+$input->validator( Term::Fabulous::Validator->integer( min => 1, max => 65535 ) );
+$input->validator(undef);             # any value is fine
+```
+
+Accessor for the validator. The reader returns the
+[Term::Fabulous::Validator](../Validator.md) object, whatever form it was given in,
+or `undef`. Writing takes everything
+["coerce" in Term::Fabulous::Validator](../Validator.md#coerce) does; an unknown name or an
+unsuitable value dies and leaves the validator as it was. Writing runs
+["validate"](#validate). A text input also takes the `accept` spec the validator
+suggests, as long as it was not given one of its own (see
+["accept" in Term::Fabulous::Widget::TextInput](TextInput.md#accept)).
+
+## error
+
+```perl
+my $message = $input->error;
+```
+
+What is wrong with the value right now, or `undef` when it is fine:
+`required_message` for an empty required value, else what the
+validator says about a non-empty value. An empty value that is not
+required is fine, and the validator never sees it. The value is
+checked every time you ask; nothing is cached.
+
+## is\_valid
+
+```perl
+if ( $input->is_valid ) { ... }
+```
+
+True when ["error"](#error) is `undef`. While it is false, the input shows
+the invalid look: its text in `invalid_color` and its border, when it
+has one, in the theme's `input.border.color` of the `invalid` state;
+["look\_state" in Term::Fabulous::Role::Themed](../Role/Themed.md#look_state) is `invalid`. A disabled
+input shows the disabled look instead.
+
+## validate
+
+```perl
+my $message = $input->validate;
+```
+
+Checks the value, fires [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md) on the
+input when the message differs from the one the last `ValidityChange`
+reported (until the first, the input counts as reported valid), and
+returns the message or `undef`. The input calls it after every
+`Change` and when `required`, `required_message` or `validator`
+is written; call it yourself after setting the value from the program,
+or once after building a form to report its initial state. To check a
+whole form, ["invalid\_inputs" in Term::Fabulous::Widget](../Widget.md#invalid_inputs) lists the inputs
+below a widget that are not valid.
 
 ## accent\_color
 
@@ -398,6 +523,13 @@ Term::Fabulous::Widget::TextField->new( width_group => 1, layout => { sizing => 
     It bubbles to the input's ancestors unless a listener on the way
     returns something other than `Clay::UI::Enum::Result->CONTINUE`.
 
+- `ValidityChange`
+
+    [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md), fired by ["validate"](#validate) right
+    after a `Change` when the message about the value changed with it:
+    the value became invalid, valid, or invalid for another reason. It
+    bubbles like `Change`. The event carries `is_valid` and `error`.
+
 - `OnFocus`, `OnBlur`
 
     [Clay::UI::Events::OnFocus](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AOnFocus) and [Clay::UI::Events::OnBlur](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AOnBlur), fired by
@@ -439,7 +571,22 @@ the following ones. The string after the widget name is its `id`
     Takes `#true` or `#false`, like the `can_focus` parameter; with
     `disabled #true` in the same block the order does not matter.
 
-- `text_color`, `disabled_color`, `accent_color`, `focus_background_color`
+- `required`
+
+    Takes `#true` or `#false`, like the `required` parameter.
+
+- `required_message`
+
+    A string, like the `required_message` parameter.
+
+- `validator`
+
+    The name of a named validator (`validator "email"`); a layout cannot
+    give a regular expression, code or options, set those from the
+    program. A text input applies it before its `value`, wherever it
+    stands.
+
+- `text_color`, `disabled_color`, `invalid_color`, `accent_color`, `focus_background_color`
 
     Any [Term::Fabulous::Color](../Color.md) string, such as `"#ff8800"` or
     `"rgb(255, 136, 0)"`.
@@ -456,6 +603,10 @@ Box "form" {
                 accent_color "#ff8800"
                 sizing width=grow
         }
+        TextField "email" {
+                required #true
+                validator "email"
+        }
 }
 ```
 
@@ -464,8 +615,8 @@ checks as the accessors of the same name. Values that depend on each
 other are applied together, so their order in the layout does not
 matter: a dropdown's `options` come before its `value`, a slider's
 `min`, `max` and `step` are one range set before its `value`, and a
-text input's `max_length` comes before its `value`. Everything else is
-applied in the order of the layout.
+text input's `max_length`, `accept` and `validator` come before its
+`value`. Everything else is applied in the order of the layout.
 
 # SUBCLASS INTERFACE
 
@@ -616,8 +767,23 @@ when enabled.
 $self->fire_change($new_value);
 ```
 
-Fires a [Term::Fabulous::Event::Change](../Event/Change.md) with that value on the input.
-Call it after the user changed the value, never when the program did.
+Fires a [Term::Fabulous::Event::Change](../Event/Change.md) with that value on the input,
+then runs ["validate"](#validate), which fires a `ValidityChange` when the
+message about the value changed. Call it after the user changed the
+value, never when the program did.
+
+## value\_is\_empty
+
+```perl
+method value_is_empty :override () { return $checked ? 0 : 1 }
+```
+
+Whether the value counts as not filled in, which `required` rejects
+and the validator never sees. Default: `value` is `undef` or the
+empty string. [Term::Fabulous::Widget::Checkbox](Checkbox.md) overrides it: an
+unchecked box is empty. From [Term::Fabulous::Role::Validatable](../Role/Validatable.md),
+which also has `validator_changed`, the hook a text input uses to
+take the validator's suggested `accept`.
 
 ## foreground\_attr
 
@@ -626,7 +792,8 @@ my $fg = $self->foreground_attr;
 ```
 
 The termbox2 attribute of `text_color`, or of `disabled_color` while
-the input is disabled.
+the input is disabled, or of `invalid_color` while its value is
+invalid.
 
 ## accent\_attr
 

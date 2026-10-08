@@ -103,12 +103,13 @@ L</Segmented controls>.
 =back
 
 F<examples/form.pl> uses all of them in one form. The picture shows it
-after the user typed a name and a note and chose a color; the status
-line at the bottom shows the last C<Change>.
+after the user typed a name and a note, chose a color and started an
+e-mail address; the status line at the bottom shows the last C<Change>
+or, as here, what is wrong with a value (see L</Checking input>).
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter, terms, e-mail and port; the e-mail field holds ada@ in red and the status line says email: Please enter an e-mail address."></p>
 
 =end html
 
@@ -278,6 +279,13 @@ B<Disabled>: everything in C<disabled_color>.
 
 =item *
 
+B<Invalid>: the text in C<invalid_color> and the border, where there
+is one, in the theme's red, while the value is empty but C<required>
+or rejected by the C<validator> (see L</Checking input>). A disabled
+input shows the disabled look instead.
+
+=item *
+
 B<Placeholder>: an empty text input, or a dropdown without a selection,
 shows its C<placeholder> in C<placeholder_color>.
 
@@ -300,7 +308,8 @@ open list are painted in C<accent_color>.
 =back
 
 The colors are parameters and accessors of every input (C<text_color>,
-C<disabled_color>, C<accent_color>, C<focus_background_color>, see
+C<disabled_color>, C<invalid_color>, C<accent_color>,
+C<focus_background_color>, see
 L<Term::Fabulous::Widget::Input/CONSTRUCTOR>) and of some inputs only
 (C<placeholder_color>, C<selection_color>, C<track_color>,
 C<list_background_color>, C<highlight_text_color>). They take every
@@ -309,9 +318,11 @@ pictures in L</THE INPUT WIDGETS ONE BY ONE> show each widget in its
 states.
 
 Your program can ask for the state too: C<< $input->is_focused >>,
-C<< $input->is_enabled >>, or C<< $input->has_state('focused') >> with
-the state names C<focused>, C<hovered>, C<pressed> and C<disabled>
-(see L<Term::Fabulous::Widget/has_state>).
+C<< $input->is_enabled >>, C<< $input->is_valid >>, or
+C<< $input->has_state('focused') >> with the state names C<focused>,
+C<hovered>, C<pressed> and C<disabled> (see
+L<Term::Fabulous::Widget/has_state>; C<invalid> is not a widget state,
+ask C<is_valid>).
 
 =head2 Size
 
@@ -339,30 +350,91 @@ different natural widths.
 
 =head2 Checking input
 
-The inputs check nothing about the meaning of a value; only the text
-inputs have a length limit (C<max_length>), and a slider keeps its
-value within its range. Check the values yourself, either while the
-user types (in a C<Change> listener) or when the user submits the form
-(in a C<Submit> listener, or when the user activates a button), and
-show what is wrong next to the input:
+Two things keep input in shape. A text input can restrict what the
+user may type at all, with C<accept>; and every input can say whether
+its value is acceptable, with C<required> and C<validator>. They are
+separate on purpose: C<accept> is an editing rule, applied as the user
+types and pastes, C<validator> is a rule about the whole value.
+
+B<Restricting characters.> C<accept> takes the body of a character
+class (C<'0-9'>, C<'a-zA-Z '>), a regular expression every character
+must match (C<qr/\p{L}/>) or a code reference. A key the spec rejects
+does nothing; pasted text keeps its accepted characters and drops the
+rest, so pasting C<+49 170 1234> into a digits-only field inserts the
+digits. Setting C<value> from the program to a text with a rejected
+character dies: the restriction is for the user.
+
+	my $zip = Term::Fabulous::Widget::TextField->new( id => 'zip', accept => '0-9', max_length => 5 );
+
+B<Checking the value.> C<required =E<gt> 1> makes an empty value
+invalid: empty text, a dropdown without a selection, an unchecked
+checkbox. C<validator> checks a non-empty value: the name of a built-in
+validator (C<email>, C<integer>, C<number>, C<url>, C<hostname>,
+C<ip>, C<date>, C<time>), a regular expression the whole value must
+match, a code reference that returns what is wrong with the value (or
+nothing), a list of those, or a L<Term::Fabulous::Validator> object
+when a validator takes options. An empty value that is not required
+is always fine; the validator never sees it.
+
+	use Term::Fabulous::Validator;
+
+	my $name  = Term::Fabulous::Widget::TextField->new( id => 'name',  required  => 1 );
+	my $email = Term::Fabulous::Widget::TextField->new( id => 'email', validator => 'email', placeholder => 'name@example.com' );
+	my $port  = Term::Fabulous::Widget::TextField->new( id => 'port',  validator => Term::Fabulous::Validator->integer( min => 1, max => 65535 ) );
+	my $code  = Term::Fabulous::Widget::TextField->new( id => 'code',  validator => qr/\A[A-Z]{3}\z/ );
+	my $even  = Term::Fabulous::Widget::TextField->new( id => 'even',  validator => sub ($value) { $value % 2 ? 'Please enter an even number.' : undef } );
+	my $terms = Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms', required => 1 );
+
+The validators that know their characters also restrict typing:
+C<integer> lets the user type digits and a minus sign only, unless the
+field has an C<accept> of its own.
+
+B<What the user sees.> An input whose value is invalid shows the
+invalid look at once, while the user types: its text in
+C<invalid_color> and its border, where it has one, in the theme's
+C<danger> red. It does not show the message; the message is yours to
+place. C<< $input->error >> is the message right now (C<undef> when
+the value is fine), C<< $input->is_valid >> the same as a boolean, and
+the input fires L<Term::Fabulous::Event::ValidityChange> after every
+C<Change> whose message differs from the last one reported:
 
 	use Term::Fabulous::Widget::Text;
 
-	my $email = Term::Fabulous::Widget::TextField->new( id => 'email', placeholder => 'name@example.com', max_length => 80 );
-	my $error = Term::Fabulous::Widget::Text->new( text => ' ', text_color => '#e06c75' );
-
-	$email->on(
-		Submit => sub ($event) {
-			my $is_valid = $event->value =~ /\A[^@\s]+@[^@\s]+\z/;
-			$error->text( $is_valid ? ' ' : 'Please enter an e-mail address.' );
-			$ui->loop->stop if $is_valid;
+	my $hint = Term::Fabulous::Widget::Text->new( text => ' ', text_color => '#e06c75' );
+	$form->on(
+		ValidityChange => sub ($event) {
+			$hint->text( $event->error // ' ' );
 			return;
 		}
 	);
 
+B<Checking a whole form.> When the user submits, ask the form:
+C<< $form->invalid_inputs >> lists the inputs below a widget that are
+not valid, in layout order, so a C<Submit> listener (or a button) can
+stop and move the focus to the first one:
+
+	$form->on(
+		Submit => sub ($event) {
+			if ( my @invalid = $form->invalid_inputs ) {
+				$hint->text( $invalid[0]->error );
+				$ui->interaction->set_focused_widget( $invalid[0] );
+				return;
+			}
+			save( form_values($form) );
+			return;
+		}
+	);
+
+Setting a value from the program fires no C<ValidityChange>, as it
+fires no C<Change>; call C<< $input->validate >> to report it, or
+C<< $_->validate foreach $form->invalid_inputs >> once after building
+a form to show its initial state. The messages are in English by
+default; give your own with C<required_message> and the C<message>
+option of every validator (L<Term::Fabulous::Validator/CONSTRUCTORS>).
+
 The recipe
 L<A login form|Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>
-checks a whole form when the user presses C<Enter>.
+checks a whole form this way when the user presses C<Enter>.
 
 =head1 THE INPUT WIDGETS ONE BY ONE
 
@@ -1008,7 +1080,9 @@ L<Term::Fabulous::Widget::RadioGroup>, L<Term::Fabulous::Widget::RadioButton>,
 L<Term::Fabulous::Widget::Dropdown>, L<Term::Fabulous::Widget::Slider>,
 L<Term::Fabulous::Widget::StarRating>,
 L<Term::Fabulous::Widget::SegmentedControl>,
-L<Term::Fabulous::Editor>, L<Term::Fabulous::Event::Change>,
+L<Term::Fabulous::Editor>, L<Term::Fabulous::Validator>,
+L<Term::Fabulous::Event::Change>,
+L<Term::Fabulous::Event::ValidityChange>,
 L<Term::Fabulous::Event::Submit>.
 
 The recipes: L<Term::Fabulous::Cookbook::Forms>.

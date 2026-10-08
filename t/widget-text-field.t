@@ -10,6 +10,8 @@ use lib "$FindBin::Bin/lib";
 use InputTest;
 use Term::Fabulous::Termbox qw(TB_MOD_MOTION TB_MOD_SHIFT TB_REVERSE);
 use Term::Fabulous::Editor;
+use Term::Fabulous::Layout;
+use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::TextField;
 
 sub text_field {
@@ -171,6 +173,92 @@ subtest 'disabled' => sub {
 	like dies { $toggled->can_focus( 1, 0 ) }, qr/\AClay::UI: 'can_focus' takes one value/,               'so do two values';
 	$toggled->disabled(0);
 	ok $toggled->can_focus, 'but counts once enabled';
+};
+
+subtest 'accept restricts typing' => sub {
+	my ( $field, $ui ) = text_field( accept => '0-9' );
+	type_text( $field, 'a1b2' );
+	is $field->value, '12', 'rejected keys are ignored';
+	like dies { $field->value('x') }, qr/^Term::Fabulous::Widget::TextField: the text has characters that accept rejects: "x"/, 'the program may not set one';
+	$field->accept(undef);
+	type_text( $field, 'x' );
+	is $field->value, '12x', 'undef lifts the restriction';
+	like dies { $field->accept('a-z') }, qr/accept rejects: "12"/, 'a spec the text violates dies';
+	is $field->accept, undef, 'and is not kept';
+
+	my ($integer) = text_field( validator => 'integer' );
+	type_text( $integer, '-4x2' );
+	is $integer->value, '-42', 'a validator suggests the accept spec';
+	my ($own) = text_field( validator => 'integer', accept => '0-9' );
+	type_text( $own, '-4x2' );
+	is $own->value, '42', 'an explicit accept wins over the suggestion';
+	$own->validator(undef);
+	type_text( $own, '-' );
+	is $own->value, '42', 'and stays when the validator goes';
+};
+
+subtest 'required and validator' => sub {
+	my ( $field, $ui ) = text_field( validator => 'email' );
+	my @reports;
+	$field->on( ValidityChange => sub { push @reports, [ $_[0]->is_valid, $_[0]->error ]; return } );
+	ok $field->is_valid, 'an empty optional field is valid';
+	type_text( $field, 'ada@' );
+	is $field->error,                    'Please enter an e-mail address.',            'the message of the validator';
+	is \@reports,                        [ [ 0, 'Please enter an e-mail address.' ] ], 'ValidityChange once when the message appeared';
+	is $field->look_state,               'invalid',                                    'the look state';
+	is shown($field)->cell( 0, 0 )->[1], $field->color_attr( $field->invalid_color ),  'painted in the invalid color';
+	type_text( $field, 'example.com' );
+	is [ $field->is_valid, scalar @reports ], [ 1, 2 ],     'and once when it went';
+	is $reports[-1],                          [ 1, undef ], 'reported valid';
+	is shown($field)->cell( 0, 0 )->[1],      $field->color_attr( $field->text_color ), 'painted in the text color again';
+
+	$field->required(1);
+	$field->value('');
+	ok !$field->is_valid, 'an empty required field is invalid';
+	is $field->error,    'Please fill in this field.', 'with the required message';
+	is scalar @reports,  2,                            'a value set by the program reports nothing';
+	is $field->validate, 'Please fill in this field.', 'validate reports it';
+	is scalar @reports,  3,                            'and fires';
+	$field->validate;
+	is scalar @reports, 3, 'but not twice for the same message';
+	$field->required_message('Name?');
+	is $reports[-1], [ 0, 'Name?' ], 'a new message is reported';
+	$field->disabled(1);
+	is $field->look_state, 'disabled', 'disabled wins over invalid';
+	$field->disabled(0);
+
+	$field->validator( sub { $_[0] eq 'ok' ? undef : 'Say ok.' } );
+	type_text( $field, 'no' );
+	is $field->error, 'Say ok.',        'a code validator';
+	is $reports[-1],  [ 0, 'Say ok.' ], 'reported on the change';
+	like dies { $field->validator('mail') },    qr/unknown validator 'mail'/,         'an unknown name dies';
+	like dies { text_field( required => [] ) }, qr/required must be a plain boolean/, 'required is checked';
+};
+
+subtest 'KDL limits come before the value' => sub {
+	my $build = sub {
+		my ($properties) = @_;
+		return Term::Fabulous::Layout->new( string => "use Term::Fabulous::Widget::TextField as Field\nField { $properties }" )->build;
+	};
+	my $field = $build->('value "42"; accept "0-9"; validator "integer"; required #true; required_message "Number?"');
+	is [ $field->value, $field->accept, $field->validator->name, $field->required, $field->required_message ], [ '42', '0-9', 'integer', 1, 'Number?' ], 'every property is read';
+	like dies { $build->('value "abc"; validator "integer"') }, qr/accept rejects: "abc"/, 'the validator limits a value before it';
+};
+
+subtest 'invalid_inputs' => sub {
+	my $box   = Term::Fabulous::Widget::Box->new;
+	my $inner = Term::Fabulous::Widget::Box->new;
+	my $name  = Term::Fabulous::Widget::TextField->new( id => 'name', required  => 1 );
+	my $port  = Term::Fabulous::Widget::TextField->new( id => 'port', validator => qr/\A[0-9]+\z/, value => '8080' );
+	$inner->add_child($port);
+	$box->add_child( $name, $inner );
+	is [ map { $_->id } $box->invalid_inputs ], ['name'], 'the invalid inputs below a widget';
+	$port->value('x');
+	is [ map { $_->id } $box->invalid_inputs ],  [ 'name', 'port' ], 'in layout order';
+	is [ map { $_->id } $port->invalid_inputs ], ['port'],           'a widget counts itself';
+	$name->value('Ada');
+	$port->value('80');
+	is [ $box->invalid_inputs ], [], 'none when all are valid';
 };
 
 done_testing;

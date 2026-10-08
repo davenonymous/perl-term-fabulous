@@ -784,10 +784,12 @@ scrollbar thumbs and the group headers of tables at once, while a
 theme that sets C<button.border.color> changes buttons only.
 
 A slot can have a different value in a I<state> of the widget:
-C<hovered>, C<focused>, C<pressed>, C<disabled>, C<selected> or
-C<active>, where the widget shows such a state. C<button.border.color>
-in the C<focused> state is the accent by default; a state a theme
-does not set looks like the normal state.
+C<hovered>, C<focused>, C<pressed>, C<disabled>, C<selected>,
+C<active> or C<invalid>, where the widget shows such a state.
+C<button.border.color> in the C<focused> state is the accent by
+default, C<input.text> and C<input.border.color> in the C<invalid>
+state are the C<danger> token; a state a theme does not set looks like
+the normal state.
 L<Term::Fabulous::Theme/Families, slots and states> lists every
 family with its slots and their states, and the parameter of each
 widget class says which slot it reads (for example

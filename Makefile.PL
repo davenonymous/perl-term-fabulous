@@ -85,6 +85,7 @@ WriteMakefile(
 		'Object::PadX::Enum'              => '0',
 		'POSIX'                           => '0',
 		'Scalar::Util'                    => '0',
+		'Socket'                          => '0',
 		'Text::KDL::XS'                   => '0.002',
 		'Time::HiRes'                     => '0',
 		'Time::Local'                     => '1.30',

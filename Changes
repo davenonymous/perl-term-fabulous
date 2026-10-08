@@ -1,6 +1,29 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Input validation. Every input widget takes required (an empty
+          value, an unchecked checkbox or a dropdown without a selection
+          is invalid), required_message and validator: the name of a
+          built-in validator (email, integer, number, url, hostname, ip,
+          date, time), a regular expression, a code reference, a list of
+          those, or a Term::Fabulous::Validator with options (integer
+          min/max, a message of your own). The inputs gain error,
+          is_valid and validate, fire the new event
+          Term::Fabulous::Event::ValidityChange after a Change whose
+          message changed, and show an invalid value in the new theme
+          state invalid (input.text and input.border.color default to
+          the danger token; the new invalid_color parameter overrides the
+          text). Term::Fabulous::Widget's invalid_inputs lists the
+          invalid inputs below a widget. The role behind it is
+          Term::Fabulous::Role::Validatable.
+        - The text inputs take accept, which restricts the characters the
+          user may type and paste: the body of a character class (what
+          KDL writes), a regular expression per grapheme cluster or a
+          code reference; rejected clusters are dropped, the program's
+          value may not contain one. A validator that knows its
+          characters (integer, number, date, time) suggests an accept
+          spec that applies unless the input has one of its own.
+          Term::Fabulous::Editor holds it as accept and set_accept.
         - Links in Term::Fabulous::Widget::RichText: ranges of the text
           with a target, from [link=TARGET]...[/link] markup or from the
           links parameter and add_link (any value is a target). They are

@@ -11,6 +11,7 @@ use Clay::UI::Role::Interaction::Disableable;
 use Clay::UI::Role::Interaction::Focusable;
 use Clay::UI::Role::Interaction::Hoverable;
 use Clay::UI::Role::Interaction::Pressable;
+use Term::Fabulous::Role::Validatable;
 use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.01';
@@ -21,6 +22,7 @@ class Term::Fabulous::Widget::Input
 	:does(Clay::UI::Role::Interaction::Hoverable)
 	:does(Clay::UI::Role::Interaction::Pressable)
 	:does(Clay::UI::Role::Interaction::Disableable)
+	:does(Term::Fabulous::Role::Validatable)
 	:abstract
 {
 	use Clay::UI::Enum::Result;
@@ -60,14 +62,18 @@ class Term::Fabulous::Widget::Input
 			$class->SUPER::themed_params,
 			text_color             => [ 'text',       'normal',   'cell_color' ],
 			disabled_color         => [ 'text',       'disabled', 'cell_color' ],
+			invalid_color          => [ 'text',       'invalid',  'cell_color' ],
 			accent_color           => [ 'accent',     'normal',   'cell_color' ],
 			focus_background_color => [ 'background', 'focused',  'cell_color' ],
 		);
 	}
 
-	# A disabled input is neither focused nor hovered.
+	# A disabled input is neither focused nor hovered; an invalid value
+	# shows over the focus.
 	method look_state :override () {
-		return !$self->is_enabled ? 'disabled' : $self->is_focused ? 'focused' : $self->is_hovered ? 'hovered' : 'normal';
+		return 'disabled' unless $self->is_enabled;
+		return 'invalid' unless $self->is_valid;
+		return $self->is_focused ? 'focused' : $self->is_hovered ? 'hovered' : 'normal';
 	}
 
 	# The focus background is painted inside the content, not on the
@@ -90,6 +96,10 @@ class Term::Fabulous::Widget::Input
 		return @new ? $self->set_look( disabled_color => $new[0] ) : $self->look_value('disabled_color');
 	}
 
+	method invalid_color (@new) {
+		return @new ? $self->set_look( invalid_color => $new[0] ) : $self->look_value('invalid_color');
+	}
+
 	method accent_color (@new) {
 		return @new ? $self->set_look( accent_color => $new[0] ) : $self->look_value('accent_color');
 	}
@@ -98,9 +108,11 @@ class Term::Fabulous::Widget::Input
 		return @new ? $self->set_look( focus_background_color => $new[0] ) : $self->look_value('focus_background_color');
 	}
 
-	# The attribute for normal text: the text color, or the disabled color.
+	# The attribute for normal text: the text color, or the disabled or
+	# the invalid color.
 	method foreground_attr () {
-		return $self->color_attr( $self->look_value( $self->is_enabled ? 'text_color' : 'disabled_color' ) );
+		my $name = !$self->is_enabled ? 'disabled_color' : !$self->is_valid ? 'invalid_color' : 'text_color';
+		return $self->color_attr( $self->look_value($name) );
 	}
 
 	method accent_attr () {
@@ -123,9 +135,10 @@ class Term::Fabulous::Widget::Input
 	# ---------------------------------------------------------------------
 
 	# What paint reads, besides the size and the widget's own state: what
-	# other objects decide, the focus and whether the widget is enabled.
+	# other objects decide, the focus, whether the widget is enabled and
+	# whether its value is valid.
 	method paint_key :override () {
-		return ( $self->SUPER::paint_key, $self->is_focused, $self->is_enabled );
+		return ( $self->SUPER::paint_key, $self->is_focused, $self->is_enabled, $self->is_valid );
 	}
 
 	method focus_changed ($is_focused) {
@@ -171,13 +184,22 @@ class Term::Fabulous::Widget::Input
 		return;
 	}
 
+	# Fires Change, then ValidityChange when the message changed with it.
 	method fire_change ($value) {
 		$self->fire_event( Term::Fabulous::Event::Change->new( value => $value ) );
+		$self->validate;
 		return;
 	}
 
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, can_focus => 'boolean', disabled => 'boolean' );
+		return (
+			$class->SUPER::layout_properties,
+			can_focus        => 'boolean',
+			disabled         => 'boolean',
+			required         => 'boolean',
+			required_message => 'scalar',
+			validator        => 'scalar',
+		);
 	}
 }
 
@@ -197,14 +219,19 @@ Term::Fabulous::Widget::Input - Common base class of the input widgets
 	my $field = Term::Fabulous::Widget::TextField->new(
 		id                     => 'name',
 		disabled               => 0,
+		required               => 1,
+		validator              => 'email',
 		text_color             => '#dcdfe4',
 		accent_color           => [ 97, 175, 239, 255 ],
 		disabled_color         => 0x6c7078,
+		invalid_color          => 'Tomato',
 		focus_background_color => 'rgb(52, 58, 72)',
 	);
 
 	$field->disabled(1);                   # gray, ignores input, loses the focus
 	$field->accent_color('#ff8800');      # shows in the next frame
+	my $message = $field->error;           # what is wrong with the value, or undef
+	$field->on( ValidityChange => sub ($event) { $hint->text( $event->error // '' ); return } );
 
 	# A widget of your own (see SUBCLASS INTERFACE):
 	use Object::Pad;
@@ -357,8 +384,9 @@ the renderer calls the input's C<refresh>
 (L<Term::Fabulous::Widget::Canvas/refresh>), which compares the input's
 I<paint key> (see L</paint_key>) with the one it last painted for: the
 size of its buffer, how often the input was marked changed, whether it
-has the focus and whether it is enabled, and what a subclass adds, such
-as the state of its radio group. Only when the key differs does it
+has the focus, whether it is enabled, whether its value is valid, and
+what a subclass adds, such as the state of its radio group. Only when
+the key differs does it
 clear the buffer and call L</paint>. So the cells always show the state
 of the frame they are drawn in, also when the state was changed by
 another widget, and a frame that changes nothing about an input paints
@@ -428,6 +456,26 @@ says (see L</can_focus>). A L<Term::Fabulous::Widget::RadioButton> never
 takes the focus (it does not accept it, see L</accepts_focus>), so for
 it the parameter has no effect.
 
+=item C<required>
+
+A boolean, stored as 1 or 0. Default: 0. Whether an empty value is
+invalid: empty text, a dropdown without a selection, an unchecked
+checkbox (see L</value_is_empty>). See L</required>.
+
+=item C<required_message>
+
+A string. Default: C<'Please fill in this field.'>. What L</error>
+reports for an empty required value.
+
+=item C<validator>
+
+What checks a non-empty value: the name of a named validator
+(C<'email'>, C<'integer'>, C<'number'>, C<'url'>, C<'hostname'>,
+C<'ip'>, C<'date'>, C<'time'>), a regular expression the whole value
+must match, a code reference that returns what is wrong with the value
+(or false), a list of those, or a L<Term::Fabulous::Validator> for one
+with options. Default: C<undef>, any value is fine. See L</validator>.
+
 =item C<text_color>
 
 The color of the input's text. Default: the theme's C<input.text>,
@@ -439,6 +487,15 @@ The color of all text while the input is disabled, and of inactive parts
 such as scrollbar tracks. Default: the theme's C<input.text> in the
 C<disabled> state, C<[108, 112, 120, 255]> in the dark theme, a
 medium gray.
+
+=item C<invalid_color>
+
+The color of the text while the value is invalid (see L</is_valid>).
+Default: the theme's C<input.text> in the C<invalid> state, the
+C<danger> token, C<[224, 108, 117, 255]> in the dark theme, a red. The
+border of an invalid input takes C<input.border.color> in the
+C<invalid> state, the same red, unless the input has a
+C<border_color> of its own.
 
 =item C<accent_color>
 
@@ -453,7 +510,7 @@ The background of the input's content while it has the focus. Default:
 the theme's C<input.background> in the C<focused> state,
 C<[52, 58, 72, 255]> in the dark theme, a dark blue-gray.
 
-The four colors return to the theme with
+The five colors return to the theme with
 L<Term::Fabulous::Widget/reset_look>; the input's own
 C<background_color>, C<border_color> and border style come from the
 theme's C<input> family too when they are not given. See
@@ -461,7 +518,7 @@ L<Term::Fabulous::Manual::Looks/THEMES>.
 
 =back
 
-The four colors accept every color format of the canvas: a packed
+The five colors accept every color format of the canvas: a packed
 C<0xRRGGBB> integer, an C<[r, g, b]> or C<[r, g, b, a]> array reference,
 a C<{ r, g, b }> hash reference, a string such as C<'#ff8800'>,
 C<'rgb(255, 136, 0)'> or C<'hsl(32, 100%, 50%)'>, or a
@@ -537,6 +594,82 @@ the old color.
 
 Accessor for the C<disabled_color> parameter; works like
 L</text_color>.
+
+=head2 invalid_color
+
+	$input->invalid_color('#ff5555');
+
+Accessor for the C<invalid_color> parameter; works like
+L</text_color>.
+
+=head2 required
+
+	my $is_required = $input->required;
+	$input->required(1);
+
+Accessor for the C<required> parameter. Returns 1 or 0; a reference
+dies. Writing runs L</validate>, so a C<ValidityChange> is fired when
+the message changed with it.
+
+=head2 required_message
+
+	$input->required_message('Please enter your name.');
+
+Accessor for the C<required_message> parameter. A value that is not a
+string dies. Writing runs L</validate>.
+
+=head2 validator
+
+	my $validator = $input->validator;    # a Term::Fabulous::Validator, or undef
+	$input->validator('email');
+	$input->validator( qr/\A[A-Z]{3}\z/ );
+	$input->validator( sub ($value) { $value % 2 ? 'Please enter an even number.' : undef } );
+	$input->validator( [ 'hostname', qr/\.example\.com\z/ ] );
+	$input->validator( Term::Fabulous::Validator->integer( min => 1, max => 65535 ) );
+	$input->validator(undef);             # any value is fine
+
+Accessor for the validator. The reader returns the
+L<Term::Fabulous::Validator> object, whatever form it was given in,
+or C<undef>. Writing takes everything
+L<Term::Fabulous::Validator/coerce> does; an unknown name or an
+unsuitable value dies and leaves the validator as it was. Writing runs
+L</validate>. A text input also takes the C<accept> spec the validator
+suggests, as long as it was not given one of its own (see
+L<Term::Fabulous::Widget::TextInput/accept>).
+
+=head2 error
+
+	my $message = $input->error;
+
+What is wrong with the value right now, or C<undef> when it is fine:
+C<required_message> for an empty required value, else what the
+validator says about a non-empty value. An empty value that is not
+required is fine, and the validator never sees it. The value is
+checked every time you ask; nothing is cached.
+
+=head2 is_valid
+
+	if ( $input->is_valid ) { ... }
+
+True when L</error> is C<undef>. While it is false, the input shows
+the invalid look: its text in C<invalid_color> and its border, when it
+has one, in the theme's C<input.border.color> of the C<invalid> state;
+L<Term::Fabulous::Role::Themed/look_state> is C<invalid>. A disabled
+input shows the disabled look instead.
+
+=head2 validate
+
+	my $message = $input->validate;
+
+Checks the value, fires L<Term::Fabulous::Event::ValidityChange> on the
+input when the message differs from the one the last C<ValidityChange>
+reported (until the first, the input counts as reported valid), and
+returns the message or C<undef>. The input calls it after every
+C<Change> and when C<required>, C<required_message> or C<validator>
+is written; call it yourself after setting the value from the program,
+or once after building a form to report its initial state. To check a
+whole form, L<Term::Fabulous::Widget/invalid_inputs> lists the inputs
+below a widget that are not valid.
 
 =head2 accent_color
 
@@ -621,6 +754,13 @@ changes its value. Setting the value from the program never fires it.
 It bubbles to the input's ancestors unless a listener on the way
 returns something other than C<< Clay::UI::Enum::Result->CONTINUE >>.
 
+=item C<ValidityChange>
+
+L<Term::Fabulous::Event::ValidityChange>, fired by L</validate> right
+after a C<Change> when the message about the value changed with it:
+the value became invalid, valid, or invalid for another reason. It
+bubbles like C<Change>. The event carries C<is_valid> and C<error>.
+
 =item C<OnFocus>, C<OnBlur>
 
 L<Clay::UI::Events::OnFocus> and L<Clay::UI::Events::OnBlur>, fired by
@@ -666,7 +806,22 @@ Takes C<#true> or C<#false>, like the C<disabled> parameter.
 Takes C<#true> or C<#false>, like the C<can_focus> parameter; with
 C<disabled #true> in the same block the order does not matter.
 
-=item C<text_color>, C<disabled_color>, C<accent_color>, C<focus_background_color>
+=item C<required>
+
+Takes C<#true> or C<#false>, like the C<required> parameter.
+
+=item C<required_message>
+
+A string, like the C<required_message> parameter.
+
+=item C<validator>
+
+The name of a named validator (C<validator "email">); a layout cannot
+give a regular expression, code or options, set those from the
+program. A text input applies it before its C<value>, wherever it
+stands.
+
+=item C<text_color>, C<disabled_color>, C<invalid_color>, C<accent_color>, C<focus_background_color>
 
 Any L<Term::Fabulous::Color> string, such as C<"#ff8800"> or
 C<"rgb(255, 136, 0)">.
@@ -686,6 +841,10 @@ A complete layout with one disabled text field:
 			accent_color "#ff8800"
 			sizing width=grow
 		}
+		TextField "email" {
+			required #true
+			validator "email"
+		}
 	}
 
 Properties are applied after the widget was constructed, with the same
@@ -693,8 +852,8 @@ checks as the accessors of the same name. Values that depend on each
 other are applied together, so their order in the layout does not
 matter: a dropdown's C<options> come before its C<value>, a slider's
 C<min>, C<max> and C<step> are one range set before its C<value>, and a
-text input's C<max_length> comes before its C<value>. Everything else is
-applied in the order of the layout.
+text input's C<max_length>, C<accept> and C<validator> come before its
+C<value>. Everything else is applied in the order of the layout.
 
 =head1 SUBCLASS INTERFACE
 
@@ -825,15 +984,29 @@ when enabled.
 
 	$self->fire_change($new_value);
 
-Fires a L<Term::Fabulous::Event::Change> with that value on the input.
-Call it after the user changed the value, never when the program did.
+Fires a L<Term::Fabulous::Event::Change> with that value on the input,
+then runs L</validate>, which fires a C<ValidityChange> when the
+message about the value changed. Call it after the user changed the
+value, never when the program did.
+
+=head2 value_is_empty
+
+	method value_is_empty :override () { return $checked ? 0 : 1 }
+
+Whether the value counts as not filled in, which C<required> rejects
+and the validator never sees. Default: C<value> is C<undef> or the
+empty string. L<Term::Fabulous::Widget::Checkbox> overrides it: an
+unchecked box is empty. From L<Term::Fabulous::Role::Validatable>,
+which also has C<validator_changed>, the hook a text input uses to
+take the validator's suggested C<accept>.
 
 =head2 foreground_attr
 
 	my $fg = $self->foreground_attr;
 
 The termbox2 attribute of C<text_color>, or of C<disabled_color> while
-the input is disabled.
+the input is disabled, or of C<invalid_color> while its value is
+invalid.
 
 =head2 accent_attr
 

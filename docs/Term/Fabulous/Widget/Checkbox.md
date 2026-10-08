@@ -125,6 +125,10 @@ my $is_checked = $checkbox->value;
 The same as reading `checked`: 1 or 0. Read-only; use `checked` to
 change the state. This is the value `Change` events carry.
 
+A `required` checkbox (see ["required" in Term::Fabulous::Widget::Input](Input.md#required))
+counts as empty while it is unchecked, so it is invalid until the user
+checks it: the way to insist on accepted terms.
+
 ## indeterminate
 
 ```perl

@@ -21,6 +21,7 @@ use Term::Fabulous::Widget::Slider;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::TextArea;
 use Term::Fabulous::Widget::TextField;
+use Term::Fabulous::Validator;
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(:all);
@@ -92,9 +93,14 @@ my $volume = row( 'Volume',     Term::Fabulous::Widget::Slider->new( id => 'volu
 my $news   = row( 'Newsletter', Term::Fabulous::Widget::Checkbox->new( id => 'newsletter', label => 'Send me the newsletter' ) );
 my $terms  = row( 'Terms',      Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms (enables the password field)', checked => 1 ) );
 
+# Validated fields: an invalid value is painted red; the message is in the status line.
+my $email = row( 'E-mail', Term::Fabulous::Widget::TextField->new( id => 'email', validator => 'email', placeholder => 'name@example.com', preferred_columns => 30 ) );
+my $port  = row( 'Port',   Term::Fabulous::Widget::TextField->new( id => 'port', validator => Term::Fabulous::Validator->integer( min => 1, max => 65535 ), value => '8080', preferred_columns => 6 ) );
+
 $terms->on( Change => sub ($event) { $password->disabled( !$event->value ); return Clay::UI::Enum::Result->CONTINUE } );
 
-# Every Change bubbles up to the form; show the latest one.
+# Every Change bubbles up to the form; show the latest one. A
+# ValidityChange follows a Change whose value became valid or invalid.
 my $status = text('Change something.');
 $root->add_child($status);
 $form->on(
@@ -102,6 +108,12 @@ $form->on(
 		my $value = $event->value // 'nothing';
 		$value =~ s/\n/\x{21B5}/g;
 		$status->text( sprintf '%s changed to: %s', $event->target->id, $value );
+		return;
+	}
+);
+$form->on(
+	ValidityChange => sub ($event) {
+		$status->text( sprintf '%s: %s', $event->target->id, $event->error // 'fine now' );
 		return;
 	}
 );

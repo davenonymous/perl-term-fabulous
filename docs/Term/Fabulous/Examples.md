@@ -339,18 +339,18 @@ pointer over the Reset button.
 
 ### examples/form.pl
 
-Every input widget in one form, built in Perl: text fields (one masked),
-a text area, a dropdown, radio buttons, a slider and check boxes, with
-labels of equal width. A status line shows every change; checking
-"I accept the terms" enables the password field. Tab and Shift+Tab move
-between the inputs. See
-["FORMS AND INPUT WIDGETS" in Term::Fabulous::Manual::Forms](Manual/Forms.md#forms-and-input-widgets).
+Every input widget in one form, built in Perl: text fields (one masked,
+two validated), a text area, a dropdown, radio buttons, a slider and
+check boxes, with labels of equal width. A status line shows every
+change and what is wrong with an invalid value; checking "I accept the
+terms" enables the password field. Tab and Shift+Tab move between the
+inputs. See ["FORMS AND INPUT WIDGETS" in Term::Fabulous::Manual::Forms](Manual/Forms.md#forms-and-input-widgets).
 
-The picture shows it after typing a name and a note and choosing a
-color from the dropdown.
+The picture shows it after typing a name and a note, choosing a color
+from the dropdown and starting an e-mail address.
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter, terms, e-mail and port; the e-mail field holds ada@ in red and the status line says email: Please enter an e-mail address."></p>
 </div>
 
 ### examples/custom-widget.pl

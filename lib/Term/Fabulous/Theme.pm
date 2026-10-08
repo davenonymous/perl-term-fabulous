@@ -20,7 +20,7 @@ class Term::Fabulous::Theme :strict(params) {
 	# The vocabulary: palette tokens, families with their slots and states.
 	# ---------------------------------------------------------------------
 
-	my @STATES   = qw(hovered focused pressed disabled selected active);
+	my @STATES   = qw(hovered focused pressed disabled selected active invalid);
 	my %IS_STATE = map { $_ => 1 } 'normal', @STATES;
 
 	# Every token, with its value in the built-in dark and light themes.
@@ -104,8 +104,8 @@ class Term::Fabulous::Theme :strict(params) {
 			extends => 'box',
 			slots   => {
 				'background'       => _color_slot( 'none',   focused  => 'focus_background', disabled => 'normal' ),
-				'border.color'     => _color_slot( 'border', focused  => 'normal',           disabled => 'normal' ),
-				'text'             => _color_slot( 'text',   disabled => 'disabled' ),
+				'border.color'     => _color_slot( 'border', focused  => 'normal',   disabled => 'normal', invalid => 'danger' ),
+				'text'             => _color_slot( 'text',   disabled => 'disabled', invalid  => 'danger' ),
 				'accent'           => _color_slot('accent'),
 				'star'             => _required( _color_slot('warning') ),
 				'placeholder'      => _color_slot('placeholder'),
@@ -790,7 +790,7 @@ C<border.style>, C<text>, C<accent>, C<line.color>, ... Slots whose
 name ends in C<style> take a border style name; all others take a
 color. A slot has a value for the C<normal> state and, where the
 widget shows states, for some of C<hovered>, C<focused>, C<pressed>,
-C<disabled>, C<selected> and C<active>. A state that a theme does not
+C<disabled>, C<selected>, C<active> and C<invalid>. A state that a theme does not
 set looks like the normal state. L</slots> lists the slots of a family
 with their states.
 

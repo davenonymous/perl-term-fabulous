@@ -38,8 +38,22 @@ sub text ( $string, $color = [ 220, 220, 220, 255 ] ) {
 	return Term::Fabulous::Widget::Text->new( text => $string, text_color => $color );
 }
 
-my $user     = Term::Fabulous::Widget::TextField->new( id => 'user', placeholder => 'User name', layout => { sizing => { width => sizing_grow() } } );
-my $password = Term::Fabulous::Widget::TextField->new( id => 'password', placeholder => 'Password', layout => { sizing => { width => sizing_grow() } }, mask => '*' );
+my $user = Term::Fabulous::Widget::TextField->new(
+	id               => 'user',
+	placeholder      => 'User name',
+	required         => 1,
+	required_message => 'Please enter your user name.',
+	accept           => 'a-zA-Z0-9_.-',
+	layout           => { sizing => { width => sizing_grow() } },
+);
+my $password = Term::Fabulous::Widget::TextField->new(
+	id               => 'password',
+	placeholder      => 'Password',
+	required         => 1,
+	required_message => 'Please enter your password.',
+	mask             => '*',
+	layout           => { sizing => { width => sizing_grow() } },
+);
 my $remember = Term::Fabulous::Widget::Checkbox->new( id => 'remember', label => 'Remember me' );
 my $message  = text( 'Enter in a field logs in.', [ 150, 160, 180, 255 ] );
 $dialog->add_child( text('Log in'), $user, $password, $remember, $message );
@@ -47,9 +61,9 @@ $dialog->add_child( text('Log in'), $user, $password, $remember, $message );
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
 sub log_in () {
-	if ( $user->value eq '' || $password->value eq '' ) {
-		$message->text('Please fill in both fields.');
-		$ui->interaction->set_focused_widget( $user->value eq '' ? $user : $password );
+	if ( my @invalid = $dialog->invalid_inputs ) {
+		$message->text( $invalid[0]->error );
+		$ui->interaction->set_focused_widget( $invalid[0] );
 		return;
 	}
 	$message->text( sprintf 'Welcome, %s!%s', $user->value, $remember->checked ? ' (remembered)' : '' );

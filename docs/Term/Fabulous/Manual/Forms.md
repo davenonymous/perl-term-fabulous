@@ -77,11 +77,12 @@ box sees every change.
     ["Segmented controls"](#segmented-controls).
 
 `examples/form.pl` uses all of them in one form. The picture shows it
-after the user typed a name and a note and chose a color; the status
-line at the bottom shows the last `Change`.
+after the user typed a name and a note, chose a color and started an
+e-mail address; the status line at the bottom shows the last `Change`
+or, as here, what is wrong with a value (see ["Checking input"](#checking-input)).
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter and terms, and the status line color changed to: Yellow"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter, terms, e-mail and port; the e-mail field holds ada@ in red and the status line says email: Please enter an e-mail address."></p>
 </div>
 
 All input widgets except the radio group are subclasses of
@@ -232,6 +233,10 @@ shows the cursor as a block (the character under it in reverse video),
 a slider paints its thumb in `text_color`, and a radio group highlights
 the button the keyboard is on.
 - **Disabled**: everything in `disabled_color`.
+- **Invalid**: the text in `invalid_color` and the border, where there
+is one, in the theme's red, while the value is empty but `required`
+or rejected by the `validator` (see ["Checking input"](#checking-input)). A disabled
+input shows the disabled look instead.
 - **Placeholder**: an empty text input, or a dropdown without a selection,
 shows its `placeholder` in `placeholder_color`.
 - **Masked**: a text field with a `mask` shows the mask character for
@@ -243,7 +248,8 @@ filled part of a slider, the dropdown's arrow and the border of its
 open list are painted in `accent_color`.
 
 The colors are parameters and accessors of every input (`text_color`,
-`disabled_color`, `accent_color`, `focus_background_color`, see
+`disabled_color`, `invalid_color`, `accent_color`,
+`focus_background_color`, see
 ["CONSTRUCTOR" in Term::Fabulous::Widget::Input](../Widget/Input.md#constructor)) and of some inputs only
 (`placeholder_color`, `selection_color`, `track_color`,
 `list_background_color`, `highlight_text_color`). They take every
@@ -252,9 +258,11 @@ pictures in ["THE INPUT WIDGETS ONE BY ONE"](#the-input-widgets-one-by-one) show
 states.
 
 Your program can ask for the state too: `$input->is_focused`,
-`$input->is_enabled`, or `$input->has_state('focused')` with
-the state names `focused`, `hovered`, `pressed` and `disabled`
-(see ["has\_state" in Term::Fabulous::Widget](../Widget.md#has_state)).
+`$input->is_enabled`, `$input->is_valid`, or
+`$input->has_state('focused')` with the state names `focused`,
+`hovered`, `pressed` and `disabled` (see
+["has\_state" in Term::Fabulous::Widget](../Widget.md#has_state); `invalid` is not a widget state,
+ask `is_valid`).
 
 ## Size
 
@@ -284,32 +292,99 @@ different natural widths.
 
 ## Checking input
 
-The inputs check nothing about the meaning of a value; only the text
-inputs have a length limit (`max_length`), and a slider keeps its
-value within its range. Check the values yourself, either while the
-user types (in a `Change` listener) or when the user submits the form
-(in a `Submit` listener, or when the user activates a button), and
-show what is wrong next to the input:
+Two things keep input in shape. A text input can restrict what the
+user may type at all, with `accept`; and every input can say whether
+its value is acceptable, with `required` and `validator`. They are
+separate on purpose: `accept` is an editing rule, applied as the user
+types and pastes, `validator` is a rule about the whole value.
+
+**Restricting characters.** `accept` takes the body of a character
+class (`'0-9'`, `'a-zA-Z '`), a regular expression every character
+must match (`qr/\p{L}/`) or a code reference. A key the spec rejects
+does nothing; pasted text keeps its accepted characters and drops the
+rest, so pasting `+49 170 1234` into a digits-only field inserts the
+digits. Setting `value` from the program to a text with a rejected
+character dies: the restriction is for the user.
+
+```perl
+my $zip = Term::Fabulous::Widget::TextField->new( id => 'zip', accept => '0-9', max_length => 5 );
+```
+
+**Checking the value.** `required => 1` makes an empty value
+invalid: empty text, a dropdown without a selection, an unchecked
+checkbox. `validator` checks a non-empty value: the name of a built-in
+validator (`email`, `integer`, `number`, `url`, `hostname`,
+`ip`, `date`, `time`), a regular expression the whole value must
+match, a code reference that returns what is wrong with the value (or
+nothing), a list of those, or a [Term::Fabulous::Validator](../Validator.md) object
+when a validator takes options. An empty value that is not required
+is always fine; the validator never sees it.
+
+```perl
+use Term::Fabulous::Validator;
+
+my $name  = Term::Fabulous::Widget::TextField->new( id => 'name',  required  => 1 );
+my $email = Term::Fabulous::Widget::TextField->new( id => 'email', validator => 'email', placeholder => 'name@example.com' );
+my $port  = Term::Fabulous::Widget::TextField->new( id => 'port',  validator => Term::Fabulous::Validator->integer( min => 1, max => 65535 ) );
+my $code  = Term::Fabulous::Widget::TextField->new( id => 'code',  validator => qr/\A[A-Z]{3}\z/ );
+my $even  = Term::Fabulous::Widget::TextField->new( id => 'even',  validator => sub ($value) { $value % 2 ? 'Please enter an even number.' : undef } );
+my $terms = Term::Fabulous::Widget::Checkbox->new( id => 'terms', label => 'I accept the terms', required => 1 );
+```
+
+The validators that know their characters also restrict typing:
+`integer` lets the user type digits and a minus sign only, unless the
+field has an `accept` of its own.
+
+**What the user sees.** An input whose value is invalid shows the
+invalid look at once, while the user types: its text in
+`invalid_color` and its border, where it has one, in the theme's
+`danger` red. It does not show the message; the message is yours to
+place. `$input->error` is the message right now (`undef` when
+the value is fine), `$input->is_valid` the same as a boolean, and
+the input fires [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md) after every
+`Change` whose message differs from the last one reported:
 
 ```perl
 use Term::Fabulous::Widget::Text;
 
-my $email = Term::Fabulous::Widget::TextField->new( id => 'email', placeholder => 'name@example.com', max_length => 80 );
-my $error = Term::Fabulous::Widget::Text->new( text => ' ', text_color => '#e06c75' );
-
-$email->on(
-        Submit => sub ($event) {
-                my $is_valid = $event->value =~ /\A[^@\s]+@[^@\s]+\z/;
-                $error->text( $is_valid ? ' ' : 'Please enter an e-mail address.' );
-                $ui->loop->stop if $is_valid;
+my $hint = Term::Fabulous::Widget::Text->new( text => ' ', text_color => '#e06c75' );
+$form->on(
+        ValidityChange => sub ($event) {
+                $hint->text( $event->error // ' ' );
                 return;
         }
 );
 ```
 
+**Checking a whole form.** When the user submits, ask the form:
+`$form->invalid_inputs` lists the inputs below a widget that are
+not valid, in layout order, so a `Submit` listener (or a button) can
+stop and move the focus to the first one:
+
+```perl
+$form->on(
+        Submit => sub ($event) {
+                if ( my @invalid = $form->invalid_inputs ) {
+                        $hint->text( $invalid[0]->error );
+                        $ui->interaction->set_focused_widget( $invalid[0] );
+                        return;
+                }
+                save( form_values($form) );
+                return;
+        }
+);
+```
+
+Setting a value from the program fires no `ValidityChange`, as it
+fires no `Change`; call `$input->validate` to report it, or
+`$_->validate foreach $form->invalid_inputs` once after building
+a form to show its initial state. The messages are in English by
+default; give your own with `required_message` and the `message`
+option of every validator (["CONSTRUCTORS" in Term::Fabulous::Validator](../Validator.md#constructors)).
+
 The recipe
 [A login form](../Cookbook/Forms.md#a-login-form-centered-dialog-masked-password)
-checks a whole form when the user presses `Enter`.
+checks a whole form this way when the user presses `Enter`.
 
 # THE INPUT WIDGETS ONE BY ONE
 
@@ -901,7 +976,9 @@ The class pages: [Term::Fabulous::Widget::Input](../Widget/Input.md),
 [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md), [Term::Fabulous::Widget::Slider](../Widget/Slider.md),
 [Term::Fabulous::Widget::StarRating](../Widget/StarRating.md),
 [Term::Fabulous::Widget::SegmentedControl](../Widget/SegmentedControl.md),
-[Term::Fabulous::Editor](../Editor.md), [Term::Fabulous::Event::Change](../Event/Change.md),
+[Term::Fabulous::Editor](../Editor.md), [Term::Fabulous::Validator](../Validator.md),
+[Term::Fabulous::Event::Change](../Event/Change.md),
+[Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md),
 [Term::Fabulous::Event::Submit](../Event/Submit.md).
 
 The recipes: [Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md).

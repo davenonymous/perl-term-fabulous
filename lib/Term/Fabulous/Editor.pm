@@ -10,7 +10,8 @@ our $VERSION = '0.01';
 use Object::Pad 0.825;
 
 class Term::Fabulous::Editor :strict(params) {
-	use List::Util qw(sum0);
+	use Feature::Compat::Try;
+	use List::Util qw(sum0 uniq);
 	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Unicode qw(grapheme_clusters);
 
@@ -26,6 +27,12 @@ class Term::Fabulous::Editor :strict(params) {
 
 	field $multi_line :param :reader = 1;
 	field $max_length :param = undef;
+
+	# Which grapheme clusters may enter the text: the spec as given (a
+	# character class body, a regular expression or a code reference) and
+	# the predicate it means; both undef when every cluster may.
+	field $accept :param :reader = undef;
+	field $is_accepted;
 
 	field @lines = ('');
 
@@ -57,6 +64,7 @@ class Term::Fabulous::Editor :strict(params) {
 
 	ADJUST :params ( :$text = '' ) {
 		$self->set_max_length($max_length);
+		$self->set_accept($accept);
 		$self->set_text($text);
 	}
 
@@ -90,6 +98,55 @@ class Term::Fabulous::Editor :strict(params) {
 		return sum0 map { scalar( @{ _boundaries($_) } ) - 1 } split /\n/, $text, -1;
 	}
 
+	# The predicate for a grapheme cluster that an accept spec means: a
+	# code reference as it is, a regular expression the cluster must match,
+	# a string as the body of a character class. Undef means no restriction.
+	sub _acceptance_of ($spec) {
+		return undef unless defined $spec;
+		return $spec if ref $spec eq 'CODE';
+		return sub ($cluster) { $cluster =~ $spec }
+			if ref $spec eq 'Regexp';
+		die "Term::Fabulous::Editor: accept must be a character class body, a regular expression, a code reference or undef, got " . describe($spec) if ref $spec;
+
+		my $class;
+		try {
+			$class = qr/\A[$spec]\z/;
+		}
+		catch ($error) {
+			die "Term::Fabulous::Editor: accept '$spec' is not the body of a character class: $error";
+		}
+		return sub ($cluster) { $cluster =~ $class };
+	}
+
+	# The distinct clusters of $text (line breaks aside) that the predicate
+	# rejects.
+	sub _rejected_by ( $is_accepted, $text ) {
+		return () unless defined $is_accepted;
+		return uniq grep { !$is_accepted->($_) } map { grapheme_clusters($_) } split /\n/, $text;
+	}
+
+	sub _die_for_rejected (@rejected) {
+		die 'Term::Fabulous::Editor: the text has characters that accept rejects: "' . join( '', @rejected ) . '"';
+	}
+
+	method set_accept ($spec) {
+		my $is_accepted_now = _acceptance_of($spec);
+		my @rejected        = _rejected_by( $is_accepted_now, $self->text );
+		_die_for_rejected(@rejected) if @rejected;
+		( $accept, $is_accepted ) = ( $spec, $is_accepted_now );
+		return $self;
+	}
+
+	# $text without the clusters that accept rejects; line breaks stay.
+	method _accepted ($text) {
+		return $text unless defined $is_accepted;
+		return join "\n", map { $self->_accepted_line($_) } split /\n/, $text, -1;
+	}
+
+	method _accepted_line ($line) {
+		return join q{}, grep { $is_accepted->($_) } grapheme_clusters($line);
+	}
+
 	method text () {
 		return join "\n", @lines;
 	}
@@ -99,6 +156,8 @@ class Term::Fabulous::Editor :strict(params) {
 		my $length = _cluster_count($text) + ( $text =~ tr/\n// );
 		die "Term::Fabulous::Editor: the text has $length characters, more than max_length $max_length"
 			if defined $max_length && $length > $max_length;
+		my @rejected = _rejected_by( $is_accepted, $text );
+		_die_for_rejected(@rejected) if @rejected;
 
 		@lines      = split /\n/, $text, -1;
 		@lines      = ('') unless @lines;
@@ -416,8 +475,19 @@ class Term::Fabulous::Editor :strict(params) {
 		return @range ? @range : ( @cursor, @cursor );
 	}
 
+	# What of $text may go in at the cursor: normalized, without the
+	# clusters accept rejects, cut to fit max_length. Undef when the text
+	# was not empty but nothing of it is accepted; such an edit does
+	# nothing, not even replace the selection.
+	method _insertable ($text) {
+		my $normalized = $self->_normalize($text);
+		my $accepted   = $self->_accepted($normalized);
+		return undef if length $normalized && !length $accepted;
+		return $self->_fitting($accepted);
+	}
+
 	method insert ($text) {
-		$text = $self->_fitting( $self->_normalize($text) );
+		$text = $self->_insertable($text) // return 0;
 		return 0 unless length $text || $self->has_selection;
 		return $self->_edit( undef, sub { $self->_replace( $self->_replaced_range, $text ) } );
 	}
@@ -425,7 +495,7 @@ class Term::Fabulous::Editor :strict(params) {
 	# Like insert, for text the user types: consecutive typing is undone
 	# word by word.
 	method type ($text) {
-		$text = $self->_fitting( $self->_normalize($text) );
+		$text = $self->_insertable($text) // return 0;
 		return 0 unless length $text || $self->has_selection;
 		my $run = !length $text ? undef : $text =~ /\A\s+\z/ ? 'space' : 'word';
 		return $self->_edit( $run, sub { $self->_replace( $self->_replaced_range, $text ) } );
@@ -609,6 +679,7 @@ L<Term::Fabulous::Widget::TextInput/editor>).
 		text       => '',
 		multi_line => 1,
 		max_length => undef,
+		accept     => undef,
 	);
 
 All parameters are optional. Unknown parameters die, and so do invalid
@@ -634,6 +705,12 @@ A non-negative integer, or C<undef>. Default: C<undef> (no limit). The
 most grapheme clusters the text may hold; every line break counts as
 one. Inserted and typed text is cut to fit. Dies if it is not a
 non-negative integer or C<undef>.
+
+=item C<accept>
+
+Which grapheme clusters may enter the text, as for L</set_accept>.
+Default: C<undef> (every cluster). Dies, as C<set_accept> does, if the
+initial text has a cluster the spec rejects.
 
 =back
 
@@ -719,6 +796,35 @@ The length limit, or C<undef> for none.
 
 Sets the length limit. Returns the editor. Dies if the limit is not a
 non-negative integer or C<undef>, or if the text is already longer.
+
+=head2 accept
+
+	my $spec = $editor->accept;
+
+The accept spec as it was given to L</set_accept>, or C<undef> for
+none.
+
+=head2 set_accept
+
+	$editor->set_accept('0-9');                             # digits only
+	$editor->set_accept(qr/\p{L}/);                         # letters of any script
+	$editor->set_accept( sub ($cluster) { $cluster ne ' ' } );
+	$editor->set_accept(undef);                             # everything again
+
+Restricts which grapheme clusters may enter the text. The spec is the
+body of a character class (what a KDL layout writes; C<'0-9'> means
+C<qr/[0-9]/>), a regular expression that every cluster must match, a
+code reference called with each cluster that returns true to accept
+it, or C<undef> for no restriction. Returns the editor.
+
+L</insert> and L</type> drop the clusters the spec rejects and keep
+the rest, so pasting C<+49 170 1234> into a digits-only editor inserts
+the digits; an insertion of which nothing is accepted does nothing at
+all, not even replace the selection. Line breaks are never subject to
+the spec. L</set_text> is for the program and dies instead, as it does
+for C<max_length>; so does C<set_accept> itself when the text already
+has a rejected cluster. Dies for a string that is not a valid
+character class body and for any other kind of value.
 
 =head2 revision
 
@@ -891,9 +997,11 @@ methods on the text model.
 	$editor->insert('text');
 
 Inserts a character string at the cursor, replacing the selection. Line
-breaks are converted as in L</set_text>. With C<max_length>, only as
-much of the text as fits is inserted. Inserting an empty string with a
-selection deletes the selection.
+breaks are converted as in L</set_text>. With an L</accept> spec, the
+clusters it rejects are left out; when that leaves nothing of a
+non-empty string, nothing happens and 0 is returned. With
+C<max_length>, only as much of the text as fits is inserted. Inserting
+an empty string with a selection deletes the selection.
 
 =head2 type
 

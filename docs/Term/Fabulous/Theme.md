@@ -92,7 +92,7 @@ A slot is one colored or styled part: `background`, `border.color`,
 name ends in `style` take a border style name; all others take a
 color. A slot has a value for the `normal` state and, where the
 widget shows states, for some of `hovered`, `focused`, `pressed`,
-`disabled`, `selected` and `active`. A state that a theme does not
+`disabled`, `selected`, `active` and `invalid`. A state that a theme does not
 set looks like the normal state. ["slots"](#slots) lists the slots of a family
 with their states.
 

@@ -162,4 +162,11 @@ subtest 'the list opens upwards without room below' => sub {
 	is $lines[8], ( ' ' x 8 ) . "\x{25B4}", 'the arrow points up';
 };
 
+subtest 'required means a selection' => sub {
+	my ( $dropdown, $ui ) = dropdown( required => 1 );
+	is $dropdown->error, 'Please fill in this field.', 'no selection is invalid';
+	$dropdown->value('Red');
+	ok $dropdown->is_valid, 'a selection is valid';
+};
+
 done_testing;

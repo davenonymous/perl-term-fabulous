@@ -177,6 +177,7 @@ the sections below it describe each event.
 	Resize           the root                          (no parent)
 	CanvasResize     the canvas                        yes
 	Change           the input (radio: its group)      yes
+	ValidityChange   the input                         yes
 	Submit           the text field                    yes
 	Activate         the Button                        yes
 	Close            the Dialog or the Toast           (no parent then)
@@ -292,6 +293,14 @@ C<value>. Not fired when your code sets a value with C<value> or
 C<checked>; the methods that act like the user, such as
 C<< $checkbox->toggle >>, C<< $group->choose($button) >> and
 C<< $dropdown->choose($index) >>, do fire it.
+
+=item C<ValidityChange> (L<Term::Fabulous::Event::ValidityChange>)
+
+The message an input widget has about its value changed: the value
+became invalid, valid, or invalid for another reason. Fired on the
+input right after the C<Change> it follows, and by
+C<< $input->validate >>. Fields: C<is_valid>, C<error>. See
+L<Term::Fabulous::Manual::Forms/Checking input>.
 
 =item C<Submit> (L<Term::Fabulous::Event::Submit>)
 

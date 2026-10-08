@@ -12,7 +12,7 @@ subtest 'the vocabulary' => sub {
 	my @families = Term::Fabulous::Theme::families();
 	is \@families, [ sort @families ], 'families are sorted';
 	ok( ( grep { $_ eq 'button' } @families ), 'button is a family' );
-	is [ Term::Fabulous::Theme::states() ], [qw(normal hovered focused pressed disabled selected active)], 'the states, normal first';
+	is [ Term::Fabulous::Theme::states() ], [qw(normal hovered focused pressed disabled selected active invalid)], 'the states, normal first';
 	ok( ( grep { $_ eq 'accent' } Term::Fabulous::Theme::tokens() ), 'accent is a token' );
 	is [ Term::Fabulous::Theme::builtin_names() ], [qw(dark light)], 'two built-in themes';
 
@@ -20,6 +20,7 @@ subtest 'the vocabulary' => sub {
 	is $states_of{'border.color'}, [qw(disabled focused hovered pressed)], 'a stateful slot lists its states';
 	is $states_of{'border.style'}, [],                                     'a style slot has no states';
 	ok exists $states_of{background}, 'button inherits the slots of box';
+	is +{ Term::Fabulous::Theme::slots('input') }->{text}, [qw(disabled invalid)], 'the text of an input has the invalid state';
 
 	ok Term::Fabulous::Theme::is_family('text'),                         'is_family';
 	ok !Term::Fabulous::Theme::is_family('Button'),                      'family names are lower case';

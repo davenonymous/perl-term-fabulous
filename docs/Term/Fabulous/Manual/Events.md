@@ -160,6 +160,7 @@ the sections below it describe each event.
 | Resize          | the root                         | (no parent)      |
 | CanvasResize    | the canvas                       | yes              |
 | Change          | the input (radio: its group)     | yes              |
+| ValidityChange  | the input                        | yes              |
 | Submit          | the text field                   | yes              |
 | Activate        | the Button                       | yes              |
 | Close           | the Dialog or the Toast          | (no parent then) |
@@ -265,6 +266,14 @@ the sections below it describe each event.
     `checked`; the methods that act like the user, such as
     `$checkbox->toggle`, `$group->choose($button)` and
     `$dropdown->choose($index)`, do fire it.
+
+- `ValidityChange` ([Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md))
+
+    The message an input widget has about its value changed: the value
+    became invalid, valid, or invalid for another reason. Fired on the
+    input right after the `Change` it follows, and by
+    `$input->validate`. Fields: `is_valid`, `error`. See
+    ["Checking input" in Term::Fabulous::Manual::Forms](Forms.md#checking-input).
 
 - `Submit` ([Term::Fabulous::Event::Submit](../Event/Submit.md))
 

@@ -1382,8 +1382,9 @@ fires C<Start> instead; see L<Term::Fabulous::Event::Resize>.
 
 =back
 
-Widgets fire further events themselves: C<Change> from the input
-widgets, C<Submit> from L<Term::Fabulous::Widget::TextField>,
+Widgets fire further events themselves: C<Change> and
+C<ValidityChange> from the input widgets, C<Submit> from
+L<Term::Fabulous::Widget::TextField>,
 C<Activate> from L<Term::Fabulous::Widget::Button>, C<Close> from
 L<Term::Fabulous::Widget::Dialog>, C<CanvasResize> from canvases,
 C<SeriesHover> from charts, the table events (C<CursorMove>,
@@ -1886,6 +1887,10 @@ A canvas got a new size from the layout.
 
 The user changed the value of an input widget.
 
+=item L<Term::Fabulous::Event::ValidityChange>
+
+The value of an input widget became valid or invalid.
+
 =item L<Term::Fabulous::Event::Submit>
 
 The user pressed Enter in a text field.
@@ -1982,6 +1987,12 @@ key moves to.
 A value in a range on a grid of steps (snapping, keys, formats), behind
 the slider, the star rating and the progress bar; and how such a widget
 takes its range from a layout in one piece.
+
+=item L<Term::Fabulous::Validator>, L<Term::Fabulous::Role::Validatable>
+
+The checks behind the C<validator> and C<required> parameters of the
+inputs: e-mail addresses, numbers in a range, patterns, your own code;
+and the role that gives a widget C<error>, C<is_valid> and C<validate>.
 
 =item L<Term::Fabulous::Unicode>
 
