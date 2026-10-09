@@ -97,6 +97,45 @@ subtest 'a widget reads the theme of its UI' => sub {
 	is $late->text_color, $dark->token('text'), 'and the default theme again once it left';
 };
 
+class Test::PreviewUI :isa(Term::Fabulous::Static) {
+	field $preview :param;
+	field $preview_theme = 'light';
+
+	method theme_for :override ($widget) {
+		return $self->SUPER::theme_for($widget) unless $preview->contains($widget);
+		return Term::Fabulous::Theme->builtin($preview_theme);
+	}
+
+	method preview_theme ($theme) {
+		$preview_theme = $theme;
+		$self->refresh_looks;
+		return $self;
+	}
+}
+
+subtest 'a UI subclass gives part of its tree another theme' => sub {
+	my $outside = Term::Fabulous::Widget::Text->new( text => 'controls' );
+	my $inside  = Term::Fabulous::Widget::Text->new( text => 'preview' );
+	my $preview = Term::Fabulous::Widget::Box->new;
+	$preview->add_child($inside);
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child( $outside, $preview );
+	my $ui = Test::PreviewUI->new( root => $root, width => 20, preview => $preview );
+
+	ref_is $ui->theme_for($outside), $dark, 'theme_for is the UI\'s theme by default';
+	is $outside->text_color, $dark->token('text'),  'a widget outside the preview reads the UI\'s theme';
+	is $inside->text_color,  $light->token('text'), 'a widget inside reads what theme_for returns';
+
+	my $generation = Term::Fabulous::Theme::generation();
+	ref_is $ui->refresh_looks, $ui, 'refresh_looks returns the UI';
+	is Term::Fabulous::Theme::generation(), $generation + 1, 'and bumps the generation';
+	$ui->preview_theme('dark');
+	is $inside->text_color, $dark->token('text'), 'after refresh_looks the preview reads the new theme';
+	$ui->preview_theme('light');
+	$ui->theme($red);
+	is [ $outside->text_color, $inside->text_color ], [ [ 255, 0, 0, 255 ], $light->token('text') ], 'a theme switch reaches the rest of the tree only';
+};
+
 subtest 'explicit values win and reset_look returns to the theme' => sub {
 	my $text = Term::Fabulous::Widget::Text->new( text => 'x', text_color => '#123456' );
 	is $text->text_color,                [ 18, 52, 86, 255 ], 'an explicit color';

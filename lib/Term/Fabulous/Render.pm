@@ -116,10 +116,23 @@ role Term::Fabulous::Render
 	method theme (@new) {
 		return $theme unless @new;
 		$theme = _checked_theme( $new[0] );
+		$self->refresh_looks;
+		return $theme;
+	}
+
+	# The theme a widget of the tree draws with (Term::Fabulous::Role::Themed
+	# asks): the UI's. A subclass may give parts of its tree another theme;
+	# it calls refresh_looks when what it returns changes.
+	method theme_for ($widget) {
+		return $theme;
+	}
+
+	# Every widget looks its looks up again in the next frame.
+	method refresh_looks () {
 		Term::Fabulous::Theme::bump_generation();
 		Term::Fabulous::Role::Themed::forget_tree_looks( $self->root );
 		bump_revision();
-		return $theme;
+		return $self;
 	}
 
 	# Clay measures single words and single lines, so the height is one cell.
@@ -331,6 +344,46 @@ looks again, calls C<looks_changed> on every widget of the tree that
 has such a method (see L<Term::Fabulous::Role::Themed/looks_changed>)
 and draws a frame. Widgets that were given a color or a border style
 explicitly keep it; see L<Term::Fabulous::Manual::Looks/THEMES>.
+
+=head2 theme_for
+
+	my $theme = $ui->theme_for($widget);
+
+The theme a widget of the tree draws with: the one L</theme> returns.
+L<Term::Fabulous::Role::Themed> asks this method whenever a widget
+looks its looks up, so a subclass of the UI class can override it to
+give a part of its tree another theme, for example a preview of a theme
+next to the controls that edit it (L<Term::Fabulous::ThemeEditor> does
+that):
+
+	class My::UI :isa(Term::Fabulous) {
+		field $preview :param;          # a Box: the part drawn in $preview_theme
+		field $preview_theme = 'light';
+
+		method theme_for :override ($widget) {
+			return $self->SUPER::theme_for($widget) unless $preview->contains($widget);
+			return Term::Fabulous::Theme->builtin($preview_theme);
+		}
+
+		method preview_theme ($name) {
+			$preview_theme = $name;
+			$self->refresh_looks;    # what theme_for returns changed
+			return $self;
+		}
+	}
+
+The override must be cheap (it runs for every widget once after every
+change of the looks) and must call L</refresh_looks> whenever what it
+returns changes. The screen background always comes from L</theme>.
+
+=head2 refresh_looks
+
+	$ui->refresh_looks;
+
+Makes every widget read its looks again, calls C<looks_changed> on
+every widget of the tree that has such a method and draws a frame, as
+setting L</theme> does. Call it after a change that L</theme_for>
+reports. Returns the UI.
 
 =head2 draw
 

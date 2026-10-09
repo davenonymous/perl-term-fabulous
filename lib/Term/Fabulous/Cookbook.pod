@@ -243,6 +243,10 @@ L<Switch themes at run time (built-in themes and a theme file)|Term::Fabulous::C
 
 =item *
 
+L<Design a theme against your own screen (the theme editor)|Term::Fabulous::Cookbook::Layout/Design a theme against your own screen (the theme editor)>
+
+=item *
+
 L<Mark widgets with states and classes|Term::Fabulous::Cookbook::Layout/Mark widgets with states and classes>
 
 =item *

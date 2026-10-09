@@ -726,7 +726,9 @@ Cut: copy the selection to the clipboard and delete it.
 =item C<Ctrl+Insert>
 
 Copy the selection to the clipboard. C<Ctrl+C> is not copy: it stops
-L<Term::Fabulous>.
+L<Term::Fabulous> (unless the UI was made with
+C<< stop_on_ctrl_c =E<gt> 0 >>; the input does not use C<Ctrl+C> either
+way, so a program can bind it).
 
 =item C<Ctrl+V>, C<Shift+Insert>
 

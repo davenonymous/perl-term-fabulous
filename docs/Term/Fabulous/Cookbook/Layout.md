@@ -8,7 +8,8 @@ This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: 
 
 This page shows how to arrange widgets and how they look: labels of
 equal width, borders that differ per side, colors derived from one
-base color and switched at run time, states and classes to style
+base color and switched at run time, a theme designed in the theme
+editor against a screen of your own, states and classes to style
 widgets from, and a layout that changes with the terminal size. It
 uses [Term::Fabulous::Widget::Box](../Widget/Box.md), [Term::Fabulous::Color](../Color.md),
 [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) and the `Start` and `Resize`
@@ -22,6 +23,7 @@ The recipes on this page:
 - ["Line up labels with equal widths (width\_group)"](#line-up-labels-with-equal-widths-width_group)
 - ["Use a different border style on each side"](#use-a-different-border-style-on-each-side)
 - ["Switch themes at run time (built-in themes and a theme file)"](#switch-themes-at-run-time-built-in-themes-and-a-theme-file)
+- ["Design a theme against your own screen (the theme editor)"](#design-a-theme-against-your-own-screen-the-theme-editor)
 - ["Mark widgets with states and classes"](#mark-widgets-with-states-and-classes)
 - ["Change the layout with the terminal size (Start and Resize events)"](#change-the-layout-with-the-terminal-size-start-and-resize-events)
 
@@ -295,6 +297,92 @@ other button. See ["Variants and classes" in Term::Fabulous::Manual::Looks](../M
 new colors that a palette or a slot takes as they are (see
 ["Working with colors" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#working-with-colors) and
 ["new" in Term::Fabulous::Theme](../Theme.md#new)).
+
+# Design a theme against your own screen (the theme editor)
+
+Goal: make a theme file for your program while you see your program's
+screen in it, with every change shown at once.
+
+This program is shipped as `examples/cookbook/theme-editor-preview.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+use Term::Fabulous::ThemeEditor;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Button;
+use Term::Fabulous::Widget::Checkbox;
+use Term::Fabulous::Widget::Divider;
+use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextField;
+
+# The screen of your program, as the program builds it. No widget here is
+# given a color, so the theme decides them all.
+sub sign_in_screen () {
+        my $form = Term::Fabulous::Widget::Box->new(
+                border_width => 1,
+                layout       => {
+                        layout_direction => CLAY_TOP_TO_BOTTOM,
+                        sizing           => { width => sizing_grow( 0, 44 ) },
+                        padding          => { left  => 1, right => 1 },
+                        child_gap        => 1,
+                },
+        );
+        my $name     = Term::Fabulous::Widget::TextField->new( placeholder => 'E-mail address', validator => 'email' );
+        my $password = Term::Fabulous::Widget::TextField->new( placeholder => 'Password',       mask      => '*' );
+        my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        $sign_in->add_child( Term::Fabulous::Widget::Text->new( text => 'Sign in' ) );
+        my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        $cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
+        my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+        $buttons->add_child( $sign_in, $cancel );
+
+        $form->add_child(
+                Term::Fabulous::Widget::Divider->new( text => 'Sign in', text_position => 'start' ),
+                $name, $password,
+                Term::Fabulous::Widget::Checkbox->new( label => 'Keep me signed in' ),
+                $buttons,
+        );
+        return $form;
+}
+
+# The editor shows the screen on its left, in the theme being edited,
+# instead of its gallery of widgets; the editor itself is drawn in the
+# built-in light theme. The theme file is the first argument, or
+# sign-in.kdl in the current directory, which is made when you save.
+Term::Fabulous::ThemeEditor->new(
+        files    => [ $ARGV[0] // 'sign-in.kdl' ],
+        preview  => sub ($editor) { sign_in_screen() },
+        ui_theme => 'light',
+)->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-theme-editor-preview.svg" alt="The theme editor drawn in the light theme, its preview showing a sign-in form in the dark theme being edited: an e-mail field with an invalid address in red, a password field, a check box and Sign in and Cancel buttons; the form on the right lists the palette"></p>
+</div>
+
+- [Term::Fabulous::ThemeEditor](../ThemeEditor.md) is the theme editor of the distribution,
+which the program `fabulous-theme-editor` starts from the shell. Its
+`preview` parameter replaces the gallery of every widget family on the
+left with widgets you give it, drawn in the theme being edited; the
+editor itself is drawn in `ui_theme`. The picture shows the form after
+`F6` (into the preview), typing an incomplete e-mail address and
+`Tab`: the field shows the theme's `invalid` look.
+- The screen is built by a function, as a program usually builds its
+screens; the editor calls the code once, with the editor as its
+argument. Give the widgets no colors where the theme should decide, or
+the preview shows your colors instead of the theme's.
+- The theme file is the first argument; a file that does not exist yet
+is made when you save (`Ctrl+S`). In the editor, `Enter` on a setting
+opens a dialog for its value, `Delete` resets it, `F2` shows the file
+as text, and `F1` lists every key.
+- The program loads the file with
+`Term::Fabulous::Theme->from_file('sign-in.kdl')`, as in
+["Switch themes at run time (built-in themes and a theme file)"](#switch-themes-at-run-time-built-in-themes-and-a-theme-file).
 
 # Mark widgets with states and classes
 

@@ -780,7 +780,8 @@ replaces the selection.
 
 `Ctrl+Insert` copies the selection, `Ctrl+X` or `Shift+Delete` cuts
 it, and `Ctrl+V` or `Shift+Insert` pastes. `Ctrl+C` is not copy: it
-ends the program (see
+ends the program, unless the UI was made with
+`stop_on_ctrl_c => 0` (see
 ["Keys Term::Fabulous handles itself" in Term::Fabulous::Manual::Events](Events.md#keys-term-fabulous-handles-itself)).
 
 The clipboard is one string shared by all text inputs of the program,

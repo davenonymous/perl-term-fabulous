@@ -417,8 +417,9 @@ application shortcuts on the root keep working while the user types.
 See ["KEYBOARD" in Term::Fabulous::Manual::Events](../Manual/Events.md#keyboard).
 
 Ctrl+C, Tab and Shift+Tab are fired like every other key, but
-[Term::Fabulous](../../../../README.md) then acts on them itself (it stops on Ctrl+C and moves
-the focus on Tab and Shift+Tab); see
+[Term::Fabulous](../../../../README.md) then acts on them itself (it stops on Ctrl+C, unless
+it was made with `stop_on_ctrl_c => 0`, and moves the focus on
+Tab and Shift+Tab); see
 ["Keys Term::Fabulous handles itself" in Term::Fabulous::Manual::Events](../Manual/Events.md#keys-term-fabulous-handles-itself).
 
 # SEE ALSO

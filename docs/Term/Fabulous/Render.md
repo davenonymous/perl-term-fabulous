@@ -96,6 +96,52 @@ has such a method (see ["looks\_changed" in Term::Fabulous::Role::Themed](Role/T
 and draws a frame. Widgets that were given a color or a border style
 explicitly keep it; see ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes).
 
+## theme\_for
+
+```perl
+my $theme = $ui->theme_for($widget);
+```
+
+The theme a widget of the tree draws with: the one ["theme"](#theme) returns.
+[Term::Fabulous::Role::Themed](Role/Themed.md) asks this method whenever a widget
+looks its looks up, so a subclass of the UI class can override it to
+give a part of its tree another theme, for example a preview of a theme
+next to the controls that edit it ([Term::Fabulous::ThemeEditor](ThemeEditor.md) does
+that):
+
+```perl
+class My::UI :isa(Term::Fabulous) {
+        field $preview :param;          # a Box: the part drawn in $preview_theme
+        field $preview_theme = 'light';
+
+        method theme_for :override ($widget) {
+                return $self->SUPER::theme_for($widget) unless $preview->contains($widget);
+                return Term::Fabulous::Theme->builtin($preview_theme);
+        }
+
+        method preview_theme ($name) {
+                $preview_theme = $name;
+                $self->refresh_looks;    # what theme_for returns changed
+                return $self;
+        }
+}
+```
+
+The override must be cheap (it runs for every widget once after every
+change of the looks) and must call ["refresh\_looks"](#refresh_looks) whenever what it
+returns changes. The screen background always comes from ["theme"](#theme).
+
+## refresh\_looks
+
+```perl
+$ui->refresh_looks;
+```
+
+Makes every widget read its looks again, calls `looks_changed` on
+every widget of the tree that has such a method and draws a frame, as
+setting ["theme"](#theme) does. Call it after a change that ["theme\_for"](#theme_for)
+reports. Returns the UI.
+
 ## draw
 
 ```perl

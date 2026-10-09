@@ -1,5 +1,6 @@
 .perlcriticrc
 .perltidyrc
+bin/fabulous-theme-editor
 Changes
 cpanfile
 examples/border-options.pl
@@ -75,6 +76,7 @@ examples/cookbook/table-sort.pl
 examples/cookbook/table-tree.pl
 examples/cookbook/table-widths.pl
 examples/cookbook/test-a-widget.pl       
+examples/cookbook/theme-editor-preview.pl
 examples/cookbook/theme-switch.pl        
 examples/cookbook/width-group.pl         
 examples/cookbook/wrap-and-align-text.pl 
@@ -101,6 +103,7 @@ examples/table-directory.pl
 examples/table-files.pl
 examples/text-features.pl
 examples/text-sizing.pl
+examples/theme-editor.pl
 examples/themes.pl
 examples/themes/dracula.kdl
 examples/themes/nord.kdl
@@ -217,6 +220,21 @@ lib/Term/Fabulous/Text/Markup.pm
 lib/Term/Fabulous/Text/Style.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
+lib/Term/Fabulous/Theme/Document.pm
+lib/Term/Fabulous/ThemeEditor.pm
+lib/Term/Fabulous/ThemeEditor/FileDialog.pm
+lib/Term/Fabulous/ThemeEditor/Form.pm
+lib/Term/Fabulous/ThemeEditor/KdlArea.pm
+lib/Term/Fabulous/ThemeEditor/KeyReference.pm
+lib/Term/Fabulous/ThemeEditor/MenuBar.pm
+lib/Term/Fabulous/ThemeEditor/Preview.pm
+lib/Term/Fabulous/ThemeEditor/Prompt.pm
+lib/Term/Fabulous/ThemeEditor/SettingsList.pm
+lib/Term/Fabulous/ThemeEditor/StatusBar.pm
+lib/Term/Fabulous/ThemeEditor/Tab.pm
+lib/Term/Fabulous/ThemeEditor/TabStrip.pm
+lib/Term/Fabulous/ThemeEditor/UI.pm
+lib/Term/Fabulous/ThemeEditor/ValueDialog.pm
 lib/Term/Fabulous/Unicode.pm
 lib/Term/Fabulous/Validator.pm
 lib/Term/Fabulous/Viewport.pm
@@ -339,6 +357,8 @@ t/text-markup.t
 t/text-style.t
 t/text-view.t
 t/theme-binding.t
+t/theme-document.t
+t/theme-editor.t
 t/theme-file.t
 t/theme.t
 t/unicode.t
@@ -488,6 +508,7 @@ screenshots/cookbook-table-report.svg
 screenshots/cookbook-table-sort.svg
 screenshots/cookbook-table-tree.svg
 screenshots/cookbook-table-widths.svg
+screenshots/cookbook-theme-editor-preview.svg
 screenshots/cookbook-theme-switch.svg    
 screenshots/cookbook-width-group.svg
 screenshots/cookbook-wrap-and-align-text.svg
@@ -517,6 +538,9 @@ screenshots/example-table-files.svg
 screenshots/example-table-files-scrolling.svg
 screenshots/example-text-features.svg
 screenshots/example-text-sizing.svg      
+screenshots/example-theme-editor-dialog.svg
+screenshots/example-theme-editor-text.svg
+screenshots/example-theme-editor.svg
 screenshots/example-themes-dark.svg
 screenshots/example-themes-dracula.svg
 screenshots/example-themes-light.svg

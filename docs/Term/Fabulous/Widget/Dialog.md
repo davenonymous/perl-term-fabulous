@@ -53,7 +53,8 @@ behind the dialog;
 through the dialog to the backdrop, where `Escape` closes the dialog
 (unless `close_on_escape` is off). They go no further: the widgets
 and key bindings behind the dialog do not see them. Ctrl+C still ends
-the program, Tab and Shift+Tab still move the focus;
+the program (unless the UI was made with `stop_on_ctrl_c => 0`),
+Tab and Shift+Tab still move the focus;
 - the focus stays inside the dialog: when the focused widget is disabled
 or removed, the backdrop takes the focus (an `OnBlur` listener inside
 the dialog must let the event bubble for that, see

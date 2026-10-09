@@ -81,6 +81,23 @@ subtest 'a second run works' => sub {
 	is scalar( $loop->notifiers ),                       $notifiers_before, 'no notifier is left on the loop';
 };
 
+subtest 'stop_on_ctrl_c => 0 makes Ctrl+C an ordinary key' => sub {
+	my ( $keeps, $keeps_terminal ) = memory_ui( stop_on_ctrl_c => 0 );
+	is [ $ui->stop_on_ctrl_c, $keeps->stop_on_ctrl_c ], [ 1, 0 ], 'the reader, with its default';
+	my @keys;
+	$keeps->root->on(
+		KeyPress => sub {
+			push @keys, $_[0]->key_name;
+			$keeps->loop->stop if $_[0]->key_name eq 'Ctrl+Q';
+			return;
+		}
+	);
+	$keeps_terminal->press_key($_) foreach 'Ctrl+C', 'x', 'Ctrl+Q';
+	ok lives { $keeps->run }, 'run returns on the program\'s own key';
+	is \@keys, [ 'Ctrl+C', 'x', 'Ctrl+Q' ], 'Ctrl+C reached the listener and did not stop the loop';
+	like dies { memory_ui( stop_on_ctrl_c => [] ) }, qr/stop_on_ctrl_c must be a boolean/, 'a reference dies';
+};
+
 subtest 'Start fires inside the running loop' => sub {
 	my $handler = sub { };
 	local $SIG{INT} = $handler;

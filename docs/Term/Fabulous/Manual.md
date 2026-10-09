@@ -520,6 +520,12 @@ program, and the class pages with the reference.
     ["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file),
     ["theme" in Term::Fabulous](../../../README.md#theme).
 
+- Make and change themes in an editor with a live preview, check theme files from a script
+
+    ["The theme editor" in Term::Fabulous::Manual::Looks](Manual/Looks.md#the-theme-editor),
+    [Term::Fabulous::ThemeEditor](ThemeEditor.md), [Term::Fabulous::Theme::Document](Theme/Document.md),
+    ["Design a theme against your own screen (the theme editor)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#design-a-theme-against-your-own-screen-the-theme-editor).
+
 - Named colors (Tomato, SteelBlue, ...)
 
     [Term::Fabulous::Enum::WebColor](Enum/WebColor.md).

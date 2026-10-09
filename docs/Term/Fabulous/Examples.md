@@ -250,6 +250,25 @@ themes in that order:
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-solarized-light.svg" alt="The panel in the solarized-light theme: gray-blue text on a warm paper-colored screen, blue accents, an orange divider, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in blue and a Cancel button with a red border"></p>
 </div>
 
+### examples/theme-editor.pl
+
+[Term::Fabulous::ThemeEditor](ThemeEditor.md): the theme editor with the theme files
+of `examples/themes/`, one per tab, as the program
+`fabulous-theme-editor` starts it. The preview on the left shows a
+widget of every family in the theme of the tab you are on, the form on
+the right every setting of the theme; F2 shows the file as text, F1
+lists every key. The pictures show the form with the cursor on the
+palette's accent, the dialog of a setting whose value the preview shows
+while it is chosen, and text mode with a mistake on its last line:
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor.svg" alt="The theme editor with four themes in tabs: the menu bar, the tab strip with ocean.kdl active, the preview on the left with the palette swatches, text with links and a box in the ocean theme, and the form on the right listing the theme's name and base and the palette tokens with their swatches, values and where they come from, the cursor on accent"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button with a red border"></p>
+
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-text.svg" alt="The theme editor in text mode: the end of ocean.kdl with a new line button { text "acent" }, the message Line 51: button.text must be a color, got 'acent' (unrecognized color string 'acent') under the text, an exclamation mark on the tab, and the preview marked stale"></p>
+</div>
+
 ### examples/web-colors.pl
 
 All colors of [Term::Fabulous::Enum::WebColor](Enum/WebColor.md) in a grid that adapts
@@ -1226,6 +1245,17 @@ The programs of [Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-theme-switch.svg" alt="The ocean theme after two presses of F2: teal text on a dark blue background, a text field holding Light and readable, and a Save button with a teal border"></p>
+    </div>
+
+- `theme-editor-preview.pl`
+
+    ["Design a theme against your own screen (the theme editor)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#design-a-theme-against-your-own-screen-the-theme-editor):
+    the theme editor, drawn in the light theme, with a sign-in form of
+    your own as its preview; the theme file is `sign-in.kdl` in the
+    current directory or the first argument.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-theme-editor-preview.svg" alt="The theme editor drawn in the light theme, its preview showing a sign-in form in the dark theme being edited: an e-mail field with an invalid address in red, a password field, a check box and Sign in and Cancel buttons; the form on the right lists the palette"></p>
     </div>
 
 - `states-and-classes.pl`

@@ -734,8 +734,9 @@ application shortcuts on the root keep working while the user types.
 See L<Term::Fabulous::Manual::Events/KEYBOARD>.
 
 Ctrl+C, Tab and Shift+Tab are fired like every other key, but
-L<Term::Fabulous> then acts on them itself (it stops on Ctrl+C and moves
-the focus on Tab and Shift+Tab); see
+L<Term::Fabulous> then acts on them itself (it stops on Ctrl+C, unless
+it was made with C<< stop_on_ctrl_c =E<gt> 0 >>, and moves the focus on
+Tab and Shift+Tab); see
 L<Term::Fabulous::Manual::Events/Keys Term::Fabulous handles itself>.
 
 =head1 SEE ALSO

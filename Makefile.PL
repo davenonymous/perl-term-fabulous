@@ -128,8 +128,9 @@ WriteMakefile(
 		# not part of the installed distribution.
 		no_index => { directory => [qw(examples tools screenshots)] },
 	},
-	test  => { TESTS => 't/*.t' },
-	clean => { FILES => 'Term-Fabulous-* lib/Term/Fabulous/Termbox.c lib/Term/Fabulous/Termbox.o lib/Term/Fabulous/Termbox.bs src/*.o' },
+	EXE_FILES => ['bin/fabulous-theme-editor'],
+	test      => { TESTS => 't/*.t' },
+	clean     => { FILES => 'Term-Fabulous-* lib/Term/Fabulous/Termbox.c lib/Term/Fabulous/Termbox.o lib/Term/Fabulous/Termbox.bs src/*.o' },
 );
 
 sub MY::postamble {

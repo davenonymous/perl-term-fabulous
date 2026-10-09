@@ -183,6 +183,35 @@ subtest 'tabs.line.style needs joints' => sub {
 	is $theme->look( 'tabs', 'line.style' )->name, 'Double', 'a style with joints is taken';
 };
 
+subtest 'slot_info and check_value' => sub {
+	is Term::Fabulous::Theme::slot_info( 'button', 'background' ),
+		{
+		kind     => 'color',
+		required => 0,
+		reverse  => 1,
+		grid     => 0,
+		states   => [qw(disabled focused hovered pressed)],
+		default  => { normal => 'none', hovered => 'normal', focused => 'normal', pressed => 'reverse', disabled => 'normal' },
+		},
+		'a stateful color slot that may be reverse';
+	is Term::Fabulous::Theme::slot_info( 'tabs', 'line.style' ), { kind => 'style', required => 1, reverse => 0, grid => 1, states => [], default => { normal => 'Round' } },
+		'a required grid style slot';
+	is Term::Fabulous::Theme::slot_info( 'button', 'border.style' )->{default}, { normal => 'Round' }, 'inherited slots are known too';
+	like dies { Term::Fabulous::Theme::slot_info( 'nope',   'text' ) }, qr/unknown family 'nope'/,                'an unknown family dies';
+	like dies { Term::Fabulous::Theme::slot_info( 'button', 'nope' ) }, qr/the family button has no slot 'nope'/, 'an unknown slot dies';
+
+	is Term::Fabulous::Theme::check_value( 'button', 'border.color', 'focused', 'accent' ),  'accent',                                  'a token stays a name';
+	is Term::Fabulous::Theme::check_value( 'button', 'border.color', 'normal',  '#ff0000' ), [ 255, 0, 0, 255 ],                        'a color is parsed';
+	is Term::Fabulous::Theme::check_value( 'button', 'background',   'pressed', 'reverse' ), 'reverse',                                 'reverse where allowed';
+	is Term::Fabulous::Theme::check_value( 'box',    'background',   'normal',  undef ),     'none',                                    'undef is none';
+	is Term::Fabulous::Theme::check_value( 'tabs',   'line.style',   'normal',  'Double' ),  Term::Fabulous::Enum::BorderStyle->Double, 'a style is an item';
+	like dies { Term::Fabulous::Theme::check_value( 'tabs', 'line.style', 'normal',  'none' ) },    qr/tabs\.line\.style cannot be 'none'/,                'a required slot rejects none';
+	like dies { Term::Fabulous::Theme::check_value( 'tabs', 'line.style', 'normal',  'Block' ) },   qr/tabs\.line\.style/,                                 'a grid slot rejects a style without joints';
+	like dies { Term::Fabulous::Theme::check_value( 'box',  'background', 'normal',  'reverse' ) }, qr/cannot be 'reverse'/,                               'reverse elsewhere dies';
+	like dies { Term::Fabulous::Theme::check_value( 'box',  'background', 'normal',  'nope' ) },    qr/box\.background/,                                   'an unknown color dies';
+	like dies { Term::Fabulous::Theme::check_value( 'box',  'background', 'pressed', 'accent' ) },  qr/has no slot 'background' with the state 'pressed'/, 'an unknown state dies';
+};
+
 subtest 'the generation' => sub {
 	my $before = Term::Fabulous::Theme::generation();
 	is Term::Fabulous::Theme::bump_generation(), $before + 1, 'bump_generation returns the new generation';

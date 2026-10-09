@@ -323,7 +323,9 @@ has been delivered.
 - `Ctrl+Insert`
 
     Copy the selection to the clipboard. `Ctrl+C` is not copy: it stops
-    [Term::Fabulous](../../../../README.md).
+    [Term::Fabulous](../../../../README.md) (unless the UI was made with
+    `stop_on_ctrl_c => 0`; the input does not use `Ctrl+C` either
+    way, so a program can bind it).
 
 - `Ctrl+V`, `Shift+Insert`
 

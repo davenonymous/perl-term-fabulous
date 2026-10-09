@@ -612,6 +612,12 @@ L<Term::Fabulous::Manual::Looks/THEMES>, L<Term::Fabulous::Theme>,
 L<Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>,
 L<Term::Fabulous/theme>.
 
+=item Make and change themes in an editor with a live preview, check theme files from a script
+
+L<Term::Fabulous::Manual::Looks/The theme editor>,
+L<Term::Fabulous::ThemeEditor>, L<Term::Fabulous::Theme::Document>,
+L<Term::Fabulous::Cookbook::Layout/Design a theme against your own screen (the theme editor)>.
+
 =item Named colors (Tomato, SteelBlue, ...)
 
 L<Term::Fabulous::Enum::WebColor>.

@@ -129,6 +129,37 @@ screenshot "example-themes-solarized-light" {
 	}
 }
 
+// The theme editor on the theme files of examples/themes/: the form with
+// the cursor on the palette's accent; the dialog of a slot, its value
+// shown in the preview while it is chosen; text mode with a mistake.
+screenshot "example-theme-editor" {
+	script "examples/theme-editor.pl"
+	size 110 32
+	steps {
+		key "Alt+3" "Down" "Down" "Down" "Down"
+	}
+}
+
+screenshot "example-theme-editor-dialog" {
+	script "examples/theme-editor.pl"
+	size 110 32
+	steps {
+		key "Alt+3" "Ctrl+F"
+		type "button.border.co"
+		key "Enter" "Enter" "Down" "Down" "Down"
+	}
+}
+
+screenshot "example-theme-editor-text" {
+	script "examples/theme-editor.pl"
+	size 110 32
+	steps {
+		key "Alt+3" "F2" "Ctrl+End" "Enter"
+		type "button { text \"acent\" }"
+		wait 1
+	}
+}
+
 screenshot "example-custom-widget" {
 	script "examples/custom-widget.pl"
 	size 80 11
@@ -504,6 +535,16 @@ screenshot "cookbook-theme-switch" {
 	steps {
 		type "Light and readable"
 		key "F2" "F2"
+	}
+}
+
+screenshot "cookbook-theme-editor-preview" {
+	script "examples/cookbook/theme-editor-preview.pl"
+	size 100 30
+	steps {
+		key "F6"
+		type "ada@"
+		key "Tab"
 	}
 }
 

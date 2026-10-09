@@ -102,7 +102,7 @@
 ^docs/
 
 # Local scratch scripts
-^bin/
+^bin/scratch$
 
 # Local HTML rendering of the documentation
 ^docs\.html$

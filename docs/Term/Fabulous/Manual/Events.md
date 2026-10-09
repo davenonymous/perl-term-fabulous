@@ -570,8 +570,11 @@ from it and override `handle_key` (see
     Fires its `KeyPress` (key code 3) and then stops the loop, so `run`
     returns. Listeners cannot prevent this. Term::Fabulous looks at the key
     code only, so `Ctrl+Alt+C` and (with the kitty keyboard protocol)
-    `Ctrl+Shift+C` stop the loop as well. To ask before quitting, use
-    another key; to clean up, put the code after `$ui->run`.
+    `Ctrl+Shift+C` stop the loop as well. To clean up, put the code after
+    `$ui->run`. A program that must ask before it quits, or that wants
+    `Ctrl+C` for something else (copy, say), passes
+    `stop_on_ctrl_c => 0` to ["new" in Term::Fabulous](../../../../README.md#new): `Ctrl+C` is then an
+    ordinary key, and the program quits on a key of its own.
 
 - `Tab` and `Shift+Tab`
 
@@ -580,6 +583,27 @@ from it and override `handle_key` (see
     As with `Ctrl+C`, the key code decides: `Alt+Tab` moves the focus like
     `Tab`, while `Ctrl+Tab` (reported only with the kitty keyboard
     protocol) does not.
+
+    The one exception is a focused widget that keeps the keys itself: when
+    the widget the key was fired on has a `captures_tab` method and it
+    returns true, the focus stays where it is. A widget of your own (a code
+    editor that indents with `Tab`, say) defines it:
+
+    ```perl
+    class My::CodeArea :isa(Term::Fabulous::Widget::TextArea) {
+            method captures_tab () { return 1 }
+
+            method handle_key :override ($event) {
+                    my $name = $event->main_key_name // '';
+                    return $self->apply_edit( $self->editor->insert("\t") ) if $name eq 'Tab';
+                    return $self->SUPER::handle_key($event);
+            }
+    }
+    ```
+
+    Such a widget must offer another way out, since `Tab` no longer
+    leaves it: the mouse, or a key your program binds to move the focus
+    (`$ui->interaction->focus_next`).
 
 # FOCUS
 

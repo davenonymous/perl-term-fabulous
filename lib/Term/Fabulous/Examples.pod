@@ -282,6 +282,27 @@ themes in that order:
 
 =end html
 
+=head3 examples/theme-editor.pl
+
+L<Term::Fabulous::ThemeEditor>: the theme editor with the theme files
+of F<examples/themes/>, one per tab, as the program
+C<fabulous-theme-editor> starts it. The preview on the left shows a
+widget of every family in the theme of the tab you are on, the form on
+the right every setting of the theme; F2 shows the file as text, F1
+lists every key. The pictures show the form with the cursor on the
+palette's accent, the dialog of a setting whose value the preview shows
+while it is chosen, and text mode with a mistake on its last line:
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor.svg" alt="The theme editor with four themes in tabs: the menu bar, the tab strip with ocean.kdl active, the preview on the left with the palette swatches, text with links and a box in the ocean theme, and the form on the right listing the theme's name and base and the palette tokens with their swatches, values and where they come from, the cursor on accent"></p>
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button with a red border"></p>
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-text.svg" alt="The theme editor in text mode: the end of ocean.kdl with a new line button { text "acent" }, the message Line 51: button.text must be a color, got 'acent' (unrecognized color string 'acent') under the text, an exclamation mark on the tab, and the preview marked stale"></p>
+
+=end html
+
 =head3 examples/web-colors.pl
 
 All colors of L<Term::Fabulous::Enum::WebColor> in a grid that adapts
@@ -1435,6 +1456,19 @@ the ocean theme, after typing a line and two presses of F2.
 =begin html
 
 <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-theme-switch.svg" alt="The ocean theme after two presses of F2: teal text on a dark blue background, a text field holding Light and readable, and a Save button with a teal border"></p>
+
+=end html
+
+=item F<theme-editor-preview.pl>
+
+L<Term::Fabulous::Cookbook::Layout/Design a theme against your own screen (the theme editor)>:
+the theme editor, drawn in the light theme, with a sign-in form of
+your own as its preview; the theme file is F<sign-in.kdl> in the
+current directory or the first argument.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-theme-editor-preview.svg" alt="The theme editor drawn in the light theme, its preview showing a sign-in form in the dark theme being edited: an e-mail field with an invalid address in red, a password field, a check box and Sign in and Cancel buttons; the form on the right lists the palette"></p>
 
 =end html
 

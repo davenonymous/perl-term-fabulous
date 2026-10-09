@@ -180,9 +180,11 @@ role Term::Fabulous::Role::Themed {
 		return $_look_table;
 	}
 
-	# The theme of the UI the widget is in, or the default one outside.
+	# The theme the UI the widget is in gives it, or the default one
+	# outside a UI.
 	method _theme () {
 		my $ui = $self->ui;
+		return $ui->theme_for($self) if defined $ui && $ui->can('theme_for');
 		return defined $ui && $ui->can('theme') ? $ui->theme : Term::Fabulous::Theme->default;
 	}
 
@@ -359,7 +361,11 @@ L<Term::Fabulous::Widget> or L<Term::Fabulous::Widget::Text>). It
 holds the widget's I<explicit> looks, the colors and border styles the
 program set, and reads everything else from the
 L<Term::Fabulous::Theme> of the UI the widget is in, for the widget's
-I<family> and I<classes>. A widget in no UI reads the default theme.
+I<family> and I<classes>: the theme the UI's
+L<theme_for|Term::Fabulous::Render/theme_for> returns for the widget,
+which is the UI's L<theme|Term::Fabulous::Render/theme> unless a
+subclass of the UI says otherwise. A widget in no UI reads the default
+theme.
 
 The looks are fetched once and kept until the theme changes
 (L<Term::Fabulous::Theme/generation>) or the widget joins or leaves a

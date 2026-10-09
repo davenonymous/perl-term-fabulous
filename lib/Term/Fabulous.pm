@@ -57,6 +57,7 @@ class Term::Fabulous
 	field $inline         :param :reader = undef;    # the rows of the inline region, or undef for the full screen
 	field $mouse          :param :reader = undef;
 	field $kitty_keyboard :param :reader = 1;
+	field $stop_on_ctrl_c :param :reader = 1;
 	field $terminal       :param :reader //= Term::Fabulous::Terminal::Termbox->new;
 	field $clock          :param = sub { Time::HiRes::time() };
 	field $loop           :reader;
@@ -101,6 +102,8 @@ class Term::Fabulous
 			unless blessed $terminal && $terminal->DOES('Term::Fabulous::Role::Terminal');
 		die "Term::Fabulous: clock must be a code reference, got " . ( defined $clock ? "'$clock'" : 'undef' )
 			unless ref $clock eq 'CODE';
+		die "Term::Fabulous: stop_on_ctrl_c must be a boolean, got a " . ref($stop_on_ctrl_c) . " reference" if ref $stop_on_ctrl_c;
+		$stop_on_ctrl_c = $stop_on_ctrl_c ? 1 : 0;
 	}
 
 	method cell_target () {
@@ -380,7 +383,8 @@ class Term::Fabulous
 		$target->fire_event( Term::Fabulous::Event::KeyPress->of($event) );
 
 		my ( $key, $is_special_key ) = ( $event->key, $event->ch == 0 );
-		$self->_stop_run if $is_special_key                   && $key == TB_KEY_CTRL_C;
+		$self->_stop_run if $is_special_key                   && $stop_on_ctrl_c && $key == TB_KEY_CTRL_C;
+		return if $target->can('captures_tab')                && $target->captures_tab;
 		$self->interaction->focus_next if $is_special_key     && $key == TB_KEY_TAB;
 		$self->interaction->focus_previous if $is_special_key && $key == TB_KEY_BACK_TAB;
 		return;
@@ -855,6 +859,15 @@ when C<run> starts, at most half a second for a terminal that does not
 answer at all. With 0, the terminal is not asked and the protocol stays
 off. L</kitty_keyboard_active> tells whether C<run> uses it.
 
+=item C<stop_on_ctrl_c>
+
+A boolean, stored as 1 or 0; a reference dies. Default: 1. With 1,
+C<Ctrl+C> stops the loop after its C<KeyPress> was fired, so L</run>
+returns. With 0, C<Ctrl+C> is an ordinary key that a listener can bind,
+for example to copy, and the program ends some other way, such as a
+quit key that first asks about unsaved work. C<SIGINT>, C<SIGTERM> and
+C<SIGHUP> stop the loop either way.
+
 =item C<terminal>
 
 Optional. The terminal to run on: an object composing
@@ -1001,7 +1014,8 @@ your code calls C<< $ui->loop->stop >>;
 
 =item *
 
-the user presses C<Ctrl+C> (after its C<KeyPress> was fired);
+the user presses C<Ctrl+C> (after its C<KeyPress> was fired), unless
+C<stop_on_ctrl_c> is 0;
 
 =item *
 
@@ -1172,6 +1186,13 @@ parameter, or its default (1, or 0 in inline mode). Read only.
 
 Returns the C<kitty_keyboard> constructor parameter, or its default
 (1). Read only.
+
+=head2 stop_on_ctrl_c
+
+	my $stops = $ui->stop_on_ctrl_c;
+
+Returns the C<stop_on_ctrl_c> constructor parameter as 1 or 0, or its
+default (1). Read only.
 
 =head2 kitty_keyboard_active
 
@@ -1404,7 +1425,9 @@ for any other key, and then:
 
 =item C<Ctrl+C>
 
-stops the loop, so L</run> returns.
+stops the loop, so L</run> returns. With C<< stop_on_ctrl_c => 0 >>
+(see L</new>) it is an ordinary key: its C<KeyPress> is all that
+happens.
 
 =item C<Tab>
 
@@ -1418,6 +1441,12 @@ of its own (see L<Term::Fabulous::Manual::Events/Custom focus order>).
 moves the focus to the previous one, in the same order.
 
 =back
+
+A focused widget that has a C<captures_tab> method returning true keeps
+C<Tab> and C<Shift+Tab> for itself: the focus does not move, and the
+widget's own key handling decides what the keys do (a code editor
+indents with them). See
+L<Term::Fabulous::Manual::Events/Keys Term::Fabulous handles itself>.
 
 Listeners cannot prevent these actions.
 
@@ -2007,6 +2036,40 @@ behind the spans of a RichText.
 =item L<Term::Fabulous::Text::Markup>
 
 The C<[bold red]text[/]> markup of a RichText.
+
+=back
+
+=head2 Themes
+
+=over
+
+=item L<Term::Fabulous::Theme>
+
+The colors and border styles of every widget family: the built-in
+C<dark> and C<light> themes, themes made in Perl and theme files.
+
+=item L<Term::Fabulous::Theme::Document>
+
+A theme file as a document: its mistakes with their lines, and changes
+to its settings that keep its comments and layout.
+
+=item L<Term::Fabulous::ThemeEditor>
+
+The theme editor, with a live preview of every widget family (or of
+your own screens); the program C<fabulous-theme-editor> starts it from
+the shell. Its parts, used internally, are
+L<Term::Fabulous::ThemeEditor::UI>, L<Term::Fabulous::ThemeEditor::Tab>,
+L<Term::Fabulous::ThemeEditor::Form>,
+L<Term::Fabulous::ThemeEditor::SettingsList>,
+L<Term::Fabulous::ThemeEditor::Preview>,
+L<Term::Fabulous::ThemeEditor::KdlArea>,
+L<Term::Fabulous::ThemeEditor::MenuBar>,
+L<Term::Fabulous::ThemeEditor::TabStrip>,
+L<Term::Fabulous::ThemeEditor::StatusBar>,
+L<Term::Fabulous::ThemeEditor::ValueDialog>,
+L<Term::Fabulous::ThemeEditor::FileDialog>,
+L<Term::Fabulous::ThemeEditor::Prompt> and
+L<Term::Fabulous::ThemeEditor::KeyReference>.
 
 =back
 

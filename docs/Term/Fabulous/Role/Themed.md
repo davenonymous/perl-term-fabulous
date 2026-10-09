@@ -37,7 +37,11 @@ Every Term::Fabulous widget composes this role (through
 holds the widget's _explicit_ looks, the colors and border styles the
 program set, and reads everything else from the
 [Term::Fabulous::Theme](../Theme.md) of the UI the widget is in, for the widget's
-_family_ and _classes_. A widget in no UI reads the default theme.
+_family_ and _classes_: the theme the UI's
+[theme\_for](../Render.md#theme_for) returns for the widget,
+which is the UI's [theme](../Render.md#theme) unless a
+subclass of the UI says otherwise. A widget in no UI reads the default
+theme.
 
 The looks are fetched once and kept until the theme changes
 (["generation" in Term::Fabulous::Theme](../Theme.md#generation)) or the widget joins or leaves a

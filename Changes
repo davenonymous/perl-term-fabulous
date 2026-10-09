@@ -1,6 +1,28 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - The theme editor: the program fabulous-theme-editor and the
+          module Term::Fabulous::ThemeEditor behind it. Themes open in
+          tabs; the left side previews every widget family (or widgets
+          the program gives) in the theme being edited, the right side
+          edits its settings as a form or as the text of the file, with
+          live preview, undo and redo, reset to default, copy and paste
+          between themes, a menu bar, open, save and save as, and a key
+          reference (F1).
+        - Term::Fabulous::Theme::Document: a theme file as a document.
+          It lists the mistakes of a theme with their lines, and changes
+          settings while keeping the comments, blank lines, indentation
+          and order of the rest of the file.
+        - Term::Fabulous::Theme has the functions slot_info (the kind,
+          states and defaults of a slot) and check_value (checks a value
+          for a slot as a theme does).
+        - Term::Fabulous->new takes stop_on_ctrl_c; with 0, Ctrl+C is an
+          ordinary key that a program can bind (to copy, say).
+        - A focused widget whose captures_tab method returns true keeps
+          Tab and Shift+Tab: Term::Fabulous does not move the focus then.
+        - The UI classes have theme_for, the theme a widget draws with
+          (a subclass may give part of its tree another theme), and
+          refresh_looks.
         - Input validation. Every input widget takes required (an empty
           value, an unchecked checkbox or a dropdown without a selection
           is invalid), required_message and validator: the name of a

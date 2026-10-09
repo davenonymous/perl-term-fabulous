@@ -210,7 +210,8 @@ key presses go to the focused widget inside the dialog and bubble up
 through the dialog to the backdrop, where C<Escape> closes the dialog
 (unless C<close_on_escape> is off). They go no further: the widgets
 and key bindings behind the dialog do not see them. Ctrl+C still ends
-the program, Tab and Shift+Tab still move the focus;
+the program (unless the UI was made with C<< stop_on_ctrl_c =E<gt> 0 >>),
+Tab and Shift+Tab still move the focus;
 
 =item *
 

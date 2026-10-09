@@ -264,6 +264,30 @@ class Term::Fabulous::Theme :strict(params) {
 		return exists $definition->{default}{$state} ? 1 : 0;
 	}
 
+	# What the vocabulary says about a slot: its kind, the values it takes
+	# besides colors or styles, its states and its defaults.
+	sub slot_info ( $family, $slot ) {
+		die "Term::Fabulous::Theme: unknown family " . describe($family) . " (known: " . join( ', ', families() ) . ")" unless is_family($family);
+		my $slots      = _slots_of($family);
+		my $definition = defined $slot && !ref $slot ? $slots->{$slot} : undef;
+		die "Term::Fabulous::Theme: the family $family has no slot " . describe($slot) . " (known: " . join( ', ', sort keys %$slots ) . ")" unless defined $definition;
+		return {
+			kind     => $definition->{kind},
+			required => $definition->{required} ? 1 : 0,
+			reverse  => $definition->{reverse}  ? 1 : 0,
+			grid     => $definition->{grid}     ? 1 : 0,
+			states   => [ grep { $_ ne 'normal' } sort keys %{ $definition->{default} } ],
+			default  => { %{ $definition->{default} } },
+		};
+	}
+
+	# A value a theme may give a slot in a state, as the theme would store
+	# it; dies with the reason when the slot cannot take it.
+	sub check_value ( $family, $slot, $state, $value ) {
+		die "Term::Fabulous::Theme: the family " . describe($family) . " has no slot " . describe($slot) . " with the state " . describe($state) unless has_slot( $family, $slot, $state );
+		return _checked_spec( $family, $slot, $state, $value );
+	}
+
 	# ---------------------------------------------------------------------
 	# The generation: a process-wide counter that every UI bumps when its
 	# theme is set, so that widgets know when to look their looks up again.
@@ -1009,6 +1033,70 @@ C<normal>.
 	Term::Fabulous::Theme::has_slot( 'button', 'text', 'pressed' );    # 1
 
 Whether a family exists, and whether it has a slot in a state.
+
+=head2 slot_info
+
+	my $info = Term::Fabulous::Theme::slot_info( 'button', 'background' );
+	# {
+	#     kind     => 'color',
+	#     required => 0,
+	#     reverse  => 1,
+	#     grid     => 0,
+	#     states   => [ 'disabled', 'focused', 'hovered', 'pressed' ],
+	#     default  => { normal => 'none', pressed => 'reverse', hovered => 'normal', ... },
+	# }
+
+What the vocabulary says about one slot of a family, as a new hash
+reference:
+
+=over
+
+=item C<kind>
+
+C<color> or C<style>: whether the slot takes a color or a border style
+(see L</Values>).
+
+=item C<required>
+
+1 when the slot cannot be C<none> (see L</Values>), else 0.
+
+=item C<reverse>
+
+1 when the slot may be C<reverse> (C<button.background>), else 0.
+
+=item C<grid>
+
+1 when the slot needs a border style with joints (C<tabs.line.style>),
+else 0.
+
+=item C<states>
+
+The states the slot has besides C<normal>, sorted by name.
+
+=item C<default>
+
+The value of every state, C<normal> included, before any theme sets
+it: a token name, a style name, C<none>, C<reverse>, or C<normal> for a
+state that looks like the normal state. The built-in themes keep these
+defaults and differ only in their palettes.
+
+=back
+
+Dies for an unknown family or slot, naming the known ones.
+
+=head2 check_value
+
+	my $value = Term::Fabulous::Theme::check_value( 'button', 'border.color', 'focused', 'accent' );
+	my $style = Term::Fabulous::Theme::check_value( 'tabs', 'line.style', 'normal', 'Double' );
+
+Checks a value a theme would give a slot in a state, by the rules of
+L</Values>, and returns it as the theme stores it: a token name, C<none>
+or C<reverse> as a string, a color as C<[r, g, b, a]>, a style as a
+L<Term::Fabulous::Enum::BorderStyle> item; C<undef> becomes C<none>.
+Dies with the reason when the slot cannot take the value, for example
+C<Term::Fabulous::Theme: tabs.line.style cannot be 'none'>, and for a
+slot or state the family does not have. Theme editors use it to check a
+value before they write it.
 
 =head2 generation, bump_generation
 

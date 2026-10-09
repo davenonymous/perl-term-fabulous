@@ -94,7 +94,8 @@ protocol, which Term::Fabulous switches on when it is available, tell
 all of them apart; see
 ["THE KITTY KEYBOARD PROTOCOL" in Term::Fabulous::Event::KeyPress](../Event/KeyPress.md#the-kitty-keyboard-protocol). So bind
 keys that work in every terminal, or offer a second key.
-- Ctrl+C always ends the program, and Tab and Shift+Tab always move the
+- Ctrl+C ends the program (unless the UI was made with
+`stop_on_ctrl_c => 0`), and Tab and Shift+Tab always move the
 focus after their KeyPress has been delivered; see
 ["Keys Term::Fabulous handles itself" in Term::Fabulous::Manual::Events](../Manual/Events.md#keys-term-fabulous-handles-itself).
 - Alt with a printable key arrives as one key, such as `Alt+x`: the

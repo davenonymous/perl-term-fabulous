@@ -324,6 +324,33 @@ subtest 'Tab and Shift-Tab move focus' => sub {
 	is scalar @key_targets, 3, 'every Tab still fires a KeyPress';
 };
 
+class Test::TabKeeper :isa(Term::Fabulous::Widget::Button) {
+	field @keys :reader;
+	method captures_tab () { return 1 }
+
+	ADJUST {
+		$self->on( KeyPress => sub { push @keys, $_[0]->key_name; return } );
+	}
+}
+
+subtest 'a widget whose captures_tab is true keeps Tab and Shift-Tab' => sub {
+	my $focus_root = Term::Fabulous::Widget::Box->new;
+	my $keeper     = Test::TabKeeper->new;
+	my $other      = Term::Fabulous::Widget::Button->new;
+	$focus_root->add_child( $keeper, $other );
+	my ( $focus_ui, $focus_terminal ) = memory_ui( root => $focus_root );
+	$focus_ui->interaction->set_focused_widget($keeper);
+	$focus_terminal->press_key($_) foreach 'Tab', 'BackTab';
+	$focus_ui->step;
+	ref_is $focus_ui->interaction->get_focused_widget, $keeper, 'the focus stays';
+	is [ $keeper->keys ], [ 'Tab', 'BackTab' ], 'and the widget gets both keys';
+
+	$focus_ui->interaction->set_focused_widget($other);
+	$focus_terminal->press_key('Tab');
+	$focus_ui->step;
+	ref_is $focus_ui->interaction->get_focused_widget, $keeper, 'other widgets move the focus as before';
+};
+
 subtest 'scroll boxes' => sub {
 	my $scroll_root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my $header      = Term::Fabulous::Widget::Box->new( background_color => [ 3, 3, 3, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(2) } } );

@@ -128,7 +128,8 @@ keys that work in every terminal, or offer a second key.
 
 =item *
 
-Ctrl+C always ends the program, and Tab and Shift+Tab always move the
+Ctrl+C ends the program (unless the UI was made with
+C<< stop_on_ctrl_c =E<gt> 0 >>), and Tab and Shift+Tab always move the
 focus after their KeyPress has been delivered; see
 L<Term::Fabulous::Manual::Events/Keys Term::Fabulous handles itself>.
 

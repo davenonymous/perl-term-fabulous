@@ -254,6 +254,15 @@ add timers first. Unknown parameters die
     answer at all. With 0, the terminal is not asked and the protocol stays
     off. ["kitty\_keyboard\_active"](#kitty_keyboard_active) tells whether `run` uses it.
 
+- `stop_on_ctrl_c`
+
+    A boolean, stored as 1 or 0; a reference dies. Default: 1. With 1,
+    `Ctrl+C` stops the loop after its `KeyPress` was fired, so ["run"](#run)
+    returns. With 0, `Ctrl+C` is an ordinary key that a listener can bind,
+    for example to copy, and the program ends some other way, such as a
+    quit key that first asks about unsaved work. `SIGINT`, `SIGTERM` and
+    `SIGHUP` stop the loop either way.
+
 - `terminal`
 
     Optional. The terminal to run on: an object composing
@@ -375,7 +384,8 @@ as usual.
 The loop stops, and `run` returns, when:
 
 - your code calls `$ui->loop->stop`;
-- the user presses `Ctrl+C` (after its `KeyPress` was fired);
+- the user presses `Ctrl+C` (after its `KeyPress` was fired), unless
+`stop_on_ctrl_c` is 0;
 - the process receives `SIGINT`, `SIGTERM` or `SIGHUP`.
 
 While `run` is active it handles these three signals itself; when it
@@ -546,6 +556,15 @@ my $wanted = $ui->kitty_keyboard;
 
 Returns the `kitty_keyboard` constructor parameter, or its default
 (1). Read only.
+
+## stop\_on\_ctrl\_c
+
+```perl
+my $stops = $ui->stop_on_ctrl_c;
+```
+
+Returns the `stop_on_ctrl_c` constructor parameter as 1 or 0, or its
+default (1). Read only.
 
 ## kitty\_keyboard\_active
 
@@ -798,7 +817,9 @@ for any other key, and then:
 
 - `Ctrl+C`
 
-    stops the loop, so ["run"](#run) returns.
+    stops the loop, so ["run"](#run) returns. With `stop_on_ctrl_c => 0`
+    (see ["new"](#new)) it is an ordinary key: its `KeyPress` is all that
+    happens.
 
 - `Tab`
 
@@ -810,6 +831,12 @@ for any other key, and then:
 - `Shift+Tab` (key name `BackTab`)
 
     moves the focus to the previous one, in the same order.
+
+A focused widget that has a `captures_tab` method returning true keeps
+`Tab` and `Shift+Tab` for itself: the focus does not move, and the
+widget's own key handling decides what the keys do (a code editor
+indents with them). See
+["Keys Term::Fabulous handles itself" in Term::Fabulous::Manual::Events](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Events.md#keys-term-fabulous-handles-itself).
 
 Listeners cannot prevent these actions.
 
@@ -1351,6 +1378,36 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Text::Markup](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Markup.md)
 
     The `[bold red]text[/]` markup of a RichText.
+
+## Themes
+
+- [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md)
+
+    The colors and border styles of every widget family: the built-in
+    `dark` and `light` themes, themes made in Perl and theme files.
+
+- [Term::Fabulous::Theme::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme/Document.md)
+
+    A theme file as a document: its mistakes with their lines, and changes
+    to its settings that keep its comments and layout.
+
+- [Term::Fabulous::ThemeEditor](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor.md)
+
+    The theme editor, with a live preview of every widget family (or of
+    your own screens); the program `fabulous-theme-editor` starts it from
+    the shell. Its parts, used internally, are
+    [Term::Fabulous::ThemeEditor::UI](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/UI.md), [Term::Fabulous::ThemeEditor::Tab](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Tab.md),
+    [Term::Fabulous::ThemeEditor::Form](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Form.md),
+    [Term::Fabulous::ThemeEditor::SettingsList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/SettingsList.md),
+    [Term::Fabulous::ThemeEditor::Preview](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Preview.md),
+    [Term::Fabulous::ThemeEditor::KdlArea](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KdlArea.md),
+    [Term::Fabulous::ThemeEditor::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/MenuBar.md),
+    [Term::Fabulous::ThemeEditor::TabStrip](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/TabStrip.md),
+    [Term::Fabulous::ThemeEditor::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/StatusBar.md),
+    [Term::Fabulous::ThemeEditor::ValueDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/ValueDialog.md),
+    [Term::Fabulous::ThemeEditor::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/FileDialog.md),
+    [Term::Fabulous::ThemeEditor::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Prompt.md) and
+    [Term::Fabulous::ThemeEditor::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KeyReference.md).
 
 ## Extending Term::Fabulous
 

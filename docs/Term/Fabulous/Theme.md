@@ -322,6 +322,70 @@ Term::Fabulous::Theme::has_slot( 'button', 'text', 'pressed' );    # 1
 
 Whether a family exists, and whether it has a slot in a state.
 
+## slot\_info
+
+```kdl
+my $info = Term::Fabulous::Theme::slot_info( 'button', 'background' );
+# {
+#     kind     => 'color',
+#     required => 0,
+#     reverse  => 1,
+#     grid     => 0,
+#     states   => [ 'disabled', 'focused', 'hovered', 'pressed' ],
+#     default  => { normal => 'none', pressed => 'reverse', hovered => 'normal', ... },
+# }
+```
+
+What the vocabulary says about one slot of a family, as a new hash
+reference:
+
+- `kind`
+
+    `color` or `style`: whether the slot takes a color or a border style
+    (see ["Values"](#values)).
+
+- `required`
+
+    1 when the slot cannot be `none` (see ["Values"](#values)), else 0.
+
+- `reverse`
+
+    1 when the slot may be `reverse` (`button.background`), else 0.
+
+- `grid`
+
+    1 when the slot needs a border style with joints (`tabs.line.style`),
+    else 0.
+
+- `states`
+
+    The states the slot has besides `normal`, sorted by name.
+
+- `default`
+
+    The value of every state, `normal` included, before any theme sets
+    it: a token name, a style name, `none`, `reverse`, or `normal` for a
+    state that looks like the normal state. The built-in themes keep these
+    defaults and differ only in their palettes.
+
+Dies for an unknown family or slot, naming the known ones.
+
+## check\_value
+
+```kdl
+my $value = Term::Fabulous::Theme::check_value( 'button', 'border.color', 'focused', 'accent' );
+my $style = Term::Fabulous::Theme::check_value( 'tabs', 'line.style', 'normal', 'Double' );
+```
+
+Checks a value a theme would give a slot in a state, by the rules of
+["Values"](#values), and returns it as the theme stores it: a token name, `none`
+or `reverse` as a string, a color as `[r, g, b, a]`, a style as a
+[Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) item; `undef` becomes `none`.
+Dies with the reason when the slot cannot take the value, for example
+`Term::Fabulous::Theme: tabs.line.style cannot be 'none'`, and for a
+slot or state the family does not have. Theme editors use it to check a
+value before they write it.
+
 ## generation, bump\_generation
 
 ```kdl

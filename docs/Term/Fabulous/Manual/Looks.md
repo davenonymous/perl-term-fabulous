@@ -893,6 +893,27 @@ holds three more: `nord`, `dracula` and `solarized-light`), and the recipe
 a complete program. The grammar is described in
 ["THEME FILES" in Term::Fabulous::Theme](../Theme.md#theme-files).
 
+## The theme editor
+
+The distribution comes with a program to make and change theme files:
+`fabulous-theme-editor`. It opens theme files in tabs, shows a widget
+of every family (or the screens of your program) in the theme you edit,
+and lists every setting with its value and where the value comes from;
+a change in the form or in the text of the file shows at once, and
+every change can be undone. A mistake in the text is shown with its
+line.
+
+```text
+fabulous-theme-editor examples/themes/ocean.kdl
+```
+
+[Term::Fabulous::ThemeEditor](../ThemeEditor.md) describes the editor and how to start it
+from Perl, for example with a preview of your own program's screens
+(the recipe
+[Design a theme against your own screen](../Cookbook/Layout.md#design-a-theme-against-your-own-screen-the-theme-editor)).
+To check theme files or change them from a script, with their lines
+and comments kept, use [Term::Fabulous::Theme::Document](../Theme/Document.md).
+
 ## Themes in Perl
 
 A theme can be built in Perl as well, with the same parts: the theme
