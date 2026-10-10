@@ -64,9 +64,9 @@ From top to bottom:
 - The menu bar
 
     `File`, `Edit`, `View`, `Theme` and `Help`, with every command
-    and its keys. `F10` opens the first menu, `Alt` with a menu's
-    underlined letter opens that menu (`Alt+F` for `File`), and a click
-    opens a menu with the mouse. Commands that cannot run now (`Revert`
+    and its keys (a [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md)). `F10` opens the
+    first menu, `Alt` with a menu's underlined letter opens that menu
+    (`Alt+F` for `File`), and a click opens a menu with the mouse. Commands that cannot run now (`Revert`
     of a theme without a file, `Undo` with nothing to undo) are dimmed.
 
 - The tab strip
@@ -85,8 +85,9 @@ From top to bottom:
     text area with a scrollbar), check boxes, radio buttons, a segmented
     control, a slider, a star rating and a dropdown, tabs, an accordion, a
     table with groups, a filter row and pages, progress bars and a spinner,
-    toasts, a button that opens a dialog, dividers, an image, and a sample
-    of every variant the theme defines. The background behind them is the
+    toasts, a menu bar, a menu and status bars, a button that opens a
+    dialog, dividers, an image, and a sample of every variant the theme
+    defines. The background behind them is the
     theme's `background` token. The title of the pane says which theme it
     shows; while the text of the theme has errors, it shows the theme as it
     was before them and says so.
@@ -109,7 +110,7 @@ From top to bottom:
     success, warnings and errors, and on the right the number of errors in
     the text, whether the theme has unsaved changes, the line and column of
     the cursor in text mode, and the mode. A message too long for the line
-    ends in `~`.
+    ends in an ellipsis.
 
 # THE FORM
 
@@ -771,9 +772,9 @@ Every key of the editor, as the key reference (`F1`) lists it.
 ## form, status
 
 The form ([Term::Fabulous::ThemeEditor::Form](ThemeEditor/Form.md)) and the status line
-([Term::Fabulous::ThemeEditor::StatusBar](ThemeEditor/StatusBar.md)), for programs and tests
+([Term::Fabulous::Widget::StatusBar](Widget/StatusBar.md)), for programs and tests
 that look at what the editor shows: `$editor->form->go_to($key)`
-puts the cursor on a setting, `$editor->status->text` is the last
+puts the cursor on a setting, `$editor->status->message` is the last
 message.
 
 # COMMANDS

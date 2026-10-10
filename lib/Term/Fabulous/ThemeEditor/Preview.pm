@@ -27,6 +27,8 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Term::Fabulous::Widget::Divider;
 	use Term::Fabulous::Widget::Dropdown;
 	use Term::Fabulous::Widget::Image;
+	use Term::Fabulous::Widget::Menu;
+	use Term::Fabulous::Widget::MenuBar;
 	use Term::Fabulous::Widget::ProgressBar;
 	use Term::Fabulous::Widget::RadioButton;
 	use Term::Fabulous::Widget::RadioGroup;
@@ -36,6 +38,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Term::Fabulous::Widget::Slider;
 	use Term::Fabulous::Widget::Spinner;
 	use Term::Fabulous::Widget::StarRating;
+	use Term::Fabulous::Widget::StatusBar;
 	use Term::Fabulous::Widget::Table;
 	use Term::Fabulous::Widget::Tabs;
 	use Term::Fabulous::Widget::Tabs::Page;
@@ -64,6 +67,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		[ table     => 'Table',     ['table'] ],
 		[ progress  => 'Progress',  [ 'progress', 'spinner' ] ],
 		[ toast     => 'Messages',  ['toast'] ],
+		[ menus     => 'Menus',     [ 'menu_bar', 'menu', 'status_bar' ] ],
 		[ dialog    => 'Dialog',    ['dialog'] ],
 		[ divider   => 'Dividers',  ['divider'] ],
 		[ image     => 'Image',     ['image'] ],
@@ -87,6 +91,9 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		spinner    => sub ($classes) { Term::Fabulous::Widget::Spinner->new( label => 'Spinner', running => 0, classes => $classes ) },
 		divider    => sub ($classes) { Term::Fabulous::Widget::Divider->new( text  => 'Divider', classes => $classes ) },
 		toast      => sub ($classes) { Term::Fabulous::Widget::Toast->new( kind => 'info', message => 'A message of this variant.', closable => 0, classes => $classes ) },
+		menu_bar   => sub ($classes) { _menu_bar($classes) },
+		menu       => sub ($classes) { _menu($classes) },
+		status_bar => sub ($classes) { Term::Fabulous::Widget::StatusBar->new( message => 'A status bar of this variant.', parts => [ [ 'dim', 'dim' ] ], classes => $classes ) },
 		tabs       => sub ($classes) { _tabs($classes) },
 		accordion  => sub ($classes) { _accordion($classes) },
 	);
@@ -294,6 +301,42 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		);
 	}
 
+	# A menu bar whose titles open short menus, a menu with every kind of
+	# item, and a status bar for each kind of message.
+	method _build_menus () {
+		return _column(
+			_menu_bar( [] ),
+			_row( 0, _menu( [] ) ),
+			Term::Fabulous::Widget::StatusBar->new( message => 'An info message.',     parts => [ [ 'accent', 'accent' ], [ 'dim', 'dim' ] ] ),
+			Term::Fabulous::Widget::StatusBar->new( message => 'Saved the theme.',     kind  => 'success' ),
+			Term::Fabulous::Widget::StatusBar->new( message => 'It cannot be undone.', kind  => 'warning' ),
+			Term::Fabulous::Widget::StatusBar->new( message => 'Could not write it.',  kind  => 'danger' ),
+		);
+	}
+
+	sub _menu_bar ($classes) {
+		return Term::Fabulous::Widget::MenuBar->new(
+			caption => 'caption',
+			classes => $classes,
+			menus   => [ map { { title => $_, items => [ { label => 'New' }, { label => 'Open', keys => ['Ctrl+O'] } ] } } qw(File Edit View) ],
+		);
+	}
+
+	# Highlighted, with keys, a separator, a toggle that is on and one that
+	# is disabled.
+	sub _menu ($classes) {
+		return Term::Fabulous::Widget::Menu->new(
+			classes => $classes,
+			items   => [
+				{ label => 'Highlighted', keys => ['Ctrl+H'] },
+				{ label => 'With keys',   keys => ['F5'] },
+				'-',
+				{ label => 'Checked',  checked => sub { 1 } },
+				{ label => 'Disabled', enabled => sub { 0 } },
+			],
+		);
+	}
+
 	method _build_dialog () {
 		my $open = _button('Open a dialog');
 		weaken( my $weak_self = $self );
@@ -457,7 +500,8 @@ and a disabled one, a text area with a scrollbar), choices (check
 boxes, radio buttons, a segmented control, a slider, a star rating, a
 dropdown), tabs, an accordion, a table (groups, a filter row, pages),
 progress bars and a spinner, toasts (and a button that shows one),
-a button that opens a dialog, dividers, an image, and the variants the
+a menu bar whose titles open menus, a menu with every kind of item, a
+status bar for each kind of message, a button that opens a dialog, dividers, an image, and the variants the
 theme defines, each with a sample of its family.
 
 The editor draws the gallery in the theme being edited (see

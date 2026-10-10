@@ -163,7 +163,9 @@ the sections below it describe each event.
 | ValidityChange  | the input                        | yes              |
 | Submit          | the text field                   | yes              |
 | Activate        | the Button                       | yes              |
-| Close           | the Dialog or the Toast          | (no parent then) |
+| Close           | the Dialog, Toast or popup Menu  | (no parent then) |
+| Answer          | the Prompt                       | (no parent then) |
+| Choose          | the Menu                         | yes, not popups  |
 | Select          | the Accordion or the Tabs        | yes              |
 | SeriesHover     | the chart                        | yes              |
 | OnFocus, OnBlur | the widget                       | yes              |
@@ -289,9 +291,29 @@ the sections below it describe each event.
 - `Close` ([Term::Fabulous::Event::Close](../Event/Close.md))
 
     A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) was closed, by `Escape` or from
-    code, or a [Term::Fabulous::Widget::Toast](../Widget/Toast.md) went away, by its timeout,
-    its close mark or from code. Fired on the dialog or the toast, after
-    it has left the screen, so only listeners on it see it. No fields.
+    code, a [Term::Fabulous::Widget::Toast](../Widget/Toast.md) went away, by its timeout,
+    its close mark or from code, or a [Term::Fabulous::Widget::Menu](../Widget/Menu.md) that
+    was opened as a popup closed. Fired on the dialog, the toast or the
+    menu, after it has left the screen, so only listeners on it see it. No
+    fields.
+
+- `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md))
+
+    A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) was answered: the user pressed one
+    of its buttons or `Escape`, or the program called `answer` or
+    `close`. Fired on the prompt after it closed and gave the focus back,
+    so only listeners on it see it. Fields: `button`, the id of the button
+    (`cancel` for Escape), `values`, the values of the prompt's fields,
+    and `dismissed`, true when no button answered.
+
+- `Choose` ([Term::Fabulous::Event::Choose](../Event/Choose.md))
+
+    The user chose an item of a [Term::Fabulous::Widget::Menu](../Widget/Menu.md), or of a
+    menu of a [Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md): pressed `Enter` or
+    `Space` on it, or clicked it. Also fired by `$menu->choose`.
+    Fired on the menu after a popup closed and before the item's command
+    runs. Bubbles, except from a popup, which has left the tree. Fields:
+    `command`, the [Term::Fabulous::Command](../Command.md) of the item, and `index`.
 
 - `Select` ([Term::Fabulous::Event::Select](../Event/Select.md))
 
@@ -629,6 +651,21 @@ clicked widget is the Text itself, so a click on a
 [Term::Fabulous::Widget::RichText](../Widget/RichText.md) with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
+
+    A widget can keep the focus where it is when the user clicks it. It
+    does so with a method `keeps_focus_on_click` that returns true, and
+    the widgets inside it then keep the focus as well. A
+    [Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md) works this way: a click on a menu
+    title opens the menu, and the text field the user was typing in still
+    has the focus when the menu closes. Use it for widgets that act on the
+    focused widget rather than take its place, such as a toolbar:
+
+    ```perl
+    class My::Toolbar :isa(Term::Fabulous::Widget::Box) {
+            method keeps_focus_on_click () { return 1 }
+    }
+    ```
+
 - from your code, through the _interaction tracker_ of the UI
 ([Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction)):
 

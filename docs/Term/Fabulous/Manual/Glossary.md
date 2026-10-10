@@ -89,10 +89,24 @@ belongs to, such as (table) or (KDL).
     the columns of a table. See
     ["Choosing the visible columns" in Term::Fabulous::Manual::Tables](Tables.md#choosing-the-visible-columns).
 
+- command
+
+    One thing the user can do, with a label, keys and code: a
+    [Term::Fabulous::Command](../Command.md), usually kept in a
+    [Term::Fabulous::Commands](../Commands.md) table that runs it by its keys and shows it
+    in menus. See ["COMMANDS" in Term::Fabulous::Manual::Menus](Menus.md#commands).
+
 - content box
 
     The area of a widget inside its border and padding, where its children
     (or a canvas's cells) are placed.
+
+- context menu
+
+    A menu of what can be done with the thing under the pointer, opened
+    with a right click, the Menu key or Shift+F10. In Term::Fabulous, a
+    [Term::Fabulous::Widget::Menu](../Widget/Menu.md) opened as a popup. See
+    ["CONTEXT MENUS" in Term::Fabulous::Manual::Menus](Menus.md#context-menus).
 
 - contributor
 
@@ -217,6 +231,11 @@ belongs to, such as (table) or (KDL).
 
     A code reference registered with `$widget->on( $event_name => $code )`.
     See ["Listening to events" in Term::Fabulous::Manual::Events](Events.md#listening-to-events).
+
+- mnemonic
+
+    The underlined letter of a menu title, which opens the menu together
+    with Alt. See ["Opening the menus" in Term::Fabulous::Manual::Menus](Menus.md#opening-the-menus).
 
 - mutator
 
@@ -361,6 +380,12 @@ belongs to, such as (table) or (KDL).
 - theme file
 
     A KDL file that describes a theme: a `theme` node, a `palette` node and one node per widget family. Loaded with ["from\_file" in Term::Fabulous::Theme](../Theme.md#from_file). See ["THEME FILES" in Term::Fabulous::Theme](../Theme.md#theme-files).
+
+- toggle
+
+    A command for a setting that is on or off, which a menu shows with a
+    check mark while it is on. See
+    ["Settings that are on or off" in Term::Fabulous::Manual::Menus](Menus.md#settings-that-are-on-or-off).
 
 - token (theme)
 

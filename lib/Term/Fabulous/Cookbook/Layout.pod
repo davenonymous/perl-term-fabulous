@@ -8,7 +8,7 @@ Term::Fabulous::Cookbook::Layout - Recipes: layout, borders, colors and themes
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Forms>. Next page: L<Term::Fabulous::Cookbook::Tables>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Menus>. Next page: L<Term::Fabulous::Cookbook::Tables>.
 
 This page shows how to arrange widgets and how they look: labels of
 equal width, borders that differ per side, colors derived from one
@@ -699,6 +699,6 @@ terminal size by themselves.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Forms>. Next page: L<Term::Fabulous::Cookbook::Tables>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Menus>. Next page: L<Term::Fabulous::Cookbook::Tables>.
 
 =cut

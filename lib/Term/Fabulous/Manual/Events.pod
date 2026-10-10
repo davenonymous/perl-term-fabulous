@@ -180,7 +180,9 @@ the sections below it describe each event.
 	ValidityChange   the input                         yes
 	Submit           the text field                    yes
 	Activate         the Button                        yes
-	Close            the Dialog or the Toast           (no parent then)
+	Close            the Dialog, Toast or popup Menu   (no parent then)
+	Answer           the Prompt                        (no parent then)
+	Choose           the Menu                          yes, not popups
 	Select           the Accordion or the Tabs         yes
 	SeriesHover      the chart                         yes
 	OnFocus, OnBlur  the widget                        yes
@@ -316,9 +318,29 @@ C<< $button->activate >>. Fired on the button. No fields.
 =item C<Close> (L<Term::Fabulous::Event::Close>)
 
 A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
-code, or a L<Term::Fabulous::Widget::Toast> went away, by its timeout,
-its close mark or from code. Fired on the dialog or the toast, after
-it has left the screen, so only listeners on it see it. No fields.
+code, a L<Term::Fabulous::Widget::Toast> went away, by its timeout,
+its close mark or from code, or a L<Term::Fabulous::Widget::Menu> that
+was opened as a popup closed. Fired on the dialog, the toast or the
+menu, after it has left the screen, so only listeners on it see it. No
+fields.
+
+=item C<Answer> (L<Term::Fabulous::Event::Answer>)
+
+A L<Term::Fabulous::Widget::Prompt> was answered: the user pressed one
+of its buttons or C<Escape>, or the program called C<answer> or
+C<close>. Fired on the prompt after it closed and gave the focus back,
+so only listeners on it see it. Fields: C<button>, the id of the button
+(C<cancel> for Escape), C<values>, the values of the prompt's fields,
+and C<dismissed>, true when no button answered.
+
+=item C<Choose> (L<Term::Fabulous::Event::Choose>)
+
+The user chose an item of a L<Term::Fabulous::Widget::Menu>, or of a
+menu of a L<Term::Fabulous::Widget::MenuBar>: pressed C<Enter> or
+C<Space> on it, or clicked it. Also fired by C<< $menu->choose >>.
+Fired on the menu after a popup closed and before the item's command
+runs. Bubbles, except from a popup, which has left the tree. Fields:
+C<command>, the L<Term::Fabulous::Command> of the item, and C<index>.
 
 =item C<Select> (L<Term::Fabulous::Event::Select>)
 
@@ -699,6 +721,18 @@ clicked widget is the Text itself, so a click on a
 L<Term::Fabulous::Widget::RichText> with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
+
+A widget can keep the focus where it is when the user clicks it. It
+does so with a method C<keeps_focus_on_click> that returns true, and
+the widgets inside it then keep the focus as well. A
+L<Term::Fabulous::Widget::MenuBar> works this way: a click on a menu
+title opens the menu, and the text field the user was typing in still
+has the focus when the menu closes. Use it for widgets that act on the
+focused widget rather than take its place, such as a toolbar:
+
+	class My::Toolbar :isa(Term::Fabulous::Widget::Box) {
+		method keeps_focus_on_click () { return 1 }
+	}
 
 =item *
 

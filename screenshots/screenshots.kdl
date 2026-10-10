@@ -497,6 +497,51 @@ screenshot "cookbook-disable-inputs" {
 	size 60 5
 }
 
+screenshot "cookbook-confirm-prompt" {
+	script "examples/cookbook/confirm-prompt.pl"
+	size 80 16
+	steps {
+		type "Buy milk and a new punch card reader."
+		key "Ctrl+Q"
+	}
+}
+
+screenshot "cookbook-ask-prompt" {
+	script "examples/cookbook/ask-prompt.pl"
+	size 72 18
+	steps {
+		key "t"
+		type "300"
+		key "Enter"
+	}
+}
+
+screenshot "cookbook-menu-bar" {
+	script "examples/cookbook/menu-bar.pl"
+	size 64 10
+	steps {
+		key "Alt+v"
+	}
+}
+
+screenshot "cookbook-context-menu" {
+	script "examples/cookbook/context-menu.pl"
+	size 64 14
+	steps {
+		key "Ctrl+Home" "Ctrl+Shift+Right" "Ctrl+Shift+Right"
+		click 24 5 button="right"
+	}
+}
+
+screenshot "cookbook-status-bar" {
+	script "examples/cookbook/status-bar.pl"
+	size 64 10
+	steps {
+		type "Rode my bike to the lake and back."
+		key "Ctrl+S"
+	}
+}
+
 screenshot "cookbook-focus-help-line" {
 	script "examples/cookbook/focus-help-line.pl"
 	size 72 14
@@ -916,6 +961,37 @@ screenshot "widget-dialog" {
 	size 72 14
 }
 
+screenshot "widget-prompt" {
+	script "examples/widgets/prompt.pl"
+	size 72 22
+	steps {
+		key "n"
+		type "Ada Lovelace"
+		key "Tab"
+		type "ada@engine"
+		key "Enter"
+	}
+}
+
+screenshot "widget-menu" {
+	script "examples/widgets/menu.pl"
+	size 64 14
+	steps {
+		click 8 4 button="right"
+		move 10 6
+	}
+}
+
+screenshot "widget-menu-bar" {
+	script "examples/widgets/menu-bar.pl"
+	size 64 14
+	steps {
+		key "Ctrl+End"
+		type "- milk"
+		key "Alt+e"
+	}
+}
+
 screenshot "widget-progress-bar" {
 	script "examples/widgets/progress-bar.pl"
 	size 72 10
@@ -929,6 +1005,14 @@ screenshot "widget-toast" {
 	size 90 22
 	steps {
 		key "1" "2" "3" "i"
+	}
+}
+
+screenshot "widget-status-bar" {
+	script "examples/widgets/status-bar.pl"
+	size 72 16
+	steps {
+		key "Down" "Down" "s"
 	}
 }
 

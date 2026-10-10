@@ -762,6 +762,18 @@ again.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-dialog.svg" alt="A Delete 3 files? dialog with Delete and Cancel buttons over a dimmed list of files; Delete has the focus and a blue border"></p>
 </div>
 
+### examples/widgets/prompt.pl
+
+[Term::Fabulous::Widget::Prompt](Widget/Prompt.md): a list of contacts. n opens a prompt
+with a name that must be filled in and an e-mail address that must look
+like one, and Add keeps the prompt open while a value is wrong. d asks
+before it deletes the last contact, starting on Cancel. The picture
+shows the prompt after Add with an e-mail address that is not valid.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-prompt.svg" alt="A New contact prompt over the dimmed list of contacts: Name holds Ada Lovelace, E-mail holds ada@engine in red, and the red line E-mail: Please enter an e-mail address. sits above the Add and Cancel buttons"></p>
+</div>
+
 ## Progress and feedback
 
 ### examples/widgets/progress-bar.pl
@@ -798,6 +810,43 @@ animates them.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-spinner.svg" alt="Spinners in every style, each with its name: dots, line, arc, circle, arrow, box, pulse and bar in one cell, dots3, bounce and wave in several, and the three-row ring; a stopped one and one with frames of its own"></p>
+</div>
+
+### examples/widgets/status-bar.pl
+
+[Term::Fabulous::Widget::StatusBar](Widget/StatusBar.md): a list of files with a status
+bar at the bottom, which shows the position of the cursor on the right
+and a message after s, w or e. Above the list, a status bar of each
+other kind. The picture shows it after Down, Down and s.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-status-bar.svg" alt="A list of files with the cursor on budget.csv and, at the bottom, a status bar with the green message Saved budget.csv. and the parts file 3 of 6 and Ctrl+C quits. Above the list, status bars with a success message, a yellow warning with a blue modified part, and a red error with a red read-only part"></p>
+</div>
+
+## Menus
+
+### examples/widgets/menu.pl
+
+[Term::Fabulous::Widget::Menu](Widget/Menu.md) as a context menu: a list of files,
+whose menu opens with a right click, Shift+F10 or the Menu key. Its
+items run the same commands as their keys, Paste is dimmed until a file
+was cut, and Show hidden files has a check mark. The picture shows the
+menu after a right click on budget.csv.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-menu.svg" alt="A list of files with a context menu opened over budget.csv where it was right-clicked: Open with Enter, Rename... with F2, a line, Cut with Ctrl+X, a dimmed Paste with Ctrl+V, a line, and Show hidden files with a check mark and Alt+h. The pointer highlights Rename..."></p>
+</div>
+
+### examples/widgets/menu-bar.pl
+
+[Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md): a small notes editor with a menu
+bar, a text area and a status bar. The items of the menus are commands
+of one table, so their keys work without the menus, and the items that
+cannot run now are dimmed. The picture shows the Edit menu after typing
+a line.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-menu-bar.svg" alt="A notes editor with a menu bar of File, Edit, View and Help, each with its first letter underlined, and the caption notes.txt. The Edit menu is open below its title with Undo highlighted, Redo, Cut and Copy dimmed, Paste and Select all, each with its key. The status bar at the bottom says F10 opens the menus, Ctrl+Q quits. on the left and modified and Ln 6, Col 7 on the right"></p>
 </div>
 
 ## Tables
@@ -1154,6 +1203,27 @@ The programs of [Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md).
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-confirm-dialog.svg" alt="The Really quit? dialog with Quit and Cancel buttons over the dimmed notes; Quit has the focus and a blue border"></p>
     </div>
 
+- `confirm-prompt.pl`
+
+    ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#confirm-before-quitting-prompt):
+    the notes area of the previous program, with the question asked by a
+    prompt in one call, which starts on Keep writing. The picture shows the
+    prompt after typing a note and Ctrl+Q.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-confirm-prompt.svg" alt="A Quit? prompt with the message Your notes are not saved anywhere. and the buttons Quit and Keep writing over the dimmed notes. Keep writing has the focus"></p>
+    </div>
+
+- `ask-prompt.pl`
+
+    ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator):
+    t asks for the length of a session in minutes, a whole number from 1
+    to 120. The picture shows the prompt after typing 300 and Enter.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-ask-prompt.svg" alt="A Session length prompt asking How many minutes should the next session last?, with 300 typed in the Minutes field, the red message A session lasts 1 to 120 minutes. and the buttons OK and Cancel"></p>
+    </div>
+
 - `inline-prompt.pl`
 
     ["Ask for input below the shell's output (inline mode)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode):
@@ -1210,6 +1280,42 @@ The programs of [Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-tab-order.svg" alt="Three text fields side by side: Street filled in, City still empty, and the Zip field focused with 12345 typed, because Tab went from Street straight to Zip"></p>
+    </div>
+
+## Menus and status bars
+
+The programs of [Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md).
+
+- `menu-bar.pl`
+
+    ["Give a program a menu bar (MenuBar, Commands)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#give-a-program-a-menu-bar-menubar-commands):
+    a to-do list with a menu bar whose commands add to-dos, remove the
+    finished ones, show or hide them, and quit. The picture shows the View
+    menu.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-menu-bar.svg" alt="A to-do list of five check boxes below a menu bar with List and View and the caption To-do. The View menu is open and shows Show done with a check mark and the key Alt+d"></p>
+    </div>
+
+- `context-menu.pl`
+
+    ["Open a menu with a right click or the Menu key (Menu)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#open-a-menu-with-a-right-click-or-the-menu-key-menu):
+    a text area with a context menu of Cut, Copy, Paste and Select all. The
+    picture shows the menu after selecting two words and a right click.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-context-menu.svg" alt="A text area whose first two words are selected, with a context menu opened over it where it was right-clicked: Cut is highlighted, then Copy, Paste, a line and Select all, each with its key"></p>
+    </div>
+
+- `status-bar.pl`
+
+    ["Show messages and state in a status bar (StatusBar)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#show-messages-and-state-in-a-status-bar-statusbar):
+    a journal with a status bar that counts the words and says when the
+    entry was saved. The picture shows it after typing a sentence and
+    Ctrl+S.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-status-bar.svg" alt="A journal entry in a text area and, below it, a status bar with the green message Saved the entry. on the left and 8 words on the right"></p>
     </div>
 
 ## Layout and looks

@@ -118,10 +118,24 @@ A list with a check box per column that lets the user show and hide
 the columns of a table. See
 L<Term::Fabulous::Manual::Tables/Choosing the visible columns>.
 
+=item command
+
+One thing the user can do, with a label, keys and code: a
+L<Term::Fabulous::Command>, usually kept in a
+L<Term::Fabulous::Commands> table that runs it by its keys and shows it
+in menus. See L<Term::Fabulous::Manual::Menus/COMMANDS>.
+
 =item content box
 
 The area of a widget inside its border and padding, where its children
 (or a canvas's cells) are placed.
+
+=item context menu
+
+A menu of what can be done with the thing under the pointer, opened
+with a right click, the Menu key or Shift+F10. In Term::Fabulous, a
+L<Term::Fabulous::Widget::Menu> opened as a popup. See
+L<Term::Fabulous::Manual::Menus/CONTEXT MENUS>.
 
 =item contributor
 
@@ -257,6 +271,11 @@ lines. See L<Term::Fabulous::Manual::Tables/Table terms>.
 
 A code reference registered with C<< $widget->on( $event_name => $code ) >>.
 See L<Term::Fabulous::Manual::Events/Listening to events>.
+
+=item mnemonic
+
+The underlined letter of a menu title, which opens the menu together
+with Alt. See L<Term::Fabulous::Manual::Menus/Opening the menus>.
 
 =item mutator
 
@@ -401,6 +420,12 @@ L<Term::Fabulous::Manual::Charts/Colors, palettes and themes>.
 =item theme file
 
 A KDL file that describes a theme: a C<theme> node, a C<palette> node and one node per widget family. Loaded with L<Term::Fabulous::Theme/from_file>. See L<Term::Fabulous::Theme/THEME FILES>.
+
+=item toggle
+
+A command for a setting that is on or off, which a menu shows with a
+check mark while it is on. See
+L<Term::Fabulous::Manual::Menus/Settings that are on or off>.
 
 =item token (theme)
 

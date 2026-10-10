@@ -44,7 +44,7 @@ event loop, testing and writing widgets of your own.
 
 Recipes: complete, runnable programs for common tasks, each with a
 picture and notes on the lines that matter. Its index page lists every
-recipe; the recipes themselves are on fourteen topic pages, from
+recipe; the recipes themselves are on fifteen topic pages, from
 L<Term::Fabulous::Cookbook::GettingStarted> to
 L<Term::Fabulous::Cookbook::Extending>.
 
@@ -127,7 +127,14 @@ forms.
 
 The widgets that show what the program is doing: progress bars, with
 and without a known extent, spinners, toasts that appear in a corner
-and go away by themselves, and how widgets animate without timers.
+and go away by themselves, status bars, and how widgets animate without
+timers. Also prompts, which ask the user a question and wait for the
+answer.
+
+=item L<Term::Fabulous::Manual::Menus>
+
+Commands and the keys that run them, menu bars, context menus, and the
+shape of an application window with a menu bar and a status bar.
 
 =item L<Term::Fabulous::Manual::Charts>
 
@@ -704,6 +711,18 @@ L<Term::Fabulous::Cookbook::GettingStarted/Let the terminal handle the mouse (se
 L<Term::Fabulous::Widget::Dialog>,
 L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>.
 
+=item Ask a question, ask for a value, say that something happened (prompts)
+
+L<Term::Fabulous::Manual::Feedback/PROMPTS>,
+L<Term::Fabulous::Widget::Prompt>,
+L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)>,
+L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>.
+
+=item Keep a widget from taking the focus when it is clicked (toolbars)
+
+L<Term::Fabulous::Manual::Events/Moving the focus>,
+L<Term::Fabulous/KEYBOARD AND FOCUS>.
+
 =back
 
 =head2 Forms and input
@@ -773,11 +792,49 @@ L<Term::Fabulous::Widget::Spinner>.
 L<Term::Fabulous::Manual::Feedback/TOASTS AND ALERTS>,
 L<Term::Fabulous::Widget::Toast>.
 
+=item Show messages and the program's state in the last row (a status bar)
+
+L<Term::Fabulous::Manual::Feedback/STATUS BARS>,
+L<Term::Fabulous::Widget::StatusBar>,
+L<Term::Fabulous::Cookbook::Menus/Show messages and state in a status bar (StatusBar)>.
+
 =item Animate a widget without a timer
 
 L<Term::Fabulous::Manual::Feedback/ANIMATION>,
 L<Term::Fabulous::Widget::Display/ANIMATION>,
 L<Term::Fabulous/request_frame_at>.
+
+=back
+
+=head2 Commands and menus
+
+=over
+
+=item Keep the program's commands and their keys in one table
+
+L<Term::Fabulous::Manual::Menus/COMMANDS>,
+L<Term::Fabulous::Commands>, L<Term::Fabulous::Command>.
+
+=item Commands that cannot run now, and settings that are on or off
+
+L<Term::Fabulous::Manual::Menus/Commands that cannot run now>,
+L<Term::Fabulous::Manual::Menus/Settings that are on or off>.
+
+=item A menu bar at the top of the screen
+
+L<Term::Fabulous::Manual::Menus/MENU BARS>,
+L<Term::Fabulous::Widget::MenuBar>,
+L<Term::Fabulous::Cookbook::Menus/Give a program a menu bar (MenuBar, Commands)>.
+
+=item A menu that opens with a right click or the Menu key (a context menu)
+
+L<Term::Fabulous::Manual::Menus/CONTEXT MENUS>,
+L<Term::Fabulous::Widget::Menu>,
+L<Term::Fabulous::Cookbook::Menus/Open a menu with a right click or the Menu key (Menu)>.
+
+=item A menu bar, the content and a status bar together
+
+L<Term::Fabulous::Manual::Menus/AN APPLICATION WINDOW>.
 
 =back
 

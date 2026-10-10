@@ -154,10 +154,11 @@
 <text x="498" y="542" textLength="45" class="b" fill="#1e222a">Theme</text>
 <text x="543" y="542" textLength="333" fill="#1e222a">: 2 of 2 settings set. Enter opens or</text>
 <text x="498" y="560" textLength="378" fill="#1e222a">closes it, Delete resets it, Ctrl+C copies</text>
-<text x="39" y="596" textLength="648" fill="#1e222a">In the preview: Tab moves between the widgets, PageUp and PageDown scro~</text>
-<text x="705" y="596" textLength="72" fill="#1e6ec8">modified</text>
-<text x="795" y="596" textLength="36" fill="#1e222a">Form</text>
-<text x="849" y="596" textLength="63" fill="#8c929e">F1 keys</text>
+<text x="39" y="596" textLength="648" fill="#1e222a">In the preview: Tab moves between the widgets, PageUp and PageDown scrol</text>
+<text x="691.5" y="596" text-anchor="middle" fill="#1e222a">…</text>
+<text x="714" y="596" textLength="72" fill="#1e6ec8">modified</text>
+<text x="804" y="596" textLength="36" fill="#1e222a">Form</text>
+<text x="858" y="596" textLength="63" fill="#8c929e">F1 keys</text>
 </g>
 <g shape-rendering="crispEdges">
 <rect x="39" y="75" width="9" height="1" fill="#1e222a"/>

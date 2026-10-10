@@ -36,7 +36,7 @@ The manual is one of four kinds of documentation:
 
     Recipes: complete, runnable programs for common tasks, each with a
     picture and notes on the lines that matter. Its index page lists every
-    recipe; the recipes themselves are on fourteen topic pages, from
+    recipe; the recipes themselves are on fifteen topic pages, from
     [Term::Fabulous::Cookbook::GettingStarted](Cookbook/GettingStarted.md) to
     [Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md).
 
@@ -117,7 +117,14 @@ The manual has these pages, in reading order:
 
     The widgets that show what the program is doing: progress bars, with
     and without a known extent, spinners, toasts that appear in a corner
-    and go away by themselves, and how widgets animate without timers.
+    and go away by themselves, status bars, and how widgets animate without
+    timers. Also prompts, which ask the user a question and wait for the
+    answer.
+
+- [Term::Fabulous::Manual::Menus](Manual/Menus.md)
+
+    Commands and the keys that run them, menu bars, context menus, and the
+    shape of an application window with a menu bar and a status bar.
 
 - [Term::Fabulous::Manual::Charts](Manual/Charts.md)
 
@@ -608,6 +615,18 @@ program, and the class pages with the reference.
     [Term::Fabulous::Widget::Dialog](Widget/Dialog.md),
     ["Ask a question in a dialog (Dialog widget)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget).
 
+- Ask a question, ask for a value, say that something happened (prompts)
+
+    ["PROMPTS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#prompts),
+    [Term::Fabulous::Widget::Prompt](Widget/Prompt.md),
+    ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#confirm-before-quitting-prompt),
+    ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator).
+
+- Keep a widget from taking the focus when it is clicked (toolbars)
+
+    ["Moving the focus" in Term::Fabulous::Manual::Events](Manual/Events.md#moving-the-focus),
+    ["KEYBOARD AND FOCUS" in Term::Fabulous](../../../README.md#keyboard-and-focus).
+
 ## Forms and input
 
 - The input widgets and what they have in common
@@ -669,11 +688,45 @@ program, and the class pages with the reference.
     ["TOASTS AND ALERTS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#toasts-and-alerts),
     [Term::Fabulous::Widget::Toast](Widget/Toast.md).
 
+- Show messages and the program's state in the last row (a status bar)
+
+    ["STATUS BARS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#status-bars),
+    [Term::Fabulous::Widget::StatusBar](Widget/StatusBar.md),
+    ["Show messages and state in a status bar (StatusBar)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#show-messages-and-state-in-a-status-bar-statusbar).
+
 - Animate a widget without a timer
 
     ["ANIMATION" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#animation),
     ["ANIMATION" in Term::Fabulous::Widget::Display](Widget/Display.md#animation),
     ["request\_frame\_at" in Term::Fabulous](../../../README.md#request_frame_at).
+
+## Commands and menus
+
+- Keep the program's commands and their keys in one table
+
+    ["COMMANDS" in Term::Fabulous::Manual::Menus](Manual/Menus.md#commands),
+    [Term::Fabulous::Commands](Commands.md), [Term::Fabulous::Command](Command.md).
+
+- Commands that cannot run now, and settings that are on or off
+
+    ["Commands that cannot run now" in Term::Fabulous::Manual::Menus](Manual/Menus.md#commands-that-cannot-run-now),
+    ["Settings that are on or off" in Term::Fabulous::Manual::Menus](Manual/Menus.md#settings-that-are-on-or-off).
+
+- A menu bar at the top of the screen
+
+    ["MENU BARS" in Term::Fabulous::Manual::Menus](Manual/Menus.md#menu-bars),
+    [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md),
+    ["Give a program a menu bar (MenuBar, Commands)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#give-a-program-a-menu-bar-menubar-commands).
+
+- A menu that opens with a right click or the Menu key (a context menu)
+
+    ["CONTEXT MENUS" in Term::Fabulous::Manual::Menus](Manual/Menus.md#context-menus),
+    [Term::Fabulous::Widget::Menu](Widget/Menu.md),
+    ["Open a menu with a right click or the Menu key (Menu)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#open-a-menu-with-a-right-click-or-the-menu-key-menu).
+
+- A menu bar, the content and a status bar together
+
+    ["AN APPLICATION WINDOW" in Term::Fabulous::Manual::Menus](Manual/Menus.md#an-application-window).
 
 ## Tables
 

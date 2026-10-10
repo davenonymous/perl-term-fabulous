@@ -501,8 +501,11 @@ C<"red"> are not color strings.
 
 =head1 NODE TYPES
 
-Every widget class of Term::Fabulous can be declared in a layout. The
-table lists them with the alias the examples use; each link leads to the
+Every widget class of Term::Fabulous can be declared in a layout,
+except L<Term::Fabulous::Widget::Prompt>,
+L<Term::Fabulous::Widget::Menu> and L<Term::Fabulous::Widget::MenuBar>,
+whose fields and items are code, which a layout file cannot hold. The
+table lists the others with the alias the examples use; each link leads to the
 list of properties the class accepts. All of them except Text accept
 the L</Box properties>.
 
@@ -538,6 +541,7 @@ the L</Box properties>.
 	ProgressBar       Term::Fabulous::Widget::ProgressBar       Box + range, value, style, ...
 	Spinner           Term::Fabulous::Widget::Spinner           Box + style, frames, label
 	Toast             Term::Fabulous::Widget::Toast             Box + kind, title, message, ...
+	StatusBar         Term::Fabulous::Widget::StatusBar         Box + message, kind, timeout
 	Table             Term::Fabulous::Widget::Table             Box + columns, lines, sort, ...
 	LineChart         Term::Fabulous::Widget::LineChart         chart + series, axes, ...
 	AreaChart         Term::Fabulous::Widget::AreaChart         chart + series, axes, ...
@@ -601,6 +605,8 @@ The properties of each class:
 =item * L<Spinner|Term::Fabulous::Widget::Spinner/KDL PROPERTIES>
 
 =item * L<Toast|Term::Fabulous::Widget::Toast/KDL PROPERTIES>
+
+=item * L<StatusBar|Term::Fabulous::Widget::StatusBar/KDL PROPERTIES>
 
 =item * L<Table|Term::Fabulous::Widget::Table/KDL PROPERTIES>
 

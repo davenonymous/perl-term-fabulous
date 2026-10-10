@@ -801,7 +801,9 @@ Widgets fire further events themselves: `Change` and
 `ValidityChange` from the input widgets, `Submit` from
 [Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md),
 `Activate` from [Term::Fabulous::Widget::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Button.md), `Close` from
-[Term::Fabulous::Widget::Dialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog.md), `CanvasResize` from canvases,
+[Term::Fabulous::Widget::Dialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog.md), `Answer` from
+[Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md), `Choose` from
+[Term::Fabulous::Widget::Menu](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Menu.md), `CanvasResize` from canvases,
 `SeriesHover` from charts, the table events (`CursorMove`,
 `SelectionChange`, `RowActivate`, `SortChange`, `FilterChange`,
 `PageChange`, `Expand`, `Collapse`, `ColumnsChange`) from
@@ -843,9 +845,14 @@ Listeners cannot prevent these actions.
 When the left mouse button is pressed (not dragged), the widget under
 the pointer (on text, the Text widget) gets the focus, or its nearest
 ancestor that can take it.
-When there is none, the focus is cleared; so clicking an empty area
+When there is none, the focus is cleared, so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
-`Mouse` event is fired.
+`Mouse` event is fired. A widget that has a `keeps_focus_on_click`
+method returning true, or that is inside such a widget, leaves the
+focus where it is when it is pressed: a click on the title of a
+[Term::Fabulous::Widget::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/MenuBar.md) opens the menu without taking the
+focus from the text field the user was typing in, so the menu can give
+it back when it closes.
 
 See ["KEYBOARD" in Term::Fabulous::Manual::Events](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Events.md#keyboard) and
 ["FOCUS" in Term::Fabulous::Manual::Events](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Events.md#focus).
@@ -935,6 +942,11 @@ Term::Fabulous, and programs do not use them directly.
     A terminal in memory: test a whole program, keys, clicks and what the
     screen shows, with ["step"](#step).
 
+- [Term::Fabulous::Commands](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Commands.md), [Term::Fabulous::Command](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Command.md)
+
+    The program's commands in one table: a label, the keys and the code of
+    each, which the keys run and the menus show.
+
 ## Widgets
 
 - [Term::Fabulous::Widget::Box](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Box.md)
@@ -960,6 +972,23 @@ Term::Fabulous, and programs do not use them directly.
 
     A box that opens over the whole screen, keeps the keyboard focus inside
     itself and closes on Escape.
+
+- [Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md)
+
+    A dialog that asks a question, with a message, fields and buttons, and
+    reports the answer. In one call: an alert, a question with OK and
+    Cancel, or a request for one value.
+
+- [Term::Fabulous::Widget::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/MenuBar.md)
+
+    A row of menus at the top of the screen, opened with the mouse, F10 or
+    Alt and a letter.
+
+- [Term::Fabulous::Widget::Menu](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Menu.md)
+
+    A list of commands with their keys: a context menu that opens at the
+    pointer or below a widget, the menus of a menu bar, or a list of
+    actions on its own.
 
 - [Term::Fabulous::Widget::ScrollBox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ScrollBox.md)
 
@@ -1130,6 +1159,11 @@ Term::Fabulous, and programs do not use them directly.
 
     The column of toasts in one corner. Used internally by the toast.
 
+- [Term::Fabulous::Widget::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/StatusBar.md)
+
+    One row for a message of a kind, which may go away by itself, and short
+    texts about the program's state on the right.
+
 ## Tables
 
 - [Term::Fabulous::Widget::Table](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Table.md)
@@ -1285,7 +1319,15 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Event::Close](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Close.md)
 
-    A dialog was closed, or a toast went away.
+    A dialog was closed, a toast went away, or a popup menu closed.
+
+- [Term::Fabulous::Event::Answer](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Answer.md)
+
+    A prompt was answered: which button, and the values of its fields.
+
+- [Term::Fabulous::Event::Choose](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Choose.md)
+
+    An item of a menu was chosen.
 
 - [Term::Fabulous::Event::Select](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Select.md)
 
@@ -1401,13 +1443,13 @@ Term::Fabulous, and programs do not use them directly.
     [Term::Fabulous::ThemeEditor::SettingsList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/SettingsList.md),
     [Term::Fabulous::ThemeEditor::Preview](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Preview.md),
     [Term::Fabulous::ThemeEditor::KdlArea](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KdlArea.md),
-    [Term::Fabulous::ThemeEditor::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/MenuBar.md),
     [Term::Fabulous::ThemeEditor::TabStrip](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/TabStrip.md),
-    [Term::Fabulous::ThemeEditor::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/StatusBar.md),
     [Term::Fabulous::ThemeEditor::ValueDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/ValueDialog.md),
-    [Term::Fabulous::ThemeEditor::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/FileDialog.md),
-    [Term::Fabulous::ThemeEditor::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Prompt.md) and
-    [Term::Fabulous::ThemeEditor::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KeyReference.md).
+    [Term::Fabulous::ThemeEditor::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/FileDialog.md) and
+    [Term::Fabulous::ThemeEditor::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KeyReference.md). Its menu bar, status bar
+    and questions are the library's own
+    [Term::Fabulous::Widget::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/MenuBar.md), [Term::Fabulous::Widget::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/StatusBar.md)
+    and [Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md).
 
 ## Extending Term::Fabulous
 

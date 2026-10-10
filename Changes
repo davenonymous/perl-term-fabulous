@@ -1,6 +1,37 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::MenuBar: a row of menus at the top of
+          the screen, opened with the mouse, F10 or Alt and the
+          underlined letter of a title. It takes the focus only while a
+          menu is open and gives it back when the menu closes.
+        - Term::Fabulous::Widget::Menu: a list of commands with their
+          keys, dimmed items, check marks for settings and separators.
+          It opens as a context menu at a point or below a widget, kept
+          on the screen, or stays on the screen as an ordinary widget.
+          Choosing an item fires the new event Choose.
+        - Term::Fabulous::Command and Term::Fabulous::Commands: the
+          commands of a program with their labels, keys, code, enabled
+          and checked states, in one table that runs them by key and
+          feeds the menus. Keys are checked when a command is made, and
+          a key claimed twice dies.
+        - Term::Fabulous::Widget::StatusBar: one row for a message of a
+          kind (info, success, warning, danger), which may go away after
+          a timeout, and parts on the right, given as a list or as code
+          that is read for every frame.
+        - Term::Fabulous::Widget::Prompt: a dialog with a title, a
+          message, input fields and buttons, which checks the fields
+          with their validators before a primary button answers and
+          reports the answer with the new event Answer. alert, confirm
+          and ask build and open the common prompts in one call.
+        - The theme families menu, menu_bar and status_bar.
+        - A widget whose keeps_focus_on_click method returns true keeps
+          the focus where it is when it is clicked.
+        - The theme editor uses the new widgets; its own menu bar,
+          status bar and prompt classes are gone, and the preview shows
+          the new families.
+        - Manual::Menus, Cookbook::Menus, status bars and prompts in
+          Manual::Feedback, and two prompt recipes in Cookbook::Forms.
         - Borders are switched on and off instead of sized: Term::Fabulous
           widgets take bordered (one boolean for all four sides, or a
           hash of booleans under top, right, bottom and left) instead of

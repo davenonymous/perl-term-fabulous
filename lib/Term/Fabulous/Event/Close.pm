@@ -21,7 +21,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Event::Close - A dialog was closed or a toast went away
+Term::Fabulous::Event::Close - A dialog, a toast or a popup menu went away
 
 =head1 SYNOPSIS
 
@@ -43,10 +43,17 @@ A L<Term::Fabulous::Widget::Toast> fires it on itself when it goes
 away: when its timeout runs out, when the user clicks its close mark,
 or when the program calls C<< $toast->hide >>.
 
+A L<Term::Fabulous::Widget::Menu> that was opened as a popup fires it
+on itself when it closes: when the user chooses an item, presses
+C<Escape> or moves the focus elsewhere, or when the program calls
+C<< $menu->close >>. A L<Term::Fabulous::Widget::Prompt> fires it like
+every dialog, before its C<Answer>.
+
 The event has no fields of its own; C<< $event->target >> is the
-dialog or the toast. It is a L<Clay::UI::Events::Event> whose name is
-C<Close>. The widget has no parent any more when it fires, so the
-event does not bubble anywhere; listen on the dialog or toast itself.
+dialog, the toast or the menu. It is a L<Clay::UI::Events::Event>
+whose name is C<Close>. The widget has no parent any more when it
+fires, so the event does not bubble anywhere. Listen on the dialog,
+the toast or the menu itself.
 
 =head1 CONSTRUCTOR
 
@@ -60,7 +67,7 @@ L<Clay::UI::Events::Event> are accepted.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Dialog>, L<Term::Fabulous::Widget::Toast>,
-L<Clay::UI::Events::Event>,
+L<Term::Fabulous::Widget::Menu>, L<Clay::UI::Events::Event>,
 L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>.
 
 =cut

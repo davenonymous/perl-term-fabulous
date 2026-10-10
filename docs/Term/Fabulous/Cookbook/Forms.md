@@ -4,7 +4,7 @@ Term::Fabulous::Cookbook::Forms - Recipes: forms, dialogs and input widgets
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::LiveData](LiveData.md). Next page: [Term::Fabulous::Cookbook::Layout](Layout.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::LiveData](LiveData.md). Next page: [Term::Fabulous::Cookbook::Menus](Menus.md).
 
 The recipes on this page build forms: they read text, choices and
 numbers from the user, check and collect the values, open a dialog over
@@ -20,7 +20,8 @@ The recipes use the input widgets
 with [Term::Fabulous::Widget::RadioButton](../Widget/RadioButton.md),
 [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md) and [Term::Fabulous::Widget::Slider](../Widget/Slider.md),
 the checks of [Term::Fabulous::Validator](../Validator.md),
-the dialog [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md), the clipboard of
+the dialog [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) and the prompt
+[Term::Fabulous::Widget::Prompt](../Widget/Prompt.md), the clipboard of
 [Term::Fabulous::Editor](../Editor.md), and [Term::Fabulous::Layout](../Layout.md) for a form
 described in KDL.
 
@@ -37,6 +38,8 @@ The recipes on this page:
 - ["Check the values of a form (required, validator)"](#check-the-values-of-a-form-required-validator)
 - ["Write your own checks and restrict typing (accept, pattern, code)"](#write-your-own-checks-and-restrict-typing-accept-pattern-code)
 - ["Ask a question in a dialog (Dialog widget)"](#ask-a-question-in-a-dialog-dialog-widget)
+- ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt)
+- ["Ask for a number and check it (Prompt, validator)"](#ask-for-a-number-and-check-it-prompt-validator)
 - ["Ask for input below the shell's output (inline mode)"](#ask-for-input-below-the-shell-s-output-inline-mode)
 - ["Choose from options in Perl (Dropdown, RadioGroup, Slider)"](#choose-from-options-in-perl-dropdown-radiogroup-slider)
 - ["Read all values of a form"](#read-all-values-of-a-form)
@@ -486,6 +489,11 @@ Goal: a "Really quit?" dialog that opens over the screen when the user
 presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
+This recipe builds the dialog from its parts, which shows how a dialog
+works. For a question with a few buttons, a
+[Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) does the same in one call: see the
+next recipe, ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt).
+
 This program is shipped as `examples/cookbook/confirm-dialog.pl`.
 
 ```perl
@@ -583,6 +591,183 @@ program behind the dialog are off until it closes.
 - The text area keeps its text while the dialog is open and after it
 closes: the dialog is added to and removed from the tree, nothing else
 changes. The dialog itself keeps its children between openings.
+
+# Confirm before quitting (Prompt)
+
+Goal: ask "Quit?" before the program ends, in one call, and start on
+the button that does no harm.
+
+This program is shipped as `examples/cookbook/confirm-prompt.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Prompt;
+use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextArea;
+use Clay::UI::Enum::Result;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+my $notes = Term::Fabulous::Widget::TextArea->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+$root->add_child( Term::Fabulous::Widget::Text->new( text => 'Type some notes. Ctrl+Q asks before quitting.' ), $notes );
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+$root->on(
+        KeyPress => sub ($event) {
+                return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'Ctrl+Q';
+                Term::Fabulous::Widget::Prompt->confirm(
+                        $ui,
+                        title   => 'Quit?',
+                        message => 'Your notes are not saved anywhere.',
+                        ok      => 'Quit',
+                        cancel  => 'Keep writing',
+                        focus   => 'cancel',
+                )->on(
+                        Answer => sub ($event) {
+                                $ui->loop->stop if $event->button eq 'ok';
+                                return;
+                        }
+                );
+                return;
+        }
+);
+
+$ui->interaction->set_focused_widget($notes);
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-confirm-prompt.svg" alt="A Quit? prompt with the message Your notes are not saved anywhere. and the buttons Quit and Keep writing over the dimmed notes. Keep writing has the focus"></p>
+</div>
+
+- `Term::Fabulous::Widget::Prompt->confirm` builds a prompt with a
+title, a message and two buttons, opens it, and returns it. The buttons
+have the ids `ok` and `cancel`, and `ok` and `cancel` set their
+labels. The prompt is a [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md), so it keeps
+the focus while it is open, as the dialog of the previous recipe does.
+- `focus => 'cancel'` puts the focus on Keep writing, so a hasty
+`Enter` keeps the notes. Without it, the first button would start
+with the focus.
+- The prompt reports the answer with an `Answer` event
+([Term::Fabulous::Event::Answer](../Event/Answer.md)), and `on` returns the prompt, so
+the listener follows the call. `$event->button` is the id of the
+button. `Escape` answers `cancel` too, so the program needs no code
+for it.
+- When the `Answer` listener runs, the prompt is closed and the focus is
+back on the text area, so the user can go on writing.
+
+# Ask for a number and check it (Prompt, validator)
+
+Goal: ask for a number of minutes in a prompt, accept only whole
+numbers from 1 to 120, and keep the prompt open with a message until
+the value is right.
+
+This program is shipped as `examples/cookbook/ask-prompt.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Prompt;
+use Term::Fabulous::Widget::Text;
+use Clay::UI::Enum::Result;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+my $minutes = 25;
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+                child_gap        => 1,
+        },
+);
+my $session = Term::Fabulous::Widget::Text->new( text => "The next session lasts $minutes minutes." );
+$root->add_child( $session, Term::Fabulous::Widget::Text->new( text => 't changes it, q quits.' ) );
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+# The field checks that it holds a whole number; the check of the
+# prompt runs after it and keeps the number in range.
+sub ask_minutes () {
+        Term::Fabulous::Widget::Prompt->ask(
+                $ui,
+                title     => 'Session length',
+                message   => 'How many minutes should the next session last?',
+                label     => 'Minutes',
+                value     => $minutes,
+                required  => 1,
+                validator => 'integer',
+                check     => sub ($values) { return $values->{value} >= 1 && $values->{value} <= 120 ? undef : 'A session lasts 1 to 120 minutes.' },
+                width     => 52,
+        )->on(
+                Answer => sub ($event) {
+                        return if $event->button ne 'ok';
+                        $minutes = $event->value('value');
+                        $session->text("The next session lasts $minutes minutes.");
+                        return;
+                }
+        );
+        return;
+}
+
+$root->on(
+        KeyPress => sub ($event) {
+                my $key = $event->key_name // '';
+                if ( $key eq 't' ) {
+                        ask_minutes();
+                        return;
+                }
+                if ( $key eq 'q' ) {
+                        $ui->loop->stop;
+                        return;
+                }
+                return Clay::UI::Enum::Result->CONTINUE;
+        }
+);
+
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-ask-prompt.svg" alt="A Session length prompt asking How many minutes should the next session last?, with 300 typed in the Minutes field, the red message A session lasts 1 to 120 minutes. and the buttons OK and Cancel"></p>
+</div>
+
+- `Term::Fabulous::Widget::Prompt->ask` builds a prompt with one text
+field, named `value`, and the buttons `ok` and `cancel`. The field
+starts with the text of `value`, all of it selected, so typing
+replaces it.
+- `required` and `validator` go to the text field and work as in a form
+(see ["Check the values of a form (required, validator)"](#check-the-values-of-a-form-required-validator)): the field
+must not be empty and must hold a whole number. `Enter` in the field
+presses OK, and OK checks the field before it answers. While something
+is wrong, the prompt stays open, shows the label of the field and what
+is wrong with it in red, and puts the cursor back in the field.
+- `check` runs after the field found nothing wrong. It gets the values
+of all fields, so it can check a range, as here, or compare two fields.
+It returns what is wrong, as a sentence, or `undef` when everything is
+fine.
+- `$event->value('value')` is the text of the field when the user
+pressed OK.
 
 # Ask for input below the shell's output (inline mode)
 
@@ -1238,7 +1423,7 @@ to the cursor and shows the change in it.
 
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::LiveData](LiveData.md). Next page: [Term::Fabulous::Cookbook::Layout](Layout.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::LiveData](LiveData.md). Next page: [Term::Fabulous::Cookbook::Menus](Menus.md).
 
 [Term::Fabulous::Manual::Forms](../Manual/Forms.md) - the guide to the input widgets and
 what they have in common.
@@ -1247,5 +1432,7 @@ what they have in common.
 Tab order.
 
 [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) - dialogs that open over the screen.
+
+[Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) - questions and small forms in a dialog.
 
 [Term::Fabulous::Manual::KDL](../Manual/KDL.md) - layouts described in KDL files.

@@ -84,9 +84,10 @@ background instead gives the token a color with alpha 0, such as
 ## Families, slots and states
 
 A family is the kind of a widget: `text`, `box`, `button`,
-`input`, `text_input`, `dropdown`, `table`, `scrollbar`, `tabs`,
-`accordion`, `dialog`, `toast`, `progress`, `spinner`,
-`image`, `divider`. A widget class says which family it belongs to
+`input`, `text_input`, `dropdown`, `menu`, `menu_bar`, `table`,
+`scrollbar`, `tabs`, `accordion`, `dialog`, `toast`,
+`status_bar`, `progress`, `spinner`, `image`, `divider`. A widget
+class says which family it belongs to
 (["theme\_family" in Term::Fabulous::Role::Themed](Role/Themed.md#theme_family)), and a family may
 extend another: `button` extends `box`, so it has the box's slots
 too.
@@ -107,6 +108,13 @@ same slot, but keeps its own value: `box.border.color` does not change
 `button.border.color`, and `input.border.enabled` does not change
 `text_input.border.enabled` or `dropdown.border.enabled`.
 
+The slots of the status bar are named after the colors they give, not
+after the kinds of message: a message of the kind `info` is drawn in
+`status_bar.text`, the others in `status_bar.success`,
+`status_bar.warning` and `status_bar.danger` (see
+[Term::Fabulous::Widget::StatusBar](Widget/StatusBar.md)). A toast of the kind `info`, by
+contrast, is drawn in `toast.info`, an accent color.
+
 ## Borders
 
 Three slots decide the border of a widget:
@@ -116,10 +124,10 @@ Three slots decide the border of a widget:
     Whether a widget of the family has a border on all four sides when
     the program does not decide it with the widget's `bordered` parameter
     (see ["bordered" in Term::Fabulous::Widget](Widget.md#bordered)). The families `button`,
-    `input`, `text_input`, `dropdown`, `accordion`, `dialog`,
-    `toast`, `progress`, `spinner` and `image` have it. It is `false`
-    in the built-in themes, except for `dialog` and `toast`, where it is
-    `true`.
+    `input`, `text_input`, `dropdown`, `menu`, `menu_bar`,
+    `accordion`, `dialog`, `toast`, `progress`, `spinner` and
+    `image` have it. It is `false` in the built-in themes, except for
+    `menu`, `dialog` and `toast`, where it is `true`.
 
     A border takes one cell on each side, inside the widget's box, so this
     slot has the `normal` state only: a border that came and went with
@@ -150,8 +158,8 @@ its own parameters (see
 and takes no `bordered` at all.
 - `tabs`: the line of a tab bar joins the borders of its tabs,
 which the bar draws itself.
-- `scrollbar` and `divider`: lines one cell thick, which a
-frame does not fit around.
+- `scrollbar`, `divider` and `status_bar`: lines one cell
+thick, which a frame does not fit around.
 - `text`, which has no border slots.
 
 A widget that frames one of its parts decides that part's border

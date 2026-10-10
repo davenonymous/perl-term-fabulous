@@ -415,7 +415,7 @@ class Term::Fabulous
 		$_frame_requested = 1;    # listeners may change anything
 		my $is_press = $IS_BUTTON{$key} && !( $event->mod & TB_MOD_MOTION );
 		$self->interaction->set_focused_widget( $self->_focusable_at_or_above( $text // $target ) )
-			if $is_press && $key == TB_KEY_MOUSE_LEFT;
+			if $is_press && $key == TB_KEY_MOUSE_LEFT && !_keeps_focus_on_click($target);
 		my $mouse_event = Term::Fabulous::Event::Mouse->of($event);
 		$target->fire_event($mouse_event);
 
@@ -448,6 +448,15 @@ class Term::Fabulous
 		return 0 unless $event->key == TB_KEY_MOUSE_RELEASE;
 		my $button = $event->ch;
 		return $button == 0 || $button == TB_KEY_MOUSE_LEFT ? 1 : 0;
+	}
+
+	# Whether a press on a widget leaves the focus where it is: the widget
+	# or one of its ancestors says so (a menu bar does).
+	sub _keeps_focus_on_click ($widget) {
+		for ( my $node = $widget; defined $node; $node = $node->parent ) {
+			return 1 if $node->can('keeps_focus_on_click') && $node->keeps_focus_on_click;
+		}
+		return 0;
 	}
 
 	# The widget a click focuses: the nearest one that can take focus now.
@@ -1407,7 +1416,9 @@ Widgets fire further events themselves: C<Change> and
 C<ValidityChange> from the input widgets, C<Submit> from
 L<Term::Fabulous::Widget::TextField>,
 C<Activate> from L<Term::Fabulous::Widget::Button>, C<Close> from
-L<Term::Fabulous::Widget::Dialog>, C<CanvasResize> from canvases,
+L<Term::Fabulous::Widget::Dialog>, C<Answer> from
+L<Term::Fabulous::Widget::Prompt>, C<Choose> from
+L<Term::Fabulous::Widget::Menu>, C<CanvasResize> from canvases,
 C<SeriesHover> from charts, the table events (C<CursorMove>,
 C<SelectionChange>, C<RowActivate>, C<SortChange>, C<FilterChange>,
 C<PageChange>, C<Expand>, C<Collapse>, C<ColumnsChange>) from
@@ -1453,9 +1464,14 @@ Listeners cannot prevent these actions.
 When the left mouse button is pressed (not dragged), the widget under
 the pointer (on text, the Text widget) gets the focus, or its nearest
 ancestor that can take it.
-When there is none, the focus is cleared; so clicking an empty area
+When there is none, the focus is cleared, so clicking an empty area
 leaves a text field and closes an open dropdown. This happens before the
-C<Mouse> event is fired.
+C<Mouse> event is fired. A widget that has a C<keeps_focus_on_click>
+method returning true, or that is inside such a widget, leaves the
+focus where it is when it is pressed: a click on the title of a
+L<Term::Fabulous::Widget::MenuBar> opens the menu without taking the
+focus from the text field the user was typing in, so the menu can give
+it back when it closes.
 
 See L<Term::Fabulous::Manual::Events/KEYBOARD> and
 L<Term::Fabulous::Manual::Events/FOCUS>.
@@ -1565,6 +1581,11 @@ file format.
 A terminal in memory: test a whole program, keys, clicks and what the
 screen shows, with L</step>.
 
+=item L<Term::Fabulous::Commands>, L<Term::Fabulous::Command>
+
+The program's commands in one table: a label, the keys and the code of
+each, which the keys run and the menus show.
+
 =back
 
 =head2 Widgets
@@ -1594,6 +1615,23 @@ pressed, and fires C<Activate> for a click, Enter or Space.
 
 A box that opens over the whole screen, keeps the keyboard focus inside
 itself and closes on Escape.
+
+=item L<Term::Fabulous::Widget::Prompt>
+
+A dialog that asks a question, with a message, fields and buttons, and
+reports the answer. In one call: an alert, a question with OK and
+Cancel, or a request for one value.
+
+=item L<Term::Fabulous::Widget::MenuBar>
+
+A row of menus at the top of the screen, opened with the mouse, F10 or
+Alt and a letter.
+
+=item L<Term::Fabulous::Widget::Menu>
+
+A list of commands with their keys: a context menu that opens at the
+pointer or below a widget, the menus of a menu bar, or a list of
+actions on its own.
 
 =item L<Term::Fabulous::Widget::ScrollBox>
 
@@ -1772,6 +1810,11 @@ the layout, an alert box.
 
 The column of toasts in one corner. Used internally by the toast.
 
+=item L<Term::Fabulous::Widget::StatusBar>
+
+One row for a message of a kind, which may go away by itself, and short
+texts about the program's state on the right.
+
 =back
 
 =head2 Tables
@@ -1939,7 +1982,15 @@ The user followed a link of a RichText, by click or key.
 
 =item L<Term::Fabulous::Event::Close>
 
-A dialog was closed, or a toast went away.
+A dialog was closed, a toast went away, or a popup menu closed.
+
+=item L<Term::Fabulous::Event::Answer>
+
+A prompt was answered: which button, and the values of its fields.
+
+=item L<Term::Fabulous::Event::Choose>
+
+An item of a menu was chosen.
 
 =item L<Term::Fabulous::Event::Select>
 
@@ -2063,13 +2114,13 @@ L<Term::Fabulous::ThemeEditor::Form>,
 L<Term::Fabulous::ThemeEditor::SettingsList>,
 L<Term::Fabulous::ThemeEditor::Preview>,
 L<Term::Fabulous::ThemeEditor::KdlArea>,
-L<Term::Fabulous::ThemeEditor::MenuBar>,
 L<Term::Fabulous::ThemeEditor::TabStrip>,
-L<Term::Fabulous::ThemeEditor::StatusBar>,
 L<Term::Fabulous::ThemeEditor::ValueDialog>,
-L<Term::Fabulous::ThemeEditor::FileDialog>,
-L<Term::Fabulous::ThemeEditor::Prompt> and
-L<Term::Fabulous::ThemeEditor::KeyReference>.
+L<Term::Fabulous::ThemeEditor::FileDialog> and
+L<Term::Fabulous::ThemeEditor::KeyReference>. Its menu bar, status bar
+and questions are the library's own
+L<Term::Fabulous::Widget::MenuBar>, L<Term::Fabulous::Widget::StatusBar>
+and L<Term::Fabulous::Widget::Prompt>.
 
 =back
 

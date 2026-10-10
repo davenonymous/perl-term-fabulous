@@ -144,6 +144,28 @@ class Term::Fabulous::Theme :strict(params) {
 				'highlight.background' => _color_slot('accent'),
 			}
 		},
+		menu => {
+			extends => 'input',
+			slots   => {
+				'background'           => _color_slot( 'surface_low', focused => 'normal', disabled => 'normal' ),
+				'border.color'         => _color_slot( 'accent', focused => 'normal', disabled => 'normal', invalid => 'normal' ),
+				'border.style'         => _style_slot('Round'),
+				'border.enabled'       => _boolean_slot('true'),
+				'keys'                 => _color_slot('placeholder'),
+				'separator'            => _color_slot('placeholder'),
+				'highlight.text'       => _color_slot('text_inverse'),
+				'highlight.background' => _color_slot('accent'),
+			}
+		},
+		menu_bar => {
+			extends => 'input',
+			slots   => {
+				'background'           => _color_slot( 'surface_low', focused => 'normal', disabled => 'normal' ),
+				'caption'              => _color_slot('placeholder'),
+				'highlight.text'       => _color_slot('text_inverse'),
+				'highlight.background' => _color_slot('accent'),
+			}
+		},
 		table => {
 			extends => 'box',
 			slots   => {
@@ -208,6 +230,18 @@ class Term::Fabulous::Theme :strict(params) {
 				'success'        => _required( _color_slot('success') ),
 				'warning'        => _required( _color_slot('warning') ),
 				'danger'         => _required( _color_slot('danger') ),
+			}
+		},
+		status_bar => {
+			extends => 'box',
+			slots   => {
+				'background' => _color_slot('surface_low'),
+				'text'       => _color_slot('text'),
+				'dim'        => _color_slot('placeholder'),
+				'accent'     => _color_slot('accent'),
+				'success'    => _color_slot('success'),
+				'warning'    => _color_slot('warning'),
+				'danger'     => _color_slot('danger'),
 			}
 		},
 		progress => {
@@ -837,9 +871,10 @@ C<rgba(0, 0, 0, 0)>. L<Term::Fabulous::Static> does not paint it.
 =head2 Families, slots and states
 
 A family is the kind of a widget: C<text>, C<box>, C<button>,
-C<input>, C<text_input>, C<dropdown>, C<table>, C<scrollbar>, C<tabs>,
-C<accordion>, C<dialog>, C<toast>, C<progress>, C<spinner>,
-C<image>, C<divider>. A widget class says which family it belongs to
+C<input>, C<text_input>, C<dropdown>, C<menu>, C<menu_bar>, C<table>,
+C<scrollbar>, C<tabs>, C<accordion>, C<dialog>, C<toast>,
+C<status_bar>, C<progress>, C<spinner>, C<image>, C<divider>. A widget
+class says which family it belongs to
 (L<Term::Fabulous::Role::Themed/theme_family>), and a family may
 extend another: C<button> extends C<box>, so it has the box's slots
 too.
@@ -860,6 +895,13 @@ same slot, but keeps its own value: C<box.border.color> does not change
 C<button.border.color>, and C<input.border.enabled> does not change
 C<text_input.border.enabled> or C<dropdown.border.enabled>.
 
+The slots of the status bar are named after the colors they give, not
+after the kinds of message: a message of the kind C<info> is drawn in
+C<status_bar.text>, the others in C<status_bar.success>,
+C<status_bar.warning> and C<status_bar.danger> (see
+L<Term::Fabulous::Widget::StatusBar>). A toast of the kind C<info>, by
+contrast, is drawn in C<toast.info>, an accent color.
+
 =head2 Borders
 
 Three slots decide the border of a widget:
@@ -871,10 +913,10 @@ Three slots decide the border of a widget:
 Whether a widget of the family has a border on all four sides when
 the program does not decide it with the widget's C<bordered> parameter
 (see L<Term::Fabulous::Widget/bordered>). The families C<button>,
-C<input>, C<text_input>, C<dropdown>, C<accordion>, C<dialog>,
-C<toast>, C<progress>, C<spinner> and C<image> have it. It is C<false>
-in the built-in themes, except for C<dialog> and C<toast>, where it is
-C<true>.
+C<input>, C<text_input>, C<dropdown>, C<menu>, C<menu_bar>,
+C<accordion>, C<dialog>, C<toast>, C<progress>, C<spinner> and
+C<image> have it. It is C<false> in the built-in themes, except for
+C<menu>, C<dialog> and C<toast>, where it is C<true>.
 
 A border takes one cell on each side, inside the widget's box, so this
 slot has the C<normal> state only: a border that came and went with
@@ -912,8 +954,8 @@ and takes no C<bordered> at all.
 =item * C<tabs>: the line of a tab bar joins the borders of its tabs,
 which the bar draws itself.
 
-=item * C<scrollbar> and C<divider>: lines one cell thick, which a
-frame does not fit around.
+=item * C<scrollbar>, C<divider> and C<status_bar>: lines one cell
+thick, which a frame does not fit around.
 
 =item * C<text>, which has no border slots.
 

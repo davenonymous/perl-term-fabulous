@@ -4,7 +4,7 @@ Term::Fabulous::Manual::Charts - Canvases and charts
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Feedback](Feedback.md). Next page: [Term::Fabulous::Manual::Tables](Tables.md).
+This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Menus](Menus.md). Next page: [Term::Fabulous::Manual::Tables](Tables.md).
 
 This page covers the two ways to draw graphics in the terminal. A
 _canvas_ (["CANVASES"](#canvases)) is a widget you draw into yourself, cell by
@@ -574,7 +574,7 @@ line styles and hover.
 
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Feedback](Feedback.md). Next page: [Term::Fabulous::Manual::Tables](Tables.md).
+This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Menus](Menus.md). Next page: [Term::Fabulous::Manual::Tables](Tables.md).
 
 The class pages: [Term::Fabulous::Widget::Canvas](../Widget/Canvas.md),
 [Term::Fabulous::Widget::PixelCanvas](../Widget/PixelCanvas.md), [Term::Fabulous::Widget::Chart](../Widget/Chart.md),

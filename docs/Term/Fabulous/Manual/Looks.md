@@ -542,8 +542,9 @@ Three parameters control it:
     Which sides have a border: a true value for all four sides, or a hash
     reference such as `{ left => 1, top => 1 }` for some of
     them (the sides it leaves out have none). Without it, the theme
-    decides for the widget's family: the built-in themes give dialogs and
-    toasts a border and no other widget. See ["Borders and space"](#borders-and-space) and
+    decides for the widget's family: the built-in themes give dialogs,
+    toasts and menus a border and no other widget. See
+    ["Borders and space"](#borders-and-space) and
     ["Borders from the theme"](#borders-from-the-theme).
 
 - `border_style`
@@ -699,11 +700,12 @@ themes draw the border of a Box in their `border` token and in the
 
 A widget that is not given `bordered` has a border when the theme's
 `border.enabled` says so for its family. The built-in themes give
-dialogs and toasts a border and no other widget. A theme can give one
-to buttons; to the inputs, in three families that are set one by one
-(`input`: check boxes, radio buttons, sliders, star ratings and
-segmented controls; `text_input`: text fields and text areas;
-`dropdown`); and to accordions, progress bars, spinners and images.
+dialogs, toasts and menus a border and no other widget. A theme can
+give one to buttons, to the inputs in three families that are set one
+by one (`input` for check boxes, radio buttons, sliders, star ratings
+and segmented controls, `text_input` for text fields and text areas,
+and `dropdown`), to menu bars, and to accordions, progress bars,
+spinners and images. A theme can also take the border away from menus.
 This theme file frames every text field and text area:
 
 ```kdl

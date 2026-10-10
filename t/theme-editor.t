@@ -97,7 +97,7 @@ subtest 'opening files' => sub {
 
 	my $broken = $editor->open_file( theme_file( 'broken.kdl', "palette {\n\taccent \"#zz\"\n}\n" ) );
 	is $broken->mode, 'text', 'a theme with errors opens in text mode';
-	like $editor->status->text,             qr/1 error/,                     'and the status line says so';
+	like $editor->status->message,          qr/1 error/,                     'and the status line says so';
 	like dies { $editor->open_file( [] ) }, qr/open_file needs a file name/, 'open_file checks its argument';
 };
 
@@ -146,15 +146,15 @@ subtest 'resetting settings' => sub {
 	$editor->form->go_to('palette.accent');
 	$press->('Delete');
 	is $tab->document->setting('palette.accent'), undef, 'Delete resets a set setting';
-	like $editor->status->text, qr/follows the dark theme \(#61afef\)/, 'the status line says what it follows now';
+	like $editor->status->message, qr/follows the dark theme \(#61afef\)/, 'the status line says what it follows now';
 	$press->('Delete');
-	like $editor->status->text, qr/is not set/, 'Delete on an unset one says so';
+	like $editor->status->message, qr/is not set/, 'Delete on an unset one says so';
 
 	$editor->form->go_to( Term::Fabulous::ThemeEditor::Form::section_id( 'family', 'divider' ) );
 	$press->('Delete');
-	my $prompt = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
+	my $prompt = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
 	ok $prompt, 'Delete on a section asks first';
-	$prompt->finish('reset');
+	$prompt->answer('reset');
 	$editor->ui->step;
 	is $tab->document->setting('divider.line.style'), undef, 'and resets what the section sets';
 	unlike $tab->text, qr/Dividers draw/, 'with the comment above it';
@@ -189,7 +189,7 @@ subtest 'copy and paste between themes' => sub {
 	is $plain_tab->document->setting('palette.text'), '#123456', 'a plain color pastes onto the setting';
 	Term::Fabulous::Editor->clipboard('not a theme at all');
 	$press->('Ctrl+V');
-	like $editor->status->text, qr/no theme settings/, 'other text is no setting';
+	like $editor->status->message, qr/no theme settings/, 'other text is no setting';
 
 	$press->('Ctrl+X');
 	is $plain_tab->document->setting('palette.text'), undef, 'Ctrl+X copies and resets';
@@ -244,15 +244,15 @@ subtest 'saving, reverting, closing' => sub {
 
 	$editor->set_setting( 'palette.text', '#000000' );
 	$press->('Ctrl+R');
-	dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' )->finish('revert');
+	dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' )->answer('revert');
 	$editor->ui->step;
 	is $tab->document->setting('palette.text'), '#fafafa', 'Ctrl+R reverts to the file after asking';
 
 	$tab->change_text( $tab->text . "wat\n" );
 	$press->('Ctrl+S');
-	my $question = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
+	my $question = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
 	ok $question, 'a theme with errors is saved only after a question';
-	$question->finish('cancel');
+	$question->answer('cancel');
 	$editor->ui->step;
 	unlike read_file($path), qr/wat/, 'cancelled, nothing is written';
 	$tab->undo;
@@ -263,9 +263,9 @@ subtest 'saving, reverting, closing' => sub {
 	utime time, time + 5, $path;
 	$editor->set_setting( 'palette.text', '#111111' );
 	$press->('Ctrl+S');
-	my $changed = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
+	my $changed = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
 	ok $changed, 'a file changed on the disk is overwritten only after a question';
-	$changed->finish('save');
+	$changed->answer('save');
 	$editor->ui->step;
 	like read_file($path), qr/#111111/, 'then it is';
 
@@ -281,9 +281,9 @@ subtest 'saving, reverting, closing' => sub {
 
 	$editor->set_setting( 'palette.accent', '#fedcba' );
 	$press->('Ctrl+W');
-	my $close = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
+	my $close = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
 	ok $close, 'closing a tab with unsaved changes asks';
-	$close->finish('discard');
+	$close->answer('discard');
 	$editor->ui->step;
 	is [ map { $_->title } $editor->tabs ], ['ocean.kdl'], 'and closes it without saving';
 	$press->('Ctrl+W');
@@ -300,15 +300,15 @@ subtest 'quitting' => sub {
 	$editor->set_setting( 'palette.text', '#000000' );
 	$press->('Ctrl+Q');
 	ok !$editor->is_quitting, 'with unsaved changes it asks';
-	my $prompt = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
-	$prompt->finish('discard');
+	my $prompt = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
+	$prompt->answer('discard');
 	ok $editor->is_quitting, 'and quits without saving when told so';
 };
 
 subtest 'menus and help' => sub {
 	my ( $editor, $press ) = editor();
 	$press->('F10');
-	my ($menu) = grep { $_->isa('Term::Fabulous::ThemeEditor::MenuBar') } $editor->ui->root->descendants;
+	my ($menu) = grep { $_->isa('Term::Fabulous::Widget::MenuBar') } $editor->ui->root->descendants;
 	is $menu->open_menu, 0, 'F10 opens the first menu';
 	$press->( 'Right', 'Right' );
 	is $menu->open_menu, 2, 'Right moves to the next menu';
@@ -357,10 +357,10 @@ subtest 'variants' => sub {
 	my $tab = $editor->active_tab;
 	$editor->form->go_to( Term::Fabulous::ThemeEditor::Form::section_id( 'family', 'button' ) );
 	$editor->run_command('add_variant');
-	my $prompt = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::Prompt' );
+	my $prompt = dialog_of( $editor, 'Term::Fabulous::Widget::Prompt' );
 	is $prompt->values->{family}, 'button', 'the family under the cursor is suggested';
-	$prompt->field('name')->value('danger');
-	$prompt->finish('add');
+	$prompt->input('name')->value('danger');
+	$prompt->answer('add');
 	$editor->ui->step;
 	ok $editor->form->has_row('button[danger].text'), 'a new variant shows in the form';
 	is [ $tab->document->variants ], [], 'without settings it is not in the file yet';

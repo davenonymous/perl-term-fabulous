@@ -10,7 +10,7 @@ Term::Fabulous::Cookbook - Recipes for common Term::Fabulous tasks
 
 The cookbook is a collection of recipes: short, complete solutions to
 common tasks, each with a program you can run and change. The recipes
-are grouped by topic into fourteen pages. L</THE RECIPES> below lists
+are grouped by topic into fifteen pages. L</THE RECIPES> below lists
 every page with every recipe on it. Each page lists its own recipes at
 the top and links to the previous and the next page, so you can also
 read the cookbook from start to end.
@@ -187,6 +187,14 @@ L<Ask a question in a dialog (Dialog widget)|Term::Fabulous::Cookbook::Forms/Ask
 
 =item *
 
+L<Confirm before quitting (Prompt)|Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)>
+
+=item *
+
+L<Ask for a number and check it (Prompt, validator)|Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>
+
+=item *
+
 L<Ask for input below the shell's output (inline mode)|Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>
 
 =item *
@@ -220,6 +228,26 @@ L<Change the Tab order (HasFocusOrder)|Term::Fabulous::Cookbook::Forms/Change th
 =item *
 
 L<Copy and paste through the clipboard|Term::Fabulous::Cookbook::Forms/Copy and paste through the clipboard>
+
+=back
+
+=item L<Term::Fabulous::Cookbook::Menus>
+
+Menu bars, context menus and status bars:
+
+=over
+
+=item *
+
+L<Give a program a menu bar (MenuBar, Commands)|Term::Fabulous::Cookbook::Menus/Give a program a menu bar (MenuBar, Commands)>
+
+=item *
+
+L<Open a menu with a right click or the Menu key (Menu)|Term::Fabulous::Cookbook::Menus/Open a menu with a right click or the Menu key (Menu)>
+
+=item *
+
+L<Show messages and state in a status bar (StatusBar)|Term::Fabulous::Cookbook::Menus/Show messages and state in a status bar (StatusBar)>
 
 =back
 

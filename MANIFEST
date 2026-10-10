@@ -9,6 +9,7 @@ examples/buttons-and-keys.pl
 examples/canvas.pl
 examples/chart-gallery.pl
 examples/colors.pl
+examples/cookbook/ask-prompt.pl
 examples/cookbook/border-sides.pl        
 examples/cookbook/chart-bars.pl
 examples/cookbook/chart-colors.pl
@@ -34,6 +35,8 @@ examples/cookbook/choose-options.pl
 examples/cookbook/click-a-word.pl
 examples/cookbook/clock.pl               
 examples/cookbook/confirm-dialog.pl      
+examples/cookbook/confirm-prompt.pl
+examples/cookbook/context-menu.pl
 examples/cookbook/custom-events.pl       
 examples/cookbook/disable-inputs.pl      
 examples/cookbook/embedded-logo.pl
@@ -46,6 +49,7 @@ examples/cookbook/kdl-panel.pl
 examples/cookbook/key-bindings.pl        
 examples/cookbook/lib/My/Panel.pm        
 examples/cookbook/login-form.pl          
+examples/cookbook/menu-bar.pl
 examples/cookbook/minimal-program.pl     
 examples/cookbook/non-ascii-text.pl      
 examples/cookbook/own-checks.pl
@@ -58,6 +62,7 @@ examples/cookbook/scrolling-log.pl
 examples/cookbook/show-output.pl
 examples/cookbook/sixel-viewer.pl
 examples/cookbook/states-and-classes.pl  
+examples/cookbook/status-bar.pl
 examples/cookbook/tab-order.pl           
 examples/cookbook/table-basics.pl
 examples/cookbook/table-colors.pl
@@ -129,6 +134,8 @@ lib/Term/Fabulous/Chart/Surface.pm
 lib/Term/Fabulous/Chart/Transform.pm
 lib/Term/Fabulous/Check.pm
 lib/Term/Fabulous/Color.pm
+lib/Term/Fabulous/Command.pm
+lib/Term/Fabulous/Commands.pm
 lib/Term/Fabulous/Cookbook.pod
 lib/Term/Fabulous/Cookbook/Canvases.pod
 lib/Term/Fabulous/Cookbook/ChartStyles.pod
@@ -140,6 +147,7 @@ lib/Term/Fabulous/Cookbook/GettingStarted.pod
 lib/Term/Fabulous/Cookbook/KeyboardAndMouse.pod
 lib/Term/Fabulous/Cookbook/Layout.pod
 lib/Term/Fabulous/Cookbook/LiveData.pod
+lib/Term/Fabulous/Cookbook/Menus.pod
 lib/Term/Fabulous/Cookbook/Output.pod
 lib/Term/Fabulous/Cookbook/TableRows.pod
 lib/Term/Fabulous/Cookbook/TableStyles.pod
@@ -148,8 +156,10 @@ lib/Term/Fabulous/Editor.pm
 lib/Term/Fabulous/Enum/BorderStyle.pm
 lib/Term/Fabulous/Enum/WebColor.pm
 lib/Term/Fabulous/Event/Activate.pm
+lib/Term/Fabulous/Event/Answer.pm
 lib/Term/Fabulous/Event/CanvasResize.pm
 lib/Term/Fabulous/Event/Change.pm
+lib/Term/Fabulous/Event/Choose.pm
 lib/Term/Fabulous/Event/Close.pm
 lib/Term/Fabulous/Event/Collapse.pm
 lib/Term/Fabulous/Event/ColumnsChange.pm
@@ -182,6 +192,7 @@ lib/Term/Fabulous/Manual/Glossary.pod
 lib/Term/Fabulous/Manual/KDL.pod
 lib/Term/Fabulous/Manual/Layout.pod
 lib/Term/Fabulous/Manual/Looks.pod
+lib/Term/Fabulous/Manual/Menus.pod
 lib/Term/Fabulous/Manual/Programs.pod
 lib/Term/Fabulous/Manual/TableRows.pod
 lib/Term/Fabulous/Manual/TableStyles.pod
@@ -226,11 +237,8 @@ lib/Term/Fabulous/ThemeEditor/FileDialog.pm
 lib/Term/Fabulous/ThemeEditor/Form.pm
 lib/Term/Fabulous/ThemeEditor/KdlArea.pm
 lib/Term/Fabulous/ThemeEditor/KeyReference.pm
-lib/Term/Fabulous/ThemeEditor/MenuBar.pm
 lib/Term/Fabulous/ThemeEditor/Preview.pm
-lib/Term/Fabulous/ThemeEditor/Prompt.pm
 lib/Term/Fabulous/ThemeEditor/SettingsList.pm
-lib/Term/Fabulous/ThemeEditor/StatusBar.pm
 lib/Term/Fabulous/ThemeEditor/Tab.pm
 lib/Term/Fabulous/ThemeEditor/TabStrip.pm
 lib/Term/Fabulous/ThemeEditor/UI.pm
@@ -242,6 +250,10 @@ lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
 lib/Term/Fabulous/Widget/Accordion.pm
 lib/Term/Fabulous/Widget/Accordion/Item.pm
+lib/Term/Fabulous/Widget/Menu.pm
+lib/Term/Fabulous/Widget/MenuBar.pm
+lib/Term/Fabulous/Widget/Prompt.pm
+lib/Term/Fabulous/Widget/StatusBar.pm
 lib/Term/Fabulous/Widget/Tabs.pm
 lib/Term/Fabulous/Widget/Tabs/Bar.pm
 lib/Term/Fabulous/Widget/Tabs/Button.pm
@@ -327,6 +339,7 @@ t/chart-surface.t
 t/chart-transform.t
 t/check.t
 t/color.t
+t/commands.t
 t/editor.t
 t/events.t
 t/layout.t
@@ -366,6 +379,10 @@ t/validator.t
 t/viewport.t
 t/web-color.t
 t/widget-accordion.t
+t/widget-menu-bar.t
+t/widget-menu.t
+t/widget-prompt.t
+t/widget-status-bar.t
 t/widget-tabs.t
 t/widget-button.t
 t/widget-canvas.t
@@ -406,6 +423,10 @@ examples/showcase.pl
 examples/widgets/area-chart.pl
 examples/widgets/accordion.pl
 examples/widgets/input-validation.pl
+examples/widgets/menu-bar.pl
+examples/widgets/menu.pl
+examples/widgets/prompt.pl
+examples/widgets/status-bar.pl
 examples/widgets/tabs.pl
 examples/widgets/bar-chart.pl
 examples/widgets/box.pl                  
@@ -443,6 +464,7 @@ examples/widgets/toast.pl
 examples/widgets/virtual-list.pl
 lib/Term/Fabulous/Examples.pod           
 lib/Term/Fabulous/Widget/XYChart.pm
+screenshots/cookbook-ask-prompt.svg
 screenshots/cookbook-border-sides.svg    
 screenshots/cookbook-chart-bars.svg
 screenshots/cookbook-chart-colors.svg
@@ -468,6 +490,8 @@ screenshots/cookbook-choose-options.svg
 screenshots/cookbook-click-a-word.svg
 screenshots/cookbook-clock.svg           
 screenshots/cookbook-confirm-dialog.svg  
+screenshots/cookbook-confirm-prompt.svg
+screenshots/cookbook-context-menu.svg
 screenshots/cookbook-disable-inputs.svg  
 screenshots/cookbook-embedded-logo.svg
 screenshots/cookbook-first-program.svg
@@ -478,6 +502,7 @@ screenshots/cookbook-inline-prompt.svg
 screenshots/cookbook-kdl-panel.svg
 screenshots/cookbook-key-bindings.svg    
 screenshots/cookbook-login-form.svg      
+screenshots/cookbook-menu-bar.svg
 screenshots/cookbook-minimal-program.svg 
 screenshots/cookbook-non-ascii-text.svg  
 screenshots/cookbook-own-checks.svg
@@ -491,6 +516,7 @@ screenshots/cookbook-scrolling-log.svg
 screenshots/cookbook-show-output.svg
 screenshots/cookbook-sixel-viewer.svg
 screenshots/cookbook-states-and-classes.svg
+screenshots/cookbook-status-bar.svg
 screenshots/cookbook-tab-order.svg
 screenshots/cookbook-table-basics.svg
 screenshots/cookbook-table-colors.svg
@@ -553,7 +579,11 @@ screenshots/overview.svg
 screenshots/screenshots.kdl              
 screenshots/widget-accordion.svg
 screenshots/widget-input-validation.svg
+screenshots/widget-menu-bar.svg
+screenshots/widget-menu.svg
+screenshots/widget-prompt.svg
 screenshots/widget-rich-text.svg
+screenshots/widget-status-bar.svg
 screenshots/widget-tabs.svg
 screenshots/widget-area-chart.svg
 screenshots/widget-bar-chart.svg

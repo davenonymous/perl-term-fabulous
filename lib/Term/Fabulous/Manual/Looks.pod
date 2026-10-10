@@ -548,8 +548,9 @@ Three parameters control it:
 Which sides have a border: a true value for all four sides, or a hash
 reference such as C<< { left =E<gt> 1, top =E<gt> 1 } >> for some of
 them (the sides it leaves out have none). Without it, the theme
-decides for the widget's family: the built-in themes give dialogs and
-toasts a border and no other widget. See L</Borders and space> and
+decides for the widget's family: the built-in themes give dialogs,
+toasts and menus a border and no other widget. See
+L</Borders and space> and
 L</Borders from the theme>.
 
 =item C<border_style>
@@ -705,11 +706,12 @@ C<Round> style, so a Box given C<bordered> alone gets a round frame.
 
 A widget that is not given C<bordered> has a border when the theme's
 C<border.enabled> says so for its family. The built-in themes give
-dialogs and toasts a border and no other widget. A theme can give one
-to buttons; to the inputs, in three families that are set one by one
-(C<input>: check boxes, radio buttons, sliders, star ratings and
-segmented controls; C<text_input>: text fields and text areas;
-C<dropdown>); and to accordions, progress bars, spinners and images.
+dialogs, toasts and menus a border and no other widget. A theme can
+give one to buttons, to the inputs in three families that are set one
+by one (C<input> for check boxes, radio buttons, sliders, star ratings
+and segmented controls, C<text_input> for text fields and text areas,
+and C<dropdown>), to menu bars, and to accordions, progress bars,
+spinners and images. A theme can also take the border away from menus.
 This theme file frames every text field and text area:
 
 =for highlighter language=kdl

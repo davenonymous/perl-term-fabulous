@@ -22,25 +22,28 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use List::Util qw(any first max min);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(describe);
+	use Term::Fabulous::Commands;
 	use Term::Fabulous::Editor;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Theme::Document;
 	use Term::Fabulous::ThemeEditor::FileDialog;
 	use Term::Fabulous::ThemeEditor::Form;
 	use Term::Fabulous::ThemeEditor::KeyReference;
-	use Term::Fabulous::ThemeEditor::MenuBar;
 	use Term::Fabulous::ThemeEditor::Preview;
-	use Term::Fabulous::ThemeEditor::Prompt;
-	use Term::Fabulous::ThemeEditor::StatusBar;
 	use Term::Fabulous::ThemeEditor::Tab;
 	use Term::Fabulous::ThemeEditor::TabStrip;
 	use Term::Fabulous::ThemeEditor::UI;
 	use Term::Fabulous::ThemeEditor::ValueDialog;
 	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::Dropdown;
+	use Term::Fabulous::Widget::MenuBar;
+	use Term::Fabulous::Widget::Prompt;
 	use Term::Fabulous::Widget::RichText;
 	use Term::Fabulous::Widget::ScrollBox;
 	use Term::Fabulous::Widget::SegmentedControl;
+	use Term::Fabulous::Widget::StatusBar;
 	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::Widget::TextField;
 
 	# How long the text must rest before it is parsed again, in seconds.
 	use constant PARSE_DELAY => 0.15;
@@ -89,9 +92,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	field $errors_text;
 	field $welcome;
 	field $status :reader;
-	field %command;
-	field @command_order;
-	field %command_of_key;
+	field $commands  = Term::Fabulous::Commands->new;
 	field $find_text = '';
 
 	ADJUST {
@@ -112,9 +113,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# ---------------------------------------------------------------------
 
 	method _command ( $id, %definition ) {
-		$command{$id} = { id => $id, enabled => sub { 1 }, %definition };
-		push @command_order, $id;
-		$command_of_key{$_} = $id foreach @{ $definition{keys} // [] };
+		$commands->add( { id => $id, %definition } );
 		return;
 	}
 
@@ -184,31 +183,26 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	method _menus () {
-		my $item = sub ($id) { return { label => $command{$id}{label}, command => $id, keys => join( ', ', @{ $command{$id}{keys} } ) || undef } };
 		return [
-			{ title => 'File',  key => 'f', items => [ map { $_ eq '-' ? $_ : $item->($_) } qw(new open - save save_as save_all revert - duplicate - close quit) ] },
-			{ title => 'Edit',  key => 'e', items => [ map { $_ eq '-' ? $_ : $item->($_) } qw(undo redo - cut copy paste paste_keys - edit reset - find find_next next_error) ] },
-			{ title => 'View',  key => 'v', items => [ map { $_ eq '-' ? $_ : $item->($_) } qw(toggle_mode switch_pane toggle_preview - only_set open_all close_all - previous_tab next_tab) ] },
-			{ title => 'Theme', key => 't', items => [ map { $_ eq '-' ? $_ : $item->($_) } qw(rename rebase - add_variant remove_variant - reset_section reset_theme) ] },
-			{ title => 'Help',  key => 'h', items => [ map { $_ eq '-' ? $_ : $item->($_) } qw(keys about) ] },
+			{ title => 'File',  items => [qw(new open - save save_as save_all revert - duplicate - close quit)] },
+			{ title => 'Edit',  items => [qw(undo redo - cut copy paste paste_keys - edit reset - find find_next next_error)] },
+			{ title => 'View',  items => [qw(toggle_mode switch_pane toggle_preview - only_set open_all close_all - previous_tab next_tab)] },
+			{ title => 'Theme', items => [qw(rename rebase - add_variant remove_variant - reset_section reset_theme)] },
+			{ title => 'Help',  items => [qw(keys about)] },
 		];
 	}
 
 	method run_command ($id) {
-		my $definition = $command{$id} // die "Term::Fabulous::ThemeEditor: unknown command '$id'";
-		return 0 unless $definition->{enabled}->();
-		$definition->{run}->();
-		return 1;
+		return $commands->command($id)->run;
 	}
 
 	# Every command: its id, its label in the menus and its keys.
 	method commands () {
-		return map { { id => $_, label => $command{$_}{label} =~ s/\.\.\.\z//r, keys => [ @{ $command{$_}{keys} } ] } } @command_order;
+		return map { { id => $_->id, label => $_->label =~ s/\.\.\.\z//r, keys => [ $_->keys ] } } $commands->commands;
 	}
 
 	method command_enabled ($id) {
-		my $definition = $command{$id} // die "Term::Fabulous::ThemeEditor: unknown command '$id'";
-		return $definition->{enabled}->() ? 1 : 0;
+		return $commands->command($id)->is_enabled;
 	}
 
 	# ---------------------------------------------------------------------
@@ -219,12 +213,11 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		weaken( my $editor = $self );
 		my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 
-		$menu = Term::Fabulous::ThemeEditor::MenuBar->new(
-			menus   => $self->_menus,
-			run     => sub ($id) { $editor->run_command($id) },
-			enabled => sub ($id) { $editor->command_enabled($id) },
-			caption => 'Term::Fabulous theme editor',
-			layout  => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
+		$menu = Term::Fabulous::Widget::MenuBar->new(
+			commands => $commands,
+			menus    => $self->_menus,
+			caption  => 'Term::Fabulous theme editor',
+			layout   => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
 		);
 		$strip = Term::Fabulous::ThemeEditor::TabStrip->new(
 			tabs      => sub { $editor->_tab_summaries },
@@ -264,7 +257,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		my $workspace = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 		$workspace->add_child( $preview_pane, $settings_pane );
 
-		$status = Term::Fabulous::ThemeEditor::StatusBar->new( info => sub { $editor->_status_info }, layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } );
+		$status = Term::Fabulous::Widget::StatusBar->new( parts => sub { $editor->_status_info }, layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } );
 		$root->add_child( $menu, $strip, $workspace, $status );
 
 		$ui = Term::Fabulous::ThemeEditor::UI->new(
@@ -673,7 +666,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			$error =~ s/ at \S+ line \d+\.?\n?\z//;
 			$error =~ s/ \(known: [^)]*\)//g;    # the status line has one row
 			$error =~ s/\s+\z//;
-			$status->message( "Not changed: $error", 'error' );
+			$status->message( "Not changed: $error", 'danger' );
 			return 0;
 		}
 		$last_valid{ refaddr $tab } = $tab->document if $tab->document->is_valid;
@@ -794,17 +787,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 	method _key ($event) {
 		my $name = $event->key_name // return 0;
-		if ( my ($letter) = $name =~ /\AAlt\+([a-z])\z/i ) {
-			my $index = $menu->menu_for_key($letter);
-			if ( defined $index ) {
-				$menu->open($index);
-				return 1;
-			}
-		}
-		if ( $name eq 'F10' ) {
-			$menu->open(0);
-			return 1;
-		}
+		return 1 if $menu->handle_shortcut($event);
 		if ( my ($number) = $name =~ /\AAlt\+([1-9])\z/ ) {
 			$self->select_tab( $number - 1 ) if $number <= @tabs;
 			return 1;
@@ -812,9 +795,10 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		if ( $name eq 'Escape' ) {
 			return $self->_escape;
 		}
-		my $id = $command_of_key{$name} // return 0;
+		my $command = $commands->command_for_key($name) // return 0;
+		my $id      = $command->id;
 		return 0 if ( $id eq 'edit' || $id eq 'reset' ) && !$self->_form_has_focus;
-		$self->run_command($id) or $self->_not_now($id);
+		$command->run or $self->_not_now($id);
 		return 1;
 	}
 
@@ -830,7 +814,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			find_next  => 'Find something first (Ctrl+F).',
 			next_error => 'The theme has no errors.',
 		);
-		$status->message( $why{$id} // ( $command{$id}{label} =~ s/\.\.\.\z//r ) . ' is not available now.', 'warning' );
+		$status->message( $why{$id} // ( $commands->command($id)->label =~ s/\.\.\.\z//r ) . ' is not available now.', 'warning' );
 		return;
 	}
 
@@ -964,7 +948,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		$self->_ask(
 			title   => 'Reset section',
 			message => sprintf( 'Reset the %d setting%s of %s to their defaults? Undo (Ctrl+Z) takes it back.', scalar @keys, @keys == 1 ? '' : 's', $name ),
-			buttons => [ [ reset => 'Reset', 1 ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'reset', label => 'Reset', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return unless $button eq 'reset';
 				$self->_change(
@@ -988,7 +972,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		$self->_ask(
 			title   => 'Reset whole theme',
 			message => sprintf( 'Remove all %d settings, so the theme is its base theme (%s) again? Its name and base stay. Undo (Ctrl+Z) takes it back.', scalar @keys, $tab->document->extends ),
-			buttons => [ [ reset => 'Reset', 1 ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'reset', label => 'Reset', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return unless $button eq 'reset';
 				$self->_change(
@@ -1022,20 +1006,26 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			title   => 'Add variant',
 			message => 'A variant changes some settings of a family for the widgets whose [bold]classes[/] name it, such as a button made with classes => [\'primary\'].',
 			fields  => [
-				{ name => 'family', label => 'Family', kind => 'list', options => [ Term::Fabulous::Theme::families() ], value => $family // 'button' },
 				{
-					name        => 'name',
-					label       => 'Name',
-					placeholder => 'primary',
-					check       => sub ( $value, $values ) {
-						return 'A variant needs a name.' unless length $value;
-						return 'A name is a word: letters, digits, _ and -.' unless $value =~ /\A[A-Za-z0-9_-]+\z/;
-						return 'The theme has this variant already.' if grep { $_->[0] eq $values->{family} && $_->[1] eq $value } $tab->document->variants;
-						return undef;
-					}
+					name  => 'family', label => 'Family',
+					input => Term::Fabulous::Widget::Dropdown->new( options => [ Term::Fabulous::Theme::families() ], value => $family // 'button', max_visible_options => 10 )
+				},
+				{
+					name  => 'name',
+					label => 'Name',
+					input => _text_input(
+						placeholder      => 'primary',
+						required         => 1,
+						required_message => 'A variant needs a name.',
+						validator        => sub ($value) { $value =~ /\A[A-Za-z0-9_-]+\z/ ? undef : 'A name is a word: letters, digits, _ and -.' },
+					),
 				},
 			],
-			buttons => [ [ add => 'Add', 1 ], [ cancel => 'Cancel' ] ],
+			check => sub ($values) {
+				return 'The theme has this variant already.' if grep { $_->[0] eq $values->{family} && $_->[1] eq $values->{name} } $tab->document->variants;
+				return undef;
+			},
+			buttons => [ { id => 'add', label => 'Add', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return unless $button eq 'add';
 				push @{ $tab->form_state->{new_variants} }, [ $values->{family}, $values->{name} ];
@@ -1227,8 +1217,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		}
 		$self->_ask(
 			title   => 'Find',
-			fields  => [ { name => 'text', label => 'Find', value => $find_text } ],
-			buttons => [ [ find => 'Find', 1 ], [ cancel => 'Cancel' ] ],
+			fields  => [ { name => 'text', label => 'Find', input   => _text_input( value => $find_text ) } ],
+			buttons => [ { id   => 'find', label => 'Find', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return unless $button eq 'find' && length $values->{text};
 				$find_text = $values->{text};
@@ -1274,7 +1264,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		$editor->move_line_end(1);
 		$tab->area->mark_changed;
 		$ui->interaction->set_focused_widget( $tab->area );
-		$status->message( "Line $error->{line}: $error->{message}", 'error' );
+		$status->message( "Line $error->{line}: $error->{message}", 'danger' );
 		return;
 	}
 
@@ -1288,14 +1278,26 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		return max( 4, min( 10, $ui->height - $other_rows ) );
 	}
 
+	# Opens a prompt; on_done gets the id of the button that answered it
+	# and the values of its fields.
 	method _ask (%parameters) {
-		my $prompt = Term::Fabulous::ThemeEditor::Prompt->new(%parameters);
+		my $on_done = delete $parameters{on_done};
+		my $prompt  = Term::Fabulous::Widget::Prompt->new(%parameters);
+		$prompt->on( Answer => sub ($event) { $on_done->( $event->button, $event->values ) if defined $on_done; return } );
 		$prompt->open($ui);
 		return $prompt;
 	}
 
+	# A text field that grows to the width of the prompt, its text selected
+	# so typing replaces it.
+	sub _text_input (%parameters) {
+		my $input = Term::Fabulous::Widget::TextField->new( %parameters, layout => { sizing => { width => sizing_grow() } } );
+		$input->editor->select_all;
+		return $input;
+	}
+
 	method _tell ( $title, $message ) {
-		return $self->_ask( title => $title, message => _escaped($message), buttons => [ [ ok => 'OK', 1 ] ], on_done => sub ( $button, $values ) { } );
+		return $self->_ask( title => $title, message => _escaped($message) );
 	}
 
 	method _ask_new_theme () {
@@ -1305,10 +1307,10 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			title   => 'New theme',
 			message => 'A theme starts from one of the built-in themes and changes what you set.',
 			fields  => [
-				{ name => 'name', label => 'Name',     value => "untitled-$number", check   => sub ( $value, $values ) { length $value ? undef : 'A theme needs a name.' } },
-				{ name => 'base', label => 'Based on', kind  => 'choice',           options => [ Term::Fabulous::Theme::builtin_names() ] },
+				{ name => 'name', label => 'Name',     input => _text_input( value => "untitled-$number", required => 1, required_message => 'A theme needs a name.' ) },
+				{ name => 'base', label => 'Based on', input => Term::Fabulous::Widget::SegmentedControl->new( options => [ Term::Fabulous::Theme::builtin_names() ], value => 'dark' ) },
 			],
-			buttons => [ [ create => 'Create', 1 ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'create', label => 'Create', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return unless $button eq 'create';
 				$editor->new_theme( name => $values->{name}, extends => $values->{base} );
@@ -1359,7 +1361,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 						"%s has %d error%s; the first is on line %d: %s\n\nA program cannot load the file until they are fixed. Save it anyway?", $tab->title, scalar @errors, @errors == 1 ? '' : 's',
 						$errors[0]{line}, _escaped( $errors[0]{message} )
 					),
-					buttons => [ [ save => 'Save anyway', 1 ], [ cancel => 'Cancel' ] ],
+					buttons => [ { id => 'save', label => 'Save anyway', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 					on_done => sub ( $button, $values ) { $next->() if $button eq 'save' },
 				);
 			},
@@ -1368,7 +1370,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 				$self->_ask(
 					title   => 'The file changed',
 					message => _escaped( $tab->path ) . ' was changed by another program since it was opened or saved. Overwrite it with the theme from the editor?',
-					buttons => [ [ save => 'Overwrite', 1 ], [ cancel => 'Cancel' ] ],
+					buttons => [ { id => 'save', label => 'Overwrite', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 					on_done => sub ( $button, $values ) { $next->() if $button eq 'save' },
 				);
 			},
@@ -1418,7 +1420,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 					$editor->_ask(
 						title   => 'Replace the file?',
 						message => _escaped($path) . ' exists. Replace it with this theme?',
-						buttons => [ [ replace => 'Replace', 1 ], [ cancel => 'Cancel' ] ],
+						buttons => [ { id => 'replace', label => 'Replace', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 						on_done => sub ( $button, $values ) { $editor->_write( $tab, $path ) && $then && $then->() if $button eq 'replace' },
 					);
 					return;
@@ -1461,7 +1463,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		$self->_ask(
 			title   => 'Revert to saved',
 			message => 'Replace the theme in the editor with ' . _escaped( $tab->path ) . ' as it is on the disk? Undo (Ctrl+Z) takes it back.',
-			buttons => [ [ revert => 'Revert', 1 ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'revert', label => 'Revert', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) { $go->() if $button eq 'revert' },
 		);
 		return;
@@ -1499,7 +1501,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		$self->_ask(
 			title   => 'Unsaved changes',
 			message => 'Save the changes to ' . _escaped( $tab->title ) . ' before closing it?',
-			buttons => [ [ save => 'Save', 1 ], [ discard => 'Close without saving' ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'save', label => 'Save', primary => 1 }, { id => 'discard', label => 'Close without saving' }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return $editor->_save( $tab, $close ) if $button eq 'save';
 				$close->() if $button eq 'discard';
@@ -1521,7 +1523,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 				"%d theme%s %s unsaved changes: %s.\n\nSave %s before quitting?", scalar @unsaved, @unsaved == 1 ? '' : 's', @unsaved == 1 ? 'has' : 'have',
 				join( ', ', map { _escaped( $_->title ) } @unsaved ), @unsaved == 1 ? 'it' : 'them'
 			),
-			buttons => [ [ save => @unsaved == 1 ? 'Save' : 'Save all', 1 ], [ discard => 'Quit without saving' ], [ cancel => 'Cancel' ] ],
+			buttons => [ { id => 'save', label => @unsaved == 1 ? 'Save' : 'Save all', primary => 1 }, { id => 'discard', label => 'Quit without saving' }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return $editor->_save_all($stop) if $button eq 'save';
 				$stop->() if $button eq 'discard';
@@ -1544,10 +1546,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 	method key_list () {
 		my @keys;
-		foreach my $id (@command_order) {
-			my $definition = $command{$id};
-			next unless @{ $definition->{keys} } && !$FORM_COMMAND{$id};    # the form's keys are listed below
-			push @keys, [ 'Everywhere', join( ', ', @{ $definition->{keys} } ), $definition->{label} =~ s/\.\.\.\z//r ];
+		foreach my $command ( $commands->commands ) {
+			next unless $command->keys && !$FORM_COMMAND{ $command->id };    # the form's keys are listed below
+			push @keys, [ 'Everywhere', $command->keys_text, $command->label =~ s/\.\.\.\z//r ];
 		}
 		push @keys,
 			[ 'Everywhere',  'Alt+1 to Alt+9',                        'Show the first to the ninth tab' ],
@@ -1602,8 +1603,6 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			title   => 'About',
 			message =>
 "The theme editor of [bold]Term::Fabulous[/] $Term::Fabulous::ThemeEditor::VERSION.\n\nIt edits theme files: KDL documents that set the palette and the looks of the widget families of Term::Fabulous. Programs load them with Term::Fabulous::Theme->from_file. See perldoc Term::Fabulous::ThemeEditor and Term::Fabulous::Theme.",
-			buttons => [ [ ok => 'OK', 1 ] ],
-			on_done => sub ( $button, $values ) { },
 		);
 		return;
 	}
@@ -1613,16 +1612,16 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# ---------------------------------------------------------------------
 
 	method _status_info () {
-		my $tab = $self->active_tab // return ( [ 'F1 keys ', 'dim' ] );
+		my $tab = $self->active_tab // return ( [ 'F1 keys', 'dim' ] );
 		my @parts;
 		my $errors = scalar $tab->document->errors;
-		push @parts, [ sprintf( '%d error%s', $errors, $errors == 1 ? '' : 's' ), 'error' ], [ '  ', 'dim' ] if $errors;
-		push @parts, [ 'modified', 'accent' ], [ '  ', 'dim' ] if $tab->is_modified;
+		push @parts, [ sprintf( '%d error%s', $errors, $errors == 1 ? '' : 's' ), 'danger' ] if $errors;
+		push @parts, [ 'modified', 'accent' ] if $tab->is_modified;
 		if ( $tab->mode eq 'text' ) {
 			my ( $row, $offset ) = $tab->area->editor->cursor;
-			push @parts, [ sprintf( 'Ln %d, Col %d', $row + 1, $offset + 1 ), 'info' ], [ '  ', 'dim' ];
+			push @parts, [ sprintf( 'Ln %d, Col %d', $row + 1, $offset + 1 ), 'info' ];
 		}
-		push @parts, [ ucfirst( $tab->mode ) . ' ', 'info' ], [ ' F1 keys ', 'dim' ];
+		push @parts, [ ucfirst( $tab->mode ), 'info' ], [ 'F1 keys', 'dim' ];
 		return @parts;
 	}
 
@@ -1727,9 +1726,9 @@ From top to bottom:
 =item The menu bar
 
 C<File>, C<Edit>, C<View>, C<Theme> and C<Help>, with every command
-and its keys. C<F10> opens the first menu, C<Alt> with a menu's
-underlined letter opens that menu (C<Alt+F> for C<File>), and a click
-opens a menu with the mouse. Commands that cannot run now (C<Revert>
+and its keys (a L<Term::Fabulous::Widget::MenuBar>). C<F10> opens the
+first menu, C<Alt> with a menu's underlined letter opens that menu
+(C<Alt+F> for C<File>), and a click opens a menu with the mouse. Commands that cannot run now (C<Revert>
 of a theme without a file, C<Undo> with nothing to undo) are dimmed.
 
 =item The tab strip
@@ -1748,8 +1747,9 @@ C<primary>), text fields (one with an invalid value, one disabled, a
 text area with a scrollbar), check boxes, radio buttons, a segmented
 control, a slider, a star rating and a dropdown, tabs, an accordion, a
 table with groups, a filter row and pages, progress bars and a spinner,
-toasts, a button that opens a dialog, dividers, an image, and a sample
-of every variant the theme defines. The background behind them is the
+toasts, a menu bar, a menu and status bars, a button that opens a
+dialog, dividers, an image, and a sample of every variant the theme
+defines. The background behind them is the
 theme's C<background> token. The title of the pane says which theme it
 shows; while the text of the theme has errors, it shows the theme as it
 was before them and says so.
@@ -1772,7 +1772,7 @@ What the last action did, in the colors the editor's theme gives
 success, warnings and errors, and on the right the number of errors in
 the text, whether the theme has unsaved changes, the line and column of
 the cursor in text mode, and the mode. A message too long for the line
-ends in C<~>.
+ends in an ellipsis.
 
 =back
 
@@ -2418,9 +2418,9 @@ Every key of the editor, as the key reference (C<F1>) lists it.
 =head2 form, status
 
 The form (L<Term::Fabulous::ThemeEditor::Form>) and the status line
-(L<Term::Fabulous::ThemeEditor::StatusBar>), for programs and tests
+(L<Term::Fabulous::Widget::StatusBar>), for programs and tests
 that look at what the editor shows: C<< $editor->form->go_to($key) >>
-puts the cursor on a setting, C<< $editor->status->text >> is the last
+puts the cursor on a setting, C<< $editor->status->message >> is the last
 message.
 
 =head1 COMMANDS

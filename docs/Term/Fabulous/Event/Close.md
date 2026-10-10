@@ -1,6 +1,6 @@
 # NAME
 
-Term::Fabulous::Event::Close - A dialog was closed or a toast went away
+Term::Fabulous::Event::Close - A dialog, a toast or a popup menu went away
 
 # SYNOPSIS
 
@@ -24,10 +24,17 @@ A [Term::Fabulous::Widget::Toast](../Widget/Toast.md) fires it on itself when it
 away: when its timeout runs out, when the user clicks its close mark,
 or when the program calls `$toast->hide`.
 
+A [Term::Fabulous::Widget::Menu](../Widget/Menu.md) that was opened as a popup fires it
+on itself when it closes: when the user chooses an item, presses
+`Escape` or moves the focus elsewhere, or when the program calls
+`$menu->close`. A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) fires it like
+every dialog, before its `Answer`.
+
 The event has no fields of its own; `$event->target` is the
-dialog or the toast. It is a [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent) whose name is
-`Close`. The widget has no parent any more when it fires, so the
-event does not bubble anywhere; listen on the dialog or toast itself.
+dialog, the toast or the menu. It is a [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent)
+whose name is `Close`. The widget has no parent any more when it
+fires, so the event does not bubble anywhere. Listen on the dialog,
+the toast or the menu itself.
 
 # CONSTRUCTOR
 
@@ -43,5 +50,5 @@ Unknown parameters die. The `name` and `bubble_mode` parameters of
 # SEE ALSO
 
 [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md), [Term::Fabulous::Widget::Toast](../Widget/Toast.md),
-[Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent),
+[Term::Fabulous::Widget::Menu](../Widget/Menu.md), [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent),
 ["Ask a question in a dialog (Dialog widget)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget).

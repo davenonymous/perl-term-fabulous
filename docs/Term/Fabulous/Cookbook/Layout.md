@@ -4,7 +4,7 @@ Term::Fabulous::Cookbook::Layout - Recipes: layout, borders, colors and themes
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Forms](Forms.md). Next page: [Term::Fabulous::Cookbook::Tables](Tables.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Menus](Menus.md). Next page: [Term::Fabulous::Cookbook::Tables](Tables.md).
 
 This page shows how to arrange widgets and how they look: labels of
 equal width, borders that differ per side, colors derived from one
@@ -569,4 +569,4 @@ terminal size by themselves.
 
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Forms](Forms.md). Next page: [Term::Fabulous::Cookbook::Tables](Tables.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Menus](Menus.md). Next page: [Term::Fabulous::Cookbook::Tables](Tables.md).

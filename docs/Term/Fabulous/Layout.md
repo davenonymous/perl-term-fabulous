@@ -302,8 +302,11 @@ structured properties of a few widgets that say so, such as a table's
 
 # NODE TYPES
 
-Every widget class of Term::Fabulous can be declared in a layout. The
-table lists them with the alias the examples use; each link leads to the
+Every widget class of Term::Fabulous can be declared in a layout,
+except [Term::Fabulous::Widget::Prompt](Widget/Prompt.md),
+[Term::Fabulous::Widget::Menu](Widget/Menu.md) and [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md),
+whose fields and items are code, which a layout file cannot hold. The
+table lists the others with the alias the examples use; each link leads to the
 list of properties the class accepts. All of them except Text accept
 the ["Box properties"](#box-properties).
 
@@ -337,6 +340,7 @@ the ["Box properties"](#box-properties).
 | ProgressBar      | Term::Fabulous::Widget::ProgressBar      | Box + range, value, style, ...   |
 | Spinner          | Term::Fabulous::Widget::Spinner          | Box + style, frames, label       |
 | Toast            | Term::Fabulous::Widget::Toast            | Box + kind, title, message, ...  |
+| StatusBar        | Term::Fabulous::Widget::StatusBar        | Box + message, kind, timeout     |
 | Table            | Term::Fabulous::Widget::Table            | Box + columns, lines, sort, ...  |
 | LineChart        | Term::Fabulous::Widget::LineChart        | chart + series, axes, ...        |
 | AreaChart        | Term::Fabulous::Widget::AreaChart        | chart + series, axes, ...        |
@@ -375,6 +379,7 @@ The properties of each class:
 - [ProgressBar](Widget/ProgressBar.md#kdl-properties)
 - [Spinner](Widget/Spinner.md#kdl-properties)
 - [Toast](Widget/Toast.md#kdl-properties)
+- [StatusBar](Widget/StatusBar.md#kdl-properties)
 - [Table](Widget/Table.md#kdl-properties)
 - [LineChart](Widget/LineChart.md#kdl-properties)
 - [AreaChart](Widget/AreaChart.md#kdl-properties)

@@ -4,23 +4,28 @@
 
 =head1 NAME
 
-Term::Fabulous::Manual::Feedback - Progress bars, spinners and toasts
+Term::Fabulous::Manual::Feedback - Progress bars, spinners, toasts, status bars and prompts
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Menus>.
 
 This page covers the widgets that tell the user what the program is
 doing: a L<progress bar|/PROGRESS BARS> for a task whose extent is
 known, or not, a L<spinner|/SPINNERS> for one that just takes a
-while, and L<toasts|/TOASTS AND ALERTS> for messages that must not
-interrupt the user. They take no input; the program sets their state,
-from a timer, a process or a listener, and they draw themselves. The
-ones that move do so on the application's clock, without a timer of
-their own (see L</ANIMATION>).
+while, L<toasts|/TOASTS AND ALERTS> for messages that must not
+interrupt the user, and a L<status bar|/STATUS BARS> for messages and
+the program's state at the bottom of the screen. They take no input.
+The program sets their state, from a timer, a process or a listener,
+and they draw themselves. The ones that move do so on the application's
+clock, without a timer of their own (see L</ANIMATION>).
+
+The section L</PROMPTS> is about the other direction: a prompt stops
+the user to ask a question, and reports the answer.
 
 The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>,
-L<Term::Fabulous::Widget::Spinner> and L<Term::Fabulous::Widget::Toast>.
+L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Toast>,
+L<Term::Fabulous::Widget::StatusBar> and L<Term::Fabulous::Widget::Prompt>.
 The class the first two share, L<Term::Fabulous::Widget::Display>, is
 the base of every widget that paints itself from its own state, and
 the one to derive from for a feedback widget of your own
@@ -190,6 +195,121 @@ whichever way. In KDL a toast is an alert box inside its parent:
 		closable #false
 	}
 
+=head1 STATUS BARS
+
+A L<Term::Fabulous::Widget::StatusBar> is one row, usually the last
+row of the screen. On its left it shows a I<message>: what just
+happened, or what a key does now. On its right it shows I<parts>,
+short texts about the state of the program, such as the position of the
+cursor or a marker for unsaved changes.
+
+A message has one of the kinds a toast has, which gives it its color:
+C<info> for plain news (drawn like normal text), C<success>, C<warning>
+and C<danger>. Parts have these kinds as well, plus C<dim> for a hint
+that should not draw the eye and C<accent> for one that should:
+
+=for highlighter language=perl
+
+	use Term::Fabulous::Widget::StatusBar;
+
+	my $status = Term::Fabulous::Widget::StatusBar->new(
+		message => 'Ready.',
+		timeout => 5,
+		parts   => sub { ( ( $modified ? [ 'modified', 'accent' ] : () ), "Line $line", [ 'F1 help', 'dim' ] ) },
+	);
+	$root->add_child( $content, $status );
+
+	$status->message( 'Saved notes.txt.', 'success' );
+
+A message stays until the next one replaces it, or for C<timeout>
+seconds when the bar has a timeout. The parts may be a list, which the
+program sets again when the state changes, or a code reference, which
+the bar calls whenever a frame is drawn. A code reference keeps the
+parts up to date without any code that updates them, because a frame
+is drawn after every key and every click. When the message and the
+parts do not fit side by side, the message is cut and ends in an
+ellipsis. The picture shows status bars of the kinds C<success>,
+C<warning> and C<danger> (F<examples/widgets/status-bar.pl>):
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-status-bar.svg" alt="A list of files with the cursor on budget.csv and, at the bottom, a status bar with the green message Saved budget.csv. and the parts file 3 of 6 and Ctrl+C quits. Above the list, status bars with a success message, a yellow warning with a blue modified part, and a red error with a red read-only part"></p>
+
+=end html
+
+A toast and a status bar both report what happened. A toast floats
+over the screen and draws the eye, so it suits news the user must not
+miss. A status bar does not move anything on the screen, so it suits
+the steady stream of small news that an editor or a browser of files
+produces. The recipe
+L<Term::Fabulous::Cookbook::Menus/Show messages and state in a status bar (StatusBar)>
+is a complete program. A status bar can also be part of a KDL layout
+file, with C<message>, C<kind> and C<timeout>:
+
+=for highlighter language=kdl
+
+	StatusBar "status" {
+		message "Ready."
+		timeout 5
+	}
+
+=head1 PROMPTS
+
+A L<Term::Fabulous::Widget::Prompt> is a dialog that asks the user
+something and waits for the answer: whether to delete a file, what to
+call it, or simply that something went wrong. It has a title, a
+message, optional input fields and a row of buttons. Like every
+L<Term::Fabulous::Widget::Dialog>, it opens over the screen and keeps
+the keyboard focus until it closes.
+
+The three most common prompts take one call each.
+L<alert|Term::Fabulous::Widget::Prompt/alert> says something and has an
+OK button, L<confirm|Term::Fabulous::Widget::Prompt/confirm> asks a
+question with OK and Cancel, and L<ask|Term::Fabulous::Widget::Prompt/ask>
+asks for one value:
+
+=for highlighter language=perl
+
+	use Term::Fabulous::Widget::Prompt;
+
+	Term::Fabulous::Widget::Prompt->confirm(
+		$ui,
+		title   => 'Delete notes.txt?',
+		message => 'It cannot be restored.',
+		ok      => 'Delete',
+		focus   => 'cancel',
+	)->on( Answer => sub ($event) {
+		unlink 'notes.txt' if $event->button eq 'ok';
+		return;
+	} );
+
+When the user presses a button, the prompt closes, gives the focus back
+to the widget that had it, and fires C<Answer>
+(L<Term::Fabulous::Event::Answer>) with the id of the button and the
+values of the fields. C<Escape> answers with the button C<cancel>.
+
+A prompt of your own takes any input widgets as its fields, each with a
+name and a label. The inputs check their own values, with C<required>
+and C<validator> (see L<Term::Fabulous::Manual::Forms/Checking input>),
+and a button marked as I<primary> asks them before it answers. While a
+value is wrong, the prompt stays open, says which field is wrong and
+why, and moves the focus to that field. A C<check> of the whole prompt
+catches what involves more than one field. The picture shows a prompt
+whose e-mail field holds an address that is not valid
+(F<examples/widgets/prompt.pl>):
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-prompt.svg" alt="A New contact prompt over the dimmed list of contacts: Name holds Ada Lovelace, E-mail holds ada@engine in red, and the red line E-mail: Please enter an e-mail address. sits above the Add and Cancel buttons"></p>
+
+=end html
+
+The recipes
+L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)> and
+L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>
+are complete programs. For a dialog that is not a question, build a
+L<Term::Fabulous::Widget::Dialog> and fill it with any widgets.
+
 =head1 ANIMATION
 
 Spinners, and progress bars that are C<indeterminate> or C<animated>,
@@ -205,10 +325,11 @@ L<Term::Fabulous::Widget::Display/ANIMATION>.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Charts>.
+This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual::Forms>. Next page: L<Term::Fabulous::Manual::Menus>.
 
 The class pages: L<Term::Fabulous::Widget::ProgressBar>,
 L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Toast>,
+L<Term::Fabulous::Widget::StatusBar>, L<Term::Fabulous::Widget::Prompt>,
 L<Term::Fabulous::Widget::Display>.
 L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>
 for the timers that drive a bar, and

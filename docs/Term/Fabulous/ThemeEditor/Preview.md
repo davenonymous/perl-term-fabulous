@@ -14,7 +14,8 @@ and a disabled one, a text area with a scrollbar), choices (check
 boxes, radio buttons, a segmented control, a slider, a star rating, a
 dropdown), tabs, an accordion, a table (groups, a filter row, pages),
 progress bars and a spinner, toasts (and a button that shows one),
-a button that opens a dialog, dividers, an image, and the variants the
+a menu bar whose titles open menus, a menu with every kind of item, a
+status bar for each kind of message, a button that opens a dialog, dividers, an image, and the variants the
 theme defines, each with a sample of its family.
 
 The editor draws the gallery in the theme being edited (see

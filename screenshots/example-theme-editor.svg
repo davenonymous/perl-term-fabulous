@@ -89,14 +89,14 @@
 <rect x="529" y="114" width="1" height="486" fill="#61afef"/>
 <rect x="943" y="114" width="1" height="18" fill="#5a606e"/>
 <rect x="1015" y="114" width="1" height="486" fill="#61afef"/>
-<rect x="502" y="132" width="2" height="90" fill="#5fd3c0"/>
+<rect x="502" y="132" width="2" height="72" fill="#5fd3c0"/>
 <rect x="57" y="139" width="9" height="1" fill="#2b5a70"/>
 <rect x="147" y="139" width="342" height="1" fill="#2b5a70"/>
 <rect x="57" y="141" width="9" height="1" fill="#2b5a70"/>
 <rect x="147" y="141" width="342" height="1" fill="#2b5a70"/>
-<rect x="997" y="186" width="2" height="162" fill="#61afef"/>
-<rect x="502" y="222" width="1" height="378" fill="#464c5a"/>
-<rect x="997" y="348" width="1" height="216" fill="#464c5a"/>
+<rect x="997" y="186" width="2" height="144" fill="#61afef"/>
+<rect x="502" y="204" width="1" height="396" fill="#464c5a"/>
+<rect x="997" y="330" width="1" height="234" fill="#464c5a"/>
 <rect x="57" y="463" width="9" height="1" fill="#2b5a70"/>
 <rect x="183" y="463" width="306" height="1" fill="#2b5a70"/>
 <rect x="57" y="465" width="9" height="1" fill="#2b5a70"/>
@@ -194,8 +194,8 @@
 <text x="678" y="578" textLength="288" fill="#dcdfe4">(a color): set on line 27. Enter</text>
 <text x="75" y="596" textLength="99" class="b" fill="#8fb3c2">Boxes (box)</text>
 <text x="543" y="596" textLength="459" fill="#dcdfe4">edits, Delete resets, Ctrl+C copies, Ctrl+V pastes.</text>
-<text x="39" y="632" textLength="882" fill="#dcdfe4">Opened 4 themes. F1 lists every key; F10 or Alt with an underlined letter opens a menu.       Form</text>
-<text x="939" y="632" textLength="63" fill="#787e8a">F1 keys</text>
+<text x="39" y="632" textLength="891" fill="#dcdfe4">Opened 4 themes. F1 lists every key; F10 or Alt with an underlined letter opens a menu.        Form</text>
+<text x="948" y="632" textLength="63" fill="#787e8a">F1 keys</text>
 </g>
 <g shape-rendering="crispEdges">
 <rect x="39" y="75" width="9" height="1" fill="#dcdfe4"/>

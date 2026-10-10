@@ -205,6 +205,19 @@ subtest 'border.enabled is a boolean slot' => sub {
 	like dies { $Theme->new( slots => { 'input.border.enabled.focused' => 1 } ) },      qr/the slot input.border.enabled has no state 'focused' \(it has the normal state only\)/, 'and has no states';
 };
 
+subtest 'the families of menus and the status bar' => sub {
+	my $dark = $Theme->default;
+	is $dark->look( 'menu',     'border.enabled' ), 1, 'a menu has a border';
+	is $dark->look( 'menu_bar', 'border.enabled' ), 0, 'a menu bar has none';
+	ok !Term::Fabulous::Theme::has_slot( 'status_bar', 'border.enabled' ), 'a status bar is one row and has no border.enabled';
+	is $dark->look( 'menu',       'text', 'disabled' ), $dark->token('disabled'), 'menu items take the disabled state of input text';
+	is $dark->look( $_,           'highlight.background' ), $dark->token('accent'),      "$_ highlights in the accent"     foreach qw(menu menu_bar);
+	is $dark->look( $_,           'background' ),           $dark->token('surface_low'), "$_ lies on surface_low"          foreach qw(menu menu_bar status_bar);
+	is $dark->look( 'status_bar', $_ ),                     $dark->token($_),            "status_bar.$_ follows its token" foreach qw(accent success warning danger);
+	is $dark->look( 'status_bar', 'text' ),                 $dark->token('text'),        'status_bar.text colors info messages';
+	is $dark->look( 'status_bar', 'dim' ),                  $dark->token('placeholder'), 'status_bar.dim is the placeholder color';
+};
+
 subtest 'slot_info and check_value' => sub {
 	is Term::Fabulous::Theme::slot_info( 'button', 'background' ),
 		{

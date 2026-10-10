@@ -217,8 +217,8 @@
 <text x="120" y="596" textLength="36" fill="#101216">Week</text>
 <text x="183" y="596" textLength="45" fill="#d8e8ee">Month</text>
 <text x="543" y="596" textLength="414" fill="#dcdfe4">the default (the token &quot;border&quot;). Enter edits,</text>
-<text x="39" y="632" textLength="882" fill="#dcdfe4">Choose a value: the preview shows it. Enter applies, Escape leaves the theme as it was.       Form</text>
-<text x="939" y="632" textLength="63" fill="#787e8a">F1 keys</text>
+<text x="39" y="632" textLength="891" fill="#dcdfe4">Choose a value: the preview shows it. Enter applies, Escape leaves the theme as it was.        Form</text>
+<text x="948" y="632" textLength="63" fill="#787e8a">F1 keys</text>
 </g>
 <g shape-rendering="crispEdges">
 <rect x="39" y="75" width="9" height="1" fill="#dcdfe4"/>

@@ -6,7 +6,7 @@ Term::Fabulous::Cookbook - Recipes for common Term::Fabulous tasks
 
 The cookbook is a collection of recipes: short, complete solutions to
 common tasks, each with a program you can run and change. The recipes
-are grouped by topic into fourteen pages. ["THE RECIPES"](#the-recipes) below lists
+are grouped by topic into fifteen pages. ["THE RECIPES"](#the-recipes) below lists
 every page with every recipe on it. Each page lists its own recipes at
 the top and links to the previous and the next page, so you can also
 read the cookbook from start to end.
@@ -119,6 +119,8 @@ The pages, in reading order, each with its recipes:
     - [Check the values of a form (required, validator)](Cookbook/Forms.md#check-the-values-of-a-form-required-validator)
     - [Write your own checks and restrict typing (accept, pattern, code)](Cookbook/Forms.md#write-your-own-checks-and-restrict-typing-accept-pattern-code)
     - [Ask a question in a dialog (Dialog widget)](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget)
+    - [Confirm before quitting (Prompt)](Cookbook/Forms.md#confirm-before-quitting-prompt)
+    - [Ask for a number and check it (Prompt, validator)](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator)
     - [Ask for input below the shell's output (inline mode)](Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode)
     - [Choose from options in Perl (Dropdown, RadioGroup, Slider)](Cookbook/Forms.md#choose-from-options-in-perl-dropdown-radiogroup-slider)
     - [Read all values of a form](Cookbook/Forms.md#read-all-values-of-a-form)
@@ -128,6 +130,14 @@ The pages, in reading order, each with its recipes:
     - [Show a status line that follows the focus (OnFocus)](Cookbook/Forms.md#show-a-status-line-that-follows-the-focus-onfocus)
     - [Change the Tab order (HasFocusOrder)](Cookbook/Forms.md#change-the-tab-order-hasfocusorder)
     - [Copy and paste through the clipboard](Cookbook/Forms.md#copy-and-paste-through-the-clipboard)
+
+- [Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md)
+
+    Menu bars, context menus and status bars:
+
+    - [Give a program a menu bar (MenuBar, Commands)](Cookbook/Menus.md#give-a-program-a-menu-bar-menubar-commands)
+    - [Open a menu with a right click or the Menu key (Menu)](Cookbook/Menus.md#open-a-menu-with-a-right-click-or-the-menu-key-menu)
+    - [Show messages and state in a status bar (StatusBar)](Cookbook/Menus.md#show-messages-and-state-in-a-status-bar-statusbar)
 
 - [Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md)
 
