@@ -238,15 +238,10 @@ themes in that order:
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-dark.svg" alt="The panel in the dark theme: light text on a dark blue-gray screen, a text field holding Ada, a checked check box, a blue progress bar at 65 percent, a Save button and a Cancel button with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-light.svg" alt="The panel in the light theme: dark text on a near-white screen, a white text field holding Ada, a checked check box, a blue progress bar at 65 percent, a Save button and a Cancel button with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-ocean.svg" alt="The panel in the ocean theme: teal accents on a deep blue screen, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in the accent and a Cancel button with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-nord.svg" alt="The panel in the nord theme: pale text on a slate gray screen, frost blue accents, a text field holding Ada, a checked check box, a progress bar at 65 percent, a round-bordered Save button in frost blue and a Cancel button with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-dracula.svg" alt="The panel in the dracula theme: white text on a dark purple-gray screen, purple accents, a text field holding Ada, a checked check box, a progress bar at 65 percent, a pink Save button and a Cancel button with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-themes-solarized-light.svg" alt="The panel in the solarized-light theme: gray-blue text on a warm paper-colored screen, blue accents, an orange divider, a text field holding Ada, a checked check box, a progress bar at 65 percent, a Save button in blue and a Cancel button with a red border"></p>
 </div>
 
@@ -263,9 +258,7 @@ while it is chosen, and text mode with a mistake on its last line:
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor.svg" alt="The theme editor with four themes in tabs: the menu bar, the tab strip with ocean.kdl active, the preview on the left with the palette swatches, text with links and a box in the ocean theme, and the form on the right listing the theme's name and base and the palette tokens with their swatches, values and where they come from, the cursor on accent"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
-
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-text.svg" alt="The theme editor in text mode: the end of ocean.kdl with a new line button { text "acent" }, the message Line 51: button.text must be a color, got 'acent' (unrecognized color string 'acent') under the text, an exclamation mark on the tab, and the preview marked stale"></p>
 </div>
 
