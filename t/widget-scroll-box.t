@@ -22,7 +22,7 @@ sub box_ui ( $lines, %args ) {
 	my $box = Term::Fabulous::Widget::ScrollBox->new(
 		id           => 'log',
 		layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },
-		border_width => 1,
+		bordered     => 1,
 		border_color => [ 1, 1, 1, 255 ],
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		%args,
@@ -87,6 +87,16 @@ subtest 'vertical scrollbar' => sub {
 	$box->scrollbar(0);
 	$h->{ui}->step;
 	like row( $h, 1 ), qr/Line 1 {22}│\z/, 'scrollbar(0) gives the column back to the content';
+};
+
+subtest 'the scrollbars sit inside the border' => sub {
+	my ( $box, $h ) = box_ui(30);
+	$box->bordered(0);
+	$h->{ui}->step;
+	like column( $h, 29 ), qr/\A\x{2503}/, 'without a border the scrollbar takes the last column';
+	$box->bordered( { right => 1 } );
+	$h->{ui}->step;
+	like column( $h, 28 ), qr/\A\x{2503}/, 'with a right border it moves inside it';
 };
 
 subtest 'horizontal scrollbar' => sub {

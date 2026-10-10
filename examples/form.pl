@@ -45,7 +45,7 @@ $root->add_child( text('Tab and Shift-Tab move between inputs; the mouse works t
 
 my $form = Term::Fabulous::Widget::Box->new(
 	background_color => [ 28, 33, 45, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 97, 175, 239, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => {

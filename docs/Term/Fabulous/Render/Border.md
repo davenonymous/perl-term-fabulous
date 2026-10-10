@@ -16,7 +16,8 @@ Most programs never use this module directly, and neither do widgets
 of your own: a widget gets its border from the parameters described in
 ["BORDERS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#borders). This module is one of the
 roles [Term::Fabulous::Render](../Render.md) is made of, and it paints the border render
-commands Clay emits for widgets with a `border_width`, using the
+commands Clay emits for widgets with a border (see
+["bordered" in Term::Fabulous::Widget](../Widget.md#bordered)), using the
 widget's border styles (see [Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md) and
 [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md)).
 
@@ -32,9 +33,10 @@ Paints the border of `$widget`:
 
 - Nothing is painted unless `$widget` composes
 [Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md).
-- A side is painted when its border width in the command is positive.
-Whatever the width, a side is one cell thick: it is drawn on the
-outermost row or column of the widget's box. Corners are drawn where a
+- A side is painted when its width in the command is positive:
+[Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md) gives every side with a border
+the width 1. A side is one cell thick: it is drawn on the outermost row
+or column of the widget's box. Corners are drawn where a
 painted top or bottom side meets a painted left or right side;
 otherwise the top or bottom edge glyph continues to the end of the row.
 In a box only one cell high, the top and bottom sides would share the

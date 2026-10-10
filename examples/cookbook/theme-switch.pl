@@ -34,7 +34,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 my $label = Term::Fabulous::Widget::Text->new( text => 'Theme: dark. Press F2 to switch to the next theme.' );
 my $field = Term::Fabulous::Widget::TextField->new( placeholder => 'Type here' );
-my $save  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 2, right => 2 } } );
+my $save  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 2, right => 2 } } );
 $save->add_child( Term::Fabulous::Widget::Text->new( text => 'Save' ) );
 $root->add_child( $label, $field, $save );
 

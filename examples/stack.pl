@@ -49,7 +49,7 @@ sub card ( $title, $lines, $badge, $badge_color ) {
 			padding          => { left  => 1,             right  => 1 },
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);
@@ -105,7 +105,7 @@ my $message = Term::Fabulous::Widget::Box->new(
 		child_alignment => { x    => CLAY_ALIGN_X_CENTER },
 	},
 	background_color => [ 40, 46, 64, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 152, 195, 121, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 );

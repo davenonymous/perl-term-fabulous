@@ -21,7 +21,7 @@ my $words = "Text wraps at spaces to the width of its box.\nA line break starts 
 sub sample ( $caption, $text, %options ) {
 	my $box_layout = delete $options{box_layout} // { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(24) } };
 	my $box        = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Ascii,
 		border_color => [ 120, 160, 220, 255 ],
 		layout       => $box_layout,

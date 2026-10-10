@@ -325,10 +325,10 @@ L</Lines of columns, rows and cells>) still
 keeps its space everywhere, drawn blank where there is no line, so that
 the cells stay aligned.
 
-The table's own C<border> is not the C<border_width> and C<border_style>
-that every L<Term::Fabulous::Widget::Box> has. Those still work and draw
-a second frame around the whole table, pager included; you rarely want
-both.
+The table's own C<border> is not the C<bordered> that every other
+L<Term::Fabulous::Widget::Box> has: a table takes no C<bordered>
+(giving it dies, naming C<border>), and no theme frames it, so the
+table's own frame is the only one.
 
 =head2 Tables with colored backgrounds
 

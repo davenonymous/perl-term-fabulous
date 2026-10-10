@@ -39,7 +39,7 @@ my $status = Term::Fabulous::Widget::Text->new( text => 'Nothing pressed yet.', 
 sub button ( $caption, $background, $border ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		background_color => $background,
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => $border,
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },

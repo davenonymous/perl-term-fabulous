@@ -17,7 +17,7 @@ my $root = Term::Fabulous::Widget::Box->new(
                 sizing           => { width => sizing_grow(), height => sizing_fit() },
                 padding          => { left => 1, right => 1 },
         },
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 180, 200, 220, 255 ],
 );

@@ -85,7 +85,7 @@ class Term::Fabulous::ThemeEditor::FileDialog :isa(Term::Fabulous::Widget::Dialo
 		my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 		foreach my $definition ( [ $mode eq 'open' ? 'Open' : 'Save', ['primary'], sub { $weak_self->choose( $weak_self->typed ) } ], [ 'Cancel', [], sub { $weak_self->close } ] ) {
 			my ( $label, $classes, $action ) = @$definition;
-			my $button = Term::Fabulous::Widget::Button->new( border_width => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
+			my $button = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
 			$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
 			$button->on( Activate => sub ($event) { $action->(); return } );
 			$buttons->add_child($button);

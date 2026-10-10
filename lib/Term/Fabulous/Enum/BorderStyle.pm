@@ -346,7 +346,7 @@ Term::Fabulous::Enum::BorderStyle - The border styles a widget can be drawn with
 
 	# A box with a rounded border on all four sides.
 	my $box = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
+		bordered     => 1,
 		border_color => [ 180, 200, 220, 255 ],
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	);
@@ -371,8 +371,8 @@ C<border_style> parameter (all four sides) or to one of
 C<border_style_top>, C<border_style_right>, C<border_style_bottom> and
 C<border_style_left> (one side each); see
 L<Term::Fabulous::Role::HasBorderStyle>. A border is only drawn on the
-sides where the widget's C<border_width> is positive and the style is
-not L</Hidden>; see
+sides where the widget has one (its C<bordered>, or the theme's
+C<border.enabled>) and the style is not L</Hidden>; see
 L<Term::Fabulous::Manual::Looks/BORDERS>.
 
 In a KDL layout file, a style is named in the C<border> node, for
@@ -428,9 +428,10 @@ Heavy (bold) box-drawing lines.
 
 =head2 Hidden
 
-The side takes no space and draws nothing, even when its
-C<border_width> is positive. Use it to switch one side off without
-changing C<border_width>; see L<Term::Fabulous::Role::HasBorderStyle>.
+The side takes no space and draws nothing, even where the widget has a
+border. Use it to switch one side off while the widget's C<bordered>
+(or the theme's C<border.enabled>) gives the others; see
+L<Term::Fabulous::Role::HasBorderStyle>.
 
 =head2 Hkey
 

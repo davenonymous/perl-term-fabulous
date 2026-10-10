@@ -17,8 +17,9 @@ subtest 'the vocabulary' => sub {
 	is [ Term::Fabulous::Theme::builtin_names() ], [qw(dark light)], 'two built-in themes';
 
 	my %states_of = Term::Fabulous::Theme::slots('button');
-	is $states_of{'border.color'}, [qw(disabled focused hovered pressed)], 'a stateful slot lists its states';
-	is $states_of{'border.style'}, [],                                     'a style slot has no states';
+	is $states_of{'border.color'},   [qw(disabled focused hovered pressed)], 'a stateful slot lists its states';
+	is $states_of{'border.style'},   [],                                     'a style slot has no states';
+	is $states_of{'border.enabled'}, [],                                     'a boolean slot has no states';
 	ok exists $states_of{background}, 'button inherits the slots of box';
 	is +{ Term::Fabulous::Theme::slots('input') }->{text}, [qw(disabled invalid)], 'the text of an input has the invalid state';
 
@@ -136,15 +137,16 @@ subtest 'variants' => sub {
 };
 
 subtest 'invalid themes die' => sub {
-	like dies { $Theme->new( extends => 'neon' ) },                        qr/extends names an unknown built-in theme 'neon' \(known: dark, light\)/,              'unknown parent name';
-	like dies { $Theme->new( extends => undef ) },                         qr/extends must be a Term::Fabulous::Theme or the name of a built-in theme, got undef/, 'undef parent';
-	like dies { $Theme->new( palette => { pink => '#ff00ff' } ) },         qr/palette does not know the token pink \(known: /,                                     'unknown token';
-	like dies { $Theme->new( palette => { accent => 'redd' } ) },          qr/palette token accent must be a color, got 'redd'/,                                   'invalid color';
-	like dies { $Theme->new( palette => [] ) },                            qr/palette must be a hash reference/,                                                   'palette not a hash';
-	like dies { $Theme->new( slots   => { 'glow' => 'accent' } ) },        qr/a slot key must be 'family.slot' or 'family.slot.state', got 'glow'/,                'slot key without a family';
-	like dies { $Theme->new( slots   => { 'lamp.glow' => 'accent' } ) },   qr/slot 'lamp.glow' names an unknown family 'lamp'/,                                    'unknown family';
-	like dies { $Theme->new( slots   => { 'button.glow' => 'accent' } ) }, qr/the family button has no slot 'glow' \(known: background, border.color, border.style, text\)/, 'unknown slot';
-	like dies { $Theme->new( slots   => { 'button.text.selected' => 'accent' } ) }, qr/the slot button.text has no state 'selected' \(its states: disabled, focused, hovered, pressed\)/,
+	like dies { $Theme->new( extends => 'neon' ) },                      qr/extends names an unknown built-in theme 'neon' \(known: dark, light\)/,              'unknown parent name';
+	like dies { $Theme->new( extends => undef ) },                       qr/extends must be a Term::Fabulous::Theme or the name of a built-in theme, got undef/, 'undef parent';
+	like dies { $Theme->new( palette => { pink => '#ff00ff' } ) },       qr/palette does not know the token pink \(known: /,                                     'unknown token';
+	like dies { $Theme->new( palette => { accent => 'redd' } ) },        qr/palette token accent must be a color, got 'redd'/,                                   'invalid color';
+	like dies { $Theme->new( palette => [] ) },                          qr/palette must be a hash reference/,                                                   'palette not a hash';
+	like dies { $Theme->new( slots   => { 'glow' => 'accent' } ) },      qr/a slot key must be 'family.slot' or 'family.slot.state', got 'glow'/,                'slot key without a family';
+	like dies { $Theme->new( slots   => { 'lamp.glow' => 'accent' } ) }, qr/slot 'lamp.glow' names an unknown family 'lamp'/,                                    'unknown family';
+	like dies { $Theme->new( slots   => { 'button.glow' => 'accent' } ) }, qr/the family button has no slot 'glow' \(known: background, border.color, border.enabled, border.style, text\)/,
+		'unknown slot';
+	like dies { $Theme->new( slots => { 'button.text.selected' => 'accent' } ) }, qr/the slot button.text has no state 'selected' \(its states: disabled, focused, hovered, pressed\)/,
 		'a state the slot lacks';
 	like dies { $Theme->new( slots    => { 'input.background'    => 'reverse' } ) }, qr/input.background cannot be 'reverse' \(only button.background can\)/, 'reverse elsewhere';
 	like dies { $Theme->new( slots    => { 'button.border.style' => 'Wobbly' } ) },  qr/button.border.style must be a border style, its name or 'none', got 'Wobbly' \(known: Ascii, /, 'unknown style';
@@ -183,6 +185,26 @@ subtest 'tabs.line.style needs joints' => sub {
 	is $theme->look( 'tabs', 'line.style' )->name, 'Double', 'a style with joints is taken';
 };
 
+subtest 'border.enabled is a boolean slot' => sub {
+	my $dark = $Theme->default;
+	is $dark->look( 'button',     'border.enabled' ), 0, 'buttons have no border by default';
+	is $dark->look( 'text_input', 'border.enabled' ), 0, 'nor do text fields';
+	is $dark->look( 'dialog',     'border.enabled' ), 1, 'dialogs have one';
+	is $dark->look( 'toast',      'border.enabled' ), 1, 'toasts have one';
+	ok !Term::Fabulous::Theme::has_slot( $_, 'border.enabled' ), "the family $_ has no border.enabled" foreach qw(box table tabs scrollbar divider text);
+
+	my $theme = $Theme->new( slots => { 'input.border.enabled' => 'true', 'dialog.border.enabled' => 0 }, variants => { 'button.framed' => { 'border.enabled' => 1 } } );
+	is $theme->look( 'input',  'border.enabled' ), 1, 'true turns it on';
+	is $theme->look( 'dialog', 'border.enabled' ), 0, '0 turns it off';
+	is $theme->look( 'button', 'border.enabled', 'normal', ['framed'] ), 1, 'a variant';
+
+	is Term::Fabulous::Theme::check_value( 'button', 'border.enabled', 'normal', 1 ),       'true',  '1 is stored as true';
+	is Term::Fabulous::Theme::check_value( 'button', 'border.enabled', 'normal', 'false' ), 'false', 'false is stored as false';
+	like dies { $Theme->new( slots => { 'button.border.enabled'        => 'yes' } ) },  qr/button.border.enabled must be true, false, 1 or 0, got 'yes'/, 'another value dies';
+	like dies { $Theme->new( slots => { 'button.border.enabled'        => 'none' } ) }, qr/button.border.enabled cannot be 'none'/,                       'a boolean slot is required';
+	like dies { $Theme->new( slots => { 'input.border.enabled.focused' => 1 } ) },      qr/the slot input.border.enabled has no state 'focused'/,         'and has no states';
+};
+
 subtest 'slot_info and check_value' => sub {
 	is Term::Fabulous::Theme::slot_info( 'button', 'background' ),
 		{
@@ -197,6 +219,8 @@ subtest 'slot_info and check_value' => sub {
 	is Term::Fabulous::Theme::slot_info( 'tabs', 'line.style' ), { kind => 'style', required => 1, reverse => 0, grid => 1, states => [], default => { normal => 'Round' } },
 		'a required grid style slot';
 	is Term::Fabulous::Theme::slot_info( 'button', 'border.style' )->{default}, { normal => 'Round' }, 'inherited slots are known too';
+	is Term::Fabulous::Theme::slot_info( 'button', 'border.enabled' ), { kind => 'boolean', required => 1, reverse => 0, grid => 0, states => [], default => { normal => 'false' } },
+		'a boolean slot';
 	like dies { Term::Fabulous::Theme::slot_info( 'nope',   'text' ) }, qr/unknown family 'nope'/,                'an unknown family dies';
 	like dies { Term::Fabulous::Theme::slot_info( 'button', 'nope' ) }, qr/the family button has no slot 'nope'/, 'an unknown slot dies';
 

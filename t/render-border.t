@@ -77,7 +77,7 @@ subtest 'degenerate and clipped boxes' => sub {
 
 subtest 'Hidden sides' => sub {
 	my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
-	my $box    = sub { Term::Fabulous::Widget::Box->new( border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, @_ ) };
+	my $box    = sub { Term::Fabulous::Widget::Box->new( bordered => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, @_ ) };
 
 	is draw_border( widget => $box->( border_style_bottom => $hidden, border_style_left => $hidden ) ),
 		{ '1,1' => "\x{2500}", '2,1' => "\x{2500}", '3,1' => "\x{2500}", '4,1' => "\x{2510}", '4,2' => "\x{2502}", '4,3' => "\x{2502}" },
@@ -94,7 +94,7 @@ subtest 'Hidden sides' => sub {
 
 subtest 'corner glyphs of the widget' => sub {
 	my $box = Term::Fabulous::Widget::Box->new(
-		border_width   => 1,
+		bordered       => 1,
 		border_style   => Term::Fabulous::Enum::BorderStyle->Solid,
 		border_corners => { top_left => "\x{251C}", bottom_right => "\x{253C}" },
 	);
@@ -113,7 +113,7 @@ subtest 'sides on the outer background' => sub {
 	$buffer->[$_]    = [ (0x0A0B0C) x 6 ] for 0 .. 4;    # the widget's background ...
 	$buffer->[$_][0] = 0x010101 for 0 .. 4;    # ... and the parent's, left of the box
 	$buffer->[0]     = [ (0x020202) x 6 ];    # and above it
-	my $box = Term::Fabulous::Widget::Box->new( border_width => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, outer_border_sides => ['left'] );
+	my $box = Term::Fabulous::Widget::Box->new( bordered => 1, border_style => Term::Fabulous::Enum::BorderStyle->Solid, outer_border_sides => ['left'] );
 	draw_border( widget => $box, buffer => $buffer );
 	is $cells{'1,2'}[2], 0x010101, 'an outer side is drawn on the background beside the box';
 	is $cells{'1,1'}[2], 0x010101, 'and so is a corner on it';

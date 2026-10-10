@@ -28,17 +28,17 @@ my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLA
 # Lines above and below only: no left and right border.
 my $rules = panel(
 	'Rules above and below',
-	border_width        => { top => 1, bottom => 1, left => 0, right => 0 },
+	bordered            => { top => 1, bottom => 1 },
 	border_style_top    => $Style->Double,
 	border_style_bottom => $Style->Solid,
 );
 
 # A box with a heavy top edge. border_style sets the sides that have no
 # style of their own.
-my $header = panel( 'Heavy top edge', border_width => 1, border_style => $Style->Solid, border_style_top => $Style->Heavy );
+my $header = panel( 'Heavy top edge', bordered => 1, border_style => $Style->Solid, border_style_top => $Style->Heavy );
 
 # A tab-like look: thick left edge only.
-my $marker = panel( 'Thick left edge', border_width => { left => 1 }, border_style_left => $Style->Thick );
+my $marker = panel( 'Thick left edge', bordered => { left => 1 }, border_style_left => $Style->Thick );
 
 $root->add_child( $rules, $header, $marker );
 Term::Fabulous::Static->new( root => $root, width => 32 )->print( colors => 0 );

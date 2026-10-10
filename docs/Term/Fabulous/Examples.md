@@ -264,7 +264,7 @@ while it is chosen, and text mode with a mistake on its last line:
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor.svg" alt="The theme editor with four themes in tabs: the menu bar, the tab strip with ocean.kdl active, the preview on the left with the palette swatches, text with links and a box in the ocean theme, and the form on the right listing the theme's name and base and the palette tokens with their swatches, values and where they come from, the cursor on accent"></p>
 
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button with a red border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
 
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-text.svg" alt="The theme editor in text mode: the end of ocean.kdl with a new line button { text "acent" }, the message Line 51: button.text must be a color, got 'acent' (unrecognized color string 'acent') under the text, an exclamation mark on the tab, and the preview marked stale"></p>
 </div>
@@ -307,15 +307,15 @@ each. See ["Border styles" in Term::Fabulous::Manual::Looks](Manual/Looks.md#bor
 ### examples/border-options.pl
 
 Borders beyond a single style: a border on some sides only, a style per
-side, a wider border, a hidden side, two boxes that share one line
+side, padding inside a border, a hidden side, two boxes that share one line
 through `border_corners`, and a border drawn on the parent's
 background with `outer_border_sides`. See
-["Border width and space" in Term::Fabulous::Manual::Looks](Manual/Looks.md#border-width-and-space),
+["Borders and space" in Term::Fabulous::Manual::Looks](Manual/Looks.md#borders-and-space),
 ["Joining borders" in Term::Fabulous::Manual::Looks](Manual/Looks.md#joining-borders) and
 [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md).
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border with a cell of padding inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
 </div>
 
 ## Events, keys and forms
@@ -615,10 +615,10 @@ colors, and a vertical divider with a text between two columns.
 ### examples/widgets/accordion.pl
 
 [Term::Fabulous::Widget::Accordion](Widget/Accordion.md): a settings accordion with one
-section open at a time and a disabled section, and a bordered one
-with the toggles at the end of the headers and several sections open
-at once. Up and Down move between the headers, Enter or Space opens
-and closes the focused section.
+section open at a time and a disabled section, and one with a border
+around every item, the toggles at the end of the headers and several
+sections open at once. Up and Down move between the headers, Enter or
+Space opens and closes the focused section.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-accordion.svg" alt="Two accordions: one with the Network section open under General and a disabled Licenses section, one with borders, the toggles at the end and two sections open at once"></p>

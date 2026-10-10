@@ -67,7 +67,7 @@ sub button ( $id, $caption, $action ) {
 		id               => $id,
 		background_color => $button_color,
 		border_color     => $border_color,
-		border_width     => 1,
+		bordered         => 1,
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },
 	);

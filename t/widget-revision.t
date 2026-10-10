@@ -67,7 +67,7 @@ subtest 'Dropdown' => sub {
 };
 
 subtest 'border_style_top' => sub {
-	my $box = Term::Fabulous::Widget::Box->new( border_width => 1 );
+	my $box = Term::Fabulous::Widget::Box->new( bordered => 1 );
 	is bumps( sub { $box->border_style_top( Term::Fabulous::Enum::BorderStyle->Round ) } ), 1, 'writes mark the widget changed';
 	is bumps( sub { $box->border_style_top } ),                                             0, 'reads do not';
 	ref_is $box->border_style_top, Term::Fabulous::Enum::BorderStyle->Round, 'the style is stored';

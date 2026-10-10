@@ -149,7 +149,7 @@ activated
 	my $save = Term::Fabulous::Widget::Button->new(
 		id               => 'save',
 		background_color => [ 40, 60, 90, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 90, 110, 140, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => {
@@ -197,7 +197,8 @@ replaces that with a background color, or switches it off;
 =item * while it has the focus, its border is drawn in
 C<focus_border_color>, the blue the input widgets use for their accent.
 A Button without a border shows nothing: give it
-C<border_width =E<gt> 1>, and the theme supplies the style (C<Round>
+C<bordered =E<gt> 1> (or let the theme give every button a border with
+C<button.border.enabled>), and the theme supplies the style (C<Round>
 in the built-in themes) and the color, or change its background in an
 C<OnFocus> listener;
 
@@ -224,7 +225,7 @@ Buttons, and pressing the left mouse button on a cell the Button paints
 
 All parameters are optional; unknown parameters die. A Button takes
 every parameter of L<Term::Fabulous::Widget::Box> (C<id>, C<layout>,
-C<background_color>, C<border_width>, C<border_color>, C<border_style>,
+C<background_color>, C<bordered>, C<border_color>, C<border_style>,
 ...; see L<Term::Fabulous::Widget/new>) plus:
 
 =over
@@ -257,8 +258,9 @@ The color of the border while the Button has the focus, in any format
 L<Term::Fabulous::Color> accepts, or C<undef> for no focus look.
 Default: the theme's C<button.border.color> in the C<focused> state,
 the accent C<[ 97, 175, 239, 255 ]> in the built-in dark theme. It
-only shows on sides with a positive C<border_width> whose style, the
-theme's or the widget's own, is not C<Blank>.
+only shows on the sides the Button has a border on (C<bordered>, or
+the theme's C<button.border.enabled>) whose style, the theme's or the
+widget's own, is not C<Blank>.
 
 =item C<pressed_background_color>
 
@@ -475,7 +477,7 @@ for no pressed look) and C<disabled_color> (a color string):
 	Button "save" {
 		background_color "#283c5a"
 		border style=Round color="#5a6b8c"
-		border_width 1
+		bordered #true
 		padding left=1 right=1
 		pressed_background_color "#3d5a85"
 		Text { text "Save"; text_color "#ffffff"; }

@@ -209,7 +209,7 @@ Term::Fabulous::Layout - Build a widget tree from a KDL layout description
 		sizing width=grow height=grow
 		padding left=1 right=1
 		border style=Round color="rgb(20, 140, 56)"
-		border_width 1
+		bordered #true
 		background_color "#141937"
 
 		Text "greeting" {
@@ -481,12 +481,12 @@ A property node has one of two shapes:
 
 =item *
 
-One argument: C<text "Hello">, C<border_width 1>, C<checked #true>.
+One argument: C<text "Hello">, C<width_group 1>, C<checked #true>.
 
 =item *
 
 Only key=value pairs: C<padding left=1 right=1>,
-C<border_width left=1 right=2>.
+C<bordered left=#true right=#true>.
 
 =back
 
@@ -687,8 +687,9 @@ shows what they do, with pictures.
 	       style-right=... style-bottom=...     Heavy, ...) for all four sides; the
 	       style-left=... color=...             style-SIDE keys override it for one side;
 	                                            color: a color string
-	border_width N                              all four sides, an integer 0..65535
-	border_width left=N right=N top=N bottom=N  per side; missing sides are 0
+	bordered #true                              a border on all four sides (#false: none)
+	bordered top=#true left=#true ...           per side (top, right, bottom, left);
+	                                            missing sides have none
 	background_color "..."                      a color string
 	glyphs_show_through #true                   #true or #false (the default): whether text
 	                                            and borders below a translucent background
@@ -701,7 +702,9 @@ C<layout>, C<sizing>, C<padding>, C<border>, C<child_alignment> and
 C<floating> take only the keys shown, and at least one of them. The
 border style names are those of
 L<Term::Fabulous::Enum::BorderStyle> and are case sensitive. A border
-is only drawn on sides with a positive C<border_width>.
+is only drawn on the sides C<bordered> names; without C<bordered>, the
+theme decides for the widget's family (no border for a Box, see
+L<Term::Fabulous::Manual::Looks/Borders from the theme>).
 
 C<width_group> and C<height_group> give widgets in different parts of
 the tree the same width or height; see
@@ -748,7 +751,7 @@ only the keys it names and keeps the others.
 		sizing width="percent(50)" height=fit
 		padding left=1 right=1
 		border style=Round style-top=Heavy color="#61afef"
-		border_width 1
+		bordered #true
 		background_color "rgb(28, 33, 45)"
 	}
 
@@ -781,7 +784,7 @@ only the keys it names and keeps the others.
 		sizing width=grow height=grow
 		padding left=1 right=1
 		border style=Round color="#61afef"
-		border_width 1
+		bordered #true
 
 		Text "title" {
 			text "Sign up"
@@ -896,7 +899,7 @@ widget class's own message:
 
 =for highlighter language=text
 
-	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
+	Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, bordered, child_alignment, classes, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 
 L</new> dies for:
 

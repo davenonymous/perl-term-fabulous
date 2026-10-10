@@ -317,10 +317,10 @@ A line that is only drawn in some places (see
 keeps its space everywhere, drawn blank where there is no line, so that
 the cells stay aligned.
 
-The table's own `border` is not the `border_width` and `border_style`
-that every [Term::Fabulous::Widget::Box](../Widget/Box.md) has. Those still work and draw
-a second frame around the whole table, pager included; you rarely want
-both.
+The table's own `border` is not the `bordered` that every other
+[Term::Fabulous::Widget::Box](../Widget/Box.md) has: a table takes no `bordered`
+(giving it dies, naming `border`), and no theme frames it, so the
+table's own frame is the only one.
 
 ## Tables with colored backgrounds
 

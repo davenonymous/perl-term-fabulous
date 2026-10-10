@@ -47,7 +47,7 @@ sub panel ( $caption, $layout, @items ) {
 			child_gap        => 1,
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);

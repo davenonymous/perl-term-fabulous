@@ -276,6 +276,10 @@ of the same name, described under ["METHODS"](#methods).
     The line style of all four sides of the frame. Default: `'Round'`. The
     values of this and the following parameters are described in
     ["Lines between and around the cells" in Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md#lines-between-and-around-the-cells).
+    The table draws its frame itself: it takes no `bordered` (giving it
+    dies), and the `table` family has no `border.enabled`, so no theme
+    frames it (see ["Borders" in Term::Fabulous::Theme](../Theme.md#borders)); `'none'` leaves the
+    frame out.
 
 - `border_top`, `border_right`, `border_bottom`, `border_left`
 

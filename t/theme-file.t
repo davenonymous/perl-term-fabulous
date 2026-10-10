@@ -40,7 +40,7 @@ button {
 }
 
 input {
-	border style=none
+	border style=none enabled=#true
 	focused { background "focus_background" }
 }
 
@@ -63,6 +63,7 @@ KDL
 	is $theme->look( 'button', 'border.color', 'normal', ['primary'] ),  [ 136, 192, 208, 255 ],            'a variant';
 	is $theme->look( 'button', 'border.color', 'focused', ['primary'] ), $light->token('text_bright'),      'a state inside a variant';
 	is $theme->look( 'input', 'border.style' ),                          undef,                             'style=none';
+	is $theme->look( 'input', 'border.enabled' ),                        1,                                 'enabled=#true';
 	is $theme->look( 'input', 'background', 'focused' ),                 $light->token('focus_background'), 'another family';
 	is $theme->look( 'table', 'header.text' ),                           $light->token('text_bright'),      'a dotted slot name';
 };
@@ -126,6 +127,9 @@ subtest 'invalid theme files die with the node' => sub {
 		'button { text { color "x" } }'                           => qr/button: the node 'text' has no children/,
 		'button { text 1 }'                                       => qr/button.text must be a string or #null/,
 		'button { border style=1 }'                               => qr/button.border.style must be a string or #null/,
+		'button { text #true }'                                   => qr/button.text must be a string or #null/,
+		'input { border enabled="true" }'                         => qr/input.border.enabled must be #true or #false/,
+		'input { border enabled=#null }'                          => qr/input.border.enabled cannot be 'none'/,
 		'button { border style=Wobbly }'                          => qr/button.border.style must be a border style, its name or 'none', got 'Wobbly'/,
 		'scrollbar { track "none" }'                              => qr/scrollbar.track cannot be 'none'/,
 		'scrollbar { thumb #null }'                               => qr/scrollbar.thumb cannot be 'none'/,

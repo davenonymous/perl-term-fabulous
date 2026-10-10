@@ -49,7 +49,7 @@ my $dialog = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width 
 sub button ( $caption, $background, $action ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		background_color => $background,
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 90, 110, 140, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },

@@ -120,7 +120,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my $log = Term::Fabulous::Widget::ScrollBox->new(
         id               => 'log',
         background_color => [ 30, 35, 50, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 120, 160, 220, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         layout           => {
@@ -214,7 +214,7 @@ my $log = Term::Fabulous::Widget::ScrollBox->new(
         id               => 'log',
         horizontal       => 1,    # vertical scrolling is on by default
         background_color => [ 30, 35, 50, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 120, 160, 220, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         layout           => {
@@ -376,7 +376,7 @@ my $title  = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Runnin
 my $output = Term::Fabulous::Widget::ScrollBox->new(
         id               => 'output',
         background_color => [ 30, 35, 50, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 120, 160, 220, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },

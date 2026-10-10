@@ -17,17 +17,30 @@ class Term::Fabulous::Widget
 {
 	use List::Util qw(first);
 	use Term::Fabulous::Check qw(boolean class_names color);
+	use Term::Fabulous::Theme;
 
 	my @COLOR_PARAMS = qw(background_color border_color);
+
+	# The sides of the theme's border.enabled, shared and never changed.
+	my %EVERY_SIDE = map { $_ => 1 } qw(top right bottom left);
+	my %NO_SIDE    = map { $_ => 0 } qw(top right bottom left);
 
 	field $classes             :param = [];
 	field $glyphs_show_through :param = 0;
 
 	# Clay::UI validates the colors before any ADJUST of this class runs,
 	# so they are converted while the arguments are still a plain list.
+	# Clay::UI's border_width is replaced by bordered.
 	sub BUILDARGS ( $class, %params ) {
+		_no_border_width($class) if exists $params{border_width};
 		$params{$_} = color( $class, $_ => $params{$_} ) foreach grep { defined $params{$_} } @COLOR_PARAMS;
 		return %params;
+	}
+
+	sub _no_border_width ($owner) {
+		die( ( ref $owner || $owner )
+			. ": border_width is not a parameter of Term::Fabulous widgets; use bordered (true, or a hash of the sides top, right, bottom and left) and give the room inside the border as layout padding"
+		);
 	}
 
 	ADJUST {
@@ -45,6 +58,25 @@ class Term::Fabulous::Widget
 	method border_color :override (@new) {
 		return $self->SUPER::border_color( defined $new[0] ? color( $self, border_color => $new[0] ) : @new ) if @new;
 		return $self->SUPER::border_color // $self->look('border.color');
+	}
+
+	method border_width :override (@) {
+		_no_border_width($self);
+	}
+
+	# The sides the widget has a border on: the given ones, or every side
+	# or none as the theme's border.enabled says. Returns a new hash.
+	method bordered (@new) {
+		return { %{ $self->_bordered_sides } } unless @new;
+		$self->set_look( bordered => $new[0] );
+		return { %{ $self->_bordered_sides } };
+	}
+
+	# The same, shared, for Term::Fabulous::Role::HasBorderStyle, which
+	# reads it for every frame; it must not be changed.
+	method _bordered_sides () {
+		my $sides = $self->look_value('bordered');
+		return ref $sides ? $sides : $sides ? \%EVERY_SIDE : \%NO_SIDE;
 	}
 
 	# The color this widget lies on: the background of the widget itself
@@ -77,8 +109,15 @@ class Term::Fabulous::Widget
 		return 'box';
 	}
 
+	# A family without border.enabled (box itself) leaves bordered to the
+	# program.
 	method themed_params :common () {
-		return ( background_color => [ 'background', 'normal' ], border_color => [ 'border.color', 'normal' ] );
+		my $border_slot = Term::Fabulous::Theme::has_slot( $class->theme_family, 'border.enabled' ) ? 'border.enabled' : undef;
+		return (
+			background_color => [ 'background',   'normal' ],
+			border_color     => [ 'border.color', 'normal' ],
+			bordered         => [ $border_slot,   'normal', 'border_sides' ],
+		);
 	}
 
 	method look_state () {
@@ -187,7 +226,7 @@ container widgets
 			child_gap        => 1,
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		classes          => ['sidebar'],
@@ -234,13 +273,13 @@ and the one it composes itself:
 
 =item * L<Clay::UI::Role::Style::HasBackground>: C<background_color>
 
-=item * L<Clay::UI::Role::Style::HasBorder>: C<border_width>, C<border_color>
+=item * L<Clay::UI::Role::Style::HasBorder>: C<border_color> (its C<border_width> gives way to L</bordered>)
 
 =item * L<Clay::UI::Role::Style::HasStates>: C<add_state>, C<states>, ...
 
 =item * L<Term::Fabulous::Role::HasBorderStyle>: the border glyphs (C<border_style>, ...)
 
-=item * L<Term::Fabulous::Role::Themed>: the colors and border styles the theme supplies (C<look>, C<reset_look>, ...)
+=item * L<Term::Fabulous::Role::Themed>: the colors, border styles and borders the theme supplies (C<look>, C<reset_look>, ...)
 
 =back
 
@@ -430,15 +469,30 @@ opaque and a glyph's default foreground stays as it is. Any true or
 false value; references die. See
 L<Term::Fabulous::Manual::Looks/Alpha and the terminal default color>.
 
-=item C<border_width>
+=item C<bordered>
 
-The border's thickness: a number for all four sides, or a hash
-reference C<< { left => $n, right => $n, top => $n, bottom => $n } >>
-(missing sides are 0). Default: no border. In a terminal a drawn border
-is always one cell thick; any positive width draws the side, and the
-width is the space the side takes from the widget, except on a side
-whose style is C<Hidden>, which draws nothing and takes no space. Use
-C<1>.
+Which sides have a border: one true or false value for all four sides,
+or a hash reference with any of the keys C<top>, C<right>, C<bottom>
+and C<left> and true or false values, where a side the hash leaves out
+has no border (C<< { top => 1, bottom => 1 } >> draws a line above and
+below the widget). Default: the theme's C<border.enabled> for the
+widget's family, on all four sides. The C<box> family (plain boxes,
+scroll boxes, canvases, charts and every widget that names no family
+of its own) has no C<border.enabled>, so its widgets have no border
+unless they are given one (see L<Term::Fabulous::Theme/Borders>). Stored as a hash of all four sides,
+1 or 0. Another reference, an unknown side or a reference as a side's
+value dies, and so does C<undef>: L</reset_look> returns the parameter
+to the theme.
+
+A border is one cell thick and takes that cell from the inside of the
+widget: the C<padding> and the content start after it, and a widget
+with C<fit> sizing grows by it. Room between the border and the content
+is C<padding>. A side whose style is C<Hidden> draws nothing and takes
+no space. See L<Term::Fabulous::Manual::Looks/BORDERS>.
+
+Term::Fabulous widgets do not take the C<border_width> of
+L<Clay::UI::Role::Style::HasBorder>: giving it to the constructor, or
+calling C<border_width>, dies with a hint to use C<bordered>.
 
 =item C<border_color>
 
@@ -450,8 +504,10 @@ C<background_color>. Default: the terminal's default foreground color.
 A L<Term::Fabulous::Enum::BorderStyle> item, such as
 C<< Term::Fabulous::Enum::BorderStyle->Round >>, or its name
 (C<'Round'>), used for every side
-that has no side parameter of its own. Default: none; a side that has a
-width but no style is drawn with the C<Blank> style (spaces). See
+that has no side parameter of its own. Default: the theme's
+C<border.style> for the widget's family (C<Round> in the built-in
+themes); a side with a border but no style from the program, the
+widget or the theme is drawn with the C<Blank> style (spaces). See
 L<Term::Fabulous::Role::HasBorderStyle>.
 
 =item C<border_style_top>
@@ -502,10 +558,11 @@ names dies.
 
 =back
 
-The background, the border color and the border style come from the
-theme of the UI when they are not given, where the theme has them for
-the widget's family (a plain Box has none in the built-in themes; a
-Button, a Dialog or a Toast has); see
+The background, the border color, the border style and whether there
+is a border at all come from the theme of the UI when they are not
+given, where the theme has them for the widget's family (a plain Box
+has no background in the built-in themes and never gets a border from
+a theme; a Dialog or a Toast has both); see
 L<Term::Fabulous::Manual::Looks/THEMES>. Subclasses document the
 theme slot each of their colors reads.
 
@@ -797,15 +854,27 @@ C<undef> removes the given color (L</reset_look> does the same). An
 invalid value dies like the constructor parameter of the same name.
 The change shows in the next frame.
 
+=head2 bordered
+
+	$box->bordered(1);                                # every side
+	$box->bordered( { top => 1, bottom => 1 } );      # two sides
+	$box->bordered(0);                                # none, whatever the theme says
+	my $sides = $box->bordered;                       # { top => 1, right => 0, ... }
+
+Accessor for the C<bordered> parameter. The writer takes the same values
+as the constructor and returns the sides; an invalid value dies like the
+constructor parameter. The reader returns the sides the widget has a
+border on, given or from the theme's C<border.enabled>, as a new hash
+reference of all four sides, each 1 or 0; a side whose style is
+C<Hidden> still counts
+(L<Term::Fabulous::Role::HasBorderStyle/drawn_border_sides> leaves it
+out). C<< reset_look('bordered') >> returns it to the theme (no border
+in a family without C<border.enabled>). The change shows in the next
+frame and changes the layout, because a border takes space.
+
 =head2 border_width
 
-	$box->border_width(1);
-
-Accessor. Without an argument it returns the current value (C<undef>
-when none is set); with an argument it sets the value and returns the
-new value. C<undef> removes the border. An invalid value dies like the
-constructor parameter of the same name. The change shows in the next
-frame. Changing it changes the layout, because borders take space.
+Dies: Term::Fabulous widgets use L</bordered> instead.
 
 =head2 border_style_top
 
@@ -959,16 +1028,17 @@ theme reads the classes only, not the state names.
 	$button->reset_look('border_color');
 	$button->reset_look( 'background_color', 'focus_border_color' );
 
-Drops the colors or border styles the program gave for the named
-parameters, so the theme supplies them again. Takes the names of
-the widget's themed parameters (C<background_color>, C<border_color>
-and the ones a subclass lists), including the looks a widget keeps on
-its parts (the colors of a L<Term::Fabulous::Widget::Tabs> live on its
-bar, the scrollbar colors of a L<Term::Fabulous::Widget::ScrollBox> on
-both scrollbars); an unknown name dies naming the known ones. Returns
-the widget. The change shows in the next frame. From
-L<Term::Fabulous::Role::Themed>, which also has L<look|Term::Fabulous::Role::Themed/look>
-and L<look_value|Term::Fabulous::Role::Themed/look_value> for widget
+Drops the colors, border styles or borders the program gave for the
+named parameters, so the theme supplies them again. Takes the names of
+the widget's themed parameters (C<background_color>, C<border_color>,
+C<bordered> and the ones a subclass lists), including the looks a widget
+keeps on its parts (the colors of a L<Term::Fabulous::Widget::Tabs> live
+on its bar, the scrollbar colors of a
+L<Term::Fabulous::Widget::ScrollBox> on both scrollbars); an unknown
+name dies naming the known ones. Returns the widget. The change shows in
+the next frame. From L<Term::Fabulous::Role::Themed>, which also has
+L<look|Term::Fabulous::Role::Themed/look> and
+L<look_value|Term::Fabulous::Role::Themed/look_value> for widget
 authors.
 
 =head2 mark_changed

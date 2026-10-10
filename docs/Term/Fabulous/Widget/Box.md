@@ -19,7 +19,7 @@ my $card = Term::Fabulous::Widget::Box->new(
                 child_gap        => 1,
         },
         background_color => [ 30, 35, 50, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 97, 175, 239, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 );
@@ -106,11 +106,12 @@ describes the accepted values in full.
     A boolean. Default: false. With a translucent `background_color`,
     whether text and borders below the box stay visible through it.
 
-- `border_width`
+- `bordered`
 
-    The border's width, a number for all sides or a hash reference with
-    `left`, `right`, `top` and `bottom`. Default: `undef`, so there is
-    no border.
+    Which sides have a border: a true value for all four sides, or a hash
+    reference with any of `left`, `right`, `top` and `bottom` and true
+    or false values. Default: no border; the theme has no
+    `border.enabled` for a Box (see ["bordered" in Term::Fabulous::Widget](../Widget.md#bordered)).
 
 - `border_color`
 
@@ -162,7 +163,7 @@ A Box has all methods of [Term::Fabulous::Widget](../Widget.md): children
 (`add_child`, `remove_child`, `children`, ...), events (`on`,
 `fire_event`), the search ["find\_by\_id" in Term::Fabulous::Widget](../Widget.md#find_by_id), the
 accessors `layout`, `floating`, `background_color`,
-`glyphs_show_through`, `border_color`, `border_width`, `border_style_top`,
+`glyphs_show_through`, `border_color`, `bordered`, `border_style_top`,
 `border_style_right`, `border_style_bottom`, `border_style_left`,
 `width_group` and `height_group`, and the state methods. It adds
 nothing for applications; the methods in ["SUBCLASS INTERFACE"](#subclass-interface) are for
@@ -196,7 +197,7 @@ Box "card" {
         padding left=1 right=1
         child_alignment x=center
         border style=Round color="#61afef"
-        border_width 1
+        bordered #true
         background_color "rgb(30, 35, 50)"
 
         Text { text "Title"; text_color "#ffffff"; }
@@ -289,7 +290,7 @@ Box "card" {
             floating attach_to=element parent_id="menu-button" element=left_top parent=left_bottom
             floating z_index=10
             border style=Round
-            border_width 1
+            bordered #true
     }
     ```
 
@@ -306,11 +307,13 @@ Box "card" {
     `Double`, ...). `color` takes any color string that
     [Term::Fabulous::Color](../Color.md) understands (`"#61afef"`,
     `"rgb(97, 175, 239)"`, `"hsl(207, 82%, 66%)"`, ...). This property
-    does not make a border appear: also give `border_width`.
+    does not make a border appear: also give `bordered`.
 
-- `border_width N` or `border_width left=N right=N top=N bottom=N`
+- `bordered #true` or `bordered top=#true right=#true bottom=#true left=#true`
 
-    The border width, for all sides or per side.
+    A border on all four sides, or on the sides named `#true`; the sides
+    left out have none. `#false` (or `0`) gives no border. Any other
+    value dies, a quoted `"true"` included.
 
 - `background_color "..."`
 - `border_color "..."`
@@ -348,10 +351,12 @@ method layout_properties :common () {
 The table of the properties a layout may set and how each is read (see
 ["layout\_properties" in Term::Fabulous::Role::CanParseLayout](../Role/CanParseLayout.md#layout_properties)). For a Box:
 `background_color` and `border_color` are colors,
-`glyphs_show_through` is a boolean, `border_width`, `width_group`
-and `height_group` are scalars, and `layout`, `border`, `sizing`,
+`glyphs_show_through` is a boolean, `width_group` and
+`height_group` are scalars, and `layout`, `border`, `sizing`,
 `padding`, `child_alignment` and `floating` are structured
-properties the Box parses itself (see ["KDL PROPERTIES"](#kdl-properties)). Subclasses
+properties the Box parses itself (see ["KDL PROPERTIES"](#kdl-properties)). `bordered`
+is a layout property by itself, as a themed parameter (see
+["layout\_properties" in Term::Fabulous::Role::CanParseLayout](../Role/CanParseLayout.md#layout_properties)). Subclasses
 extend the table as shown.
 
 # SEE ALSO

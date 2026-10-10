@@ -132,6 +132,22 @@ name (case sensitive, `'Round'`). Returns the item. Options:
 The message lists the names it accepts:
 `My::Widget: line_style must be a border style or its name, got 'Fancy' (known: Ascii, Blank, ...)`.
 
+## border\_sides
+
+```perl
+my $sides = border_sides( $self, bordered => 1 );                         # every side
+my $rule  = border_sides( $self, bordered => { top => 1, bottom => 1 } );  # two sides
+```
+
+The sides a border is drawn on: one plain value, true or false, for all
+four sides, or a hash reference whose keys are `top`, `right`,
+`bottom` and `left` and whose values are plain booleans; a side the
+hash leaves out has no border. Returns a new hash reference with all
+four sides, each 1 or 0 (`{ top => 1, right => 0, bottom => 1, left => 0 }`
+for the second example). Another reference, an unknown key or a
+reference as a side's value dies:
+`My::Widget: bordered must be a boolean or a hash reference of booleans under the sides top, right, bottom and left, got a HASH reference (unknown side middle)`.
+
 ## value\_format
 
 How a widget writes a number: `undef` (the widget's default), a

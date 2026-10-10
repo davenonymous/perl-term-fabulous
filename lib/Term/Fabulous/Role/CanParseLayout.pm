@@ -12,10 +12,11 @@ use Object::Pad 0.825;
 role Term::Fabulous::Role::CanParseLayout {
 	use Term::Fabulous::Check qw(color);
 
-	my %IS_SIMPLE_KIND = map { $_ => 1 } qw(scalar boolean color);
+	my %IS_SIMPLE_KIND = map { $_ => 1 } qw(scalar boolean color border_sides);
 
-	# The class's KDL properties: name => 'scalar', 'boolean', 'color', or
-	# a code reference that parses the property node and applies it.
+	# The class's KDL properties: name => 'scalar', 'boolean', 'color',
+	# 'border_sides', or a code reference that parses the property node
+	# and applies it.
 	method layout_properties;
 
 	# A node inside a widget's block is a child widget when its name starts
@@ -43,7 +44,7 @@ role Term::Fabulous::Role::CanParseLayout {
 			my $kind = $kind_of{$name};
 			next if ref $kind eq 'CODE' || ( defined $kind && $IS_SIMPLE_KIND{$kind} );
 			die sprintf(
-				"%s: layout property '%s' is declared as %s; use 'scalar', 'boolean', 'color' or a code reference",
+				"%s: layout property '%s' is declared as %s; use 'scalar', 'boolean', 'color', 'border_sides' or a code reference",
 				ref $self, $name, defined $kind ? "'$kind'" : 'undef'
 			);
 		}
@@ -57,6 +58,7 @@ role Term::Fabulous::Role::CanParseLayout {
 		my $kind = $kind_of->{$name} // die sprintf( "%s: unknown layout property '%s' (known: %s)", ref $self, $name, join( ', ', sort keys %$kind_of ) );
 		return [ $name, $kid ] if ref $kind eq 'CODE';
 		return [ $name, $self->kdl_boolean($kid) ] if $kind eq 'boolean';
+		return [ $name, $self->kdl_border_sides($kid) ] if $kind eq 'border_sides';
 		return [ $name, color( $self, $name, $self->kdl_value($kid) ) ] if $kind eq 'color';
 		return [ $name, $self->kdl_value($kid) ];
 	}
@@ -74,10 +76,32 @@ role Term::Fabulous::Role::CanParseLayout {
 	# The single argument of a boolean property node as 1 or 0: #true,
 	# #false, 1 or 0. Any other value dies, so "false" cannot count as true.
 	method kdl_boolean ($kid) {
-		my $argument = $self->kdl_argument($kid);
-		return $argument->as_perl ? 1 : 0 if $argument->is_bool;
-		return $argument->as_perl + 0 if $argument->is_number && $argument->as_perl =~ /\A[01]\z/;
-		die sprintf( "%s: layout property '%s' must be #true or #false, got %s", ref $self, $kid->name, $argument->is_null ? '#null' : "'" . $argument->as_perl . "'" );
+		return $self->_kdl_boolean_value( "layout property '" . $kid->name . "'", $self->kdl_argument($kid) );
+	}
+
+	method _kdl_boolean_value ( $what, $value ) {
+		return $value->as_perl ? 1 : 0 if $value->is_bool;
+		return $value->as_perl + 0 if $value->is_number && $value->as_perl =~ /\A[01]\z/;
+		die sprintf( "%s: %s must be #true or #false, got %s", ref $self, $what, $value->is_null ? '#null' : "'" . $value->as_perl . "'" );
+	}
+
+	# The sides of a border property node, as a hash of all four sides:
+	# one boolean argument for every side, or boolean key=value pairs
+	# under side names, where a side left out is false.
+	method kdl_border_sides ($kid) {
+		my $name = $kid->name;
+		my @args = $kid->args->@*;
+		if (@args) {
+			my $on = $self->kdl_boolean($kid);
+			return { map { $_ => $on } qw(top right bottom left) };
+		}
+		my %given   = map  { $_->[0] => $_->[1] } $kid->props->@*;
+		my %sides   = map  { $_      => 0 } qw(top right bottom left);
+		my @unknown = grep { !exists $sides{$_} } sort keys %given;
+		die sprintf( "%s: layout property '%s' needs one boolean argument or boolean key=value pairs for the sides top, right, bottom and left", ref $self, $name )
+			if !%given || @unknown || $kid->children->@*;
+		$sides{$_} = $self->_kdl_boolean_value( "layout property '$name' $_", $given{$_} ) foreach keys %given;
+		return \%sides;
 	}
 
 	# The value of a property node: its single argument, or a hashref of its
@@ -180,7 +204,7 @@ and in a layout:
 	Panel "settings" {
 		title "Settings"
 		title_color "#ffcc00"
-		border_width 1
+		bordered #true
 		shortcut key="F2" action="save"
 		shortcut key="F10" action="quit"
 	}
@@ -245,14 +269,20 @@ as pairs of a name and how its node is read:
 =item C<'scalar'>
 
 The node's value, read with L</kdl_value>: its single argument
-(C<title "x">) or a hash reference of its C<key=value> pairs
-(C<border_width left=1 right=2>).
+(C<title "x">) or a hash reference of its C<key=value> pairs (a node
+C<name a=1 b=2> gives C<< { a => 1, b => 2 } >>).
 
 =item C<'boolean'>
 
 The node's single argument, read with L</kdl_boolean>: a layout must
 write C<#true> or C<#false> (or C<1> and C<0>), so a quoted C<"false">
 dies instead of counting as true.
+
+=item C<'border_sides'>
+
+The sides of a border, read with L</kdl_border_sides>: one boolean
+argument for all four sides (C<bordered #true>) or boolean C<key=value>
+pairs under side names (C<bordered top=#true bottom=#true>).
 
 =item C<'color'>
 
@@ -271,7 +301,7 @@ pairs.
 
 =back
 
-Each name of the first three kinds is also the name of the accessor
+Each name of the first four kinds is also the name of the accessor
 that sets it: the value is applied as C<< $self->name($value) >>, so
 the accessor checks it, as for a program. This table is the only way a
 layout can set a value: a property that is not in it dies with the list
@@ -284,7 +314,8 @@ layout is applied.
 The themed parameters that have a kind (see
 L<Term::Fabulous::Role::Themed/themed_params>) and the looks a widget
 forwards to its parts are layout properties by themselves: a color
-kind is a C<'color'> property, every other kind a C<'scalar'> one. They
+kind is a C<'color'> property, the C<border_sides> kind a
+C<'border_sides'> one, every other kind a C<'scalar'> one. They
 need no entry here; an entry of the same name replaces theirs.
 
 =head1 METHODS
@@ -339,6 +370,18 @@ C<#null>, other numbers and strings such as C<"false">:
 
 	Term::Fabulous::Widget::Checkbox: layout property 'checked' must be #true or #false, got 'false'
 
+=head2 kdl_border_sides
+
+	my $sides = $self->kdl_border_sides($kid);    # { top => 1, right => 0, bottom => 1, left => 0 }
+
+The sides of a border property node as a hash reference of all four
+sides, each 1 or 0: one boolean argument, read like L</kdl_boolean>,
+gives every side; C<key=value> pairs whose keys are C<top>, C<right>,
+C<bottom> and C<left> and whose values are booleans give those sides,
+and the sides left out are 0. Anything else dies, including an unknown
+key, a pair whose value is not C<#true>, C<#false>, C<1> or C<0>, and a
+node with both an argument and pairs.
+
 =head2 kdl_value
 
 =for highlighter language=perl
@@ -346,10 +389,10 @@ C<#null>, other numbers and strings such as C<"false">:
 	my $value = $self->kdl_value($kid);
 
 The value of a property node as Perl data: its single argument
-(C<border_width 1> gives C<1>, C<title "x"> gives C<'x'>, C<#true>
+(C<title "x"> gives C<'x'>, C<body_indent 2> gives C<2>, C<#true>
 gives a true value), or, for a node with only C<key=value> pairs, a
-hash reference of them (C<border_width left=1 right=2> gives
-C<< { left => 1, right => 2 } >>). Dies when the node has several
+hash reference of them (C<name a=1 b=2> gives
+C<< { a => 1, b => 2 } >>). Dies when the node has several
 arguments, both arguments and pairs, nothing at all, or child nodes.
 
 =head2 kdl_argument

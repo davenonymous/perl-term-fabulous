@@ -51,7 +51,7 @@
 <polyline points="520.5 222 520.5 226 520.538 226.587 520.653 227.165 520.843 227.722 521.103 228.25 521.43 228.739 521.818 229.182 522.261 229.57 522.75 229.897 523.278 230.157 523.835 230.347 524.413 230.462 525 230.5 525 230.5" fill="none" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="628.5 222 628.5 226 628.462 226.587 628.347 227.165 628.157 227.722 627.897 228.25 627.57 228.739 627.182 229.182 626.739 229.57 626.25 229.897 625.722 230.157 625.165 230.347 624.587 230.462 624 230.5 624 230.5" fill="none" stroke="#ffffff" stroke-width="1" stroke-linejoin="round"/>
 <g class="terminal">
-<text x="48" y="92" textLength="630" fill="#dcdcdc">no padding               padding left/right 2,      border_width 1 and</text>
+<text x="48" y="92" textLength="576" fill="#dcdcdc">no padding               padding left/right 2,      bordered and</text>
 <text x="48" y="110" textLength="594" fill="#dcdcdc">child_gap 0              top/bottom 1, child_gap 1  padding_all(1)</text>
 <text x="57" y="128" textLength="63" fill="#141923">child 1</text>
 <text x="57" y="146" textLength="306" fill="#141923">child 2                    child 1</text>

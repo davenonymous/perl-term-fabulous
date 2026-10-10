@@ -60,7 +60,7 @@ class Term::Fabulous::ThemeEditor::Prompt :isa(Term::Fabulous::Widget::Dialog) :
 		my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 		foreach my $definition (@$buttons) {
 			my ( $id, $label, $primary ) = @$definition;
-			my $button = Term::Fabulous::Widget::Button->new( border_width => 1, classes => $primary ? ['primary'] : [], layout => { padding => { left => 1, right => 1 } } );
+			my $button = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $primary ? ['primary'] : [], layout => { padding => { left => 1, right => 1 } } );
 			$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
 			$button->on( Activate => sub ($event) { $weak_self->finish($id); return } );
 			$row->add_child($button);

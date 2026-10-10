@@ -62,13 +62,13 @@ sub email_field (%parameters) {
 my $typed = state_row( 'typing, focused', email_field() );
 state_row( 'valid',              email_field( value => 'ada@example.com' ) );
 state_row( 'invalid',            email_field( value => 'ada@' ) );
-state_row( 'invalid, border',    email_field( value => 'ada@', border_width => 1 ) );
+state_row( 'invalid, border',    email_field( value => 'ada@', bordered => 1 ) );
 state_row( 'required, empty',    Term::Fabulous::Widget::TextField->new( required => 1, placeholder => 'Your name', preferred_columns => 24 ) );
-state_row( 'required, border',   Term::Fabulous::Widget::TextField->new( required => 1, placeholder => 'Your name', preferred_columns => 22, border_width => 1 ) );
+state_row( 'required, border',   Term::Fabulous::Widget::TextField->new( required => 1, placeholder => 'Your name', preferred_columns => 22, bordered => 1 ) );
 state_row( 'required check box', Term::Fabulous::Widget::Checkbox->new( required => 1, label   => 'I accept the terms' ) );
 state_row( 'required dropdown',  Term::Fabulous::Widget::Dropdown->new( required => 1, options => [qw(Red Green Blue)], placeholder => 'Choose a color' ) );
 state_row( 'invalid_color',      email_field( value => 'ada@', invalid_color => '#c678dd' ) );
-state_row( 'theme variant',      email_field( value => 'ada@', border_width  => 1, classes => ['calm'] ) );
+state_row( 'theme variant',      email_field( value => 'ada@', bordered      => 1, classes => ['calm'] ) );
 state_row( 'disabled',           email_field( value => 'ada@', disabled      => 1 ) );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root, theme => $theme );

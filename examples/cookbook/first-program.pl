@@ -22,7 +22,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 
 # A box with a rounded border, one cell of space left and right of the text.
 my $frame = Term::Fabulous::Widget::Box->new(
-	border_width => 1,
+	bordered     => 1,
 	border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color => [ 120, 170, 255, 255 ],
 	layout       => { padding => { left => 1, right => 1 } },

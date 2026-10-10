@@ -39,7 +39,7 @@ my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { s
 sub button ( $caption, $action ) {
 	my $button = Term::Fabulous::Widget::Button->new(
 		background_color => [ 43, 58, 85, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 28, 33, 45, 255 ],    # the dialog background: only the focus shows
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { padding => { left => 1, right => 1 } },

@@ -127,7 +127,7 @@ their own:
 
 		ADJUST {
 			$self->layout( { %{ $self->layout }, layout_direction => CLAY_TOP_TO_BOTTOM } );
-			$self->border_width(1);
+			$self->bordered(1);
 			$self->border_color( [ 120, 170, 255, 255 ] );
 			$self->$_( Term::Fabulous::Enum::BorderStyle->Solid ) foreach qw(border_style_right border_style_bottom border_style_left);
 			$self->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
@@ -147,7 +147,7 @@ The card draws a heavy line on top and thin lines on the other sides:
 	│All systems go│
 	└──────────────┘
 
-The accessors a Box inherits (C<layout>, C<border_width>, ...) record
+The accessors a Box inherits (C<layout>, C<bordered>, ...) record
 the change themselves, so the next frame shows it. A container whose
 look depends on fields of its own must say so when they change; see
 L</Telling Term::Fabulous that something changed>.
@@ -280,7 +280,7 @@ L<Write a custom input widget|Term::Fabulous::Cookbook::Extending/Write a custom
 
 =head2 Colors from the theme
 
-Every widget draws the colors and border styles it was not given from
+Every widget draws the colors, border styles and borders it was not given from
 the theme of its UI (L<Term::Fabulous::Manual::Looks/THEMES>). A
 widget class of your own takes part through
 L<Term::Fabulous::Role::Themed>, which every widget composes:

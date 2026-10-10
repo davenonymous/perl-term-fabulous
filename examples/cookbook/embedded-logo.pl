@@ -26,7 +26,7 @@ KTqejlNqDQT2YNYY/2eRgpCZVjkIgRmPKQw0XWHn/AWQfdWh/qecnAAAAABJRU5ErkJggg==
 BASE64
 
 my $about = Term::Fabulous::Widget::Box->new(
-	border_width => 1,
+	bordered     => 1,
 	border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color => [ 120, 160, 220, 255 ],
 	layout       => {

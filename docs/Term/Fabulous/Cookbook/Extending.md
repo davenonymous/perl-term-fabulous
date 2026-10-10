@@ -228,7 +228,7 @@ class My::Panel :isa(Term::Fabulous::Widget::Box) :strict(params) {
         ADJUST {
                 my $layout = $self->layout;
                 $self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM } ) unless exists $layout->{layout_direction};
-                $self->border_width(1) unless defined $self->border_width;
+                $self->bordered(1) unless $self->has_look_override('bordered');
                 foreach my $side (qw(top right bottom left)) {
                         my $accessor = "border_style_$side";
                         $self->$accessor( Term::Fabulous::Enum::BorderStyle->Round ) unless defined $self->$accessor;

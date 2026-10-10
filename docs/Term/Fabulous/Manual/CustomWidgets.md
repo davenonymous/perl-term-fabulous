@@ -115,7 +115,7 @@ class My::Card :isa(Term::Fabulous::Widget::Box) :strict(params) {
 
         ADJUST {
                 $self->layout( { %{ $self->layout }, layout_direction => CLAY_TOP_TO_BOTTOM } );
-                $self->border_width(1);
+                $self->bordered(1);
                 $self->border_color( [ 120, 170, 255, 255 ] );
                 $self->$_( Term::Fabulous::Enum::BorderStyle->Solid ) foreach qw(border_style_right border_style_bottom border_style_left);
                 $self->border_style_top( Term::Fabulous::Enum::BorderStyle->Heavy );
@@ -136,7 +136,7 @@ The card draws a heavy line on top and thin lines on the other sides:
 └──────────────┘
 ```
 
-The accessors a Box inherits (`layout`, `border_width`, ...) record
+The accessors a Box inherits (`layout`, `bordered`, ...) record
 the change themselves, so the next frame shows it. A container whose
 look depends on fields of its own must say so when they change; see
 ["Telling Term::Fabulous that something changed"](#telling-term-fabulous-that-something-changed).
@@ -265,7 +265,7 @@ events and KDL support, is the recipe
 
 ## Colors from the theme
 
-Every widget draws the colors and border styles it was not given from
+Every widget draws the colors, border styles and borders it was not given from
 the theme of its UI (["THEMES" in Term::Fabulous::Manual::Looks](Looks.md#themes)). A
 widget class of your own takes part through
 [Term::Fabulous::Role::Themed](../Role/Themed.md), which every widget composes:

@@ -434,7 +434,7 @@ C<invalid_color>, by default the theme's C<danger> red.
 
 =item *
 
-B<Invalid, border>: an input with a border (C<< border_width => 1 >>)
+B<Invalid, border>: an input with a border (C<< bordered => 1 >>)
 also draws its border in the C<danger> red, unless it was given a
 C<border_color> of its own.
 
@@ -529,7 +529,7 @@ C<[r, g, b, a]> array reference. Text inputs and the dropdown
 default to a dark gray (C<[36, 40, 48, 255]>); the other inputs have no
 background of their own and show the background of their parent.
 
-=item C<border_width>
+=item C<bordered>
 
 =item C<border_color>
 
@@ -537,6 +537,9 @@ background of their own and show the background of their parent.
 
 A border around the input, exactly as for
 L<Term::Fabulous::Widget::Box>; see L<Term::Fabulous::Manual::Looks/BORDERS>.
+Without C<bordered>, the theme's C<border.enabled> for the input's
+family decides (C<input>, C<text_input> or C<dropdown>; C<false> in
+the built-in themes, so inputs have no border).
 The border takes cells inside the widget's box; the natural size is
 grown accordingly.
 
@@ -831,7 +834,7 @@ Every input has a natural content size: for example one row and as many
 columns as its label needs (a checkbox), or C<preferred_columns> by one
 row (a text field). When the C<layout> gives no C<sizing> for an axis,
 the input is given a fixed size on that axis: its natural size plus its
-padding and border width (see L<Term::Fabulous::Widget::Display/Size>).
+padding and its border (see L<Term::Fabulous::Widget::Display/Size>).
 A C<sizing> in the C<layout> always wins:
 
 	# 20 columns wide (the default preferred_columns), one row high:
@@ -898,7 +901,7 @@ bubbles further.
 In a layout file (see L<Term::Fabulous::Layout>), every input accepts
 the properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>
 (C<layout>, C<sizing>, C<padding>, C<border>, C<background_color>,
-C<border_color>, C<border_width>, C<width_group>, C<height_group>) and
+C<border_color>, C<bordered>, C<width_group>, C<height_group>) and
 the following ones. The string after the widget name is its C<id>
 (C<TextField "name"> is the C<id> C<name>).
 

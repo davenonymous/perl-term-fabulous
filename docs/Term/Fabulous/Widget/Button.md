@@ -14,7 +14,7 @@ use Clay::XS qw(sizing_fit);
 my $save = Term::Fabulous::Widget::Button->new(
         id               => 'save',
         background_color => [ 40, 60, 90, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 90, 110, 140, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         layout           => {
@@ -58,7 +58,8 @@ replaces that with a background color, or switches it off;
 - while it has the focus, its border is drawn in
 `focus_border_color`, the blue the input widgets use for their accent.
 A Button without a border shows nothing: give it
-`border_width => 1`, and the theme supplies the style (`Round`
+`bordered => 1` (or let the theme give every button a border with
+`button.border.enabled`), and the theme supplies the style (`Round`
 in the built-in themes) and the color, or change its background in an
 `OnFocus` listener;
 - hovering changes nothing by default. `is_hovered` and the
@@ -83,7 +84,7 @@ my $button = Term::Fabulous::Widget::Button->new(%parameters);
 
 All parameters are optional; unknown parameters die. A Button takes
 every parameter of [Term::Fabulous::Widget::Box](Box.md) (`id`, `layout`,
-`background_color`, `border_width`, `border_color`, `border_style`,
+`background_color`, `bordered`, `border_color`, `border_style`,
 ...; see ["new" in Term::Fabulous::Widget](../Widget.md#new)) plus:
 
 - `can_focus`
@@ -114,8 +115,9 @@ every parameter of [Term::Fabulous::Widget::Box](Box.md) (`id`, `layout`,
     [Term::Fabulous::Color](../Color.md) accepts, or `undef` for no focus look.
     Default: the theme's `button.border.color` in the `focused` state,
     the accent `[ 97, 175, 239, 255 ]` in the built-in dark theme. It
-    only shows on sides with a positive `border_width` whose style, the
-    theme's or the widget's own, is not `Blank`.
+    only shows on the sides the Button has a border on (`bordered`, or
+    the theme's `button.border.enabled`) whose style, the theme's or the
+    widget's own, is not `Blank`.
 
 - `pressed_background_color`
 
@@ -347,7 +349,7 @@ use Term::Fabulous::Widget::Text as Text
 Button "save" {
         background_color "#283c5a"
         border style=Round color="#5a6b8c"
-        border_width 1
+        bordered #true
         padding left=1 right=1
         pressed_background_color "#3d5a85"
         Text { text "Save"; text_color "#ffffff"; }

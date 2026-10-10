@@ -130,7 +130,7 @@ my $canvas = Term::Fabulous::Widget::Canvas->new(%parameters);
 
 All parameters are optional; unknown parameters die. A Canvas takes
 exactly the parameters of [Term::Fabulous::Widget::Box](Box.md): `id`,
-`layout`, `background_color`, `border_width`, `border_color`,
+`layout`, `background_color`, `bordered`, `border_color`,
 `border_style`, ... (see ["new" in Term::Fabulous::Widget](../Widget.md#new)). Without a
 `sizing`, the canvas has no content and therefore a 0 x 0 buffer, so
 always give it a size.
@@ -361,7 +361,8 @@ my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 ```
 
 The number of cells between the widget's outer box and its content box
-on each side: padding plus border width.
+on each side: padding plus one cell where a border is drawn on the side
+(see ["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#drawn_border_sides)).
 
 ## set\_content\_origin
 

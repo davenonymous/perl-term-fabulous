@@ -450,9 +450,11 @@ class Term::Fabulous::Theme::Document :strict(params) {
 		return;
 	}
 
-	# What is wrong with the value of a slot, or undef.
+	# What is wrong with the value of a slot, or undef: a boolean slot
+	# takes #true or #false, every other slot a string or #null.
 	sub _value_error ( $family, $slot, $state, $slot_name, $value ) {
-		return "$family.$slot_name must be a string or #null" unless $value->{type} eq 'string' || $value->{type} eq 'null';
+		my $wanted = Term::Fabulous::Theme::slot_info( $family, $slot )->{kind} eq 'boolean' ? 'bool' : 'string';
+		return "$family.$slot_name must be " . ( $wanted eq 'bool' ? '#true or #false' : 'a string or #null' ) unless $value->{type} eq $wanted || $value->{type} eq 'null';
 		return _failure( sub { Term::Fabulous::Theme::check_value( $family, $slot, $state, $value->{type} eq 'null' ? undef : $value->{value} ) } );
 	}
 
@@ -685,16 +687,19 @@ class Term::Fabulous::Theme::Document :strict(params) {
 				if $parsed->{field} eq 'extends' && !$IS_BASE{$value};
 			return { type => 'string', value => $value };
 		}
+		my $checked;
 		try {
-			$section eq 'palette'
+			$checked
+				= $section eq 'palette'
 				? color( 'Term::Fabulous::Theme', "palette token $parsed->{token}", $value )
 				: Term::Fabulous::Theme::check_value( @{$parsed}{qw(family slot state)}, $value );
 		}
 		catch ($error) {
 			die "Term::Fabulous::Theme::Document: " . _theme_message($error) . "\n";
 		}
-		my $is_style = $section eq 'slot' && Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} )->{kind} eq 'style';
-		return { type => 'string', value => $value, ( $is_style ? ( bare => 1 ) : () ) };
+		my $kind = $section eq 'slot' ? Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} )->{kind} : 'color';
+		return { type => 'bool', value => $checked } if $kind eq 'boolean';    # 'true' or 'false'
+		return { type => 'string', value => $value, ( $kind eq 'style' ? ( bare => 1 ) : () ) };
 	}
 
 	sub _item_at ( $tree, $path ) {
@@ -1095,10 +1100,11 @@ C<focused { text "accent" }> in it holds C<button.text.focused>.
 
 Values are strings as the file holds them: a token name (C<accent>), a
 color in a format L<Term::Fabulous::Color> reads (C<#5fd3c0>), a
-border style name (C<Round>), C<none> (also for C<#null> in the file)
-or C<reverse>. L</with_setting> checks a value as the theme does before
-it writes it, so a document never gets a value its slot cannot take
-from this class.
+border style name (C<Round>), C<none> (also for C<#null> in the file),
+C<reverse>, or C<true> or C<false> for C<border.enabled>, which the file
+holds as C<#true> or C<#false> (C<true> or C<false> in a KDL 1 file).
+L</with_setting> checks a value as the theme does before it writes it,
+so a document never gets a value its slot cannot take from this class.
 
 =head1 CONSTRUCTORS
 
@@ -1245,10 +1251,12 @@ the theme checks it and dies with the reason when the slot cannot take
 it (C<Term::Fabulous::Theme::Document: tabs.line.style cannot be
 'none'>); C<undef> dies, see L</without_setting>. A key the text sets
 gets the new value in its place; the line holding it is written anew,
-the rest of the text stays. A new key is added: to the family's first
-block (made at the end of the text when there is none), in its state
-block or variant block (made as needed), next to a node with the same
-head (C<border color="accent"> gets C<style=Round> added); a token to
+the rest of the text stays. A value for C<border.enabled> may also be C<1> or
+C<0>; the file gets C<#true> or C<#false>. A new key is added: to the
+family's first block (made at the end of the text when there is none),
+in its state block or variant block (made as needed), next to a node
+with the same head (C<border color="accent"> gets C<style=Round>
+added); a token to
 the palette block, the name and the base to the theme node. Dies when
 the text is not valid KDL (L</has_syntax_error>); other errors do not
 stop changes.

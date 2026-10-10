@@ -22,7 +22,7 @@ use Term::Fabulous::Widget::Text;
 my $root   = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 my $button = Term::Fabulous::Widget::Button->new(
 	background_color => [ 2, 2, 2, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 5, 5, 5, 255 ],
 	layout           => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },
 );
@@ -63,7 +63,7 @@ subtest 'a click activates and shows the pressed look' => sub {
 subtest 'a disabled button' => sub {
 	my $label = Term::Fabulous::Widget::Text->new( text => 'Go', text_color => [ 255, 255, 255, 255 ] );
 	my $off
-		= Term::Fabulous::Widget::Button->new( disabled => 1, border_width => 1, border_color => [ 5, 5, 5, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } } );
+		= Term::Fabulous::Widget::Button->new( disabled => 1, bordered => 1, border_color => [ 5, 5, 5, 255 ], layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } } );
 	$off->add_child($label);
 	my $off_root = Term::Fabulous::Widget::Box->new;
 	$off_root->add_child($off);

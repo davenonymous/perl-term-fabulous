@@ -40,7 +40,7 @@ Box "root" {
 		sizing width=grow
 		padding left=1 right=1
 		border style=Round color="#61afef"
-		border_width 1
+		bordered #true
 		background_color "#1c212d"
 
 		Box {

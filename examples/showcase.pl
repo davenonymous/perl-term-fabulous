@@ -65,7 +65,7 @@ sub text ( $string, $text_color = $color{text} ) {
 sub panel ( $title, $sizing, @children ) {
 	my $panel = Term::Fabulous::Widget::Box->new(
 		background_color => $color{panel},
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => $color{border},
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 		layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => $sizing, padding => { left => 1, right => 1 }, child_gap => 1 },
@@ -98,7 +98,7 @@ my $newsletter = Term::Fabulous::Widget::Checkbox->new( id => 'newsletter', labe
 
 sub button ( $caption, $border_color ) {
 	my $button = Term::Fabulous::Widget::Button->new(
-		border_width => 1,
+		bordered     => 1,
 		border_color => $border_color,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		layout       => { padding => { left => 2, right => 2 } },
@@ -161,7 +161,7 @@ my $toast_text = text( '', [ 255, 255, 255, 255 ] );
 my $toast      = Term::Fabulous::Widget::Box->new(
 	background_color    => [ 40, 90, 70, 200 ],
 	glyphs_show_through => 1,
-	border_width        => 1,
+	bordered            => 1,
 	border_color        => $color{green},
 	border_style        => Term::Fabulous::Enum::BorderStyle->Round,
 	layout              => { padding => { left => 1, right => 1 } },

@@ -70,7 +70,7 @@ class Term::Fabulous::ThemeEditor::KeyReference :isa(Term::Fabulous::Widget::Dia
 		weaken( my $weak_table = $table );
 		$search->on( Change => sub ($event) { $weak_table->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
 
-		my $close = Term::Fabulous::Widget::Button->new( border_width => 1, classes => ['primary'], layout => { padding => { left => 1, right => 1 } } );
+		my $close = Term::Fabulous::Widget::Button->new( bordered => 1, classes => ['primary'], layout => { padding => { left => 1, right => 1 } } );
 		$close->add_child( Term::Fabulous::Widget::Text->new( text => 'Close' ) );
 		weaken( my $weak_self = $self );
 		$close->on( Activate => sub ($event) { $weak_self->close; return } );

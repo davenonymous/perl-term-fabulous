@@ -262,7 +262,7 @@ ones you use, or all of them with C<use Clay::XS qw(:all)>.
 	line_sizing         layout line_sizing=...       Flow layout
 
 Three more constructor parameters take part in the layout: C<floating>
-(see L</Floating widgets>), C<border_width> (see L</Borders take space>)
+(see L</Floating widgets>), C<bordered> (see L</Borders take space>)
 and C<width_group>/C<height_group> (see L</Equal sizes across the tree>).
 
 =head2 Direction
@@ -446,10 +446,11 @@ C<gap>; giving both dies.
 =head2 Borders take space
 
 A border is drawn on the outermost cells of a widget, inside its box.
-Term::Fabulous adds the border width to the padding, so the children
-always start inside the border: a box with C<border_width =E<gt> 1> and
-C<padding =E<gt> { left =E<gt> 1 }> has its first child at the third
-column (see the third box in the picture above). A box without a
+Term::Fabulous adds a cell to the padding of every side with a border,
+so the children always start inside the border: a box with
+C<bordered =E<gt> 1> and C<padding =E<gt> { left =E<gt> 1 }> has its
+first child at the third column (see the third box in the picture
+above). A box without a
 C<sizing> rule grows by the border, so its content keeps its size. A
 side with the C<Hidden> border style takes no space and draws nothing.
 See L<Term::Fabulous::Manual::Looks/BORDERS> for border styles and
@@ -852,7 +853,7 @@ others:
 
 The new layout applies from the next frame on. The same is true for every
 other widget property: C<floating>, C<background_color>,
-C<border_width>, C<text> and so on are accessors that take effect in the
+C<bordered>, C<text> and so on are accessors that take effect in the
 next frame. (One exception: C<border_style> exists only as a constructor
 parameter; the accessors are per side, see
 L<Term::Fabulous::Widget/border_style_top>.)
@@ -932,7 +933,7 @@ L<Term::Fabulous::Event::Select> for every change the user makes, and
 C<open>, C<close>, C<open_all> and C<close_all> change it from the
 program. The toggle glyph sits before the title, as in a tree, or at
 the end of the header (C<toggle_position>), the items can have
-borders (C<bordered>), and an item can be disabled. The picture shows
+borders (C<item_borders>), and an item can be disabled. The picture shows
 both looks (F<examples/widgets/accordion.pl>):
 
 =begin html

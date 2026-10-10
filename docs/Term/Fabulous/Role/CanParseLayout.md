@@ -53,7 +53,7 @@ use My::Panel as Panel
 Panel "settings" {
         title "Settings"
         title_color "#ffcc00"
-        border_width 1
+        bordered #true
         shortcut key="F2" action="save"
         shortcut key="F10" action="quit"
 }
@@ -119,14 +119,20 @@ as pairs of a name and how its node is read:
 - `'scalar'`
 
     The node's value, read with ["kdl\_value"](#kdl_value): its single argument
-    (`title "x"`) or a hash reference of its `key=value` pairs
-    (`border_width left=1 right=2`).
+    (`title "x"`) or a hash reference of its `key=value` pairs (a node
+    `name a=1 b=2` gives `{ a => 1, b => 2 }`).
 
 - `'boolean'`
 
     The node's single argument, read with ["kdl\_boolean"](#kdl_boolean): a layout must
     write `#true` or `#false` (or `1` and `0`), so a quoted `"false"`
     dies instead of counting as true.
+
+- `'border_sides'`
+
+    The sides of a border, read with ["kdl\_border\_sides"](#kdl_border_sides): one boolean
+    argument for all four sides (`bordered #true`) or boolean `key=value`
+    pairs under side names (`bordered top=#true bottom=#true`).
 
 - `'color'`
 
@@ -143,7 +149,7 @@ as pairs of a name and how its node is read:
     not fit the other kinds, such as an argument together with `key=value`
     pairs.
 
-Each name of the first three kinds is also the name of the accessor
+Each name of the first four kinds is also the name of the accessor
 that sets it: the value is applied as `$self->name($value)`, so
 the accessor checks it, as for a program. This table is the only way a
 layout can set a value: a property that is not in it dies with the list
@@ -156,7 +162,8 @@ layout is applied.
 The themed parameters that have a kind (see
 ["themed\_params" in Term::Fabulous::Role::Themed](Themed.md#themed_params)) and the looks a widget
 forwards to its parts are layout properties by themselves: a color
-kind is a `'color'` property, every other kind a `'scalar'` one. They
+kind is a `'color'` property, the `border_sides` kind a
+`'border_sides'` one, every other kind a `'scalar'` one. They
 need no entry here; an entry of the same name replaces theirs.
 
 # METHODS
@@ -217,6 +224,20 @@ The single argument of a boolean property node: `#true` and `1` give
 Term::Fabulous::Widget::Checkbox: layout property 'checked' must be #true or #false, got 'false'
 ```
 
+## kdl\_border\_sides
+
+```text
+my $sides = $self->kdl_border_sides($kid);    # { top => 1, right => 0, bottom => 1, left => 0 }
+```
+
+The sides of a border property node as a hash reference of all four
+sides, each 1 or 0: one boolean argument, read like ["kdl\_boolean"](#kdl_boolean),
+gives every side; `key=value` pairs whose keys are `top`, `right`,
+`bottom` and `left` and whose values are booleans give those sides,
+and the sides left out are 0. Anything else dies, including an unknown
+key, a pair whose value is not `#true`, `#false`, `1` or `0`, and a
+node with both an argument and pairs.
+
 ## kdl\_value
 
 ```perl
@@ -224,10 +245,10 @@ my $value = $self->kdl_value($kid);
 ```
 
 The value of a property node as Perl data: its single argument
-(`border_width 1` gives `1`, `title "x"` gives `'x'`, `#true`
+(`title "x"` gives `'x'`, `body_indent 2` gives `2`, `#true`
 gives a true value), or, for a node with only `key=value` pairs, a
-hash reference of them (`border_width left=1 right=2` gives
-`{ left => 1, right => 2 }`). Dies when the node has several
+hash reference of them (`name a=1 b=2` gives
+`{ a => 1, b => 2 }`). Dies when the node has several
 arguments, both arguments and pairs, nothing at all, or child nodes.
 
 ## kdl\_argument

@@ -37,7 +37,8 @@ palette {
 	danger "#bf616a"
 }
 
-// Boxes with a border width get a round frame in the polar night gray.
+// Boxes the program gives a border (bordered) get a round frame in the
+// polar night gray.
 box {
 	border style=Round color="border"
 }

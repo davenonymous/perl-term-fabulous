@@ -52,7 +52,7 @@ class Term::Fabulous::Widget::Tabs::Button
 		$title = string( $self, title => $title );
 		$icon  = optional( \&string, $self, icon => $icon );
 
-		$self->border_width(1);
+		$self->bordered(1);
 		$self->pressed_background_color(undef);
 		$_icon_text  = Term::Fabulous::Widget::Text->new( text => '' );
 		$_title_text = Term::Fabulous::Widget::Text->new( text => '' );

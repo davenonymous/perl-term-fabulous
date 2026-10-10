@@ -64,14 +64,14 @@
 <polyline points="502.5 276 502.5 280 502.538 280.587 502.653 281.165 502.843 281.722 503.103 282.25 503.43 282.739 503.818 283.182 504.261 283.57 504.75 283.897 505.278 284.157 505.835 284.347 506.413 284.462 507 284.5 507 284.5" fill="none" stroke="#8cb4e6" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="691.5 276 691.5 280 691.462 280.587 691.347 281.165 691.157 281.722 690.897 282.25 690.57 282.739 690.182 283.182 689.739 283.57 689.25 283.897 688.722 284.157 688.165 284.347 687.587 284.462 687 284.5 687 284.5" fill="none" stroke="#8cb4e6" stroke-width="1" stroke-linejoin="round"/>
 <g class="terminal">
-<text x="57" y="110" textLength="108" fill="#e6e6e6">border_width</text>
+<text x="57" y="110" textLength="72" fill="#e6e6e6">bordered</text>
 <text x="282" y="110" textLength="117" fill="#e6e6e6">Solid, with a</text>
 <text x="57" y="128" textLength="117" fill="#e6e6e6">{ left, top }</text>
 <text x="282" y="128" textLength="144" fill="#e6e6e6">Double top and a</text>
-<text x="516" y="128" textLength="135" fill="#e6e6e6">border_width 2:</text>
+<text x="516" y="128" textLength="117" fill="#e6e6e6">Round, with a</text>
 <text x="282" y="146" textLength="135" fill="#e6e6e6">Thick left side</text>
-<text x="516" y="146" textLength="144" fill="#e6e6e6">the border, then</text>
-<text x="516" y="164" textLength="126" fill="#e6e6e6">one empty cell</text>
+<text x="516" y="146" textLength="135" fill="#e6e6e6">cell of padding</text>
+<text x="516" y="164" textLength="153" fill="#e6e6e6">inside the border</text>
 <text x="57" y="254" textLength="117" fill="#e6e6e6">Round, with a</text>
 <text x="282" y="254" textLength="81" fill="#e6e6e6">Title box</text>
 <text x="507" y="254" textLength="162" fill="#e6e6e6">outer_border_sides</text>

@@ -65,7 +65,7 @@ my $agree    = Term::Fabulous::Widget::Checkbox->new( id => 'agree', label => 'S
 my $ok       = Term::Fabulous::Widget::Button->new(
 	id               => 'ok',
 	background_color => [ 40, 60, 90, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 90, 110, 140, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => { padding => { left => 1, right => 1 } },

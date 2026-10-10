@@ -117,7 +117,7 @@ subtest 'keys and clicks' => sub {
 };
 
 subtest 'looks' => sub {
-	my ( $accordion, $terminal, $ui ) = accordion( toggle_position => 'end', open_glyph => '-', closed_glyph => '+', bordered => 1, body_indent => 0 );
+	my ( $accordion, $terminal, $ui ) = accordion( toggle_position => 'end', open_glyph => '-', closed_glyph => '+', item_borders => 1, body_indent => 0 );
 	$accordion->open(1);
 	$ui->step;
 	is lines($terminal), [
@@ -131,7 +131,7 @@ subtest 'looks' => sub {
 		"\x{256D}" . ( "\x{2500}" x 28 ) . "\x{256E}",
 		],
 		'borders, the toggles at the end, no indent (the terminal cuts the last item off)';
-	$accordion->bordered(0);
+	$accordion->item_borders(0);
 	$accordion->toggle_position('start');
 	$ui->step;
 	is lines($terminal)->[0], '+ General', 'restyled at once';

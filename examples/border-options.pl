@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 
 # Term::Fabulous borders beyond a single style: a border on some sides
-# only, a style per side, a wider border, a Hidden side, two boxes that
-# share one line through border_corners, and a border drawn on the
-# parent's background with outer_border_sides. Ctrl+C quits.
+# only, a style per side, padding inside a border, a Hidden side, two
+# boxes that share one line through border_corners, and a border drawn
+# on the parent's background with outer_border_sides. Ctrl+C quits.
 #
 #     perl examples/border-options.pl
 
@@ -62,15 +62,20 @@ sub row (@widgets) {
 }
 
 row(
-	sample( "border_width\n{ left, top }", border_width => { left => 1, top => 1 }, border_style => $style->Solid ),
+	sample( "bordered\n{ left, top }", bordered => { left => 1, top => 1 }, border_style => $style->Solid ),
 	sample(
 		"Solid, with a\nDouble top and a\nThick left side",
-		border_width      => 1,
+		bordered          => 1,
 		border_style      => $style->Solid,
 		border_style_top  => $style->Double,
 		border_style_left => $style->Thick,
 	),
-	sample( "border_width 2:\nthe border, then\none empty cell", border_width => 2, border_style => $style->Round ),
+	sample(
+		"Round, with a\ncell of padding\ninside the border",
+		bordered     => 1,
+		border_style => $style->Round,
+		layout       => { sizing => { width => sizing_fixed(22) }, padding => { left => 1, right => 1, top => 1, bottom => 1 } },
+	),
 );
 
 # Two boxes that share one line: the upper one has no bottom side, and the
@@ -78,10 +83,10 @@ row(
 my $solid  = $style->Solid;
 my $joined = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
 $joined->add_child(
-	sample( "Title box", border_width => { left => 1, right => 1, top => 1 }, border_style => $solid ),
+	sample( "Title box", bordered => { left => 1, right => 1, top => 1 }, border_style => $solid ),
 	sample(
 		"Body box joined\nby border_corners",
-		border_width   => 1,
+		bordered       => 1,
 		border_style   => $solid,
 		border_corners => {
 			top_left  => $style->junction( up => $solid, right => $solid, down => $solid ),    # ├
@@ -91,9 +96,9 @@ $joined->add_child(
 );
 
 row(
-	sample( "Round, with a\nHidden bottom side", border_width => 1, border_style => $style->Round, border_style_bottom => $style->Hidden ),
+	sample( "Round, with a\nHidden bottom side", bordered => 1, border_style => $style->Round, border_style_bottom => $style->Hidden ),
 	$joined,
-	sample( "outer_border_sides\non all four sides", border_width => 1, border_style => $style->Round, outer_border_sides => [qw(top right bottom left)] ),
+	sample( "outer_border_sides\non all four sides", bordered => 1, border_style => $style->Round, outer_border_sides => [qw(top right bottom left)] ),
 );
 
 Term::Fabulous->new( width => 80, height => 24, root => $root )->run;

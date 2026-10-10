@@ -40,7 +40,7 @@ $root->add_child(
 
 my $canvas = Term::Fabulous::Widget::Canvas->new(
 	background_color => [ 10, 12, 20, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 120, 160, 220, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },

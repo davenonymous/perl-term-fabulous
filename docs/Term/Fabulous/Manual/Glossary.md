@@ -313,7 +313,7 @@ belongs to, such as (table) or (KDL).
 
 - slot (theme)
 
-    One colored or styled part of a widget family in a theme: `button.border.color`, `input.placeholder`, `divider.line.style`. A slot has a value for the normal state and may have one for each state the widget shows (`focused`, `disabled`, ...). It defaults to a token. See ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states).
+    One part of a widget family that a theme decides, a color, a border style or whether there is a border: `button.border.color`, `input.placeholder`, `divider.line.style`, `text_input.border.enabled`. A slot has a value for the normal state and may have one for each state the widget shows (`focused`, `disabled`, ...). It defaults to a token, a style name, or `true` or `false`. See ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states).
 
 - style hash (table)
 
@@ -349,7 +349,7 @@ belongs to, such as (table) or (KDL).
 
 - theme
 
-    The colors and border styles every widget draws with when it is not given its own: a palette of tokens and the slots of every widget family, with variants. Set per UI (`Term::Fabulous->new( theme => ... )`) and switched at run time; built-in: `dark` and `light`; written in theme files or in Perl. See ["THEMES" in Term::Fabulous::Manual::Looks](Looks.md#themes) and [Term::Fabulous::Theme](../Theme.md).
+    The colors, border styles and borders every widget draws with when it is not given its own: a palette of tokens and the slots of every widget family, with variants. Set per UI (`Term::Fabulous->new( theme => ... )`) and switched at run time; built-in: `dark` and `light`; written in theme files or in Perl. See ["THEMES" in Term::Fabulous::Manual::Looks](Looks.md#themes) and [Term::Fabulous::Theme](../Theme.md).
 
 - theme (chart)
 

@@ -1383,7 +1383,7 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Theme](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme.md)
 
-    The colors and border styles of every widget family: the built-in
+    The colors, border styles and borders of every widget family: the built-in
     `dark` and `light` themes, themes made in Perl and theme files.
 
 - [Term::Fabulous::Theme::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Theme/Document.md)

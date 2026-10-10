@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.01';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names one_of border_style value_format optional describe);
+our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names one_of border_style border_sides value_format optional describe);
 
 use Carp qw(croak);
 use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
@@ -162,6 +162,23 @@ sub _border_style_words (%options) {
 sub _border_style_names (%options) {
 	my @styles = $options{grid} ? Term::Fabulous::Enum::BorderStyle->get_grid_styles : Term::Fabulous::Enum::BorderStyle->values;
 	return join ', ', sort map { $_->name } @styles;
+}
+
+# The sides a border is drawn on: one boolean for all four sides, or a
+# hash of booleans under the side names, where a missing side is false.
+# Returned as a new hash with every side, as 1 or 0.
+my @BORDER_SIDES = qw(top right bottom left);
+
+sub border_sides ( $owner, $name, $value ) {
+	my $expected = 'a boolean or a hash reference of booleans under the sides top, right, bottom and left';
+	return { map { $_ => $value ? 1 : 0 } @BORDER_SIDES } unless ref $value;
+	_fail( $owner, $name, $expected, $value ) unless ref $value eq 'HASH';
+	my %is_side = map  { $_ => 1 } @BORDER_SIDES;
+	my @unknown = grep { !$is_side{$_} } sort keys %$value;
+	_fail( $owner, $name, $expected, $value, "unknown side @unknown" ) if @unknown;
+	my @not_plain = grep { ref $value->{$_} } @BORDER_SIDES;
+	_fail( $owner, $name, $expected, $value, "the side $not_plain[0] is " . describe( $value->{ $not_plain[0] } ) ) if @not_plain;
+	return { map { $_ => $value->{$_} ? 1 : 0 } @BORDER_SIDES };
 }
 
 # How a widget writes a number: undef (its default), a sprintf format
@@ -318,6 +335,20 @@ L<Term::Fabulous::Enum::BorderStyle/get_grid_styles>).
 
 The message lists the names it accepts:
 C<My::Widget: line_style must be a border style or its name, got 'Fancy' (known: Ascii, Blank, ...)>.
+
+=head2 border_sides
+
+	my $sides = border_sides( $self, bordered => 1 );                         # every side
+	my $rule  = border_sides( $self, bordered => { top => 1, bottom => 1 } );  # two sides
+
+The sides a border is drawn on: one plain value, true or false, for all
+four sides, or a hash reference whose keys are C<top>, C<right>,
+C<bottom> and C<left> and whose values are plain booleans; a side the
+hash leaves out has no border. Returns a new hash reference with all
+four sides, each 1 or 0 (C<< { top => 1, right => 0, bottom => 1, left => 0 } >>
+for the second example). Another reference, an unknown key or a
+reference as a side's value dies:
+C<My::Widget: bordered must be a boolean or a hash reference of booleans under the sides top, right, bottom and left, got a HASH reference (unknown side middle)>.
 
 =head2 value_format
 

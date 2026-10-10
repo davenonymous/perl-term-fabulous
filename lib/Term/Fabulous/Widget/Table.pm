@@ -86,6 +86,7 @@ class Term::Fabulous::Widget::Table
 	my %WRAP           = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my @LINE_PARAMS    = qw(border_top border_right border_bottom border_left column_lines row_lines header_line);
 	my @NONE_IS_HIDDEN = ( none => Term::Fabulous::Enum::BorderStyle->Hidden );    # 'none' draws no line
+	my %NO_BOX_BORDER  = map { $_ => 0 } qw(top right bottom left);
 	my @COLOR_PARAMS   = qw(
 		text_color header_text_color header_background_color group_text_color group_background_color
 		cursor_color selected_color hover_color filter_background_color error_color muted_color line_color
@@ -200,13 +201,37 @@ class Term::Fabulous::Widget::Table
 		return 'table';
 	}
 
-	# The colors come from the theme's table family unless given.
+	# The colors come from the theme's table family unless given. The
+	# table draws its frame itself, so it takes no bordered and has no
+	# border.enabled from the theme.
 	method themed_params :common () {
+		my %box = $class->SUPER::themed_params;
+		delete $box{bordered};
 		return (
-			$class->SUPER::themed_params,
+			%box,
 			stripe_color => [ 'stripe', 'normal', 'optional_color' ],
 			map { $_ => [ $COLOR_SLOT{$_}, 'normal', 'color' ] } @COLOR_PARAMS,
 		);
+	}
+
+	sub BUILDARGS ( $class, %params ) {
+		_no_bordered($class) if exists $params{bordered};
+		return $class->SUPER::BUILDARGS(%params);
+	}
+
+	sub _no_bordered ($owner) {
+		die( ( ref $owner || $owner )
+			. ": a table takes no bordered; it draws its frame itself, in the style of border (or border_top, border_right, border_bottom and border_left), and 'none' leaves a side out" );
+	}
+
+	method bordered :override (@new) {
+		_no_bordered($self) if @new;
+		return $self->SUPER::bordered;
+	}
+
+	# No Box border around the table's own frame.
+	method _bordered_sides :override () {
+		return \%NO_BOX_BORDER;
 	}
 
 	# The cells, the pager and the scrollbar copy the colors
@@ -956,7 +981,7 @@ class Term::Fabulous::Widget::Table
 		my %properties = (
 			background_color   => $look->{background_color},
 			border_color       => $look->{border_color},
-			border_width       => { map { $_ => $sides->{$_} ? 1 : 0 } qw(top right bottom left) },
+			bordered           => { map { $_ => $sides->{$_} ? 1 : 0 } qw(top right bottom left) },
 			border_corners     => %{ $border->{corners} } ? $border->{corners} : undef,
 			outer_border_sides => $border->{outer},
 			map { ( "border_style_$_" => $sides->{$_} ) } qw(top right bottom left),
@@ -1782,7 +1807,7 @@ class Term::Fabulous::Widget::Table
 			text_color       => $self->text_color,
 			muted_color      => $self->muted_color,
 			background_color => $self->group_background_color,
-			border_width     => 1,
+			bordered         => 1,
 			border_color     => $self->text_color,
 			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 			on_toggle        => sub ( $key, $visible ) { $weak->_chooser_toggled( $key, $visible ) if $weak },
@@ -2755,6 +2780,10 @@ rows but none passes the filters.
 The line style of all four sides of the frame. Default: C<'Round'>. The
 values of this and the following parameters are described in
 L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>.
+The table draws its frame itself: it takes no C<bordered> (giving it
+dies), and the C<table> family has no C<border.enabled>, so no theme
+frames it (see L<Term::Fabulous::Theme/Borders>); C<'none'> leaves the
+frame out.
 
 =item C<border_top>, C<border_right>, C<border_bottom>, C<border_left>
 

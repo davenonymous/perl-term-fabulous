@@ -37,11 +37,10 @@ class Term::Fabulous::Widget::Dialog
 	field $_is_open = 0;
 	field $_focus_before;    # the widget focused when the dialog opened
 
-	# A dialog looks like a dialog unless told otherwise: a bordered
-	# panel in the theme's dialog colors and border style, laid out top to
-	# bottom with a cell of padding.
+	# A dialog looks like a dialog unless told otherwise: a panel in the
+	# theme's dialog colors and border (dialog.border.enabled), laid out
+	# top to bottom with a cell of padding.
 	sub BUILDARGS ( $class, %params ) {
-		$params{border_width} //= 1;
 		$params{layout} = { %DEFAULT_LAYOUT, %{ $params{layout} // {} } };
 		return $class->SUPER::BUILDARGS(%params);
 	}

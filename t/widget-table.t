@@ -102,6 +102,8 @@ subtest 'construction' => sub {
 	like dies { Term::Fabulous::Widget::Table->new( id => 't', header_style => { size => 2 } ) }, qr/header_style does not know size/,                            'style hashes';
 	like dies { Term::Fabulous::Widget::Table->new( id => 't', page_sizes   => [0] ) },           qr/page_sizes must be an array reference of positive integers/, 'page sizes';
 	like dies { Term::Fabulous::Widget::Table->new( id => 't', colour       => 1 ) },             qr/Unrecognised parameters/,                                    'unknown parameters';
+	like dies { Term::Fabulous::Widget::Table->new( id => 't', bordered     => 1 ) },             qr/a table takes no bordered; it draws its frame itself, in the style of border/, 'bordered dies';
+	like dies { Term::Fabulous::Widget::Table->new( id => 't' )->bordered(1) }, qr/a table takes no bordered/, 'so does its writer';
 };
 
 subtest 'drawing' => sub {

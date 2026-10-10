@@ -57,7 +57,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my $help   = Term::Fabulous::Widget::Text->new( text => 'Left button draws, right button erases. Drag to draw lines.', text_color => [ 230, 230, 230, 255 ] );
 my $canvas = Term::Fabulous::Widget::Canvas->new(
         background_color => [ 10, 12, 20, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         border_color     => [ 120, 160, 220, 255 ],
         layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
@@ -145,7 +145,7 @@ $root->add_child( Term::Fabulous::Widget::Text->new( text => 'Temperature over 2
 
 my $plot = Term::Fabulous::Widget::PixelCanvas->new(
         background_color => [ 10, 12, 20, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         border_color     => [ 120, 160, 220, 255 ],
         layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },
@@ -242,7 +242,7 @@ $header->add_child( $status, Term::Fabulous::Widget::Text->new( text => 'n, c, s
 
 # The picture fills a frame; its background is the area inside the frame.
 my $frame = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 160, 220, 255 ],
         layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
@@ -354,7 +354,7 @@ KTqejlNqDQT2YNYY/2eRgpCZVjkIgRmPKQw0XWHn/AWQfdWh/qecnAAAAABJRU5ErkJggg==
 BASE64
 
 my $about = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 160, 220, 255 ],
         layout       => {
@@ -438,7 +438,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 my $status = Term::Fabulous::Widget::Text->new( text => 'n, c, s: fit    h: help    q: quit', text_color => [ 150, 160, 180, 255 ] );
 
 my $frame = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 160, 220, 255 ],
         layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
@@ -456,7 +456,7 @@ $root->add_child( $status, $frame );
 my $help = Term::Fabulous::Widget::Box->new(
         layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, padding => { left => 1, right => 1 } },
         background_color => [ 40, 44, 52, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 229, 192, 123, 255 ],
         floating         => { attach_to => CLAY_ATTACH_TO_PARENT, attach_points => { element => CLAY_ATTACH_POINT_CENTER_TOP, parent => CLAY_ATTACH_POINT_CENTER_TOP } },
 );

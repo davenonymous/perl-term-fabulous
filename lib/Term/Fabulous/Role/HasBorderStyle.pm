@@ -117,57 +117,46 @@ role Term::Fabulous::Role::HasBorderStyle {
 		return defined $border_corners ? $border_corners->{$corner} : undef;
 	}
 
-	# The sides whose style is Hidden; they take no space and draw nothing.
-	method _hidden_border_sides () {
+	# The sides the widget has a border on (Term::Fabulous::Widget/bordered),
+	# as a shared hash of all four sides that must not be changed.
+	method _bordered_sides;
+
+	# The sides a border is drawn on and takes room on: the bordered sides
+	# whose style is not Hidden. A new hash of all four sides, 1 or 0.
+	method drawn_border_sides () {
+		return $self->_drawn_sides // { map { $_ => 0 } @SIDES };
+	}
+
+	# The same, or undef when no side is drawn: the contributors run for
+	# every widget in every frame, and most widgets have no border.
+	method _drawn_sides () {
+		my $bordered = $self->_bordered_sides;
+		return undef unless grep { $bordered->{$_} } @SIDES;
 		my $hidden = Term::Fabulous::Enum::BorderStyle->Hidden;
-		return grep { refaddr( $self->border_style_of($_) ) == refaddr($hidden) } @SIDES;
+		my %drawn  = map { $_ => $bordered->{$_} && refaddr( $self->border_style_of($_) ) != refaddr($hidden) ? 1 : 0 } @SIDES;
+		return ( grep { $drawn{$_} } @SIDES ) ? \%drawn : undef;
 	}
 
-	# Per-side widths of a Clay border_width (a number for all sides, or a
-	# hashref), with the given sides counted as 0; undef when no side has a
-	# width. Clay::UI's HasBorder has already validated the value when it
-	# was set.
-	sub _border_insets ( $border_width, @zero_sides ) {
-		return undef unless defined $border_width;
+	# The width of every side for Clay: 1 where a border is drawn, else 0.
+	# Clay::UI runs the contribute_* methods in alphabetical order, so this
+	# runs after contribute_border, which wrote the color the program gave,
+	# and before contribute_look_theme, which colors the border from the
+	# theme. Writes a fresh hash, so the border slice is never modified.
+	method contribute_border_sides ($config) {
+		my $drawn = $self->_drawn_sides // return;
 
-		my %width_by_side = ref $border_width ? %$border_width : map { $_ => $border_width } @SIDES;
-		delete @width_by_side{@zero_sides};
-		my %inset = map { $_ => $width_by_side{$_} // 0 } @SIDES;
-
-		return ( grep { $_ > 0 } values %inset ) ? \%inset : undef;
-	}
-
-	# Hidden sides keep their border_width but get a Clay width of 0, so the
-	# renderer draws nothing there. Clay::UI runs contribute_* methods in
-	# alphabetical order, so the name sorts right after contribute_border,
-	# which wrote the border slice. Writes fresh hashes, so the widget's own
-	# border_width is never modified.
-	method contribute_border_hidden ($config) {
-		my $border = $config->{border};
-		return unless defined $border && ref $border->{width} eq 'HASH';
-
-		my @hidden_sides = $self->_hidden_border_sides;
-		return unless @hidden_sides;
-
-		$config->{border} = {
-			%$border,
-			width => { %{ $border->{width} }, map { $_ => 0 } @hidden_sides },
-		};
+		$config->{border} = { %{ $config->{border} // {} }, width => { %$drawn, between_children => 0 } };
 		return;
 	}
 
-	# Clay draws borders over the content box, so the border width is added
-	# to the padding: borders occupy cells inside the widget and the user's
-	# padding starts after them. Hidden sides take no space. Clay::UI runs
-	# contribute_* methods in alphabetical order, so the name sorts after
-	# contribute_layout; that way the inset is applied to the final layout
-	# slice. Writes fresh hashes, so the widget's own layout is never
-	# modified.
+	# Clay draws borders over the content box, so every drawn side adds a
+	# cell to the padding: borders occupy cells inside the widget and the
+	# user's padding starts after them. Clay::UI runs contribute_* methods
+	# in alphabetical order, so the name sorts after contribute_layout;
+	# that way the inset is applied to the final layout slice. Writes fresh
+	# hashes, so the widget's own layout is never modified.
 	method contribute_layout_inset ($config) {
-		return unless $self->can('border_width') && $self->can('layout');
-
-		my $insets = _border_insets( $self->border_width, $self->_hidden_border_sides );
-		return unless defined $insets;
+		my $drawn = $self->_drawn_sides // return;
 
 		my $layout  = $config->{layout}  // {};
 		my $padding = $layout->{padding} // {};
@@ -176,7 +165,7 @@ role Term::Fabulous::Role::HasBorderStyle {
 
 		$config->{layout} = {
 			%$layout,
-			padding => { %$padding, map { $_ => ( $padding->{$_} // 0 ) + $insets->{$_} } @SIDES },
+			padding => { %$padding, map { $_ => ( $padding->{$_} // 0 ) + $drawn->{$_} } @SIDES },
 		};
 		return;
 	}
@@ -197,7 +186,7 @@ borders that take space
 	use Term::Fabulous::Enum::BorderStyle;
 
 	my $box = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
+		bordered     => 1,
 		border_color => [ 180, 200, 220, 255 ],
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,    # all four sides
 		layout       => { padding => { left => 1, right => 1 } },    # inside the border
@@ -217,8 +206,8 @@ things:
 =item 1.
 
 It adds the border style parameters and accessors, which choose the
-characters a border is drawn with (Clay itself only knows border
-widths and colors).
+characters a border is drawn with (Clay itself only knows where a
+border is and its color).
 
 =item 2.
 
@@ -228,22 +217,23 @@ overlaps them.
 =back
 
 You do not compose this role yourself; it is already part of the
-widget classes. To draw a border, a widget needs a C<border_width>
-(from L<Clay::UI::Role::Style::HasBorder>) and normally a border style
-and a C<border_color>:
+widget classes. A widget has a border on the sides
+L<Term::Fabulous::Widget/bordered> names, given by the program or by
+the theme's C<border.enabled>, drawn in a border style and a
+C<border_color> that the program or the theme gives:
 
-	border_width => 1,
+	bordered     => 1,
 	border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color => [ 180, 200, 220, 255 ],
 
 L<The borders section of the looks guide|Term::Fabulous::Manual::Looks/BORDERS>
-explains borders with examples. F<examples/border-options.pl> shows per-side styles, a wider
-border, a C<Hidden> side, C<border_corners> and
-C<outer_border_sides>:
+explains borders with examples. F<examples/border-options.pl> shows a
+border on some sides, per-side styles, padding inside a border, a
+C<Hidden> side, C<border_corners> and C<outer_border_sides>:
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border with a cell of padding inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
 
 =end html
 
@@ -251,13 +241,15 @@ C<outer_border_sides>:
 
 =over
 
-=item * A side is drawn when its border width is greater than 0 and its
-style is not C<Hidden>. It is always one cell thick, whatever the
-width; see L</Border space> for what a larger width does.
+=item * A side is drawn when the widget has a border on it (see
+L<Term::Fabulous::Widget/bordered>) and its style is not C<Hidden>. It
+is one cell thick. L</drawn_border_sides> answers which sides are
+drawn.
 
 =item * A side with the C<Hidden> style is switched off: it draws
-nothing and takes no space, whatever its border width. Use it to turn
-one side off without changing C<border_width>.
+nothing and takes no space, even where the widget has a border. Use it
+to turn one side of a border off while the rest comes from the theme's
+C<border.enabled>, which switches all four sides.
 
 =item * The top and bottom sides are drawn over the whole width of the
 widget and own the corners: a corner glyph appears where the top or
@@ -291,9 +283,9 @@ L<Term::Fabulous::Enum::BorderStyle> for the styles.
 =head2 Border space
 
 Clay, the layout engine, would draw borders on top of the content. This
-role prevents that: when a widget has a C<border_width>, the width of
-every side whose style is not C<Hidden> is added to that side's padding
-before Clay lays the widget out. The effect is:
+role prevents that: every drawn side (see L</drawn_border_sides>) adds
+one cell to that side's padding before Clay lays the widget out. The
+effect is:
 
 =over
 
@@ -302,10 +294,6 @@ widget's C<layout> is extra space between the border and the content.
 In the SYNOPSIS, a child of the box starts two cells right of the left
 edge: one for the border, one for the padding.
 
-=item * A width larger than 1 still draws a one-cell border, followed
-by empty cells: C<border_width => 2> is a border plus one cell of
-padding.
-
 =item * A widget with C<fit> sizing grows by the border.
 
 =item * A C<Hidden> side adds no padding, so the content reaches that
@@ -313,12 +301,9 @@ edge of the widget.
 
 =back
 
-C<border_width> is a number for all four sides, or a hash reference
-C<< { left => ..., right => ..., top => ..., bottom => ... } >> in which
-missing sides count as 0. Each width must be an integer from 0 to 65535
-(checked by Clay::UI when it is set). Clay's C<between_children> key
-is not supported. The widget's stored C<layout> is
-not modified; only the configuration handed to Clay is.
+Room between the border and the content is C<padding>, never a
+thicker border. The widget's stored C<layout> is not modified; only the
+configuration handed to Clay is.
 
 =head1 CONSTRUCTOR PARAMETERS
 
@@ -439,7 +424,18 @@ the one the widget derives (L</derived_border_style>), else the
 theme's C<border.style> for the widget's family and classes (see
 L<Term::Fabulous::Role::Themed/look>), else C<Blank>. The four side
 readers and L<Term::Fabulous::Render::Border> answer with it, and a
-side it answers C<Hidden> for takes no space (see L</Border space>).
+side it answers C<Hidden> for is not drawn and takes no space (see
+L</Border space>).
+
+=head2 drawn_border_sides
+
+	my $drawn = $widget->drawn_border_sides;    # { top => 1, right => 1, bottom => 0, left => 1 }
+
+The sides a border is drawn on and takes a cell of: the sides of
+L<Term::Fabulous::Widget/bordered> whose style (L</border_style_of>)
+is not C<Hidden>. A new hash reference of all four sides, each 1 or 0.
+For widgets that place parts inside their border, as
+L<Term::Fabulous::Widget::ScrollBox> places its scrollbars.
 
 =head2 border_corners
 
@@ -477,22 +473,23 @@ The glyph drawn at one corner instead of the style's corner glyph, or
 C<undef> when the style's glyph is drawn. Used by
 L<Term::Fabulous::Render::Border>.
 
-=head2 contribute_border_hidden
+=head2 contribute_border_sides
 
-	$widget->contribute_border_hidden( \%config );
+	$widget->contribute_border_sides( \%config );
 
 Called by Clay::UI while it builds the configuration of a frame, after
-C<contribute_border>; it sets the border width Clay sees to 0 on every
-C<Hidden> side, so nothing is drawn there. The widget's own
-C<border_width> is not modified. You do not call it yourself.
+C<contribute_border>, which handed Clay the C<border_color> the program
+gave: it tells Clay to draw a border one cell wide on every side of
+L</drawn_border_sides> and none on the others. You do not call it
+yourself.
 
 =head2 contribute_layout_inset
 
 	$widget->contribute_layout_inset( \%config );
 
 Called by Clay::UI while it builds the configuration of a frame; it
-adds the border widths of the sides that are not C<Hidden> to the
-padding as described in L</Border space>. You do not call it yourself.
+adds a cell for every side of L</drawn_border_sides> to the padding as
+described in L</Border space>. You do not call it yourself.
 
 =head1 METHODS A WIDGET DEFINES
 

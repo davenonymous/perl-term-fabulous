@@ -25,7 +25,7 @@ sub page {
 			sizing           => { width => sizing_grow(), height => $args{height} // sizing_fit() },
 			padding          => { left  => 1,             right  => 1 },
 		},
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		border_color => [ 200, 0, 0, 255 ],
 		( $args{background} ? ( background_color => $args{background} ) : () ),
@@ -71,7 +71,7 @@ subtest 'colors' => sub {
 	is $grid->row_text( 0, columns => 1, colors => 1 ), "\e[1;2;3;4;5;8;9;53;38;2;255;0;0ma\e[0m", 'every style bit has its SGR code';
 
 	$root = Term::Fabulous::Widget::Box->new(
-		layout       => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } }, border_width => 1,
+		layout       => { sizing => { width => sizing_fixed(2), height => sizing_fixed(1) } }, bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Panel,                              border_color => [ 9, 9, 9, 255 ]
 	);
 	like [ Term::Fabulous::Static->new( root => $root, width => 2 )->render_lines ]->[0], qr/\e\[7;38;2;9;9;9m/, 'reverse video locations use SGR 7';
@@ -106,7 +106,7 @@ subtest 'scroll box' => sub {
 	my $log = Term::Fabulous::Widget::ScrollBox->new(
 		id           => 'log',
 		layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_fixed(4) } },
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	);
 	$log->add_child( Term::Fabulous::Widget::Text->new( text => "line $_" ) ) foreach 1 .. 9;
@@ -129,7 +129,7 @@ subtest 'stack layout' => sub {
 	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_BACK_TO_FRONT, child_alignment => { x => CLAY_ALIGN_X_RIGHT, y => CLAY_ALIGN_Y_BOTTOM } } );
 	$root->add_child(
 		Term::Fabulous::Widget::Box->new(
-			border_width => 1,
+			bordered     => 1,
 			border_style => Term::Fabulous::Enum::BorderStyle->Round,
 			layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 		),

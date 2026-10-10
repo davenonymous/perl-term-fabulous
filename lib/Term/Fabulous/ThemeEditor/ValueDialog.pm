@@ -46,7 +46,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	field $on_reset   :param;    # code: removes the setting
 	field $list_rows  :param = 12;    # how many rows the list shows
 
-	field $kind;    # color, palette, style, name, base
+	field $kind;    # color, palette, style, boolean, name, base
 	field $value;    # the value chosen now
 	field $list;
 	field $hex;
@@ -110,7 +110,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	# A list in a frame of its own (a table's own frame scrolls with its
 	# rows), drawn in the accent while the list has the focus.
 	sub _framed ( $list, $rows ) {
-		my $frame = Term::Fabulous::Widget::Box->new( border_width => 1, layout => { sizing => { width => sizing_grow(), height => sizing_fixed( $rows + 2 ) } } );
+		my $frame = Term::Fabulous::Widget::Box->new( bordered => 1, layout => { sizing => { width => sizing_grow(), height => sizing_fixed( $rows + 2 ) } } );
 		$frame->add_child($list);
 		weaken( my $weak_frame = $frame );
 		weaken( my $weak_list  = $list );
@@ -127,6 +127,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 		return $self->_name_field if $kind eq 'name';
 		return $self->_list( map { [ $_, $_ ] } Term::Fabulous::Theme::builtin_names() ) if $kind eq 'base';
 		return $self->_style_list($parsed) if $kind eq 'style';
+		return $self->_list( [ 'true', 'true' ], [ 'false', 'false' ] ) if $kind eq 'boolean';
 		return $self->_color_editor if $kind eq 'palette';
 		my $info    = Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} );
 		my @choices = map { [ $_, $_ ] } Term::Fabulous::Theme::tokens();
@@ -222,7 +223,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 		foreach my $definition (@buttons) {
 			my ( $label, $classes, $action ) = @$definition;
 			next if $label =~ /\AReset/ && !$is_set;
-			my $button = Term::Fabulous::Widget::Button->new( border_width => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
+			my $button = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
 			$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
 			$button->on( Activate => sub ($event) { $action->(); return } );
 			$row->add_child($button);

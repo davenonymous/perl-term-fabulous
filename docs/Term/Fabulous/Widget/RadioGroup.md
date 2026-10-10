@@ -70,7 +70,7 @@ my $group = Term::Fabulous::Widget::RadioGroup->new(%parameters);
 ```
 
 Accepts the parameters of [Term::Fabulous::Widget::Box](Box.md) (`id`,
-`layout`, `background_color`, `border_width`, `border_color`,
+`layout`, `background_color`, `bordered`, `border_color`,
 `border_style`, ...) and the ones below. Unknown parameters die.
 
 - `value`

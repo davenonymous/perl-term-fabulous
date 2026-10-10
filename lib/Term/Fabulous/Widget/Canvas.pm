@@ -482,7 +482,7 @@ children) overlap it. See L<Term::Fabulous::Render::Canvas>.
 
 All parameters are optional; unknown parameters die. A Canvas takes
 exactly the parameters of L<Term::Fabulous::Widget::Box>: C<id>,
-C<layout>, C<background_color>, C<border_width>, C<border_color>,
+C<layout>, C<background_color>, C<bordered>, C<border_color>,
 C<border_style>, ... (see L<Term::Fabulous::Widget/new>). Without a
 C<sizing>, the canvas has no content and therefore a 0 x 0 buffer, so
 always give it a size.
@@ -693,7 +693,8 @@ frame is drawn. Applications do not call them.
 	my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 
 The number of cells between the widget's outer box and its content box
-on each side: padding plus border width.
+on each side: padding plus one cell where a border is drawn on the side
+(see L<Term::Fabulous::Role::HasBorderStyle/drawn_border_sides>).
 
 =head2 set_content_origin
 

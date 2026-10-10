@@ -18,8 +18,8 @@ use Term::Fabulous::Widget::TextField;
 # given a color, so the theme decides them all.
 sub sign_in_screen () {
 	my $form = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
-		layout       => {
+		bordered => 1,
+		layout   => {
 			layout_direction => CLAY_TOP_TO_BOTTOM,
 			sizing           => { width => sizing_grow( 0, 44 ) },
 			padding          => { left  => 1, right => 1 },
@@ -28,9 +28,9 @@ sub sign_in_screen () {
 	);
 	my $name     = Term::Fabulous::Widget::TextField->new( placeholder => 'E-mail address', validator => 'email' );
 	my $password = Term::Fabulous::Widget::TextField->new( placeholder => 'Password',       mask      => '*' );
-	my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+	my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 1, right => 1 } } );
 	$sign_in->add_child( Term::Fabulous::Widget::Text->new( text => 'Sign in' ) );
-	my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+	my $cancel = Term::Fabulous::Widget::Button->new( bordered => 1, layout => { padding => { left => 1, right => 1 } } );
 	$cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
 	my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 	$buttons->add_child( $sign_in, $cancel );

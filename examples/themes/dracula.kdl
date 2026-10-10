@@ -37,7 +37,8 @@ palette {
 	danger "#ff5555"
 }
 
-// Boxes with a border width get a frame in the comment blue-gray.
+// Boxes the program gives a border (bordered) get a frame in the
+// comment blue-gray.
 box {
 	border style=Solid color="border"
 }

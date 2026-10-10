@@ -140,13 +140,14 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	}
 
 	sub _button ( $label, $classes = [], %parameters ) {
-		my $button = Term::Fabulous::Widget::Button->new( border_width => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } }, %parameters );
+		my $button = Term::Fabulous::Widget::Button->new( classes => $classes, layout => { padding => { left => 1, right => 1 } }, %parameters );
 		$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
 		return $button;
 	}
 
+	# A box has no border.enabled: the program frames it.
 	sub _framed_box ( $text, $classes = [] ) {
-		my $box = Term::Fabulous::Widget::Box->new( border_width => 1, classes => $classes, layout => { sizing => { width => sizing_grow() }, padding => { left => 1, right => 1 } } );
+		my $box = Term::Fabulous::Widget::Box->new( bordered => 1, classes => $classes, layout => { sizing => { width => sizing_grow() }, padding => { left => 1, right => 1 } } );
 		$box->add_child( Term::Fabulous::Widget::Text->new( text => $text ) );
 		return $box;
 	}
@@ -201,8 +202,16 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		return _column( _framed_box('A box with a border: box.border.color and box.border.style.'), $plain );
 	}
 
+	# The buttons as the theme draws them, and with a border of their own,
+	# so that button.border.color and button.border.style show either way.
 	method _build_button () {
-		return _row( 1, _button( 'Save', ['primary'] ), _button('Cancel'), _button( 'Disabled', [], disabled => 1 ) );
+		my $themed   = Term::Fabulous::Widget::Text->new( text => 'As the theme draws them; button.border.enabled gives them a border:' );
+		my $bordered = Term::Fabulous::Widget::Text->new( text => 'With a border of their own, in button.border.color and button.border.style:' );
+		return _column( $themed, _buttons(), $bordered, _buttons( bordered => 1 ) );
+	}
+
+	sub _buttons (%border) {
+		return _row( 1, _button( 'Save', ['primary'], %border ), _button( 'Cancel', [], %border ), _button( 'Disabled', [], disabled => 1, %border ) );
 	}
 
 	method _build_fields () {

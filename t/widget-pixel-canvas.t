@@ -82,7 +82,7 @@ subtest 'shapes' => sub {
 
 subtest 'pixel_at maps the pointer to the pixels of its cell' => sub {
 	my $root  = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 2, top => 1 } } );
-	my $image = Term::Fabulous::Widget::PixelCanvas->new( border_width => 1, layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(4) } } );
+	my $image = Term::Fabulous::Widget::PixelCanvas->new( bordered => 1, layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(4) } } );
 	$root->add_child($image);
 	my $ui = Term::Fabulous::Static->new( root => $root, width => 10, height => 6 );
 

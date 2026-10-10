@@ -309,7 +309,7 @@ class Term::Fabulous::ThemeEditor::MenuBar::Popup :isa(Term::Fabulous::Widget::D
 	field $menu :param;
 
 	ADJUST {
-		$self->border_width(1);
+		$self->bordered(1);
 		weaken( my $weak_self = $self );
 		$self->on( Mouse     => sub ($event) { $weak_self->_mouse($event); return Clay::UI::Enum::Result->HANDLED } );
 		$self->on( MouseMove => sub ($event) { $weak_self->_hover($event); return Clay::UI::Enum::Result->HANDLED } );

@@ -30,7 +30,7 @@ $header->add_child( $status, Term::Fabulous::Widget::Text->new( text => 'n, c, s
 
 # The picture fills a frame; its background is the area inside the frame.
 my $frame = Term::Fabulous::Widget::Box->new(
-	border_width => 1,
+	bordered     => 1,
 	border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color => [ 120, 160, 220, 255 ],
 	layout       => { sizing => { width => sizing_grow(), height => sizing_grow() } },

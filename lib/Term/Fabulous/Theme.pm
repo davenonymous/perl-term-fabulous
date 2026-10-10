@@ -59,12 +59,14 @@ class Term::Fabulous::Theme :strict(params) {
 		danger           => { dark => [ 224, 108, 117, 255 ], light => [ 200, 50,  60,  255 ] },
 	);
 
-	# A slot: its kind (color or style), its default for the normal state
-	# and for every state it has. A state default of 'normal' means the
-	# state looks like the normal state unless a theme says otherwise.
-	# Flags added to a slot: reverse (it may be 'reverse'), required (it
-	# cannot be 'none', its widget draws with the value) and grid (a style
-	# with joints).
+	# A slot: its kind (color, style or boolean), its default for the
+	# normal state and for every state it has. A state default of 'normal'
+	# means the state looks like the normal state unless a theme says
+	# otherwise. Flags added to a slot: reverse (it may be 'reverse'),
+	# required (it cannot be 'none', its widget draws with the value) and
+	# grid (a style with joints). A boolean slot has no states, because
+	# its widget would change size when its state changes, and is always
+	# required.
 	sub _color_slot ( $default, %by_state ) {
 		return { kind => 'color', default => { normal => $default, %by_state } };
 	}
@@ -72,6 +74,13 @@ class Term::Fabulous::Theme :strict(params) {
 	sub _style_slot ($default) {
 		return { kind => 'style', default => { normal => $default } };
 	}
+
+	sub _boolean_slot ($default) {
+		return { kind => 'boolean', required => 1, default => { normal => $default } };
+	}
+
+	# The values a boolean slot takes, and the spec each one is stored as.
+	my %BOOLEAN_SPEC = ( true => 'true', 1 => 'true', false => 'false', 0 => 'false' );
 
 	sub _required ( $slot, %flags ) {
 		return { %$slot, required => 1, %flags };
@@ -95,17 +104,19 @@ class Term::Fabulous::Theme :strict(params) {
 		button => {
 			extends => 'box',
 			slots   => {
-				'background'   => { %{ _color_slot( 'none', hovered => 'normal', focused => 'normal', pressed => 'reverse', disabled => 'normal' ) }, reverse => 1 },
-				'border.color' => _color_slot( 'border', hovered => 'normal', focused => 'accent', pressed => 'normal', disabled => 'disabled' ),
-				'text'         => _color_slot( 'text',   hovered => 'normal', focused => 'normal', pressed => 'normal', disabled => 'disabled' ),
+				'background'     => { %{ _color_slot( 'none', hovered => 'normal', focused => 'normal', pressed => 'reverse', disabled => 'normal' ) }, reverse => 1 },
+				'border.color'   => _color_slot( 'border', hovered => 'normal', focused => 'accent', pressed => 'normal', disabled => 'disabled' ),
+				'border.enabled' => _boolean_slot('false'),
+				'text'           => _color_slot( 'text', hovered => 'normal', focused => 'normal', pressed => 'normal', disabled => 'disabled' ),
 			}
 		},
 		input => {
 			extends => 'box',
 			slots   => {
-				'background'       => _color_slot( 'none',   focused  => 'focus_background', disabled => 'normal' ),
-				'border.color'     => _color_slot( 'border', focused  => 'normal',   disabled => 'normal', invalid => 'danger' ),
-				'text'             => _color_slot( 'text',   disabled => 'disabled', invalid  => 'danger' ),
+				'background'       => _color_slot( 'none',   focused => 'focus_background', disabled => 'normal' ),
+				'border.color'     => _color_slot( 'border', focused => 'normal', disabled => 'normal', invalid => 'danger' ),
+				'border.enabled'   => _boolean_slot('false'),
+				'text'             => _color_slot( 'text', disabled => 'disabled', invalid => 'danger' ),
 				'accent'           => _color_slot('accent'),
 				'star'             => _required( _color_slot('warning') ),
 				'placeholder'      => _color_slot('placeholder'),
@@ -172,15 +183,17 @@ class Term::Fabulous::Theme :strict(params) {
 				'disabled'          => _required( _color_slot('disabled') ),
 				'border.color'      => _color_slot('disabled'),
 				'border.style'      => _style_slot('Round'),
+				'border.enabled'    => _boolean_slot('false'),
 			}
 		},
 		dialog => {
 			extends => 'box',
 			slots   => {
-				'background'   => _color_slot('surface'),
-				'border.color' => _color_slot('accent'),
-				'border.style' => _style_slot('Round'),
-				'backdrop'     => _color_slot('backdrop'),
+				'background'     => _color_slot('surface'),
+				'border.color'   => _color_slot('accent'),
+				'border.style'   => _style_slot('Round'),
+				'border.enabled' => _boolean_slot('true'),
+				'backdrop'       => _color_slot('backdrop'),
 			}
 		},
 		toast => {
@@ -188,6 +201,7 @@ class Term::Fabulous::Theme :strict(params) {
 			slots   => {
 				'background'     => _color_slot('surface'),
 				'border.style'   => _style_slot('Round'),
+				'border.enabled' => _boolean_slot('true'),
 				'text'           => _required( _color_slot('text') ),
 				'important_text' => _required( _color_slot('text_inverse') ),
 				'info'           => _required( _color_slot('accent') ),
@@ -199,14 +213,15 @@ class Term::Fabulous::Theme :strict(params) {
 		progress => {
 			extends => 'box',
 			slots   => {
-				'color'       => _color_slot('accent'),
-				'track'       => _color_slot('track'),
-				'text'        => _color_slot('text'),
-				'inside_text' => _color_slot('text_inverse'),
+				'color'          => _color_slot('accent'),
+				'track'          => _color_slot('track'),
+				'text'           => _color_slot('text'),
+				'inside_text'    => _color_slot('text_inverse'),
+				'border.enabled' => _boolean_slot('false'),
 			}
 		},
-		spinner => { extends => 'box', slots => { color  => _color_slot('accent'), label => _color_slot('text') } },
-		image   => { extends => 'box', slots => { notice => _color_slot('text_dim') } },
+		spinner => { extends => 'box', slots => { color  => _color_slot('accent'),   label => _color_slot('text'), 'border.enabled' => _boolean_slot('false') } },
+		image   => { extends => 'box', slots => { notice => _color_slot('text_dim'), 'border.enabled' => _boolean_slot('false') } },
 		divider => {
 			extends => 'box',
 			slots   => {
@@ -418,7 +433,8 @@ class Term::Fabulous::Theme :strict(params) {
 	# A raw spec a theme may give: undef or 'none' (no color or style)
 	# unless the slot is required, a token name, 'reverse' where the slot
 	# allows it, a style name or item for a style slot (one with joints for
-	# a grid slot), any color for a color slot. Returned normalized.
+	# a grid slot), true, false, 1 or 0 for a boolean slot, any color for
+	# a color slot. Returned normalized; a boolean as 'true' or 'false'.
 	sub _checked_spec ( $family, $slot, $state, $value ) {
 		my $definition = _slots_of($family)->{$slot};
 		my $what       = "$family.$slot" . ( $state eq 'normal' ? '' : ".$state" );
@@ -433,6 +449,10 @@ class Term::Fabulous::Theme :strict(params) {
 		if ( $definition->{kind} eq 'style' ) {
 			my %allowed = ( ( $definition->{required} ? () : ( none => 'none' ) ), ( $definition->{grid} ? ( grid => 1 ) : () ) );
 			return border_style( __PACKAGE__, $what, $value, %allowed );
+		}
+		if ( $definition->{kind} eq 'boolean' ) {
+			die "Term::Fabulous::Theme: $what must be true, false, 1 or 0, got " . describe($value) unless !ref $value && exists $BOOLEAN_SPEC{$value};
+			return $BOOLEAN_SPEC{$value};
 		}
 		return $value if !ref $value && exists $PALETTE{$value};
 		return color( __PACKAGE__, $what, $value );
@@ -513,7 +533,9 @@ class Term::Fabulous::Theme :strict(params) {
 		return 'reverse' if $spec eq 'reverse';
 		return $_palette{$spec} if exists $PALETTE{$spec};
 		my ($slot) = $key =~ /\A(.+)\.[a-z]+\z/;
-		return Term::Fabulous::Enum::BorderStyle->from_name($spec) if _slots_of($family)->{$slot}{kind} eq 'style';
+		my $kind = _slots_of($family)->{$slot}{kind};
+		return Term::Fabulous::Enum::BorderStyle->from_name($spec) if $kind eq 'style';
+		return $spec eq 'true' ? 1 : 0 if $kind eq 'boolean';
 		die "Term::Fabulous::Theme: internal: no value for $family.$key from '$spec'";
 	}
 
@@ -703,13 +725,21 @@ class Term::Fabulous::Theme :strict(params) {
 		my @props    = $kid->props->@*;
 		die "$family: the node '$kid_name' has no children" if $kid->children->@*;
 		die "$family: the node '$kid_name' needs either one value or key=value properties" if ( @args && @props ) || ( !@args && !@props ) || @args > 1;
-		return ( [ $kid_name, _kdl_spec( $args[0], "$family.$kid_name" ) ] ) if @args;
-		return map { [ "$kid_name.$_->[0]", _kdl_spec( $_->[1], "$family.$kid_name.$_->[0]" ) ] } @props;
+		return ( [ $kid_name, _kdl_spec( $args[0], $family, $kid_name ) ] ) if @args;
+		return map { [ "$kid_name.$_->[0]", _kdl_spec( $_->[1], $family, "$kid_name.$_->[0]" ) ] } @props;
 	}
 
-	sub _kdl_spec ( $value, $what ) {
+	# The raw spec of a KDL value: #null for none, #true or #false for a
+	# boolean slot, a string for any other slot. Checked like any spec
+	# when the theme is built.
+	sub _kdl_spec ( $value, $family, $slot ) {
 		return undef if $value->is_null;
-		die "$what must be a string or #null" unless $value->is_string;
+		my $definition = _slots_of($family)->{$slot};
+		if ( defined $definition && $definition->{kind} eq 'boolean' ) {
+			die "$family.$slot must be #true or #false" unless $value->is_bool;
+			return $value->as_perl ? 'true' : 'false';
+		}
+		die "$family.$slot must be a string or #null" unless $value->is_string;
 		return $value->value;
 	}
 
@@ -726,8 +756,8 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Theme - Colors and border styles for every widget,
-with variants per class
+Term::Fabulous::Theme - Colors and borders for every widget, with
+variants per class
 
 =head1 SYNOPSIS
 
@@ -742,6 +772,7 @@ with variants per class
 		slots   => {
 			'button.border.style'         => 'Round',
 			'button.border.color.focused' => 'accent',
+			'text_input.border.enabled'   => 1,
 		},
 		variants => {
 			'button.primary' => { 'border.color' => 'accent', 'text' => 'text_bright' },
@@ -759,20 +790,23 @@ with variants per class
 
 =head1 DESCRIPTION
 
-A theme decides the colors and the border styles of every widget that
-does not set them itself: the border of a focused button, the
-background of a text field, the lines of a table, the color of text.
-It is made of a I<palette> of named colors (tokens) and of I<slots>,
-one for every colored or styled part of every widget family, in every
-state the part can be in. Slots default to tokens, so most themes set
-a few tokens and nothing else. A theme may also define I<variants>: a
-widget whose C<classes> name a variant draws with it.
+A theme decides the colors and the borders of every widget that does
+not set them itself: whether a text field has a border, the border
+color of a focused button, the background of a text field, the color
+of the lines of a table, the color of text. It is made of a
+I<palette> of named colors (tokens) and of I<slots>, one for every
+part of every widget family that a theme colors, styles or switches
+on, in every state the part can be in. Most slots default to tokens,
+so most themes set a few tokens and nothing else. A theme may also
+define I<variants>: a widget whose C<classes> name a variant draws
+with it.
 
 Themes are set per UI (L<Term::Fabulous/theme>,
 L<Term::Fabulous::Static/theme>) and can be switched at any time. A
 widget that was given a color or style explicitly keeps it, whatever
-the theme says; L<Term::Fabulous::Widget/reset_look> returns it to
-the theme. See L<Term::Fabulous::Manual::Looks/THEMES> for the guide.
+the theme says, and so does a widget that was given C<bordered>;
+L<Term::Fabulous::Widget/reset_look> returns it to the theme. See
+L<Term::Fabulous::Manual::Looks/THEMES> for the guide.
 
 =head1 VOCABULARY
 
@@ -789,10 +823,10 @@ colors for a light screen.
 	track track_scroll button_face backdrop
 	success warning danger
 
-C<border> is what every border is drawn in unless a theme or the
+C<border> is the color every border is drawn in unless a theme or the
 widget says otherwise, so a frame stays visible on the theme's own
-screen; the built-in themes draw every border, of a Box, a Button or
-an input, in the C<Round> style. C<background> is the screen behind the widgets: L<Term::Fabulous>
+screen. Which widgets have a border at all is a slot of its own (see
+L</Borders>). C<background> is the screen behind the widgets: L<Term::Fabulous>
 paints the whole screen in it before every frame, so a theme looks the
 same whatever colors the terminal shows otherwise, and a light theme is
 readable on a dark terminal. A theme that wants the terminal's own
@@ -809,14 +843,84 @@ C<image>, C<divider>. A widget class says which family it belongs to
 extend another: C<button> extends C<box>, so it has the box's slots
 too.
 
-A slot is one colored or styled part: C<background>, C<border.color>,
-C<border.style>, C<text>, C<accent>, C<line.color>, ... Slots whose
-name ends in C<style> take a border style name; all others take a
-color. A slot has a value for the C<normal> state and, where the
-widget shows states, for some of C<hovered>, C<focused>, C<pressed>,
-C<disabled>, C<selected>, C<active> and C<invalid>. A state that a theme does not
-set looks like the normal state. L</slots> lists the slots of a family
-with their states.
+A slot is one part a theme decides: C<background>, C<border.color>,
+C<border.style>, C<border.enabled>, C<text>, C<accent>,
+C<line.color>, ... Slots whose name ends in C<style> take a border
+style name, C<border.enabled> takes true or false (see L</Borders>),
+and all others take a color. A slot has a value for the C<normal>
+state and, where the widget shows states, for some of C<hovered>,
+C<focused>, C<pressed>, C<disabled>, C<selected>, C<active> and
+C<invalid>; style slots and C<border.enabled> have the C<normal> state
+only. A state that a theme does not set looks like the normal state.
+L</slots> lists the slots of a family with their states.
+
+A theme sets a slot for one family. A family that extends it has the
+same slot, but keeps its own value: C<box.border.color> does not change
+C<button.border.color>, and C<input.border.enabled> does not change
+C<text_input.border.enabled> or C<dropdown.border.enabled>.
+
+=head2 Borders
+
+Three slots decide the border of a widget:
+
+=over
+
+=item C<border.enabled>
+
+Whether a widget of the family has a border on all four sides when
+the program does not decide it with the widget's C<bordered> parameter
+(see L<Term::Fabulous::Widget/bordered>). The families C<button>,
+C<input>, C<text_input>, C<dropdown>, C<accordion>, C<dialog>,
+C<toast>, C<progress>, C<spinner> and C<image> have it. It is C<false>
+in the built-in themes, except for C<dialog> and C<toast>, where it is
+C<true>.
+
+A border takes one cell on each side, inside the widget's box, so this
+slot has the C<normal> state only: a border that came and went with
+the focus would resize the widget and move its neighbors.
+
+=item C<border.style>
+
+The border style the border is drawn in: C<Round> in the built-in
+themes. A widget may give each side a style of its own; a side whose
+style is C<Hidden> has no border, whatever C<border.enabled> says.
+
+=item C<border.color>
+
+The color of the border's characters, by state.
+
+=back
+
+Every family but C<text> has C<border.style> and C<border.color>. The
+families not listed under C<border.enabled> above have no
+C<border.enabled>, and a widget of one of them has a border only where
+the program gives it one:
+
+=over
+
+=item * C<box>, the family of plain boxes, scroll boxes, canvases,
+charts and every widget that names no family of its own. Widgets build
+their parts out of boxes, so a theme that framed every box would frame
+those parts too.
+
+=item * C<table>: a table draws its frame and its lines itself, with
+its own parameters (see
+L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>),
+and takes no C<bordered> at all.
+
+=item * C<tabs>: the line of a tab bar joins the borders of its tabs,
+which the bar draws itself.
+
+=item * C<scrollbar> and C<divider>: lines one cell thick, which a
+frame does not fit around.
+
+=item * C<text>, which has no border slots.
+
+=back
+
+A widget that frames one of its parts decides that part's border
+itself: the tabs of a tab bar, the list of an open dropdown, the items
+of an accordion with C<item_borders>.
 
 =head2 Values
 
@@ -829,6 +933,8 @@ Where a theme sets a slot, it gives one of:
 =item * a color, in any format L<Term::Fabulous::Color> accepts (a color slot);
 
 =item * a border style name, such as C<Round> (a style slot; see L<Term::Fabulous::Enum::BorderStyle>);
+
+=item * C<true> or C<false>, or C<1> or C<0>, for C<border.enabled> (in a theme file C<#true> or C<#false>);
 
 =item * C<none>: no color or no style, as if the widget had been given none (not for a required slot, see below);
 
@@ -846,7 +952,8 @@ C<input>); C<table.text>, C<table.header.text>, C<table.cursor>,
 C<table.muted>, C<table.line.color> and C<table.pager.button>;
 C<accordion.title>, C<accordion.accent> and C<accordion.disabled>;
 C<toast.text>, C<toast.important_text>, C<toast.info>,
-C<toast.success>, C<toast.warning> and C<toast.danger>.
+C<toast.success>, C<toast.warning> and C<toast.danger>, and
+C<border.enabled> in every family that has it.
 C<tabs.line.style> also needs a style with joints (see
 L<Term::Fabulous::Enum::BorderStyle/get_grid_styles>), because the tab
 bar's line joins the tab borders; another style dies.
@@ -879,23 +986,24 @@ node, a C<palette> node and one node per family, all optional:
 		}
 	}
 
-	input {
-		border style=none
+	text_input {
+		border enabled=#true style=Solid
 		focused { background "focus_background" }
 	}
 
-Inside a family node, C<name "value"> sets the slot C<name> and
-C<name key="value"> sets the slot C<name.key> for every property, so
-C<border style=Round color="border"> sets C<border.style> and
-C<border.color>. A node named after a state holds the slots of that
-state. A C<variant "NAME"> node holds the slots and states of a
-variant. C<#null> means C<none>. An unknown family, slot, state, token
-or style dies with the known names, and so does C<none> or C<#null> for
-a required slot (see L</Values>). A palette token, or a slot of a family,
-state or variant, that is set twice in one document dies too (C<palette:
-the token 'accent' is set twice>, C<button: the slot 'text.focused' is
-set twice>), also when the two settings are in two nodes of the same
-family.
+Inside a family node, C<name "value"> sets the slot C<name> and C<name
+key="value"> sets the slot C<name.key> for every property, so C<border
+style=Round color="border"> sets C<border.style> and C<border.color>,
+and C<border enabled=#true> sets C<border.enabled>. A node named after a
+state holds the slots of that state. A C<variant "NAME"> node holds the
+slots and states of a variant. C<#null> means C<none>. C<border.enabled>
+takes C<#true> or C<#false> only; every other slot takes a string or
+C<#null>. An unknown family, slot, state, token or style dies with the
+known names, and so does C<none> or C<#null> for a required slot (see
+L</Values>). A palette token, or a slot of a family, state or variant,
+that is set twice in one document dies too (C<palette: the token
+'accent' is set twice>, C<button: the slot 'text.focused' is set
+twice>), also when the two settings are in two nodes of the same family.
 
 =head1 CONSTRUCTORS
 
@@ -986,11 +1094,11 @@ One token's color as a new C<[r, g, b, a]>. Unknown tokens die.
 	my $color = $theme->look( 'button', 'border.color', 'focused' );
 	my $color = $theme->look( 'button', 'border.color', 'focused', ['primary'] );
 
-The value of a slot in a state (C<normal> by default) for a widget of
-a family with the given classes: C<[r, g, b, a]> for a color, a
-L<Term::Fabulous::Enum::BorderStyle> item for a style, C<'reverse'>,
-or C<undef> for none. Dies for a slot or state the family does not
-have.
+The value of a slot in a state (C<normal> by default) for a widget of a
+family with the given classes: C<[r, g, b, a]> for a color, a
+L<Term::Fabulous::Enum::BorderStyle> item for a style, 1 or 0 for
+C<border.enabled>, C<'reverse'>, or C<undef> for none. Dies for a slot
+or state the family does not have.
 
 =head2 look_table
 
@@ -1053,12 +1161,13 @@ reference:
 
 =item C<kind>
 
-C<color> or C<style>: whether the slot takes a color or a border style
-(see L</Values>).
+C<color>, C<style> or C<boolean>: whether the slot takes a color, a
+border style, or true or false (see L</Values>).
 
 =item C<required>
 
-1 when the slot cannot be C<none> (see L</Values>), else 0.
+1 when the slot cannot be C<none> (see L</Values>), else 0. Always 1
+for a boolean slot.
 
 =item C<reverse>
 
@@ -1076,8 +1185,9 @@ The states the slot has besides C<normal>, sorted by name.
 =item C<default>
 
 The value of every state, C<normal> included, before any theme sets
-it: a token name, a style name, C<none>, C<reverse>, or C<normal> for a
-state that looks like the normal state. The built-in themes keep these
+it: a token name, a style name, C<true> or C<false>, C<none>,
+C<reverse>, or C<normal> for a state that looks like the normal
+state. The built-in themes keep these
 defaults and differ only in their palettes.
 
 =back
@@ -1088,11 +1198,13 @@ Dies for an unknown family or slot, naming the known ones.
 
 	my $value = Term::Fabulous::Theme::check_value( 'button', 'border.color', 'focused', 'accent' );
 	my $style = Term::Fabulous::Theme::check_value( 'tabs', 'line.style', 'normal', 'Double' );
+	my $on    = Term::Fabulous::Theme::check_value( 'input', 'border.enabled', 'normal', 1 );    # 'true'
 
 Checks a value a theme would give a slot in a state, by the rules of
 L</Values>, and returns it as the theme stores it: a token name, C<none>
 or C<reverse> as a string, a color as C<[r, g, b, a]>, a style as a
-L<Term::Fabulous::Enum::BorderStyle> item; C<undef> becomes C<none>.
+L<Term::Fabulous::Enum::BorderStyle> item, a boolean as the string
+C<true> or C<false>; C<undef> becomes C<none>.
 Dies with the reason when the slot cannot take the value, for example
 C<Term::Fabulous::Theme: tabs.line.style cannot be 'none'>, and for a
 slot or state the family does not have. Theme editors use it to check a

@@ -42,7 +42,7 @@ $root->add_child(
 $root->add_child(
 	Term::Fabulous::Widget::BarChart->new(
 		title        => 'Colors of your own',
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		border_color => '#3a4152',
 		layout       => { padding => { left => 1, right => 1 } },

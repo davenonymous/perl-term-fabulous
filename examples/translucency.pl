@@ -84,7 +84,7 @@ foreach my $box (@orbit) {
 	$box->{widget} = Term::Fabulous::Widget::Box->new(
 		background_color    => $box->{color},
 		glyphs_show_through => $box->{shows_through},
-		border_width        => 1,
+		bordered            => 1,
 		border_style        => Term::Fabulous::Enum::BorderStyle->Round,
 		border_color        => [ @{ $box->{color} }[ 0 .. 2 ], 255 ],
 		layout              => {

@@ -119,13 +119,13 @@ Box "root" {
                         sizing width="fixed(18)" height=grow
                         padding left=1 right=1
                         border style=Round color="#61afef"
-                        border_width 1
+                        bordered #true
                         Text { text "Servers"; text_color "#61afef"; }
                         Button "web" {
                                 sizing width=grow
                                 padding left=1
                                 border style=Thick color="#2c3346"
-                                border_width left=1
+                                bordered left=#true
                                 focus_border_color "#e5c07b"
                                 background_color "#2c3346"
                                 Text { text "web"; text_color "#dcdcdc"; }
@@ -134,7 +134,7 @@ Box "root" {
                                 sizing width=grow
                                 padding left=1
                                 border style=Thick color="#2c3346"
-                                border_width left=1
+                                bordered left=#true
                                 focus_border_color "#e5c07b"
                                 background_color "#2c3346"
                                 Text { text "db"; text_color "#dcdcdc"; }
@@ -143,7 +143,7 @@ Box "root" {
                                 sizing width=grow
                                 padding left=1
                                 border style=Thick color="#2c3346"
-                                border_width left=1
+                                bordered left=#true
                                 focus_border_color "#e5c07b"
                                 background_color "#2c3346"
                                 Text { text "mail"; text_color "#dcdcdc"; }
@@ -156,7 +156,7 @@ Box "root" {
                         sizing width=grow height=grow
                         padding left=1 right=1
                         border style=Round color="hsl(95, 38%, 62%)"
-                        border_width 1
+                        bordered #true
                         background_color "#1c212d"
                         Text "details-title" { text "Pick a server on the left."; text_color "#98c379"; }
                         Text "details-text" { text ""; text_color "#dcdcdc"; }
@@ -343,9 +343,9 @@ widgets your program uses and leave them out elsewhere.
 A property node sets one property of the widget. The properties of the
 built-in widgets have one of two shapes:
 
-- One argument: `text "Hello"`, `border_width 1`, `checked #true`.
+- One argument: `text "Hello"`, `width_group 1`, `checked #true`.
 - Only key=value pairs: `padding left=1 right=1`,
-`border_width left=1 right=2`, `sizing width=grow`.
+`bordered left=#true right=#true`, `sizing width=grow`.
 
 A widget class of your own decides the shape of its own properties; it
 may also take an argument and key=value pairs together (see
@@ -378,7 +378,7 @@ dropdown's options before its `value`, a slider's `min`, `max` and
 
 ## Numbers, booleans and text
 
-Numbers are written as they are: `border_width 1`,
+Numbers are written as they are: `width_group 1`,
 `preferred_columns 30`, `min 0.5`. Boolean properties take `#true` or
 `#false` (`1` and `0` work too); a quoted `"false"` dies instead of
 counting as true. `#null` means "no value" where a property allows
@@ -546,7 +546,7 @@ general.
 # THEME FILES
 
 A layout file says what the widgets are; a _theme file_ says what
-colors and border styles they draw with, for every widget that is not
+colors, border styles and borders they draw with, for every widget that is not
 given its own. Theme files are KDL too, kept apart from the layouts,
 and loaded with ["from\_file" in Term::Fabulous::Theme](../Theme.md#from_file):
 
@@ -593,7 +593,7 @@ message names the node, its id and the widget class, followed by the
 class's own message:
 
 ```text
-Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
+Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, bordered, child_alignment, classes, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 Term::Fabulous::Layout: cannot build widget 'Box': Term::Fabulous::Widget::Box: sizing width percentage must be in 0..100, got 'percent(150)'
 Term::Fabulous::Layout: widget 'Text' cannot contain child widgets (found 'Text')
 ```

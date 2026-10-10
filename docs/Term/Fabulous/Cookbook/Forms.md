@@ -78,7 +78,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 
 my $dialog = Term::Fabulous::Widget::Box->new(
         background_color => [ 28, 33, 45, 255 ],
-        border_width     => 1,
+        bordered         => 1,
         border_color     => [ 97, 175, 239, 255 ],
         border_style     => Term::Fabulous::Enum::BorderStyle->Round,
         layout           => {
@@ -528,7 +528,7 @@ my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { s
 sub button ( $caption, $action ) {
         my $button = Term::Fabulous::Widget::Button->new(
                 background_color => [ 43, 58, 85, 255 ],
-                border_width     => 1,
+                bordered         => 1,
                 border_color     => [ 28, 33, 45, 255 ],    # the dialog background: only the focus shows
                 border_style     => Term::Fabulous::Enum::BorderStyle->Round,
                 layout           => { padding => { left => 1, right => 1 } },
@@ -874,7 +874,7 @@ Box "root" {
                 sizing width=grow
                 padding left=1 right=1
                 border style=Round color="#61afef"
-                border_width 1
+                bordered #true
                 background_color "#1c212d"
 
                 Box {

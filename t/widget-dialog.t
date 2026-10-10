@@ -198,9 +198,9 @@ subtest 'an open dialog does not keep a dropped UI alive' => sub {
 };
 
 subtest 'defaults and errors' => sub {
-	is $dialog->border_width,                                                        1, 'a border by default';
-	is $dialog->layout->{padding}, { left => 1, right => 1, top => 1, bottom => 1 }, 'padding by default';
-	is $dialog->layout->{sizing}{width},                                             sizing_fixed(12), 'the given layout keys win';
+	is $dialog->bordered,          { top  => 1, right => 1, bottom => 1, left   => 1 }, 'a border by default, from dialog.border.enabled';
+	is $dialog->layout->{padding}, { left => 1, right => 1, top    => 1, bottom => 1 }, 'padding by default';
+	is $dialog->layout->{sizing}{width}, sizing_fixed(12), 'the given layout keys win';
 	my $fresh = Term::Fabulous::Widget::Dialog->new;
 	is [ $fresh->backdrop_color, $fresh->z_index, $fresh->close_on_escape ], [ [ 0, 0, 0, 128 ], 1000, 1 ], 'the dialog parameters';
 	like dies { $dialog->open('nope') }, qr/open needs the Term::Fabulous object/, 'open wants the UI';

@@ -32,8 +32,9 @@ palette {
 	danger "#f27e7e"
 }
 
-// Buttons get round borders; a button with classes => ['primary'] is
-// drawn in the accent and brightens while it has the focus.
+// Buttons with a border get round ones; a button with
+// classes => ['primary'] is drawn in the accent and brightens while it
+// has the focus.
 button {
 	border style=Round
 	variant "primary" {

@@ -43,7 +43,7 @@ foreach my $style ( sort keys %panels ) {
 			sizing           => { width => sizing_grow(), height => sizing_fit() },
 			padding          => { left  => 1,             right  => 1 },
 		},
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->from_name($style),
 		border_color => [ 120, 180, 240, 255 ],
 	);

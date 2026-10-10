@@ -131,6 +131,13 @@ subtest 'editing a setting in the form' => sub {
 	$press->( 'Down', 'Escape' );
 	is $tab->document->setting('button.border.color.focused'),                  undef,                                                            'Escape leaves the theme as it was';
 	is $editor->ui->preview_theme->look( 'button', 'border.color', 'focused' ), $tab->preview_theme->look( 'button', 'border.color', 'focused' ), 'and the preview too';
+	$form->go_to('text_input.border.enabled');
+	$press->('Enter');
+	ok dialog_of( $editor, 'Term::Fabulous::ThemeEditor::ValueDialog' ), 'a boolean slot opens the dialog';
+	$press->( 'Up', 'Enter' );
+	is $tab->document->setting('text_input.border.enabled'), 'true', 'the list chooses true';
+	like $tab->text, qr/enabled=#true/, 'which the file holds as #true';
+	is $editor->ui->preview_theme->look( 'text_input', 'border.enabled' ), 1, 'and the preview frames text fields';
 };
 
 subtest 'resetting settings' => sub {

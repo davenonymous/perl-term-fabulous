@@ -174,7 +174,7 @@ class Term::Fabulous::Widget::Dropdown
 		$list = Term::Fabulous::Widget::Dropdown::List->new(
 			dropdown     => $self,
 			visible_rows => $visible,
-			border_width => 1,
+			bordered     => 1,
 			layout       => { sizing => { width => sizing_fixed($width), height => sizing_fixed( $visible + 2 ) } },
 			floating     => {
 				attach_to     => CLAY_ATTACH_TO_PARENT,

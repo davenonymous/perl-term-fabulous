@@ -123,7 +123,7 @@ my $table = Term::Fabulous::Widget::Table->new(
 );
 
 my $details = Term::Fabulous::Widget::Box->new(
-	border_width => 1,
+	bordered     => 1,
 	border_style => Term::Fabulous::Enum::BorderStyle->Outer,
 	border_color => [ 88, 96, 112, 255 ],
 	layout       => {

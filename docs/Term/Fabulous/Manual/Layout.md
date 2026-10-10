@@ -250,7 +250,7 @@ ones you use, or all of them with `use Clay::XS qw(:all)`.
 | `line_sizing`      | layout line_sizing=...      | Flow layout                     |
 
 Three more constructor parameters take part in the layout: `floating`
-(see ["Floating widgets"](#floating-widgets)), `border_width` (see ["Borders take space"](#borders-take-space))
+(see ["Floating widgets"](#floating-widgets)), `bordered` (see ["Borders take space"](#borders-take-space))
 and `width_group`/`height_group` (see ["Equal sizes across the tree"](#equal-sizes-across-the-tree)).
 
 ## Direction
@@ -424,10 +424,11 @@ In KDL: `layout gap=2`. `child_gap` is accepted as a longer name for
 ## Borders take space
 
 A border is drawn on the outermost cells of a widget, inside its box.
-Term::Fabulous adds the border width to the padding, so the children
-always start inside the border: a box with `border_width => 1` and
-`padding => { left => 1 }` has its first child at the third
-column (see the third box in the picture above). A box without a
+Term::Fabulous adds a cell to the padding of every side with a border,
+so the children always start inside the border: a box with
+`bordered => 1` and `padding => { left => 1 }` has its
+first child at the third column (see the third box in the picture
+above). A box without a
 `sizing` rule grows by the border, so its content keeps its size. A
 side with the `Hidden` border style takes no space and draws nothing.
 See ["BORDERS" in Term::Fabulous::Manual::Looks](Looks.md#borders) for border styles and
@@ -786,7 +787,7 @@ $box->layout( { %{ $box->layout }, child_gap => 2 } );
 
 The new layout applies from the next frame on. The same is true for every
 other widget property: `floating`, `background_color`,
-`border_width`, `text` and so on are accessors that take effect in the
+`bordered`, `text` and so on are accessors that take effect in the
 next frame. (One exception: `border_style` exists only as a constructor
 parameter; the accessors are per side, see
 ["border\_style\_top" in Term::Fabulous::Widget](../Widget.md#border_style_top).)
@@ -866,7 +867,7 @@ accordion has `multiple => 1`. The accordion fires
 `open`, `close`, `open_all` and `close_all` change it from the
 program. The toggle glyph sits before the title, as in a tree, or at
 the end of the header (`toggle_position`), the items can have
-borders (`bordered`), and an item can be disabled. The picture shows
+borders (`item_borders`), and an item can be disabled. The picture shows
 both looks (`examples/widgets/accordion.pl`):
 
 <div>

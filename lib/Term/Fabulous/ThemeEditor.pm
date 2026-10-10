@@ -320,8 +320,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# A framed part of the workspace.
 	method _pane ( $head, $body ) {
 		my $pane = Term::Fabulous::Widget::Box->new(
-			border_width => 1,
-			layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_percent(0.5), height => sizing_grow() }, padding => { left => 1, right => 1 } },
+			bordered => 1,
+			layout   => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_percent(0.5), height => sizing_grow() }, padding => { left => 1, right => 1 } },
 		);
 		$pane->add_child( $head, $body );
 		return $pane;
@@ -1643,7 +1643,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			: $parsed->{section} eq 'theme'   ? ( $parsed->{field} eq 'name' ? 'the theme\'s name' : 'the built-in theme it starts from' )
 			: do {
 			my $info = Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} );
-			( $info->{kind} eq 'style' ? 'a border style' : 'a token or a color' ) . ( $info->{required} ? ', required' : '' );
+			$info->{kind} eq 'boolean'
+				? 'true or false'
+				: ( $info->{kind} eq 'style' ? 'a border style' : 'a token or a color' ) . ( $info->{required} ? ', required' : '' );
 			};
 		my $line  = $document->line_of($key);
 		my $where = $effective->{origin} eq 'set' ? 'set' . ( defined $line ? " on line $line" : '' ) : 'follows ' . _origin_words($effective);
@@ -1691,7 +1693,7 @@ From Perl:
 
 The theme editor makes and changes the theme files of
 L<Term::Fabulous::Theme>: the KDL files that set the palette of a theme
-and the colors and border styles of every widget family. It opens each
+and the colors, border styles and borders of every widget family. It opens each
 theme in a tab of its own. The left side of the screen shows a widget
 of every family drawn in the theme of the tab you are on, and you can
 try them out: type into the fields, open the dropdown, move the slider,
@@ -1803,7 +1805,8 @@ the token or the slot and state, as the theme file names them
 =item the value
 
 a token name (C<accent>), a color (C<#5fd3c0>), a border style
-(C<Round>), C<none> or C<reverse>;
+(C<Round>), C<true> or C<false> (C<border.enabled>), C<none> or
+C<reverse>;
 
 =item where the value comes from
 
@@ -1844,6 +1847,11 @@ the color of its own (a token is a color, never another token);
 the border styles with a sample of each (only those with joints for
 C<tabs.line.style>), and C<none> where the slot may have none;
 
+=item C<border.enabled>
+
+C<true> and C<false>: whether the widgets of the family have a border
+unless the program decides it;
+
 =item C<theme.name> and C<theme.extends>
 
 a field for the name, and the built-in themes to extend.
@@ -1861,7 +1869,7 @@ in the accent color while it has the keyboard focus.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button with a red border"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
 
 =end html
 
@@ -2160,8 +2168,8 @@ form, with the editor drawn in the light theme:
 	# given a color, so the theme decides them all.
 	sub sign_in_screen () {
 		my $form = Term::Fabulous::Widget::Box->new(
-			border_width => 1,
-			layout       => {
+			bordered => 1,
+			layout   => {
 				layout_direction => CLAY_TOP_TO_BOTTOM,
 				sizing           => { width => sizing_grow( 0, 44 ) },
 				padding          => { left  => 1, right => 1 },
@@ -2170,9 +2178,9 @@ form, with the editor drawn in the light theme:
 		);
 		my $name     = Term::Fabulous::Widget::TextField->new( placeholder => 'E-mail address', validator => 'email' );
 		my $password = Term::Fabulous::Widget::TextField->new( placeholder => 'Password',       mask      => '*' );
-		my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+		my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 1, right => 1 } } );
 		$sign_in->add_child( Term::Fabulous::Widget::Text->new( text => 'Sign in' ) );
-		my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+		my $cancel = Term::Fabulous::Widget::Button->new( bordered => 1, layout => { padding => { left => 1, right => 1 } } );
 		$cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
 		my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 		$buttons->add_child( $sign_in, $cancel );

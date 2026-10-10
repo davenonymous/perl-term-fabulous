@@ -33,7 +33,7 @@ my $title  = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Runnin
 my $output = Term::Fabulous::Widget::ScrollBox->new(
 	id               => 'output',
 	background_color => [ 30, 35, 50, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 120, 160, 220, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },

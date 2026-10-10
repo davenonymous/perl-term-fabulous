@@ -44,7 +44,7 @@ use Clay::XS qw(sizing_grow sizing_fit CLAY_TOP_TO_BOTTOM);
 my %sales = ( 'North' => 1250, 'South' => 980, 'East' => 1530 );
 
 my $report = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 180, 240, 255 ],
         layout       => {

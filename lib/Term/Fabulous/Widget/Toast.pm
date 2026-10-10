@@ -66,10 +66,9 @@ class Term::Fabulous::Widget::Toast
 	field $_panel_color;
 	field $_styling = 0;
 
-	# A toast looks like a toast unless told otherwise: a bordered panel in
-	# the theme's toast colors and border style.
+	# A toast looks like a toast unless told otherwise: a panel in the
+	# theme's toast colors and border (toast.border.enabled).
 	sub BUILDARGS ( $class, %params ) {
-		$params{border_width} //= 1;
 		$params{layout}         = { padding => { left => 1, right => 1 }, child_gap => 1, %{ $params{layout} // {} } };
 		$params{layout}{sizing} = { %DEFAULT_SIZING, %{ $params{layout}{sizing} // {} } };
 		return $class->SUPER::BUILDARGS(%params);

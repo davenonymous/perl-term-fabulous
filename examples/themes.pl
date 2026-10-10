@@ -43,8 +43,8 @@ if ( my ($wanted) = @ARGV ) {
 # own, so it is drawn in the theme's text color, and the screen around
 # the panel in the theme's background.
 my $panel = Term::Fabulous::Widget::Box->new(
-	border_width => 1,
-	layout       => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(56) }, padding => { left => 1, right => 1 }, child_gap => 1 },
+	bordered => 1,
+	layout   => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(56) }, padding => { left => 1, right => 1 }, child_gap => 1 },
 );
 my $title = Term::Fabulous::Widget::Text->new( text => "Theme: $names[$current] (F2 switches, Ctrl+C quits)" );
 
@@ -54,9 +54,9 @@ my $bar   = Term::Fabulous::Widget::ProgressBar->new( value => 65, layout => { s
 
 # Two buttons: the first is 'primary', which the theme files style in
 # their accent; the second keeps its own border color under every theme.
-my $save = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 2, right => 2 } } );
+my $save = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 2, right => 2 } } );
 $save->add_child( Term::Fabulous::Widget::Text->new( text => 'Save' ) );
-my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, border_color => '#e06c75', layout => { padding => { left => 2, right => 2 } } );
+my $cancel = Term::Fabulous::Widget::Button->new( bordered => 1, border_color => '#e06c75', layout => { padding => { left => 2, right => 2 } } );
 $cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
 my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 $buttons->add_child( $save, $cancel );

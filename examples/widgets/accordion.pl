@@ -1,11 +1,11 @@
 #!/usr/bin/env perl
 
 # Term::Fabulous::Widget::Accordion: a settings accordion with one
-# section open at a time and a disabled section, and a bordered one
-# with the toggles at the end of the headers and several sections open
-# at once. Tab moves the focus, Up and Down move between the headers,
-# Enter or Space opens and closes the focused section, so does a click,
-# Ctrl+C quits.
+# section open at a time and a disabled section, and one with a border
+# around every item, the toggles at the end of the headers and several
+# sections open at once. Tab moves the focus, Up and Down move between
+# the headers, Enter or Space opens and closes the focused section, so
+# does a click, Ctrl+C quits.
 #
 #     perl examples/widgets/accordion.pl
 
@@ -70,11 +70,11 @@ $settings->add_child(
 $settings->item(3)->disabled(1);
 $settings->open(1);
 
-# Several at once, bordered, the toggles at the end.
+# Several at once, a border around every item, the toggles at the end.
 my $faq = Term::Fabulous::Widget::Accordion->new(
 	layout          => { sizing => { width => sizing_fixed(38) }, child_gap => 1 },
 	multiple        => 1,
-	bordered        => 1,
+	item_borders    => 1,
 	toggle_position => 'end',
 	open_glyph      => '-',
 	closed_glyph    => '+',

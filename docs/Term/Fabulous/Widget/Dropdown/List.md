@@ -34,7 +34,7 @@ my $list = Term::Fabulous::Widget::Dropdown::List->new(
 ```
 
 Called by the dropdown with these parameters, plus `background_color`,
-`border_color`, `border_width`, `border_style`, `layout` and
+`border_color`, `bordered`, `border_style`, `layout` and
 `floating` (see ["floating" in Term::Fabulous::Widget](../../Widget.md#floating)). Unknown
 parameters die.
 

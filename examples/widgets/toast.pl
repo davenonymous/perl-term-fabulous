@@ -43,7 +43,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 # A small form with an alert box inside it.
 my $form = Term::Fabulous::Widget::Box->new(
 	background_color => [ 28, 33, 45, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 70, 85, 110, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(40) }, padding => { left => 1, right => 1 }, child_gap => 1 },

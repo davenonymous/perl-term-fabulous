@@ -23,6 +23,7 @@ use Term::Fabulous::Widget::LineChart;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Tabs;
 use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextField;
 
 my $Theme = 'Term::Fabulous::Theme';
 my $dark  = $Theme->default;
@@ -149,18 +150,18 @@ subtest 'explicit values win and reset_look returns to the theme' => sub {
 	like dies { $text->text_color(undef) },  qr/text_color must be a color, got undef/,                 'undef is not a color';
 	like dies { $text->reset_look('glow') }, qr/reset_look does not know 'glow' \(known: text_color\)/, 'an unknown parameter dies';
 
-	my $box = Term::Fabulous::Widget::Box->new( background_color => '#ff00ff', border_color => '#00ffff', border_width => 1 );
+	my $box = Term::Fabulous::Widget::Box->new( background_color => '#ff00ff', border_color => '#00ffff', bordered => 1 );
 	is $box->to_config->{background_color}, [ 255, 0,   255, 255 ], 'an explicit box background';
 	is $box->to_config->{border}{color},    [ 0,   255, 255, 255 ], 'an explicit box border color';
 	$box->reset_look( 'background_color', 'border_color' );
 	is $box->background_color,               undef, 'the box has no background of its own any more';
 	is $box->to_config->{background_color},  undef, 'and the dark theme gives a box none';
 	is $box->look_value('background_color'), undef, 'look_value says so';
-	like dies { $box->look_value('glow') }, qr/look_value does not know 'glow' \(known: background_color, border_color\)/, 'look_value checks the name';
+	like dies { $box->look_value('glow') }, qr/look_value does not know 'glow' \(known: background_color, border_color, bordered\)/, 'look_value checks the name';
 };
 
 subtest 'the theme fills what a box left open' => sub {
-	my $box = Term::Fabulous::Widget::Box->new( border_width => 1 );
+	my $box = Term::Fabulous::Widget::Box->new( bordered => 1 );
 	my $ui  = static( $box, theme => $red );
 	is $box->to_config->{background_color},  [ 0, 0,   255, 255 ], 'the background from the theme';
 	is $box->to_config->{border}{color},     [ 0, 255, 0,   255 ], 'the border color from the theme';
@@ -176,10 +177,29 @@ subtest 'the theme fills what a box left open' => sub {
 	is $plain->to_config->{background_color}, undef, 'under the dark theme a box stays transparent';
 	ok !exists $plain->to_config->{border}, 'and has no border';
 
-	my $framed = Term::Fabulous::Widget::Box->new( border_width => 1, border_color => '#ffffff', layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(2) } } );
+	my $framed = Term::Fabulous::Widget::Box->new( bordered => 1, border_color => '#ffffff', layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(2) } } );
 	is [ static( $framed, theme => $red )->render_lines( colors => 0 ) ], [ "\x{256D}\x{2500}\x{2500}\x{256E}", "\x{2570}\x{2500}\x{2500}\x{256F}" ], 'the border style from the theme';
 	$framed->border_style_top( Term::Fabulous::Enum::BorderStyle->Double );
 	is [ static( $framed, theme => $red )->render_lines( colors => 0 ) ], [ "\x{2554}\x{2550}\x{2550}\x{2557}", "\x{2570}\x{2500}\x{2500}\x{256F}" ], 'an explicit side keeps its style';
+};
+
+subtest 'border.enabled gives a widget a border unless bordered says otherwise' => sub {
+	my $field = Term::Fabulous::Widget::TextField->new;
+	my $plain = Term::Fabulous::Widget::TextField->new( bordered => 0 );
+	my $root  = Term::Fabulous::Widget::Box->new;
+	$root->add_child( $field, $plain );
+	my $ui = static( $root, theme => $Theme->new( slots => { 'text_input.border.enabled' => 1 } ) );
+	is $field->bordered, { top => 1, right => 1, bottom => 1, left => 1 }, 'the theme gives a text field a border';
+	ok !$field->has_look_override('bordered'), 'which is no override';
+	is $field->to_config->{border}{width}{top}, 1, 'and Clay draws it';
+	ok !exists $plain->to_config->{border}, 'an explicit bordered => 0 wins';
+	$plain->reset_look('bordered');
+	is $plain->bordered->{top}, 1, 'reset_look returns it to the theme';
+	$ui->theme('dark');
+	ok !exists $field->to_config->{border}, 'a theme switch takes the border away';
+
+	my $box = Term::Fabulous::Widget::Box->new;
+	is $box->bordered, { top => 0, right => 0, bottom => 0, left => 0 }, 'a box has no border.enabled: only the program gives it a border';
 };
 
 subtest 'classes select variants' => sub {
@@ -230,7 +250,7 @@ subtest 'a button follows its state and its variant' => sub {
 		slots    => { 'button.border.color' => '#101010', 'button.border.color.hovered' => '#202020', 'button.text.pressed' => '#303030' },
 		variants => { 'button.primary'      => { 'border.color' => '#404040', 'border.color.focused' => '#505050' } },
 	);
-	my $button = Term::Fabulous::Widget::Button->new( border_width => 1 );
+	my $button = Term::Fabulous::Widget::Button->new( bordered => 1 );
 	my $label  = Term::Fabulous::Widget::Text->new( text => 'Go' );
 	$button->add_child($label);
 	my $ui     = static( $button, theme => $theme );
@@ -343,7 +363,7 @@ subtest 'a theme switch reaches the other composite widgets' => sub {
 	require Term::Fabulous::Widget::Divider;
 	require Term::Fabulous::Widget::ProgressBar;
 
-	my $accordion = Term::Fabulous::Widget::Accordion->new( bordered => 1, layout => { sizing => { width => sizing_fixed(20) } } );
+	my $accordion = Term::Fabulous::Widget::Accordion->new( item_borders => 1, layout => { sizing => { width => sizing_fixed(20) } } );
 	$accordion->add_child( Term::Fabulous::Widget::Accordion::Item->new( title => 'One', open => 1 ) );
 	my $toast   = Term::Fabulous::Widget::Toast->new( kind => 'success', title => 'Saved', message => 'done' );
 	my $divider = Term::Fabulous::Widget::Divider->new( text => 'x' );
@@ -355,7 +375,7 @@ subtest 'a theme switch reaches the other composite widgets' => sub {
 	$ui->render_lines;
 	my ($item) = $accordion->items;
 	is $accordion->title_color, [ 16, 16, 16, 255 ], 'accordion.title from the theme';
-	is $item->border_color,     [ 80, 80, 80, 255 ], 'a bordered item takes accordion.border.color';
+	is $item->border_color,     [ 80, 80, 80, 255 ], 'an item with item_borders takes accordion.border.color';
 	is $toast->kind_color,      [ 32, 32, 32, 255 ], 'toast.success from the theme';
 	is $toast->border_color,    [ 32, 32, 32, 255 ], 'and the toast border wears it';
 	is $divider->color,         [ 48, 48, 48, 255 ], 'divider.line.color from the theme';
@@ -449,7 +469,7 @@ subtest 'looks_changed hears every change of a look' => sub {
 
 	my $root = Term::Fabulous::Widget::Box->new;
 	$root->add_child($gauge);
-	my $all = [ [qw(background_color border_color fill_color track_color)] ];
+	my $all = [ [qw(background_color border_color bordered fill_color track_color)] ];
 	my $ui  = Term::Fabulous->new( root => $root, width => 10, height => 2, terminal => Term::Fabulous::Terminal::Memory->new( width => 10, height => 2 ) );
 	is $gauge->heard, $all, 'a new UI: every look, once';
 	$ui->theme('light');
@@ -469,7 +489,7 @@ subtest 'a themed parameter of a kind' => sub {
 	is [ $gauge->track_color(undef), $gauge->track_color, $gauge->has_look_override('track_color') ], [ undef, undef, 1 ],                'an optional kind takes undef: none';
 	like dies { $gauge->track_color('nope') }, qr/\AGauge: track_color must be a color, got 'nope'/, 'and checks the rest';
 
-	is { Gauge->themed_layout_properties }, { fill_color => 'color', track_color => 'scalar' }, 'the kinds declare the layout properties (an optional color takes #null)';
+	is { Gauge->themed_layout_properties }, { bordered => 'border_sides', fill_color => 'color', track_color => 'scalar' }, 'the kinds declare the layout properties (an optional color takes #null)';
 	my $built = Term::Fabulous::Layout->new( string => qq{use Gauge as Gauge\nGauge { fill_color "#0000ff"; track_color #null; }\n} )->build;
 	is [ $built->fill_color, $built->track_color, $built->has_look_override('track_color') ], [ [ 0, 0, 255, 255 ], undef, 1 ], 'so a layout sets them';
 };
@@ -491,7 +511,7 @@ class DoubleForward :isa(Term::Fabulous::Widget::Box) {
 
 subtest 'declarations are checked once, when the class is first used' => sub {
 	like dies { BadKind->new },
-		qr/BadKind: themed parameter 'fill_color' has an unknown kind 'shade' \(known: border_style, cell_color, color, grid_border_style, optional_cell_color, optional_color, or a code reference\)/,
+qr/BadKind: themed parameter 'fill_color' has an unknown kind 'shade' \(known: border_sides, border_style, cell_color, color, grid_border_style, optional_cell_color, optional_color, or a code reference\)/,
 		'an unknown kind dies';
 	like dies { StrayForward->new }, qr/StrayForward: forwarded look 'glow_color' is not a themed parameter of Term::Fabulous::Widget::Tabs::Bar with a kind/,
 		'a forwarded look the part does not have dies';
@@ -507,7 +527,7 @@ subtest 'forwarded looks live on the parts' => sub {
 		'and returns it to the theme';
 	is $tabs->text_color('#00ff00'), [ 0, 255, 0, 255 ], 'the writer returns the checked look';
 	is $tabs->bar->text_color,       [ 0, 255, 0, 255 ], 'which the bar keeps';
-	like dies { $tabs->reset_look('glow') }, qr/reset_look does not know 'glow' \(known: active_text_color, background_color, border_color, disabled_color, focus_border_color, /,
+	like dies { $tabs->reset_look('glow') }, qr/reset_look does not know 'glow' \(known: active_text_color, background_color, border_color, bordered, disabled_color, focus_border_color, /,
 		'the known names include the forwarded ones';
 
 	my $box  = Term::Fabulous::Widget::ScrollBox->new( id => 'log', thumb_color => '#ff0000' );

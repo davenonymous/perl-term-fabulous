@@ -117,17 +117,17 @@ my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLA
 # Lines above and below only: no left and right border.
 my $rules = panel(
         'Rules above and below',
-        border_width        => { top => 1, bottom => 1, left => 0, right => 0 },
+        bordered            => { top => 1, bottom => 1 },
         border_style_top    => $Style->Double,
         border_style_bottom => $Style->Solid,
 );
 
 # A box with a heavy top edge. border_style sets the sides that have no
 # style of their own.
-my $header = panel( 'Heavy top edge', border_width => 1, border_style => $Style->Solid, border_style_top => $Style->Heavy );
+my $header = panel( 'Heavy top edge', bordered => 1, border_style => $Style->Solid, border_style_top => $Style->Heavy );
 
 # A tab-like look: thick left edge only.
-my $marker = panel( 'Thick left edge', border_width => { left => 1 }, border_style_left => $Style->Thick );
+my $marker = panel( 'Thick left edge', bordered => { left => 1 }, border_style_left => $Style->Thick );
 
 $root->add_child( $rules, $header, $marker );
 Term::Fabulous::Static->new( root => $root, width => 32 )->print( colors => 0 );
@@ -159,10 +159,10 @@ without colors:
 █ Thick left edge
 ```
 
-- `border_width` decides which sides have a border: a number for all
-sides, or a hash with `top`, `right`, `bottom` and `left` (missing
-sides have none). Borders take one cell per side inside the box. See
-["BORDERS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#borders).
+- `bordered` decides which sides have a border: a true value for all
+sides, or a hash with `top`, `right`, `bottom` and `left` (the
+sides it leaves out have none). Borders take one cell per side inside
+the box. See ["BORDERS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#borders).
 - `border_style_top`, `border_style_right`, `border_style_bottom` and
 `border_style_left` choose the style of each side, `border_style` of
 all sides that have no style of their own. So the second box passes
@@ -249,7 +249,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 my $label = Term::Fabulous::Widget::Text->new( text => 'Theme: dark. Press F2 to switch to the next theme.' );
 my $field = Term::Fabulous::Widget::TextField->new( placeholder => 'Type here' );
-my $save  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 2, right => 2 } } );
+my $save  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 2, right => 2 } } );
 $save->add_child( Term::Fabulous::Widget::Text->new( text => 'Save' ) );
 $root->add_child( $label, $field, $save );
 
@@ -324,8 +324,8 @@ use Term::Fabulous::Widget::TextField;
 # given a color, so the theme decides them all.
 sub sign_in_screen () {
         my $form = Term::Fabulous::Widget::Box->new(
-                border_width => 1,
-                layout       => {
+                bordered => 1,
+                layout   => {
                         layout_direction => CLAY_TOP_TO_BOTTOM,
                         sizing           => { width => sizing_grow( 0, 44 ) },
                         padding          => { left  => 1, right => 1 },
@@ -334,9 +334,9 @@ sub sign_in_screen () {
         );
         my $name     = Term::Fabulous::Widget::TextField->new( placeholder => 'E-mail address', validator => 'email' );
         my $password = Term::Fabulous::Widget::TextField->new( placeholder => 'Password',       mask      => '*' );
-        my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 1, right => 1 } } );
         $sign_in->add_child( Term::Fabulous::Widget::Text->new( text => 'Sign in' ) );
-        my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        my $cancel = Term::Fabulous::Widget::Button->new( bordered => 1, layout => { padding => { left => 1, right => 1 } } );
         $cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
         my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
         $buttons->add_child( $sign_in, $cancel );
@@ -510,7 +510,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 foreach my $name (qw(Inbox Message)) {
         my $pane = Term::Fabulous::Widget::Box->new(
-                border_width => 1,
+                bordered     => 1,
                 border_style => Term::Fabulous::Enum::BorderStyle->Round,
                 border_color => [ 120, 160, 220, 255 ],
                 layout       => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1 } },

@@ -1,7 +1,7 @@
 # NAME
 
 Term::Fabulous::Role::Themed - How a widget reads its colors and
-border styles from the theme
+borders from the theme
 
 # SYNOPSIS
 
@@ -34,8 +34,8 @@ $gauge->reset_look('fill_color');                          # back to the theme
 
 Every Term::Fabulous widget composes this role (through
 [Term::Fabulous::Widget](../Widget.md) or [Term::Fabulous::Widget::Text](../Widget/Text.md)). It
-holds the widget's _explicit_ looks, the colors and border styles the
-program set, and reads everything else from the
+holds the widget's _explicit_ looks, the colors, border styles and
+borders the program set, and reads everything else from the
 [Term::Fabulous::Theme](../Theme.md) of the UI the widget is in, for the widget's
 _family_ and _classes_: the theme the UI's
 [theme\_for](../Render.md#theme_for) returns for the widget,
@@ -89,6 +89,17 @@ exist in the family; the first use of the class checks that, and the
 kind, and dies otherwise. A subclass returns its parent's list plus
 its own.
 
+A parameter with a kind may map to the slot `undef`: the family has
+no slot for it, so only an explicit value counts and ["look\_value"](#look_value)
+answers `undef` without one. [Term::Fabulous::Widget](../Widget.md) declares
+`bordered` this way for the families that have no `border.enabled`:
+
+```perl
+my $slot = Term::Fabulous::Theme::has_slot( $class->theme_family, 'border.enabled' ) ? 'border.enabled' : undef;
+...
+bordered => [ $slot, 'normal', 'border_sides' ],
+```
+
 The kind says what a value is:
 
 - `color`, `cell_color`
@@ -110,6 +121,15 @@ The kind says what a value is:
     (["border\_style" in Term::Fabulous::Check](../Check.md#border_style)); `grid_border_style` only a
     style with joints. `undef` dies as for a color. A `'scalar'` layout
     property.
+
+- `border_sides`
+
+    The sides of a border (["border\_sides" in Term::Fabulous::Check](../Check.md#border_sides)): one
+    boolean for all four sides or a hash reference of booleans under the
+    side names, stored as a hash of all four sides, 1 or 0. It maps to a
+    boolean slot, whose 1 or 0 stands for all four sides, or to no slot
+    (see above). `undef` dies as
+    for a color. A `'border_sides'` layout property.
 
 - a code reference
 
@@ -239,8 +259,8 @@ my $color = $self->look( 'border.color', 'focused' );
 The theme's value of a slot of the widget's family in a state
 (`normal` by default), for the widget's classes: `[r, g, b, a]`, a
 [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) item, `'reverse'` or `undef`
-for none. A state the theme gives no value of its own looks like the
-normal state.
+for none, 1 or 0 for a boolean slot (`border.enabled`). A state the
+theme gives no value of its own looks like the normal state.
 
 ## family\_look
 
@@ -262,7 +282,8 @@ my $color = $self->look_value('accent_color');
 
 What a themed parameter is worth: the explicit value when the program
 set one, else the theme's value of the slot and state the parameter
-maps to. A forwarded look is the first part's. Dies for a name that is
+maps to, or `undef` for a parameter that maps to no slot. A forwarded
+look is the first part's. Dies for a name that is
 neither in ["themed\_params"](#themed_params) nor in ["forwarded\_looks"](#forwarded_looks).
 
 ## themed\_value

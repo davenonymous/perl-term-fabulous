@@ -17,7 +17,7 @@ Box "root" {
         sizing width=grow height=grow
         padding left=1 right=1
         border style=Round color="rgb(20, 140, 56)"
-        border_width 1
+        bordered #true
         background_color "#141937"
 
         Text "greeting" {
@@ -287,9 +287,9 @@ duplicate ids dies with
 
 A property node has one of two shapes:
 
-- One argument: `text "Hello"`, `border_width 1`, `checked #true`.
+- One argument: `text "Hello"`, `width_group 1`, `checked #true`.
 - Only key=value pairs: `padding left=1 right=1`,
-`border_width left=1 right=2`.
+`bordered left=#true right=#true`.
 
 A property node never has children; the only exceptions are the
 structured properties of a few widgets that say so, such as a table's
@@ -416,53 +416,56 @@ describes each one with an example, and
 [the layout chapter of the manual](Manual/Layout.md#layout)
 shows what they do, with pictures.
 
-| Property node                              | Value                                        |
-| ------------------------------------------ | -------------------------------------------- |
-| layout direction=... gap=N                 | direction: down, ttb, top_to_bottom          |
-| line_gap=N line_sizing=...                 | (children top to bottom), right, ltr,        |
-|                                            | left_to_right (left to right), wrap,         |
-|                                            | ltr_wrap, left_to_right_wrap (left to        |
-|                                            | right, wrapping onto new lines) or           |
-|                                            | stack, back_to_front, btf (on top of         |
-|                                            | each other);                                 |
-|                                            | gap (alias child_gap): cells between         |
-|                                            | children, an integer >= 0;                   |
-|                                            | line_gap: rows between wrapped lines,        |
-|                                            | an integer >= 0; line_sizing: grow           |
-|                                            | (the default) or fit                         |
-| sizing width=... height=...                | each: grow, fit, "grow(MIN)",                |
-|                                            | "grow(MIN, MAX)", "fit(MIN)",                |
-|                                            | "fit(MIN, MAX)" with MIN and MAX integers    |
-|                                            | >= 0 and MIN &lt;= MAX (no MAX: no maximum), |
-|                                            | "percent(N)" with N in 0..100 (decimals      |
-|                                            | allowed), or "fixed(N)" with N an            |
-|                                            | integer >= 0                                 |
-| padding left=N right=N top=N bottom=N      | any subset; integers >= 0                    |
-| child_alignment x=... y=...                | x: left (the default), center or right;      |
-|                                            | y: top (the default), center or bottom       |
-| floating attach_to=... parent_id="..."     | takes the box out of the layout and          |
-| element=... parent=...                     | draws it on top (see below)                  |
-| offset_x=N offset_y=N z_index=N            |                                              |
-| pointer_capture=... clip_to=...            |                                              |
-| border style=... style-top=...             | style: a border style name (Round, Solid,    |
-| style-right=... style-bottom=...           | Heavy, ...) for all four sides; the          |
-| style-left=... color=...                   | style-SIDE keys override it for one side;    |
-|                                            | color: a color string                        |
-| border_width N                             | all four sides, an integer 0..65535          |
-| border_width left=N right=N top=N bottom=N | per side; missing sides are 0                |
-| background_color "..."                     | a color string                               |
-| glyphs_show_through #true                  | #true or #false (the default): whether text  |
-|                                            | and borders below a translucent background   |
-|                                            | stay visible (see Term::Fabulous::Widget)    |
-| border_color "..."                         | a color string (same as border color=)       |
-| width_group N                              | an integer 0..1048575; 0 means no group      |
-| height_group N                             | an integer 0..1048575; 0 means no group      |
+| Property node                          | Value                                        |
+| -------------------------------------- | -------------------------------------------- |
+| layout direction=... gap=N             | direction: down, ttb, top_to_bottom          |
+| line_gap=N line_sizing=...             | (children top to bottom), right, ltr,        |
+|                                        | left_to_right (left to right), wrap,         |
+|                                        | ltr_wrap, left_to_right_wrap (left to        |
+|                                        | right, wrapping onto new lines) or           |
+|                                        | stack, back_to_front, btf (on top of         |
+|                                        | each other);                                 |
+|                                        | gap (alias child_gap): cells between         |
+|                                        | children, an integer >= 0;                   |
+|                                        | line_gap: rows between wrapped lines,        |
+|                                        | an integer >= 0; line_sizing: grow           |
+|                                        | (the default) or fit                         |
+| sizing width=... height=...            | each: grow, fit, "grow(MIN)",                |
+|                                        | "grow(MIN, MAX)", "fit(MIN)",                |
+|                                        | "fit(MIN, MAX)" with MIN and MAX integers    |
+|                                        | >= 0 and MIN &lt;= MAX (no MAX: no maximum), |
+|                                        | "percent(N)" with N in 0..100 (decimals      |
+|                                        | allowed), or "fixed(N)" with N an            |
+|                                        | integer >= 0                                 |
+| padding left=N right=N top=N bottom=N  | any subset; integers >= 0                    |
+| child_alignment x=... y=...            | x: left (the default), center or right;      |
+|                                        | y: top (the default), center or bottom       |
+| floating attach_to=... parent_id="..." | takes the box out of the layout and          |
+| element=... parent=...                 | draws it on top (see below)                  |
+| offset_x=N offset_y=N z_index=N        |                                              |
+| pointer_capture=... clip_to=...        |                                              |
+| border style=... style-top=...         | style: a border style name (Round, Solid,    |
+| style-right=... style-bottom=...       | Heavy, ...) for all four sides; the          |
+| style-left=... color=...               | style-SIDE keys override it for one side;    |
+|                                        | color: a color string                        |
+| bordered #true                         | a border on all four sides (#false: none)    |
+| bordered top=#true left=#true ...      | per side (top, right, bottom, left);         |
+|                                        | missing sides have none                      |
+| background_color "..."                 | a color string                               |
+| glyphs_show_through #true              | #true or #false (the default): whether text  |
+|                                        | and borders below a translucent background   |
+|                                        | stay visible (see Term::Fabulous::Widget)    |
+| border_color "..."                     | a color string (same as border color=)       |
+| width_group N                          | an integer 0..1048575; 0 means no group      |
+| height_group N                         | an integer 0..1048575; 0 means no group      |
 
 `layout`, `sizing`, `padding`, `border`, `child_alignment` and
 `floating` take only the keys shown, and at least one of them. The
 border style names are those of
 [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md) and are case sensitive. A border
-is only drawn on sides with a positive `border_width`.
+is only drawn on the sides `bordered` names; without `bordered`, the
+theme decides for the widget's family (no border for a Box, see
+["Borders from the theme" in Term::Fabulous::Manual::Looks](Manual/Looks.md#borders-from-the-theme)).
 
 `width_group` and `height_group` give widgets in different parts of
 the tree the same width or height; see
@@ -510,7 +513,7 @@ Box "panel" {
         sizing width="percent(50)" height=fit
         padding left=1 right=1
         border style=Round style-top=Heavy color="#61afef"
-        border_width 1
+        bordered #true
         background_color "rgb(28, 33, 45)"
 }
 ```
@@ -543,7 +546,7 @@ Box "form" {
         sizing width=grow height=grow
         padding left=1 right=1
         border style=Round color="#61afef"
-        border_width 1
+        bordered #true
 
         Text "title" {
                 text "Sign up"
@@ -644,7 +647,7 @@ widget's properties also name the widget and its id, followed by the
 widget class's own message:
 
 ```text
-Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, border_width, child_alignment, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
+Term::Fabulous::Layout: cannot build widget 'Box' "panel": Term::Fabulous::Widget::Box: unknown layout property 'colour' (known: background_color, border, border_color, bordered, child_alignment, classes, floating, glyphs_show_through, height_group, layout, padding, sizing, width_group)
 ```
 
 ["new"](#new) dies for:

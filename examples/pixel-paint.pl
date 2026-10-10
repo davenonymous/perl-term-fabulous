@@ -39,7 +39,7 @@ $root->add_child(
 
 my $image = Term::Fabulous::Widget::PixelCanvas->new(
 	background_color => [ 8, 10, 16, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 120, 160, 220, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },

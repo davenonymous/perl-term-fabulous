@@ -51,7 +51,7 @@ for my $panel ( [ 'numbers', 200, sub ($n) { sprintf 'Line %3d', $n } ], [ 'squa
 			padding          => { left  => 1,             right  => 1 },
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);

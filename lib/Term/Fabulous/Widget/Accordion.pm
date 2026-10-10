@@ -29,7 +29,7 @@ class Term::Fabulous::Widget::Accordion
 	my @TOGGLE_POSITIONS = qw(start end);
 
 	field $multiple        :param = 0;
-	field $bordered        :param = 0;
+	field $item_borders    :param = 0;
 	field $toggle_position :param = 'start';
 	field $open_glyph      :param = "\x{25BE}";
 	field $closed_glyph    :param = "\x{25B8}";
@@ -37,8 +37,8 @@ class Term::Fabulous::Widget::Accordion
 	field $body_indent     :param = 2;
 
 	ADJUST {
-		$multiple        = boolean( $self, multiple => $multiple );
-		$bordered        = boolean( $self, bordered => $bordered );
+		$multiple        = boolean( $self, multiple     => $multiple );
+		$item_borders    = boolean( $self, item_borders => $item_borders );
 		$toggle_position = one_of( $self, toggle_position => $toggle_position, @TOGGLE_POSITIONS );
 		$open_glyph      = string( $self, open_glyph   => $open_glyph );
 		$closed_glyph    = string( $self, closed_glyph => $closed_glyph );
@@ -153,16 +153,17 @@ class Term::Fabulous::Widget::Accordion
 	# Look
 	# ---------------------------------------------------------------------
 
-	# A bordered item takes the theme's accordion border.
+	# With item_borders, an item takes the theme's accordion border;
+	# without, it has none.
 	method _style_item ($item) {
-		if ($bordered) {
+		if ($item_borders) {
 			my $style = $self->look('border.style');
-			$item->border_width(1);
+			$item->bordered(1);
 			$item->$_($style) foreach qw(border_style_top border_style_right border_style_bottom border_style_left);
 			$item->border_color( $self->look('border.color') );
 		}
 		else {
-			$item->border_width(undef);
+			$item->bordered(0);
 		}
 		$item->refresh_look;
 		return;
@@ -209,7 +210,7 @@ class Term::Fabulous::Widget::Accordion
 		return $multiple;
 	}
 
-	method bordered        (@new) { return @new ? $self->_set( \$bordered, boolean( $self, bordered => $new[0] ) )                                 : $bordered }
+	method item_borders    (@new) { return @new ? $self->_set( \$item_borders, boolean( $self, item_borders => $new[0] ) )                         : $item_borders }
 	method toggle_position (@new) { return @new ? $self->_set( \$toggle_position, one_of( $self, toggle_position => $new[0], @TOGGLE_POSITIONS ) ) : $toggle_position }
 	method open_glyph      (@new) { return @new ? $self->_set( \$open_glyph, string( $self, open_glyph => $new[0] ) )                              : $open_glyph }
 	method closed_glyph    (@new) { return @new ? $self->_set( \$closed_glyph, string( $self, closed_glyph => $new[0] ) )                          : $closed_glyph }
@@ -228,7 +229,7 @@ class Term::Fabulous::Widget::Accordion
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			( map { $_ => 'boolean' } qw(multiple bordered title_bold) ),
+			( map { $_ => 'boolean' } qw(multiple item_borders title_bold) ),
 			( map { $_ => 'scalar' } qw(toggle_position open_glyph closed_glyph body_indent) ),
 		);
 	}
@@ -286,10 +287,10 @@ their headers
 
 =head1 DESCRIPTION
 
-The picture shows two accordions: one with its second section open
-and its last section disabled, and a bordered one with the toggles at
-the end of the headers and two sections open at once. The program is
-F<examples/widgets/accordion.pl>.
+The picture shows two accordions: one with its second section open and
+its last section disabled, and one with a border around every item and
+the toggles at the end of the headers and two sections open at once. The
+program is F<examples/widgets/accordion.pl>.
 
 An accordion stacks sections, its I<items>, each with a header line
 and a body that shows while the item is open:
@@ -318,7 +319,7 @@ the widgets you add to the item and is part of the widget tree only
 while the item is open, so a closed body takes no space. The look of
 the headers (the glyphs, their colors, where the toggle sits, borders
 around the items) is set once, on the accordion. By default the
-toggle sits at the start of the header, as in a tree; C<bordered> and
+toggle sits at the start of the header, as in a tree; C<item_borders> and
 C<< toggle_position => 'end' >> give the look of a web page's
 accordion.
 
@@ -345,10 +346,14 @@ and the ones below. All are optional; unknown parameters die.
 A boolean. Default: 0, one open item at a time. True lets any number
 of items be open. Stored as 1 or 0; a reference dies.
 
-=item C<bordered>
+=item C<item_borders>
 
-A boolean. Default: 0. True draws a round border around every item,
-in C<disabled_color>.
+A boolean. Default: 0. True draws a border around every item, in the
+theme's C<accordion.border.style> and C<accordion.border.color>: a
+C<Round> border in the C<disabled> token's gray in the built-in
+themes. Stored as 1 or 0. Not to be confused with C<bordered>, which
+frames the whole accordion, as it frames any box (see
+L<Term::Fabulous::Widget/bordered>).
 
 =item C<toggle_position>
 
@@ -399,7 +404,7 @@ C<[40, 45, 58, 255]> in the dark theme.
 
 The color of a disabled item's header. Default: the theme's
 C<accordion.disabled>, C<[108, 112, 120, 255]> in the dark theme, a
-gray. The borders of a C<bordered> accordion take the theme's
+gray. The borders of the items (C<item_borders>) take the theme's
 C<accordion.border.color> and C<accordion.border.style>; the six
 colors return to the theme with L<Term::Fabulous::Widget/reset_look>.
 
@@ -496,11 +501,11 @@ disabled item changes nothing. Returns the accordion.
 Accessor for the C<multiple> parameter. Writing 0 while several items
 are open closes all but the first. Returns 1 or 0.
 
-=head2 bordered
+=head2 item_borders
 
-	$accordion->bordered(1);
+	$accordion->item_borders(1);
 
-Accessor for the C<bordered> parameter. Returns 1 or 0.
+Accessor for the C<item_borders> parameter. Returns 1 or 0.
 
 =head2 toggle_position
 
@@ -627,7 +632,7 @@ bodies bubble through the accordion as well.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<multiple>, C<bordered> and C<title_bold> (C<#true> / C<#false>),
+C<multiple>, C<item_borders> and C<title_bold> (C<#true> / C<#false>),
 C<toggle_position>, C<open_glyph>, C<closed_glyph> and C<body_indent>
 (strings and numbers), and the colors C<title_color>, C<accent_color>,
 C<header_background_color>, C<focus_background_color>,
@@ -641,7 +646,7 @@ child nodes (see L<Term::Fabulous::Widget::Accordion::Item/KDL PROPERTIES>):
 	use Term::Fabulous::Widget::Text as Text
 
 	Accordion "settings" {
-		bordered #true
+		item_borders #true
 		toggle_position "end"
 		Item "general" {
 			title "General"

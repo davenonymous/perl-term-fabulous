@@ -93,15 +93,15 @@ class Term::Fabulous::Widget::ScrollBox
 
 	# The gutter is padded by the border, so the scrollbars sit inside it.
 	method _pad_gutter () {
-		my $border = $self->to_config->{border}{width} // {};
-		$_gutter->layout( { %GUTTER_LAYOUT, padding => { map { $_ => $border->{$_} // 0 } qw(left right top bottom) } } );
+		$_gutter->layout( { %GUTTER_LAYOUT, padding => $self->drawn_border_sides } );
 		return;
 	}
 
-	method border_width :override (@new) {
-		my $width = $self->SUPER::border_width(@new);
-		$self->_pad_gutter if @new;
-		return $width;
+	# The border may change with bordered or with the theme
+	# (Term::Fabulous::Role::Themed).
+	method looks_changed (@names) {
+		$self->_pad_gutter if grep { $_ eq 'bordered' } @names;
+		return;
 	}
 
 	method scrollbar (@new) {
@@ -151,7 +151,7 @@ Term::Fabulous::Widget::ScrollBox - A box whose content scrolls
 			padding          => { left => 1, right => 1 },
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 120, 160, 220, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);

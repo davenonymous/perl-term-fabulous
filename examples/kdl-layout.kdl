@@ -34,13 +34,13 @@ Box "root" {
 			sizing width="fixed(18)" height=grow
 			padding left=1 right=1
 			border style=Round color="#61afef"
-			border_width 1
+			bordered #true
 			Text { text "Servers"; text_color "#61afef"; }
 			Button "web" {
 				sizing width=grow
 				padding left=1
 				border style=Thick color="#2c3346"
-				border_width left=1
+				bordered left=#true
 				focus_border_color "#e5c07b"
 				background_color "#2c3346"
 				Text { text "web"; text_color "#dcdcdc"; }
@@ -49,7 +49,7 @@ Box "root" {
 				sizing width=grow
 				padding left=1
 				border style=Thick color="#2c3346"
-				border_width left=1
+				bordered left=#true
 				focus_border_color "#e5c07b"
 				background_color "#2c3346"
 				Text { text "db"; text_color "#dcdcdc"; }
@@ -58,7 +58,7 @@ Box "root" {
 				sizing width=grow
 				padding left=1
 				border style=Thick color="#2c3346"
-				border_width left=1
+				bordered left=#true
 				focus_border_color "#e5c07b"
 				background_color "#2c3346"
 				Text { text "mail"; text_color "#dcdcdc"; }
@@ -71,7 +71,7 @@ Box "root" {
 			sizing width=grow height=grow
 			padding left=1 right=1
 			border style=Round color="hsl(95, 38%, 62%)"
-			border_width 1
+			bordered #true
 			background_color "#1c212d"
 			Text "details-title" { text "Pick a server on the left."; text_color "#98c379"; }
 			Text "details-text" { text ""; text_color "#dcdcdc"; }

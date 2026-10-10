@@ -22,8 +22,8 @@ sub scene {
 	);
 	my $canvas = Term::Fabulous::Widget::Canvas->new(
 		( $args{background} ? ( background_color => $args{background} ) : () ),
-		border_width => 1,
-		layout       => { sizing => { width => sizing_fixed( $args{width} // 6 ), height => sizing_fixed(3) }, padding => { left => 1 } },
+		bordered => 1,
+		layout   => { sizing => { width => sizing_fixed( $args{width} // 6 ), height => sizing_fixed(3) }, padding => { left => 1 } },
 	);
 	$root->add_child($canvas);
 	return ( Term::Fabulous::Static->new( root => $root, width => 12, height => 6 ), $canvas );
@@ -73,7 +73,7 @@ subtest 'a border beside an intact canvas blends with the canvas cells every fra
 	my $canvas = Term::Fabulous::Widget::Canvas->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
 	my $panel  = Term::Fabulous::Widget::Box->new(
 		background_color => [ 0, 0, 200, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 255, 255, 255, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Tall,
 		layout           => { sizing => { width => sizing_fixed(6), height => sizing_fixed(3) } },

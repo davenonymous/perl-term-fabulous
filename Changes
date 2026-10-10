@@ -1,6 +1,31 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Borders are switched on and off instead of sized: Term::Fabulous
+          widgets take bordered (one boolean for all four sides, or a
+          hash of booleans under top, right, bottom and left) instead of
+          Clay::UI's border_width, which now dies with a hint. A border
+          is always one cell thick; room inside it is padding. In a
+          layout file: bordered #true or bordered left=#true top=#true.
+        - Themes decide whether a widget has a border: the new boolean
+          slot border.enabled of the families button, input, text_input,
+          dropdown, accordion, progress, spinner and image (false in the
+          built-in themes), dialog and toast (true). A theme file writes
+          it as border enabled=#true; Term::Fabulous::Theme::Document and
+          the theme editor read and write it, and the editor's preview
+          shows the buttons with and without a border of their own.
+          The box family (plain boxes, scroll boxes, canvases, charts
+          and every widget without a family of its own), tables, tab
+          bars, scrollbars, dividers and text have no border.enabled.
+        - Term::Fabulous::Widget::Accordion's bordered (a border around
+          every item) is now item_borders. A Table takes no bordered: its
+          frame is drawn by its own border parameters.
+        - Term::Fabulous::Check has border_sides; Role::Themed and
+          Role::CanParseLayout have the kind border_sides (and
+          kdl_border_sides); Role::HasBorderStyle has drawn_border_sides,
+          and its contribute_border_sides replaces
+          contribute_border_hidden; a themed parameter may map to no
+          slot of its family.
         - The theme editor: the program fabulous-theme-editor and the
           module Term::Fabulous::ThemeEditor behind it. Themes open in
           tabs; the left side previews every widget family (or widgets
@@ -266,7 +291,7 @@ Revision history for Term::Fabulous
           VirtualList
         - Term::Fabulous::Widget documents descendants and contains, the
           subtree queries every widget inherits from Clay::UI
-        - The layout, floating, border_width and other Clay attributes
+        - The layout, floating and other Clay attributes
           read back with snake_case keys whatever spelling was set
           (Clay::UI stores them that way), so a VirtualList given
           childGap or childAlignment in camelCase uses them, and a
@@ -387,8 +412,8 @@ Revision history for Term::Fabulous
           programs no longer give their root a background of their own).
           Borders without a color are drawn in the theme's border
           token instead of the terminal's default text color, and a
-          widget with a border_width but no border_style gets the
-          theme's style, Round in the built-in themes (was spaces). The theme files
+          bordered widget without a border_style gets the theme's
+          style, Round in the built-in themes (was spaces). The theme files
           moved to examples/themes/, with nord, dracula and
           solarized-light beside ocean
         - Needs Perl 5.32.1 or later (was 5.24)
@@ -623,8 +648,7 @@ Revision history for Term::Fabulous
           the last frame (get_last_commands and get_last_clip_rects are
           gone), and it is complete even when painting died partway.
           Term::Fabulous::Render::Clip is gone; the painters' clip_rect
-          comes from Term::Fabulous::Render. A border wider than one
-          cell takes the mouse only on the cells it draws
+          comes from Term::Fabulous::Render.
         - Kitty keyboard protocol: run asks the terminal whether it
           speaks the protocol and switches it on (flags 1 and 4) until
           run returns; terminals without it are read as before, and
@@ -745,7 +769,7 @@ Revision history for Term::Fabulous
           default); a too-large tree dies with a message that names it
         - Border styles: Tab is gone (it was identical to Wide).
           Hidden now switches a side off: it draws nothing and takes
-          no space, whatever the side's border_width; Blank still
+          no space, even on a bordered side; Blank still
           takes space and draws spaces
         - First version. Terminal UIs from Clay layouts, drawn with
           termbox2: Box, Text and Button widgets, border styles,
@@ -772,8 +796,7 @@ Revision history for Term::Fabulous
           view
         - Tab and Shift-Tab move the keyboard focus after their KeyPress
         - Requires the Clay::UI interaction tracker: focus is read
-          through $ui->interaction, and border_width is validated by
-          Clay::UI when it is set
+          through $ui->interaction
         - Widget::Canvas: a free-drawing buffer of grapheme clusters
           with any foreground and background color, sized by the layout
           (CanvasResize event). Frames keep the cells of canvases that

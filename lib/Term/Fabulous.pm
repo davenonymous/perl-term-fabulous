@@ -2045,7 +2045,7 @@ The C<[bold red]text[/]> markup of a RichText.
 
 =item L<Term::Fabulous::Theme>
 
-The colors and border styles of every widget family: the built-in
+The colors, border styles and borders of every widget family: the built-in
 C<dark> and C<light> themes, themes made in Perl and theme files.
 
 =item L<Term::Fabulous::Theme::Document>

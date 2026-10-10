@@ -364,7 +364,7 @@ L<Term::Fabulous::Examples/RUNNING THE EXAMPLES>).
 
 	# A box with a rounded border, one cell of space left and right of the text.
 	my $frame = Term::Fabulous::Widget::Box->new(
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		border_color => [ 120, 170, 255, 255 ],
 		layout       => { padding => { left => 1, right => 1 } },
@@ -606,7 +606,7 @@ L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, co
 
 L<Term::Fabulous::Manual::Looks/COLORS>, L<Term::Fabulous::Color>.
 
-=item Themes: colors and border styles for every widget, theme files, variants, switching at run time
+=item Themes: colors, border styles and borders for every widget, theme files, variants, switching at run time
 
 L<Term::Fabulous::Manual::Looks/THEMES>, L<Term::Fabulous::Theme>,
 L<Term::Fabulous::Cookbook::Layout/Switch themes at run time (built-in themes and a theme file)>,
@@ -629,7 +629,8 @@ L<Term::Fabulous::Manual::Looks/Alpha and the terminal default color>.
 =item Borders on all or some sides, border styles, a different style per side
 
 L<Term::Fabulous::Manual::Looks/BORDERS>,
-L<Term::Fabulous::Manual::Looks/Border width and space>,
+L<Term::Fabulous::Manual::Looks/Borders and space>,
+L<Term::Fabulous::Manual::Looks/Borders from the theme>,
 L<Term::Fabulous::Enum::BorderStyle>,
 L<Term::Fabulous::Role::HasBorderStyle>,
 L<Term::Fabulous::Cookbook::Layout/Use a different border style on each side>.

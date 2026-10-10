@@ -216,7 +216,7 @@ for tests.
 	);
 
 Called by the dropdown with these parameters, plus C<background_color>,
-C<border_color>, C<border_width>, C<border_style>, C<layout> and
+C<border_color>, C<bordered>, C<border_style>, C<layout> and
 C<floating> (see L<Term::Fabulous::Widget/floating>). Unknown
 parameters die.
 

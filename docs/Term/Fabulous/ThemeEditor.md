@@ -34,7 +34,7 @@ my $ui = Term::Fabulous->new( root => $root, theme => Term::Fabulous::Theme->fro
 
 The theme editor makes and changes the theme files of
 [Term::Fabulous::Theme](Theme.md): the KDL files that set the palette of a theme
-and the colors and border styles of every widget family. It opens each
+and the colors, border styles and borders of every widget family. It opens each
 theme in a tab of its own. The left side of the screen shows a widget
 of every family drawn in the theme of the tab you are on, and you can
 try them out: type into the fields, open the dropdown, move the slider,
@@ -138,7 +138,8 @@ Each row shows four things:
 - the value
 
     a token name (`accent`), a color (`#5fd3c0`), a border style
-    (`Round`), `none` or `reverse`;
+    (`Round`), `true` or `false` (`border.enabled`), `none` or
+    `reverse`;
 
 - where the value comes from
 
@@ -175,6 +176,11 @@ it, so the preview shows the value in its true colors:
     the border styles with a sample of each (only those with joints for
     `tabs.line.style`), and `none` where the slot may have none;
 
+- `border.enabled`
+
+    `true` and `false`: whether the widgets of the family have a border
+    unless the program decides it;
+
 - `theme.name` and `theme.extends`
 
     a field for the name, and the built-in themes to extend.
@@ -189,7 +195,7 @@ is not applied; the dialog says why. A list in a dialog has its frame
 in the accent color while it has the keyboard focus.
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button with a red border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
 </div>
 
 The picture shows the dialog of `button.border.color` with `danger`
@@ -490,8 +496,8 @@ use Term::Fabulous::Widget::TextField;
 # given a color, so the theme decides them all.
 sub sign_in_screen () {
         my $form = Term::Fabulous::Widget::Box->new(
-                border_width => 1,
-                layout       => {
+                bordered => 1,
+                layout   => {
                         layout_direction => CLAY_TOP_TO_BOTTOM,
                         sizing           => { width => sizing_grow( 0, 44 ) },
                         padding          => { left  => 1, right => 1 },
@@ -500,9 +506,9 @@ sub sign_in_screen () {
         );
         my $name     = Term::Fabulous::Widget::TextField->new( placeholder => 'E-mail address', validator => 'email' );
         my $password = Term::Fabulous::Widget::TextField->new( placeholder => 'Password',       mask      => '*' );
-        my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        my $sign_in  = Term::Fabulous::Widget::Button->new( classes => ['primary'], bordered => 1, layout => { padding => { left => 1, right => 1 } } );
         $sign_in->add_child( Term::Fabulous::Widget::Text->new( text => 'Sign in' ) );
-        my $cancel = Term::Fabulous::Widget::Button->new( border_width => 1, layout => { padding => { left => 1, right => 1 } } );
+        my $cancel = Term::Fabulous::Widget::Button->new( bordered => 1, layout => { padding => { left => 1, right => 1 } } );
         $cancel->add_child( Term::Fabulous::Widget::Text->new( text => 'Cancel' ) );
         my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
         $buttons->add_child( $sign_in, $cancel );

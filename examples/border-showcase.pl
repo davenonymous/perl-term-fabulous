@@ -56,7 +56,7 @@ for my $i ( 0 .. $#styles ) {
 		},
 		background_color => [ 35,  40,  55,  255 ],
 		border_color     => [ 180, 200, 220, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_style     => $style,
 	);
 

@@ -38,10 +38,10 @@ sub framed ( $fit, $columns, $rows ) {
 		Term::Fabulous::Widget::Text->new( text => $fit ),
 		Term::Fabulous::Widget::Text->new( text => "fixed ${columns}x$rows" ),
 		Term::Fabulous::Widget::Sixel->new(
-			file         => $fractal,
-			fit          => $fit =~ s/ .*//r,
-			border_width => 1,
-			layout       => { sizing => { width => sizing_fixed( $columns + 2 ), height => sizing_fixed( $rows + 2 ) } },
+			file     => $fractal,
+			fit      => $fit =~ s/ .*//r,
+			bordered => 1,
+			layout   => { sizing => { width => sizing_fixed( $columns + 2 ), height => sizing_fixed( $rows + 2 ) } },
 		),
 	);
 	return $panel;

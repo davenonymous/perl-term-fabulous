@@ -220,12 +220,13 @@ class Term::Fabulous::Widget::Tabs
 	# Look: the bar's, and the border of the pages
 	# ---------------------------------------------------------------------
 
-	# A page has a border around it, or none; its style and color follow
-	# the bar (see Term::Fabulous::Widget::Tabs::Page).
+	# A page has a border around it, or none, as page_border says; its
+	# style and color follow the bar (see
+	# Term::Fabulous::Widget::Tabs::Page).
 	method _restyle_pages () {
-		my $width = $_bar->page_border ? 1 : undef;
+		my $on = $_bar->page_border ? 1 : 0;
 		foreach my $page (@_pages) {
-			$page->border_width($width) unless ( $page->border_width // 0 ) eq ( $width // 0 );
+			$page->bordered($on) unless $page->has_look_override('bordered') && $page->bordered->{top} == $on;
 		}
 		return;
 	}

@@ -75,10 +75,11 @@ style=Round color="border"` in the `button` block holds the keys
 
 Values are strings as the file holds them: a token name (`accent`), a
 color in a format [Term::Fabulous::Color](../Color.md) reads (`#5fd3c0`), a
-border style name (`Round`), `none` (also for `#null` in the file)
-or `reverse`. ["with\_setting"](#with_setting) checks a value as the theme does before
-it writes it, so a document never gets a value its slot cannot take
-from this class.
+border style name (`Round`), `none` (also for `#null` in the file),
+`reverse`, or `true` or `false` for `border.enabled`, which the file
+holds as `#true` or `#false` (`true` or `false` in a KDL 1 file).
+["with\_setting"](#with_setting) checks a value as the theme does before it writes it,
+so a document never gets a value its slot cannot take from this class.
 
 # CONSTRUCTORS
 
@@ -239,10 +240,12 @@ the theme checks it and dies with the reason when the slot cannot take
 it (`Term::Fabulous::Theme::Document: tabs.line.style cannot be
 'none'`); `undef` dies, see ["without\_setting"](#without_setting). A key the text sets
 gets the new value in its place; the line holding it is written anew,
-the rest of the text stays. A new key is added: to the family's first
-block (made at the end of the text when there is none), in its state
-block or variant block (made as needed), next to a node with the same
-head (`border color="accent"` gets `style=Round` added); a token to
+the rest of the text stays. A value for `border.enabled` may also be `1` or
+`0`; the file gets `#true` or `#false`. A new key is added: to the
+family's first block (made at the end of the text when there is none),
+in its state block or variant block (made as needed), next to a node
+with the same head (`border color="accent"` gets `style=Round`
+added); a token to
 the palette block, the name and the base to the theme node. Dies when
 the text is not valid KDL (["has\_syntax\_error"](#has_syntax_error)); other errors do not
 stop changes.

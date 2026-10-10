@@ -43,7 +43,7 @@ my $card = Term::Fabulous::Widget::Box->new(
 		child_gap        => 1,
 	},
 	background_color => [ 30, 35, 50, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_color     => [ 97, 175, 239, 255 ],
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 );
@@ -59,7 +59,7 @@ foreach my $sample ( [ 'fit', sizing_fit(), [ 152, 195, 121, 255 ] ], [ 'grow', 
 	my ( $caption, $width, $color ) = @$sample;
 	my $box = Term::Fabulous::Widget::Box->new(
 		background_color => [ map( { int( $_ * 0.35 ) } @{$color}[ 0 .. 2 ] ), 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => $color,
 		border_style     => Term::Fabulous::Enum::BorderStyle->Solid,
 		layout           => { sizing => { width => $width }, padding => { left => 1, right => 1 } },

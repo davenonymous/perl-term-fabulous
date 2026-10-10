@@ -106,7 +106,6 @@ class Term::Fabulous::Widget::Box
 			classes             => \&_parse_classes,
 			glyphs_show_through => 'boolean',
 			border_color        => 'color',
-			border_width        => 'scalar',
 			width_group         => 'scalar',
 			height_group        => 'scalar',
 			layout              => \&_parse_layout,
@@ -221,7 +220,7 @@ Term::Fabulous::Widget::Box - The general-purpose container widget
 			child_gap        => 1,
 		},
 		background_color => [ 30, 35, 50, 255 ],
-		border_width     => 1,
+		bordered         => 1,
 		border_color     => [ 97, 175, 239, 255 ],
 		border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	);
@@ -311,11 +310,12 @@ transparent.
 A boolean. Default: false. With a translucent C<background_color>,
 whether text and borders below the box stay visible through it.
 
-=item C<border_width>
+=item C<bordered>
 
-The border's width, a number for all sides or a hash reference with
-C<left>, C<right>, C<top> and C<bottom>. Default: C<undef>, so there is
-no border.
+Which sides have a border: a true value for all four sides, or a hash
+reference with any of C<left>, C<right>, C<top> and C<bottom> and true
+or false values. Default: no border; the theme has no
+C<border.enabled> for a Box (see L<Term::Fabulous::Widget/bordered>).
 
 =item C<border_color>
 
@@ -373,7 +373,7 @@ A Box has all methods of L<Term::Fabulous::Widget>: children
 (C<add_child>, C<remove_child>, C<children>, ...), events (C<on>,
 C<fire_event>), the search L<Term::Fabulous::Widget/find_by_id>, the
 accessors C<layout>, C<floating>, C<background_color>,
-C<glyphs_show_through>, C<border_color>, C<border_width>, C<border_style_top>,
+C<glyphs_show_through>, C<border_color>, C<bordered>, C<border_style_top>,
 C<border_style_right>, C<border_style_bottom>, C<border_style_left>,
 C<width_group> and C<height_group>, and the state methods. It adds
 nothing for applications; the methods in L</SUBCLASS INTERFACE> are for
@@ -408,7 +408,7 @@ unknown keys and invalid values die, naming the property.
 		padding left=1 right=1
 		child_alignment x=center
 		border style=Round color="#61afef"
-		border_width 1
+		bordered #true
 		background_color "rgb(30, 35, 50)"
 
 		Text { text "Title"; text_color "#ffffff"; }
@@ -507,7 +507,7 @@ name dies with the known ones.
 		floating attach_to=element parent_id="menu-button" element=left_top parent=left_bottom
 		floating z_index=10
 		border style=Round
-		border_width 1
+		bordered #true
 	}
 
 =item C<padding left=N right=N top=N bottom=N>
@@ -523,11 +523,13 @@ L<Term::Fabulous::Enum::BorderStyle> items (C<Round>, C<Solid>,
 C<Double>, ...). C<color> takes any color string that
 L<Term::Fabulous::Color> understands (C<"#61afef">,
 C<"rgb(97, 175, 239)">, C<"hsl(207, 82%, 66%)">, ...). This property
-does not make a border appear: also give C<border_width>.
+does not make a border appear: also give C<bordered>.
 
-=item C<border_width N> or C<border_width left=N right=N top=N bottom=N>
+=item C<bordered #true> or C<bordered top=#true right=#true bottom=#true left=#true>
 
-The border width, for all sides or per side.
+A border on all four sides, or on the sides named C<#true>; the sides
+left out have none. C<#false> (or C<0>) gives no border. Any other
+value dies, a quoted C<"true"> included.
 
 =item C<background_color "...">
 
@@ -569,10 +571,12 @@ also provides C<apply_layout_node> and C<apply_layout_settings>.
 The table of the properties a layout may set and how each is read (see
 L<Term::Fabulous::Role::CanParseLayout/layout_properties>). For a Box:
 C<background_color> and C<border_color> are colors,
-C<glyphs_show_through> is a boolean, C<border_width>, C<width_group>
-and C<height_group> are scalars, and C<layout>, C<border>, C<sizing>,
+C<glyphs_show_through> is a boolean, C<width_group> and
+C<height_group> are scalars, and C<layout>, C<border>, C<sizing>,
 C<padding>, C<child_alignment> and C<floating> are structured
-properties the Box parses itself (see L</KDL PROPERTIES>). Subclasses
+properties the Box parses itself (see L</KDL PROPERTIES>). C<bordered>
+is a layout property by itself, as a themed parameter (see
+L<Term::Fabulous::Role::CanParseLayout/layout_properties>). Subclasses
 extend the table as shown.
 
 =head1 SEE ALSO

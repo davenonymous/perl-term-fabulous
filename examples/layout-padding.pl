@@ -53,9 +53,9 @@ $root->add_child(
 	demo( [ 'no padding',            'child_gap 0' ],               {} ),
 	demo( [ 'padding left/right 2,', 'top/bottom 1, child_gap 1' ], { padding => { left => 2, right => 2, top => 1, bottom => 1 }, child_gap => 1 } ),
 	demo(
-		[ 'border_width 1 and', 'padding_all(1)' ],
+		[ 'bordered and', 'padding_all(1)' ],
 		{ padding => padding_all(1) },
-		border_width => 1,
+		bordered     => 1,
 		border_color => [ 255, 255, 255, 255 ],
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 	),

@@ -28,7 +28,7 @@ $root->add_child( Term::Fabulous::Widget::Text->new( text => 'Temperature over 2
 
 my $plot = Term::Fabulous::Widget::PixelCanvas->new(
 	background_color => [ 10, 12, 20, 255 ],
-	border_width     => 1,
+	bordered         => 1,
 	border_style     => Term::Fabulous::Enum::BorderStyle->Round,
 	border_color     => [ 120, 160, 220, 255 ],
 	layout           => { sizing => { width => sizing_grow(), height => sizing_grow() } },

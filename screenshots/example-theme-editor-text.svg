@@ -114,25 +114,24 @@
 <text x="957" y="128" textLength="36" fill="#101216">Text</text>
 <text x="75" y="146" textLength="63" class="b" fill="#8fb3c2">Palette</text>
 <text x="552" y="146" text-anchor="middle" fill="#dcdfe4">　</text>
-<text x="561" y="146" textLength="234" fill="#dcdfe4">focus_background &quot;#1a3a48&quot;</text>
+<text x="561" y="146" textLength="234" fill="#dcdfe4">hover_background &quot;#153240&quot;</text>
 <text x="552" y="164" text-anchor="middle" fill="#dcdfe4">　</text>
-<text x="561" y="164" textLength="234" fill="#dcdfe4">hover_background &quot;#153240&quot;</text>
+<text x="561" y="164" textLength="153" fill="#dcdfe4">success &quot;#9ad46b&quot;</text>
 <text x="84" y="182" textLength="252" fill="#d8e8ee">accent              backdrop</text>
 <text x="552" y="182" text-anchor="middle" fill="#dcdfe4">　</text>
-<text x="561" y="182" textLength="153" fill="#dcdfe4">success &quot;#9ad46b&quot;</text>
+<text x="561" y="182" textLength="153" fill="#dcdfe4">warning &quot;#f0c674&quot;</text>
 <text x="84" y="200" textLength="234" fill="#d8e8ee">background          border</text>
 <text x="552" y="200" text-anchor="middle" fill="#dcdfe4">　</text>
-<text x="561" y="200" textLength="153" fill="#dcdfe4">warning &quot;#f0c674&quot;</text>
+<text x="561" y="200" textLength="144" fill="#dcdfe4">danger &quot;#f27e7e&quot;</text>
 <text x="84" y="218" textLength="297" fill="#d8e8ee">button_face         control_hover</text>
-<text x="552" y="218" text-anchor="middle" fill="#dcdfe4">　</text>
-<text x="561" y="218" textLength="144" fill="#dcdfe4">danger &quot;#f27e7e&quot;</text>
+<text x="543" y="218" textLength="9" fill="#dcdfe4">}</text>
 <text x="84" y="236" textLength="252" fill="#d8e8ee">danger              disabled</text>
-<text x="543" y="236" textLength="9" fill="#dcdfe4">}</text>
 <text x="84" y="254" textLength="324" fill="#d8e8ee">focus_background    group_background</text>
+<text x="543" y="254" textLength="441" fill="#dcdfe4">// Buttons with a border get round ones; a button</text>
 <text x="84" y="272" textLength="261" fill="#d8e8ee">hover_background    hover_low</text>
-<text x="543" y="272" textLength="450" fill="#dcdfe4">// Buttons get round borders; a button with classe</text>
+<text x="543" y="272" textLength="450" fill="#dcdfe4">// classes =&gt; ['primary'] is drawn in the accent a</text>
 <text x="84" y="290" textLength="243" fill="#d8e8ee">line                outline</text>
-<text x="543" y="290" textLength="441" fill="#dcdfe4">// drawn in the accent and brightens while it has</text>
+<text x="543" y="290" textLength="153" fill="#dcdfe4">// has the focus.</text>
 <text x="84" y="308" textLength="252" fill="#d8e8ee">placeholder         selected</text>
 <text x="543" y="308" textLength="72" fill="#dcdfe4">button {</text>
 <text x="84" y="326" textLength="243" fill="#d8e8ee">selection           success</text>
@@ -172,14 +171,14 @@
 <text x="156" y="542" textLength="324" fill="#d8e8ee">. Point at a link to see it hovered;</text>
 <text x="57" y="560" textLength="360" fill="#d8e8ee">Tab to the text and Right to select one.</text>
 <text x="543" y="560" textLength="207" fill="#dcdfe4">button { text &quot;acent&quot; }</text>
-<text x="543" y="578" textLength="72" class="b" fill="#e06c75">Line 51:</text>
+<text x="543" y="578" textLength="72" class="b" fill="#e06c75">Line 52:</text>
 <text x="624" y="578" textLength="360" fill="#dcdfe4">button.text must be a color, got 'acent'</text>
 <text x="75" y="596" textLength="99" class="b" fill="#8fb3c2">Boxes (box)</text>
 <text x="543" y="596" textLength="315" fill="#dcdfe4">(unrecognized color string 'acent')</text>
 <text x="39" y="632" textLength="522" fill="#dcdfe4">Text mode: the file as it is; the preview follows your ty~</text>
 <text x="579" y="632" textLength="63" fill="#e06c75">1 error</text>
 <text x="660" y="632" textLength="72" fill="#61afef">modified</text>
-<text x="750" y="632" textLength="171" fill="#dcdfe4">Ln 51, Col 24  Text</text>
+<text x="750" y="632" textLength="171" fill="#dcdfe4">Ln 52, Col 24  Text</text>
 <text x="939" y="632" textLength="63" fill="#787e8a">F1 keys</text>
 </g>
 <g shape-rendering="crispEdges">

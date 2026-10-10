@@ -179,7 +179,7 @@ C<disabled> and C<value>, and no colors (the buttons have them).
 	my $group = Term::Fabulous::Widget::RadioGroup->new(%parameters);
 
 Accepts the parameters of L<Term::Fabulous::Widget::Box> (C<id>,
-C<layout>, C<background_color>, C<border_width>, C<border_color>,
+C<layout>, C<background_color>, C<bordered>, C<border_color>,
 C<border_style>, ...) and the ones below. Unknown parameters die.
 
 =over

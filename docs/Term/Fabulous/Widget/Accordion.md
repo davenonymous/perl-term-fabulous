@@ -30,10 +30,10 @@ $settings->on( Select => sub ($event) {
 
 # DESCRIPTION
 
-The picture shows two accordions: one with its second section open
-and its last section disabled, and a bordered one with the toggles at
-the end of the headers and two sections open at once. The program is
-`examples/widgets/accordion.pl`.
+The picture shows two accordions: one with its second section open and
+its last section disabled, and one with a border around every item and
+the toggles at the end of the headers and two sections open at once. The
+program is `examples/widgets/accordion.pl`.
 
 An accordion stacks sections, its _items_, each with a header line
 and a body that shows while the item is open:
@@ -62,7 +62,7 @@ the widgets you add to the item and is part of the widget tree only
 while the item is open, so a closed body takes no space. The look of
 the headers (the glyphs, their colors, where the toggle sits, borders
 around the items) is set once, on the accordion. By default the
-toggle sits at the start of the header, as in a tree; `bordered` and
+toggle sits at the start of the header, as in a tree; `item_borders` and
 `toggle_position => 'end'` give the look of a web page's
 accordion.
 
@@ -87,10 +87,14 @@ and the ones below. All are optional; unknown parameters die.
     A boolean. Default: 0, one open item at a time. True lets any number
     of items be open. Stored as 1 or 0; a reference dies.
 
-- `bordered`
+- `item_borders`
 
-    A boolean. Default: 0. True draws a round border around every item,
-    in `disabled_color`.
+    A boolean. Default: 0. True draws a border around every item, in the
+    theme's `accordion.border.style` and `accordion.border.color`: a
+    `Round` border in the `disabled` token's gray in the built-in
+    themes. Stored as 1 or 0. Not to be confused with `bordered`, which
+    frames the whole accordion, as it frames any box (see
+    ["bordered" in Term::Fabulous::Widget](../Widget.md#bordered)).
 
 - `toggle_position`
 
@@ -140,7 +144,7 @@ and the ones below. All are optional; unknown parameters die.
 
     The color of a disabled item's header. Default: the theme's
     `accordion.disabled`, `[108, 112, 120, 255]` in the dark theme, a
-    gray. The borders of a `bordered` accordion take the theme's
+    gray. The borders of the items (`item_borders`) take the theme's
     `accordion.border.color` and `accordion.border.style`; the six
     colors return to the theme with ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look).
 
@@ -259,13 +263,13 @@ $accordion->multiple(1);
 Accessor for the `multiple` parameter. Writing 0 while several items
 are open closes all but the first. Returns 1 or 0.
 
-## bordered
+## item\_borders
 
 ```perl
-$accordion->bordered(1);
+$accordion->item_borders(1);
 ```
 
-Accessor for the `bordered` parameter. Returns 1 or 0.
+Accessor for the `item_borders` parameter. Returns 1 or 0.
 
 ## toggle\_position
 
@@ -406,7 +410,7 @@ bodies bubble through the accordion as well.
 # KDL PROPERTIES
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties), plus
-`multiple`, `bordered` and `title_bold` (`#true` / `#false`),
+`multiple`, `item_borders` and `title_bold` (`#true` / `#false`),
 `toggle_position`, `open_glyph`, `closed_glyph` and `body_indent`
 (strings and numbers), and the colors `title_color`, `accent_color`,
 `header_background_color`, `focus_background_color`,
@@ -419,7 +423,7 @@ use Term::Fabulous::Widget::Accordion::Item as Item
 use Term::Fabulous::Widget::Text as Text
 
 Accordion "settings" {
-        bordered #true
+        item_borders #true
         toggle_position "end"
         Item "general" {
                 title "General"

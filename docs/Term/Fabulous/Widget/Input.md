@@ -158,7 +158,7 @@ changes with every key, so the text stays red until the address is
 complete. The cursor takes the color of the text.
 - **Valid**, **invalid**: the text of an invalid value is drawn in
 `invalid_color`, by default the theme's `danger` red.
-- **Invalid, border**: an input with a border (`border_width => 1`)
+- **Invalid, border**: an input with a border (`bordered => 1`)
 also draws its border in the `danger` red, unless it was given a
 `border_color` of its own.
 - **Required, empty**: an empty text field shows its placeholder in the
@@ -236,12 +236,15 @@ dies.
     default to a dark gray (`[36, 40, 48, 255]`); the other inputs have no
     background of their own and show the background of their parent.
 
-- `border_width`
+- `bordered`
 - `border_color`
 - `border_style`
 
     A border around the input, exactly as for
     [Term::Fabulous::Widget::Box](Box.md); see ["BORDERS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#borders).
+    Without `bordered`, the theme's `border.enabled` for the input's
+    family decides (`input`, `text_input` or `dropdown`; `false` in
+    the built-in themes, so inputs have no border).
     The border takes cells inside the widget's box; the natural size is
     grown accordingly.
 
@@ -566,7 +569,7 @@ Every input has a natural content size: for example one row and as many
 columns as its label needs (a checkbox), or `preferred_columns` by one
 row (a text field). When the `layout` gives no `sizing` for an axis,
 the input is given a fixed size on that axis: its natural size plus its
-padding and border width (see ["Size" in Term::Fabulous::Widget::Display](Display.md#size)).
+padding and its border (see ["Size" in Term::Fabulous::Widget::Display](Display.md#size)).
 A `sizing` in the `layout` always wins:
 
 ```perl
@@ -633,7 +636,7 @@ bubbles further.
 In a layout file (see [Term::Fabulous::Layout](../Layout.md)), every input accepts
 the properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties)
 (`layout`, `sizing`, `padding`, `border`, `background_color`,
-`border_color`, `border_width`, `width_group`, `height_group`) and
+`border_color`, `bordered`, `width_group`, `height_group`) and
 the following ones. The string after the widget name is its `id`
 (`TextField "name"` is the `id` `name`).
 

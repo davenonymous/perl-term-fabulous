@@ -100,11 +100,11 @@ subtest 'the style a side is drawn in' => sub {
 	like dies { $box->border_style_of('middle') }, qr/border_style_of takes a side \(left right top bottom\), got 'middle'/, 'an unknown side dies';
 
 	my $none = Term::Fabulous::Theme->new( name => 'none', slots => { 'box.border.style' => 'none' } );
-	my $bare = Term::Fabulous::Widget::Box->new( border_width => 1, layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
+	my $bare = Term::Fabulous::Widget::Box->new( bordered => 1, layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
 	my $ui   = Term::Fabulous::Static->new( root => $bare, width => 4, theme => $none );
 	ref_is $bare->border_style_of('top'), $Style->Blank, 'without a style anywhere: Blank';
 
-	my $framed = DerivingBox->new( border_width => 1, border_style => 'Solid', layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
+	my $framed = DerivingBox->new( bordered => 1, border_style => 'Solid', layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(3) } } );
 	$framed->border_style_left(undef);
 	$framed->border_style_bottom(undef);
 	is [ Term::Fabulous::Static->new( root => $framed, width => 4 )->render_lines( colors => 0 ) ], [ "\x{250C}\x{2500}\x{2500}\x{2510}", "\x{2551}  \x{2502}", "\x{2551}  \x{2502}" ],

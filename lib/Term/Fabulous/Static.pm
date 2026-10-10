@@ -98,7 +98,7 @@ Term::Fabulous::Static - Render a widget tree to text once, without a terminal
 			sizing           => { width => sizing_grow(), height => sizing_fit() },
 			padding          => { left => 1, right => 1 },
 		},
-		border_width => 1,
+		bordered     => 1,
 		border_style => Term::Fabulous::Enum::BorderStyle->Round,
 		border_color => [ 180, 200, 220, 255 ],
 	);

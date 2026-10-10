@@ -307,7 +307,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 
 # A box with a rounded border, one cell of space left and right of the text.
 my $frame = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 170, 255, 255 ],
         layout       => { padding => { left => 1, right => 1 } },
@@ -514,7 +514,7 @@ program, and the class pages with the reference.
 
     ["COLORS" in Term::Fabulous::Manual::Looks](Manual/Looks.md#colors), [Term::Fabulous::Color](Color.md).
 
-- Themes: colors and border styles for every widget, theme files, variants, switching at run time
+- Themes: colors, border styles and borders for every widget, theme files, variants, switching at run time
 
     ["THEMES" in Term::Fabulous::Manual::Looks](Manual/Looks.md#themes), [Term::Fabulous::Theme](Theme.md),
     ["Switch themes at run time (built-in themes and a theme file)" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#switch-themes-at-run-time-built-in-themes-and-a-theme-file),
@@ -537,7 +537,8 @@ program, and the class pages with the reference.
 - Borders on all or some sides, border styles, a different style per side
 
     ["BORDERS" in Term::Fabulous::Manual::Looks](Manual/Looks.md#borders),
-    ["Border width and space" in Term::Fabulous::Manual::Looks](Manual/Looks.md#border-width-and-space),
+    ["Borders and space" in Term::Fabulous::Manual::Looks](Manual/Looks.md#borders-and-space),
+    ["Borders from the theme" in Term::Fabulous::Manual::Looks](Manual/Looks.md#borders-from-the-theme),
     [Term::Fabulous::Enum::BorderStyle](Enum/BorderStyle.md),
     [Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md),
     ["Use a different border style on each side" in Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md#use-a-different-border-style-on-each-side).

@@ -293,6 +293,16 @@ subtest 'values are checked before they are written' => sub {
 	is $document->with_setting( 'box.background',            'none' )->text,                                    qq{box {\n\tbackground "none"\n}\n}, 'none';
 };
 
+subtest 'border.enabled is written and read as a KDL boolean' => sub {
+	my $document = $Document->parse(qq{text_input {\n\tborder style=Solid\n}\n})->with_setting( 'text_input.border.enabled', 1 );
+	is $document->text,                                          qq{text_input {\n\tborder style=Solid enabled=#true\n}\n}, 'true joins the border node as #true';
+	is $document->setting('text_input.border.enabled'),          'true',                                                    'and reads as true';
+	is $document->theme->look( 'text_input', 'border.enabled' ), 1,                                                         'the theme has it';
+	is $Document->parse(qq{button {\n\tborder enabled=true\n}\n})->with_setting( 'button.border.enabled', 'false' )->text, qq{button {\n\tborder enabled=false\n}\n},         'a KDL 1 file gets false';
+	is [ map { $_->{message} } $Document->parse(qq{button {\n\tborder enabled="true"\n}\n})->errors ],                     ['button.border.enabled must be #true or #false'], 'a string is an error';
+	like dies { $document->with_setting( 'text_input.border.enabled', 'yes' ) }, qr/text_input\.border\.enabled must be true, false, 1 or 0, got 'yes'/, 'another value dies';
+};
+
 subtest 'files' => sub {
 	my $directory = tempdir( CLEANUP => 1 );
 	my $path      = "$directory/theme.kdl";

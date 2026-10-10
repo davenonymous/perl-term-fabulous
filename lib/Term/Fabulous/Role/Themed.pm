@@ -11,7 +11,7 @@ use Object::Pad 0.825;
 
 role Term::Fabulous::Role::Themed {
 	use Scalar::Util qw(blessed);
-	use Term::Fabulous::Check qw(border_style cell_color color describe optional);
+	use Term::Fabulous::Check qw(border_sides border_style cell_color color describe optional);
 	use Term::Fabulous::Theme;
 
 	# The family of the class (a class method): button, input, ...
@@ -21,7 +21,9 @@ role Term::Fabulous::Role::Themed {
 	# name => [ slot, state ] or name => [ slot, state, kind ]; a subclass
 	# adds its own to its parent's. A kind says how a value is checked
 	# (see %KIND); the role takes the parameters of a kind from the
-	# constructor and declares them as layout properties.
+	# constructor and declares them as layout properties. A slot of undef
+	# (with a kind) is a parameter the family has no slot for: only an
+	# explicit value counts.
 	method themed_params;
 
 	# The state the widget shows now, from the states its family's slots
@@ -58,6 +60,7 @@ role Term::Fabulous::Role::Themed {
 			noun     => 'a border style with joints or its name',
 			property => 'scalar',
 		},
+		border_sides => { check => \&border_sides, noun => 'a boolean or a hash reference of sides', property => 'border_sides' },
 	);
 
 	sub _optional ($check) {
@@ -81,8 +84,9 @@ role Term::Fabulous::Role::Themed {
 				die "$class: themed parameter '$name' must map to [ slot, state ] or [ slot, state, kind ], got " . describe($mapping)
 					unless ref $mapping eq 'ARRAY' && ( @$mapping == 2 || @$mapping == 3 );
 				my ( $slot, $state, $kind ) = @$mapping;
+				die "$class: themed parameter '$name' maps to no slot, so it needs a kind" unless defined $slot || defined $kind;
 				die "$class: themed parameter '$name' maps to $slot" . ( $state eq 'normal' ? '' : ".$state" ) . ", which the family $family does not have"
-					unless Term::Fabulous::Theme::has_slot( $family, $slot, $state );
+					unless !defined $slot || Term::Fabulous::Theme::has_slot( $family, $slot, $state );
 				$checked{$name} = { slot => $slot, state => $state, _kind_of( $class, $name, $kind ) };
 			}
 			\%checked;
@@ -102,7 +106,7 @@ role Term::Fabulous::Role::Themed {
 	sub _param_of_look_of ($class) {
 		return $param_of_look_of{$class} //= do {
 			my $params       = _themed_params_of($class);
-			my %name_of_look = map { join( '.', @{ $params->{$_} }{qw(slot state)} ) => $_ } keys %$params;
+			my %name_of_look = map { join( '.', @{ $params->{$_} }{qw(slot state)} ) => $_ } grep { defined $params->{$_}{slot} } keys %$params;
 			\%name_of_look;
 		};
 	}
@@ -271,6 +275,7 @@ role Term::Fabulous::Role::Themed {
 		return $part->look_value($name) if defined $part;
 		return $_override{$name} if exists $_override{$name};
 		my $param = _themed_params_of( ref $self )->{$name} // $self->_unknown_look( look_value => $name );
+		return undef unless defined $param->{slot};
 		return $self->look( @{$param}{qw(slot state)} );
 	}
 
@@ -327,7 +332,7 @@ __END__
 =head1 NAME
 
 Term::Fabulous::Role::Themed - How a widget reads its colors and
-border styles from the theme
+borders from the theme
 
 =head1 SYNOPSIS
 
@@ -358,8 +363,8 @@ border styles from the theme
 
 Every Term::Fabulous widget composes this role (through
 L<Term::Fabulous::Widget> or L<Term::Fabulous::Widget::Text>). It
-holds the widget's I<explicit> looks, the colors and border styles the
-program set, and reads everything else from the
+holds the widget's I<explicit> looks, the colors, border styles and
+borders the program set, and reads everything else from the
 L<Term::Fabulous::Theme> of the UI the widget is in, for the widget's
 I<family> and I<classes>: the theme the UI's
 L<theme_for|Term::Fabulous::Render/theme_for> returns for the widget,
@@ -409,6 +414,15 @@ exist in the family; the first use of the class checks that, and the
 kind, and dies otherwise. A subclass returns its parent's list plus
 its own.
 
+A parameter with a kind may map to the slot C<undef>: the family has
+no slot for it, so only an explicit value counts and L</look_value>
+answers C<undef> without one. L<Term::Fabulous::Widget> declares
+C<bordered> this way for the families that have no C<border.enabled>:
+
+	my $slot = Term::Fabulous::Theme::has_slot( $class->theme_family, 'border.enabled' ) ? 'border.enabled' : undef;
+	...
+	bordered => [ $slot, 'normal', 'border_sides' ],
+
 The kind says what a value is:
 
 =over
@@ -432,6 +446,15 @@ A L<Term::Fabulous::Enum::BorderStyle> item or its name
 (L<Term::Fabulous::Check/border_style>); C<grid_border_style> only a
 style with joints. C<undef> dies as for a color. A C<'scalar'> layout
 property.
+
+=item C<border_sides>
+
+The sides of a border (L<Term::Fabulous::Check/border_sides>): one
+boolean for all four sides or a hash reference of booleans under the
+side names, stored as a hash of all four sides, 1 or 0. It maps to a
+boolean slot, whose 1 or 0 stands for all four sides, or to no slot
+(see above). C<undef> dies as
+for a color. A C<'border_sides'> layout property.
 
 =item a code reference
 
@@ -551,8 +574,8 @@ L<layout_properties|Term::Fabulous::Role::CanParseLayout/layout_properties>.
 The theme's value of a slot of the widget's family in a state
 (C<normal> by default), for the widget's classes: C<[r, g, b, a]>, a
 L<Term::Fabulous::Enum::BorderStyle> item, C<'reverse'> or C<undef>
-for none. A state the theme gives no value of its own looks like the
-normal state.
+for none, 1 or 0 for a boolean slot (C<border.enabled>). A state the
+theme gives no value of its own looks like the normal state.
 
 =head2 family_look
 
@@ -570,7 +593,8 @@ L<Term::Fabulous::Widget::Display> by itself.
 
 What a themed parameter is worth: the explicit value when the program
 set one, else the theme's value of the slot and state the parameter
-maps to. A forwarded look is the first part's. Dies for a name that is
+maps to, or C<undef> for a parameter that maps to no slot. A forwarded
+look is the first part's. Dies for a name that is
 neither in L</themed_params> nor in L</forwarded_looks>.
 
 =head2 themed_value

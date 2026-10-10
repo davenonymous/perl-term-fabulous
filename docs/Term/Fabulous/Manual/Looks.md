@@ -532,15 +532,19 @@ once, and to switch all the colors at run time, use a theme
 # BORDERS
 
 Every widget except [Term::Fabulous::Widget::Text](../Widget/Text.md) can have a border:
-boxes, buttons, scroll boxes, dialogs, canvases, charts, tables and the
-input widgets. Three parameters control it:
+boxes, buttons, scroll boxes, dialogs, toasts, canvases, charts, the
+input widgets, accordions, progress bars, spinners and images. (A table draws its frame and its lines itself; see
+["Lines between and around the cells" in Term::Fabulous::Manual::TableStyles](TableStyles.md#lines-between-and-around-the-cells).)
+Three parameters control it:
 
-- `border_width`
+- `bordered`
 
-    Which sides have a border, and how much room it takes: a number for
-    all four sides, or a hash reference such as
-    `{ left => 1, top => 1 }` (missing sides have no border).
-    See ["Border width and space"](#border-width-and-space).
+    Which sides have a border: a true value for all four sides, or a hash
+    reference such as `{ left => 1, top => 1 }` for some of
+    them (the sides it leaves out have none). Without it, the theme
+    decides for the widget's family: the built-in themes give dialogs and
+    toasts a border and no other widget. See ["Borders and space"](#borders-and-space) and
+    ["Borders from the theme"](#borders-from-the-theme).
 
 - `border_style`
 
@@ -560,27 +564,28 @@ input widgets. Three parameters control it:
 use Term::Fabulous::Enum::BorderStyle;
 
 my $panel = Term::Fabulous::Widget::Box->new(
-        border_width => 1,
+        bordered     => 1,
         border_style => Term::Fabulous::Enum::BorderStyle->Round,
         border_color => [ 120, 170, 255, 255 ],
 );
 ```
 
 In a KDL layout file, the style and the color are attributes of the
-`border` node, and the width is a property of its own:
+`border` node, and `bordered` is a property of its own:
 
 ```kdl
 Box "panel" {
         border style=Round color="#78aaff"
-        border_width 1
+        bordered #true
 }
 ```
 
-A border needs a width: a style without a width draws nothing. A side
-with a width but no style takes the style the theme gives the widget's
-family, `Round` for every box, button and input in the built-in
-themes; a theme that sets a family's style to `none` has such a side
-drawn with spaces (the `Blank` style).
+A border needs `bordered` (or the theme's `border.enabled`): a style
+or a color alone draws nothing. A side with a border but no style
+takes the style the theme gives the widget's family, `Round` for
+every family in the built-in themes; a theme that sets a family's
+style to `none` has such a side drawn with spaces (the `Blank`
+style).
 
 ## Border styles
 
@@ -597,7 +602,7 @@ my $style = Term::Fabulous::Enum::BorderStyle->from_name('Double')
 ```
 
 `Hidden` switches a side off: it draws nothing and takes no space,
-whatever its width. Some styles (`Block`, `Panel`, `Tall`, `Wide`,
+whatever `bordered` says. Some styles (`Block`, `Panel`, `Tall`, `Wide`,
 `Inner`) draw half of their characters on the background outside the
 widget, so that the border blends into the parent; they look best when
 the widget and its parent have different background colors.
@@ -616,7 +621,7 @@ their own. The side accessors change one side afterwards:
 
 ```perl
 my $card = Term::Fabulous::Widget::Box->new(
-        border_width      => 1,
+        bordered          => 1,
         border_style      => Term::Fabulous::Enum::BorderStyle->Solid,    # all four sides ...
         border_style_left => Term::Fabulous::Enum::BorderStyle->Thick,    # ... except the left one
 );
@@ -637,40 +642,38 @@ change all four sides, call the four side accessors. The recipe
 [Use a different border style on each side](../Cookbook/Layout.md#use-a-different-border-style-on-each-side) is a
 complete program.
 
-## Border width and space
+## Borders and space
 
-A border is drawn on the outermost cells of the widget, inside its box,
-and takes room in the layout: Term::Fabulous adds the width of every
-side to that side's padding, so the content always starts inside the
-border, and the `padding` of the widget's `layout` is extra room
-between the border and the content. A widget with `fit` sizing grows
-by the border. See also
-["Borders take space" in Term::Fabulous::Manual::Layout](Layout.md#borders-take-space).
+A border is one line of characters on each side that has one, drawn on
+the outermost cells of the widget, inside its box, and it takes room in
+the layout: Term::Fabulous adds a cell to the padding of every side
+with a border, so the content always starts inside the border, and the
+`padding` of the widget's `layout` is extra room between the border
+and the content. A widget with `fit` sizing grows by the border. See
+also ["Borders take space" in Term::Fabulous::Manual::Layout](Layout.md#borders-take-space).
 
-Only one line of border characters is drawn per side. A width larger
-than 1 adds empty cells inside the line: `border_width => 2` is a
-border plus one cell of padding. Each width is an integer from 0 to
-65535; any other value dies. A hash takes the keys `left`, `right`,
-`top` and `bottom`; Clay's `between_children` key is not supported.
-A side with the `Hidden` style takes no space, whatever its width, so
-the content reaches that edge of the widget; use it to switch a side
-off without changing `border_width`.
+`bordered` takes one true or false value for all four sides, or a hash with any of the keys `left`, `right`, `top` and
+`bottom` and true or false values: a side the hash leaves out has no
+border, and an unknown key dies. A side with the `Hidden` style takes
+no space, even where the widget has a border, so the content reaches
+that edge of the widget; use it to switch off one side of a border the
+theme gives all four sides.
 
 ```perl
 my $rule = Term::Fabulous::Widget::Box->new(    # a line above and at the left only
-        border_width => { left => 1, top => 1 },
+        bordered     => { left => 1, top => 1 },
         border_style => Term::Fabulous::Enum::BorderStyle->Solid,
 );
 ```
 
-In a KDL layout file: `border_width left=1 top=1`.
+In a KDL layout file: `bordered left=#true top=#true`.
 
 `examples/border-options.pl` shows a border on two sides, per-side
-styles, `border_width => 2`, a `Hidden` side and the two
-parameters of ["Joining borders"](#joining-borders):
+styles, a border with a cell of padding inside, a `Hidden` side and
+the two parameters of ["Joining borders"](#joining-borders):
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border of width 2 with an empty cell inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-border-options.svg" alt="Six bordered panels: a border on the left and top only; a solid border with a double top and a thick left side; a round border with a cell of padding inside; a round border with a hidden bottom side; a title box and a body box sharing one line; a round border drawn on the parent's background"></p>
 </div>
 
 ## Border colors
@@ -689,8 +692,34 @@ $panel->border_color('#ff5050');    # shown in the next frame
 A widget that was given no `border_color` or no `border_style` takes
 them from the theme, where the theme has them for the widget's family
 (a button, a dialog, a toast, ...); see ["THEMES"](#themes). The built-in
-themes draw every border in their `border` token and in the `Round`
-style, so a Box with a `border_width` alone gets a round frame.
+themes draw the border of a Box in their `border` token and in the
+`Round` style, so a Box given `bordered` alone gets a round frame.
+
+## Borders from the theme
+
+A widget that is not given `bordered` has a border when the theme's
+`border.enabled` says so for its family. The built-in themes give
+dialogs and toasts a border and no other widget. A theme can give one
+to buttons; to the inputs, in three families that are set one by one
+(`input`: check boxes, radio buttons, sliders, star ratings and
+segmented controls; `text_input`: text fields and text areas;
+`dropdown`); and to accordions, progress bars, spinners and images.
+This theme file frames every text field and text area:
+
+```kdl
+text_input {
+        border enabled=#true
+}
+```
+
+The `box` family (plain boxes, scroll boxes, canvases, charts and every
+widget that names no family of its own) has no `border.enabled`,
+because widgets build their parts out of boxes; nor do tab bars,
+scrollbars and dividers, which draw lines of their own. These widgets
+have a border only when the program gives them one. A table draws its
+frame itself. `bordered` given to a widget wins over the theme,
+`bordered => 0` included, and `reset_look('bordered')`
+returns it to the theme. See ["Borders" in Term::Fabulous::Theme](../Theme.md#borders).
 
 ## Joining borders
 
@@ -711,17 +740,17 @@ in Perl code only; KDL layout files have no property for them.
     Draws some sides on the background just outside the widget instead of
     the widget's own, so the border looks like part of its surroundings and
     a colored widget starts inside it (the last panel in the picture of
-    ["Border width and space"](#border-width-and-space)).
+    ["Borders and space"](#borders-and-space)).
 
 This box sits directly below a box that has a border on its left, right
 and top sides; its top corners join the side lines of the upper box, so
 the two boxes share one line (the middle panel of the second row in the
-picture of ["Border width and space"](#border-width-and-space)):
+picture of ["Borders and space"](#borders-and-space)):
 
-```perl
+```kdl
 my $solid = Term::Fabulous::Enum::BorderStyle->Solid;
 my $body  = Term::Fabulous::Widget::Box->new(
-        border_width   => 1,
+        bordered       => 1,
         border_style   => $solid,
         border_corners => {
                 top_left  => Term::Fabulous::Enum::BorderStyle->junction( up => $solid, right => $solid, down => $solid ),    # ├
@@ -735,17 +764,17 @@ my $body  = Term::Fabulous::Widget::Box->new(
 
 # THEMES
 
-A _theme_ decides the colors and the border styles of every widget
-that does not set them itself: the text color of a Text, the
-background of a text field, the border of a focused button, the lines
-of a table. Term::Fabulous comes with two themes, `dark` (the colors
-the pictures on these pages show) and `light`. A theme also decides
-the background of the screen: every frame first paints the whole
-screen in the theme's `background` token, so a theme looks the same
-on any terminal, and `light` is readable on a dark one. A theme is
-set per UI and can be switched at any time:
+A _theme_ decides the colors and the borders of every widget that does
+not set them itself: the text color of a Text, the background of a text
+field, the border color of a focused button, whether a text field has a
+border at all, the lines of a table. Term::Fabulous comes with two
+themes, `dark` (the colors the pictures on these pages show) and
+`light`. A theme also decides the background of the screen: every frame
+first paints the whole screen in the theme's `background` token, so a
+theme looks the same on any terminal, and `light` is readable on a dark
+one. A theme is set per UI and can be switched at any time:
 
-```perl
+```kdl
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24, theme => 'light' );
 $ui->theme('dark');    # every widget takes the new colors in the next frame
 ```
@@ -773,9 +802,10 @@ _tokens_: `background`, `surface`, `border`, `text`,
 a theme that wants the terminal's own background gives it a color
 with alpha 0 (see ["Alpha and the terminal default color"](#alpha-and-the-terminal-default-color)). Above
 it, every kind of widget, a
-_family_, has _slots_, one for each colored or styled part: a
-button has `background`, `border.color`, `border.style` and
-`text`; an input has `text`, `accent`, `placeholder`, `selection`
+_family_, has _slots_, one for each part the theme decides: a
+button has `background`, `border.color`, `border.style`,
+`border.enabled` (whether it has a border, see
+["Borders from the theme"](#borders-from-the-theme)) and `text`; an input has `text`, `accent`, `placeholder`, `selection`
 and more; a table has `header.background`, `cursor`, `line.color`,
 ... Each slot defaults to a token, so a theme that changes the
 `accent` token changes the focus borders, the check marks, the
@@ -796,8 +826,9 @@ widget class says which slot it reads (for example
 
 ## Your own colors win
 
-A color or a border style given to a widget, in `new`, through an
-accessor or in a layout file, stays whatever the theme says. So a
+A color, a border style or `bordered` given to a widget, in `new`,
+through an accessor or in a layout file, stays whatever the theme
+says. So a
 program that colors its widgets as the earlier sections describe
 looks the same under every theme, and a program that leaves the
 colors to the theme follows it. The reader of a themed parameter
@@ -805,7 +836,7 @@ returns the color in use, the given one or the theme's. To return a
 given color to the theme, call ["reset\_look" in Term::Fabulous::Widget](../Widget.md#reset_look)
 with the parameter's name:
 
-```perl
+```kdl
 $button->border_color('#ff5050');    # red under every theme
 $button->reset_look('border_color');  # the theme's again
 ```
@@ -818,7 +849,8 @@ colors of a [Term::Fabulous::Widget::Tabs](../Widget/Tabs.md) (kept by its bar) 
 scrollbar colors of a [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) (kept by
 both scrollbars).
 
-Only the colors and border styles are themed. Layout, text and the
+Only the colors, the border styles and whether a widget has a border
+are themed. Layout, text and the
 glyphs of a widget (the marks of a check box, the frames of a
 spinner) are the widget's own.
 
