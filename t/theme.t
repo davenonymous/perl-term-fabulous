@@ -202,7 +202,7 @@ subtest 'border.enabled is a boolean slot' => sub {
 	is Term::Fabulous::Theme::check_value( 'button', 'border.enabled', 'normal', 'false' ), 'false', 'false is stored as false';
 	like dies { $Theme->new( slots => { 'button.border.enabled'        => 'yes' } ) },  qr/button.border.enabled must be true, false, 1 or 0, got 'yes'/, 'another value dies';
 	like dies { $Theme->new( slots => { 'button.border.enabled'        => 'none' } ) }, qr/button.border.enabled cannot be 'none'/,                       'a boolean slot is required';
-	like dies { $Theme->new( slots => { 'input.border.enabled.focused' => 1 } ) },      qr/the slot input.border.enabled has no state 'focused'/,         'and has no states';
+	like dies { $Theme->new( slots => { 'input.border.enabled.focused' => 1 } ) },      qr/the slot input.border.enabled has no state 'focused' \(it has the normal state only\)/, 'and has no states';
 };
 
 subtest 'slot_info and check_value' => sub {

@@ -123,6 +123,8 @@ subtest 'errors carry their lines' => sub {
 	ok !$wrong->has_syntax_error, 'they are no syntax errors';
 	like dies { Term::Fabulous::Theme->from_string( $wrong->text ) }, qr/Term::Fabulous::Theme/, 'and the theme module rejects the text too';
 	ok $wrong->with_setting( 'palette.text', '#000000' )->setting('palette.text'), 'a document with such errors can still be changed';
+	is [ map { $_->{message} } $Document->parse(qq{button {\n\tfocused { border style=Double }\n}\n})->errors ],
+		["the slot button.border.style has no state 'focused' (it has the normal state only)"], 'a slot without states says so';
 };
 
 subtest 'changes in an empty document' => sub {

@@ -184,6 +184,13 @@ class Term::Fabulous::Widget::Input
 		return;
 	}
 
+	# The value the input holds, which validation reads. An input without
+	# a value of its own (a list that only navigates) has none: it counts
+	# as empty and is valid unless it is required.
+	method value () {
+		return undef;
+	}
+
 	# Fires Change, then ValidityChange when the message changed with it.
 	method fire_change ($value) {
 		$self->fire_event( Term::Fabulous::Event::Change->new( value => $value ) );
@@ -970,7 +977,8 @@ C<value>. Everything else is applied in the order of the layout.
 To write an input widget of your own, subclass
 C<Term::Fabulous::Widget::Input> with L<Object::Pad> (see the
 L</SYNOPSIS>). You must implement C<natural_size> and C<paint>; override
-the other methods as needed. Paint with C<put_attrs>
+the other methods as needed, C<value> as soon as the input holds a
+value. Paint with C<put_attrs>
 (L<Term::Fabulous::Widget::Canvas/put_attrs>) and the helpers below and
 those of L<Term::Fabulous::Widget::Display/SUBCLASS INTERFACE>
 (C<color_attr>, C<paint_text>, C<fill_attrs>), which take termbox2
@@ -1098,6 +1106,17 @@ Fires a L<Term::Fabulous::Event::Change> with that value on the input,
 then runs L</validate>, which fires a C<ValidityChange> when the
 message about the value changed. Call it after the user changed the
 value, never when the program did.
+
+=head2 value
+
+	method value () { return $on }
+
+The value the input holds, read by validation (L</required>,
+L</validator>, L</is_valid>) whenever it is asked. Optional: the
+default returns C<undef>, so an input without a value of its own, such
+as a list that only moves the reader somewhere, counts as empty and is
+valid unless it is C<required>. Every input of Term::Fabulous overrides
+it.
 
 =head2 value_is_empty
 

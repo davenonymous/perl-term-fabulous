@@ -834,6 +834,6 @@ before C<value> and the segments, so they may come in any order.
 
 L<Term::Fabulous::Widget::Display>, L<Term::Fabulous::Widget::Spinner>,
 L<Term::Fabulous::Widget::Slider>,
-L<Term::Fabulous::Manual::Feedback/Progress bars>.
+L<Term::Fabulous::Manual::Feedback/PROGRESS BARS>.
 
 =cut

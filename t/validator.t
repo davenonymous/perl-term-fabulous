@@ -6,7 +6,21 @@ use utf8;
 
 use Test2::V0;
 
+use Object::Pad 0.825;
+
+use Term::Fabulous::Static;
 use Term::Fabulous::Validator;
+use Term::Fabulous::Widget::Input;
+
+# An input that only navigates and holds no value of its own.
+class Navigator :isa(Term::Fabulous::Widget::Input) :strict(params) {
+	method natural_size () { return ( 3, 1 ) }
+
+	method paint () {
+		$self->paint_text( 0, 0, 'nav', $self->foreground_attr, undef );
+		return;
+	}
+}
 
 my $class = 'Term::Fabulous::Validator';
 
@@ -92,6 +106,15 @@ subtest 'coerce' => sub {
 	like dies { $class->pattern('x') },                                   qr/pattern takes a regular expression/,                     'pattern wants a regexp';
 	like dies { $class->code('x') },                                      qr/code takes a code reference/,                            'code wants code';
 	like dies { $class->new( name => 'x', message => 'm', check => 1 ) }, qr/check must be a code reference/,                         'new checks its code';
+};
+
+subtest 'an input without a value of its own' => sub {
+	my $navigator = Navigator->new;
+	is $navigator->value, undef, 'its value is undef';
+	ok $navigator->is_valid, 'and valid';
+	is [ Term::Fabulous::Static->new( root => $navigator, width => 3 )->render_lines( colors => 0 ) ], ['nav'], 'so it paints';
+	$navigator->required(1);
+	ok !$navigator->is_valid, 'unless it is required';
 };
 
 done_testing;

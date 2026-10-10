@@ -44,8 +44,9 @@ subclass of the UI says otherwise. A widget in no UI reads the default
 theme.
 
 The looks are fetched once and kept until the theme changes
-(["generation" in Term::Fabulous::Theme](../Theme.md#generation)) or the widget joins or leaves a
-tree, so reading a look while a frame is drawn costs one hash lookup.
+(["generation, bump\_generation" in Term::Fabulous::Theme](../Theme.md#generation-bump_generation)) or the widget
+joins or leaves a tree, so reading a look while a frame is drawn costs
+one hash lookup.
 
 A themed parameter is declared once, in ["themed\_params"](#themed_params), with the
 slot it reads and its _kind_. The role takes a parameter of a kind

@@ -422,7 +422,8 @@ class Term::Fabulous::Theme :strict(params) {
 		return ( $name, 'normal' ) if exists $slots->{$name};
 		if ( my ( $slot, $state ) = $name =~ /\A(.+)\.([a-z]+)\z/ ) {
 			if ( exists $slots->{$slot} ) {
-				die "Term::Fabulous::Theme: $what: the slot $family.$slot has no state '$state' (its states: " . join( ', ', grep { $_ ne 'normal' } sort keys %{ $slots->{$slot}{default} } ) . ")"
+				my @states = grep { $_ ne 'normal' } sort keys %{ $slots->{$slot}{default} };
+				die "Term::Fabulous::Theme: $what: the slot $family.$slot has no state '$state' (" . ( @states ? 'its states: ' . join( ', ', @states ) : 'it has the normal state only' ) . ")"
 					unless exists $slots->{$slot}{default}{$state};
 				return ( $slot, $state );
 			}

@@ -701,7 +701,8 @@ text input's `max_length`, `accept` and `validator` come before its
 To write an input widget of your own, subclass
 `Term::Fabulous::Widget::Input` with [Object::Pad](https://metacpan.org/pod/Object%3A%3APad) (see the
 ["SYNOPSIS"](#synopsis)). You must implement `natural_size` and `paint`; override
-the other methods as needed. Paint with `put_attrs`
+the other methods as needed, `value` as soon as the input holds a
+value. Paint with `put_attrs`
 (["put\_attrs" in Term::Fabulous::Widget::Canvas](Canvas.md#put_attrs)) and the helpers below and
 those of ["SUBCLASS INTERFACE" in Term::Fabulous::Widget::Display](Display.md#subclass-interface)
 (`color_attr`, `paint_text`, `fill_attrs`), which take termbox2
@@ -849,6 +850,19 @@ Fires a [Term::Fabulous::Event::Change](../Event/Change.md) with that value on t
 then runs ["validate"](#validate), which fires a `ValidityChange` when the
 message about the value changed. Call it after the user changed the
 value, never when the program did.
+
+## value
+
+```perl
+method value () { return $on }
+```
+
+The value the input holds, read by validation (["required"](#required),
+["validator"](#validator), ["is\_valid"](#is_valid)) whenever it is asked. Optional: the
+default returns `undef`, so an input without a value of its own, such
+as a list that only moves the reader somewhere, counts as empty and is
+valid unless it is `required`. Every input of Term::Fabulous overrides
+it.
 
 ## value\_is\_empty
 

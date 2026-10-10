@@ -464,7 +464,8 @@ class Term::Fabulous::Theme::Document :strict(params) {
 		if ( my ( $slot, $state ) = $name =~ /\A(.+)\.([a-z]+)\z/ ) {
 			if ( Term::Fabulous::Theme::has_slot( $family, $slot ) ) {
 				my $states = Term::Fabulous::Theme::slot_info( $family, $slot )->{states};
-				die "the slot $family.$slot has no state '$state' (its states: " . join( ', ', @$states ) . ")\n" unless grep { $_ eq $state } 'normal', @$states;
+				die "the slot $family.$slot has no state '$state' (" . ( @$states ? 'its states: ' . join( ', ', @$states ) : 'it has the normal state only' ) . ")\n"
+					unless grep { $_ eq $state } 'normal', @$states;
 				return ( $slot, $state );
 			}
 		}

@@ -522,4 +522,4 @@ sub show ($done) {
 
 [Term::Fabulous::Widget::Display](Display.md), [Term::Fabulous::Widget::Spinner](Spinner.md),
 [Term::Fabulous::Widget::Slider](Slider.md),
-["Progress bars" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#progress-bars).
+["PROGRESS BARS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#progress-bars).
