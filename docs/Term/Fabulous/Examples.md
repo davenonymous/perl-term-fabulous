@@ -630,6 +630,19 @@ Ctrl+PageUp and Ctrl+PageDown turn the pages from anywhere inside.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a sidebar of tabs along the left side, a tab bar at the bottom in the Heavy style with the tabs in the center, and tall tabs with downward labels without a page border"></p>
 </div>
 
+### examples/widgets/document-tabs.pl
+
+[Term::Fabulous::Widget::DocumentTabs](Widget/DocumentTabs.md): a row of tabs for the open
+documents of an editor, some with unsaved changes (a dot), one with an
+error (an exclamation mark). A click on a tab shows its document, a
+click on its close mark or a middle click closes it, and `+` adds a
+new one; the arrows at the ends lead to the tabs that do not fit. The
+picture shows it after closing README.md and choosing budget.csv.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-tabs.svg" alt="A row of document tabs at the top: notes.txt with a blue dot for unsaved changes, config.kdl with a red exclamation mark for errors, todo.md, and the active tab budget.csv in bold on a lighter background with a blue dot, each with a close mark, then an arrow to a hidden tab and a plus button. Below, the text of budget.csv, a dim line with the keys that switch, close and add tabs, and a status bar with the message Closed README.md."></p>
+</div>
+
 ## Buttons, inputs and dialogs
 
 ### examples/widgets/button.pl
@@ -707,6 +720,18 @@ a segment; so does a click.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
 </div>
 
+### examples/widgets/color-picker.pl
+
+[Term::Fabulous::Widget::ColorPicker](Widget/ColorPicker.md): a picker with named swatches,
+RGB sliders and an alpha slider, and one without swatches and alpha
+that shows its sliders in HSL, each with a line that shows the value it
+chose. Tab moves from part to part, Up and Down pick a swatch, Left and
+Right move a slider, and typing a color sets it.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-color-picker.svg" alt="Two color pickers. The upper one has a framed list of named swatches with color samples on the left, Orange selected, an empty field with a sample of the orange next to it, the RGB/HSL switch on RGB and the red, green, blue and alpha sliders at the orange. The lower one has no list and no alpha slider, its field shows #2e8b57 and its sliders show hue, saturation and lightness. Below each picker a line names the chosen value and its channels"></p>
+</div>
+
 ### examples/widgets/text-field.pl
 
 [Term::Fabulous::Widget::TextField](Widget/TextField.md): a focused field to type in, an
@@ -765,6 +790,20 @@ shows the prompt after Add with an e-mail address that is not valid.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-prompt.svg" alt="A New contact prompt over the dimmed list of contacts: Name holds Ada Lovelace, E-mail holds ada@engine in red, and the red line E-mail: Please enter an e-mail address. sits above the Add and Cancel buttons"></p>
+</div>
+
+### examples/widgets/file-dialog.pl
+
+[Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md): a notes program that asks for
+files and folders, in a folder of sample notes it makes in a temporary
+directory. o opens a note (the dropdown switches between notes and all
+files), s saves it under a name (a name without a dot gets .txt, and an
+existing file is replaced only after a question), f chooses a folder;
+the status bar shows the answer. The picture shows the dialog to open a
+note after the cursor moved to reading-list.txt.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-file-dialog.svg" alt="An Open a file dialog over a dimmed notes program: the folder line ends in Documents/Projects/analytical-engine/notes, the list shows two folders and four notes with their sizes and modification times, the cursor is on reading-list.txt, which is also in the File field, and below it are the Notes filter, the Show hidden files checkbox and the Open and Cancel buttons"></p>
 </div>
 
 ## Progress and feedback
@@ -840,6 +879,18 @@ a line.
 
 <div>
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-menu-bar.svg" alt="A notes editor with a menu bar of File, Edit, View and Help, each with its first letter underlined, and the caption notes.txt. The Edit menu is open below its title with Undo highlighted, Redo, Cut and Copy dimmed, Paste and Select all, each with its key. The status bar at the bottom says F10 opens the menus, Ctrl+Q quits. on the left and modified and Ln 6, Col 7 on the right"></p>
+</div>
+
+### examples/widgets/key-reference.pl
+
+[Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md): a small notes editor whose
+keys are commands of one table. F1 opens the key reference with the
+keys of the commands, and the keys of the text area and of the key
+reference itself, in groups. Typing filters it; Escape or Close closes
+it. The picture shows it after F1 and typing ctrl.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-key-reference.svg" alt="A Keys of the notes editor dialog over a dimmed notes editor: the search field holds ctrl, and the table below lists only the keys with Ctrl, Ctrl+N New note, Ctrl+S Save, Ctrl+A Select all and Ctrl+Q Quit under Everywhere, and the undo, copy and word keys under Text; a Close button at the bottom"></p>
 </div>
 
 ## Tables
@@ -1217,6 +1268,28 @@ The programs of [Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md).
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-ask-prompt.svg" alt="A Session length prompt asking How many minutes should the next session last?, with 300 typed in the Minutes field, the red message A session lasts 1 to 120 minutes. and the buttons OK and Cancel"></p>
     </div>
 
+- `open-and-save.pl`
+
+    ["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#open-and-save-a-file-filedialog):
+    a notes editor that opens and saves its note with file dialogs, in a
+    folder of sample notes it makes in a temporary directory. The picture
+    shows the open dialog after Ctrl+O and two steps down the list.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-open-and-save.svg" alt="An Open a file dialog over the empty notes editor: the folder line ends in garden-club/season-2026/notes, the list shows garden.txt, groceries.txt and ideas.md with sizes and dates, the cursor is on groceries.txt, which is also in the File field, and below are the Notes filter, the Show hidden files checkbox and the Open and Cancel buttons"></p>
+    </div>
+
+- `color-prompt.pl`
+
+    ["Ask for a color (ColorPicker in a Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt):
+    c asks for the color of a highlight in a prompt with a color picker.
+    The picture shows the prompt after two steps down the list of named
+    colors.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-color-prompt.svg" alt="A Highlight color prompt over the dimmed setting: on the left the label Color and a framed list of six named colors with samples, Mint selected; on the right the field with #98c379 and a green sample, the RGB/HSL switch on RGB and the red, green and blue sliders at 152, 195 and 121; the buttons Use it and Cancel below"></p>
+    </div>
+
 - `inline-prompt.pl`
 
     ["Ask for input below the shell's output (inline mode)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode):
@@ -1275,7 +1348,7 @@ The programs of [Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md).
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-tab-order.svg" alt="Three text fields side by side: Street filled in, City still empty, and the Zip field focused with 12345 typed, because Tab went from Street straight to Zip"></p>
     </div>
 
-## Menus and status bars
+## Menus, status bars, help screens and document tabs
 
 The programs of [Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md).
 
@@ -1309,6 +1382,27 @@ The programs of [Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md).
 
     <div>
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-status-bar.svg" alt="A journal entry in a text area and, below it, a status bar with the green message Saved the entry. on the left and 8 words on the right"></p>
+    </div>
+
+- `help-screen.pl`
+
+    ["Show the keys in a help screen (KeyReference)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference):
+    a to-do list whose F1 opens a help screen with the keys of its
+    commands and of the list. The picture shows it after F1.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-help-screen.svg" alt="A Keys of the to-do list dialog over the dimmed to-do list: an empty search field, and a table of keys and actions in three groups: Everywhere with F1 Keys, Ctrl+A Check all, Ctrl+D Remove done, Alt+s Sort by name and Ctrl+Q Quit, The list with the Tab and Space keys, and This help with typing and Escape; a Close button below"></p>
+    </div>
+
+- `document-tabs.pl`
+
+    ["Keep several documents open in tabs (DocumentTabs)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#keep-several-documents-open-in-tabs-documenttabs):
+    an editor with a tab for each open document, which asks before it
+    closes one with unsaved changes. The picture shows it after a change to
+    shopping.txt, Ctrl+N and a line in the new document.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-tabs.svg" alt="An editor with the tabs shopping.txt with a blue dot, letter.txt, ideas.txt and the active Untitled 1 in bold with a blue dot, each with a close mark, and a plus button. Below, the text Plant the tulips. and a status bar with the keys"></p>
     </div>
 
 ## Layout and looks

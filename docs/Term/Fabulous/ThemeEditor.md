@@ -71,11 +71,11 @@ From top to bottom:
 
 - The tab strip
 
-    A tab per open theme: its file's name (`untitled-N` before it is
-    saved), a dot while it has unsaved changes or an exclamation mark while
-    its text has errors, and a close button. A click selects a tab, a
-    click on its close button or a middle click closes it, the `+` at the
-    end makes a new theme.
+    A tab per open theme (a [Term::Fabulous::Widget::DocumentTabs](Widget/DocumentTabs.md)): its
+    file's name (`untitled-N` before it is saved), a dot while it has
+    unsaved changes or an exclamation mark while its text has errors, and a
+    close button. A click selects a tab, a click on its close button or a
+    middle click closes it, the `+` at the end makes a new theme.
 
 - The preview (left)
 
@@ -83,7 +83,8 @@ From top to bottom:
     every token, text and links, boxes, buttons (one of them with the class
     `primary`), text fields (one with an invalid value, one disabled, a
     text area with a scrollbar), check boxes, radio buttons, a segmented
-    control, a slider, a star rating and a dropdown, tabs, an accordion, a
+    control, a slider, a star rating and a dropdown, a color picker, tabs,
+    document tabs, an accordion, a
     table with groups, a filter row and pages, progress bars and a spinner,
     toasts, a menu bar, a menu and status bars, a button that opens a
     dialog, dividers, an image, and a sample of every variant the theme
@@ -162,15 +163,18 @@ it, so the preview shows the value in its true colors:
 
 - a color slot
 
-    a list of the palette's tokens with their colors (and `none` where the
-    slot may have no color, `reverse` for `button.background.pressed`),
-    and a color of its own: a field for `#rrggbb`, `#rrggbbaa`,
-    `rgb(...)`, `rgba(...)` or a color name, with a swatch and a slider
-    for each of red, green, blue and alpha;
+    a [Term::Fabulous::Widget::ColorPicker](Widget/ColorPicker.md): a list of the palette's
+    tokens with their colors (and `none` where the slot may have no color,
+    `reverse` for `button.background.pressed`), and a color of its own: a
+    field for `#rrggbb`, `#rrggbbaa`, `rgb(...)`, `hsl(...)` or a color
+    name, with a sample, sliders for red, green and blue or (switched with
+    `RGB` and `HSL`) for hue, saturation and lightness, and a slider for
+    alpha;
 
 - a palette token
 
-    the color of its own (a token is a color, never another token);
+    the color picker without the list (a token is a color, never another
+    token);
 
 - a border style slot
 
@@ -191,12 +195,13 @@ such as `focused` or `hovered` shows on a widget of the preview that
 has the focus or is under the pointer (`F6` goes into the preview).
 `Apply` (or `Enter` in the list or a field) writes the value to the
 theme, `Reset to default` removes the setting, and `Cancel` or
-`Escape` leaves the theme as it was. A value the setting cannot take
-is not applied; the dialog says why. A list in a dialog has its frame
-in the accent color while it has the keyboard focus.
+`Escape` leaves the theme as it was. A value the setting cannot take,
+or a text in the color field that is no color, is not applied; the
+dialog says why. A list in a dialog has its frame in the accent color
+while it has the keyboard focus.
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a color picker with the palette's tokens in a list, danger chosen, a field, an RGB and HSL switch and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
 </div>
 
 The picture shows the dialog of `button.border.color` with `danger`
@@ -315,8 +320,8 @@ desktop.
 
 `Ctrl+S` saves the theme of the tab to its file; a new theme asks
 where (as `Alt+S`, `Save as`, does; a name without an extension gets
-`.kdl`). `File` > `Save all` saves every theme with unsaved
-changes. A file is written to a temporary file first and then renamed
+`.kdl`, and saving over another file that exists asks first).
+`File` > `Save all` saves every theme with unsaved changes. A file is written to a temporary file first and then renamed
 over the old one, so it is never half written; it keeps its permissions
 and its line ends (CRLF when every line of it ended in CRLF), a symbolic
 link keeps pointing to its file, and a read-only file is not replaced.
@@ -324,9 +329,11 @@ Saving asks first when the theme has errors (a program could not load
 it) and when another program changed the file since the editor read
 it.
 
-`Ctrl+O` opens theme files: a dialog lists the folders and the
-`*.kdl` files of a folder (all files with `Show all files`), and
-takes a name or a path; a file that is open already shows its tab. A
+`Ctrl+O` opens theme files. The open and save dialogs (a
+[Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md)) list the folders and the
+`*.kdl` files of a folder (all files when `All files` is chosen
+instead of `Theme files`, hidden ones with `Show hidden files`), and
+take a name or a path; a file that is open already shows its tab. A
 file with errors opens in text mode. `Ctrl+R` reverts a theme to its
 file (after a question when it has unsaved changes; undo takes it
 back). `Ctrl+N` makes a new theme based on `dark` or `light`, and
@@ -343,7 +350,8 @@ listed on the standard error.
 
 # KEYS
 
-`F1` shows this list in the editor, with a search field. Keys that a
+`F1` shows this list in the editor, with a search field (a
+[Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md)). Keys that a
 focused widget uses itself (a text field, the text of the theme, a
 dialog) do what that widget does; the others reach the editor.
 
@@ -699,6 +707,12 @@ my $tab = $editor->open_file('themes/nord.kdl');
 Opens a theme file in a new tab, or shows the tab it is open in, and
 returns the tab. A file that does not exist becomes a new theme saved
 there. Dies when the file cannot be read or is not UTF-8.
+
+The path is a byte string, as the file system has it (as on the command
+line and in a [Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md) answer); a
+character string with characters above 255 dies. The editor shows
+paths and file names (tab titles, messages) decoded from UTF-8, with a
+byte that is no UTF-8 shown as `\xHH`.
 
 ## new\_theme
 

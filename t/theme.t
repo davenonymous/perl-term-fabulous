@@ -218,6 +218,20 @@ subtest 'the families of menus and the status bar' => sub {
 	is $dark->look( 'status_bar', 'dim' ),                  $dark->token('placeholder'), 'status_bar.dim is the placeholder color';
 };
 
+subtest 'the family of document tabs' => sub {
+	ok !Term::Fabulous::Theme::has_slot( 'document_tabs', 'border.enabled' ), 'a tab strip is one row and has no border.enabled';
+	foreach my $theme ( map { $Theme->builtin($_) } qw(dark light) ) {
+		my $name = $theme->name;
+		is $theme->look( 'document_tabs', 'background' ),           $theme->token('surface_low'),      "$name: tabs lie on surface_low";
+		is $theme->look( 'document_tabs', 'background', 'active' ), $theme->token('focus_background'), "$name: the active tab on focus_background";
+		is $theme->look( 'document_tabs', 'text' ),                 $theme->token('text_dim'),         "$name: tab titles are text_dim";
+		is $theme->look( 'document_tabs', 'text', 'active' ),       $theme->token('text'),             "$name: the active title is text";
+		is $theme->look( 'document_tabs', 'modified' ),             $theme->token('accent'),           "$name: the modified mark is the accent";
+		is $theme->look( 'document_tabs', 'error' ),                $theme->token('danger'),           "$name: the error mark is danger";
+		is $theme->look( 'document_tabs', 'button' ),               $theme->token('accent'),           "$name: the buttons are the accent";
+	}
+};
+
 subtest 'slot_info and check_value' => sub {
 	is Term::Fabulous::Theme::slot_info( 'button', 'background' ),
 		{

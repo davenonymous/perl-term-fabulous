@@ -346,6 +346,13 @@ belongs to, such as (table) or (KDL).
     the 2 x 4 Braille dots of a line or the eighth blocks of a bar. See
     ["How a chart is drawn" in Term::Fabulous::Manual::Charts](Charts.md#how-a-chart-is-drawn).
 
+- swatch
+
+    A named value a [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md) offers in a
+    list, with the color it stands for: a color of its own, a theme's
+    token name, or `none` for no color. See
+    ["Color pickers" in Term::Fabulous::Manual::Forms](Forms.md#color-pickers).
+
 - target
 
     The widget an event was fired on.

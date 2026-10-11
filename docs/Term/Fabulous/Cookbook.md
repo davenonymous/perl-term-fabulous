@@ -121,6 +121,8 @@ The pages, in reading order, each with its recipes:
     - [Ask a question in a dialog (Dialog widget)](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget)
     - [Confirm before quitting (Prompt)](Cookbook/Forms.md#confirm-before-quitting-prompt)
     - [Ask for a number and check it (Prompt, validator)](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator)
+    - [Open and save a file (FileDialog)](Cookbook/Forms.md#open-and-save-a-file-filedialog)
+    - [Ask for a color (ColorPicker in a Prompt)](Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt)
     - [Ask for input below the shell's output (inline mode)](Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode)
     - [Choose from options in Perl (Dropdown, RadioGroup, Slider)](Cookbook/Forms.md#choose-from-options-in-perl-dropdown-radiogroup-slider)
     - [Read all values of a form](Cookbook/Forms.md#read-all-values-of-a-form)
@@ -133,11 +135,13 @@ The pages, in reading order, each with its recipes:
 
 - [Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md)
 
-    Menu bars, context menus and status bars:
+    Menu bars, context menus, status bars, help screens and document tabs:
 
     - [Give a program a menu bar (MenuBar, Commands)](Cookbook/Menus.md#give-a-program-a-menu-bar-menubar-commands)
     - [Open a menu with a right click or the Menu key (Menu)](Cookbook/Menus.md#open-a-menu-with-a-right-click-or-the-menu-key-menu)
     - [Show messages and state in a status bar (StatusBar)](Cookbook/Menus.md#show-messages-and-state-in-a-status-bar-statusbar)
+    - [Show the keys in a help screen (KeyReference)](Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference)
+    - [Keep several documents open in tabs (DocumentTabs)](Cookbook/Menus.md#keep-several-documents-open-in-tabs-documenttabs)
 
 - [Term::Fabulous::Cookbook::Layout](Cookbook/Layout.md)
 

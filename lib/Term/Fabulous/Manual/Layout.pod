@@ -16,7 +16,8 @@ where each widget goes and how big it is. Every layout option is shown
 with a picture, with the Perl code and with the form it takes in a
 L<KDL layout file|Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>. The
 last sections cover the widgets that structure a screen:
-L<dividers|/DIVIDERS>, L<accordions|/ACCORDIONS> and L<tabs|/TABS>.
+L<dividers|/DIVIDERS>, L<accordions|/ACCORDIONS>, L<tabs|/TABS> and
+L<document tabs|/Document tabs>.
 
 The reference pages for this topic are L<Term::Fabulous::Widget> (the
 parameters and methods all container widgets share),
@@ -74,6 +75,11 @@ Sections with headers that open and close, one at a time or several
 =item L<Term::Fabulous::Widget::Tabs>
 
 Pages behind a row of tabs, on any side of the page (see L</TABS>).
+
+=item L<Term::Fabulous::Widget::DocumentTabs>
+
+A row of tabs for the open documents of a program, which the program
+fills and steers (see L</Document tabs>).
 
 =item L<Term::Fabulous::Widget::Canvas>
 
@@ -1012,12 +1018,71 @@ L<Term::Fabulous::Widget::Tabs::Bar> and
 L<Term::Fabulous::Widget::Tabs::Button>, for a row of tabs that
 switches something that is not a page, for example whole layouts.
 
+=head2 Document tabs
+
+An editor that keeps several documents open shows a tab for each above
+the text, with the document's title, a dot while it has unsaved
+changes and a close mark. That row is a
+L<Term::Fabulous::Widget::DocumentTabs>. Unlike a Tabs, it holds no
+pages and no widgets: it shows a list of plain hashes, one per
+document, and the program shows the document itself. A code reference
+in place of the list is called whenever a frame is drawn, so the tabs
+always show the documents as they are now:
+
+=for highlighter language=perl
+
+	use Term::Fabulous::Widget::DocumentTabs;
+
+	my $tabs = Term::Fabulous::Widget::DocumentTabs->new(
+		tabs   => sub { map { { title => $_->{title}, modified => $_->{modified} } } @documents },
+		active => 0,
+	);
+	$tabs->on( Select   => sub ($event) { show_document( $event->index ); return } );
+	$tabs->on( TabClose => sub ($event) { close_document( $event->index ); return } );
+	$tabs->on( TabAdd   => sub ($event) { new_document(); return } );
+
+A tab may also have C<error>, which shows an exclamation mark in place
+of the dot, and C<< closable => 0 >>, which takes away its close mark.
+Other keys stay in the hash and come back in the events, so a tab can
+carry the path of its file.
+
+The tabs never change anything themselves. A click on a tab fires
+L<Select|Term::Fabulous::Event::Select> with the tab as the item, a
+click on a close mark or a middle click fires
+L<TabClose|Term::Fabulous::Event::TabClose>, and the C<+> button at
+the end fires L<TabAdd|Term::Fabulous::Event::TabAdd>. The program
+answers: it shows the document and sets
+L<active|Term::Fabulous::Widget::DocumentTabs/active>, asks whether to
+save a document before it closes it, or makes a new one. Setting
+C<active> fires nothing. When the tabs do not fit, the row scrolls so
+that the active tab is shown, and arrows at the ends lead to the hidden
+ones. Document tabs are one row high, react to the mouse only and never
+take the focus, so the program gives them keys of its own, such as
+C<Alt+PageDown> for the next document. The picture shows tabs with
+unsaved changes and an error, and an arrow to a tab that does not fit
+(F<examples/widgets/document-tabs.pl>):
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-document-tabs.svg" alt="A row of document tabs at the top: notes.txt with a blue dot for unsaved changes, config.kdl with a red exclamation mark for errors, todo.md, and the active tab budget.csv in bold on a lighter background with a blue dot, each with a close mark, then an arrow to a hidden tab and a plus button. Below, the text of budget.csv, a dim line with the keys that switch, close and add tabs, and a status bar with the message Closed README.md."></p>
+
+=end html
+
+The theme family C<document_tabs> colors them: C<background> and
+C<text>, each with an C<active> state for the active tab, C<modified>
+for the dot, C<error> for the exclamation mark and C<button> for the
+C<+> and the arrows (see
+L<Term::Fabulous::Theme/Families, slots and states>). Document tabs are
+built in Perl only, not in KDL layout files. The recipe
+L<Term::Fabulous::Cookbook::Menus/Keep several documents open in tabs (DocumentTabs)>
+is a complete program.
+
 =head1 SEE ALSO
 
 This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous::Manual>. Next page: L<Term::Fabulous::Manual::Looks>.
 
 L<Term::Fabulous::Widget::Divider>, L<Term::Fabulous::Widget::Accordion>,
-L<Term::Fabulous::Widget::Tabs>,
+L<Term::Fabulous::Widget::Tabs>, L<Term::Fabulous::Widget::DocumentTabs>,
 L<Term::Fabulous::Widget> (the parameters and methods of all container
 widgets), L<Term::Fabulous::Widget::Box>,
 L<Term::Fabulous::Widget::ScrollBox>,

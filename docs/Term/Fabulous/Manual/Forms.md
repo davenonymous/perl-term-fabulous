@@ -7,15 +7,15 @@ Term::Fabulous::Manual::Forms - Forms and input widgets
 This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Term::Fabulous::Manual::Events](Events.md). Next page: [Term::Fabulous::Manual::Feedback](Feedback.md).
 
 This page is the guide to the input widgets: text fields, text areas,
-checkboxes, radio buttons, dropdowns and sliders. It first describes
-what all inputs have in common (value, `Change` event, id, focus,
-disabled and read-only inputs, the visual states, size and checking
-input), then shows each input widget with a short example and a
-picture, explains how the text inputs are edited (keys, selection,
-clipboard, undo), and ends with complete forms: reading all values and
-building a form from a KDL layout file. The reference of each widget is
-on its class page; complete programs are in
-[Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md).
+checkboxes, radio buttons, dropdowns, sliders, star ratings, segmented
+controls and the color picker. It first describes what all inputs have
+in common (value, `Change` event, id, focus, disabled and read-only
+inputs, the visual states, size and checking input), then shows each
+input widget with a short example and a picture, explains how the text
+inputs are edited (keys, selection, clipboard, undo), and ends with
+complete forms: reading all values and building a form from a KDL
+layout file. The reference of each widget is on its class page;
+complete programs are in [Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md).
 
 The page assumes you know how to build a widget tree
 (["WIDGETS AND THE WIDGET TREE" in Term::Fabulous::Manual::Layout](Layout.md#widgets-and-the-widget-tree)) and how
@@ -23,7 +23,8 @@ listeners work (["EVENTS" in Term::Fabulous::Manual::Events](Events.md#events)).
 
 - ["FORMS AND INPUT WIDGETS"](#forms-and-input-widgets): the widgets and what they share
 - ["THE INPUT WIDGETS ONE BY ONE"](#the-input-widgets-one-by-one): text fields, password fields, text
-areas, checkboxes, radio buttons, dropdowns, sliders
+areas, checkboxes, radio buttons, dropdowns, sliders, star ratings,
+segmented controls, color pickers
 - ["EDITING TEXT"](#editing-text): keys, selection, clipboard, undo, editing from the
 program
 - ["KEYS OF THE INPUT WIDGETS"](#keys-of-the-input-widgets): all keys at a glance
@@ -76,6 +77,11 @@ box sees every change.
     One choice of a few, shown side by side as one bar. See
     ["Segmented controls"](#segmented-controls).
 
+- [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md)
+
+    A color, typed, set with sliders or picked from a list of named
+    swatches. See ["Color pickers"](#color-pickers).
+
 `examples/form.pl` uses all of them in one form. The picture shows it
 after the user typed a name and a note, chose a color and started an
 e-mail address; the status line at the bottom shows the last `Change`
@@ -85,13 +91,16 @@ or, as here, what is wrong with a value (see ["Checking input"](#checking-input)
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-form.svg" alt="A form with name, password, notes, color, size, volume, newsletter, terms, e-mail and port; the e-mail field holds ada@ in red and the status line says email: Please enter an e-mail address."></p>
 </div>
 
-All input widgets except the radio group are subclasses of
+All input widgets except the radio group and the color picker are
+subclasses of
 [Term::Fabulous::Widget::Input](../Widget/Input.md), whose page describes the shared
 parameters and methods in full. The text field and the text area share
 a second base class, [Term::Fabulous::Widget::TextInput](../Widget/TextInput.md), with the
 editing keys, the placeholder and `read_only`. A radio group is a box
 that holds radio buttons; it takes the focus and holds the value for
-all of them.
+all of them. A color picker is a box built from a text field, a
+switch, sliders and a table; its parts take the focus, and the picker
+holds the value.
 
 ## Values
 
@@ -742,6 +751,63 @@ SegmentedControl "period" {
 }
 ```
 
+## Color pickers
+
+A [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md) chooses a color in three ways:
+the user types it into a field (`#rrggbb`, `rgb(...)`, `hsl(...)`,
+a color name), moves sliders, or picks a named _swatch_ from a list,
+when the program gives it one. A sample next to the field shows the
+color. The sliders show red, green and blue, or hue, saturation and
+lightness; a segmented control above them switches between the two.
+An alpha slider below them is left out with `alpha => 0`, which
+also makes the field refuse translucent colors.
+
+```perl
+use Term::Fabulous::Widget::ColorPicker;
+
+my $accent = Term::Fabulous::Widget::ColorPicker->new(
+        id       => 'accent',
+        value    => '#61afef',
+        alpha    => 0,
+        swatches => [ [ '#61afef', 'Sky', '#61afef' ], [ '#98c379', 'Mint', '#98c379' ], [ none => 'No color' ] ],
+);
+```
+
+The value is a string: what the user typed, when it is a color, the
+color of the sliders as `#rrggbb` (`#rrggbbaa` with an alpha below
+255), or the value of the chosen swatch. A swatch is `[ $value,
+$label, $color ]`, and its value need not be a color at all: a theme's
+token name, or `none` for no color. `$picker->rgba` gives the
+color as numbers, or `undef` for a value without one.
+
+The picker fires `Change` when the user changes the value and
+`Submit` on `Enter` in the field or on a swatch, both with itself as
+the target. The events of its parts stop inside it, so a listener on a
+form sees only the picker's. It is no [Term::Fabulous::Widget::Input](../Widget/Input.md),
+but it has `validate`, `error` and `is_valid`, those of its field,
+so it can be a field of a [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md): OK then
+keeps the prompt open while the field holds text that is no color, and
+puts the focus on the field (see
+["Ask for a color (ColorPicker in a Prompt)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt)).
+
+The picture shows a picker with swatches, the RGB sliders and the
+alpha slider, and one without swatches and alpha in HSL
+(`examples/widgets/color-picker.pl`):
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-color-picker.svg" alt="Two color pickers. The upper one has a framed list of named swatches with color samples on the left, Orange selected, an empty field with a sample of the orange next to it, the RGB/HSL switch on RGB and the red, green, blue and alpha sliders at the orange. The lower one has no list and no alpha slider, its field shows #2e8b57 and its sliders show hue, saturation and lightness. Below each picker a line names the chosen value and its channels"></p>
+</div>
+
+In KDL, without swatches, which only Perl can give:
+
+```kdl
+ColorPicker "background" {
+        value "#282c34"
+        alpha #false
+        sliders "hsl"
+}
+```
+
 # EDITING TEXT
 
 The text field and the text area are edited the same way. What follows is a summary; the reference is the
@@ -974,6 +1040,8 @@ shows and explains the program.
 - [a login form in a centered dialog](../Cookbook/Forms.md#a-login-form-centered-dialog-masked-password),
 which checks its input on `Enter`;
 - [asking a question in a dialog](../Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget);
+- [opening and saving a file](../Cookbook/Forms.md#open-and-save-a-file-filedialog);
+- [asking for a color](../Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt);
 - [asking for input below the shell's output](../Cookbook/Forms.md#ask-for-input-below-the-shell-s-output-inline-mode);
 - [choosing from options in Perl](../Cookbook/Forms.md#choose-from-options-in-perl-dropdown-radiogroup-slider);
 - [disabling inputs until a checkbox is checked](../Cookbook/Forms.md#disable-inputs-until-a-checkbox-is-checked);
@@ -996,6 +1064,7 @@ The class pages: [Term::Fabulous::Widget::Input](../Widget/Input.md),
 [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md), [Term::Fabulous::Widget::Slider](../Widget/Slider.md),
 [Term::Fabulous::Widget::StarRating](../Widget/StarRating.md),
 [Term::Fabulous::Widget::SegmentedControl](../Widget/SegmentedControl.md),
+[Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md),
 [Term::Fabulous::Editor](../Editor.md), [Term::Fabulous::Validator](../Validator.md),
 [Term::Fabulous::Event::Change](../Event/Change.md),
 [Term::Fabulous::Event::ValidityChange](../Event/ValidityChange.md),

@@ -10,13 +10,15 @@ own. A box with a scroll box of sections, one or more per widget
 family, each under a divider that names the families it shows: the
 palette (a swatch of every token), text and links, boxes, buttons,
 fields (text fields with a placeholder, a selection, an invalid value
-and a disabled one, a text area with a scrollbar), choices (check
-boxes, radio buttons, a segmented control, a slider, a star rating, a
-dropdown), tabs, an accordion, a table (groups, a filter row, pages),
-progress bars and a spinner, toasts (and a button that shows one),
-a menu bar whose titles open menus, a menu with every kind of item, a
-status bar for each kind of message, a button that opens a dialog, dividers, an image, and the variants the
-theme defines, each with a sample of its family.
+and a disabled one, a text area with a scrollbar), choices (check boxes,
+radio buttons, a segmented control, a slider, a star rating, a
+dropdown), a color picker with swatches, tabs, document tabs (with
+unsaved changes, errors and a tab that cannot be closed), an accordion,
+a table (groups, a filter row, pages), progress bars and a spinner,
+toasts (and a button that shows one), a menu bar whose titles open
+menus, a menu with every kind of item, a status bar for each kind of
+message, a button that opens a dialog, dividers, an image, and the
+variants the theme defines, each with a sample of its family.
 
 The editor draws the gallery in the theme being edited (see
 [Term::Fabulous::ThemeEditor::UI](UI.md)); the widgets read their looks

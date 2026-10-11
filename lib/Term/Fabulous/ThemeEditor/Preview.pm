@@ -23,8 +23,10 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Term::Fabulous::Widget::Accordion::Item;
 	use Term::Fabulous::Widget::Button;
 	use Term::Fabulous::Widget::Checkbox;
+	use Term::Fabulous::Widget::ColorPicker;
 	use Term::Fabulous::Widget::Dialog;
 	use Term::Fabulous::Widget::Divider;
+	use Term::Fabulous::Widget::DocumentTabs;
 	use Term::Fabulous::Widget::Dropdown;
 	use Term::Fabulous::Widget::Image;
 	use Term::Fabulous::Widget::Menu;
@@ -56,22 +58,24 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	# The sections of the gallery, in order: id, title, and the families
 	# they show.
 	my @SECTIONS = (
-		[ palette   => 'Palette',   [] ],
-		[ text      => 'Text',      ['text'] ],
-		[ box       => 'Boxes',     ['box'] ],
-		[ button    => 'Buttons',   ['button'] ],
-		[ fields    => 'Fields',    [ 'text_input', 'scrollbar' ] ],
-		[ choices   => 'Choices',   [ 'input',      'dropdown' ] ],
-		[ tabs      => 'Tabs',      ['tabs'] ],
-		[ accordion => 'Accordion', ['accordion'] ],
-		[ table     => 'Table',     ['table'] ],
-		[ progress  => 'Progress',  [ 'progress', 'spinner' ] ],
-		[ toast     => 'Messages',  ['toast'] ],
-		[ menus     => 'Menus',     [ 'menu_bar', 'menu', 'status_bar' ] ],
-		[ dialog    => 'Dialog',    ['dialog'] ],
-		[ divider   => 'Dividers',  ['divider'] ],
-		[ image     => 'Image',     ['image'] ],
-		[ variants  => 'Variants',  [] ],
+		[ palette       => 'Palette',       [] ],
+		[ text          => 'Text',          ['text'] ],
+		[ box           => 'Boxes',         ['box'] ],
+		[ button        => 'Buttons',       ['button'] ],
+		[ fields        => 'Fields',        [ 'text_input', 'scrollbar' ] ],
+		[ choices       => 'Choices',       [ 'input',      'dropdown' ] ],
+		[ color_picker  => 'Color picker',  [] ],
+		[ tabs          => 'Tabs',          ['tabs'] ],
+		[ document_tabs => 'Document tabs', ['document_tabs'] ],
+		[ accordion     => 'Accordion',     ['accordion'] ],
+		[ table         => 'Table',         ['table'] ],
+		[ progress      => 'Progress',      [ 'progress', 'spinner' ] ],
+		[ toast         => 'Messages',      ['toast'] ],
+		[ menus         => 'Menus',         [ 'menu_bar', 'menu', 'status_bar' ] ],
+		[ dialog        => 'Dialog',        ['dialog'] ],
+		[ divider       => 'Dividers',      ['divider'] ],
+		[ image         => 'Image',         ['image'] ],
+		[ variants      => 'Variants',      [] ],
 	);
 	my %SECTION_OF_FAMILY = map {
 		my $section = $_;
@@ -81,21 +85,22 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	# The families whose variants the gallery can show, with how it makes a
 	# sample of one.
 	my %SAMPLE = (
-		text       => sub ($classes) { Term::Fabulous::Widget::Text->new( text => 'Text of this variant', classes => $classes ) },
-		box        => sub ($classes) { _framed_box( 'A box of this variant', $classes ) },
-		button     => sub ($classes) { _button( 'Button', $classes ) },
-		input      => sub ($classes) { Term::Fabulous::Widget::Checkbox->new( label => 'Check box', checked => 1, classes => $classes ) },
-		text_input => sub ($classes) { Term::Fabulous::Widget::TextField->new( value => 'Text field', classes => $classes, layout => { sizing => { width => sizing_grow( 0, 30 ) } } ) },
-		dropdown   => sub ($classes) { Term::Fabulous::Widget::Dropdown->new( options => [qw(First Second Third)], value => 'First', classes => $classes ) },
-		progress   => sub ($classes) { Term::Fabulous::Widget::ProgressBar->new( value => 40, classes => $classes ) },
-		spinner    => sub ($classes) { Term::Fabulous::Widget::Spinner->new( label => 'Spinner', running => 0, classes => $classes ) },
-		divider    => sub ($classes) { Term::Fabulous::Widget::Divider->new( text  => 'Divider', classes => $classes ) },
-		toast      => sub ($classes) { Term::Fabulous::Widget::Toast->new( kind => 'info', message => 'A message of this variant.', closable => 0, classes => $classes ) },
-		menu_bar   => sub ($classes) { _menu_bar($classes) },
-		menu       => sub ($classes) { _menu($classes) },
-		status_bar => sub ($classes) { Term::Fabulous::Widget::StatusBar->new( message => 'A status bar of this variant.', parts => [ [ 'dim', 'dim' ] ], classes => $classes ) },
-		tabs       => sub ($classes) { _tabs($classes) },
-		accordion  => sub ($classes) { _accordion($classes) },
+		text          => sub ($classes) { Term::Fabulous::Widget::Text->new( text => 'Text of this variant', classes => $classes ) },
+		box           => sub ($classes) { _framed_box( 'A box of this variant', $classes ) },
+		button        => sub ($classes) { _button( 'Button', $classes ) },
+		input         => sub ($classes) { Term::Fabulous::Widget::Checkbox->new( label => 'Check box', checked => 1, classes => $classes ) },
+		text_input    => sub ($classes) { Term::Fabulous::Widget::TextField->new( value => 'Text field', classes => $classes, layout => { sizing => { width => sizing_grow( 0, 30 ) } } ) },
+		dropdown      => sub ($classes) { Term::Fabulous::Widget::Dropdown->new( options => [qw(First Second Third)], value => 'First', classes => $classes ) },
+		progress      => sub ($classes) { Term::Fabulous::Widget::ProgressBar->new( value => 40, classes => $classes ) },
+		spinner       => sub ($classes) { Term::Fabulous::Widget::Spinner->new( label => 'Spinner', running => 0, classes => $classes ) },
+		divider       => sub ($classes) { Term::Fabulous::Widget::Divider->new( text  => 'Divider', classes => $classes ) },
+		toast         => sub ($classes) { Term::Fabulous::Widget::Toast->new( kind => 'info', message => 'A message of this variant.', closable => 0, classes => $classes ) },
+		menu_bar      => sub ($classes) { _menu_bar($classes) },
+		menu          => sub ($classes) { _menu($classes) },
+		status_bar    => sub ($classes) { Term::Fabulous::Widget::StatusBar->new( message => 'A status bar of this variant.', parts => [ [ 'dim', 'dim' ] ], classes => $classes ) },
+		tabs          => sub ($classes) { _tabs($classes) },
+		document_tabs => sub ($classes) { _document_tabs($classes) },
+		accordion     => sub ($classes) { _accordion($classes) },
 	);
 
 	field %section;    # id => the section's box
@@ -166,6 +171,20 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 			$tab->add_child( Term::Fabulous::Widget::Text->new( text => $page->[1] ) );
 			$tabs->add_child($tab);
 		}
+		return $tabs;
+	}
+
+	# Tabs of documents: one with unsaved changes, one with errors, one
+	# that cannot be closed. A click shows a tab; closing does nothing.
+	sub _document_tabs ( $classes = [] ) {
+		my $tabs = Term::Fabulous::Widget::DocumentTabs->new(
+			classes => $classes,
+			active  => 0,
+			tabs    => [ { title => 'notes' }, { title => 'draft', modified => 1 }, { title => 'broken', error => 1 }, { title => 'pinned', closable => 0 } ],
+			layout  => { sizing => { width => sizing_grow() } },
+		);
+		weaken( my $weak_tabs = $tabs );
+		$tabs->on( Select => sub ($event) { $weak_tabs->active( $event->index ); return } );
 		return $tabs;
 	}
 
@@ -252,8 +271,23 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		);
 	}
 
+	# A color picker with a few swatches; the color picker has no family
+	# of its own, its parts draw in theirs.
+	method _build_color_picker () {
+		return Term::Fabulous::Widget::ColorPicker->new(
+			id        => 'theme-editor-preview-color',
+			value     => 'sky',
+			list_rows => 5,
+			swatches  => [ [ 'rose', 'Rose', '#e06c75' ], [ 'amber', 'Amber', '#e5c07b' ], [ 'leaf', 'Leaf', '#98c379' ], [ 'sky', 'Sky', '#61afef' ], [ 'none', 'None' ] ],
+		);
+	}
+
 	method _build_tabs () {
 		return _tabs();
+	}
+
+	method _build_document_tabs () {
+		return _document_tabs();
 	}
 
 	method _build_accordion () {
@@ -496,13 +530,15 @@ own. A box with a scroll box of sections, one or more per widget
 family, each under a divider that names the families it shows: the
 palette (a swatch of every token), text and links, boxes, buttons,
 fields (text fields with a placeholder, a selection, an invalid value
-and a disabled one, a text area with a scrollbar), choices (check
-boxes, radio buttons, a segmented control, a slider, a star rating, a
-dropdown), tabs, an accordion, a table (groups, a filter row, pages),
-progress bars and a spinner, toasts (and a button that shows one),
-a menu bar whose titles open menus, a menu with every kind of item, a
-status bar for each kind of message, a button that opens a dialog, dividers, an image, and the variants the
-theme defines, each with a sample of its family.
+and a disabled one, a text area with a scrollbar), choices (check boxes,
+radio buttons, a segmented control, a slider, a star rating, a
+dropdown), a color picker with swatches, tabs, document tabs (with
+unsaved changes, errors and a tab that cannot be closed), an accordion,
+a table (groups, a filter row, pages), progress bars and a spinner,
+toasts (and a button that shows one), a menu bar whose titles open
+menus, a menu with every kind of item, a status bar for each kind of
+message, a button that opens a dialog, dividers, an image, and the
+variants the theme defines, each with a sample of its family.
 
 The editor draws the gallery in the theme being edited (see
 L<Term::Fabulous::ThemeEditor::UI>); the widgets read their looks

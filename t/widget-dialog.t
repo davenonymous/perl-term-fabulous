@@ -170,6 +170,35 @@ subtest 'a dropdown list opens over its dialog' => sub {
 	$picker->close;
 };
 
+subtest 'a dialog opened from inside another one' => sub {
+	$ui->interaction->set_focused_widget($behind);
+	my $outer        = Term::Fabulous::Widget::Dialog->new( layout => { sizing => { width => sizing_fixed(16) } } );
+	my @outer_inside = ( button(), button() );
+	$outer->add_child(@outer_inside);
+	$outer->open($ui);
+	$ui->step;
+	press_key('Tab');
+	ref_is $ui->interaction->get_focused_widget, $outer_inside[1], 'the second widget of the outer dialog has the focus';
+
+	my $inner        = Term::Fabulous::Widget::Dialog->new( z_index => $outer->z_index + 1, layout => { sizing => { width => sizing_fixed(10) } } );
+	my $inner_inside = button();
+	$inner->add_child($inner_inside);
+	$inner->open($ui);
+	$ui->step;
+	ref_is $ui->interaction->get_focused_widget, $inner_inside, 'the inner dialog takes the focus';
+	press_key('Tab');
+	ref_is $ui->interaction->get_focused_widget, $inner_inside, 'Tab stays inside the inner dialog';
+
+	press_key('Escape');
+	ok !$inner->is_open, 'Escape closes the inner dialog';
+	ok $outer->is_open,  'but not the outer one';
+	ref_is $ui->interaction->get_focused_widget, $outer_inside[1], 'the focus goes back into the outer dialog';
+
+	press_key('Escape');
+	ok !$outer->is_open, 'Escape again closes the outer dialog';
+	ref_is $ui->interaction->get_focused_widget, $behind, 'and the focus goes back behind both';
+};
+
 subtest 'close after the program removed the dialog' => sub {
 	my $box       = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my $screen_ui = Term::Fabulous->new( width => 30, height => 9, root => $box );

@@ -717,7 +717,9 @@ text_input {
 The `box` family (plain boxes, scroll boxes, canvases, charts and every
 widget that names no family of its own) has no `border.enabled`,
 because widgets build their parts out of boxes; nor do tab bars,
-scrollbars and dividers, which draw lines of their own. These widgets
+scrollbars and dividers, which draw lines of their own, or status bars
+and document tabs (the `document_tabs` family), which are one row
+high. These widgets
 have a border only when the program gives them one. A table draws its
 frame itself. `bordered` given to a widget wins over the theme,
 `bordered => 0` included, and `reset_look('bordered')`

@@ -24,8 +24,10 @@ L<Term::Fabulous::Widget::Checkbox>, L<Term::Fabulous::Widget::RadioGroup>
 with L<Term::Fabulous::Widget::RadioButton>,
 L<Term::Fabulous::Widget::Dropdown> and L<Term::Fabulous::Widget::Slider>,
 the checks of L<Term::Fabulous::Validator>,
-the dialog L<Term::Fabulous::Widget::Dialog> and the prompt
-L<Term::Fabulous::Widget::Prompt>, the clipboard of
+the dialog L<Term::Fabulous::Widget::Dialog>, the prompt
+L<Term::Fabulous::Widget::Prompt>, the file dialog
+L<Term::Fabulous::Widget::FileDialog>, the color picker
+L<Term::Fabulous::Widget::ColorPicker>, the clipboard of
 L<Term::Fabulous::Editor>, and L<Term::Fabulous::Layout> for a form
 described in KDL.
 
@@ -63,6 +65,14 @@ L</Confirm before quitting (Prompt)>
 =item *
 
 L</Ask for a number and check it (Prompt, validator)>
+
+=item *
+
+L</Open and save a file (FileDialog)>
+
+=item *
+
+L</Ask for a color (ColorPicker in a Prompt)>
 
 =item *
 
@@ -950,6 +960,353 @@ fine.
 
 C<< $event->value('value') >> is the text of the field when the user
 pressed OK.
+
+=back
+
+=head1 Open and save a file (FileDialog)
+
+Goal: a notes editor that opens a file with a file dialog, saves it
+again with one key, and asks for a name when the note has none yet or
+the user wants another one.
+
+This program is shipped as F<examples/cookbook/open-and-save.pl>. It
+starts in a folder of sample notes that it makes in a temporary
+directory and deletes when it ends, so it never writes your files.
+
+=for code-from examples/cookbook/open-and-save.pl
+
+	use v5.32;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Commands;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::FileDialog;
+	use Term::Fabulous::Widget::StatusBar;
+	use Term::Fabulous::Widget::TextArea;
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+	use Encode qw(decode);
+	use File::Basename qw(basename dirname);
+	use File::Path qw(make_path);
+	use File::Temp;
+	use Time::Local qw(timegm);
+
+	# A folder of sample notes in a temporary directory, deleted when the
+	# program ends. The days are fixed and the folder is deep enough that
+	# the dialog shows only the end of its path, so the picture is the same
+	# on every run.
+	my $temporary = File::Temp->newdir;
+	my $samples   = "$temporary/home/grace/Documents/garden-club/season-2026/notes";
+	make_path($samples);
+	foreach my $sample ( [ 'groceries.txt', "Milk\nBread\nApples\n", 28 ], [ 'ideas.md', "# Ideas\n\nA clock that runs backwards.\n", 30 ], [ 'garden.txt', "Water the tomatoes.\n" x 5, 31 ] ) {
+		my ( $name, $text, $day ) = @$sample;
+		write_text( "$samples/$name", $text ) or die "Cannot write $samples/$name: $!\n";
+		my $time = timegm( 0, 30, 10, $day, 4, 2026 );    # 10:30 on a day in May 2026
+		utime $time, $time, "$samples/$name";
+	}
+
+	my $notes  = Term::Fabulous::Widget::TextArea->new( wrap => 1, layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $path   = undef;    # the file of the note; undef until it has one
+	my $status = Term::Fabulous::Widget::StatusBar->new(
+		message => 'Ctrl+O opens, Ctrl+S saves, Alt+s saves as, Ctrl+Q quits.',
+		parts   => sub { [ defined $path ? name_of($path) : 'untitled', 'dim' ] },
+	);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child( $notes, $status );
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	# A path is bytes, as the file system and the dialog's answer have it;
+	# the status bar shows the file's name decoded.
+	sub name_of ($file) {
+		return decode( 'UTF-8', basename($file), Encode::FB_PERLQQ | Encode::LEAVE_SRC );
+	}
+
+	# Both return false when the file cannot be read or written; $! says why.
+	sub read_text ($file) {
+		open my $in, '<:encoding(UTF-8)', $file or return;
+		my $text = do { local $/; <$in> };
+		close $in;
+		return $text;
+	}
+
+	sub write_text ( $file, $text ) {
+		open my $out, '>:encoding(UTF-8)', $file or return;
+		print {$out} $text;
+		return close $out;
+	}
+
+	sub open_note ($file) {
+		my $text = read_text($file);
+		if ( !defined $text ) {
+			$status->message( 'Cannot read ' . name_of($file) . ": $!", 'danger' );
+			return;
+		}
+		$notes->value($text);
+		$path = $file;
+		$status->message( 'Opened ' . name_of($file) . '.', 'success' );
+		return;
+	}
+
+	sub save_note ($file) {
+		if ( !write_text( $file, $notes->value ) ) {
+			$status->message( 'Cannot write ' . name_of($file) . ": $!", 'danger' );
+			return;
+		}
+		$path = $file;
+		$status->message( 'Saved ' . name_of($file) . '.', 'success' );
+		return;
+	}
+
+	# The dialogs start in the folder of the note, or in the samples.
+	sub folder () {
+		return defined $path ? dirname($path) : $samples;
+	}
+
+	sub ask_to_open () {
+		Term::Fabulous::Widget::FileDialog->new(
+			mode      => 'open',
+			directory => folder(),
+			filters   => [ [ 'Notes' => '*.txt *.md' ], [ 'All files' => '*' ] ],
+			list_rows => 5,
+			width     => 60,
+		)->on(
+			Answer => sub ($event) {
+				open_note( $event->value('path') ) if $event->button eq 'open';
+				return;
+			}
+		)->open($ui);
+		return;
+	}
+
+	sub ask_to_save () {
+		Term::Fabulous::Widget::FileDialog->new(
+			mode              => 'save',
+			directory         => folder(),
+			name              => defined $path ? basename($path) : 'untitled.txt',
+			current_file      => $path,
+			default_extension => 'txt',
+			list_rows         => 5,
+			width             => 60,
+		)->on(
+			Answer => sub ($event) {
+				save_note( $event->value('path') ) if $event->button eq 'save';
+				return;
+			}
+		)->open($ui);
+		return;
+	}
+
+	my $commands = Term::Fabulous::Commands->new(
+		commands => [
+			{ id => 'open',    label => 'Open...',    keys => ['Ctrl+O'], run => \&ask_to_open },
+			{ id => 'save',    label => 'Save',       keys => ['Ctrl+S'], run => sub { defined $path ? save_note($path) : ask_to_save() } },
+			{ id => 'save_as', label => 'Save as...', keys => ['Alt+s'],  run => \&ask_to_save },
+			{ id => 'quit',    label => 'Quit',       keys => ['Ctrl+Q'], run => sub { $ui->loop->stop } },
+		],
+	);
+	$commands->listen($root);
+
+	$ui->interaction->set_focused_widget($notes);
+	$ui->run;
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-open-and-save.svg" alt="An Open a file dialog over the empty notes editor: the folder line ends in garden-club/season-2026/notes, the list shows garden.txt, groceries.txt and ideas.md with sizes and dates, the cursor is on groceries.txt, which is also in the File field, and below are the Notes filter, the Show hidden files checkbox and the Open and Cancel buttons"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<< Term::Fabulous::Widget::FileDialog->new >> builds the dialog and
+C<open> shows it; C<on> returns the dialog, so the three calls make one
+statement. The dialog reports the result with an C<Answer> event
+(L<Term::Fabulous::Event::Answer>), as a prompt does: the button is the
+mode, C<open> or C<save>, and C<< $event->value('path') >> is the
+absolute path. C<Cancel> and C<Escape> answer C<cancel>, which the
+listeners simply ignore.
+
+=item *
+
+The path is a byte string, exactly what the file system uses, so it
+goes to C<open> as it is. To show a file's name, C<name_of> decodes it
+from UTF-8 (a byte that is no UTF-8 becomes C<\xHH>).
+
+=item *
+
+In the open dialog, the cursor on a file puts its name into the
+C<File> field, and C<Enter> or a double click opens it. C<Enter> on a
+folder, or C<Backspace>, walks through the folders. The two filters
+make a dropdown: C<Notes> shows the text and Markdown files, C<All
+files> all of them. Folders always show.
+
+=item *
+
+The dialog only chooses the path. Reading and writing the file is up to
+the program: C<read_text> and C<write_text> return false when they
+fail, and the status bar says what went wrong.
+
+=item *
+
+C<Ctrl+S> saves to the note's file without a question once it has one;
+only an untitled note opens the save dialog. C<Alt+s> always opens it.
+The save dialog starts in the C<File> field with the name selected up
+to its extension, so typing a new name keeps C<.txt>; moving through
+the list leaves the name alone. A name typed without a dot gets
+C<.txt> (C<default_extension>).
+
+=item *
+
+The save dialog asks before it replaces a file that exists, with a
+second prompt above it, which starts on C<Cancel>. C<current_file>
+names the file the note already has, so saving under its own name asks
+nothing; for an untitled note it is C<undef>, and every existing file
+is asked for.
+
+=item *
+
+The commands and their keys are in a L<Term::Fabulous::Commands> table
+(see L<Term::Fabulous::Cookbook::Menus/Give a program a menu bar (MenuBar, Commands)>),
+which a menu bar could show as well.
+
+=back
+
+=head1 Ask for a color (ColorPicker in a Prompt)
+
+Goal: a setting for a color, changed in a prompt where the user picks a
+named color, types one, or moves sliders, and OK only takes a color
+that is valid.
+
+This program is shipped as F<examples/cookbook/color-prompt.pl>.
+
+=for code-from examples/cookbook/color-prompt.pl
+
+	use v5.32;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous;
+	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::ColorPicker;
+	use Term::Fabulous::Widget::Prompt;
+	use Term::Fabulous::Widget::Text;
+	use Clay::UI::Enum::Result;
+	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
+
+	my $color = '#e5c07b';    # the setting: the color of the highlight
+
+	my $root = Term::Fabulous::Widget::Box->new(
+		layout => {
+			layout_direction => CLAY_TOP_TO_BOTTOM,
+			sizing           => { width => sizing_grow(), height => sizing_grow() },
+			padding          => { left  => 2, right => 2, top => 1, bottom => 1 },
+			child_gap        => 1,
+		},
+	);
+	my $sample = Term::Fabulous::Widget::Box->new( background_color => $color, layout => { sizing => { width => sizing_fixed(24), height => sizing_fixed(3) } } );
+	my $label  = Term::Fabulous::Widget::Text->new( text => "Highlight color: $color" );
+	$root->add_child( $label, $sample, Term::Fabulous::Widget::Text->new( text => 'c changes the color, q quits.' ) );
+
+	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+	sub ask_color () {
+		my $picker = Term::Fabulous::Widget::ColorPicker->new(
+			value     => $color,
+			alpha     => 0,
+			list_rows => 6,
+			swatches  => [
+				[ '#e5c07b', 'Sand',  '#e5c07b' ],
+				[ '#61afef', 'Sky',   '#61afef' ],
+				[ '#98c379', 'Mint',  '#98c379' ],
+				[ '#e06c75', 'Rose',  '#e06c75' ],
+				[ '#c678dd', 'Lilac', '#c678dd' ],
+				[ '#56b6c2', 'Teal',  '#56b6c2' ],
+			],
+		);
+		Term::Fabulous::Widget::Prompt->new(
+			title   => 'Highlight color',
+			message => 'Pick a color, type one or move the sliders.',
+			fields  => [ { name => 'color', label => 'Color',  input   => $picker } ],
+			buttons => [ { id   => 'ok',    label => 'Use it', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
+			width   => 66,
+		)->on(
+			Answer => sub ($event) {
+				return if $event->button ne 'ok';
+				$color = $event->value('color');
+				$sample->background_color( $picker->rgba );
+				$label->text("Highlight color: $color");
+				return;
+			}
+		)->open($ui);
+		return;
+	}
+
+	$root->on(
+		KeyPress => sub ($event) {
+			my $key = $event->key_name // '';
+			if ( $key eq 'c' ) {
+				ask_color();
+				return;
+			}
+			if ( $key eq 'q' ) {
+				$ui->loop->stop;
+				return;
+			}
+			return Clay::UI::Enum::Result->CONTINUE;
+		}
+	);
+
+	$ui->run;
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/cookbook-color-prompt.svg" alt="A Highlight color prompt over the dimmed setting: on the left the label Color and a framed list of six named colors with samples, Mint selected; on the right the field with #98c379 and a green sample, the RGB/HSL switch on RGB and the red, green and blue sliders at 152, 195 and 121; the buttons Use it and Cancel below"></p>
+
+=end html
+
+=over
+
+=item *
+
+A L<Term::Fabulous::Widget::ColorPicker> is one field of a
+L<Term::Fabulous::Widget::Prompt>, like a text field would be. The
+answer's C<< $event->value('color') >> is the picker's value. Its
+C<label> stands in front of it and starts the error line, so the user
+reads "Color: Please enter a color without transparency." and not the
+field's name. The picker is built anew for every prompt, so it starts
+with the current setting.
+
+=item *
+
+Each swatch is C<[ $value, $label, $color ]>. Here the value is the
+color itself, so it shows in the field when the user picks it. A
+swatch's value may also be a name the program understands, such as a
+theme's token, with the color only for the sample.
+
+=item *
+
+The value is what the user chose, as text: a swatch's value, a color
+typed as C<#rrggbb>, C<rgb(...)> or a name, or the color of the sliders
+as C<#rrggbb>. The label shows it as it is. To paint with it, the
+listener asks C<< $picker->rgba >>, which gives every kind as numbers.
+
+=item *
+
+C<< alpha => 0 >> leaves out the alpha slider, and the field refuses a
+translucent color: a highlight should hide what is behind it.
+
+=item *
+
+The prompt focuses the swatch list when it opens. C<Tab> moves on to
+the field, the RGB/HSL switch and the sliders. While the field holds
+text that is no color, C<Use it> and C<Enter> keep the prompt open and
+show what is wrong, as for any field with a validator (see
+L</Ask for a number and check it (Prompt, validator)>).
 
 =back
 

@@ -41,12 +41,19 @@ that is active already.
 item is then the tab, a [Term::Fabulous::Widget::Tabs::Button](../Widget/Tabs/Button.md). Under
 a Tabs, the bar's event does not bubble past the Tabs, which fires its
 own with the page.
+- A [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md), when the user clicks one of
+its tabs, the active one included, or an arrow at one of its ends,
+which chooses the next hidden tab on that side. The item is a copy of
+the tab's hash, as the DocumentTabs drew it, with the program's own
+keys. The DocumentTabs does not make the tab active itself: the program
+shows the document and sets `active`, which fires nothing.
 
 It is a [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent) whose name is `Select`; listen for
 it with `$widget->on( Select => sub ($event) { ... } )`. It
 bubbles to the widget's ancestors like every event (see
 ["Return values and bubbling" in Term::Fabulous::Manual::Events](../Manual/Events.md#return-values-and-bubbling)), and
-`$event->target` is the accordion, the Tabs or the bar.
+`$event->target` is the accordion, the Tabs, the bar or the
+DocumentTabs.
 
 # CONSTRUCTOR
 
@@ -79,7 +86,10 @@ non-negative integer.
 
 The widget the user chose: a [Term::Fabulous::Widget::Accordion::Item](../Widget/Accordion/Item.md),
 a [Term::Fabulous::Widget::Tabs::Page](../Widget/Tabs/Page.md) (from a Tabs) or a
-[Term::Fabulous::Widget::Tabs::Button](../Widget/Tabs/Button.md) (from a bar on its own).
+[Term::Fabulous::Widget::Tabs::Button](../Widget/Tabs/Button.md) (from a bar on its own). From
+a [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md), the tab: a hash reference
+with `title`, `modified`, `error`, `closable` and the program's own
+keys (see ["tabs" in Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md#tabs)).
 
 ## index
 
@@ -93,6 +103,7 @@ item was closed.
 # SEE ALSO
 
 [Term::Fabulous::Widget::Accordion](../Widget/Accordion.md), [Term::Fabulous::Widget::Tabs](../Widget/Tabs.md),
-[Term::Fabulous::Widget::Tabs::Bar](../Widget/Tabs/Bar.md), ["EVENTS" in Term::Fabulous::Manual::Events](../Manual/Events.md#events),
+[Term::Fabulous::Widget::Tabs::Bar](../Widget/Tabs/Bar.md), [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md),
+["EVENTS" in Term::Fabulous::Manual::Events](../Manual/Events.md#events),
 ["ACCORDIONS" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#accordions),
 ["TABS" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#tabs).

@@ -254,9 +254,18 @@ class Term::Fabulous::Widget::Prompt
 	}
 
 	method _focus_named ($name) {
-		my $field  = first { $_->{name} eq $name } @_fields;
-		my $target = defined $field ? $field->{input} : $self->button($name);
-		$self->ui->interaction->set_focused_widget($target);
+		my $field = first { $_->{name} eq $name } @_fields;
+		$self->_focus_into( defined $field ? $field->{input} : $self->button($name) );
+		return;
+	}
+
+	# Focuses the widget, or the first focusable widget inside it when it
+	# cannot take the focus itself (an input made of other inputs, such
+	# as a color picker).
+	method _focus_into ($widget) {
+		my $interaction = $self->ui->interaction;
+		my ($target) = $interaction->focusables( within => $widget );
+		$interaction->set_focused_widget($target) if defined $target;
 		return;
 	}
 
@@ -282,7 +291,7 @@ class Term::Fabulous::Widget::Prompt
 			my $error = $input->can('validate') ? $input->validate : undef;
 			next unless defined $error;
 			$self->_show_error( ( $field->{label} // $field->{name} ) . ": $error" );
-			$self->ui->interaction->set_focused_widget($input) if $self->ui->interaction->can_take_focus($input);
+			$self->_focus_into( $self->_invalid_part_of($input) // $input );
 			return 0;
 		}
 		my $problem = defined $check ? $check->( $self->values ) : undef;
@@ -292,6 +301,13 @@ class Term::Fabulous::Widget::Prompt
 		}
 		$self->_show_error('');
 		return 1;
+	}
+
+	# The first invalid input inside a field that can take the focus (a
+	# color picker's text field rather than its swatch list), or undef.
+	method _invalid_part_of ($input) {
+		my $interaction = $self->ui->interaction;
+		return first { $interaction->can_take_focus($_) } $input->invalid_inputs;
 	}
 
 	# Escape, or close from the program: the prompt answers cancel, after
@@ -433,10 +449,13 @@ label in front of it. The prompt does not check values itself: it asks
 the inputs, which check their values with their C<required> and
 C<validator> parameters (see L<Term::Fabulous::Widget::Input/validator>).
 
-A button marked as I<primary> checks the values before it answers. If
-an input is not valid, the prompt stays open, shows the label of the
-field and what is wrong with its value in the line above the buttons,
-and moves the focus to that input. A C<check> of the whole prompt runs
+A button marked as I<primary> checks the values before it answers. If an
+input is not valid, the prompt stays open, shows the label of the field
+and what is wrong with its value in the line above the buttons, and
+moves the focus to that input. An input made of other widgets, such as a
+L<Term::Fabulous::Widget::ColorPicker>, passes the focus to its first
+invalid part that can take it (the picker's text field), or else to the
+first focusable widget inside it. A C<check> of the whole prompt runs
 after the inputs, for rules that involve more than one field. Buttons
 that are not primary, such as Cancel, answer without checking.
 
@@ -449,8 +468,10 @@ button when none is primary). C<Escape> dismisses the prompt.
 
 When the prompt opens, the first field gets the focus, or the first
 button when there are no fields. The C<focus> parameter names another
-one. A prompt that asks before deleting something can start on its
-Cancel button, so that a hasty C<Enter> does not delete anything.
+one; a field whose input cannot take the focus itself passes it to the
+first focusable widget inside that input. A prompt that asks before
+deleting something can start on its Cancel button, so that a hasty
+C<Enter> does not delete anything.
 
 =head1 CONSTRUCTOR
 

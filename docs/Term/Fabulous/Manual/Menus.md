@@ -1,6 +1,6 @@
 # NAME
 
-Term::Fabulous::Manual::Menus - Commands, menu bars and context menus
+Term::Fabulous::Manual::Menus - Commands, menu bars, context menus and key references
 
 # DESCRIPTION
 
@@ -19,13 +19,16 @@ mouse, `F10` or `Alt` and a letter.
 below a widget.
 - ["MENUS ON THEIR OWN"](#menus-on-their-own): a menu that stays on the screen, as a list of
 actions.
+- ["KEY REFERENCES"](#key-references): a help screen that lists the keys of the program,
+made from the same table.
 - ["LOOKS"](#looks): the theme families of menus, menu bars and status bars.
 - ["AN APPLICATION WINDOW"](#an-application-window): a menu bar, the content and a status bar
 together.
 
 The reference pages are [Term::Fabulous::Command](../Command.md),
-[Term::Fabulous::Commands](../Commands.md), [Term::Fabulous::Widget::Menu](../Widget/Menu.md) and
-[Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md). Complete programs are in
+[Term::Fabulous::Commands](../Commands.md), [Term::Fabulous::Widget::Menu](../Widget/Menu.md),
+[Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md) and
+[Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md). Complete programs are in
 [Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md). The status bar, which often sits
 below the content of such a program, is described in
 ["STATUS BARS" in Term::Fabulous::Manual::Feedback](Feedback.md#status-bars).
@@ -56,9 +59,9 @@ The [Term::Fabulous::Commands](../Commands.md) table holds the commands of a pro
 in one place. Writing them down once has three advantages. The menus
 show the commands with their keys, so the menus and the keys always
 agree. A key that two commands claim dies when the second one is added,
-so a conflict shows up when the program starts. And a list of keys for
-a help screen comes from the same table
-([commands](../Commands.md#commands)).
+so a conflict shows up when the program starts. And the help screen
+that lists the keys comes from the same table (see
+["KEY REFERENCES"](#key-references)).
 
 ## Keys
 
@@ -279,6 +282,54 @@ in a popup. `Escape` and the keys it does not use go on to its
 parents, and choosing an item fires `Choose`, which bubbles up through
 the parents, and runs the command.
 
+# KEY REFERENCES
+
+A [Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md) is a dialog that answers the
+question "which key does what?". It shows a table of keys and what
+they do, in groups that say where the keys work, with a search field
+above it. Its rows come from two places: the commands of a
+[Term::Fabulous::Commands](../Commands.md) table, one row for every command with
+keys, and a list of the keys that no command runs, such as those of a
+list or a text area:
+
+```perl
+use Term::Fabulous::Widget::KeyReference;
+
+sub show_keys () {
+        Term::Fabulous::Widget::KeyReference->new(
+                commands => $commands,
+                keys     => [
+                        [ 'The list', 'Up, Down', 'Another note' ],
+                        [ 'The list', 'Enter',    'Open the note' ],
+                ],
+        )->open($ui);
+        return;
+}
+
+$commands->add( { id => 'keys', label => 'Keys...', keys => ['F1'], run => \&show_keys } );
+```
+
+The commands are listed with their keys as the menus show them and
+with their labels, under the group `Everywhere` (or the `group` the
+program names). A label that ends in `...` is shown without it.
+The rows are read from the table when the key reference is made. A
+program that makes a new one each time the user asks for it, as here,
+always lists the commands and keys it has now.
+
+Typing into the search field leaves only the rows whose keys or action
+contain the text, so `ctrl` lists the keys with Ctrl and `save` the
+ways to save. `Escape` or the `Close` button closes the key reference,
+and the focus goes back where it was. The picture shows a key reference
+after the user typed `ctrl` (`examples/widgets/key-reference.pl`):
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-key-reference.svg" alt="A Keys of the notes editor dialog over a dimmed notes editor: the search field holds ctrl, and the table below lists only the keys with Ctrl, Ctrl+N New note, Ctrl+S Save, Ctrl+A Select all and Ctrl+Q Quit under Everywhere, and the undo, copy and word keys under Text; a Close button at the bottom"></p>
+</div>
+
+The recipe
+["Show the keys in a help screen (KeyReference)" in Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference)
+is a complete program.
+
 # LOOKS
 
 Menus, menu bars and status bars have theme families of their own (see
@@ -329,7 +380,10 @@ screen without being told. `examples/widgets/menu-bar.pl` is such a
 program, a small notes editor, and
 [Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md) has the recipes. The theme editor
 ([Term::Fabulous::ThemeEditor](../ThemeEditor.md)) is a larger one: its menus, keys and
-help screen all come from one table of commands.
+help screen all come from one table of commands. A program that keeps
+several documents open adds a row of
+[document tabs](Layout.md#document-tabs) between
+the menu bar and the content.
 
 A program in which `Ctrl+C` copies, as most editors expect, makes its
 UI with `stop_on_ctrl_c => 0` (see ["new" in Term::Fabulous](../../../../README.md#new)) and
@@ -341,7 +395,8 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 
 The class pages: [Term::Fabulous::Command](../Command.md), [Term::Fabulous::Commands](../Commands.md),
 [Term::Fabulous::Widget::Menu](../Widget/Menu.md), [Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md),
-[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Event::Choose](../Event/Choose.md).
+[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md),
+[Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md), [Term::Fabulous::Event::Choose](../Event/Choose.md).
 [Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md) for complete programs, and
 ["KEYBOARD" in Term::Fabulous::Manual::Events](Events.md#keyboard) for key names and how keys
 reach widgets.

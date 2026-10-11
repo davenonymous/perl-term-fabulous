@@ -85,9 +85,9 @@ background instead gives the token a color with alpha 0, such as
 
 A family is the kind of a widget: `text`, `box`, `button`,
 `input`, `text_input`, `dropdown`, `menu`, `menu_bar`, `table`,
-`scrollbar`, `tabs`, `accordion`, `dialog`, `toast`,
-`status_bar`, `progress`, `spinner`, `image`, `divider`. A widget
-class says which family it belongs to
+`scrollbar`, `tabs`, `document_tabs`, `accordion`, `dialog`,
+`toast`, `status_bar`, `progress`, `spinner`, `image`, `divider`.
+A widget class says which family it belongs to
 (["theme\_family" in Term::Fabulous::Role::Themed](Role/Themed.md#theme_family)), and a family may
 extend another: `button` extends `box`, so it has the box's slots
 too.
@@ -158,8 +158,8 @@ its own parameters (see
 and takes no `bordered` at all.
 - `tabs`: the line of a tab bar joins the borders of its tabs,
 which the bar draws itself.
-- `scrollbar`, `divider` and `status_bar`: lines one cell
-thick, which a frame does not fit around.
+- `scrollbar`, `divider`, `status_bar` and `document_tabs`:
+lines one cell thick, which a frame does not fit around.
 - `text`, which has no border slots.
 
 A widget that frames one of its parts decides that part's border

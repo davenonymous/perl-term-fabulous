@@ -81,13 +81,23 @@ item is then the tab, a L<Term::Fabulous::Widget::Tabs::Button>. Under
 a Tabs, the bar's event does not bubble past the Tabs, which fires its
 own with the page.
 
+=item *
+
+A L<Term::Fabulous::Widget::DocumentTabs>, when the user clicks one of
+its tabs, the active one included, or an arrow at one of its ends,
+which chooses the next hidden tab on that side. The item is a copy of
+the tab's hash, as the DocumentTabs drew it, with the program's own
+keys. The DocumentTabs does not make the tab active itself: the program
+shows the document and sets C<active>, which fires nothing.
+
 =back
 
 It is a L<Clay::UI::Events::Event> whose name is C<Select>; listen for
 it with C<< $widget->on( Select => sub ($event) { ... } ) >>. It
 bubbles to the widget's ancestors like every event (see
 L<Term::Fabulous::Manual::Events/Return values and bubbling>), and
-C<< $event->target >> is the accordion, the Tabs or the bar.
+C<< $event->target >> is the accordion, the Tabs, the bar or the
+DocumentTabs.
 
 =head1 CONSTRUCTOR
 
@@ -122,7 +132,10 @@ A boolean. Default: 1. See L</open>.
 
 The widget the user chose: a L<Term::Fabulous::Widget::Accordion::Item>,
 a L<Term::Fabulous::Widget::Tabs::Page> (from a Tabs) or a
-L<Term::Fabulous::Widget::Tabs::Button> (from a bar on its own).
+L<Term::Fabulous::Widget::Tabs::Button> (from a bar on its own). From
+a L<Term::Fabulous::Widget::DocumentTabs>, the tab: a hash reference
+with C<title>, C<modified>, C<error>, C<closable> and the program's own
+keys (see L<Term::Fabulous::Widget::DocumentTabs/tabs>).
 
 =head2 index
 
@@ -136,7 +149,8 @@ item was closed.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Accordion>, L<Term::Fabulous::Widget::Tabs>,
-L<Term::Fabulous::Widget::Tabs::Bar>, L<Term::Fabulous::Manual::Events/EVENTS>,
+L<Term::Fabulous::Widget::Tabs::Bar>, L<Term::Fabulous::Widget::DocumentTabs>,
+L<Term::Fabulous::Manual::Events/EVENTS>,
 L<Term::Fabulous::Manual::Layout/ACCORDIONS>,
 L<Term::Fabulous::Manual::Layout/TABS>.
 

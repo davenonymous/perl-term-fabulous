@@ -1,6 +1,6 @@
 # NAME
 
-Term::Fabulous::Manual::Feedback - Progress bars, spinners, toasts, status bars and prompts
+Term::Fabulous::Manual::Feedback - Progress bars, spinners, toasts, status bars, prompts and file dialogs
 
 # DESCRIPTION
 
@@ -17,11 +17,14 @@ and they draw themselves. The ones that move do so on the application's
 clock, without a timer of their own (see ["ANIMATION"](#animation)).
 
 The section ["PROMPTS"](#prompts) is about the other direction: a prompt stops
-the user to ask a question, and reports the answer.
+the user to ask a question, and reports the answer. ["FILE DIALOGS"](#file-dialogs)
+are prompts of a special kind, which ask for a file to open or save,
+or for a folder.
 
 The reference pages are the class pages: [Term::Fabulous::Widget::ProgressBar](../Widget/ProgressBar.md),
 [Term::Fabulous::Widget::Spinner](../Widget/Spinner.md), [Term::Fabulous::Widget::Toast](../Widget/Toast.md),
-[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md) and [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md).
+[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md)
+and [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md).
 The class the first two share, [Term::Fabulous::Widget::Display](../Widget/Display.md), is
 the base of every widget that paints itself from its own state, and
 the one to derive from for a feedback widget of your own
@@ -280,6 +283,62 @@ The recipes
 are complete programs. For a dialog that is not a question, build a
 [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) and fill it with any widgets.
 
+# FILE DIALOGS
+
+A [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md) asks the user for a file to
+open, a name to save a file under, or a folder. It lists the folders
+and files of a folder, with their sizes and the times they were last
+modified, and has a field for a name or a path. The user walks through
+the folders with `Enter` and `Backspace` or the mouse, picks an entry
+with the cursor, or types a name. Like a prompt, it opens over the
+screen, keeps the focus while it is open, and reports the result with
+one `Answer` event after it closed:
+
+```perl
+use Term::Fabulous::Widget::FileDialog;
+
+Term::Fabulous::Widget::FileDialog->new(
+        mode      => 'open',
+        directory => $notes_folder,
+        filters   => [ [ 'Notes' => '*.txt *.md' ], [ 'All files' => '*' ] ],
+)->on( Answer => sub ($event) {
+        open_note( $event->value('path') ) if $event->button eq 'open';
+        return;
+} )->open($ui);
+```
+
+The `mode` decides what the user chooses. In `open` mode it is a file
+that exists, in `save` mode a name in a folder that exists, and in
+`folder` mode a folder; the list then shows folders only. The button
+of the answer is the mode's, `open`, `save` or `choose`, and
+`$event->value('path')` is the absolute path, as bytes: exactly
+what the file system uses, ready for `open`. The list shows the names
+decoded from UTF-8. `Cancel` answers `cancel`, and so does
+`Escape`, which also sets `dismissed`.
+
+_Filters_ decide which files the list shows. Each has a label and
+patterns such as `*.txt *.md`; with two or more, a dropdown below the
+field switches between them. Folders always show, and names that start
+with a dot show only while the `Show hidden files` checkbox is
+checked. In save mode, the dialog starts in the field with the name
+selected up to its extension, `default_extension` adds an extension
+to a name without a dot, and an existing file is replaced only after
+a question, which starts on `Cancel`. The file the document already
+has, given as `current_file`, is the exception: saving to it again
+asks nothing. The picture shows the
+dialog to open a note, with the cursor on a file
+(`examples/widgets/file-dialog.pl`):
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-file-dialog.svg" alt="An Open a file dialog over a dimmed notes program: the folder line ends in Documents/Projects/analytical-engine/notes, the list shows two folders and four notes with their sizes and modification times, the cursor is on reading-list.txt, which is also in the File field, and below it are the Notes filter, the Show hidden files checkbox and the Open and Cancel buttons"></p>
+</div>
+
+The dialog only chooses a path. It checks that a file to open is there,
+and that the folder of a file to save is there and the file is not a
+folder, but reading and writing are up to the program. The recipe
+["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#open-and-save-a-file-filedialog)
+is a complete program.
+
 # ANIMATION
 
 Spinners, and progress bars that are `indeterminate` or `animated`,
@@ -300,7 +359,7 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 The class pages: [Term::Fabulous::Widget::ProgressBar](../Widget/ProgressBar.md),
 [Term::Fabulous::Widget::Spinner](../Widget/Spinner.md), [Term::Fabulous::Widget::Toast](../Widget/Toast.md),
 [Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md),
-[Term::Fabulous::Widget::Display](../Widget/Display.md).
+[Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md), [Term::Fabulous::Widget::Display](../Widget/Display.md).
 ["Timers and other asynchronous work" in Term::Fabulous::Manual::Programs](Programs.md#timers-and-other-asynchronous-work)
 for the timers that drive a bar, and
 [Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md) for complete programs that update

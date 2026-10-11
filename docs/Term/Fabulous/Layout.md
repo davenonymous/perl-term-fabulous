@@ -304,8 +304,12 @@ structured properties of a few widgets that say so, such as a table's
 
 Every widget class of Term::Fabulous can be declared in a layout,
 except [Term::Fabulous::Widget::Prompt](Widget/Prompt.md),
-[Term::Fabulous::Widget::Menu](Widget/Menu.md) and [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md),
-whose fields and items are code, which a layout file cannot hold. The
+[Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md),
+[Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md),
+[Term::Fabulous::Widget::DocumentTabs](Widget/DocumentTabs.md),
+[Term::Fabulous::Widget::Menu](Widget/Menu.md) and [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md):
+their fields, items, rows and tabs come from code, and they answer
+through events, which a layout file cannot hold. The
 table lists the others with the alias the examples use; each link leads to the
 list of properties the class accepts. All of them except Text accept
 the ["Box properties"](#box-properties).
@@ -330,6 +334,7 @@ the ["Box properties"](#box-properties).
 | Slider           | Term::Fabulous::Widget::Slider           | input widget + range, value      |
 | StarRating       | Term::Fabulous::Widget::StarRating       | input widget + max, value, half  |
 | SegmentedControl | Term::Fabulous::Widget::SegmentedControl | input widget + options, value    |
+| ColorPicker      | Term::Fabulous::Widget::ColorPicker      | Box + value, alpha, sliders, ... |
 | Divider          | Term::Fabulous::Widget::Divider          | Box + text, line_style, ...      |
 | Accordion        | Term::Fabulous::Widget::Accordion        | Box + multiple, bordered, ...    |
 | Item             | Term::Fabulous::Widget::Accordion::Item  | Box + title, open, disabled      |
@@ -373,6 +378,7 @@ The properties of each class:
 - [Slider](Widget/Slider.md#kdl-properties)
 - [StarRating](Widget/StarRating.md#kdl-properties)
 - [SegmentedControl](Widget/SegmentedControl.md#kdl-properties)
+- [ColorPicker](Widget/ColorPicker.md#kdl-properties)
 - [Divider](Widget/Divider.md#kdl-properties)
 - [Accordion](Widget/Accordion.md#kdl-properties) and [Item](Widget/Accordion/Item.md#kdl-properties)
 - [Tabs](Widget/Tabs.md#kdl-properties) and [Page](Widget/Tabs/Page.md#kdl-properties), [TabBar](Widget/Tabs/Bar.md#kdl-properties) and [Tab](Widget/Tabs/Button.md#kdl-properties)

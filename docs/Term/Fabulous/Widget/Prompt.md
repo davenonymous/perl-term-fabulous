@@ -92,10 +92,13 @@ label in front of it. The prompt does not check values itself: it asks
 the inputs, which check their values with their `required` and
 `validator` parameters (see ["validator" in Term::Fabulous::Widget::Input](Input.md#validator)).
 
-A button marked as _primary_ checks the values before it answers. If
-an input is not valid, the prompt stays open, shows the label of the
-field and what is wrong with its value in the line above the buttons,
-and moves the focus to that input. A `check` of the whole prompt runs
+A button marked as _primary_ checks the values before it answers. If an
+input is not valid, the prompt stays open, shows the label of the field
+and what is wrong with its value in the line above the buttons, and
+moves the focus to that input. An input made of other widgets, such as a
+[Term::Fabulous::Widget::ColorPicker](ColorPicker.md), passes the focus to its first
+invalid part that can take it (the picker's text field), or else to the
+first focusable widget inside it. A `check` of the whole prompt runs
 after the inputs, for rules that involve more than one field. Buttons
 that are not primary, such as Cancel, answer without checking.
 
@@ -108,8 +111,10 @@ button when none is primary). `Escape` dismisses the prompt.
 
 When the prompt opens, the first field gets the focus, or the first
 button when there are no fields. The `focus` parameter names another
-one. A prompt that asks before deleting something can start on its
-Cancel button, so that a hasty `Enter` does not delete anything.
+one; a field whose input cannot take the focus itself passes it to the
+first focusable widget inside that input. A prompt that asks before
+deleting something can start on its Cancel button, so that a hasty
+`Enter` does not delete anything.
 
 # CONSTRUCTOR
 

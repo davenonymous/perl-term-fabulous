@@ -13,6 +13,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed sizing_grow sizing_percent CLAY_TOP_TO_BOTTOM);
 	use Cwd qw(abs_path getcwd);
+	use Encode qw(decode encode);
 	use Feature::Compat::Try;
 	use File::Basename qw(basename dirname);
 	use File::Spec;
@@ -26,16 +27,16 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use Term::Fabulous::Editor;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Theme::Document;
-	use Term::Fabulous::ThemeEditor::FileDialog;
 	use Term::Fabulous::ThemeEditor::Form;
-	use Term::Fabulous::ThemeEditor::KeyReference;
 	use Term::Fabulous::ThemeEditor::Preview;
 	use Term::Fabulous::ThemeEditor::Tab;
-	use Term::Fabulous::ThemeEditor::TabStrip;
 	use Term::Fabulous::ThemeEditor::UI;
 	use Term::Fabulous::ThemeEditor::ValueDialog;
 	use Term::Fabulous::Widget::Box;
+	use Term::Fabulous::Widget::DocumentTabs;
 	use Term::Fabulous::Widget::Dropdown;
+	use Term::Fabulous::Widget::FileDialog;
+	use Term::Fabulous::Widget::KeyReference;
 	use Term::Fabulous::Widget::MenuBar;
 	use Term::Fabulous::Widget::Prompt;
 	use Term::Fabulous::Widget::RichText;
@@ -47,6 +48,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 	# How long the text must rest before it is parsed again, in seconds.
 	use constant PARSE_DELAY => 0.15;
+
+	# What the open and save dialogs list.
+	use constant THEME_FILTERS => [ [ 'Theme files' => '*.kdl' ], [ 'All files' => '*' ] ];
 
 	use constant WATCHED_SIGNALS => qw(TERM INT HUP);
 
@@ -219,13 +223,13 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			caption  => 'Term::Fabulous theme editor',
 			layout   => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
 		);
-		$strip = Term::Fabulous::ThemeEditor::TabStrip->new(
-			tabs      => sub { $editor->_tab_summaries },
-			on_select => sub ($index) { $editor->select_tab($index) },
-			on_close  => sub ($index) { $editor->close_tab($index) },
-			on_new    => sub { $editor->_ask_new_theme },
-			layout    => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
+		$strip = Term::Fabulous::Widget::DocumentTabs->new(
+			tabs   => sub { $editor->_tab_summaries },
+			layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
 		);
+		$strip->on( Select   => sub ($event) { $editor->select_tab( $event->index ); return } );
+		$strip->on( TabClose => sub ($event) { $editor->close_tab( $event->index );  return } );
+		$strip->on( TabAdd   => sub ($event) { $editor->_ask_new_theme;              return } );
 
 		# The preview pane: the editor draws its frame and title, the preview
 		# inside it draws in the theme being edited.
@@ -441,8 +445,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	method _tab_summaries () {
-		return
-			map { { title => $tabs[$_]->title, modified => $tabs[$_]->is_modified, errors => !$tabs[$_]->document->is_valid ? 1 : 0, active => defined $active && $_ == $active ? 1 : 0 } } 0 .. $#tabs;
+		return map { { title => _title_of($_), modified => $_->is_modified, error => !$_->document->is_valid } } @tabs;
 	}
 
 	method _add_tab ($tab) {
@@ -458,11 +461,12 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# file that does not exist yet becomes a new theme that is saved there.
 	method open_file ($path) {
 		die "Term::Fabulous::ThemeEditor: open_file needs a file name, got " . describe($path) unless defined $path && !ref $path && length $path;
+		die "Term::Fabulous::ThemeEditor: open_file needs the path as the file system has it (bytes), got a character string" if $path =~ /[^\x00-\xff]/;
 		my $full     = abs_path($path) // $path;
 		my $existing = first { defined $tabs[$_]->path && ( abs_path( $tabs[$_]->path ) // $tabs[$_]->path ) eq $full } 0 .. $#tabs;
 		return $self->select_tab($existing) && $tabs[$existing] if defined $existing;
 		if ( !-e $path ) {
-			my ($name) = basename($path) =~ /\A(.*?)(?:\.kdl)?\z/i;
+			my ($name) = _decoded( basename($path) ) =~ /\A(.*?)(?:\.kdl)?\z/i;
 			my $tab = $self->_add_tab( Term::Fabulous::ThemeEditor::Tab->new( path => $path, text => _template( $name, 'dark' ), modified => 1 ) );
 			$status->message( $self->_shown_path($path) . ' does not exist yet; it is made when you save.' );
 			return $tab;
@@ -477,11 +481,22 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	# A path as the editor shows it: relative to the start directory when it
-	# is inside it.
+	# is inside it, and decoded.
 	method _shown_path ($path) {
 		my $full = abs_path($path)      // File::Spec->rel2abs($path);
 		my $base = abs_path($directory) // $directory;
-		return index( $full, "$base/" ) == 0 ? substr( $full, length($base) + 1 ) : $full;
+		return _decoded( index( $full, "$base/" ) == 0 ? substr( $full, length($base) + 1 ) : $full );
+	}
+
+	# Paths are bytes, as the file system has them; the editor shows them
+	# as UTF-8 text, with a byte that is no UTF-8 as \xHH.
+	sub _decoded ($bytes) {
+		return decode( 'UTF-8', $bytes, Encode::FB_PERLQQ | Encode::LEAVE_SRC );
+	}
+
+	# The title of a tab as the editor shows it: its file's name decoded.
+	sub _title_of ($tab) {
+		return _decoded( $tab->title );
 	}
 
 	sub _template ( $name, $base ) {
@@ -537,6 +552,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		my $tab     = $self->active_tab;
 		my $focused = $ui->interaction->get_focused_widget;
 		my $had     = defined $focused && $content->contains($focused);
+		$strip->active($active);
 		if ( !defined $tab ) {
 			$self->_show_content($welcome);
 			$preview_title->markup('Preview');
@@ -580,8 +596,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 		my @errors = $document->errors;
 		my $danger = _hex_of( $ui->theme->token('danger') );
-		$preview_title->markup( 'Preview: ' . _escaped( $theme->name // $tab->title ) . ( $tab->is_stale ? " [bold $danger](stale: the text has errors)[/]" : '' ) );
-		$settings_title->markup( 'Settings of ' . _escaped( $tab->title ) );
+		$preview_title->markup( 'Preview: ' . _escaped( $theme->name // _title_of($tab) ) . ( $tab->is_stale ? " [bold $danger](stale: the text has errors)[/]" : '' ) );
+		$settings_title->markup( 'Settings of ' . _escaped( _title_of($tab) ) );
 
 		if ( $tab->mode eq 'form' ) {
 			my $shown = $tab->is_stale ? $self->_last_valid_document($tab) : $document;
@@ -1323,24 +1339,30 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 	method _ask_open () {
 		weaken( my $editor = $self );
-		my $tab   = $self->active_tab;
-		my $start = defined $tab && defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
-		Term::Fabulous::ThemeEditor::FileDialog->new(
+		my $tab    = $self->active_tab;
+		my $start  = defined $tab && defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
+		my $dialog = Term::Fabulous::Widget::FileDialog->new(
 			mode      => 'open',
+			title     => 'Open a theme',
+			filters   => THEME_FILTERS,
 			list_rows => $self->_list_rows(20),
 			directory => -d $start ? $start : $directory,
-			on_done   => sub ($path) {
-				return unless defined $path;
+		);
+		$dialog->on(
+			Answer => sub ($event) {
+				return if $event->button eq 'cancel';
 				try {
-					$editor->open_file($path);
+					$editor->open_file( $event->values->{path} );
 					$editor->_focus_settings;
 				}
 				catch ($error) {
 					$error =~ s/\ATerm::Fabulous::Theme::Document: //;
 					$editor->_tell( 'Cannot open the file', $error );
 				}
-			},
-		)->open($ui);
+				return;
+			}
+		);
+		$dialog->open($ui);
 		return;
 	}
 
@@ -1358,7 +1380,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 				$self->_ask(
 					title   => 'The theme has errors',
 					message => sprintf(
-						"%s has %d error%s; the first is on line %d: %s\n\nA program cannot load the file until they are fixed. Save it anyway?", $tab->title, scalar @errors, @errors == 1 ? '' : 's',
+						"%s has %d error%s; the first is on line %d: %s\n\nA program cannot load the file until they are fixed. Save it anyway?", _title_of($tab), scalar @errors,
+						@errors == 1 ? '' : 's',
 						$errors[0]{line}, _escaped( $errors[0]{message} )
 					),
 					buttons => [ { id => 'save', label => 'Save anyway', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
@@ -1369,7 +1392,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 				return $next->() unless $tab->changed_on_disk;
 				$self->_ask(
 					title   => 'The file changed',
-					message => _escaped( $tab->path ) . ' was changed by another program since it was opened or saved. Overwrite it with the theme from the editor?',
+					message => _escaped( _decoded( $tab->path ) ) . ' was changed by another program since it was opened or saved. Overwrite it with the theme from the editor?',
 					buttons => [ { id => 'save', label => 'Overwrite', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 					on_done => sub ( $button, $values ) { $next->() if $button eq 'save' },
 				);
@@ -1406,28 +1429,26 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	method _save_as ( $tab = $self->active_tab, $then = undef ) {
 		return unless defined $tab;
 		weaken( my $editor = $self );
-		my $start = defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
-		my $name  = defined $tab->path ? basename( $tab->path ) : ( $tab->document->name // $tab->title ) . '.kdl';
-		Term::Fabulous::ThemeEditor::FileDialog->new(
-			mode      => 'save',
-			list_rows => $self->_list_rows(20),
-			directory => -d $start ? $start : $directory,
-			name      => $name,
-			on_done   => sub ($path) {
-				return unless defined $path;
-				my $same = defined $tab->path && ( abs_path( $tab->path ) // '' ) eq ( abs_path($path) // $path );
-				if ( -e $path && !$same ) {
-					$editor->_ask(
-						title   => 'Replace the file?',
-						message => _escaped($path) . ' exists. Replace it with this theme?',
-						buttons => [ { id => 'replace', label => 'Replace', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
-						on_done => sub ( $button, $values ) { $editor->_write( $tab, $path ) && $then && $then->() if $button eq 'replace' },
-					);
-					return;
-				}
-				$editor->_write( $tab, $path ) && $then && $then->();
-			},
-		)->open($ui);
+		my $start  = defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
+		my $name   = defined $tab->path ? basename( $tab->path )                          : encode( 'UTF-8', ( $tab->document->name // _title_of($tab) ) . '.kdl' );
+		my $dialog = Term::Fabulous::Widget::FileDialog->new(
+			mode              => 'save',
+			title             => 'Save the theme as',
+			filters           => THEME_FILTERS,
+			default_extension => 'kdl',
+			current_file      => defined $tab->path ? File::Spec->rel2abs( $tab->path ) : undef,
+			list_rows         => $self->_list_rows(20),
+			directory         => -d $start ? $start : $directory,
+			name              => $name,
+		);
+		$dialog->on(
+			Answer => sub ($event) {
+				return if $event->button eq 'cancel';
+				$editor->_write( $tab, $event->values->{path} ) && $then && $then->();
+				return;
+			}
+		);
+		$dialog->open($ui);
 		return;
 	}
 
@@ -1462,7 +1483,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		return $go->() unless $tab->is_modified;
 		$self->_ask(
 			title   => 'Revert to saved',
-			message => 'Replace the theme in the editor with ' . _escaped( $tab->path ) . ' as it is on the disk? Undo (Ctrl+Z) takes it back.',
+			message => 'Replace the theme in the editor with ' . _escaped( _decoded( $tab->path ) ) . ' as it is on the disk? Undo (Ctrl+Z) takes it back.',
 			buttons => [ { id => 'revert', label => 'Revert', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) { $go->() if $button eq 'revert' },
 		);
@@ -1476,11 +1497,11 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		my $text   = $tab->text;
 		my $name   = $tab->document->name;
 		if ( !$tab->document->has_syntax_error ) {
-			$text = $tab->document->with_setting( 'theme.name', ( $name // $tab->title ) . '-copy' )->text;
+			$text = $tab->document->with_setting( 'theme.name', ( $name // _title_of($tab) ) . '-copy' )->text;
 		}
 		$self->_add_tab( Term::Fabulous::ThemeEditor::Tab->new( untitled => $number, text => $text, modified => 1 ) );
 		$self->_focus_settings;
-		$status->message( 'Made a copy of ' . $tab->title . ' as a new theme.' );
+		$status->message( 'Made a copy of ' . _title_of($tab) . ' as a new theme.' );
 		return;
 	}
 
@@ -1494,13 +1515,13 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			my $found = first { refaddr $tabs[$_] == refaddr $tab } 0 .. $#tabs;
 			$editor->_remove_tab($found) if defined $found;
 			delete $last_valid{ refaddr $tab };
-			$status->message( 'Closed ' . $tab->title . '.' );
+			$status->message( 'Closed ' . _title_of($tab) . '.' );
 		};
 		return $close->() unless $tab->is_modified;
 		$self->select_tab($index);
 		$self->_ask(
 			title   => 'Unsaved changes',
-			message => 'Save the changes to ' . _escaped( $tab->title ) . ' before closing it?',
+			message => 'Save the changes to ' . _escaped( _title_of($tab) ) . ' before closing it?',
 			buttons => [ { id => 'save', label => 'Save', primary => 1 }, { id => 'discard', label => 'Close without saving' }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
 				return $editor->_save( $tab, $close ) if $button eq 'save';
@@ -1521,7 +1542,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			title   => 'Unsaved changes',
 			message => sprintf(
 				"%d theme%s %s unsaved changes: %s.\n\nSave %s before quitting?", scalar @unsaved, @unsaved == 1 ? '' : 's', @unsaved == 1 ? 'has' : 'have',
-				join( ', ', map { _escaped( $_->title ) } @unsaved ), @unsaved == 1 ? 'it' : 'them'
+				join( ', ', map { _escaped( _title_of($_) ) } @unsaved ), @unsaved == 1 ? 'it' : 'them'
 			),
 			buttons => [ { id => 'save', label => @unsaved == 1 ? 'Save' : 'Save all', primary => 1 }, { id => 'discard', label => 'Quit without saving' }, { id => 'cancel', label => 'Cancel' } ],
 			on_done => sub ( $button, $values ) {
@@ -1544,13 +1565,22 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# with the form's.
 	my %FORM_COMMAND = map { $_ => 1 } qw(edit reset paste_keys only_set);
 
+	# The commands with keys that work everywhere, and their group.
+	use constant COMMAND_GROUP => 'Everywhere';
+
+	method _commands_everywhere () {
+		return grep { !$FORM_COMMAND{ $_->id } } $commands->commands;
+	}
+
 	method key_list () {
-		my @keys;
-		foreach my $command ( $commands->commands ) {
-			next unless $command->keys && !$FORM_COMMAND{ $command->id };    # the form's keys are listed below
-			push @keys, [ 'Everywhere', $command->keys_text, $command->label =~ s/\.\.\.\z//r ];
-		}
-		push @keys,
+		my @command_keys = map { [ COMMAND_GROUP, $_->keys_text, $_->label =~ s/\.\.\.\z//r ] } grep { $_->keys } $self->_commands_everywhere;
+		return ( @command_keys, _other_keys() );
+	}
+
+	# The keys that are no commands' (and the form's commands, under The
+	# form), in groups in the order they are listed.
+	sub _other_keys () {
+		return
 			[ 'Everywhere',  'Alt+1 to Alt+9',                        'Show the first to the ninth tab' ],
 			[ 'Everywhere',  'F10, Alt+F/E/V/T/H',                    'Open the menu bar, or one of its menus' ],
 			[ 'Everywhere',  'Tab, Shift+Tab',                        'Move the focus (in text mode: indent, outdent)' ],
@@ -1590,11 +1620,17 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			[ 'Dialogs',     'Escape',                                'Cancel' ],
 			[ 'Files',       'Enter',                                 'Open a folder, choose a file' ],
 			[ 'Files',       'Backspace',                             'The parent folder' ];
-		return @keys;
 	}
 
 	method _show_keys () {
-		Term::Fabulous::ThemeEditor::KeyReference->new( keys => [ $self->key_list ], height => min( 40, $ui->height - 2 ), width => min( 100, $ui->width - 2 ) )->open($ui);
+		Term::Fabulous::Widget::KeyReference->new(
+			title    => 'Keys of the theme editor',
+			commands => [ $self->_commands_everywhere ],
+			group    => COMMAND_GROUP,
+			keys     => [ _other_keys() ],
+			height   => max( 1, min( 40,  $ui->height - 2 ) ),
+			width    => max( 1, min( 100, $ui->width - 2 ) ),
+		)->open($ui);
 		return;
 	}
 
@@ -1733,11 +1769,11 @@ of a theme without a file, C<Undo> with nothing to undo) are dimmed.
 
 =item The tab strip
 
-A tab per open theme: its file's name (C<untitled-N> before it is
-saved), a dot while it has unsaved changes or an exclamation mark while
-its text has errors, and a close button. A click selects a tab, a
-click on its close button or a middle click closes it, the C<+> at the
-end makes a new theme.
+A tab per open theme (a L<Term::Fabulous::Widget::DocumentTabs>): its
+file's name (C<untitled-N> before it is saved), a dot while it has
+unsaved changes or an exclamation mark while its text has errors, and a
+close button. A click selects a tab, a click on its close button or a
+middle click closes it, the C<+> at the end makes a new theme.
 
 =item The preview (left)
 
@@ -1745,7 +1781,8 @@ A widget of every family in sections: the palette with a swatch of
 every token, text and links, boxes, buttons (one of them with the class
 C<primary>), text fields (one with an invalid value, one disabled, a
 text area with a scrollbar), check boxes, radio buttons, a segmented
-control, a slider, a star rating and a dropdown, tabs, an accordion, a
+control, a slider, a star rating and a dropdown, a color picker, tabs,
+document tabs, an accordion, a
 table with groups, a filter row and pages, progress bars and a spinner,
 toasts, a menu bar, a menu and status bars, a button that opens a
 dialog, dividers, an image, and a sample of every variant the theme
@@ -1832,15 +1869,18 @@ it, so the preview shows the value in its true colors:
 
 =item a color slot
 
-a list of the palette's tokens with their colors (and C<none> where the
-slot may have no color, C<reverse> for C<button.background.pressed>),
-and a color of its own: a field for C<#rrggbb>, C<#rrggbbaa>,
-C<rgb(...)>, C<rgba(...)> or a color name, with a swatch and a slider
-for each of red, green, blue and alpha;
+a L<Term::Fabulous::Widget::ColorPicker>: a list of the palette's
+tokens with their colors (and C<none> where the slot may have no color,
+C<reverse> for C<button.background.pressed>), and a color of its own: a
+field for C<#rrggbb>, C<#rrggbbaa>, C<rgb(...)>, C<hsl(...)> or a color
+name, with a sample, sliders for red, green and blue or (switched with
+C<RGB> and C<HSL>) for hue, saturation and lightness, and a slider for
+alpha;
 
 =item a palette token
 
-the color of its own (a token is a color, never another token);
+the color picker without the list (a token is a color, never another
+token);
 
 =item a border style slot
 
@@ -1863,13 +1903,14 @@ such as C<focused> or C<hovered> shows on a widget of the preview that
 has the focus or is under the pointer (C<F6> goes into the preview).
 C<Apply> (or C<Enter> in the list or a field) writes the value to the
 theme, C<Reset to default> removes the setting, and C<Cancel> or
-C<Escape> leaves the theme as it was. A value the setting cannot take
-is not applied; the dialog says why. A list in a dialog has its frame
-in the accent color while it has the keyboard focus.
+C<Escape> leaves the theme as it was. A value the setting cannot take,
+or a text in the color field that is no color, is not applied; the
+dialog says why. A list in a dialog has its frame in the accent color
+while it has the keyboard focus.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a list of the palette's tokens with danger chosen, a field and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/example-theme-editor-dialog.svg" alt="The dialog of button.border.color at the right edge: a color picker with the palette's tokens in a list, danger chosen, a field, an RGB and HSL switch and red, green, blue and alpha sliders for a color of its own; on the left, the preview shows the Cancel button of the bordered row with a red border"></p>
 
 =end html
 
@@ -1997,8 +2038,8 @@ desktop.
 
 C<Ctrl+S> saves the theme of the tab to its file; a new theme asks
 where (as C<Alt+S>, C<Save as>, does; a name without an extension gets
-C<.kdl>). C<File> E<gt> C<Save all> saves every theme with unsaved
-changes. A file is written to a temporary file first and then renamed
+C<.kdl>, and saving over another file that exists asks first).
+C<File> E<gt> C<Save all> saves every theme with unsaved changes. A file is written to a temporary file first and then renamed
 over the old one, so it is never half written; it keeps its permissions
 and its line ends (CRLF when every line of it ended in CRLF), a symbolic
 link keeps pointing to its file, and a read-only file is not replaced.
@@ -2006,9 +2047,11 @@ Saving asks first when the theme has errors (a program could not load
 it) and when another program changed the file since the editor read
 it.
 
-C<Ctrl+O> opens theme files: a dialog lists the folders and the
-C<*.kdl> files of a folder (all files with C<Show all files>), and
-takes a name or a path; a file that is open already shows its tab. A
+C<Ctrl+O> opens theme files. The open and save dialogs (a
+L<Term::Fabulous::Widget::FileDialog>) list the folders and the
+C<*.kdl> files of a folder (all files when C<All files> is chosen
+instead of C<Theme files>, hidden ones with C<Show hidden files>), and
+take a name or a path; a file that is open already shows its tab. A
 file with errors opens in text mode. C<Ctrl+R> reverts a theme to its
 file (after a question when it has unsaved changes; undo takes it
 back). C<Ctrl+N> makes a new theme based on C<dark> or C<light>, and
@@ -2025,7 +2068,8 @@ listed on the standard error.
 
 =head1 KEYS
 
-C<F1> shows this list in the editor, with a search field. Keys that a
+C<F1> shows this list in the editor, with a search field (a
+L<Term::Fabulous::Widget::KeyReference>). Keys that a
 focused widget uses itself (a text field, the text of the theme, a
 dialog) do what that widget does; the others reach the editor.
 
@@ -2357,6 +2401,12 @@ wraps around). Returns 1, or 0 when no tab is open.
 Opens a theme file in a new tab, or shows the tab it is open in, and
 returns the tab. A file that does not exist becomes a new theme saved
 there. Dies when the file cannot be read or is not UTF-8.
+
+The path is a byte string, as the file system has it (as on the command
+line and in a L<Term::Fabulous::Widget::FileDialog> answer); a
+character string with characters above 255 dies. The editor shows
+paths and file names (tab titles, messages) decoded from UTF-8, with a
+byte that is no UTF-8 shown as C<\xHH>.
 
 =head2 new_theme
 

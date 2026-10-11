@@ -1,6 +1,40 @@
 Revision history for Term::Fabulous
 
 0.01    Unreleased
+        - Term::Fabulous::Widget::KeyReference: a dialog that lists the
+          keys of a program in groups, from the commands of a command
+          table and further rows, with a search field that filters them.
+        - Term::Fabulous::Widget::FileDialog: a dialog that asks for a
+          file to open, a name to save under, or a folder. It lists the
+          folder's entries with sizes and times, takes typed names and
+          paths, has filters in a dropdown, a checkbox for hidden files
+          and a default extension, asks before it replaces a file other
+          than the current one, and reports with Answer after it closed.
+        - Term::Fabulous::Widget::ColorPicker: a color typed into a
+          field, set with RGB or HSL sliders and an optional alpha
+          slider, or picked from a list of named swatches whose values
+          need not be colors. It fires its own Change and Submit, works
+          as a field of a Prompt, and can be built from a layout file.
+        - Term::Fabulous::Widget::DocumentTabs: a row of tabs for the
+          open documents of a program, given as a list or as code read
+          for every frame, with marks for unsaved changes and errors,
+          close marks, a + button and scrolling to the active tab. A
+          click fires Select or the new events TabClose and TabAdd; the
+          program decides what happens.
+        - The theme family document_tabs.
+        - Term::Fabulous::Widget::Prompt focuses the first focusable
+          widget inside a field that cannot take the focus itself, such
+          as a color picker.
+        - Term::Fabulous::Widget::Table::Frame (internal): the frame
+          around a list that shows the focus in the accent color.
+        - The theme editor uses the new widgets: its own file dialog,
+          key reference and tab strip classes are gone, its value dialog
+          uses a color picker with an RGB/HSL switch, and the preview
+          shows a color picker and document tabs.
+        - File dialogs and key references in Manual::Feedback and
+          Manual::Menus, color pickers in Manual::Forms, document tabs
+          in Manual::Layout, and four recipes in Cookbook::Forms and
+          Cookbook::Menus.
         - Term::Fabulous::Widget::MenuBar: a row of menus at the top of
           the screen, opened with the mouse, F10 or Alt and the
           underlined letter of a title. It takes the focus only while a

@@ -11,30 +11,30 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Dialog;
 
-# The dialog that edits one setting of a theme: a list of tokens or
-# border styles to choose from and, for a color, a field and sliders for
-# a color of its own. Every change shows in the preview at once; Apply
-# writes it to the theme, Cancel takes it back.
+# The dialog that edits one setting of a theme: a color picker with the
+# palette's tokens as swatches for a color, a list of border styles or
+# other choices, or a field for the name. Every change shows in the
+# preview at once; Apply writes it to the theme, Cancel takes it back.
 class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dialog) :strict(params) {
 	use Clay::UI::Enum::Result;
-	use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_RIGHT_CENTER);
+	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_RIGHT_CENTER);
 	use Feature::Compat::Try;
-	use List::Util qw(first min);
+	use List::Util qw(any min);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(color);
-	use Term::Fabulous::Color;
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Theme::Document;
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Button;
-	use Term::Fabulous::Widget::Slider;
+	use Term::Fabulous::Widget::ColorPicker;
 	use Term::Fabulous::Widget::Table;
+	use Term::Fabulous::Widget::Table::Frame qw(framed);
 	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextField;
 
-	use constant LIST_ID => 'theme-editor-value-list';
-	use constant SWATCH  => "\x{2588}" x 3;    # full blocks in the token's color
+	use constant LIST_ID   => 'theme-editor-value-list';
+	use constant PICKER_ID => 'theme-editor-color';
 
 	field $key        :param :reader;
 	field $current    :param;    # the value the theme has now (effective)
@@ -49,11 +49,8 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	field $kind;    # color, palette, style, boolean, name, base
 	field $value;    # the value chosen now
 	field $list;
-	field $hex;
-	field %slider;
-	field $swatch;
+	field $picker;
 	field $message;
-	field $updating = 0;
 
 	ADJUST {
 		my $parsed = Term::Fabulous::Theme::Document::parse_key($key);
@@ -75,7 +72,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 				z_index       => $self->z_index + 1,
 			}
 		);
-		$self->layout( { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(64) }, padding => { left => 2, right => 2, top => 1, bottom => 1 }, child_gap => 1 } );
+		$self->layout( { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow( 0, 64 ) }, padding => { left => 2, right => 2, top => 1, bottom => 1 }, child_gap => 1 } );
 
 		$self->add_child( Term::Fabulous::Widget::Text->new( text => "Edit $key", bold => 1 ) );
 		$self->add_child( Term::Fabulous::Widget::Text->new( text => $self->_hint($parsed) ) );
@@ -107,18 +104,6 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 		return exists $palette->{$spec} ? qq{the token "$spec"} : $spec;
 	}
 
-	# A list in a frame of its own (a table's own frame scrolls with its
-	# rows), drawn in the accent while the list has the focus.
-	sub _framed ( $list, $rows ) {
-		my $frame = Term::Fabulous::Widget::Box->new( bordered => 1, layout => { sizing => { width => sizing_grow(), height => sizing_fixed( $rows + 2 ) } } );
-		$frame->add_child($list);
-		weaken( my $weak_frame = $frame );
-		weaken( my $weak_list  = $list );
-		$list->on( OnFocus => sub ($event) { $weak_frame->border_color( $weak_frame->family_look( input => 'accent' ) ) if $event->target == $weak_list; return Clay::UI::Enum::Result->CONTINUE } );
-		$list->on( OnBlur  => sub ($event) { $weak_frame->reset_look('border_color') if $event->target == $weak_list;                                    return Clay::UI::Enum::Result->CONTINUE } );
-		return $frame;
-	}
-
 	# ---------------------------------------------------------------------
 	# What the dialog offers
 	# ---------------------------------------------------------------------
@@ -128,23 +113,20 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 		return $self->_list( map { [ $_, $_ ] } Term::Fabulous::Theme::builtin_names() ) if $kind eq 'base';
 		return $self->_style_list($parsed) if $kind eq 'style';
 		return $self->_list( [ 'true', 'true' ], [ 'false', 'false' ] ) if $kind eq 'boolean';
-		return $self->_color_editor if $kind eq 'palette';
-		my $info    = Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} );
-		my @choices = map { [ $_, $_ ] } Term::Fabulous::Theme::tokens();
-		push @choices, [ 'none',    'none (no color)' ] unless $info->{required};
-		push @choices, [ 'reverse', 'reverse video' ] if $info->{reverse} && $parsed->{state} eq 'pressed';
-		my $box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 2 } );
-		$box->add_child( $self->_list(@choices), $self->_color_editor );
-		return $box;
+		return $self->_color_picker if $kind eq 'palette';    # a token's value must be a color
+		my $info     = Term::Fabulous::Theme::slot_info( @{$parsed}{qw(family slot)} );
+		my @swatches = map { [ $_, $_, $palette->{$_} ] } Term::Fabulous::Theme::tokens();
+		push @swatches, [ 'none',    'none (no color)' ] unless $info->{required};
+		push @swatches, [ 'reverse', 'reverse video' ] if $info->{reverse} && $parsed->{state} eq 'pressed';
+		return $self->_color_picker(@swatches);
 	}
 
 	method _name_field () {
 		my $field = Term::Fabulous::Widget::TextField->new( value => $current // '', placeholder => 'The theme\'s name', layout => { sizing => { width => sizing_grow() } } );
 		$field->editor->select_all;
 		weaken( my $weak_self = $self );
-		$field->on( Change => sub ($event) { $weak_self->_choose( $event->value, 0 ); return Clay::UI::Enum::Result->CONTINUE } );
-		$field->on( Submit => sub ($event) { $weak_self->apply;                       return } );
-		$hex = $field;
+		$field->on( Change => sub ($event) { $weak_self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$field->on( Submit => sub ($event) { $weak_self->apply;                    return } );
 		return $field;
 	}
 
@@ -162,7 +144,6 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	# A list of [ value, label, sample ] choices; the cursor on one
 	# chooses it.
 	method _list (@choices) {
-		my %palette = %$palette;
 		$list = Term::Fabulous::Widget::Table->new(
 			id           => LIST_ID,
 			row_id       => 'value',
@@ -171,10 +152,10 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 			border       => 'none',
 			column_lines => 'none',
 			columns      => [
-				{ key => 'sample', width => 'fixed(6)', cell_style => sub ($cell) { my $color = $palette{ $cell->{row}{value} }; return defined $color ? { text_color => $color } : {} } },
+				{ key => 'sample', width => 'fixed(6)' },
 				{ key => 'label',  width => 'grow' },
 			],
-			rows   => [ map { { value => $_->[0], label => $_->[1], sample => $_->[2] // ( exists $palette{ $_->[0] } ? SWATCH : '' ) } } @choices ],
+			rows   => [ map { { value => $_->[0], label => $_->[1], sample => $_->[2] // '' } } @choices ],
 			layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 		);
 		my ($chosen) = grep { $choices[$_][0] eq ( $current // '' ) } 0 .. $#choices;
@@ -185,35 +166,38 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 			$list->set_selection( $choices[$chosen][0] );
 		}
 		weaken( my $weak_self = $self );
-		$list->on( CursorMove  => sub ($event) { $weak_self->_choose( $event->row_id, 1 ) if defined $event->row_id; return Clay::UI::Enum::Result->CONTINUE } );
-		$list->on( RowActivate => sub ($event) { $weak_self->apply;                                                  return } );
-		return _framed( $list, $list_rows );
+		$list->on( CursorMove  => sub ($event) { $weak_self->_choose( $event->row_id ) if defined $event->row_id; return Clay::UI::Enum::Result->CONTINUE } );
+		$list->on( RowActivate => sub ($event) { $weak_self->apply;                                               return } );
+		return framed( $list, $list_rows );    # no header
 	}
 
-	method _color_editor () {
-		my $box = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() }, child_gap => 0 } );
-		$hex    = Term::Fabulous::Widget::TextField->new( placeholder => '#rrggbb or #rrggbbaa', max_length => 32, layout => { sizing => { width => sizing_fixed(22) } } );
-		$swatch = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(6), height => sizing_fixed(1) } } );
-		my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 1, padding => { bottom => 1 } } );
-		$row->add_child( $hex,                                                               $swatch );
-		$box->add_child( Term::Fabulous::Widget::Text->new( text => 'A color of its own:' ), $row );
-
+	# The color picker, with the swatches given ([ value, label, color ]):
+	# its changes show in the preview, Enter applies.
+	method _color_picker (@swatches) {
+		$picker = Term::Fabulous::Widget::ColorPicker->new(
+			id        => PICKER_ID,
+			value     => _pickable( $current, @swatches ),
+			swatches  => @swatches ? \@swatches : undef,
+			list_rows => $list_rows,
+		);
 		weaken( my $weak_self = $self );
-		foreach my $channel ( [ red => 'R' ], [ green => 'G' ], [ blue => 'B' ], [ alpha => 'A' ] ) {
-			my ( $name, $label ) = @$channel;
-			my $slider = Term::Fabulous::Widget::Slider->new( min => 0, max => 255, step => 1, value => 0, value_format => '%3d', layout => { sizing => { width => sizing_grow() } } );
-			my $line   = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 } );
-			$line->add_child( Term::Fabulous::Widget::Text->new( text => $label ), $slider );
-			$box->add_child($line);
-			$slider{$name} = $slider;
-			$slider->on( Change => sub ($event) { $weak_self->_slid; return Clay::UI::Enum::Result->CONTINUE } );
+		$picker->on( Change => sub ($event) { $weak_self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$picker->on( Submit => sub ($event) { $weak_self->apply;                    return } );
+		return $picker;
+	}
+
+	# The value the picker starts with: the current one when the picker
+	# can show it (a swatch's value or a color), else none.
+	sub _pickable ( $spec, @swatches ) {
+		return undef unless defined $spec;
+		return $spec if any { $_->[0] eq $spec } @swatches;
+		try {
+			color( __PACKAGE__, value => $spec );
 		}
-		$hex->on( Change => sub ($event) { $weak_self->_typed( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
-		$hex->on( Submit => sub ($event) { $weak_self->apply;                   return } );
-		$self->_show_color( $self->_rgba_of($current) );
-		$hex->value( $current // '' ) if defined $current && $current =~ /\A#/;
-		$hex->editor->select_all;    # typing replaces the color
-		return $box;
+		catch ($error) {
+			return undef;
+		}
+		return $spec;
 	}
 
 	method _buttons () {
@@ -235,73 +219,12 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	# Choosing
 	# ---------------------------------------------------------------------
 
-	# The color a value stands for: a token's from the palette, or the
-	# value read as a color; undef for none.
-	method _rgba_of ($spec) {
-		return undef unless defined $spec;
-		return $palette->{$spec} if exists $palette->{$spec};
-		try {
-			return color( __CLASS__, 'value', $spec );
-		}
-		catch ($error) {
-			return undef;
-		}
-	}
-
-	method _show_color ($rgba) {
-		return unless %slider;
-		$updating = 1;
-		my @channels = defined $rgba ? @$rgba : ( 0, 0, 0, 255 );
-		$slider{red}->value( $channels[0] );
-		$slider{green}->value( $channels[1] );
-		$slider{blue}->value( $channels[2] );
-		$slider{alpha}->value( $channels[3] );
-		$updating = 0;
-		defined $rgba && $rgba->[3] > 0 ? $swatch->background_color($rgba) : $swatch->reset_look('background_color');
-		return;
-	}
-
-	# A value was chosen; the list (when the choice came from elsewhere)
-	# and the color editor follow, the preview shows it.
-	method _choose ( $chosen, $from_list ) {
+	# A value was chosen in the list, the picker or the field; the preview
+	# shows it.
+	method _choose ($chosen) {
 		$value = $chosen;
-		if ( $kind eq 'color' || $kind eq 'palette' ) {
-			$self->_show_color( $self->_rgba_of($chosen) );
-			if ($from_list) {
-				$updating = 1;
-				$hex->value( $chosen =~ /\A#/ ? $chosen : '' );
-				$updating = 0;
-			}
-		}
-		$list->set_selection if !$from_list && defined $list;
 		$message->text('');
 		$on_preview->( $self->_checked($chosen) ? $chosen : undef );
-		return;
-	}
-
-	method _slid () {
-		return if $updating;
-		my $spec = _hex_of( map { $slider{$_}->value } qw(red green blue alpha) );
-		$updating = 1;
-		$hex->value($spec);
-		$updating = 0;
-		$self->_choose( $spec, 0 );
-		return;
-	}
-
-	sub _hex_of ( $red, $green, $blue, $alpha ) {
-		return sprintf( '#%02x%02x%02x', $red, $green, $blue ) if $alpha == 255;
-		return sprintf( '#%02x%02x%02x%02x', $red, $green, $blue, $alpha );
-	}
-
-	method _typed ($text) {
-		return if $updating;
-		my $rgba = length $text ? $self->_rgba_of($text) : undef;
-		if ( !defined $rgba ) {
-			$message->text('Not a color yet: write #rrggbb, #rrggbbaa, rgb(...) or a color name.');
-			return;
-		}
-		$self->_choose( $text, 0 );
 		return;
 	}
 
@@ -325,7 +248,13 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 
 	field $finished = 0;
 
+	# A text in the picker's field that is no color is not applied; the
+	# message line says what the field wants.
 	method apply () {
+		if ( defined $picker && !$picker->is_valid ) {
+			$message->text( $picker->error );
+			return $self;
+		}
 		return $self unless defined $value && length $value && $self->_checked($value);
 		$finished = 1;
 		$self->close;
@@ -374,15 +303,17 @@ setting:
 
 =item a color slot
 
-A list of the palette's tokens with their colors (and C<none> where the
-slot may have no color, C<reverse> for C<button.background.pressed>),
-and a color of its own: a field for C<#rrggbb>, C<#rrggbbaa>,
-C<rgb(...)>, C<rgba(...)> or a color name, a swatch, and sliders for
-red, green, blue and alpha.
+A L<Term::Fabulous::Widget::ColorPicker>: the palette's tokens as
+swatches with their colors (and C<none> where the slot may have no
+color, C<reverse> for C<button.background.pressed>), and a color of its
+own: a field for C<#rrggbb>, C<#rrggbbaa>, C<rgb(...)>, C<hsl(...)> or a
+color name, a sample, sliders for red, green and blue or for hue,
+saturation and lightness (switched with C<RGB> and C<HSL>), and one for
+alpha.
 
 =item a palette token
 
-The color of its own only: a token's value must be a color.
+The color picker without swatches: a token's value must be a color.
 
 =item a style slot
 
@@ -396,12 +327,13 @@ A field for the name; a list of the built-in themes.
 
 =back
 
-The list shows that it has the keyboard focus with its frame in the
-accent color. Every choice shows in the preview at once. C<Apply> (or C<Enter> in the
-list or a field) writes the value to the theme as one undo step,
-C<Reset to default> removes the setting, and C<Cancel> or C<Escape>
-leaves the theme as it was. A value the setting cannot take is not
-applied; the line above the buttons says why.
+A list shows that it has the keyboard focus with its frame in the
+accent color. Every choice shows in the preview at once. C<Apply> (or
+C<Enter> in a list or a field) writes the value to the theme as one undo
+step, C<Reset to default> removes the setting, and C<Cancel> or
+C<Escape> leaves the theme as it was. A value the setting cannot take,
+or a text in the color field that is no color, is not applied; the line
+above the buttons says why.
 
 =head1 CONSTRUCTOR
 

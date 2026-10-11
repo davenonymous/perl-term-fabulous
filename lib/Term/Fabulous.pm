@@ -1414,11 +1414,15 @@ fires C<Start> instead; see L<Term::Fabulous::Event::Resize>.
 
 Widgets fire further events themselves: C<Change> and
 C<ValidityChange> from the input widgets, C<Submit> from
-L<Term::Fabulous::Widget::TextField>,
+L<Term::Fabulous::Widget::TextField>, C<Change> and C<Submit> from
+L<Term::Fabulous::Widget::ColorPicker>,
 C<Activate> from L<Term::Fabulous::Widget::Button>, C<Close> from
 L<Term::Fabulous::Widget::Dialog>, C<Answer> from
-L<Term::Fabulous::Widget::Prompt>, C<Choose> from
-L<Term::Fabulous::Widget::Menu>, C<CanvasResize> from canvases,
+L<Term::Fabulous::Widget::Prompt> and
+L<Term::Fabulous::Widget::FileDialog>, C<Choose> from
+L<Term::Fabulous::Widget::Menu>, C<Select> from accordions, tabs and
+L<Term::Fabulous::Widget::DocumentTabs>, which also fires C<TabClose>
+and C<TabAdd>, C<CanvasResize> from canvases,
 C<SeriesHover> from charts, the table events (C<CursorMove>,
 C<SelectionChange>, C<RowActivate>, C<SortChange>, C<FilterChange>,
 C<PageChange>, C<Expand>, C<Collapse>, C<ColumnsChange>) from
@@ -1633,6 +1637,17 @@ A list of commands with their keys: a context menu that opens at the
 pointer or below a widget, the menus of a menu bar, or a list of
 actions on its own.
 
+=item L<Term::Fabulous::Widget::KeyReference>
+
+A dialog that lists the keys of a program and what they do, in groups,
+made from a command table and further rows, with a search field.
+
+=item L<Term::Fabulous::Widget::FileDialog>
+
+A dialog that asks for a file to open, a name to save under, or a
+folder: a list of the folder's entries, a field for a name or a path,
+filters and hidden files, and a question before a file is replaced.
+
 =item L<Term::Fabulous::Widget::ScrollBox>
 
 A box whose content can be larger than the box and scrolls with the
@@ -1667,6 +1682,12 @@ labels; the active tab joins the page's border.
 L<Term::Fabulous::Widget::Tabs::Bar> and
 L<Term::Fabulous::Widget::Tabs::Button> are the bar and its tabs, also
 usable on their own.
+
+=item L<Term::Fabulous::Widget::DocumentTabs>
+
+A row of tabs for the open documents of a program, with marks for
+unsaved changes and errors, close marks and a C<+> button. The program
+gives it the tabs and answers its events.
 
 =item L<Term::Fabulous::Widget::Canvas>
 
@@ -1712,6 +1733,11 @@ Used internally.
 
 The layer behind an open dialog. Used internally by the dialog.
 
+=item L<Term::Fabulous::Widget::FileDialog::FolderLine>
+
+The line of a file dialog that shows the end of the folder's path.
+Used internally by the file dialog.
+
 =back
 
 =head2 Input widgets
@@ -1755,6 +1781,11 @@ read-only.
 =item L<Term::Fabulous::Widget::SegmentedControl>
 
 One choice of a few options shown side by side as one bar.
+
+=item L<Term::Fabulous::Widget::ColorPicker>
+
+A color, typed into a field, set with RGB or HSL sliders, or picked
+from a list of named swatches.
 
 =item L<Term::Fabulous::Widget::Input>
 
@@ -1861,6 +1892,11 @@ The widgets a table is built of: cells, the open and close markers,
 the grids, the header, the page controls and the column chooser (the
 scrollbar is a L<Term::Fabulous::Widget::Scrollbar>). Used internally
 by the table.
+
+=item L<Term::Fabulous::Widget::Table::Frame>
+
+The frame that widgets showing a list put around their table, drawn in
+the accent while the table has the focus. Used internally.
 
 =back
 
@@ -1986,7 +2022,8 @@ A dialog was closed, a toast went away, or a popup menu closed.
 
 =item L<Term::Fabulous::Event::Answer>
 
-A prompt was answered: which button, and the values of its fields.
+A prompt or a file dialog was answered: which button, and the values
+of its fields or the chosen path.
 
 =item L<Term::Fabulous::Event::Choose>
 
@@ -1995,6 +2032,14 @@ An item of a menu was chosen.
 =item L<Term::Fabulous::Event::Select>
 
 The user opened or closed an item of an accordion, or chose a tab.
+
+=item L<Term::Fabulous::Event::TabClose>
+
+The user asked to close a document tab.
+
+=item L<Term::Fabulous::Event::TabAdd>
+
+The user asked for a new document tab.
 
 =item L<Term::Fabulous::Event::SeriesHover>
 
@@ -2113,14 +2158,15 @@ L<Term::Fabulous::ThemeEditor::UI>, L<Term::Fabulous::ThemeEditor::Tab>,
 L<Term::Fabulous::ThemeEditor::Form>,
 L<Term::Fabulous::ThemeEditor::SettingsList>,
 L<Term::Fabulous::ThemeEditor::Preview>,
-L<Term::Fabulous::ThemeEditor::KdlArea>,
-L<Term::Fabulous::ThemeEditor::TabStrip>,
-L<Term::Fabulous::ThemeEditor::ValueDialog>,
-L<Term::Fabulous::ThemeEditor::FileDialog> and
-L<Term::Fabulous::ThemeEditor::KeyReference>. Its menu bar, status bar
-and questions are the library's own
-L<Term::Fabulous::Widget::MenuBar>, L<Term::Fabulous::Widget::StatusBar>
-and L<Term::Fabulous::Widget::Prompt>.
+L<Term::Fabulous::ThemeEditor::KdlArea> and
+L<Term::Fabulous::ThemeEditor::ValueDialog>. Its menu bar, tab strip,
+status bar, questions, file dialogs, key reference and color picker
+are the library's own L<Term::Fabulous::Widget::MenuBar>,
+L<Term::Fabulous::Widget::DocumentTabs>,
+L<Term::Fabulous::Widget::StatusBar>, L<Term::Fabulous::Widget::Prompt>,
+L<Term::Fabulous::Widget::FileDialog>,
+L<Term::Fabulous::Widget::KeyReference> and
+L<Term::Fabulous::Widget::ColorPicker>.
 
 =back
 

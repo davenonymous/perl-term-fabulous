@@ -103,7 +103,7 @@ The widgets and the widget tree, widget ids, and how the layout engine
 sizes and places widgets: direction, sizing, padding, gaps, alignment,
 flow and stack layouts, floating widgets and equal sizes across the
 tree. Dividers between widgets, accordions whose sections open and
-close, and tabs.
+close, tabs, and the tabs of the open documents of a program.
 
 =item L<Term::Fabulous::Manual::Looks>
 
@@ -119,7 +119,8 @@ the mouse, hover and press, and scrolling.
 =item L<Term::Fabulous::Manual::Forms>
 
 The input widgets (text fields, text areas, check boxes, radio
-buttons, dropdowns, sliders, star ratings, segmented controls), what
+buttons, dropdowns, sliders, star ratings, segmented controls, color
+pickers), what
 they have in common, editing text, the clipboard, undo, and complete
 forms.
 
@@ -129,12 +130,13 @@ The widgets that show what the program is doing: progress bars, with
 and without a known extent, spinners, toasts that appear in a corner
 and go away by themselves, status bars, and how widgets animate without
 timers. Also prompts, which ask the user a question and wait for the
-answer.
+answer, and file dialogs, which ask for a file or a folder.
 
 =item L<Term::Fabulous::Manual::Menus>
 
-Commands and the keys that run them, menu bars, context menus, and the
-shape of an application window with a menu bar and a status bar.
+Commands and the keys that run them, menu bars, context menus, a help
+screen that lists the keys, and the shape of an application window
+with a menu bar and a status bar.
 
 =item L<Term::Fabulous::Manual::Charts>
 
@@ -589,6 +591,13 @@ L<Term::Fabulous::Widget::Accordion>, L<Term::Fabulous::Event::Select>.
 L<Term::Fabulous::Manual::Layout/TABS>, L<Term::Fabulous::Widget::Tabs>,
 L<Term::Fabulous::Widget::Tabs::Page>, L<Term::Fabulous::Event::Select>.
 
+=item A tab for each open document, with marks for unsaved changes and errors (document tabs)
+
+L<Term::Fabulous::Manual::Layout/Document tabs>,
+L<Term::Fabulous::Widget::DocumentTabs>,
+L<Term::Fabulous::Event::TabClose>, L<Term::Fabulous::Event::TabAdd>,
+L<Term::Fabulous::Cookbook::Menus/Keep several documents open in tabs (DocumentTabs)>.
+
 =back
 
 =head2 Text, colors and borders
@@ -718,6 +727,12 @@ L<Term::Fabulous::Widget::Prompt>,
 L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)>,
 L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>.
 
+=item Ask for a file to open or save, or for a folder (file dialogs)
+
+L<Term::Fabulous::Manual::Feedback/FILE DIALOGS>,
+L<Term::Fabulous::Widget::FileDialog>,
+L<Term::Fabulous::Cookbook::Forms/Open and save a file (FileDialog)>.
+
 =item Keep a widget from taking the focus when it is clicked (toolbars)
 
 L<Term::Fabulous::Manual::Events/Moving the focus>,
@@ -747,6 +762,12 @@ L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password
 L<Term::Fabulous::Manual::Forms/THE INPUT WIDGETS ONE BY ONE>,
 L<Term::Fabulous::Cookbook::Forms/Choose from options in Perl (Dropdown, RadioGroup, Slider)>,
 L<Term::Fabulous::Widget::StarRating>, L<Term::Fabulous::Widget::SegmentedControl>.
+
+=item Choose a color: type it, move sliders or pick a named swatch (color pickers)
+
+L<Term::Fabulous::Manual::Forms/Color pickers>,
+L<Term::Fabulous::Widget::ColorPicker>,
+L<Term::Fabulous::Cookbook::Forms/Ask for a color (ColorPicker in a Prompt)>.
 
 =item Read the values of a form; react to changes and to Enter
 
@@ -831,6 +852,12 @@ L<Term::Fabulous::Cookbook::Menus/Give a program a menu bar (MenuBar, Commands)>
 L<Term::Fabulous::Manual::Menus/CONTEXT MENUS>,
 L<Term::Fabulous::Widget::Menu>,
 L<Term::Fabulous::Cookbook::Menus/Open a menu with a right click or the Menu key (Menu)>.
+
+=item A help screen that lists the keys of the program (key references)
+
+L<Term::Fabulous::Manual::Menus/KEY REFERENCES>,
+L<Term::Fabulous::Widget::KeyReference>,
+L<Term::Fabulous::Cookbook::Menus/Show the keys in a help screen (KeyReference)>.
 
 =item A menu bar, the content and a status bar together
 

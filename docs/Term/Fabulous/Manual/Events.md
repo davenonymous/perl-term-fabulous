@@ -159,14 +159,16 @@ the sections below it describe each event.
 | Start           | the root                         | (no parent)      |
 | Resize          | the root                         | (no parent)      |
 | CanvasResize    | the canvas                       | yes              |
-| Change          | the input (radio: its group)     | yes              |
+| Change          | input, radio group, color picker | yes              |
 | ValidityChange  | the input                        | yes              |
-| Submit          | the text field                   | yes              |
+| Submit          | the text field or color picker   | yes              |
 | Activate        | the Button                       | yes              |
 | Close           | the Dialog, Toast or popup Menu  | (no parent then) |
-| Answer          | the Prompt                       | (no parent then) |
+| Answer          | the Prompt or FileDialog         | (no parent then) |
 | Choose          | the Menu                         | yes, not popups  |
-| Select          | the Accordion or the Tabs        | yes              |
+| Select          | Accordion, Tabs, DocumentTabs    | yes              |
+| TabClose        | the DocumentTabs                 | yes              |
+| TabAdd          | the DocumentTabs                 | yes              |
 | SeriesHover     | the chart                        | yes              |
 | OnFocus, OnBlur | the widget                       | yes              |
 | OnPress         | innermost pressable widget       | yes              |
@@ -264,7 +266,9 @@ the sections below it describe each event.
 
     The user changed the value of an input widget. Fired on the input (for
     radio buttons, on their [Term::Fabulous::Widget::RadioGroup](../Widget/RadioGroup.md)). Field:
-    `value`. Not fired when your code sets a value with `value` or
+    `value`. A [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md) fires it on itself,
+    with its new value, when the user types a color, moves a slider or
+    picks a swatch. Not fired when your code sets a value with `value` or
     `checked`; the methods that act like the user, such as
     `$checkbox->toggle`, `$group->choose($button)` and
     `$dropdown->choose($index)`, do fire it.
@@ -280,7 +284,9 @@ the sections below it describe each event.
 - `Submit` ([Term::Fabulous::Event::Submit](../Event/Submit.md))
 
     The user pressed `Enter` in a [Term::Fabulous::Widget::TextField](../Widget/TextField.md).
-    Field: `value`, the text.
+    Field: `value`, the text. A [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md)
+    fires it on itself, with its value, for `Enter` in its field or on a
+    swatch.
 
 - `Activate` ([Term::Fabulous::Event::Activate](../Event/Activate.md))
 
@@ -301,10 +307,14 @@ the sections below it describe each event.
 
     A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) was answered: the user pressed one
     of its buttons or `Escape`, or the program called `answer` or
-    `close`. Fired on the prompt after it closed and gave the focus back,
-    so only listeners on it see it. Fields: `button`, the id of the button
-    (`cancel` for Escape), `values`, the values of the prompt's fields,
-    and `dismissed`, true when no button answered.
+    `close`. Or a [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md) was answered: the
+    user chose a file or a folder, or cancelled. Fired on the prompt or the
+    file dialog after it closed and gave the focus back, so only listeners
+    on it see it. Fields: `button`, the id of the button (`cancel` for
+    Escape; for a file dialog `open`, `save`, `choose` or `cancel`),
+    `values`, the values of the prompt's fields (for a file dialog
+    `path`, the chosen path), and `dismissed`, true when no button
+    answered.
 
 - `Choose` ([Term::Fabulous::Event::Choose](../Event/Choose.md))
 
@@ -325,7 +335,22 @@ the sections below it describe each event.
     `Home`, `End`, `Ctrl+PageUp` or `Ctrl+PageDown`. Also fired by
     `$tabs->choose`. Fired on the Tabs, with the page as the item; a
     [Term::Fabulous::Widget::Tabs::Bar](../Widget/Tabs/Bar.md) on its own fires it with the tab.
-    Fields: `item`, `index`, `open`.
+    Or the user clicked a tab of a [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md),
+    or an arrow at its end; the item is then the tab's hash. Fields:
+    `item`, `index`, `open`.
+
+- `TabClose` ([Term::Fabulous::Event::TabClose](../Event/TabClose.md))
+
+    The user clicked the close mark of a tab of a
+    [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md), or clicked the tab with the
+    middle button. Fired on the DocumentTabs, which removes nothing itself.
+    Fields: `item`, the tab's hash, and `index`.
+
+- `TabAdd` ([Term::Fabulous::Event::TabAdd](../Event/TabAdd.md))
+
+    The user clicked the `+` button at the end of a
+    [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md). Fired on the DocumentTabs. No
+    fields.
 
 - `TextClick` ([Term::Fabulous::Event::TextClick](../Event/TextClick.md))
 

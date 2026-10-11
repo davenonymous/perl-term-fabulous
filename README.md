@@ -799,11 +799,15 @@ widget it is fired on to the root, as described in
 
 Widgets fire further events themselves: `Change` and
 `ValidityChange` from the input widgets, `Submit` from
-[Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md),
+[Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md), `Change` and `Submit` from
+[Term::Fabulous::Widget::ColorPicker](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ColorPicker.md),
 `Activate` from [Term::Fabulous::Widget::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Button.md), `Close` from
 [Term::Fabulous::Widget::Dialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog.md), `Answer` from
-[Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md), `Choose` from
-[Term::Fabulous::Widget::Menu](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Menu.md), `CanvasResize` from canvases,
+[Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md) and
+[Term::Fabulous::Widget::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FileDialog.md), `Choose` from
+[Term::Fabulous::Widget::Menu](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Menu.md), `Select` from accordions, tabs and
+[Term::Fabulous::Widget::DocumentTabs](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/DocumentTabs.md), which also fires `TabClose`
+and `TabAdd`, `CanvasResize` from canvases,
 `SeriesHover` from charts, the table events (`CursorMove`,
 `SelectionChange`, `RowActivate`, `SortChange`, `FilterChange`,
 `PageChange`, `Expand`, `Collapse`, `ColumnsChange`) from
@@ -990,6 +994,17 @@ Term::Fabulous, and programs do not use them directly.
     pointer or below a widget, the menus of a menu bar, or a list of
     actions on its own.
 
+- [Term::Fabulous::Widget::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/KeyReference.md)
+
+    A dialog that lists the keys of a program and what they do, in groups,
+    made from a command table and further rows, with a search field.
+
+- [Term::Fabulous::Widget::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FileDialog.md)
+
+    A dialog that asks for a file to open, a name to save under, or a
+    folder: a list of the folder's entries, a field for a name or a path,
+    filters and hidden files, and a question before a file is replaced.
+
 - [Term::Fabulous::Widget::ScrollBox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ScrollBox.md)
 
     A box whose content can be larger than the box and scrolls with the
@@ -1024,6 +1039,12 @@ Term::Fabulous, and programs do not use them directly.
     [Term::Fabulous::Widget::Tabs::Bar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Tabs/Bar.md) and
     [Term::Fabulous::Widget::Tabs::Button](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Tabs/Button.md) are the bar and its tabs, also
     usable on their own.
+
+- [Term::Fabulous::Widget::DocumentTabs](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/DocumentTabs.md)
+
+    A row of tabs for the open documents of a program, with marks for
+    unsaved changes and errors, close marks and a `+` button. The program
+    gives it the tabs and answers its events.
 
 - [Term::Fabulous::Widget::Canvas](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Canvas.md)
 
@@ -1069,6 +1090,11 @@ Term::Fabulous, and programs do not use them directly.
 
     The layer behind an open dialog. Used internally by the dialog.
 
+- [Term::Fabulous::Widget::FileDialog::FolderLine](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FileDialog/FolderLine.md)
+
+    The line of a file dialog that shows the end of the folder's path.
+    Used internally by the file dialog.
+
 ## Input widgets
 
 - [Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md)
@@ -1108,6 +1134,11 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Widget::SegmentedControl](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/SegmentedControl.md)
 
     One choice of a few options shown side by side as one bar.
+
+- [Term::Fabulous::Widget::ColorPicker](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ColorPicker.md)
+
+    A color, typed into a field, set with RGB or HSL sliders, or picked
+    from a list of named swatches.
 
 - [Term::Fabulous::Widget::Input](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Input.md)
 
@@ -1206,6 +1237,11 @@ Term::Fabulous, and programs do not use them directly.
     the grids, the header, the page controls and the column chooser (the
     scrollbar is a [Term::Fabulous::Widget::Scrollbar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Scrollbar.md)). Used internally
     by the table.
+
+- [Term::Fabulous::Widget::Table::Frame](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Table/Frame.md)
+
+    The frame that widgets showing a list put around their table, drawn in
+    the accent while the table has the focus. Used internally.
 
 ## Charts
 
@@ -1323,7 +1359,8 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Event::Answer](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Answer.md)
 
-    A prompt was answered: which button, and the values of its fields.
+    A prompt or a file dialog was answered: which button, and the values
+    of its fields or the chosen path.
 
 - [Term::Fabulous::Event::Choose](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Choose.md)
 
@@ -1332,6 +1369,14 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Event::Select](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Select.md)
 
     The user opened or closed an item of an accordion, or chose a tab.
+
+- [Term::Fabulous::Event::TabClose](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/TabClose.md)
+
+    The user asked to close a document tab.
+
+- [Term::Fabulous::Event::TabAdd](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/TabAdd.md)
+
+    The user asked for a new document tab.
 
 - [Term::Fabulous::Event::SeriesHover](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/SeriesHover.md)
 
@@ -1442,14 +1487,15 @@ Term::Fabulous, and programs do not use them directly.
     [Term::Fabulous::ThemeEditor::Form](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Form.md),
     [Term::Fabulous::ThemeEditor::SettingsList](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/SettingsList.md),
     [Term::Fabulous::ThemeEditor::Preview](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/Preview.md),
-    [Term::Fabulous::ThemeEditor::KdlArea](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KdlArea.md),
-    [Term::Fabulous::ThemeEditor::TabStrip](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/TabStrip.md),
-    [Term::Fabulous::ThemeEditor::ValueDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/ValueDialog.md),
-    [Term::Fabulous::ThemeEditor::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/FileDialog.md) and
-    [Term::Fabulous::ThemeEditor::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KeyReference.md). Its menu bar, status bar
-    and questions are the library's own
-    [Term::Fabulous::Widget::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/MenuBar.md), [Term::Fabulous::Widget::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/StatusBar.md)
-    and [Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md).
+    [Term::Fabulous::ThemeEditor::KdlArea](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/KdlArea.md) and
+    [Term::Fabulous::ThemeEditor::ValueDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/ThemeEditor/ValueDialog.md). Its menu bar, tab strip,
+    status bar, questions, file dialogs, key reference and color picker
+    are the library's own [Term::Fabulous::Widget::MenuBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/MenuBar.md),
+    [Term::Fabulous::Widget::DocumentTabs](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/DocumentTabs.md),
+    [Term::Fabulous::Widget::StatusBar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Prompt.md),
+    [Term::Fabulous::Widget::FileDialog](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FileDialog.md),
+    [Term::Fabulous::Widget::KeyReference](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/KeyReference.md) and
+    [Term::Fabulous::Widget::ColorPicker](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ColorPicker.md).
 
 ## Extending Term::Fabulous
 

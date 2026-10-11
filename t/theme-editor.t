@@ -101,6 +101,36 @@ subtest 'opening files' => sub {
 	like dies { $editor->open_file( [] ) }, qr/open_file needs a file name/, 'open_file checks its argument';
 };
 
+subtest 'file names: bytes for the file system, decoded on the screen' => sub {
+	my ( $editor, $press, $terminal ) = editor();
+	my $tab = $editor->open_file( theme_file("m\xc3\xa9r.kdl") );
+	$editor->ui->step;
+	is $tab->path, "$directory/m\xc3\xa9r.kdl", 'the tab keeps the path as bytes';
+	like screen($terminal), qr/ mér\.kdl /,        'the tab title is decoded';
+	like screen($terminal), qr/Opened mér\.kdl\./, 'and so is the message';
+	$editor->open_file( theme_file("bad\xff.kdl") );
+	$editor->ui->step;
+	like screen($terminal),                                               qr/ bad\\xFF\.kdl /,           'a name that is no UTF-8 still shows';
+	like dies { $editor->open_file("$directory/caf\x{e9}\x{2615}.kdl") }, qr/as the file system has it/, 'a path of characters dies';
+
+	$editor->new_theme( name => 'süß' );
+	$press->('Ctrl+S');
+	my $save_as = dialog_of( $editor, 'Term::Fabulous::Widget::FileDialog' );
+	is $save_as->typed, 'süß.kdl', 'the save dialog offers the theme name';
+	$save_as->choose( $save_as->typed );
+	$editor->ui->step;
+	ok -f "$directory/s\xc3\xbc\xc3\x9f.kdl", 'and saves it under its UTF-8 name';
+};
+
+subtest 'the key reference on a tiny screen' => sub {
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 2, height => 2 );
+	my $editor   = Term::Fabulous::ThemeEditor->new( terminal => $terminal, width => 2, height => 2, directory => $directory );
+	$editor->ui->step;
+	$terminal->press_key('F1');
+	ok lives { $editor->ui->step },                                  'F1 opens it without dying' or note $@;
+	ok dialog_of( $editor, 'Term::Fabulous::Widget::KeyReference' ), 'it is open';
+};
+
 subtest 'editing a setting in the form' => sub {
 	my $path = theme_file('ocean.kdl');
 	my ( $editor, $press ) = editor( files => [$path] );
@@ -272,7 +302,7 @@ subtest 'saving, reverting, closing' => sub {
 	$editor->new_theme;
 	$editor->set_setting( 'palette.accent', '#abcdef' );
 	$press->('Ctrl+S');
-	my $save_as = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::FileDialog' );
+	my $save_as = dialog_of( $editor, 'Term::Fabulous::Widget::FileDialog' );
 	ok $save_as, 'an untitled theme is saved where the user says';
 	$save_as->choose('sunrise');
 	$editor->ui->step;
@@ -323,11 +353,14 @@ subtest 'menus and help' => sub {
 	is $editor->active_tab->mode, 'text', 'here View > Form or text';
 
 	$press->('F1');
-	my $keys = dialog_of( $editor, 'Term::Fabulous::ThemeEditor::KeyReference' );
+	my $keys = dialog_of( $editor, 'Term::Fabulous::Widget::KeyReference' );
 	ok $keys, 'F1 opens the key reference';
 	ok( ( grep { $_->[1] eq 'Ctrl+S' && $_->[2] eq 'Save' } $editor->key_list ), 'which lists every key' );
+	my $table  = $keys->table;
+	my @listed = map { my $row = $table->row($_); [ $row->{group} =~ s/\A\d+ //r, $row->{keys}, $row->{action} ] } $table->filtered_row_ids;    # a group's value starts with its rank
+	is \@listed, [ $editor->key_list ], 'the reference built from the commands lists the rows of key_list';
 	$press->('Escape');
-	ok !dialog_of( $editor, 'Term::Fabulous::ThemeEditor::KeyReference' ), 'Escape closes it';
+	ok !dialog_of( $editor, 'Term::Fabulous::Widget::KeyReference' ), 'Escape closes it';
 };
 
 subtest 'views: the place in both modes, only set, the preview hidden' => sub {

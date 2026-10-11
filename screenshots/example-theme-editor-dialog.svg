@@ -22,19 +22,23 @@
 <rect x="30" y="78" width="279" height="18" fill="#1e2128"/>
 <rect x="309" y="78" width="135" height="18" fill="#343a48"/>
 <rect x="444" y="78" width="576" height="18" fill="#1e2128"/>
-<rect x="435" y="114" width="576" height="144" fill="#1c212d"/>
+<rect x="435" y="114" width="576" height="126" fill="#1c212d"/>
 <rect x="48" y="132" width="387" height="234" fill="#0b1a24"/>
-<rect x="435" y="258" width="288" height="18" fill="#1c212d"/>
-<rect x="723" y="258" width="198" height="18" fill="#242830"/>
-<rect x="921" y="258" width="9" height="18" fill="#1c212d"/>
-<rect x="930" y="258" width="54" height="18" fill="#f27e7e"/>
-<rect x="984" y="258" width="27" height="18" fill="#1c212d"/>
-<rect x="435" y="276" width="576" height="90" fill="#1c212d"/>
+<rect x="435" y="240" width="297" height="18" fill="#1c212d"/>
+<rect x="732" y="240" width="189" height="18" fill="#242830"/>
+<rect x="921" y="240" width="9" height="18" fill="#1c212d"/>
+<rect x="930" y="240" width="54" height="18" fill="#f27e7e"/>
+<rect x="984" y="240" width="27" height="18" fill="#1c212d"/>
+<rect x="435" y="258" width="576" height="18" fill="#1c212d"/>
+<rect x="435" y="276" width="297" height="18" fill="#1c212d"/>
+<rect x="732" y="276" width="45" height="18" fill="#61afef"/>
+<rect x="777" y="276" width="234" height="18" fill="#1c212d"/>
+<rect x="435" y="294" width="576" height="72" fill="#1c212d"/>
 <rect x="48" y="366" width="9" height="126" fill="#0b1a24"/>
 <rect x="57" y="366" width="378" height="126" fill="#143040"/>
 <rect x="435" y="366" width="36" height="18" fill="#1c212d"/>
-<rect x="471" y="366" width="216" height="18" fill="#343a48"/>
-<rect x="687" y="366" width="324" height="18" fill="#1c212d"/>
+<rect x="471" y="366" width="225" height="18" fill="#343a48"/>
+<rect x="696" y="366" width="315" height="18" fill="#1c212d"/>
 <rect x="435" y="384" width="576" height="198" fill="#1c212d"/>
 <rect x="48" y="492" width="387" height="90" fill="#0b1a24"/>
 <rect x="48" y="582" width="63" height="18" fill="#0b1a24"/>
@@ -52,11 +56,11 @@
 <rect x="228" y="139" width="207" height="1" fill="#2b5a70"/>
 <rect x="57" y="141" width="9" height="1" fill="#2b5a70"/>
 <rect x="228" y="141" width="207" height="1" fill="#2b5a70"/>
-<rect x="471" y="248" width="225" height="1" fill="#61afef"/>
+<rect x="471" y="248" width="234" height="1" fill="#61afef"/>
 <rect x="466" y="258" width="1" height="180" fill="#61afef"/>
 <rect x="480" y="258" width="27" height="18" fill="#5fd3c0"/>
-<rect x="691" y="258" width="2" height="54" fill="#dcdfe4"/>
-<rect x="700" y="258" width="1" height="180" fill="#61afef"/>
+<rect x="700" y="258" width="2" height="54" fill="#dcdfe4"/>
+<rect x="709" y="258" width="1" height="180" fill="#61afef"/>
 <rect x="66" y="266" width="54" height="1" fill="#5fd3c0"/>
 <rect x="147" y="266" width="72" height="1" fill="#f27e7e"/>
 <rect x="246" y="266" width="90" height="1" fill="#6c7078"/>
@@ -67,30 +71,31 @@
 <rect x="241" y="276" width="1" height="18" fill="#6c7078"/>
 <rect x="340" y="276" width="1" height="18" fill="#6c7078"/>
 <rect x="480" y="276" width="27" height="18" fill="#000000"/>
+<rect x="781" y="276" width="1" height="18" fill="#5a606e"/>
 <rect x="480" y="294" width="27" height="18" fill="#0b1a24"/>
 <rect x="66" y="302" width="54" height="1" fill="#5fd3c0"/>
 <rect x="147" y="302" width="72" height="1" fill="#f27e7e"/>
 <rect x="246" y="302" width="90" height="1" fill="#6c7078"/>
-<rect x="741" y="302" width="189" height="2" fill="#61afef"/>
+<rect x="750" y="302" width="180" height="2" fill="#61afef"/>
 <rect x="939" y="302" width="9" height="1" fill="#5a606e"/>
 <rect x="480" y="312" width="27" height="18" fill="#2b5a70"/>
-<rect x="691" y="312" width="1" height="126" fill="#586070"/>
-<rect x="741" y="320" width="99" height="2" fill="#61afef"/>
+<rect x="700" y="312" width="1" height="126" fill="#586070"/>
+<rect x="750" y="320" width="90" height="2" fill="#61afef"/>
 <rect x="849" y="320" width="99" height="1" fill="#5a606e"/>
 <rect x="480" y="330" width="27" height="18" fill="#2c313c"/>
 <rect x="57" y="337" width="9" height="1" fill="#2b5a70"/>
 <rect x="354" y="337" width="81" height="1" fill="#2b5a70"/>
-<rect x="741" y="338" width="99" height="2" fill="#61afef"/>
+<rect x="750" y="338" width="90" height="2" fill="#61afef"/>
 <rect x="849" y="338" width="99" height="1" fill="#5a606e"/>
 <rect x="57" y="339" width="9" height="1" fill="#2b5a70"/>
 <rect x="354" y="339" width="81" height="1" fill="#2b5a70"/>
 <rect x="480" y="348" width="27" height="18" fill="#3c4250"/>
-<rect x="741" y="356" width="198" height="2" fill="#61afef"/>
+<rect x="750" y="356" width="189" height="2" fill="#61afef"/>
 <rect x="480" y="366" width="27" height="18" fill="#f27e7e"/>
 <rect x="480" y="384" width="27" height="18" fill="#6c7078"/>
 <rect x="480" y="402" width="27" height="18" fill="#1a3a48"/>
 <rect x="480" y="420" width="27" height="18" fill="#1c2029"/>
-<rect x="471" y="446" width="225" height="1" fill="#61afef"/>
+<rect x="471" y="446" width="234" height="1" fill="#61afef"/>
 <rect x="471" y="500" width="63" height="1" fill="#46556e"/>
 <rect x="570" y="500" width="72" height="1" fill="#46556e"/>
 <rect x="466" y="510" width="1" height="18" fill="#46556e"/>
@@ -119,7 +124,7 @@
 <polyline points="439.5 132 439.5 127 439.538 126.413 439.653 125.835 439.843 125.278 440.103 124.75 440.43 124.261 440.818 123.818 441.261 123.43 441.75 123.103 442.278 122.843 442.835 122.653 443.413 122.538 444 122.5 444 122.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="1006.5 132 1006.5 127 1006.462 126.413 1006.347 125.835 1006.157 125.278 1005.897 124.75 1005.57 124.261 1005.182 123.818 1004.739 123.43 1004.25 123.103 1003.722 122.843 1003.165 122.653 1002.587 122.538 1002 122.5 1002 122.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="466.5 258 466.5 253 466.538 252.413 466.653 251.835 466.843 251.278 467.103 250.75 467.43 250.261 467.818 249.818 468.261 249.43 468.75 249.103 469.278 248.843 469.835 248.653 470.413 248.538 471 248.5 471 248.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
-<polyline points="700.5 258 700.5 253 700.462 252.413 700.347 251.835 700.157 251.278 699.897 250.75 699.57 250.261 699.182 249.818 698.739 249.43 698.25 249.103 697.722 248.843 697.165 248.653 696.587 248.538 696 248.5 696 248.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="709.5 258 709.5 253 709.462 252.413 709.347 251.835 709.157 251.278 708.897 250.75 708.57 250.261 708.182 249.818 707.739 249.43 707.25 249.103 706.722 248.843 706.165 248.653 705.587 248.538 705 248.5 705 248.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="61.5 276 61.5 271 61.538 270.413 61.653 269.835 61.843 269.278 62.103 268.75 62.43 268.261 62.818 267.818 63.261 267.43 63.75 267.103 64.278 266.843 64.835 266.653 65.413 266.538 66 266.5 66 266.5" fill="none" stroke="#5fd3c0" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="124.5 276 124.5 271 124.462 270.413 124.347 269.835 124.157 269.278 123.897 268.75 123.57 268.261 123.182 267.818 122.739 267.43 122.25 267.103 121.722 266.843 121.165 266.653 120.587 266.538 120 266.5 120 266.5" fill="none" stroke="#5fd3c0" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="142.5 276 142.5 271 142.538 270.413 142.653 269.835 142.843 269.278 143.103 268.75 143.43 268.261 143.818 267.818 144.261 267.43 144.75 267.103 145.278 266.843 145.835 266.653 146.413 266.538 147 266.5 147 266.5" fill="none" stroke="#f27e7e" stroke-width="1" stroke-linejoin="round"/>
@@ -133,7 +138,7 @@
 <polyline points="241.5 294 241.5 298 241.538 298.587 241.653 299.165 241.843 299.722 242.103 300.25 242.43 300.739 242.818 301.182 243.261 301.57 243.75 301.897 244.278 302.157 244.835 302.347 245.413 302.462 246 302.5 246 302.5" fill="none" stroke="#6c7078" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="340.5 294 340.5 298 340.462 298.587 340.347 299.165 340.157 299.722 339.897 300.25 339.57 300.739 339.182 301.182 338.739 301.57 338.25 301.897 337.722 302.157 337.165 302.347 336.587 302.462 336 302.5 336 302.5" fill="none" stroke="#6c7078" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="466.5 438 466.5 442 466.538 442.587 466.653 443.165 466.843 443.722 467.103 444.25 467.43 444.739 467.818 445.182 468.261 445.57 468.75 445.897 469.278 446.157 469.835 446.347 470.413 446.462 471 446.5 471 446.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
-<polyline points="700.5 438 700.5 442 700.462 442.587 700.347 443.165 700.157 443.722 699.897 444.25 699.57 444.739 699.182 445.182 698.739 445.57 698.25 445.897 697.722 446.157 697.165 446.347 696.587 446.462 696 446.5 696 446.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="709.5 438 709.5 442 709.462 442.587 709.347 443.165 709.157 443.722 708.897 444.25 708.57 444.739 708.182 445.182 707.739 445.57 707.25 445.897 706.722 446.157 706.165 446.347 705.587 446.462 705 446.5 705 446.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="466.5 510 466.5 505 466.538 504.413 466.653 503.835 466.843 503.278 467.103 502.75 467.43 502.261 467.818 501.818 468.261 501.43 468.75 501.103 469.278 500.843 469.835 500.653 470.413 500.538 471 500.5 471 500.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="538.5 510 538.5 505 538.462 504.413 538.347 503.835 538.157 503.278 537.897 502.75 537.57 502.261 537.182 501.818 536.739 501.43 536.25 501.103 535.722 500.843 535.165 500.653 534.587 500.538 534 500.5 534 500.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
 <polyline points="565.5 510 565.5 505 565.538 504.413 565.653 503.835 565.843 503.278 566.103 502.75 566.43 502.261 566.818 501.818 567.261 501.43 567.75 501.103 568.278 500.843 568.835 500.653 569.413 500.538 570 500.5 570 500.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
@@ -167,28 +172,29 @@
 <text x="462" y="218" textLength="378" fill="#dcdfe4">Reset gives it back to the token &quot;border&quot;.</text>
 <text x="57" y="236" textLength="270" fill="#d8e8ee">With a border of their own, in</text>
 <text x="57" y="254" textLength="378" fill="#d8e8ee">button.border.color and button.border.styl</text>
-<text x="723" y="254" textLength="171" fill="#dcdfe4">A color of its own:</text>
+<text x="732" y="254" textLength="180" fill="#787e8a">#rrggbb or #rrggbbaa</text>
 <text x="534" y="272" textLength="54" fill="#dcdfe4">accent</text>
-<text x="723" y="272" textLength="180" fill="#787e8a">#rrggbb or #rrggbbaa</text>
 <text x="75" y="290" textLength="36" fill="#5fd3c0">Save</text>
 <text x="156" y="290" textLength="54" fill="#d8e8ee">Cancel</text>
 <text x="255" y="290" textLength="72" fill="#6c7078">Disabled</text>
 <text x="534" y="290" textLength="72" fill="#dcdfe4">backdrop</text>
+<text x="741" y="290" textLength="27" fill="#101216">RGB</text>
+<text x="795" y="290" textLength="27" fill="#dcdfe4">HSL</text>
 <text x="534" y="308" textLength="90" fill="#dcdfe4">background</text>
-<text x="723" y="308" textLength="9" fill="#dcdfe4">R</text>
+<text x="732" y="308" textLength="9" fill="#dcdfe4">R</text>
 <text x="934.5" y="308" text-anchor="middle" fill="#61afef">●</text>
 <text x="957" y="308" textLength="27" fill="#dcdfe4">242</text>
 <text x="534" y="326" textLength="54" fill="#dcdfe4">border</text>
-<text x="723" y="326" textLength="9" fill="#dcdfe4">G</text>
+<text x="732" y="326" textLength="9" fill="#dcdfe4">G</text>
 <text x="844.5" y="326" text-anchor="middle" fill="#61afef">●</text>
 <text x="957" y="326" textLength="27" fill="#dcdfe4">126</text>
 <text x="75" y="344" textLength="270" class="b" fill="#8fb3c2">Fields (text_input, scrollbar)</text>
 <text x="534" y="344" textLength="99" fill="#dcdfe4">button_face</text>
-<text x="723" y="344" textLength="9" fill="#dcdfe4">B</text>
+<text x="732" y="344" textLength="9" fill="#dcdfe4">B</text>
 <text x="844.5" y="344" text-anchor="middle" fill="#61afef">●</text>
 <text x="957" y="344" textLength="27" fill="#dcdfe4">126</text>
 <text x="534" y="362" textLength="117" fill="#dcdfe4">control_hover</text>
-<text x="723" y="362" textLength="9" fill="#dcdfe4">A</text>
+<text x="732" y="362" textLength="9" fill="#dcdfe4">A</text>
 <text x="943.5" y="362" text-anchor="middle" fill="#61afef">●</text>
 <text x="957" y="362" textLength="27" fill="#dcdfe4">255</text>
 <text x="57" y="380" textLength="117" fill="#5f8594">A placeholder</text>

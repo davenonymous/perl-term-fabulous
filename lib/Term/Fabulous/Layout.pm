@@ -503,8 +503,12 @@ C<"red"> are not color strings.
 
 Every widget class of Term::Fabulous can be declared in a layout,
 except L<Term::Fabulous::Widget::Prompt>,
-L<Term::Fabulous::Widget::Menu> and L<Term::Fabulous::Widget::MenuBar>,
-whose fields and items are code, which a layout file cannot hold. The
+L<Term::Fabulous::Widget::FileDialog>,
+L<Term::Fabulous::Widget::KeyReference>,
+L<Term::Fabulous::Widget::DocumentTabs>,
+L<Term::Fabulous::Widget::Menu> and L<Term::Fabulous::Widget::MenuBar>:
+their fields, items, rows and tabs come from code, and they answer
+through events, which a layout file cannot hold. The
 table lists the others with the alias the examples use; each link leads to the
 list of properties the class accepts. All of them except Text accept
 the L</Box properties>.
@@ -531,6 +535,7 @@ the L</Box properties>.
 	Slider            Term::Fabulous::Widget::Slider            input widget + range, value
 	StarRating        Term::Fabulous::Widget::StarRating        input widget + max, value, half
 	SegmentedControl  Term::Fabulous::Widget::SegmentedControl  input widget + options, value
+	ColorPicker       Term::Fabulous::Widget::ColorPicker       Box + value, alpha, sliders, ...
 	Divider           Term::Fabulous::Widget::Divider           Box + text, line_style, ...
 	Accordion         Term::Fabulous::Widget::Accordion         Box + multiple, bordered, ...
 	Item              Term::Fabulous::Widget::Accordion::Item   Box + title, open, disabled
@@ -593,6 +598,8 @@ The properties of each class:
 =item * L<StarRating|Term::Fabulous::Widget::StarRating/KDL PROPERTIES>
 
 =item * L<SegmentedControl|Term::Fabulous::Widget::SegmentedControl/KDL PROPERTIES>
+
+=item * L<ColorPicker|Term::Fabulous::Widget::ColorPicker/KDL PROPERTIES>
 
 =item * L<Divider|Term::Fabulous::Widget::Divider/KDL PROPERTIES>
 

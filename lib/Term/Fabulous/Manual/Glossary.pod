@@ -386,6 +386,13 @@ One of the dots or blocks a chart draws per terminal cell, for example
 the 2 x 4 Braille dots of a line or the eighth blocks of a bar. See
 L<Term::Fabulous::Manual::Charts/How a chart is drawn>.
 
+=item swatch
+
+A named value a L<Term::Fabulous::Widget::ColorPicker> offers in a
+list, with the color it stands for: a color of its own, a theme's
+token name, or C<none> for no color. See
+L<Term::Fabulous::Manual::Forms/Color pickers>.
+
 =item target
 
 The widget an event was fired on.

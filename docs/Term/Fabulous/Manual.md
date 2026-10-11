@@ -93,7 +93,7 @@ The manual has these pages, in reading order:
     sizes and places widgets: direction, sizing, padding, gaps, alignment,
     flow and stack layouts, floating widgets and equal sizes across the
     tree. Dividers between widgets, accordions whose sections open and
-    close, and tabs.
+    close, tabs, and the tabs of the open documents of a program.
 
 - [Term::Fabulous::Manual::Looks](Manual/Looks.md)
 
@@ -109,7 +109,8 @@ The manual has these pages, in reading order:
 - [Term::Fabulous::Manual::Forms](Manual/Forms.md)
 
     The input widgets (text fields, text areas, check boxes, radio
-    buttons, dropdowns, sliders, star ratings, segmented controls), what
+    buttons, dropdowns, sliders, star ratings, segmented controls, color
+    pickers), what
     they have in common, editing text, the clipboard, undo, and complete
     forms.
 
@@ -119,12 +120,13 @@ The manual has these pages, in reading order:
     and without a known extent, spinners, toasts that appear in a corner
     and go away by themselves, status bars, and how widgets animate without
     timers. Also prompts, which ask the user a question and wait for the
-    answer.
+    answer, and file dialogs, which ask for a file or a folder.
 
 - [Term::Fabulous::Manual::Menus](Manual/Menus.md)
 
-    Commands and the keys that run them, menu bars, context menus, and the
-    shape of an application window with a menu bar and a status bar.
+    Commands and the keys that run them, menu bars, context menus, a help
+    screen that lists the keys, and the shape of an application window
+    with a menu bar and a status bar.
 
 - [Term::Fabulous::Manual::Charts](Manual/Charts.md)
 
@@ -501,6 +503,13 @@ program, and the class pages with the reference.
     ["TABS" in Term::Fabulous::Manual::Layout](Manual/Layout.md#tabs), [Term::Fabulous::Widget::Tabs](Widget/Tabs.md),
     [Term::Fabulous::Widget::Tabs::Page](Widget/Tabs/Page.md), [Term::Fabulous::Event::Select](Event/Select.md).
 
+- A tab for each open document, with marks for unsaved changes and errors (document tabs)
+
+    ["Document tabs" in Term::Fabulous::Manual::Layout](Manual/Layout.md#document-tabs),
+    [Term::Fabulous::Widget::DocumentTabs](Widget/DocumentTabs.md),
+    [Term::Fabulous::Event::TabClose](Event/TabClose.md), [Term::Fabulous::Event::TabAdd](Event/TabAdd.md),
+    ["Keep several documents open in tabs (DocumentTabs)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#keep-several-documents-open-in-tabs-documenttabs).
+
 ## Text, colors and borders
 
 - Show text; wrap, align and space it; bold, italic and underlined text
@@ -622,6 +631,12 @@ program, and the class pages with the reference.
     ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#confirm-before-quitting-prompt),
     ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator).
 
+- Ask for a file to open or save, or for a folder (file dialogs)
+
+    ["FILE DIALOGS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#file-dialogs),
+    [Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md),
+    ["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#open-and-save-a-file-filedialog).
+
 - Keep a widget from taking the focus when it is clicked (toolbars)
 
     ["Moving the focus" in Term::Fabulous::Manual::Events](Manual/Events.md#moving-the-focus),
@@ -647,6 +662,12 @@ program, and the class pages with the reference.
     ["THE INPUT WIDGETS ONE BY ONE" in Term::Fabulous::Manual::Forms](Manual/Forms.md#the-input-widgets-one-by-one),
     ["Choose from options in Perl (Dropdown, RadioGroup, Slider)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#choose-from-options-in-perl-dropdown-radiogroup-slider),
     [Term::Fabulous::Widget::StarRating](Widget/StarRating.md), [Term::Fabulous::Widget::SegmentedControl](Widget/SegmentedControl.md).
+
+- Choose a color: type it, move sliders or pick a named swatch (color pickers)
+
+    ["Color pickers" in Term::Fabulous::Manual::Forms](Manual/Forms.md#color-pickers),
+    [Term::Fabulous::Widget::ColorPicker](Widget/ColorPicker.md),
+    ["Ask for a color (ColorPicker in a Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt).
 
 - Read the values of a form; react to changes and to Enter
 
@@ -723,6 +744,12 @@ program, and the class pages with the reference.
     ["CONTEXT MENUS" in Term::Fabulous::Manual::Menus](Manual/Menus.md#context-menus),
     [Term::Fabulous::Widget::Menu](Widget/Menu.md),
     ["Open a menu with a right click or the Menu key (Menu)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#open-a-menu-with-a-right-click-or-the-menu-key-menu).
+
+- A help screen that lists the keys of the program (key references)
+
+    ["KEY REFERENCES" in Term::Fabulous::Manual::Menus](Manual/Menus.md#key-references),
+    [Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md),
+    ["Show the keys in a help screen (KeyReference)" in Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference).
 
 - A menu bar, the content and a status bar together
 

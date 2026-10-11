@@ -1,6 +1,6 @@
 # NAME
 
-Term::Fabulous::Cookbook::Menus - Recipes: menu bars, context menus and status bars
+Term::Fabulous::Cookbook::Menus - Recipes: menu bars, context menus, status bars, help screens and document tabs
 
 # DESCRIPTION
 
@@ -8,19 +8,23 @@ This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: 
 
 The recipes on this page give a program the parts that most
 applications share: a menu bar that shows what the program can do, a
-menu that opens where the user right-clicks, and a status bar that says
-what just happened. Each recipe is a complete program, shipped in
+menu that opens where the user right-clicks, a status bar that says
+what just happened, a help screen that lists the keys, and a tab for
+each open document. Each recipe is a complete program, shipped in
 `examples/cookbook/`, with a screenshot and notes on the lines that
 matter.
 
 The recipes use [Term::Fabulous::Commands](../Commands.md) and
 [Term::Fabulous::Command](../Command.md), which keep the program's commands and their
 keys in one place, [Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md) and
-[Term::Fabulous::Widget::Menu](../Widget/Menu.md), which show the commands, and
-[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md). How these work together is
-explained in [Term::Fabulous::Manual::Menus](../Manual/Menus.md). The status bar is part
-of ["STATUS BARS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#status-bars). The prompts that
-the menu commands open are in
+[Term::Fabulous::Widget::Menu](../Widget/Menu.md), which show the commands,
+[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md),
+[Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md), which lists the keys of the
+commands, and [Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md). How these work
+together is explained in [Term::Fabulous::Manual::Menus](../Manual/Menus.md); the document
+tabs are part of ["Document tabs" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#document-tabs). The
+status bar is part of ["STATUS BARS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#status-bars).
+The prompts that the menu commands open are in
 ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Forms.md#confirm-before-quitting-prompt).
 
 The recipes on this page:
@@ -28,6 +32,8 @@ The recipes on this page:
 - ["Give a program a menu bar (MenuBar, Commands)"](#give-a-program-a-menu-bar-menubar-commands)
 - ["Open a menu with a right click or the Menu key (Menu)"](#open-a-menu-with-a-right-click-or-the-menu-key-menu)
 - ["Show messages and state in a status bar (StatusBar)"](#show-messages-and-state-in-a-status-bar-statusbar)
+- ["Show the keys in a help screen (KeyReference)"](#show-the-keys-in-a-help-screen-keyreference)
+- ["Keep several documents open in tabs (DocumentTabs)"](#keep-several-documents-open-in-tabs-documenttabs)
 
 # Give a program a menu bar (MenuBar, Commands)
 
@@ -342,6 +348,286 @@ word count follows the typing and nothing has to update it. The code
 returns a list of parts, each a text with a kind. `unsaved` appears
 only while the text differs from the saved one.
 
+# Show the keys in a help screen (KeyReference)
+
+Goal: a to-do list whose F1 key opens a help screen with every key of
+the program, made from the table of its commands, so the help never
+falls behind the keys.
+
+This program is shipped as `examples/cookbook/help-screen.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Commands;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::Checkbox;
+use Term::Fabulous::Widget::KeyReference;
+use Term::Fabulous::Widget::Text;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+
+my $root = Term::Fabulous::Widget::Box->new(
+        layout => {
+                layout_direction => CLAY_TOP_TO_BOTTOM,
+                sizing           => { width => sizing_grow(), height => sizing_grow() },
+                padding          => { left  => 2,             top    => 1 },
+                child_gap        => 1,
+        },
+);
+my $list = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM } );
+$root->add_child( Term::Fabulous::Widget::Text->new( text => 'To do. F1 shows the keys.' ), $list );
+
+my @todos = ( [ 'Water the plants', 1 ], [ 'Call the bank', 0 ], [ 'Fix the bike', 0 ], [ 'Book the train', 1 ] );
+
+sub show_todos () {
+        $list->clear_children;
+        foreach my $todo (@todos) {
+                my $box = Term::Fabulous::Widget::Checkbox->new( label => $todo->[0], checked => $todo->[1] );
+                $box->on( Change => sub ($event) { $todo->[1] = $event->value; return } );
+                $list->add_child($box);
+        }
+        return;
+}
+show_todos();
+
+my ( $ui, $commands );
+
+# The keys that no command runs: those of the list and of the help itself.
+my @other_keys = (
+        [ 'The list',  'Tab, Shift+Tab', 'The next, the previous to-do' ],
+        [ 'The list',  'Space, Enter',   'Check or uncheck the to-do' ],
+        [ 'This help', 'Typing',         'Show only the keys with the text' ],
+        [ 'This help', 'Escape',         'Close the help' ],
+);
+
+sub show_keys () {
+        Term::Fabulous::Widget::KeyReference->new( title => 'Keys of the to-do list', commands => $commands, keys => \@other_keys, width => 60, height => 26 )->open($ui);
+        return;
+}
+
+$commands = Term::Fabulous::Commands->new(
+        commands => [
+                { id => 'keys', label => 'Keys...',   keys => ['F1'],     run => \&show_keys },
+                { id => 'all',  label => 'Check all', keys => ['Ctrl+A'], run => sub { $_->[1] = 1 foreach @todos; show_todos() } },
+                {
+                        id    => 'clean',
+                        label => 'Remove done',
+                        keys  => ['Ctrl+D'],
+                        run   => sub {
+                                @todos = grep { !$_->[1] } @todos;
+                                show_todos();
+                        }
+                },
+                {
+                        id    => 'sort',
+                        label => 'Sort by name',
+                        keys  => ['Alt+s'],
+                        run   => sub {
+                                @todos = sort { $a->[0] cmp $b->[0] } @todos;
+                                show_todos();
+                        }
+                },
+                { id => 'quit', label => 'Quit', keys => ['Ctrl+Q'], run => sub { $ui->loop->stop } },
+        ],
+);
+
+$ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+$commands->listen($root);
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-help-screen.svg" alt="A Keys of the to-do list dialog over the dimmed to-do list: an empty search field, and a table of keys and actions in three groups: Everywhere with F1 Keys, Ctrl+A Check all, Ctrl+D Remove done, Alt+s Sort by name and Ctrl+Q Quit, The list with the Tab and Space keys, and This help with typing and Escape; a Close button below"></p>
+</div>
+
+- `commands => $commands` lists every command that has keys, with
+its keys and its label, in the group `Everywhere`. The label
+`Keys...` loses its `...`, which in a menu says that the command
+opens a dialog.
+- `keys` adds the rows that no command has: the keys the check boxes
+use themselves, and those of the help screen. Each row names its group,
+and the groups appear in the order of their first row.
+- The key reference is made anew each time F1 is pressed, so it always
+lists the commands as they are. A command added to the table, or a key
+changed, shows up in the help without a change to it.
+- When the help opens, the search field has the focus: typing `ctrl`
+leaves the rows with Ctrl, `remove` the one that removes. `Escape` or
+`Close` closes it, and the focus goes back where it was.
+- `width` and `height` are the largest size; on a smaller screen the
+help is as large as the screen, and the table scrolls.
+
+# Keep several documents open in tabs (DocumentTabs)
+
+Goal: an editor with a tab for each open document. A dot marks the
+documents with unsaved changes, a click on a tab shows its document,
+the close mark closes it after a question when it has changes, and
+`+` adds a new one.
+
+This program is shipped as `examples/cookbook/document-tabs.pl`.
+
+```perl
+use v5.32;
+use warnings;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Term::Fabulous;
+use Term::Fabulous::Commands;
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::DocumentTabs;
+use Term::Fabulous::Widget::Prompt;
+use Term::Fabulous::Widget::StatusBar;
+use Term::Fabulous::Widget::Text;
+use Term::Fabulous::Widget::TextArea;
+use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+use List::Util qw(min);
+
+# Every document has a title, a text area and the text it had when it
+# was last saved; it is modified while the two differ.
+my @documents;
+my $untitled = 0;
+
+sub is_modified ($document) {
+        return $document->{area}->value ne $document->{saved};
+}
+
+# The tabs read the documents whenever a frame is drawn, so the dot for
+# unsaved changes comes and goes with the typing.
+my $tabs = Term::Fabulous::Widget::DocumentTabs->new(
+        tabs => sub {
+                map { { title => $_->{title}, modified => is_modified($_) } } @documents;
+        }
+);
+my $page  = Term::Fabulous::Widget::Box->new( layout => { sizing  => { width => sizing_grow(), height => sizing_grow() } } );
+my $empty = Term::Fabulous::Widget::Box->new( layout => { padding => { left  => 2, top => 1 } } );
+$empty->add_child( Term::Fabulous::Widget::Text->new( text => 'No document is open. Click + or press Ctrl+N for a new one.' ) );
+my $status = Term::Fabulous::Widget::StatusBar->new(
+        message => 'Ctrl+N new, Ctrl+S save, Alt+w close, Ctrl+Q quit.',
+        timeout => 3,
+);
+my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+$root->add_child( $tabs, $page, $status );
+
+my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+
+# Shows a document below the tabs (for undef, a hint) and tells the tabs
+# which one it is.
+sub show ($index) {
+        $page->clear_children;
+        $tabs->active($index);
+        return $page->add_child($empty) if !defined $index;
+        my $area = $documents[$index]{area};
+        $page->add_child($area);
+        $ui->interaction->set_focused_widget($area);
+        return;
+}
+
+sub add_document ( $title, $text = '' ) {
+        my $area = Term::Fabulous::Widget::TextArea->new( value => $text, wrap => 1, layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+        push @documents, { title => $title, area => $area, saved => $text };
+        show($#documents);
+        return;
+}
+
+sub save_document ($index) {
+        my $document = $documents[$index];
+        $document->{saved} = $document->{area}->value;
+        $status->message( "Saved $document->{title}.", 'success' );
+        return;
+}
+
+sub remove_document ($index) {
+        my $active = $tabs->active;
+        splice @documents, $index, 1;
+        if ( !@documents ) {
+                show(undef);
+                return;
+        }
+        show( $active > $index ? $active - 1 : min( $active, $#documents ) );
+        return;
+}
+
+# A document with unsaved changes is closed only after a question.
+sub close_document ($index) {
+        my $document = $documents[$index];
+        return remove_document($index) if !is_modified($document);
+        Term::Fabulous::Widget::Prompt->confirm(
+                $ui,
+                title   => "Close $document->{title}?",
+                message => 'Its changes are not saved.',
+                ok      => 'Close',
+                cancel  => 'Keep it',
+                focus   => 'cancel',
+        )->on(
+                Answer => sub ($event) {
+                        remove_document($index) if $event->button eq 'ok';
+                        return;
+                }
+        );
+        return;
+}
+
+# The tabs change nothing themselves: the program answers their events.
+$tabs->on( Select   => sub ($event) { show( $event->index );                     return } );
+$tabs->on( TabClose => sub ($event) { close_document( $event->index );           return } );
+$tabs->on( TabAdd   => sub ($event) { add_document( 'Untitled ' . ++$untitled ); return } );
+
+# The same through the keys. Each command that needs a document is
+# enabled only while one is shown.
+my $shown    = sub { defined $tabs->active };
+my $commands = Term::Fabulous::Commands->new(
+        commands => [
+                { id => 'new',      label => 'New',      keys => ['Ctrl+N'],       run => sub { add_document( 'Untitled ' . ++$untitled ) } },
+                { id => 'save',     label => 'Save',     keys => ['Ctrl+S'],       run => sub { save_document( $tabs->active ) },             enabled => $shown },
+                { id => 'close',    label => 'Close',    keys => ['Alt+w'],        run => sub { close_document( $tabs->active ) },            enabled => $shown },
+                { id => 'previous', label => 'Previous', keys => ['Alt+PageUp'],   run => sub { show( ( $tabs->active - 1 ) % @documents ) }, enabled => $shown },
+                { id => 'next',     label => 'Next',     keys => ['Alt+PageDown'], run => sub { show( ( $tabs->active + 1 ) % @documents ) }, enabled => $shown },
+                { id => 'quit',     label => 'Quit',     keys => ['Ctrl+Q'],       run => sub { $ui->loop->stop } },
+        ],
+);
+$commands->listen($root);
+
+add_document( 'shopping.txt', "Milk\nBread\nApples\n" );
+add_document( 'letter.txt',   "Dear Grace,\n\nthank you for the plums.\n" );
+add_document( 'ideas.txt',    "A clock that runs backwards.\n" );
+show(0);
+
+$ui->run;
+```
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-tabs.svg" alt="An editor with the tabs shopping.txt with a blue dot, letter.txt, ideas.txt and the active Untitled 1 in bold with a blue dot, each with a close mark, and a plus button. Below, the text Plant the tulips. and a status bar with the keys"></p>
+</div>
+
+- The tabs come from a code reference that maps the documents to tab
+hashes. The tabs call it whenever a frame is drawn, and a frame is
+drawn after every key, so the dot appears with the first change and
+goes away when the document is saved or the change undone.
+- The tabs never change anything themselves; they only fire events. A
+click on a tab fires `Select`, and the program shows that document. A
+click on the close mark, or a middle click on the tab, fires
+`TabClose`, and the program decides: a saved document closes at once,
+one with changes only after a `Prompt` question. `+` fires `TabAdd`.
+- `show` puts the document's text area into the page, tells the tabs
+which tab is active with `active`, which fires nothing, and gives the
+text area the focus. Each document keeps its own text area, so its
+cursor and its undo history survive a switch.
+- Closing a document shows another one. When a tab before the active
+one closes, the active document stays and its position moves down by
+one. When the active tab closes, the tab that took its place is shown,
+or the last one. When the last document closes, the page shows a hint
+that `+` or `Ctrl+N` makes a new one.
+- The tabs take no keys, so the commands give them keys: `Alt+PageUp`
+and `Alt+PageDown` switch, `Alt+w` closes the document shown (the
+text area uses `Ctrl+W` to delete a word). Their `enabled` code turns
+them off while no document is open.
+- When there are more tabs than fit, the row scrolls so that the active
+tab is always shown, and arrows at its ends lead to the hidden ones.
+
 # SEE ALSO
 
 This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Forms](Forms.md). Next page: [Term::Fabulous::Cookbook::Layout](Layout.md).
@@ -351,6 +637,11 @@ context menus.
 
 ["STATUS BARS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#status-bars) - the status bar.
 
+["KEY REFERENCES" in Term::Fabulous::Manual::Menus](../Manual/Menus.md#key-references) - the help screen.
+
+["Document tabs" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#document-tabs) - the document tabs.
+
 [Term::Fabulous::Widget::MenuBar](../Widget/MenuBar.md), [Term::Fabulous::Widget::Menu](../Widget/Menu.md),
-[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Commands](../Commands.md) - the
-class pages.
+[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md),
+[Term::Fabulous::Widget::DocumentTabs](../Widget/DocumentTabs.md), [Term::Fabulous::Commands](../Commands.md) -
+the class pages.

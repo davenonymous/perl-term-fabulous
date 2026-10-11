@@ -13,15 +13,17 @@ setting:
 
 - a color slot
 
-    A list of the palette's tokens with their colors (and `none` where the
-    slot may have no color, `reverse` for `button.background.pressed`),
-    and a color of its own: a field for `#rrggbb`, `#rrggbbaa`,
-    `rgb(...)`, `rgba(...)` or a color name, a swatch, and sliders for
-    red, green, blue and alpha.
+    A [Term::Fabulous::Widget::ColorPicker](../Widget/ColorPicker.md): the palette's tokens as
+    swatches with their colors (and `none` where the slot may have no
+    color, `reverse` for `button.background.pressed`), and a color of its
+    own: a field for `#rrggbb`, `#rrggbbaa`, `rgb(...)`, `hsl(...)` or a
+    color name, a sample, sliders for red, green and blue or for hue,
+    saturation and lightness (switched with `RGB` and `HSL`), and one for
+    alpha.
 
 - a palette token
 
-    The color of its own only: a token's value must be a color.
+    The color picker without swatches: a token's value must be a color.
 
 - a style slot
 
@@ -33,12 +35,13 @@ setting:
 
     A field for the name; a list of the built-in themes.
 
-The list shows that it has the keyboard focus with its frame in the
-accent color. Every choice shows in the preview at once. `Apply` (or `Enter` in the
-list or a field) writes the value to the theme as one undo step,
-`Reset to default` removes the setting, and `Cancel` or `Escape`
-leaves the theme as it was. A value the setting cannot take is not
-applied; the line above the buttons says why.
+A list shows that it has the keyboard focus with its frame in the
+accent color. Every choice shows in the preview at once. `Apply` (or
+`Enter` in a list or a field) writes the value to the theme as one undo
+step, `Reset to default` removes the setting, and `Cancel` or
+`Escape` leaves the theme as it was. A value the setting cannot take,
+or a text in the color field that is no color, is not applied; the line
+above the buttons says why.
 
 # CONSTRUCTOR
 

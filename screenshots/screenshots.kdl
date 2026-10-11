@@ -516,6 +516,22 @@ screenshot "cookbook-ask-prompt" {
 	}
 }
 
+screenshot "cookbook-open-and-save" {
+	script "examples/cookbook/open-and-save.pl"
+	size 72 26
+	steps {
+		key "Ctrl+O" "Down" "Down"
+	}
+}
+
+screenshot "cookbook-color-prompt" {
+	script "examples/cookbook/color-prompt.pl"
+	size 72 24
+	steps {
+		key "c" "Down" "Down"
+	}
+}
+
 screenshot "cookbook-menu-bar" {
 	script "examples/cookbook/menu-bar.pl"
 	size 64 10
@@ -539,6 +555,25 @@ screenshot "cookbook-status-bar" {
 	steps {
 		type "Rode my bike to the lake and back."
 		key "Ctrl+S"
+	}
+}
+
+screenshot "cookbook-help-screen" {
+	script "examples/cookbook/help-screen.pl"
+	size 72 26
+	steps {
+		key "F1"
+	}
+}
+
+screenshot "cookbook-document-tabs" {
+	script "examples/cookbook/document-tabs.pl"
+	size 72 12
+	steps {
+		key "Ctrl+End"
+		type "Coffee"
+		key "Ctrl+N"
+		type "Plant the tulips."
 	}
 }
 
@@ -956,6 +991,11 @@ screenshot "widget-text-area" {
 	size 72 10
 }
 
+screenshot "widget-color-picker" {
+	script "examples/widgets/color-picker.pl"
+	size 72 22
+}
+
 screenshot "widget-dialog" {
 	script "examples/widgets/dialog.pl"
 	size 72 14
@@ -970,6 +1010,23 @@ screenshot "widget-prompt" {
 		key "Tab"
 		type "ada@engine"
 		key "Enter"
+	}
+}
+
+screenshot "widget-file-dialog" {
+	script "examples/widgets/file-dialog.pl"
+	size 72 30
+	steps {
+		key "o" "Down" "Down" "Down" "Down"
+	}
+}
+
+screenshot "widget-key-reference" {
+	script "examples/widgets/key-reference.pl"
+	size 72 24
+	steps {
+		key "F1"
+		type "ctrl"
 	}
 }
 
@@ -1047,6 +1104,15 @@ screenshot "widget-accordion" {
 screenshot "widget-tabs" {
 	script "examples/widgets/tabs.pl"
 	size 100 30
+}
+
+screenshot "widget-document-tabs" {
+	script "examples/widgets/document-tabs.pl"
+	size 72 14
+	steps {
+		click 13 0
+		click 47 0
+	}
 }
 
 screenshot "widget-table" {

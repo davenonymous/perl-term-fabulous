@@ -176,14 +176,16 @@ the sections below it describe each event.
 	Start            the root                          (no parent)
 	Resize           the root                          (no parent)
 	CanvasResize     the canvas                        yes
-	Change           the input (radio: its group)      yes
+	Change           input, radio group, color picker  yes
 	ValidityChange   the input                         yes
-	Submit           the text field                    yes
+	Submit           the text field or color picker    yes
 	Activate         the Button                        yes
 	Close            the Dialog, Toast or popup Menu   (no parent then)
-	Answer           the Prompt                        (no parent then)
+	Answer           the Prompt or FileDialog          (no parent then)
 	Choose           the Menu                          yes, not popups
-	Select           the Accordion or the Tabs         yes
+	Select           Accordion, Tabs, DocumentTabs     yes
+	TabClose         the DocumentTabs                  yes
+	TabAdd           the DocumentTabs                  yes
 	SeriesHover      the chart                         yes
 	OnFocus, OnBlur  the widget                        yes
 	OnPress          innermost pressable widget        yes
@@ -291,7 +293,9 @@ L<Term::Fabulous::Manual::Charts/CANVASES>.
 
 The user changed the value of an input widget. Fired on the input (for
 radio buttons, on their L<Term::Fabulous::Widget::RadioGroup>). Field:
-C<value>. Not fired when your code sets a value with C<value> or
+C<value>. A L<Term::Fabulous::Widget::ColorPicker> fires it on itself,
+with its new value, when the user types a color, moves a slider or
+picks a swatch. Not fired when your code sets a value with C<value> or
 C<checked>; the methods that act like the user, such as
 C<< $checkbox->toggle >>, C<< $group->choose($button) >> and
 C<< $dropdown->choose($index) >>, do fire it.
@@ -307,7 +311,9 @@ L<Term::Fabulous::Manual::Forms/Checking input>.
 =item C<Submit> (L<Term::Fabulous::Event::Submit>)
 
 The user pressed C<Enter> in a L<Term::Fabulous::Widget::TextField>.
-Field: C<value>, the text.
+Field: C<value>, the text. A L<Term::Fabulous::Widget::ColorPicker>
+fires it on itself, with its value, for C<Enter> in its field or on a
+swatch.
 
 =item C<Activate> (L<Term::Fabulous::Event::Activate>)
 
@@ -328,10 +334,14 @@ fields.
 
 A L<Term::Fabulous::Widget::Prompt> was answered: the user pressed one
 of its buttons or C<Escape>, or the program called C<answer> or
-C<close>. Fired on the prompt after it closed and gave the focus back,
-so only listeners on it see it. Fields: C<button>, the id of the button
-(C<cancel> for Escape), C<values>, the values of the prompt's fields,
-and C<dismissed>, true when no button answered.
+C<close>. Or a L<Term::Fabulous::Widget::FileDialog> was answered: the
+user chose a file or a folder, or cancelled. Fired on the prompt or the
+file dialog after it closed and gave the focus back, so only listeners
+on it see it. Fields: C<button>, the id of the button (C<cancel> for
+Escape; for a file dialog C<open>, C<save>, C<choose> or C<cancel>),
+C<values>, the values of the prompt's fields (for a file dialog
+C<path>, the chosen path), and C<dismissed>, true when no button
+answered.
 
 =item C<Choose> (L<Term::Fabulous::Event::Choose>)
 
@@ -352,7 +362,22 @@ L<Term::Fabulous::Widget::Tabs>: clicked it, or pressed an arrow key,
 C<Home>, C<End>, C<Ctrl+PageUp> or C<Ctrl+PageDown>. Also fired by
 C<< $tabs->choose >>. Fired on the Tabs, with the page as the item; a
 L<Term::Fabulous::Widget::Tabs::Bar> on its own fires it with the tab.
-Fields: C<item>, C<index>, C<open>.
+Or the user clicked a tab of a L<Term::Fabulous::Widget::DocumentTabs>,
+or an arrow at its end; the item is then the tab's hash. Fields:
+C<item>, C<index>, C<open>.
+
+=item C<TabClose> (L<Term::Fabulous::Event::TabClose>)
+
+The user clicked the close mark of a tab of a
+L<Term::Fabulous::Widget::DocumentTabs>, or clicked the tab with the
+middle button. Fired on the DocumentTabs, which removes nothing itself.
+Fields: C<item>, the tab's hash, and C<index>.
+
+=item C<TabAdd> (L<Term::Fabulous::Event::TabAdd>)
+
+The user clicked the C<+> button at the end of a
+L<Term::Fabulous::Widget::DocumentTabs>. Fired on the DocumentTabs. No
+fields.
 
 =item C<TextClick> (L<Term::Fabulous::Event::TextClick>)
 

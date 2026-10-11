@@ -196,6 +196,16 @@ class Term::Fabulous::Theme :strict(params) {
 				'focus_border'     => _color_slot('accent'),
 			}
 		},
+		document_tabs => {
+			extends => 'box',
+			slots   => {
+				'background' => _color_slot( 'surface_low', active => 'focus_background' ),
+				'text'       => _color_slot( 'text_dim',    active => 'text' ),
+				'modified'   => _color_slot('accent'),
+				'error'      => _color_slot('danger'),
+				'button'     => _color_slot('accent'),
+			}
+		},
 		accordion => {
 			extends => 'box',
 			slots   => {
@@ -872,9 +882,9 @@ C<rgba(0, 0, 0, 0)>. L<Term::Fabulous::Static> does not paint it.
 
 A family is the kind of a widget: C<text>, C<box>, C<button>,
 C<input>, C<text_input>, C<dropdown>, C<menu>, C<menu_bar>, C<table>,
-C<scrollbar>, C<tabs>, C<accordion>, C<dialog>, C<toast>,
-C<status_bar>, C<progress>, C<spinner>, C<image>, C<divider>. A widget
-class says which family it belongs to
+C<scrollbar>, C<tabs>, C<document_tabs>, C<accordion>, C<dialog>,
+C<toast>, C<status_bar>, C<progress>, C<spinner>, C<image>, C<divider>.
+A widget class says which family it belongs to
 (L<Term::Fabulous::Role::Themed/theme_family>), and a family may
 extend another: C<button> extends C<box>, so it has the box's slots
 too.
@@ -954,8 +964,8 @@ and takes no C<bordered> at all.
 =item * C<tabs>: the line of a tab bar joins the borders of its tabs,
 which the bar draws itself.
 
-=item * C<scrollbar>, C<divider> and C<status_bar>: lines one cell
-thick, which a frame does not fit around.
+=item * C<scrollbar>, C<divider>, C<status_bar> and C<document_tabs>:
+lines one cell thick, which a frame does not fit around.
 
 =item * C<text>, which has no border slots.
 

@@ -4,6 +4,7 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Test2::V0;
+use Object::Pad 0.825;
 
 use Clay::XS qw(sizing_grow);
 use Term::Fabulous;
@@ -123,6 +124,36 @@ subtest 'a primary button checks the inputs first' => sub {
 	$name->value('');
 	$prompt->answer('cancel');
 	is $answers->[1]{button}, 'cancel', 'a button that is not primary answers without checking';
+};
+
+# An input made of other inputs: a box that cannot take the focus
+# itself, with a text field inside that checks the value.
+class Pair :isa(Term::Fabulous::Widget::Box) {
+	use Clay::XS qw(sizing_grow);
+
+	field $text :reader;
+	ADJUST {
+		$text = Term::Fabulous::Widget::TextField->new( required => 1, layout => { sizing => { width => sizing_grow() } } );
+		$self->add_child($text);
+	}
+	method value ()    { return $text->value }
+	method validate () { return $text->validate }
+}
+
+subtest 'an input that cannot take the focus passes it inside' => sub {
+	my $pair   = Pair->new( layout => { sizing => { width => sizing_grow() } } );
+	my $prompt = $Prompt->new(
+		fields  => [ { name => 'pair', label => 'Pair', input   => $pair } ],
+		buttons => [ { id   => 'ok',   label => 'OK',   primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
+		focus   => 'pair',
+	);
+	$prompt->open($ui);
+	ref_is focused(), $pair->text, 'focus names the input: its text field gets the focus';
+	$ui->interaction->set_focused_widget( $prompt->button('ok') );
+	$prompt->answer('ok');
+	is $prompt->error, 'Pair: Please fill in this field.', 'an invalid input keeps the prompt open';
+	ref_is focused(), $pair->text, 'and its text field gets the focus';
+	$prompt->answer('cancel');
 };
 
 subtest 'alert, title and message' => sub {

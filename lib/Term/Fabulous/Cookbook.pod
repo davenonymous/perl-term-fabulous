@@ -195,6 +195,14 @@ L<Ask for a number and check it (Prompt, validator)|Term::Fabulous::Cookbook::Fo
 
 =item *
 
+L<Open and save a file (FileDialog)|Term::Fabulous::Cookbook::Forms/Open and save a file (FileDialog)>
+
+=item *
+
+L<Ask for a color (ColorPicker in a Prompt)|Term::Fabulous::Cookbook::Forms/Ask for a color (ColorPicker in a Prompt)>
+
+=item *
+
 L<Ask for input below the shell's output (inline mode)|Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>
 
 =item *
@@ -233,7 +241,7 @@ L<Copy and paste through the clipboard|Term::Fabulous::Cookbook::Forms/Copy and 
 
 =item L<Term::Fabulous::Cookbook::Menus>
 
-Menu bars, context menus and status bars:
+Menu bars, context menus, status bars, help screens and document tabs:
 
 =over
 
@@ -248,6 +256,14 @@ L<Open a menu with a right click or the Menu key (Menu)|Term::Fabulous::Cookbook
 =item *
 
 L<Show messages and state in a status bar (StatusBar)|Term::Fabulous::Cookbook::Menus/Show messages and state in a status bar (StatusBar)>
+
+=item *
+
+L<Show the keys in a help screen (KeyReference)|Term::Fabulous::Cookbook::Menus/Show the keys in a help screen (KeyReference)>
+
+=item *
+
+L<Keep several documents open in tabs (DocumentTabs)|Term::Fabulous::Cookbook::Menus/Keep several documents open in tabs (DocumentTabs)>
 
 =back
 
