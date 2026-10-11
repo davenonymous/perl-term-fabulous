@@ -1,5 +1,6 @@
 requires 'perl', '5.032001';
 
+requires 'Clay::UI', '0.06';    # first CPAN release, ships Clay::XS
 requires 'Clay::XS', '0.05';    # stringOffset in text render commands
 requires 'Data::Checks', '0.04';
 requires 'Encode';

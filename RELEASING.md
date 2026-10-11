@@ -145,9 +145,8 @@ This dist uses plain `ExtUtils::MakeMaker` plus
   perl -pi -e "s/^our \\\$VERSION = '[^']*';/our \\\$VERSION = '0.02';/" $(find lib -name '*.pm')
   ```
 
-- `Clay::XS` (which provides `Clay::UI`) is a hard runtime dependency
-  and is not on CPAN yet. Until it is released, `cpanm --installdeps .`
-  cannot resolve it and the dist cannot be indexed by PAUSE with a
-  satisfiable prereq list. Release `Clay::XS` first.
+- `Clay::UI` and `Clay::XS` (both from the `Clay-UI` distribution) are
+  hard runtime dependencies. When Term::Fabulous needs a newer Clay::UI,
+  release `Clay-UI` to CPAN first and raise the required version.
 - `cpanfile` and `Makefile.PL` both declare the dependencies. Keep them
   in sync when adding or bumping a prerequisite.

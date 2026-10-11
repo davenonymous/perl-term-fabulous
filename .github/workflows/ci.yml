@@ -7,10 +7,6 @@ on:
     branches: [master]
   workflow_dispatch:
 
-env:
-  # Clay::UI (with Clay::XS) is not on CPAN yet; install it from GitHub
-  CLAY_UI_TARBALL: https://github.com/davenonymous/perl-clay-xs/archive/refs/heads/master.tar.gz
-
 jobs:
   # termbox2 and I18N::Langinfo need a POSIX system, so there is no
   # Windows job
@@ -42,9 +38,6 @@ jobs:
       - name: Show Perl configuration
         run: perl -V
 
-      - name: Install Clay::UI from GitHub
-        run: cpanm --notest --verbose "$CLAY_UI_TARBALL"
-
       - name: Install declared dependencies
         run: cpanm --installdeps --notest --verbose .
 
@@ -75,9 +68,6 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: latest
-
-      - name: Install Clay::UI from GitHub
-        run: cpanm --notest "$CLAY_UI_TARBALL"
 
       - name: Install declared dependencies
         run: cpanm --installdeps --with-develop --notest .
