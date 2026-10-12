@@ -3,6 +3,7 @@ use warnings;
 use utf8;
 
 use Test2::V0;
+use File::Temp qw(tempfile);
 
 use Clay::XS qw(
 	Clay_GetElementId CLAY__SIZING_TYPE_FIT CLAY__SIZING_TYPE_GROW CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_LINE_SIZING_FIT CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_ALIGN_RIGHT
@@ -33,7 +34,10 @@ KDL
 die "Term::Fabulous was loaded\n" if exists $INC{'Term/Fabulous.pm'};
 print ref($root), "\n";
 PERL
-	open my $child, '-|', $^X, ( map { "-I$_" } @INC ), '-e', $code or die "cannot run $^X: $!";
+	my ( $program, $program_path ) = tempfile( UNLINK => 1 );    # a Windows command line cannot carry the lines of the program
+	print {$program} $code;
+	close $program;
+	open my $child, '-|', $^X, ( map { "-I$_" } @INC ), $program_path or die "cannot run $^X: $!";
 	my $output = do { local $/; <$child> };
 	ok close($child), 'child process succeeded';
 	is $output, "Term::Fabulous::Widget::Box\n", 'a Box builds with only Term::Fabulous::Layout loaded';

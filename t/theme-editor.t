@@ -6,10 +6,12 @@ no warnings 'experimental::signatures';
 
 use Test2::V0;
 
+use File::Spec;
 use File::Temp qw(tempdir);
 use FindBin;
 use Scalar::Util qw(blessed);
 use IO::Async::Loop;
+use IO::Async::OS;
 use Term::Fabulous::Editor;
 use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Theme::Document;
@@ -306,7 +308,7 @@ subtest 'saving, reverting, closing' => sub {
 	ok $save_as, 'an untitled theme is saved where the user says';
 	$save_as->choose('sunrise');
 	$editor->ui->step;
-	is $editor->active_tab->path, "$directory/sunrise.kdl", 'with .kdl added to a name without one';
+	is $editor->active_tab->path, File::Spec->catfile( $directory, 'sunrise.kdl' ), 'with .kdl added to a name without one';
 	like read_file("$directory/sunrise.kdl"), qr/accent "#abcdef"/, 'and written';
 
 	$editor->set_setting( 'palette.accent', '#fedcba' );
@@ -405,6 +407,7 @@ subtest 'variants' => sub {
 };
 
 subtest 'recovery after a signal' => sub {
+	skip_all 'IO::Async watches no signals on Windows' unless IO::Async::OS->HAVE_SIGNALS;
 	my $path = theme_file('ocean.kdl');
 	my ( $editor, $press ) = editor( files => [$path] );
 	$editor->set_setting( 'palette.text', '#222222' );

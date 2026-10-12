@@ -3,6 +3,7 @@ use warnings;
 use utf8;
 
 use Test2::V0;
+use POSIX qw(setlocale LC_TIME);
 use Time::HiRes ();
 
 use Term::Fabulous::Chart::Scale::Category;
@@ -16,6 +17,11 @@ my $Time     = 'Term::Fabulous::Chart::Scale::Time';
 my $Category = 'Term::Fabulous::Chart::Scale::Category';
 
 use constant { JUNE_1 => 1780272000, HOUR => 3600, DAY => 86400 };
+
+# The default labels of a time axis come from strftime, which spells
+# month names in the language of the locale; the expected labels below
+# are English.
+setlocale( LC_TIME, 'C' ) or die "cannot set LC_TIME to C: $!";
 
 sub labels {
 	my ($scale) = @_;

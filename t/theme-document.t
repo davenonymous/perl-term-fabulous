@@ -313,7 +313,10 @@ subtest 'files' => sub {
 	is $Document->read_file($path)->text, $document->text, 'what is read back is what was written, as UTF-8';
 	chmod 0600, $path;
 	$document->with_setting( 'theme.extends', 'light' )->write_file($path);
-	is( ( stat $path )[2] & oct(777), oct(600), 'an existing file keeps its permissions' );
+SKIP: {
+		skip 'Windows has no POSIX permissions', 1 if $^O eq 'MSWin32';
+		is( ( stat $path )[2] & oct(777), oct(600), 'an existing file keeps its permissions' );
+	}
 	is [ glob("$directory/*.tmp-*") ], [], 'no temporary file is left';
 
 	open my $handle, '>:raw', "$directory/latin1.kdl" or die;

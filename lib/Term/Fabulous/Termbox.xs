@@ -11,11 +11,6 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <sys/ioctl.h>
-#ifdef __sun
-#include <sys/filio.h>
-#endif
-
 #include "tf_termbox.h"
 
 /*
@@ -353,13 +348,7 @@ tf_sixel_query(int timeout_ms, SV *supported_ref, SV *cell_width_ref, SV *cell_h
 		RETVAL
 
 int
-tf_readable_bytes(int fd)
-	PREINIT:
-		int count = 0;
-	CODE:
-		RETVAL = ioctl(fd, FIONREAD, &count) == 0 ? count : -1;
-	OUTPUT:
-		RETVAL
+tf_input_ended(int fd)
 
 int
 tb_get_fds(SV *tty_ref, SV *resize_ref)

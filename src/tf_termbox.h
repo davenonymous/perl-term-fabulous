@@ -210,4 +210,15 @@ int tf_reset_attrs(void);
 /* Writes what tb_send() and the other output calls queued. */
 int tf_flush(void);
 
+/*
+ * Whether the input descriptor fd, which termbox2 reads (tb_get_fds),
+ * has ended for good: 1 when it reports readable but has no byte to
+ * read, or cannot even tell because the terminal hung up (EIO, or
+ * ENXIO on FreeBSD); on Windows, when a console no longer answers, a
+ * pipe has lost its writer or a file is at its end. Else 0. termbox2
+ * itself reports the end of the input only as "no event", again and
+ * again. Works before tb_init() and after tb_shutdown() as well.
+ */
+int tf_input_ended(int fd);
+
 #endif /* TF_TERMBOX_H */

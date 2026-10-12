@@ -19,6 +19,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use File::Spec;
 	use IO::Async::Loop;
 	use IO::Async::Signal;
+	use IO::Async::OS;
 	use IO::Async::Timer::Countdown;
 	use List::Util qw(any first max min);
 	use Scalar::Util qw(blessed refaddr weaken);
@@ -389,10 +390,11 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	method _watch_signals () {
 		my $loop = IO::Async::Loop->new;
 		weaken( my $editor = $self );
-		%signals_before  = map { $_ => $SIG{$_} } WATCHED_SIGNALS;
+		my @signals = IO::Async::OS->HAVE_SIGNALS ? WATCHED_SIGNALS : ();    # IO::Async watches no signals on Windows
+		%signals_before  = map { $_ => $SIG{$_} } @signals;
 		@signal_watchers = map {
 			IO::Async::Signal->new( name => $_, on_receipt => sub { $editor->_signalled } )
-		} WATCHED_SIGNALS;
+		} @signals;
 		$loop->add($_) foreach @signal_watchers;
 		return;
 	}
@@ -2060,7 +2062,8 @@ into a new, untitled one.
 
 C<Ctrl+W> closes a tab and C<Ctrl+Q> quits; both ask whether to save
 unsaved changes first. C<Ctrl+C> does not quit the editor: it copies.
-When the editor is ended by a signal (C<TERM>, C<INT>, C<HUP>), the
+When the editor is ended by a signal (C<TERM>, C<INT>, C<HUP>; not on
+Windows, where L<IO::Async> watches no signals), the
 text of every theme with unsaved changes is written to C<FILE.unsaved>
 (for a new theme, C<untitled-N.kdl.unsaved> in the folder of the
 C<directory> parameter, by default the current one), and the files are

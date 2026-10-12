@@ -42,13 +42,22 @@ SOFTWARE.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <io.h>
+#else
 #include <sys/ioctl.h>
 #include <sys/select.h>
-#include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#endif
 
 #ifdef PATH_MAX
 #define TB_PATH_MAX PATH_MAX
@@ -120,6 +129,9 @@ extern "C" {
 
 /* Include wchar if opting libc */
 #ifdef TB_OPT_LIBC_WCHAR
+#ifdef _WIN32
+#error "TB_OPT_LIBC_WCHAR is not available on Windows: its libc has no wcwidth(3)"
+#endif
 #include <wchar.h>
 #include <wctype.h>
 #endif
@@ -464,6 +476,17 @@ struct tb_event {
  * other functions. `tb_init` is equivalent to `tb_init_file("/dev/tty")`.
  * After successful initialization, the library must be finalized using
  * `tb_shutdown`.
+ *
+ * On Windows, the terminal is the console: `tb_init_file("/dev/tty")` (and so
+ * `tb_init`) opens `CONIN$` for input and `CONOUT$` for output, any other
+ * path is opened as a file that serves both. `tb_init_rwfd` takes C runtime
+ * file descriptors, as returned by `_open` or `_fileno`; a descriptor whose
+ * handle is a console is driven through the console API, any other
+ * (a pipe, a file) is read and written as a stream. One descriptor cannot
+ * serve both directions of the console, so `tb_init_fd` works only with
+ * descriptors that are not consoles. The console is switched to UTF-8 and
+ * to virtual terminal mode for input and output while termbox is
+ * initialized; keys arrive as the escape sequences an xterm would send.
  */
 int tb_init(void);
 int tb_init_file(const char *path);
@@ -667,6 +690,10 @@ int tb_poll_event(struct tb_event *event);
 /* Internal termbox fds that can be used with `poll(2)`, `select(2)`, etc.
  * externally. Callers must invoke `tb_poll_event` or `tb_peek_event` if
  * fds become readable.
+ *
+ * On Windows, `ttyfd` is the input descriptor and `resizefd` is -1: resizes
+ * arrive as console input records, and a console descriptor cannot be
+ * watched with `select`. Poll with `tb_peek_event` instead.
  */
 int tb_get_fds(int *ttyfd, int *resizefd);
 
@@ -843,8 +870,24 @@ struct tb_global {
     struct bytebuf out;
     struct cellbuf back;
     struct cellbuf front;
+#ifdef _WIN32
+    HANDLE in_handle;
+    HANDLE out_handle;
+    int in_is_console;
+    int out_is_console;
+    DWORD orig_in_mode;
+    DWORD orig_out_mode;
+    UINT orig_in_cp;
+    UINT orig_out_cp;
+    int has_orig_in_mode;
+    int has_orig_out_mode;
+    int resize_pending;
+    uint16_t pending_high_surrogate;
+    DWORD mouse_buttons;
+#else
     struct termios orig_tios;
     int has_orig_tios;
+#endif
     int last_errno;
     int initialized;
     int (*fn_extract_esc_pre)(struct tb_event *, size_t *);
@@ -2293,7 +2336,6 @@ static int init_resize_handler(void);
 static int send_init_escape_codes(void);
 static int send_clear(void);
 static int update_term_size(void);
-static int update_term_size_via_esc(void);
 static int init_cellbuf(void);
 static int tb_deinit(void);
 static int load_terminfo(void);
@@ -2311,7 +2353,6 @@ static int extract_esc_user(struct tb_event *event, int is_post);
 static int extract_esc_cap(struct tb_event *event);
 static int extract_esc_mouse(struct tb_event *event);
 static int resize_cellbufs(void);
-static void handle_resize(int sig);
 static int send_attr(uintattr_t fg, uintattr_t bg);
 static int send_sgr(uint32_t fg, uint32_t bg, int fg_is_default,
     int bg_is_default);
@@ -2340,19 +2381,46 @@ static int bytebuf_free(struct bytebuf *b);
 static int tb_iswprint_ex(uint32_t ch, int *width);
 static int tb_cluster_width(uint32_t *ch, size_t nch);
 
+/* The platform layer: the functions that talk to the operating system, each
+ * defined once per operating system. init_term_attrs, init_resize_handler
+ * and update_term_size, declared above, belong to it as well and keep their
+ * place; the rest is defined at the end of this file. */
+static int open_tty(const char *path, int *rfd, int *wfd);
+static int init_fds(int rfd, int wfd);
+static int restore_term_attrs(void);
+static int deinit_resize_handler(void);
+static int close_opened_fds(void);
+static int enable_mouse_input(int enabled);
+static int wait_input(int timeout_ms, int *resized);
+static int write_output(int fd, const char *buf, size_t len);
+static const char *get_term_name(void);
+static int64_t now_ms(void);
+static void format_last_error(void);
+#ifndef _WIN32
+static int update_term_size_via_esc(void);
+static void handle_resize(int sig);
+#else
+static int is_console(HANDLE handle);
+static int win_error(int rv);
+static int read_console_records(void);
+static int append_key_record(const KEY_EVENT_RECORD *key);
+static int append_utf16_unit(uint16_t unit);
+static int append_mouse_record(const MOUSE_EVENT_RECORD *mouse);
+static int append_mouse_report(int button, const MOUSE_EVENT_RECORD *mouse,
+    char final);
+static int read_stream_bytes(int timeout_ms);
+#endif
+
 int tb_init(void) {
     return tb_init_file("/dev/tty");
 }
 
 int tb_init_file(const char *path) {
+    int rv, rfd, wfd;
     if (global.initialized) return TB_ERR_INIT_ALREADY;
-    int ttyfd = open(path, O_RDWR);
-    if (ttyfd < 0) {
-        global.last_errno = errno;
-        return TB_ERR_INIT_OPEN;
-    }
+    if_err_return(rv, open_tty(path, &rfd, &wfd));
     global.ttyfd_open = 1;
-    return tb_init_fd(ttyfd);
+    return tb_init_rwfd(rfd, wfd);
 }
 
 int tb_init_fd(int ttyfd) {
@@ -2363,11 +2431,9 @@ int tb_init_rwfd(int rfd, int wfd) {
     int rv;
 
     tb_reset();
-    global.ttyfd = isatty(rfd) ? rfd : (wfd != rfd && isatty(wfd) ? wfd : -1);
-    global.rfd = rfd;
-    global.wfd = wfd;
 
     do {
+        if_err_break(rv, init_fds(rfd, wfd));
         if_err_break(rv, init_term_attrs());
         if_err_break(rv, init_term_caps());
         if_err_break(rv, init_cap_trie());
@@ -2570,6 +2636,7 @@ int tb_extend_cell(int x, int y, uint32_t ch) {
 }
 
 int tb_set_input_mode(int mode) {
+    int rv;
     if_not_init_return();
 
     if (mode == TB_INPUT_CURRENT) return global.input_mode;
@@ -2590,6 +2657,7 @@ int tb_set_input_mode(int mode) {
         bytebuf_puts(&global.out, TB_HARDCAP_EXIT_MOUSE);
         bytebuf_flush(&global.out, global.wfd);
     }
+    if_err_return(rv, enable_mouse_input(mode & TB_INPUT_MOUSE));
 
     global.input_mode = mode;
     return TB_OK;
@@ -2852,7 +2920,7 @@ const char *tb_strerror(int err) {
         case TB_ERR_RESIZE_POLL:
         case TB_ERR_RESIZE_READ:
         default:
-            strerror_r(global.last_errno, global.errbuf, sizeof(global.errbuf));
+            format_last_error();
             return (const char *)global.errbuf;
     }
 }
@@ -2905,6 +2973,7 @@ static int tb_reset(void) {
     return TB_OK;
 }
 
+#ifndef _WIN32
 static int init_term_attrs(void) {
     if (global.ttyfd < 0) return TB_OK;
 
@@ -2928,6 +2997,48 @@ static int init_term_attrs(void) {
 
     return TB_OK;
 }
+#else
+/* The console's counterpart of raw mode: the console neither buffers lines
+ * nor echoes nor turns Ctrl-C into a signal, it reports window size changes,
+ * and it encodes keys as VT sequences (mouse reporting is switched on by
+ * `tb_set_input_mode`, see enable_mouse_input). Output passes through the
+ * console's VT parser, and both directions speak UTF-8. Quick edit mode,
+ * which would swallow the mouse for text selection, is switched off along
+ * with the other flags. */
+static int init_term_attrs(void) {
+    if (global.in_is_console) {
+        if (!GetConsoleMode(global.in_handle, &global.orig_in_mode)) {
+            return win_error(TB_ERR_TCGETATTR);
+        }
+        global.has_orig_in_mode = 1;
+        global.orig_in_cp = GetConsoleCP();
+        if (!SetConsoleMode(global.in_handle,
+                ENABLE_VIRTUAL_TERMINAL_INPUT | ENABLE_WINDOW_INPUT |
+                    ENABLE_EXTENDED_FLAGS))
+        {
+            return win_error(TB_ERR_UNSUPPORTED_TERM);
+        }
+        if (!SetConsoleCP(CP_UTF8)) return win_error(TB_ERR_TCSETATTR);
+    }
+
+    if (global.out_is_console) {
+        if (!GetConsoleMode(global.out_handle, &global.orig_out_mode)) {
+            return win_error(TB_ERR_TCGETATTR);
+        }
+        global.has_orig_out_mode = 1;
+        global.orig_out_cp = GetConsoleOutputCP();
+        if (!SetConsoleMode(global.out_handle,
+                ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING |
+                    DISABLE_NEWLINE_AUTO_RETURN))
+        {
+            return win_error(TB_ERR_UNSUPPORTED_TERM);
+        }
+        if (!SetConsoleOutputCP(CP_UTF8)) return win_error(TB_ERR_TCSETATTR);
+    }
+
+    return TB_OK;
+}
+#endif
 
 int tb_printf_inner(int x, int y, uintattr_t fg, uintattr_t bg, size_t *out_w,
     const char *fmt, va_list vl) {
@@ -3062,6 +3173,7 @@ static int cap_trie_deinit(struct cap_trie *node) {
     return TB_OK;
 }
 
+#ifndef _WIN32
 static int init_resize_handler(void) {
     if (pipe(global.resize_pipefd) != 0) {
         global.last_errno = errno;
@@ -3078,6 +3190,13 @@ static int init_resize_handler(void) {
 
     return TB_OK;
 }
+#else
+/* The console reports a changed window size as an input record
+ * (ENABLE_WINDOW_INPUT, see init_term_attrs), so there is nothing to set up. */
+static int init_resize_handler(void) {
+    return TB_OK;
+}
+#endif
 
 static int send_init_escape_codes(void) {
     int rv;
@@ -3105,6 +3224,7 @@ static int send_clear(void) {
     return TB_OK;
 }
 
+#ifndef _WIN32
 static int update_term_size(void) {
     int rv, ioctl_errno;
 
@@ -3172,6 +3292,23 @@ static int update_term_size_via_esc(void) {
     global.height = rh;
     return TB_OK;
 }
+#else
+/* The size of the console window, not of its screen buffer: a legacy console
+ * keeps a scrollback buffer taller than the window, and VT output addresses
+ * the window. */
+static int update_term_size(void) {
+    CONSOLE_SCREEN_BUFFER_INFO info;
+
+    if (!global.out_is_console) return TB_OK;
+
+    if (!GetConsoleScreenBufferInfo(global.out_handle, &info)) {
+        return win_error(TB_ERR_RESIZE_IOCTL);
+    }
+    global.width = info.srWindow.Right - info.srWindow.Left + 1;
+    global.height = info.srWindow.Bottom - info.srWindow.Top + 1;
+    return TB_OK;
+}
+#endif
 
 static int init_cellbuf(void) {
     int rv;
@@ -3192,20 +3329,9 @@ static int tb_deinit(void) {
         bytebuf_puts(&global.out, TB_HARDCAP_EXIT_MOUSE);
         bytebuf_flush(&global.out, global.wfd);
     }
-    if (global.has_orig_tios && global.ttyfd >= 0) {
-        tcsetattr(global.ttyfd, TCSAFLUSH, &global.orig_tios);
-    }
-    if (global.ttyfd_open) {
-        close(global.ttyfd >= 0 ? global.ttyfd : global.rfd);
-        global.ttyfd_open = 0;
-    }
-
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = SIG_DFL;
-    sigaction(SIGWINCH, &sa, NULL);
-    if (global.resize_pipefd[0] >= 0) close(global.resize_pipefd[0]);
-    if (global.resize_pipefd[1] >= 0) close(global.resize_pipefd[1]);
+    restore_term_attrs();
+    close_opened_fds();
+    deinit_resize_handler();
 
     cellbuf_free(&global.back);
     cellbuf_free(&global.front);
@@ -3227,7 +3353,7 @@ static int load_terminfo(void) {
     // See terminfo(5) "Fetching Compiled Descriptions" for a description of
     // this behavior. Some of these paths are compile-time ncurses options, so
     // best guesses are used here.
-    const char *term = getenv("TERM");
+    const char *term = get_term_name();
     if (!term) return TB_ERR;
 
     // If TERMINFO is set, try that directory first
@@ -3384,7 +3510,7 @@ static int parse_terminfo_caps(void) {
 
 static int load_builtin_caps(void) {
     int i, j;
-    const char *term = getenv("TERM");
+    const char *term = get_term_name();
 
     if (!term) return TB_ERR_NO_TERM;
 
@@ -3457,53 +3583,15 @@ static int get_terminfo_int16(int offset, int16_t *val) {
 }
 
 static int wait_event(struct tb_event *event, int timeout) {
-    int rv;
-    char buf[TB_OPT_READ_BUF];
+    int rv, resized;
 
     memset(event, 0, sizeof(*event));
     if_ok_return(rv, extract_event(event));
 
-    fd_set fds;
-    struct timeval tv;
-    tv.tv_sec = timeout / 1000;
-    tv.tv_usec = (timeout - (tv.tv_sec * 1000)) * 1000;
-
     do {
-        FD_ZERO(&fds);
-        FD_SET(global.rfd, &fds);
-        FD_SET(global.resize_pipefd[0], &fds);
+        if_err_return(rv, wait_input(timeout, &resized));
 
-        int maxfd = global.resize_pipefd[0] > global.rfd
-                        ? global.resize_pipefd[0]
-                        : global.rfd;
-
-        int select_rv =
-            select(maxfd + 1, &fds, NULL, NULL, (timeout < 0) ? NULL : &tv);
-
-        if (select_rv < 0) {
-            // Let EINTR/EAGAIN bubble up
-            global.last_errno = errno;
-            return TB_ERR_POLL;
-        } else if (select_rv == 0) {
-            return TB_ERR_NO_EVENT;
-        }
-
-        int tty_has_events = (FD_ISSET(global.rfd, &fds));
-        int resize_has_events = (FD_ISSET(global.resize_pipefd[0], &fds));
-
-        if (tty_has_events) {
-            ssize_t read_rv = read(global.rfd, buf, sizeof(buf));
-            if (read_rv < 0) {
-                global.last_errno = errno;
-                return TB_ERR_READ;
-            } else if (read_rv > 0) {
-                bytebuf_nputs(&global.in, buf, read_rv);
-            }
-        }
-
-        if (resize_has_events) {
-            int ignore = 0;
-            read(global.resize_pipefd[0], &ignore, sizeof(ignore));
+        if (resized) {
             // TODO: Harden against errors encountered mid-resize
             if_err_return(rv, update_term_size());
             if_err_return(rv, resize_cellbufs());
@@ -3783,11 +3871,13 @@ static int resize_cellbufs(void) {
     return TB_OK;
 }
 
+#ifndef _WIN32
 static void handle_resize(int sig) {
     int errno_copy = errno;
     write(global.resize_pipefd[1], &sig, sizeof(sig));
     errno = errno_copy;
 }
+#endif
 
 static int send_attr(uintattr_t fg, uintattr_t bg) {
     int rv;
@@ -4209,13 +4299,9 @@ static int bytebuf_shift(struct bytebuf *b, size_t n) {
 }
 
 static int bytebuf_flush(struct bytebuf *b, int fd) {
+    int rv;
     if (b->len <= 0) return TB_OK;
-    ssize_t write_rv = write(fd, b->buf, b->len);
-    if (write_rv < 0 || (size_t)write_rv != b->len) {
-        // Note, errno will be 0 on partial write
-        global.last_errno = errno;
-        return TB_ERR;
-    }
+    if_err_return(rv, write_output(fd, b->buf, b->len));
     b->len = 0;
     return TB_OK;
 }
@@ -4246,6 +4332,537 @@ static int bytebuf_free(struct bytebuf *b) {
     memset(b, 0, sizeof(*b));
     return TB_OK;
 }
+
+/* The rest of the platform layer (init_term_attrs, init_resize_handler and
+ * update_term_size have their per-system definitions above, where upstream
+ * keeps them). The functions below open the terminal, restore it, wait for
+ * and read its input, write its output, read the clock and spell out
+ * errors. `wait_input` is the heart of it: it waits
+ * up to `timeout_ms` milliseconds (forever when negative) for input, appends
+ * the bytes that arrived to `global.in` and returns `TB_OK`, or
+ * `TB_ERR_NO_EVENT` when the time ran out. A terminal at end of file wakes
+ * it with nothing to append. With `resized` set, a window size change wakes
+ * it too and sets `*resized`; with `resized` NULL, size changes stay pending
+ * for a later call. */
+
+#ifndef _WIN32
+
+static int open_tty(const char *path, int *rfd, int *wfd) {
+    int fd = open(path, O_RDWR);
+    if (fd < 0) {
+        global.last_errno = errno;
+        return TB_ERR_INIT_OPEN;
+    }
+    *rfd = fd;
+    *wfd = fd;
+    return TB_OK;
+}
+
+static int init_fds(int rfd, int wfd) {
+    global.ttyfd = isatty(rfd) ? rfd : (wfd != rfd && isatty(wfd) ? wfd : -1);
+    global.rfd = rfd;
+    global.wfd = wfd;
+    return TB_OK;
+}
+
+static int restore_term_attrs(void) {
+    if (global.has_orig_tios && global.ttyfd >= 0) {
+        tcsetattr(global.ttyfd, TCSAFLUSH, &global.orig_tios);
+    }
+    return TB_OK;
+}
+
+static int deinit_resize_handler(void) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+    sigaction(SIGWINCH, &sa, NULL);
+    if (global.resize_pipefd[0] >= 0) close(global.resize_pipefd[0]);
+    if (global.resize_pipefd[1] >= 0) close(global.resize_pipefd[1]);
+    return TB_OK;
+}
+
+static int close_opened_fds(void) {
+    if (!global.ttyfd_open) return TB_OK;
+    close(global.rfd);
+    if (global.wfd != global.rfd) close(global.wfd);
+    global.ttyfd_open = 0;
+    return TB_OK;
+}
+
+/* The escape sequences of `tb_set_input_mode` switch mouse reporting. */
+static int enable_mouse_input(int enabled) {
+    (void)enabled;
+    return TB_OK;
+}
+
+static int wait_input(int timeout_ms, int *resized) {
+    int rv, maxfd, select_rv;
+    char buf[TB_OPT_READ_BUF];
+    fd_set fds;
+    struct timeval tv;
+
+    if (resized) *resized = 0;
+
+    FD_ZERO(&fds);
+    FD_SET(global.rfd, &fds);
+    maxfd = global.rfd;
+    if (resized) {
+        FD_SET(global.resize_pipefd[0], &fds);
+        if (global.resize_pipefd[0] > maxfd) maxfd = global.resize_pipefd[0];
+    }
+
+    tv.tv_sec = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    select_rv = select(maxfd + 1, &fds, NULL, NULL, timeout_ms < 0 ? NULL : &tv);
+
+    if (select_rv < 0) {
+        // Let EINTR/EAGAIN bubble up
+        global.last_errno = errno;
+        return TB_ERR_POLL;
+    } else if (select_rv == 0) {
+        return TB_ERR_NO_EVENT;
+    }
+
+    if (FD_ISSET(global.rfd, &fds)) {
+        ssize_t read_rv = read(global.rfd, buf, sizeof(buf));
+        if (read_rv < 0) {
+            global.last_errno = errno;
+            return TB_ERR_READ;
+        } else if (read_rv > 0) {
+            if_err_return(rv, bytebuf_nputs(&global.in, buf, (size_t)read_rv));
+        }
+    }
+
+    if (resized && FD_ISSET(global.resize_pipefd[0], &fds)) {
+        int ignore = 0;
+        read(global.resize_pipefd[0], &ignore, sizeof(ignore));
+        *resized = 1;
+    }
+
+    return TB_OK;
+}
+
+static int write_output(int fd, const char *buf, size_t len) {
+    ssize_t write_rv = write(fd, buf, len);
+    if (write_rv < 0 || (size_t)write_rv != len) {
+        // Note, errno will be 0 on partial write
+        global.last_errno = errno;
+        return TB_ERR;
+    }
+    return TB_OK;
+}
+
+static const char *get_term_name(void) {
+    return getenv("TERM");
+}
+
+static int64_t now_ms(void) {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return (int64_t)now.tv_sec * 1000 + now.tv_usec / 1000;
+}
+
+static void format_last_error(void) {
+    strerror_r(global.last_errno, global.errbuf, sizeof(global.errbuf));
+}
+
+#else // _WIN32
+
+/* `global.last_errno` holds a Win32 error code (`GetLastError`) on Windows,
+ * also for failures of the C runtime (`_doserrno`). */
+
+static int win_error(int rv) {
+    global.last_errno = (int)GetLastError();
+    return rv;
+}
+
+static int is_console(HANDLE handle) {
+    DWORD mode;
+    return GetConsoleMode(handle, &mode) != 0;
+}
+
+static int open_tty(const char *path, int *rfd, int *wfd) {
+    if (strcmp(path, "/dev/tty") == 0 || _stricmp(path, "CON") == 0) {
+        *rfd = _open("CONIN$", _O_RDWR | _O_BINARY);
+        if (*rfd < 0) {
+            global.last_errno = (int)_doserrno;
+            return TB_ERR_INIT_OPEN;
+        }
+        *wfd = _open("CONOUT$", _O_RDWR | _O_BINARY);
+        if (*wfd < 0) {
+            global.last_errno = (int)_doserrno;
+            _close(*rfd);
+            return TB_ERR_INIT_OPEN;
+        }
+        return TB_OK;
+    }
+
+    *rfd = _open(path, _O_RDWR | _O_BINARY);
+    if (*rfd < 0) {
+        global.last_errno = (int)_doserrno;
+        return TB_ERR_INIT_OPEN;
+    }
+    *wfd = *rfd;
+    return TB_OK;
+}
+
+static int init_fds(int rfd, int wfd) {
+    global.rfd = rfd;
+    global.wfd = wfd;
+    global.in_handle = (HANDLE)_get_osfhandle(rfd);
+    global.out_handle = (HANDLE)_get_osfhandle(wfd);
+    if (global.in_handle == INVALID_HANDLE_VALUE ||
+        global.out_handle == INVALID_HANDLE_VALUE)
+    {
+        global.last_errno = ERROR_INVALID_HANDLE;
+        return TB_ERR_INIT_OPEN;
+    }
+    global.in_is_console = is_console(global.in_handle);
+    global.out_is_console = is_console(global.out_handle);
+    // Only mirrors the POSIX meaning (the descriptor that is a terminal);
+    // the Windows code works with the handles and the two flags above.
+    global.ttyfd = global.out_is_console ? wfd
+                   : global.in_is_console ? rfd
+                                          : -1;
+    return TB_OK;
+}
+
+static int restore_term_attrs(void) {
+    if (global.has_orig_in_mode) {
+        SetConsoleMode(global.in_handle, global.orig_in_mode);
+        SetConsoleCP(global.orig_in_cp);
+    }
+    if (global.has_orig_out_mode) {
+        SetConsoleMode(global.out_handle, global.orig_out_mode);
+        SetConsoleOutputCP(global.orig_out_cp);
+    }
+    return TB_OK;
+}
+
+static int deinit_resize_handler(void) {
+    return TB_OK;
+}
+
+static int close_opened_fds(void) {
+    if (!global.ttyfd_open) return TB_OK;
+    _close(global.rfd);
+    if (global.wfd != global.rfd) _close(global.wfd);
+    global.ttyfd_open = 0;
+    return TB_OK;
+}
+
+/* The console reports the mouse only while asked to, and a pseudo console
+ * asks its terminal to report it as soon as the console is asked: the flag
+ * follows the input mode, so a program without mouse support gets no mouse
+ * reports. */
+static int enable_mouse_input(int enabled) {
+    DWORD mode;
+    if (!global.in_is_console) return TB_OK;
+    if (!GetConsoleMode(global.in_handle, &mode)) {
+        return win_error(TB_ERR_TCGETATTR);
+    }
+    mode = enabled ? (mode | ENABLE_MOUSE_INPUT) : (mode & ~(DWORD)ENABLE_MOUSE_INPUT);
+    if (!SetConsoleMode(global.in_handle, mode)) {
+        return win_error(TB_ERR_TCSETATTR);
+    }
+    return TB_OK;
+}
+
+/* A console delivers input records: keys, which the console has encoded as
+ * the bytes an xterm would send (ENABLE_VIRTUAL_TERMINAL_INPUT), the mouse
+ * and window size changes. Records that mean nothing to termbox (key
+ * releases, focus and menu events) are read and dropped, so the wait goes
+ * on until something arrived or the time ran out. Anything else (a pipe, a
+ * file) is a stream of bytes. */
+static int wait_input(int timeout_ms, int *resized) {
+    int rv;
+    int64_t deadline = timeout_ms < 0 ? 0 : now_ms() + timeout_ms;
+
+    if (resized) {
+        *resized = global.resize_pending;
+        global.resize_pending = 0;
+        if (*resized) return TB_OK;
+    }
+
+    if (!global.in_is_console) return read_stream_bytes(timeout_ms);
+
+    for (;;) {
+        size_t len_before = global.in.len;
+        int64_t left = timeout_ms < 0 ? INFINITE : deadline - now_ms();
+        DWORD wait_rv;
+
+        if (left < 0) left = 0;
+        wait_rv = WaitForSingleObject(global.in_handle, (DWORD)left);
+        if (wait_rv == WAIT_TIMEOUT) return TB_ERR_NO_EVENT;
+        if (wait_rv != WAIT_OBJECT_0) return win_error(TB_ERR_POLL);
+
+        if_err_return(rv, read_console_records());
+        if (global.in.len > len_before) return TB_OK;
+        if (resized && global.resize_pending) {
+            *resized = 1;
+            global.resize_pending = 0;
+            return TB_OK;
+        }
+    }
+}
+
+static int read_console_records(void) {
+    INPUT_RECORD records[TB_OPT_READ_BUF];
+    DWORD count, i;
+    int rv;
+
+    if (!ReadConsoleInputW(global.in_handle, records, TB_OPT_READ_BUF, &count)) {
+        return win_error(TB_ERR_READ);
+    }
+
+    for (i = 0; i < count; i++) {
+        switch (records[i].EventType) {
+            case KEY_EVENT:
+                if_err_return(rv, append_key_record(&records[i].Event.KeyEvent));
+                break;
+            case MOUSE_EVENT:
+                if_err_return(rv,
+                    append_mouse_record(&records[i].Event.MouseEvent));
+                break;
+            case WINDOW_BUFFER_SIZE_EVENT:
+                global.resize_pending = 1;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return TB_OK;
+}
+
+/* The text of a key, repeated as often as the record says. A key release
+ * carries text only for a character typed as Alt plus its number on the
+ * keypad, which the console delivers when Alt comes up. Modifier keys and
+ * dead keys carry no text. */
+static int append_key_record(const KEY_EVENT_RECORD *key) {
+    int rv;
+    WORD repeat;
+    uint16_t unit = (uint16_t)key->uChar.UnicodeChar;
+
+    if (unit == 0) return TB_OK;
+    if (!key->bKeyDown && key->wVirtualKeyCode != VK_MENU) return TB_OK;
+
+    for (repeat = key->wRepeatCount > 0 ? key->wRepeatCount : 1; repeat > 0; repeat--) {
+        if_err_return(rv, append_utf16_unit(unit));
+    }
+    return TB_OK;
+}
+
+/* The console speaks UTF-16; a character beyond the basic plane comes as a
+ * surrogate pair in two records. */
+static int append_utf16_unit(uint16_t unit) {
+    uint32_t codepoint;
+    char utf8[8];
+    int len;
+
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+        global.pending_high_surrogate = unit;
+        return TB_OK;
+    }
+    if (unit >= 0xdc00 && unit <= 0xdfff) {
+        if (global.pending_high_surrogate == 0) return TB_OK; // a stray low half
+        codepoint = 0x10000 +
+                    (((uint32_t)global.pending_high_surrogate - 0xd800) << 10) +
+                    ((uint32_t)unit - 0xdc00);
+        global.pending_high_surrogate = 0;
+    } else {
+        global.pending_high_surrogate = 0;
+        codepoint = unit;
+    }
+
+    len = tb_utf8_unicode_to_char(utf8, codepoint);
+    return bytebuf_nputs(&global.in, utf8, (size_t)len);
+}
+
+/* A mouse record, as the SGR mouse report (`ESC [ < button ; column ; row M`,
+ * `m` for a release) an xterm sends in mode 1006 with motion reporting
+ * (mode 1003): a terminal that reports the mouse itself delivers the same
+ * bytes through key records instead, so termbox parses one encoding only.
+ * Button state changes are told apart from the last record: a button that
+ * is newly down is pressed, one that is newly up is released. The console
+ * reports every motion; a motion with a button down is a drag with that
+ * button. Positions count from the console window, not from its scrollback
+ * buffer. */
+static int append_mouse_record(const MOUSE_EVENT_RECORD *mouse) {
+    int rv;
+    DWORD buttons = mouse->dwButtonState & 0x7; // left, right, middle
+    DWORD was_down = global.mouse_buttons;
+    DWORD flags = mouse->dwEventFlags;
+    static const int button_of_bit[3] = {0, 2, 1}; // SGR: 0 left, 1 middle, 2 right
+    int bit;
+
+    if (!(global.input_mode & TB_INPUT_MOUSE)) return TB_OK;
+
+    if (flags & MOUSE_WHEELED) {
+        int up = (SHORT)HIWORD(mouse->dwButtonState) > 0;
+        return append_mouse_report(up ? 64 : 65, mouse, 'M');
+    }
+    if (flags & MOUSE_HWHEELED) {
+        int right = (SHORT)HIWORD(mouse->dwButtonState) > 0;
+        return append_mouse_report(right ? 67 : 66, mouse, 'M');
+    }
+    // The button state is compared first, also for a motion record: a
+    // release the console never delivered (the focus left during a drag)
+    // must not hide the next press of that button.
+    for (bit = 0; bit < 3; bit++) {
+        DWORD mask = 1u << bit;
+        if ((buttons & mask) && !(was_down & mask)) {
+            if_err_return(rv, append_mouse_report(button_of_bit[bit], mouse, 'M'));
+        } else if (!(buttons & mask) && (was_down & mask)) {
+            if_err_return(rv, append_mouse_report(button_of_bit[bit], mouse, 'm'));
+        }
+    }
+    global.mouse_buttons = buttons;
+
+    if (flags & MOUSE_MOVED) {
+        int button = 3; // no button
+        for (bit = 0; bit < 3; bit++) {
+            if (buttons & (1u << bit)) {
+                button = button_of_bit[bit];
+                break;
+            }
+        }
+        return append_mouse_report(32 + button, mouse, 'M');
+    }
+    return TB_OK;
+}
+
+static int append_mouse_report(int button, const MOUSE_EVENT_RECORD *mouse,
+    char final) {
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    char report[32];
+    int x = mouse->dwMousePosition.X;
+    int y = mouse->dwMousePosition.Y;
+    int len;
+
+    if (mouse->dwControlKeyState & SHIFT_PRESSED) button |= 4;
+    if (mouse->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
+        button |= 8;
+    }
+    if (mouse->dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) {
+        button |= 16;
+    }
+
+    if (global.out_is_console &&
+        GetConsoleScreenBufferInfo(global.out_handle, &info))
+    {
+        x -= info.srWindow.Left;
+        y -= info.srWindow.Top;
+    }
+
+    len = snprintf(report, sizeof(report), "\x1b[<%d;%d;%d%c", button, x + 1,
+        y + 1, final);
+    if (len < 0 || len >= (int)sizeof(report)) return TB_ERR;
+    return bytebuf_nputs(&global.in, report, (size_t)len);
+}
+
+/* Bytes from a pipe or a file. A pipe cannot be waited on, so it is asked
+ * every few milliseconds whether bytes arrived; a file is always readable.
+ * A pipe whose writer went away, or a file at its end, is end of file:
+ * nothing is appended, as a POSIX read of 0 bytes appends nothing. */
+static int read_stream_bytes(int timeout_ms) {
+    char buf[TB_OPT_READ_BUF];
+    DWORD count;
+    int64_t deadline = timeout_ms < 0 ? 0 : now_ms() + timeout_ms;
+
+    if (GetFileType(global.in_handle) == FILE_TYPE_PIPE) {
+        for (;;) {
+            DWORD available = 0;
+            if (!PeekNamedPipe(global.in_handle, NULL, 0, NULL, &available, NULL)) {
+                DWORD error = GetLastError();
+                if (error == ERROR_BROKEN_PIPE ||
+                    error == ERROR_PIPE_NOT_CONNECTED)
+                {
+                    return TB_OK; // end of file
+                }
+                global.last_errno = (int)error;
+                return TB_ERR_POLL;
+            }
+            if (available > 0) break;
+            if (timeout_ms >= 0 && now_ms() >= deadline) return TB_ERR_NO_EVENT;
+            Sleep(5);
+        }
+    }
+
+    if (!ReadFile(global.in_handle, buf, sizeof(buf), &count, NULL)) {
+        DWORD error = GetLastError();
+        if (error == ERROR_BROKEN_PIPE || error == ERROR_HANDLE_EOF) {
+            return TB_OK; // end of file
+        }
+        global.last_errno = (int)error;
+        return TB_ERR_READ;
+    }
+    if (count == 0) return TB_OK; // end of file
+    return bytebuf_nputs(&global.in, buf, (size_t)count);
+}
+
+/* `WriteFile` to a console takes at most some tens of kilobytes at once. */
+static int write_output(int fd, const char *buf, size_t len) {
+    HANDLE handle = (HANDLE)_get_osfhandle(fd);
+    if (handle == INVALID_HANDLE_VALUE) {
+        global.last_errno = ERROR_INVALID_HANDLE;
+        return TB_ERR;
+    }
+    while (len > 0) {
+        DWORD chunk = len > 32768 ? 32768 : (DWORD)len;
+        DWORD written = 0;
+        if (!WriteFile(handle, buf, chunk, &written, NULL)) {
+            return win_error(TB_ERR);
+        }
+        if (written == 0) {
+            global.last_errno = ERROR_WRITE_FAULT;
+            return TB_ERR;
+        }
+        buf += written;
+        len -= written;
+    }
+    return TB_OK;
+}
+
+/* The console understands the sequences of an xterm; TERM is rarely set. */
+static const char *get_term_name(void) {
+    const char *term = getenv("TERM");
+    return term ? term : "xterm-256color";
+}
+
+static int64_t now_ms(void) {
+    return (int64_t)GetTickCount64();
+}
+
+/* The message in UTF-8, like everything else termbox2 says, not in the
+ * ANSI code page of the system. */
+static void format_last_error(void) {
+    WCHAR message[512];
+    DWORD len = FormatMessageW(
+        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
+        (DWORD)global.last_errno, 0, message,
+        sizeof(message) / sizeof(message[0]), NULL);
+    int bytes = 0;
+
+    while (len > 0 && (message[len - 1] == L'\r' || message[len - 1] == L'\n' ||
+                          message[len - 1] == L' '))
+    {
+        len--;
+    }
+    if (len > 0) {
+        bytes = WideCharToMultiByte(CP_UTF8, 0, message, (int)len,
+            global.errbuf, (int)sizeof(global.errbuf) - 1, NULL, NULL);
+    }
+    if (bytes <= 0) {
+        snprintf(global.errbuf, sizeof(global.errbuf), "Windows error %d",
+            global.last_errno);
+        return;
+    }
+    global.errbuf[bytes] = '\0';
+}
+
+#endif // _WIN32
 
 int tb_iswprint(uint32_t ch) {
 #ifdef TB_OPT_LIBC_WCHAR

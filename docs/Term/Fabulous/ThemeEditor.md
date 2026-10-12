@@ -342,7 +342,8 @@ into a new, untitled one.
 
 `Ctrl+W` closes a tab and `Ctrl+Q` quits; both ask whether to save
 unsaved changes first. `Ctrl+C` does not quit the editor: it copies.
-When the editor is ended by a signal (`TERM`, `INT`, `HUP`), the
+When the editor is ended by a signal (`TERM`, `INT`, `HUP`; not on
+Windows, where [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync) watches no signals), the
 text of every theme with unsaved changes is written to `FILE.unsaved`
 (for a new theme, `untitled-N.kdl.unsaved` in the folder of the
 `directory` parameter, by default the current one), and the files are

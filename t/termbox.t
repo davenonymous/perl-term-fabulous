@@ -7,6 +7,8 @@ use utf8;
 use Test2::V0;
 use Feature::Compat::Try;
 use Encode ();
+use File::Spec;
+use Time::HiRes ();
 
 use Term::Fabulous::Termbox qw(:all);
 use Term::Fabulous::Termbox::Event;
@@ -80,7 +82,7 @@ subtest 'event object' => sub {
 
 subtest 'input parser' => sub {
 	pipe my $read, my $write or die "pipe: $!";
-	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
+	open my $sink, '>', File::Spec->devnull or die 'cannot open the null device: ' . $!;    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
 	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
 	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
 	tb_set_input_mode( TB_INPUT_ESC | TB_INPUT_MOUSE );
@@ -137,9 +139,20 @@ subtest 'input parser' => sub {
 	tb_shutdown();
 };
 
+subtest 'the end of the input' => sub {
+	pipe my $read, my $write or die "pipe: $!";
+	is tf_input_ended( fileno $read ), 0, 'a pipe with nothing to read has not ended';
+	syswrite $write, 'a';
+	is tf_input_ended( fileno $read ), 0, 'nor one with a byte to read';
+	close $write;
+	is tf_input_ended( fileno $read ), 0, 'nor one whose writer is gone while a byte waits';
+	sysread $read, my $byte, 1;
+	is tf_input_ended( fileno $read ), 1, 'the end: the writer is gone and nothing waits';
+};
+
 subtest 'kitty keyboard query' => sub {
 	pipe my $read, my $write or die "pipe: $!";
-	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
+	open my $sink, '>', File::Spec->devnull or die 'cannot open the null device: ' . $!;    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
 	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
 	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
 
@@ -154,12 +167,17 @@ subtest 'kitty keyboard query' => sub {
 	is [ tf_kitty_keyboard_query( 1000, \$supported ), $supported ], [ TB_OK, 0 ],    'device attributes alone: no protocol';
 	is tf_kitty_keyboard_query( 50, \$supported ),                   TB_ERR_NO_EVENT, 'no answer in time';
 	like dies { tf_kitty_keyboard_query( 50, 1 ) }, qr/tf_kitty_keyboard_query needs a scalar reference/, 'tf_kitty_keyboard_query wants a reference';
+
+	close $write;
+	my $asked = Time::HiRes::time();
+	is tf_kitty_keyboard_query( 1000, \$supported ), TB_ERR_READ, 'a terminal that went away is a read error';
+	cmp_ok Time::HiRes::time() - $asked, '<', 0.5, 'reported at once, not when the time runs out';
 	tb_shutdown();
 };
 
 subtest 'sixel query' => sub {
 	pipe my $read, my $write or die "pipe: $!";
-	open my $sink, '>', '/dev/null' or die "/dev/null: $!";    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
+	open my $sink, '>', File::Spec->devnull or die 'cannot open the null device: ' . $!;    ## no critic (InputOutput::RequireBriefOpen) termbox2 writes to it until the test ends
 	my $rc = tb_init_rwfd( fileno $read, fileno $sink );
 	skip_all "termbox2 cannot start on a pipe here: " . tb_strerror($rc) unless $rc == TB_OK;
 

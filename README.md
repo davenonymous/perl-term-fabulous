@@ -416,9 +416,16 @@ terminal does not report its cursor position within a second
 (`the terminal did not report its cursor position; ...`); see
 ["open" in Term::Fabulous::Terminal::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Terminal/Termbox.md#open).
 
-When the locale's character set is not UTF-8, `run` warns (at every
-call): `Term::Fabulous: the locale's character set is not UTF-8; wide
-characters will be misaligned`.
+When the locale's character set is not UTF-8, the real terminal warns
+when it opens: `Term::Fabulous::Terminal::Termbox: the locale's
+character set is not UTF-8; wide characters will be misaligned` (see
+["open" in Term::Fabulous::Terminal::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Terminal/Termbox.md#open)).
+
+`run` watches the terminal's [read\_handles](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/Terminal.md#read_handles)
+with [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync) and reads the events as soon as one becomes readable.
+A terminal without handles, and every terminal on Windows, where Perl's
+`select` watches only sockets, is asked for its events at a steady
+rate instead; see ["termbox\_input\_poll\_interval"](#termbox_input_poll_interval).
 
 ## step
 
@@ -694,6 +701,17 @@ my $seconds = $ui->termbox_resize_debounce_interval;    # 1/10
 Returns how long, in seconds, the terminal size must stay unchanged
 before a resize is applied and the `Resize` events are fired: 1/10.
 While a resize is pending, no frames are drawn. Read only.
+
+## termbox\_input\_poll\_interval
+
+```perl
+my $seconds = $ui->termbox_input_poll_interval;    # 1/60
+```
+
+Returns the time between two polls of the terminal for events in
+seconds: 1/60. `run` polls when the terminal's handles cannot be
+watched, which is always the case on Windows (see ["run"](#run)); elsewhere
+it waits for the handles to become readable and never polls. Read only.
 
 ## draw
 
@@ -1573,6 +1591,21 @@ from layout files, or your own terminal or output class.
 - [Term::Fabulous::Render::Geometry](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render/Geometry.md)
 
     Converts Clay's layout boxes into terminal cells.
+
+# WINDOWS
+
+Term::Fabulous runs on Windows, in Windows Terminal and in a console
+window, through termbox2's console backend
+(["WINDOWS" in Term::Fabulous::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Termbox.md#windows), ["WINDOWS" in Term::Fabulous::Terminal::Termbox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Terminal/Termbox.md#windows)).
+Keys, the mouse, resizes and 24-bit colors work as elsewhere; the
+console is switched to UTF-8 while a program runs, whatever the
+locale. There is no kitty keyboard protocol and no sixel graphics, and
+`run` polls the terminal for events (see ["termbox\_input\_poll\_interval"](#termbox_input_poll_interval))
+instead of waiting for its handles, because Perl's `select` watches
+only sockets there. [IO::Async](https://metacpan.org/pod/IO%3A%3AAsync) cannot watch signals on Windows, so
+`run` does not stop on `SIGTERM`, `SIGINT` or `SIGHUP` there;
+`Ctrl+C` arrives as a key while the terminal is open and stops `run`
+through ["stop\_on\_ctrl\_c"](#stop_on_ctrl_c).
 
 # LIMITATIONS
 

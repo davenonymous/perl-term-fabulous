@@ -45,6 +45,10 @@ style bit, `TB_STRIKEOUT`, `TB_UNDERLINE_2`, `TB_OVERLINE` and
 not set), so widths are the same on every platform. ["tb\_wcwidth"](#tb_wcwidth) and
 ["tb\_cluster\_width"](#tb_cluster_width) expose exactly the functions `tb_present` uses.
 
+The header is upstream's with the patches in `src/patches` applied,
+which teach it the Windows console; see ["WINDOWS"](#windows) and
+`src/README.termbox2`.
+
 Every function keeps its termbox2 name and returns its status code, `TB_OK`
 or one of the `TB_ERR_*` constants; nothing dies on a terminal error.
 The exceptions are arguments the binding cannot translate at all, such as
@@ -148,7 +152,11 @@ my $rc = tb_init_fd($ttyfd);
 my $rc = tb_init_rwfd( $rfd, $wfd );
 ```
 
-Open the terminal. `tb_init` uses `/dev/tty`.
+Open the terminal. `tb_init` uses `/dev/tty`; `tb_init_rwfd` reads
+the terminal from one file descriptor and writes to another, which may
+be a pipe or a file as well. On Windows, `tb_init` opens the console
+(`CONIN$` and `CONOUT$`), and `tb_init_rwfd` takes the descriptors
+`fileno` returns; see ["WINDOWS"](#windows).
 
 ### tf\_init\_inline, tf\_init\_inline\_rwfd
 
@@ -443,17 +451,20 @@ taken out of the input; keys that arrive meanwhile stay queued for
 another error; the references are untouched unless the result is
 `TB_OK`. Dies unless the last three arguments are scalar references.
 
-### tf\_readable\_bytes
+### tf\_input\_ended
 
 ```perl
-my $count = tf_readable_bytes($fd);
+my $ended = tf_input_ended($fd);
 ```
 
-A Term::Fabulous addition. The number of bytes waiting to be read from
-the file descriptor (`ioctl FIONREAD`), or -1 when the descriptor
-cannot tell (`$!` says why). A terminal descriptor that is readable
-while this returns 0 is at end of file: the terminal is gone. A
-terminal that hung up returns -1 with `$!` set to `EIO`.
+A Term::Fabulous addition. 1 when the input descriptor has ended for
+good: it reports readable but has no byte to read (`ioctl FIONREAD`),
+or cannot even tell because the terminal hung up (`EIO`, or `ENXIO`
+on FreeBSD); on Windows, when a console no longer answers, a pipe has
+lost its writer or a file is at its end. Otherwise 0. termbox2 itself
+reports the end of the input only as `TB_ERR_NO_EVENT`, again and
+again. Works with any descriptor, before `tb_init` and after
+`tb_shutdown` too.
 
 ### tb\_get\_fds
 
@@ -463,7 +474,9 @@ my $rc = tb_get_fds( \my $tty_fd, \my $resize_fd );
 
 Stores termbox2's tty and resize-pipe descriptors through the references,
 for an event loop that waits on them itself. Dies unless both arguments
-are scalar references.
+are scalar references. On Windows the resize descriptor is -1: resizes
+arrive as console input, and the console descriptor cannot be waited on
+with `select` anyway, so poll ["tb\_peek\_event"](#tb_peek_event) instead.
 
 ## Widths
 
@@ -506,6 +519,29 @@ my $message = tb_strerror($rc);
 ### tb\_has\_truecolor, tb\_has\_egc, tb\_attr\_width, tb\_version
 
 Report the compile-time options: 1, 1, 64 and the termbox2 version string.
+
+# WINDOWS
+
+The patches in `src/patches` give termbox2 a Windows console backend
+(see `src/README.termbox2`). While termbox2 is initialized, the console
+runs in virtual terminal mode: the console turns the keys into the
+escape sequences an xterm sends, which termbox2 and
+["tf\_install\_input\_parser"](#tf_install_input_parser) read as on any other system, and it
+interprets the escape sequences termbox2 writes. Both directions use
+UTF-8; the console's code pages and modes are restored by
+`tb_shutdown`. Window size changes arrive as console input and become
+`TB_EVENT_RESIZE` events; the console also reports its size once right
+after it is opened. The mouse is reported while `tb_set_input_mode`
+has `TB_INPUT_MOUSE` set: a terminal that encodes the mouse itself
+(Windows Terminal) sends SGR reports like any xterm, a legacy console
+window delivers mouse records, which the backend turns into the same
+SGR reports. The built-in capabilities of `xterm-256color` are used
+unless `TERM` is set; there is no terminfo database to read.
+
+`TB_ERR_*` codes and `tb_strerror` work as elsewhere; the message of
+a failed system call comes from Windows ([tb\_last\_errno](#tb_last_errno-tb_strerror)
+then holds a Win32 error code). A pipe given to `tb_init_rwfd` is
+polled every few milliseconds while termbox2 waits for input.
 
 # NOT BOUND
 

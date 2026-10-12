@@ -3,14 +3,17 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-use Test2::V0;
-
 use POSIX ();
 
+# Before anything reads the clock: Test2 seeds srand from the local date,
+# and the C library of Windows, which has no tzset, settles the time zone
+# at its first localtime.
 BEGIN {
 	$ENV{TZ} = 'UTC';
-	POSIX::tzset();
+	POSIX::tzset() unless $^O eq 'MSWin32';
 }
+
+use Test2::V0;
 
 use Term::Fabulous::Widget::Table::Filter;
 

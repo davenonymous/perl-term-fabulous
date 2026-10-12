@@ -22,6 +22,7 @@ class Term::Fabulous
 	use Clay::XS qw(CLAY_RENDER_COMMAND_TYPE_TEXT);
 	use Feature::Compat::Try;
 	use IO::Async::Handle;
+	use IO::Async::OS;
 	use IO::Async::Loop;
 	use IO::Async::Signal;
 	use IO::Async::Timer::Countdown;
@@ -42,7 +43,7 @@ class Term::Fabulous
 	use Term::Fabulous::Event::Start;
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Render::Geometry qw(cell_rect);
-	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters terminal_is_utf8);
+	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters);
 
 	my %IS_BUTTON = map { $_ => 1 } TB_KEY_MOUSE_LEFT, TB_KEY_MOUSE_MIDDLE, TB_KEY_MOUSE_RIGHT;
 
@@ -50,19 +51,24 @@ class Term::Fabulous
 	use constant WHEEL_NOTCH_ROWS    => 3;
 	use constant WHEEL_NOTCH_COLUMNS => 3;
 
+	# IO::Async wakes the loop when a terminal handle is readable; Perl's
+	# select on Windows watches sockets only, so the terminal is polled there.
+	use constant INPUT_HANDLES_ARE_WATCHABLE => $^O ne 'MSWin32';
+
 	# step draws until no frame is due; a tree that changes again in every
 	# frame would never settle.
 	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
-	field $inline         :param :reader = undef;    # the rows of the inline region, or undef for the full screen
-	field $mouse          :param :reader = undef;
-	field $kitty_keyboard :param :reader = 1;
-	field $stop_on_ctrl_c :param :reader = 1;
-	field $terminal       :param :reader //= Term::Fabulous::Terminal::Termbox->new;
-	field $clock          :param = sub { Time::HiRes::time() };
-	field $loop           :reader;
+	field $inline                           :param :reader = undef;    # the rows of the inline region, or undef for the full screen
+	field $mouse                            :param :reader = undef;
+	field $kitty_keyboard                   :param :reader = 1;
+	field $stop_on_ctrl_c                   :param :reader = 1;
+	field $terminal                         :param :reader //= Term::Fabulous::Terminal::Termbox->new;
+	field $clock                            :param = sub { Time::HiRes::time() };
+	field $loop                             :reader;
 	field $termbox_draw_interval            :reader = 1 / 30;
 	field $termbox_resize_debounce_interval :reader = 1 / 10;
+	field $termbox_input_poll_interval      :reader = 1 / 60;
 
 	field $_running = 0;    # whether run's loop is active
 	field @_notifiers;
@@ -153,8 +159,6 @@ class Term::Fabulous
 
 	method run () {
 		die "Term::Fabulous: run is active already; it cannot be called again until it returns" if $_running;
-		warn "Term::Fabulous: the locale's character set is not UTF-8; wide characters will be misaligned\n"
-			unless terminal_is_utf8();
 
 		my $opened = $self->_open_terminal;
 		try {
@@ -235,18 +239,23 @@ class Term::Fabulous
 		);
 
 		die "Term::Fabulous: the signal handlers of an earlier run were not restored" if %_signals_before;
-		%_signals_before = map { $_ => $SIG{$_} } WATCHED_SIGNALS;
+		my @signals = IO::Async::OS->HAVE_SIGNALS ? WATCHED_SIGNALS : ();    # IO::Async watches no signals on Windows
+		%_signals_before = map { $_ => $SIG{$_} } @signals;
 		$self->_add_notifiers(
-			( map { IO::Async::Signal->new( name => $_, on_receipt => $stop ) } WATCHED_SIGNALS ),
+			( map { IO::Async::Signal->new( name => $_, on_receipt => $stop ) } @signals ),
 			$_resize_timer,
 			$_draw_timer,
 		);
 		return;
 	}
 
+	# A notifier the loop refused is not remembered, so that _detach_notifiers
+	# does not fail on it and hide the error.
 	method _add_notifiers (@notifiers) {
-		push @_notifiers, @notifiers;
-		$loop->add($_) foreach @notifiers;
+		foreach my $notifier (@notifiers) {
+			$loop->add($notifier);
+			push @_notifiers, $notifier;
+		}
 		return;
 	}
 
@@ -266,10 +275,15 @@ class Term::Fabulous
 		return;
 	}
 
+	# A terminal whose handles cannot be watched (none, or on Windows) is
+	# asked for its events at a steady rate instead.
 	method _watch_terminal_input () {
+		my @handles = INPUT_HANDLES_ARE_WATCHABLE ? $terminal->read_handles : ();
+		return $self->_poll_terminal_input unless @handles;
+
 		my @input_watchers = map {
 			IO::Async::Handle->new( read_handle => $_, on_read_ready => sub { $self->_read_input } )
-		} $terminal->read_handles;
+		} @handles;
 		$self->_add_notifiers(@input_watchers);
 
 		# IO::Async switches watched handles to non-blocking mode. A handle
@@ -281,6 +295,16 @@ class Term::Fabulous
 			defined $watcher->read_handle->blocking(1)
 				or die "Term::Fabulous: cannot restore blocking mode on a terminal descriptor: $!\n";
 		}
+		return;
+	}
+
+	method _poll_terminal_input () {
+		my $poll_timer = IO::Async::Timer::Periodic->new(
+			interval => $termbox_input_poll_interval,
+			on_tick  => sub { $self->_read_input },
+		);
+		$self->_add_notifiers($poll_timer);
+		$poll_timer->start;
 		return;
 	}
 
@@ -1060,9 +1084,16 @@ terminal does not report its cursor position within a second
 (C<the terminal did not report its cursor position; ...>); see
 L<Term::Fabulous::Terminal::Termbox/open>.
 
-When the locale's character set is not UTF-8, C<run> warns (at every
-call): C<Term::Fabulous: the locale's character set is not UTF-8; wide
-characters will be misaligned>.
+When the locale's character set is not UTF-8, the real terminal warns
+when it opens: C<Term::Fabulous::Terminal::Termbox: the locale's
+character set is not UTF-8; wide characters will be misaligned> (see
+L<Term::Fabulous::Terminal::Termbox/open>).
+
+C<run> watches the terminal's L<read_handles|Term::Fabulous::Role::Terminal/read_handles>
+with L<IO::Async> and reads the events as soon as one becomes readable.
+A terminal without handles, and every terminal on Windows, where Perl's
+C<select> watches only sockets, is asked for its events at a steady
+rate instead; see L</termbox_input_poll_interval>.
 
 =head2 step
 
@@ -1311,6 +1342,15 @@ one. Read only.
 Returns how long, in seconds, the terminal size must stay unchanged
 before a resize is applied and the C<Resize> events are fired: 1/10.
 While a resize is pending, no frames are drawn. Read only.
+
+=head2 termbox_input_poll_interval
+
+	my $seconds = $ui->termbox_input_poll_interval;    # 1/60
+
+Returns the time between two polls of the terminal for events in
+seconds: 1/60. C<run> polls when the terminal's handles cannot be
+watched, which is always the case on Windows (see L</run>); elsewhere
+it waits for the handles to become readable and never polls. Read only.
 
 =head2 draw
 
@@ -2250,6 +2290,21 @@ Converts colors into termbox2 color values.
 Converts Clay's layout boxes into terminal cells.
 
 =back
+
+=head1 WINDOWS
+
+Term::Fabulous runs on Windows, in Windows Terminal and in a console
+window, through termbox2's console backend
+(L<Term::Fabulous::Termbox/WINDOWS>, L<Term::Fabulous::Terminal::Termbox/WINDOWS>).
+Keys, the mouse, resizes and 24-bit colors work as elsewhere; the
+console is switched to UTF-8 while a program runs, whatever the
+locale. There is no kitty keyboard protocol and no sixel graphics, and
+C<run> polls the terminal for events (see L</termbox_input_poll_interval>)
+instead of waiting for its handles, because Perl's C<select> watches
+only sockets there. L<IO::Async> cannot watch signals on Windows, so
+C<run> does not stop on C<SIGTERM>, C<SIGINT> or C<SIGHUP> there;
+C<Ctrl+C> arrives as a key while the terminal is open and stops C<run>
+through L</stop_on_ctrl_c>.
 
 =head1 LIMITATIONS
 

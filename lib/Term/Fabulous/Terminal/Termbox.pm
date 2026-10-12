@@ -18,17 +18,27 @@ use Term::Fabulous::Terminal::Termbox::Cells;
 
 class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :strict(params) {
 	use Feature::Compat::Try;
-	use POSIX qw(EINTR EIO);
+	use POSIX qw(EINTR);
 	use Scalar::Util qw(openhandle);
 	use Term::Fabulous::Termbox qw(
 		tb_init tb_init_rwfd tf_init_inline tf_init_inline_rwfd tb_shutdown tb_width tb_height tb_hide_cursor tb_clear
 		tb_set_input_mode tb_set_output_mode tb_get_fds tb_peek_event tb_send
-		tb_last_errno tb_strerror tf_install_input_parser tf_readable_bytes
+		tb_last_errno tb_strerror tf_install_input_parser tf_input_ended
 		tf_cursor_position tf_reset_attrs tf_kitty_keyboard_query tf_sixel_query
 		TB_OK TB_ERR TB_ERR_NEED_MORE TB_ERR_NO_EVENT TB_ERR_POLL TB_ERR_READ
 		TB_INPUT_ESC TB_INPUT_MOUSE TB_OUTPUT_TRUECOLOR
 	);
 	use Term::Fabulous::Termbox::Event;
+	use Term::Fabulous::Unicode qw(terminal_is_utf8);
+
+	# termbox2 sends UTF-8. A terminal shows those bytes in the character
+	# set of the locale; the Windows console is switched to UTF-8 by
+	# termbox2 itself, whatever the locale says.
+	use constant LOCALE_SETS_THE_CHARACTER_SET => $^O ne 'MSWin32';
+
+	# A signal interrupts select on POSIX systems; on Windows no wait is
+	# interrupted, and tb_last_errno holds a Win32 error code, not an errno.
+	use constant POLL_CAN_BE_INTERRUPTED => $^O ne 'MSWin32';
 
 	# Mouse mode 1003 (any-event tracking) reports the pointer moving with
 	# no button held; termbox2 asks only for buttons, drags and the wheel.
@@ -59,6 +69,7 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 	field $mouse        = 0;
 	field $_shows_sixel = 0;
 	field @_size;    # the layout's [columns, rows]
+	field $_input_fd;    # termbox's terminal input descriptor
 	field @_read_handles;    # duplicates of termbox's input descriptors
 
 	ADJUST {
@@ -76,6 +87,8 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		die "Term::Fabulous::Terminal::Termbox: open does not accept @unknown (known options: " . join( ', ', OPEN_OPTIONS ) . ")" if @unknown;
 		die "Term::Fabulous::Terminal::Termbox: inline must be a whole number of rows of at least 1, got '$options{inline}'"
 			if defined $options{inline} && $options{inline} !~ /\A[1-9][0-9]*\z/;
+		warn "Term::Fabulous::Terminal::Termbox: the locale's character set is not UTF-8; wide characters will be misaligned\n"
+			if LOCALE_SETS_THE_CHARACTER_SET && !terminal_is_utf8();
 
 		my ( $init, $rc ) = $self->_init( defined $options{inline} );
 		die "Term::Fabulous::Terminal::Termbox: $init failed: " . tb_strerror($rc) . "\n" unless $rc == TB_OK;
@@ -112,7 +125,8 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		$self->_detect_sixel;
 
 		_check_termbox( 'tb_get_fds', tb_get_fds( \my $tty_fd, \my $resize_fd ) );
-		@_read_handles = map { _duplicate_for_reading($_) } $tty_fd, $resize_fd;
+		$_input_fd     = $tty_fd;
+		@_read_handles = map { _duplicate_for_reading($_) } grep { $_ >= 0 } $tty_fd, $resize_fd;    # Windows has no resize descriptor
 		return;
 	}
 
@@ -128,6 +142,7 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		$self->_leave_inline_region if defined $cell_target->region_top;
 		CORE::close($_) foreach @_read_handles;
 		@_read_handles = ();
+		$_input_fd     = undef;
 		tb_shutdown();
 		return;
 	}
@@ -167,25 +182,16 @@ class Term::Fabulous::Terminal::Termbox :does(Term::Fabulous::Role::Terminal) :s
 		# remaining bytes make the descriptor readable again; an
 		# interrupted poll leaves it readable, too.
 		return undef if $rc == TB_ERR_NO_EVENT || $rc == TB_ERR || $rc == TB_ERR_NEED_MORE;
-		return undef if $rc == TB_ERR_POLL && tb_last_errno() == EINTR;
+		return undef if $rc == TB_ERR_POLL && POLL_CAN_BE_INTERRUPTED && tb_last_errno() == EINTR;
 		die "Term::Fabulous::Terminal::Termbox: reading terminal input failed: " . tb_strerror($rc) . "\n";
-	}
-
-	method input_ended () {
-		return 0 unless @_read_handles;
-		return _input_is_at_eof( $_read_handles[0] );
 	}
 
 	# After termbox has read all it could, a descriptor that still reports
 	# readable with no byte to read is at end of file: the terminal is gone.
-	# termbox reports that only as "no event", again and again. A terminal
-	# that hung up cannot even say how many bytes wait (EIO).
-	sub _input_is_at_eof ($handle) {
-		vec( my $readable = '', fileno $handle, 1 ) = 1;
-		return 0 unless select( $readable, undef, undef, 0 ) > 0;
-		my $waiting = tf_readable_bytes( fileno $handle );
-		return 1 if $waiting == 0;
-		return $waiting < 0 && $! == EIO ? 1 : 0;
+	# termbox reports that only as "no event", again and again.
+	method input_ended () {
+		return 0 unless defined $_input_fd;
+		return tf_input_ended($_input_fd);
 	}
 
 	# A terminal that does not answer the query does not speak the
@@ -379,6 +385,14 @@ time, with C<the terminal did not report its cursor position; inline
 mode needs a terminal that answers ESC [ 6 n>. After a failure the
 terminal is closed again.
 
+When the locale's character set is not UTF-8, C<open> warns:
+C<Term::Fabulous::Terminal::Termbox: the locale's character set is not
+UTF-8; wide characters will be misaligned>. termbox2 sends UTF-8, and a
+terminal running under another locale shows the bytes of a wide
+character as several narrow ones (see
+L<Term::Fabulous::Unicode/terminal_is_utf8>). Not on Windows, where
+termbox2 switches the console to UTF-8 itself.
+
 =head2 close
 
 	$terminal->close;
@@ -420,7 +434,10 @@ Returns the new size, like L</size>.
 =head2 read_handles
 
 Duplicates of termbox2's terminal input and resize descriptors, opened
-by L</open> and closed by L</close>.
+by L</open> and closed by L</close>. On Windows, only the input
+descriptor: resizes arrive through it. Perl's C<select> cannot watch a
+console there, so L<Term::Fabulous/run> polls L</next_event> instead of
+watching the handles; see L<Term::Fabulous/termbox_input_poll_interval>.
 
 =head2 next_event
 
@@ -434,8 +451,11 @@ C<reading terminal input failed: ...>.
 =head2 input_ended
 
 1 when the terminal input descriptor reports readable but has no byte
-to read (or cannot even tell, C<EIO>): the terminal went away. termbox2
-reports that only as "no event", again and again.
+to read, or cannot even tell because the terminal hung up (C<EIO>, or
+C<ENXIO> on FreeBSD); on Windows, when the console no longer answers or
+a pipe lost its writer. The terminal went away; termbox2 reports that
+only as "no event", again and again. See
+L<Term::Fabulous::Termbox/tf_input_ended>.
 
 =head2 kitty_keyboard_active
 
@@ -445,6 +465,20 @@ reports that only as "no event", again and again.
 
 The L<Term::Fabulous::Terminal::Termbox::Cells> the frames are painted
 into.
+
+=head1 WINDOWS
+
+The terminal is the Windows console, through termbox2's console backend
+(L<Term::Fabulous::Termbox/WINDOWS>): C<new> without handles opens
+C<CONIN$> and C<CONOUT$>, and C<input> and C<output> may be any two
+handles, such as the two ends the test suite uses. The console runs in
+virtual terminal mode while the session is open, so keys, the mouse and
+the terminal queries work as in an xterm; Windows Terminal answers the
+cursor position query of inline mode and the device attributes query.
+It does not speak the kitty keyboard protocol, so C<kitty_keyboard>
+stays off there, and it reports no cell size, so no sixel pictures are
+shown. Resizes arrive as input and are read by L</next_event>, which
+L<Term::Fabulous/run> polls, since C<select> cannot watch a console.
 
 =head1 SEE ALSO
 

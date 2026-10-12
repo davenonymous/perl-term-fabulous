@@ -94,6 +94,14 @@ time, with `the terminal did not report its cursor position; inline
 mode needs a terminal that answers ESC [ 6 n`. After a failure the
 terminal is closed again.
 
+When the locale's character set is not UTF-8, `open` warns:
+`Term::Fabulous::Terminal::Termbox: the locale's character set is not
+UTF-8; wide characters will be misaligned`. termbox2 sends UTF-8, and a
+terminal running under another locale shows the bytes of a wide
+character as several narrow ones (see
+["terminal\_is\_utf8" in Term::Fabulous::Unicode](../Unicode.md#terminal_is_utf8)). Not on Windows, where
+termbox2 switches the console to UTF-8 itself.
+
 ## close
 
 ```perl
@@ -141,7 +149,10 @@ Returns the new size, like ["size"](#size).
 ## read\_handles
 
 Duplicates of termbox2's terminal input and resize descriptors, opened
-by ["open"](#open) and closed by ["close"](#close).
+by ["open"](#open) and closed by ["close"](#close). On Windows, only the input
+descriptor: resizes arrive through it. Perl's `select` cannot watch a
+console there, so ["run" in Term::Fabulous](../../../../README.md#run) polls ["next\_event"](#next_event) instead of
+watching the handles; see ["termbox\_input\_poll\_interval" in Term::Fabulous](../../../../README.md#termbox_input_poll_interval).
 
 ## next\_event
 
@@ -157,8 +168,11 @@ of a key sequence, or an interrupted poll. Any other error dies with
 ## input\_ended
 
 1 when the terminal input descriptor reports readable but has no byte
-to read (or cannot even tell, `EIO`): the terminal went away. termbox2
-reports that only as "no event", again and again.
+to read, or cannot even tell because the terminal hung up (`EIO`, or
+`ENXIO` on FreeBSD); on Windows, when the console no longer answers or
+a pipe lost its writer. The terminal went away; termbox2 reports that
+only as "no event", again and again. See
+["tf\_input\_ended" in Term::Fabulous::Termbox](../Termbox.md#tf_input_ended).
 
 ## kitty\_keyboard\_active
 
@@ -168,6 +182,20 @@ reports that only as "no event", again and again.
 
 The [Term::Fabulous::Terminal::Termbox::Cells](Termbox/Cells.md) the frames are painted
 into.
+
+# WINDOWS
+
+The terminal is the Windows console, through termbox2's console backend
+(["WINDOWS" in Term::Fabulous::Termbox](../Termbox.md#windows)): `new` without handles opens
+`CONIN$` and `CONOUT$`, and `input` and `output` may be any two
+handles, such as the two ends the test suite uses. The console runs in
+virtual terminal mode while the session is open, so keys, the mouse and
+the terminal queries work as in an xterm; Windows Terminal answers the
+cursor position query of inline mode and the device attributes query.
+It does not speak the kitty keyboard protocol, so `kitty_keyboard`
+stays off there, and it reports no cell size, so no sixel pictures are
+shown. Resizes arrive as input and are read by ["next\_event"](#next_event), which
+["run" in Term::Fabulous](../../../../README.md#run) polls, since `select` cannot watch a console.
 
 # SEE ALSO
 

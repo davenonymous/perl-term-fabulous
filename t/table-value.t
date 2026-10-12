@@ -2,14 +2,17 @@ use v5.32;
 use warnings;
 use utf8;
 
-use Test2::V0;
-
 use POSIX ();
 
+# Before anything reads the clock: Test2 seeds srand from the local date,
+# and the C library of Windows, which has no tzset, settles the time zone
+# at its first localtime.
 BEGIN {
 	$ENV{TZ} = 'UTC';
-	POSIX::tzset();
+	POSIX::tzset() unless $^O eq 'MSWin32';
 }
+
+use Test2::V0;
 
 use Term::Fabulous::Widget::Table::Value qw(is_blank number_of date_epoch date_interval compare_values natural_compare);
 use Term::Fabulous::Widget::Table::Mutator qw(:all !number);    # Test2::V0 has a number of its own

@@ -2,7 +2,6 @@ requires 'perl', '5.032001';
 
 requires 'Clay::UI', '0.06';    # first CPAN release, ships Clay::XS
 requires 'Clay::XS', '0.05';    # stringOffset in text render commands
-requires 'Data::Checks', '0.04';
 requires 'Encode';
 requires 'Exporter';
 requires 'Feature::Compat::Try';
@@ -11,7 +10,6 @@ requires 'IO::Async';
 requires 'List::Util', '1.33';    # any, all (1.33), pairmap (1.29)
 requires 'MIME::Base64';
 requires 'Object::Pad', '0.825';
-requires 'Object::Pad::FieldAttr::Checked';
 requires 'Object::PadX::Enum';
 requires 'POSIX';
 requires 'Scalar::Util';

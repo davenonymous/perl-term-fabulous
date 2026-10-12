@@ -5,6 +5,8 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use Test2::V0;
+use Config;
+use File::Spec;
 
 use FindBin;
 use lib "$FindBin::Bin/../tools/lib";
@@ -88,6 +90,7 @@ subtest 'sixel pictures lie over the cells' => sub {
 
 subtest 'the PNG renderer draws every style' => sub {
 	skip_all 'Imager is not installed' unless can_load( modules => { Imager => 0 } );
+	skip_all 'fontconfig (fc-match) is not installed' unless grep { -e File::Spec->catfile( $_, "fc-match$Config{_exe}" ) } File::Spec->path;
 	require Term::Fabulous::Screenshot::Render::PNG;
 	my $png = Term::Fabulous::Screenshot::Render::PNG->new->render( styled_scene() );
 	like $png, qr/\A\x89PNG/, 'a PNG';

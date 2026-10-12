@@ -115,6 +115,9 @@ is open. Term::Fabulous watches them with [IO::Async](https://metacpan.org/pod/I
 Term::Fabulous never reads from them and never closes them, and it
 switches them back to blocking mode after IO::Async has made them
 non-blocking. Handles the terminal owns must stay open until ["close"](#close).
+A terminal that returns no handles, and every terminal on Windows, is
+polled instead: ["run" in Term::Fabulous](../../../../README.md#run) calls ["next\_event"](#next_event) at a steady
+rate (["termbox\_input\_poll\_interval" in Term::Fabulous](../../../../README.md#termbox_input_poll_interval)).
 
 ## next\_event
 

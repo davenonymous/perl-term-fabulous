@@ -135,6 +135,9 @@ L<Term::Fabulous/run> and calls L</next_event> when one is readable.
 Term::Fabulous never reads from them and never closes them, and it
 switches them back to blocking mode after IO::Async has made them
 non-blocking. Handles the terminal owns must stay open until L</close>.
+A terminal that returns no handles, and every terminal on Windows, is
+polled instead: L<Term::Fabulous/run> calls L</next_event> at a steady
+rate (L<Term::Fabulous/termbox_input_poll_interval>).
 
 =head2 next_event
 

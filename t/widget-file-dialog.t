@@ -8,6 +8,7 @@ use Test2::V0;
 use Clay::XS qw(sizing_grow);
 use Cwd qw(abs_path);
 use File::Path qw(make_path);
+use File::Spec;
 use File::Temp qw(tempdir);
 use Term::Fabulous;
 use Term::Fabulous::Terminal::Memory;
@@ -126,13 +127,13 @@ subtest 'open: Enter on a file, a missing file, Backspace and ~' => sub {
 		local $ENV{HOME} = "$top/notes";
 		$dialog->choose('~/old.txt');
 	}
-	is $answers, [ { button => 'open', values => { path => "$top/notes/old.txt" }, dismissed => 0 } ], 'a path with ~ starts in the home folder';
+	is $answers, [ { button => 'open', values => { path => File::Spec->catfile( $top, 'notes', 'old.txt' ) }, dismissed => 0 } ], 'a path with ~ starts in the home folder';
 
 	( $dialog, $answers ) = opened();
 	keys_( 'Down', 'Down', 'Down', 'Down' );
 	is $dialog->typed, 'readme.md', 'the cursor on a file puts its name into the field';
 	keys_('Enter');
-	is $answers->[0]{values}{path}, "$top/readme.md", 'Enter on a file opens it, with an absolute path';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $top, 'readme.md' ), 'Enter on a file opens it, with an absolute path';
 
 	( $dialog, $answers ) = opened( directory => "$top/notes" );
 	keys_( 'Down', 'Up' );
@@ -192,7 +193,7 @@ subtest 'save: the default extension and a missing folder' => sub {
 	$dialog->choose("$top/nowhere/draft");
 	is $dialog->children->[-2]->text, "There is no folder $top/nowhere.", 'an absolute path is named as typed';
 	$dialog->choose('draft');
-	is $answers, [ { button => 'save', values => { path => "$top/draft.txt" }, dismissed => 0 } ], 'a name without a dot gets the default extension';
+	is $answers, [ { button => 'save', values => { path => File::Spec->catfile( $top, 'draft.txt' ) }, dismissed => 0 } ], 'a name without a dot gets the default extension';
 };
 
 subtest 'save: a name that becomes a folder with the extension' => sub {
@@ -210,7 +211,7 @@ subtest 'save: a name that becomes a folder with the extension' => sub {
 subtest 'save: the question before a file is replaced' => sub {
 	my ( $dialog, $answers ) = opened( mode => 'save', current_file => "$top/todo.txt" );
 	$dialog->choose('todo.txt');
-	is $answers->[0]{values}{path}, "$top/todo.txt", 'the current file is saved without a question';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $top, 'todo.txt' ), 'the current file is saved without a question';
 
 	( $dialog, $answers ) = opened( mode => 'save', confirm_overwrite => 0 );
 	$dialog->choose('todo.txt');
@@ -241,7 +242,7 @@ subtest 'save: the question before a file is replaced' => sub {
 		$ui->step;
 		keys_( 'BackTab', 'Enter' );
 		ok !$dialog->is_open, 'Replace closes the file dialog';
-		is $answers, [ { button => 'save', values => { path => "$top/todo.txt" }, dismissed => 0 } ], 'which answers once';
+		is $answers, [ { button => 'save', values => { path => File::Spec->catfile( $top, 'todo.txt' ) }, dismissed => 0 } ], 'which answers once';
 		ref_is focused(), $behind, 'and the focus is back behind both';
 	}
 };
@@ -292,19 +293,19 @@ subtest 'names that are UTF-8 and names that are not' => sub {
 	keys_('Down');
 	is $dialog->typed, "bad\\xFF.txt", 'the field gets the name as shown';
 	$dialog->choose( $dialog->typed );
-	is $answers->[0]{values}{path}, "$folder/bad\xff.txt", 'and the answer is the name as the file system has it';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $folder, "bad\xff.txt" ), 'and the answer is the name as the file system has it';
 
 	( $dialog, $answers ) = opened( directory => $folder );
 	$dialog->choose("na\x{ef}ve.txt");
-	is $answers->[0]{values}{path}, "$folder/na\xc3\xafve.txt", 'a typed name is encoded to UTF-8';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $folder, "na\xc3\xafve.txt" ), 'a typed name is encoded to UTF-8';
 
 	( $dialog, $answers ) = opened( mode => 'save', directory => $folder, name => "r\xc3\xa9sum\xc3\xa9.txt", current_file => "$folder/na\xc3\xafve.txt" );
 	is $dialog->typed, "r\x{e9}sum\x{e9}.txt", 'name is bytes, shown decoded';
 	$dialog->choose( $dialog->typed );
-	is $answers->[0]{values}{path}, "$folder/r\xc3\xa9sum\xc3\xa9.txt", 'and saved as UTF-8 bytes';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $folder, "r\xc3\xa9sum\xc3\xa9.txt" ), 'and saved as UTF-8 bytes';
 	( $dialog, $answers ) = opened( mode => 'save', directory => $folder, current_file => "$folder/na\xc3\xafve.txt" );
 	$dialog->choose("na\x{ef}ve.txt");
-	is $answers->[0]{values}{path}, "$folder/na\xc3\xafve.txt", 'current_file is bytes too: saving to it asks nothing';
+	is $answers->[0]{values}{path}, File::Spec->catfile( $folder, "na\xc3\xafve.txt" ), 'current_file is bytes too: saving to it asks nothing';
 };
 
 subtest 'small screens' => sub {

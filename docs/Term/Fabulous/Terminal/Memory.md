@@ -82,7 +82,8 @@ Input is queued until the application reads it:
 [`$ui->step`](../../../../README.md#step) reads all of it, and
 [`$ui->run`](../../../../README.md#run) watches `read_handles`
 (see ["read\_handles" in Term::Fabulous::Role::Terminal](../Role/Terminal.md#read_handles)), a pipe that is
-readable while input waits. Every method returns the
+readable while input waits; on Windows, where `select` cannot watch a
+pipe, it polls `next_event` instead. Every method returns the
 terminal, so calls can be chained. After ["end\_input"](#end_input), queuing more
 input dies.
 

@@ -124,9 +124,10 @@ L<Unicode::GCString>.
 The widths do not depend on the locale, but the terminal does: termbox2
 sends UTF-8, and a terminal running under a non-UTF-8 locale such as
 C<C> shows the bytes of a wide character as several narrow ones, so
-everything after it shifts. L<C<run>|Term::Fabulous/run> warns when the
-locale's character set is not UTF-8 (each time it is called); see
-L</terminal_is_utf8>.
+everything after it shifts. L<Term::Fabulous::Terminal::Termbox/open>
+warns when the locale's character set is not UTF-8 (each time the
+terminal is opened, but not on Windows, where termbox2 switches the
+console to UTF-8 itself); see L</terminal_is_utf8>.
 
 =head1 FUNCTIONS
 

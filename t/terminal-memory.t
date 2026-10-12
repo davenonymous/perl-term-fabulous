@@ -38,11 +38,14 @@ subtest 'input is queued as termbox2 reports it' => sub {
 		],
 		'characters, a named key, a click and a resize';
 
-	vec( my $readable = '', fileno( ( $terminal->read_handles )[0] ), 1 ) = 1;
-	is select( my $ready = $readable, undef, undef, 0 ), 0, 'the read handle is quiet once everything was read';
-	$terminal->type_text('x');
-	is select( $ready = $readable, undef, undef, 0 ), 1, 'and readable while input waits';
-	events($terminal);
+SKIP: {
+		skip 'select cannot watch a pipe on Windows', 2 if $^O eq 'MSWin32';
+		vec( my $readable = '', fileno( ( $terminal->read_handles )[0] ), 1 ) = 1;
+		is select( my $ready = $readable, undef, undef, 0 ), 0, 'the read handle is quiet once everything was read';
+		$terminal->type_text('x');
+		is select( $ready = $readable, undef, undef, 0 ), 1, 'and readable while input waits';
+		events($terminal);
+	}
 
 	like dies { $terminal->press_key('Ctrl+w') },                            qr/no key is named 'Ctrl\+w'/,                           'press_key takes the names key_name gives';
 	like dies { $terminal->push_event( type => 99 ) },                       qr/unknown event type '99'/,                             'push_event takes the three event types';

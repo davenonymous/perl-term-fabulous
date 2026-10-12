@@ -268,7 +268,8 @@ Input is queued until the application reads it:
 L<C<< $ui->step >>|Term::Fabulous/step> reads all of it, and
 L<C<< $ui->run >>|Term::Fabulous/run> watches C<read_handles>
 (see L<Term::Fabulous::Role::Terminal/read_handles>), a pipe that is
-readable while input waits. Every method returns the
+readable while input waits; on Windows, where C<select> cannot watch a
+pipe, it polls C<next_event> instead. Every method returns the
 terminal, so calls can be chained. After L</end_input>, queuing more
 input dies.
 

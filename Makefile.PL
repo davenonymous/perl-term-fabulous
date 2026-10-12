@@ -73,7 +73,6 @@ WriteMakefile(
 	PREREQ_PM => {
 		'Clay::UI'                        => '0.06',
 		'Clay::XS'                        => '0.05',
-		'Data::Checks'                    => '0.04',
 		'Encode'                          => '0',
 		'Exporter'                        => '0',
 		'Feature::Compat::Try'            => '0',
@@ -82,7 +81,6 @@ WriteMakefile(
 		'List::Util'                      => '1.33',
 		'MIME::Base64'                    => '0',
 		'Object::Pad'                     => '0.825',
-		'Object::Pad::FieldAttr::Checked' => '0',
 		'Object::PadX::Enum'              => '0',
 		'POSIX'                           => '0',
 		'Scalar::Util'                    => '0',

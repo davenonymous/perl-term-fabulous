@@ -11,10 +11,18 @@
  * own parsers, and read the raw input buffer, which is static to this
  * translation unit. It also holds inline mode (tf_init_inline and its
  * helpers) and the terminal queries, which reach into termbox2's
- * internals the same way.
+ * internals the same way, and the end-of-input check of
+ * tf_input_ended(). The operating system is reached only through the
+ * platform layer at the end of termbox2.h (open_tty, init_fds,
+ * wait_input, now_ms), except in tf_input_ended() and
+ * tf_window_cell_size(), which ask it questions termbox2 never asks.
  */
 #define TB_IMPL
 #include "tf_termbox.h"
+
+#ifdef __sun
+#include <sys/filio.h> /* FIONREAD */
+#endif
 
 int tf_cluster_width(const uint32_t *codepoints, size_t count) {
 	return tb_cluster_width((uint32_t *)codepoints, count);
@@ -410,16 +418,12 @@ static void tf_drop_screen_takeover(void) {
 }
 
 int tf_init_inline(void) {
-	int ttyfd;
+	int rv, rfd, wfd;
 
 	if (global.initialized) return TB_ERR_INIT_ALREADY;
-	ttyfd = open("/dev/tty", O_RDWR);
-	if (ttyfd < 0) {
-		global.last_errno = errno;
-		return TB_ERR_INIT_OPEN;
-	}
+	if_err_return(rv, open_tty("/dev/tty", &rfd, &wfd));
 	global.ttyfd_open = 1;
-	return tf_init_inline_rwfd(ttyfd, ttyfd);
+	return tf_init_inline_rwfd(rfd, wfd);
 }
 
 int tf_init_inline_rwfd(int rfd, int wfd) {
@@ -427,11 +431,9 @@ int tf_init_inline_rwfd(int rfd, int wfd) {
 
 	if (global.initialized) return TB_ERR_INIT_ALREADY;
 	tb_reset();
-	global.ttyfd = isatty(rfd) ? rfd : (wfd != rfd && isatty(wfd) ? wfd : -1);
-	global.rfd   = rfd;
-	global.wfd   = wfd;
 
 	do {
+		if_err_break(rv, init_fds(rfd, wfd));
 		if_err_break(rv, init_term_attrs());
 		if_err_break(rv, init_term_caps());
 		tf_drop_screen_takeover();
@@ -492,50 +494,37 @@ static int tf_find_cursor_report(size_t from, size_t *at, size_t *length, int *r
 
 /*
  * Appends what the terminal sent to the input buffer, waiting for it no
- * later than the deadline: TB_ERR_NO_EVENT once the deadline has
- * passed. A wait a signal interrupted reads nothing and returns TB_OK.
+ * later than the deadline (a time of termbox2's now_ms clock):
+ * TB_ERR_NO_EVENT once the deadline has passed. A wait a signal
+ * interrupted reads nothing and returns TB_OK. A terminal at end of
+ * file wakes the wait with nothing to append; that is TB_ERR_READ with
+ * tb_last_errno 0, as a read of 0 bytes was before. A resize that
+ * arrives meanwhile stays pending for tb_peek_event.
  */
-static int tf_read_input_before(const struct timeval *deadline) {
-	char buf[TB_OPT_READ_BUF];
-	struct timeval now, left;
-	fd_set fds;
-	ssize_t count;
-	int ready;
+static int tf_read_input_before(int64_t deadline) {
+	int64_t left  = deadline - now_ms();
+	size_t before = global.in.len;
+	int rv;
 
-	gettimeofday(&now, NULL);
-	if (!timercmp(&now, deadline, <)) return TB_ERR_NO_EVENT;
-	timersub(deadline, &now, &left);
-
-	FD_ZERO(&fds);
-	FD_SET(global.rfd, &fds);
-	ready = select(global.rfd + 1, &fds, NULL, NULL, &left);
-	if (ready < 0 && errno == EINTR) return TB_OK;
-	if (ready < 0) {
-		global.last_errno = errno;
-		return TB_ERR_POLL;
-	}
-	if (ready == 0) return TB_ERR_NO_EVENT;
-
-	count = read(global.rfd, buf, sizeof(buf));
-	if (count <= 0) {
-		global.last_errno = count < 0 ? errno : 0;
+	if (left <= 0) return TB_ERR_NO_EVENT;
+	rv = wait_input((int)left, NULL);
+#ifndef _WIN32
+	if (rv == TB_ERR_POLL && global.last_errno == EINTR) return TB_OK;
+#endif
+	if (rv == TB_OK && global.in.len == before) {
+		global.last_errno = 0;
 		return TB_ERR_READ;
 	}
-	return bytebuf_nputs(&global.in, buf, (size_t)count);
+	return rv;
 }
 
 /* Sends a question to the terminal and returns the time its answer must arrive by. */
-static int tf_ask_terminal(const char *question, int timeout_ms, struct timeval *deadline) {
-	struct timeval timeout;
+static int tf_ask_terminal(const char *question, int timeout_ms, int64_t *deadline) {
 	int rv;
 
 	if_err_return(rv, bytebuf_puts(&global.out, question));
 	if_err_return(rv, bytebuf_flush(&global.out, global.wfd));
-
-	gettimeofday(deadline, NULL);
-	timeout.tv_sec  = timeout_ms / 1000;
-	timeout.tv_usec = (timeout_ms % 1000) * 1000;
-	timeradd(deadline, &timeout, deadline);
+	*deadline = now_ms() + timeout_ms;
 	return TB_OK;
 }
 
@@ -547,7 +536,7 @@ static void tf_drop_input(size_t at, size_t length) {
 }
 
 int tf_cursor_position(int timeout_ms, int *x, int *y) {
-	struct timeval deadline;
+	int64_t deadline;
 	size_t from, at, length;
 	int rv, row, column;
 
@@ -556,7 +545,7 @@ int tf_cursor_position(int timeout_ms, int *x, int *y) {
 	if_err_return(rv, tf_ask_terminal("\x1b[6n", timeout_ms, &deadline));
 
 	while (tf_find_cursor_report(from, &at, &length, &row, &column) != TB_OK) {
-		if_err_return(rv, tf_read_input_before(&deadline));
+		if_err_return(rv, tf_read_input_before(deadline));
 	}
 	tf_drop_input(at, length);
 
@@ -590,7 +579,7 @@ static int tf_find_private_answer(size_t from, char final, size_t *at, size_t *l
 }
 
 int tf_kitty_keyboard_query(int timeout_ms, int *supported) {
-	struct timeval deadline;
+	int64_t deadline;
 	size_t from, at, length;
 	int rv, attributes_arrived;
 
@@ -602,7 +591,7 @@ int tf_kitty_keyboard_query(int timeout_ms, int *supported) {
 	for (;;) {
 		attributes_arrived = tf_find_private_answer(from, 'c', &at, &length) == TB_OK;
 		if (attributes_arrived) break;
-		rv = tf_read_input_before(&deadline);
+		rv = tf_read_input_before(deadline);
 		if (rv == TB_ERR_NO_EVENT) break;
 		if (rv != TB_OK) return rv;
 	}
@@ -674,21 +663,26 @@ static int tf_find_cell_size_report(size_t from, size_t *at, size_t *length, int
 	return TB_ERR;
 }
 
-/* The cell size the tty's window size gives, 0 x 0 when it has no pixels. */
+/*
+ * The cell size the tty's window size gives, 0 x 0 when it has no
+ * pixels. A Windows console knows no pixel size.
+ */
 static void tf_window_cell_size(int *cell_width, int *cell_height) {
+	*cell_width = *cell_height = 0;
+#ifndef _WIN32
 	struct winsize size;
 
-	*cell_width = *cell_height = 0;
 	memset(&size, 0, sizeof(size));
 	if (global.ttyfd < 0 || ioctl(global.ttyfd, TIOCGWINSZ, &size) != 0) return;
 	if (size.ws_col == 0 || size.ws_row == 0) return;
 	*cell_width  = size.ws_xpixel / size.ws_col;
 	*cell_height = size.ws_ypixel / size.ws_row;
 	if (*cell_width == 0 || *cell_height == 0) *cell_width = *cell_height = 0;
+#endif
 }
 
 int tf_sixel_query(int timeout_ms, int *supported, int *cell_width, int *cell_height) {
-	struct timeval deadline;
+	int64_t deadline;
 	size_t from, at, length;
 	int rv, attributes_arrived, reported_height, reported_width;
 
@@ -702,7 +696,7 @@ int tf_sixel_query(int timeout_ms, int *supported, int *cell_width, int *cell_he
 	for (;;) {
 		attributes_arrived = tf_find_private_answer(from, 'c', &at, &length) == TB_OK;
 		if (attributes_arrived) break;
-		rv = tf_read_input_before(&deadline);
+		rv = tf_read_input_before(deadline);
 		if (rv == TB_ERR_NO_EVENT) break;
 		if (rv != TB_OK) return rv;
 	}
@@ -781,3 +775,48 @@ int tf_flush(void) {
 	if_not_init_return();
 	return bytebuf_flush(&global.out, global.wfd);
 }
+
+/*
+ * The end of the input. On POSIX, a descriptor that reports readable
+ * with no byte to read is at end of file; a terminal that hung up
+ * cannot even say how many bytes wait (EIO on Linux, ENXIO on FreeBSD).
+ * On Windows, a console is gone when it no longer answers, a pipe when
+ * its writer went away, a file at its end.
+ */
+#ifndef _WIN32
+int tf_input_ended(int fd) {
+	fd_set fds;
+	struct timeval no_wait = {0, 0};
+	int waiting;
+
+	FD_ZERO(&fds);
+	FD_SET(fd, &fds);
+	if (select(fd + 1, &fds, NULL, NULL, &no_wait) <= 0) return 0;
+	if (ioctl(fd, FIONREAD, &waiting) != 0) return errno == EIO || errno == ENXIO;
+	return waiting == 0;
+}
+#else
+int tf_input_ended(int fd) {
+	HANDLE handle = (HANDLE)_get_osfhandle(fd);
+	DWORD count;
+	DWORD error;
+
+	if (handle == INVALID_HANDLE_VALUE) return 1;
+	switch (GetFileType(handle)) {
+		case FILE_TYPE_PIPE:
+			if (PeekNamedPipe(handle, NULL, 0, NULL, &count, NULL)) return 0;
+			error = GetLastError();
+			return error == ERROR_BROKEN_PIPE || error == ERROR_PIPE_NOT_CONNECTED;
+		case FILE_TYPE_DISK:
+			return _eof(fd) == 1;
+		case FILE_TYPE_CHAR:
+			/* A character device that is no console (NUL, a serial port)
+			 * answers ERROR_INVALID_HANDLE and never ends; a console that
+			 * went away fails in another way. */
+			if (GetNumberOfConsoleInputEvents(handle, &count)) return 0;
+			return GetLastError() != ERROR_INVALID_HANDLE;
+		default:
+			return 0;
+	}
+}
+#endif

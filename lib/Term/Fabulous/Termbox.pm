@@ -24,7 +24,7 @@ $EXPORT_TAGS{api} = [
 		tb_set_cell tb_set_cell_ex tb_extend_cell tb_get_cell tb_print tb_send tf_reset_attrs tf_flush
 		tf_cells_differ tf_invalidate_cells
 		tb_peek_event tb_poll_event tb_get_fds tf_install_input_parser tf_cursor_position tf_kitty_keyboard_query
-		tf_sixel_query tf_readable_bytes
+		tf_sixel_query tf_input_ended
 		tb_last_errno tb_strerror tb_has_truecolor tb_has_egc tb_attr_width tb_version
 	)
 ];
@@ -115,6 +115,10 @@ not set), so widths are the same on every platform. L</tb_wcwidth> and
 L</tb_cluster_width> expose exactly the functions C<tb_present> uses.
 
 =back
+
+The header is upstream's with the patches in F<src/patches> applied,
+which teach it the Windows console; see L</WINDOWS> and
+F<src/README.termbox2>.
 
 Every function keeps its termbox2 name and returns its status code, C<TB_OK>
 or one of the C<TB_ERR_*> constants; nothing dies on a terminal error.
@@ -221,7 +225,11 @@ C<:keys>.
 	my $rc = tb_init_fd($ttyfd);
 	my $rc = tb_init_rwfd( $rfd, $wfd );
 
-Open the terminal. C<tb_init> uses F</dev/tty>.
+Open the terminal. C<tb_init> uses F</dev/tty>; C<tb_init_rwfd> reads
+the terminal from one file descriptor and writes to another, which may
+be a pipe or a file as well. On Windows, C<tb_init> opens the console
+(C<CONIN$> and C<CONOUT$>), and C<tb_init_rwfd> takes the descriptors
+C<fileno> returns; see L</WINDOWS>.
 
 =head3 tf_init_inline, tf_init_inline_rwfd
 
@@ -496,15 +504,18 @@ C<TB_ERR_NO_EVENT> when no device attributes arrived in time, or
 another error; the references are untouched unless the result is
 C<TB_OK>. Dies unless the last three arguments are scalar references.
 
-=head3 tf_readable_bytes
+=head3 tf_input_ended
 
-	my $count = tf_readable_bytes($fd);
+	my $ended = tf_input_ended($fd);
 
-A Term::Fabulous addition. The number of bytes waiting to be read from
-the file descriptor (C<ioctl FIONREAD>), or -1 when the descriptor
-cannot tell (C<$!> says why). A terminal descriptor that is readable
-while this returns 0 is at end of file: the terminal is gone. A
-terminal that hung up returns -1 with C<$!> set to C<EIO>.
+A Term::Fabulous addition. 1 when the input descriptor has ended for
+good: it reports readable but has no byte to read (C<ioctl FIONREAD>),
+or cannot even tell because the terminal hung up (C<EIO>, or C<ENXIO>
+on FreeBSD); on Windows, when a console no longer answers, a pipe has
+lost its writer or a file is at its end. Otherwise 0. termbox2 itself
+reports the end of the input only as C<TB_ERR_NO_EVENT>, again and
+again. Works with any descriptor, before C<tb_init> and after
+C<tb_shutdown> too.
 
 =head3 tb_get_fds
 
@@ -512,7 +523,9 @@ terminal that hung up returns -1 with C<$!> set to C<EIO>.
 
 Stores termbox2's tty and resize-pipe descriptors through the references,
 for an event loop that waits on them itself. Dies unless both arguments
-are scalar references.
+are scalar references. On Windows the resize descriptor is -1: resizes
+arrive as console input, and the console descriptor cannot be waited on
+with C<select> anyway, so poll L</tb_peek_event> instead.
 
 =head2 Widths
 
@@ -547,6 +560,29 @@ drawn. Dies on an empty string or malformed UTF-8.
 =head3 tb_has_truecolor, tb_has_egc, tb_attr_width, tb_version
 
 Report the compile-time options: 1, 1, 64 and the termbox2 version string.
+
+=head1 WINDOWS
+
+The patches in F<src/patches> give termbox2 a Windows console backend
+(see F<src/README.termbox2>). While termbox2 is initialized, the console
+runs in virtual terminal mode: the console turns the keys into the
+escape sequences an xterm sends, which termbox2 and
+L</tf_install_input_parser> read as on any other system, and it
+interprets the escape sequences termbox2 writes. Both directions use
+UTF-8; the console's code pages and modes are restored by
+C<tb_shutdown>. Window size changes arrive as console input and become
+C<TB_EVENT_RESIZE> events; the console also reports its size once right
+after it is opened. The mouse is reported while C<tb_set_input_mode>
+has C<TB_INPUT_MOUSE> set: a terminal that encodes the mouse itself
+(Windows Terminal) sends SGR reports like any xterm, a legacy console
+window delivers mouse records, which the backend turns into the same
+SGR reports. The built-in capabilities of C<xterm-256color> are used
+unless C<TERM> is set; there is no terminfo database to read.
+
+C<TB_ERR_*> codes and C<tb_strerror> work as elsewhere; the message of
+a failed system call comes from Windows (L<tb_last_errno|/"tb_last_errno, tb_strerror">
+then holds a Win32 error code). A pipe given to C<tb_init_rwfd> is
+polled every few milliseconds while termbox2 waits for input.
 
 =head1 NOT BOUND
 

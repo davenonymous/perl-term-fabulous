@@ -5,6 +5,7 @@ use Test2::V0;
 
 use Object::Pad 0.825;
 use IO::Async::Loop;
+use IO::Async::OS;
 use IO::Async::Signal;
 use Clay::XS qw(sizing_fixed sizing_grow);
 use Fcntl qw(F_GETFL O_NONBLOCK);
@@ -30,9 +31,12 @@ my $loop = IO::Async::Loop->new;
 
 # IO::Async adds its own signal-pipe handle on the first signal watch and
 # keeps it for the loop's lifetime; create it before taking the snapshot.
-my $warmup_signal = IO::Async::Signal->new( name => 'HUP', on_receipt => sub { } );
-$loop->add($warmup_signal);
-$loop->remove($warmup_signal);
+# On Windows IO::Async watches no signals at all.
+if ( IO::Async::OS->HAVE_SIGNALS ) {
+	my $warmup_signal = IO::Async::Signal->new( name => 'HUP', on_receipt => sub { } );
+	$loop->add($warmup_signal);
+	$loop->remove($warmup_signal);
+}
 my $notifiers_before = scalar $loop->notifiers;
 
 # A Term::Fabulous on a 20x5 memory terminal, with a root that paints every
@@ -65,20 +69,21 @@ subtest 'a draw that dies' => sub {
 subtest 'a second run works' => sub {
 	$draw_dies = 0;
 	my ( @starts, @blocking );
+	my @watched_handles = $^O eq 'MSWin32' ? () : $terminal->read_handles;    # run polls on Windows and watches no handles
 	$ui->root->on( Start => sub { push @starts, [ $_[0]->width, $_[0]->height, $ui->width ]; return } );
 	$ui->root->on(
 		KeyPress => sub {
-			push @blocking, map { fcntl( $_, F_GETFL, 0 ) & O_NONBLOCK ? 0 : 1 } $terminal->read_handles;
+			push @blocking, map { fcntl( $_, F_GETFL, 0 ) & O_NONBLOCK ? 0 : 1 } @watched_handles;
 			return;
 		}
 	);
 	$terminal->press_key('Ctrl+C');
 
 	ok lives { $ui->run }, 'run returns after Ctrl+C';
-	is \@blocking,                                       [1],               'the watched terminal handles stay blocking';
-	is \@starts,                                         [ [ 20, 5, 20 ] ], 'Start fires once, with the terminal size already applied';
-	is [ $terminal->is_open, $terminal->session_count ], [ 0, 2 ],          'the terminal is restored again';
-	is scalar( $loop->notifiers ),                       $notifiers_before, 'no notifier is left on the loop';
+	is \@blocking,                                       [ map { 1 } @watched_handles ], 'the watched terminal handles stay blocking';
+	is \@starts,                                         [ [ 20, 5, 20 ] ],              'Start fires once, with the terminal size already applied';
+	is [ $terminal->is_open, $terminal->session_count ], [ 0, 2 ],                       'the terminal is restored again';
+	is scalar( $loop->notifiers ),                       $notifiers_before,              'no notifier is left on the loop';
 };
 
 subtest 'stop_on_ctrl_c => 0 makes Ctrl+C an ordinary key' => sub {
@@ -115,6 +120,7 @@ subtest 'Start fires inside the running loop' => sub {
 };
 
 subtest 'a signal watcher of the program outlives run' => sub {
+	skip_all 'IO::Async watches no signals on Windows' unless IO::Async::OS->HAVE_SIGNALS;
 	my $received   = 0;
 	my $watcher    = IO::Async::Signal->new( name => 'TERM', on_receipt => sub { $received++ } );
 	my ($watching) = memory_ui();
@@ -127,6 +133,7 @@ subtest 'a signal watcher of the program outlives run' => sub {
 };
 
 subtest 'INT, TERM and HUP end run' => sub {
+	skip_all 'IO::Async watches no signals on Windows' unless IO::Async::OS->HAVE_SIGNALS;
 	foreach my $signal (qw(INT TERM HUP)) {
 		my ($signalled) = memory_ui();
 		$signalled->root->on( Start => sub { kill $signal => $$; return } );

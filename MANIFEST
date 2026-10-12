@@ -331,6 +331,8 @@ MANIFEST			This list of files
 MANIFEST.SKIP
 README.md
 src/README.termbox2
+src/patches/0001-platform-layer.patch
+src/patches/0002-windows-console.patch
 src/termbox2.c
 src/termbox2.h
 src/tf_termbox.h
