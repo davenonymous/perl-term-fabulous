@@ -8,8 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # termbox2 and I18N::Langinfo need a POSIX system, so there is no
-  # Windows job
   test:
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -51,6 +49,49 @@ jobs:
         env:
           HARNESS_OPTIONS: j4
         run: make test
+
+      - name: Verbose test re-run on failure
+        if: failure()
+        run: prove -vb t
+
+  # termbox2 drives the Windows console through the backend in
+  # src/patches; Strawberry Perl brings the gcc and gmake it is built
+  # with. Tests that need a pty, fontconfig or signals skip there.
+  test-windows:
+    name: Perl ${{ matrix.perl }} on windows-latest
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        perl:
+          - '5.40'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Strawberry Perl ${{ matrix.perl }}
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+          distribution: strawberry
+
+      - name: Show Perl configuration
+        run: perl -V
+
+      - name: Install declared dependencies
+        run: cpanm --installdeps --notest --verbose .
+
+      - name: Configure
+        run: perl Makefile.PL
+
+      - name: Build
+        run: gmake
+
+      - name: Test
+        env:
+          HARNESS_OPTIONS: j4
+        run: gmake test
 
       - name: Verbose test re-run on failure
         if: failure()
