@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Object::Pad 0.825;
 
@@ -48,7 +48,7 @@ horizontal
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.01/screenshots/widget-bar-chart.svg" alt="Pairs of bars for 2025 and 2026 in four quarters, each bar with its value written above it"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.02/screenshots/widget-bar-chart.svg" alt="Pairs of bars for 2025 and 2026 in four quarters, each bar with its value written above it"></p>
 
 =end html
 

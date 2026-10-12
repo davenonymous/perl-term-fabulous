@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Exporter 'import';
 our @EXPORT_OK = qw(cell_rect intersect_cell_rects visible_cell_rect rects_overlap row_spans_outside cell_coordinate line_steps);

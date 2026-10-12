@@ -11,7 +11,7 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 class Term::Fabulous::Widget::Accordion::Item
 	:isa(Term::Fabulous::Widget::Box)

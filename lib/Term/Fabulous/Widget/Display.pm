@@ -9,7 +9,7 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Canvas;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 class Term::Fabulous::Widget::Display
 	:isa(Term::Fabulous::Widget::Canvas)

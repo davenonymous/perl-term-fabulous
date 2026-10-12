@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Exporter 'import';
 our @EXPORT_OK = qw(color_attr clay_color cell_color_attr blended_bg_attr blended_fg_attr STYLE_FLAGS);

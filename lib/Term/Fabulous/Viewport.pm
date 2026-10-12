@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Exporter 'import';
 our @EXPORT_OK = qw(max_offset clamp_offset reveal_range scroll_thumb);
