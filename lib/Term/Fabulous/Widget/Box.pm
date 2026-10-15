@@ -15,9 +15,7 @@ class Term::Fabulous::Widget::Box
 	:strict(params)
 {
 	use Clay::XS qw(
-		Clay_GetElementId CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
-		CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
-		CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
+		Clay_GetElementId
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_TO_ROOT CLAY_ATTACH_TO_ELEMENT_WITH_ID
 		CLAY_ATTACH_POINT_LEFT_TOP CLAY_ATTACH_POINT_LEFT_CENTER CLAY_ATTACH_POINT_LEFT_BOTTOM
 		CLAY_ATTACH_POINT_CENTER_TOP CLAY_ATTACH_POINT_CENTER_CENTER CLAY_ATTACH_POINT_CENTER_BOTTOM
@@ -25,27 +23,7 @@ class Term::Fabulous::Widget::Box
 		CLAY_POINTER_CAPTURE_MODE_CAPTURE CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 		CLAY_CLIP_TO_NONE CLAY_CLIP_TO_ATTACHED_PARENT
 	);
-	use Term::Fabulous::Check qw(border_style describe integer non_negative_integer one_of sizing);
-
-	my %DIRECTION_BY_NAME = (
-		top_to_bottom      => CLAY_TOP_TO_BOTTOM,
-		ttb                => CLAY_TOP_TO_BOTTOM,
-		down               => CLAY_TOP_TO_BOTTOM,
-		left_to_right      => CLAY_LEFT_TO_RIGHT,
-		ltr                => CLAY_LEFT_TO_RIGHT,
-		right              => CLAY_LEFT_TO_RIGHT,
-		wrap               => CLAY_LEFT_TO_RIGHT_WRAP,
-		ltr_wrap           => CLAY_LEFT_TO_RIGHT_WRAP,
-		left_to_right_wrap => CLAY_LEFT_TO_RIGHT_WRAP,
-		stack              => CLAY_BACK_TO_FRONT,
-		back_to_front      => CLAY_BACK_TO_FRONT,
-		btf                => CLAY_BACK_TO_FRONT,
-	);
-
-	my %LINE_SIZING_BY_NAME = ( grow => CLAY_LINE_SIZING_GROW, fit => CLAY_LINE_SIZING_FIT );
-
-	my %ALIGN_X_BY_NAME = ( left => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, right  => CLAY_ALIGN_X_RIGHT );
-	my %ALIGN_Y_BY_NAME = ( top  => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, bottom => CLAY_ALIGN_Y_BOTTOM );
+	use Term::Fabulous::Check qw(align_x align_y border_style describe direction integer line_sizing non_negative_integer one_of sizing);
 
 	my %ATTACH_TO_BY_NAME = (
 		parent  => CLAY_ATTACH_TO_PARENT,
@@ -129,13 +107,13 @@ class Term::Fabulous::Widget::Box
 
 		my %layout = %{ $self->layout };
 		if ( exists $props->{direction} ) {
-			$layout{layout_direction} = _named( 'layout direction', \%DIRECTION_BY_NAME, $props->{direction} );
+			$layout{layout_direction} = direction( $self, 'layout direction', $props->{direction} );
 		}
 		foreach my $gap_name ( grep { exists $props->{$_} } qw(child_gap gap) ) {
 			$layout{child_gap} = non_negative_integer( $self, "layout $gap_name", $props->{$gap_name} );
 		}
 		$layout{line_gap}    = non_negative_integer( $self, 'layout line_gap', $props->{line_gap} ) if exists $props->{line_gap};
-		$layout{line_sizing} = _named( 'layout line_sizing', \%LINE_SIZING_BY_NAME, $props->{line_sizing} ) if exists $props->{line_sizing};
+		$layout{line_sizing} = line_sizing( $self, 'layout line_sizing', $props->{line_sizing} ) if exists $props->{line_sizing};
 		$self->layout( \%layout );
 		return;
 	}
@@ -171,10 +149,10 @@ class Term::Fabulous::Widget::Box
 	}
 
 	method _parse_child_alignment ($kid) {
-		my $props            = $self->kdl_properties( $kid, qw(x y) );
-		my %alignment_by_key = ( x => \%ALIGN_X_BY_NAME, y => \%ALIGN_Y_BY_NAME );
-		my %layout           = %{ $self->layout };
-		$layout{child_alignment} = { %{ $layout{child_alignment} // {} }, map { $_ => _named( "child_alignment $_", $alignment_by_key{$_}, $props->{$_} ) } keys %$props };
+		my $props        = $self->kdl_properties( $kid, qw(x y) );
+		my %check_by_key = ( x => \&align_x, y => \&align_y );
+		my %layout       = %{ $self->layout };
+		$layout{child_alignment} = { %{ $layout{child_alignment} // {} }, map { $_ => $check_by_key{$_}->( $self, "child_alignment $_", $props->{$_} ) } keys %$props };
 		$self->layout( \%layout );
 		return;
 	}

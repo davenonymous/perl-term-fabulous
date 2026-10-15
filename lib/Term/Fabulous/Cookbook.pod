@@ -99,6 +99,10 @@ L<A minimal program to start from|Term::Fabulous::Cookbook::GettingStarted/A min
 
 =item *
 
+L<The same program with Term::Fabulous::Lite|Term::Fabulous::Cookbook::GettingStarted/The same program with Term::Fabulous::Lite>
+
+=item *
+
 L<Quit with q or Escape|Term::Fabulous::Cookbook::GettingStarted/Quit with q or Escape>
 
 =item *
@@ -204,6 +208,10 @@ L<Ask for a color (ColorPicker in a Prompt)|Term::Fabulous::Cookbook::Forms/Ask 
 =item *
 
 L<Ask for input below the shell's output (inline mode)|Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>
+
+=item *
+
+L<Ask three questions below the shell's output (TF-E<gt>inline)|Term::Fabulous::Cookbook::Forms/Ask three questions below the shell's output (TF-E<gt>inline)>
 
 =item *
 

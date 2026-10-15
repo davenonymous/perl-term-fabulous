@@ -487,6 +487,11 @@ program, and the class pages with the reference.
 L</YOUR FIRST PROGRAM>, L<Term::Fabulous/run>,
 L<Term::Fabulous::Cookbook::GettingStarted/A minimal program to start from>.
 
+=item Write a program with less code (the TF helpers)
+
+L<Term::Fabulous::Lite>,
+L<Term::Fabulous::Cookbook::GettingStarted/The same program with Term::Fabulous::Lite>.
+
 =item Quit the program on a key
 
 L<Term::Fabulous::Manual::Programs/Quitting>,
@@ -495,7 +500,9 @@ L<Term::Fabulous::Cookbook::GettingStarted/Quit with q or Escape>.
 =item Ask for input below the shell's output instead of taking the whole screen (inline mode)
 
 L<Term::Fabulous/INLINE MODE>,
-L<Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>.
+L<Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>,
+L<Term::Fabulous::Lite::Inline> (one call per question),
+L<Term::Fabulous::Cookbook::Forms/Ask three questions below the shell's output (TF-E<gt>inline)>.
 
 =item Timers, animation, background work, sockets, child processes
 

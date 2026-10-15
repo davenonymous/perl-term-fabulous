@@ -31,6 +31,10 @@ L</A minimal program to start from>
 
 =item *
 
+L</The same program with Term::Fabulous::Lite>
+
+=item *
+
 L</Quit with q or Escape>
 
 =item *
@@ -131,6 +135,93 @@ C<run> opens the terminal and runs the event loop: it handles input and
 draws a new frame whenever something changed (it checks 30 times per
 second). When the loop stops, C<run> restores the terminal and returns.
 See L<Term::Fabulous/run>.
+
+=back
+
+=head1 The same program with Term::Fabulous::Lite
+
+Goal: a small form, written with the C<TF> helpers of
+L<Term::Fabulous::Lite>: one import, the options of a widget first,
+its children after them, and C<run> in one call.
+
+This program is shipped as F<examples/cookbook/lite-program.pl>.
+
+=for code-from examples/cookbook/lite-program.pl
+
+	use v5.32;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Lite;    # exports TF
+
+	# A small form: the options of a widget come first, its children after
+	# them. Escape or Ctrl+C quits.
+	my $status = TF->text('Change something.');
+	my $name;
+	my $root = TF->screen(
+		gap     => 1,
+		padding => [ 1, 2 ],
+		TF->text('Hello from Term::Fabulous::Lite! Tab moves between inputs; Escape quits.'),
+		TF->column(
+			border       => 'Round',
+			border_color => '#61afef',
+			width        => 'grow',
+			padding      => [ 0, 1 ],
+			TF->row( gap => 1, TF->box( width => 'fixed(6)', TF->text('Name') ), $name = TF->text_field( id => 'name', placeholder => 'Your name', columns => 30 ) ),
+			TF->row(
+				gap => 1,
+				TF->box( width => 'fixed(6)', TF->text('Size') ),
+				TF->radio_group( id => 'size', value => 'm', direction => 'ltr', gap => 2, map { TF->radio_button( $_->[0], value => $_->[1] ) } [ Small => 's' ], [ Medium => 'm' ], [ Large => 'l' ] ),
+			),
+			TF->row( gap => 1, TF->box( width => 'fixed(6)', TF->text('News') ), TF->checkbox( 'Send me the newsletter', id => 'newsletter' ) ),
+		),
+		$status,
+	);
+
+	# Every Change bubbles up to the root; show the latest one.
+	$root->on( Change => sub ($event) { $status->text( sprintf '%s changed to: %s', $event->target->id, $event->value // 'nothing' ); return } );
+
+	TF->run( $root, focus => $name, quit_keys => ['Escape'] );
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-lite-program.svg" alt="The Lite form: a name field holding Ada Lovelace, the size radio buttons with Large chosen, a newsletter checkbox and a status line"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<use Term::Fabulous::Lite> exports one symbol, C<TF>. Its methods
+build the widgets (C<TF-E<gt>text>, C<TF-E<gt>text_field>, ...),
+loading each class on first use; C<TF-E<gt>screen> is a box that
+fills the terminal from top to bottom, C<TF-E<gt>column> and
+C<TF-E<gt>row> are boxes with a direction.
+
+=item *
+
+The options are the words of the layout files: C<width =E<gt> 'grow'>,
+C<padding =E<gt> [ 1, 2 ]> (vertical, horizontal), C<border =E<gt>
+'Round'>, C<gap =E<gt> 1>. Each stands for one parameter of the
+widget's C<new>, and the full parameters work in the same call. See
+L<Term::Fabulous::Lite/THE OPTIONS>.
+
+=item *
+
+Every widget among the arguments is a child; the leading string of
+C<TF-E<gt>text> and C<TF-E<gt>radio_button> is the text or label. A
+Text has no layout of its own, so the labels sit in boxes of a fixed
+width.
+
+=item *
+
+C<TF-E<gt>run> builds the L<Term::Fabulous>, gives the name field the
+focus, stops the program on Escape (C<quit_keys>) and runs it. Every
+helper returns the full widget: C<$root-E<gt>on> and C<$status-E<gt>text>
+are the methods of L<Term::Fabulous::Widget::Box> and
+L<Term::Fabulous::Widget::Text>.
 
 =back
 

@@ -80,6 +80,10 @@ L</Ask for input below the shell's output (inline mode)>
 
 =item *
 
+L</Ask three questions below the shell's output (TF-E<gt>inline)>
+
+=item *
+
 L</Choose from options in Perl (Dropdown, RadioGroup, Slider)>
 
 =item *
@@ -1395,6 +1399,71 @@ next line.
 
 Inline mode has no mouse support, so the terminal keeps the mouse
 for selecting and copying text, as with C<< mouse => 0 >>.
+
+=back
+
+=head1 Ask three questions below the shell's output (TF->inline)
+
+Goal: the inline prompt of the previous recipe in one call per
+question, with the answer as the return value: a text, a choice from
+a list and a yes or no.
+
+This program is shipped as F<examples/cookbook/lite-inline.pl>.
+
+=for code-from examples/cookbook/lite-inline.pl
+
+	use v5.32;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use Term::Fabulous::Lite;    # exports TF
+
+	# Each question takes a few rows below the shell's output, waits for
+	# the answer and returns it; Escape returns undef.
+	sub cancelled () {
+		say 'Cancelled.';
+		exit;
+	}
+
+	my $name = TF->inline->prompt( 'What is your name?', placeholder => 'Your name' );
+	cancelled() unless defined $name;
+
+	my $size = TF->inline->choose( 'Which size?', options => [qw(Small Medium Large)], value => 'Medium' );
+	cancelled() unless defined $size;
+
+	my $sure = TF->inline->confirm( "Order a $size one for $name?", ok => 'Order', default => 'cancel' );
+	say $sure ? "Ordered a $size one for $name." : 'Nothing ordered.';
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-lite-inline.svg" alt="The first of the three questions below a shell's earlier output: the question, the name field holding Ada Lovelace and the help line"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<TF-E<gt>inline> of L<Term::Fabulous::Lite> gives the three
+questions of L<Term::Fabulous::Lite::Inline>. Each opens the rows it
+needs in inline mode, runs until the user answers, and returns the
+answer: C<prompt> the text, C<choose> the value of the chosen option,
+C<confirm> 1 or 0. Escape returns C<undef> from any of them.
+
+=item *
+
+The rows of an answered question stay on the screen, so the three
+questions and their answers read like a transcript when the program
+goes on.
+
+=item *
+
+C<prompt> takes the options of a L<Term::Fabulous::Widget::TextField>
+(C<placeholder>, C<value>, C<mask>, C<required>, C<validator>);
+C<choose> takes C<options> as every option list in Term::Fabulous
+does; C<confirm> names its buttons with C<ok> and C<cancel> and starts
+on the one C<default> names.
 
 =back
 

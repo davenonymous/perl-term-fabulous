@@ -81,6 +81,20 @@ subtest 'one_of' => sub {
 	like dies { $one_of->( 'My::Widget', side => ['top'], qw(top) ) }, qr/side must be one of top, got an ARRAY reference/, 'a reference dies';
 };
 
+subtest 'direction, line_sizing, align_x, align_y' => sub {
+	my ( $direction, $align_x, $align_y ) = map { \&{"Term::Fabulous::Check::$_"} } qw(direction align_x align_y);
+	is $direction->( 'My::Widget', direction => 'ttb' ),                         Clay::XS::CLAY_TOP_TO_BOTTOM(),      'a direction by its short name';
+	is $direction->( 'My::Widget', direction => 'wrap' ),                        Clay::XS::CLAY_LEFT_TO_RIGHT_WRAP(), 'a wrapping direction';
+	is $direction->( 'My::Widget', direction => 'stack' ),                       Clay::XS::CLAY_BACK_TO_FRONT(),      'a stack';
+	is $align_x->( 'My::Widget', x => 'center' ),                                Clay::XS::CLAY_ALIGN_X_CENTER(),     'a horizontal alignment';
+	is $align_y->( 'My::Widget', y => 'bottom' ),                                Clay::XS::CLAY_ALIGN_Y_BOTTOM(),     'a vertical alignment';
+	is Term::Fabulous::Check::line_sizing( 'My::Widget', line_sizing => 'fit' ), Clay::XS::CLAY_LINE_SIZING_FIT(),    'a line sizing';
+	like dies { $direction->( 'My::Widget', direction => 'sideways' ) }, qr/\AMy::Widget: direction must be one of back_to_front, btf, down, .*ttb, wrap, got 'sideways'/,
+		'an unknown direction dies listing the names';
+	like dies { $align_x->( 'My::Widget', x => 'top' ) },  qr/\AMy::Widget: x must be one of center, left, right, got 'top'/,  'a vertical name on the x axis dies';
+	like dies { $align_y->( 'My::Widget', y => 'left' ) }, qr/\AMy::Widget: y must be one of bottom, center, top, got 'left'/, 'a horizontal name on the y axis dies';
+};
+
 subtest 'border_style' => sub {
 	my $border_style = \&Term::Fabulous::Check::border_style;
 	my $Style        = 'Term::Fabulous::Enum::BorderStyle';

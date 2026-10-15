@@ -1617,6 +1617,13 @@ Term::Fabulous, and programs do not use them directly.
 
 The interactive application object, described on this page.
 
+=item L<Term::Fabulous::Lite>
+
+A facade for short programs: one import, C<TF>, whose methods build
+the widgets with a flat vocabulary, run a program, print a tree, load a
+layout and ask questions below the shell's output
+(L<Term::Fabulous::Lite::Inline>).
+
 =item L<Term::Fabulous::Static>
 
 Renders a widget tree once, as text, without opening the terminal; for

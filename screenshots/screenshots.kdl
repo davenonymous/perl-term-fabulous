@@ -325,6 +325,16 @@ screenshot "cookbook-minimal-program" {
 	size 72 5
 }
 
+screenshot "cookbook-lite-program" {
+	script "examples/cookbook/lite-program.pl"
+	size 72 12
+	steps {
+		type "Ada Lovelace"
+		key "Tab"
+		key "Right"
+	}
+}
+
 screenshot "cookbook-first-program" {
 	script "examples/cookbook/first-program.pl"
 	size 60 9
@@ -463,6 +473,17 @@ screenshot "cookbook-own-checks" {
 		type "db1.example.com"
 		key "Enter"
 		type "bad_host"
+	}
+}
+
+// The harness follows the cursor through absolute moves only, so it
+// shows one inline region at a time: the first question.
+screenshot "cookbook-lite-inline" {
+	script "examples/cookbook/lite-inline.pl"
+	size 80 8
+	shell "$ ls" "notes.txt  report.csv  todo.md" "$ perl examples/cookbook/lite-inline.pl"
+	steps {
+		type "Ada Lovelace"
 	}
 }
 

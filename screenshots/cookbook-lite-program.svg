@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="708" height="309" viewBox="0 0 708 309" role="img" aria-label="perl examples/cookbook/lite-program.pl">
+<title>perl examples/cookbook/lite-program.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="676" height="274" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="676" height="274" rx="10" fill="#161622" filter="url(#shadow)"/>
+<rect x="16" y="16" width="676" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="354" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/lite-program.pl</text>
+<rect x="16.5" y="16.5" width="675" height="273" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="129" y="150" width="270" height="18" fill="#242830"/>
+<rect x="336" y="168" width="81" height="18" fill="#343a48"/>
+<rect x="57" y="140" width="594" height="1" fill="#61afef"/>
+<rect x="52" y="150" width="1" height="54" fill="#61afef"/>
+<rect x="655" y="150" width="1" height="54" fill="#61afef"/>
+<rect x="57" y="212" width="594" height="1" fill="#61afef"/>
+</g>
+<polyline points="52.5 150 52.5 145 52.538 144.413 52.653 143.835 52.843 143.278 53.103 142.75 53.43 142.261 53.818 141.818 54.261 141.43 54.75 141.103 55.278 140.843 55.835 140.653 56.413 140.538 57 140.5 57 140.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="655.5 150 655.5 145 655.462 144.413 655.347 143.835 655.157 143.278 654.897 142.75 654.57 142.261 654.182 141.818 653.739 141.43 653.25 141.103 652.722 140.843 652.165 140.653 651.587 140.538 651 140.5 651 140.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="52.5 204 52.5 208 52.538 208.587 52.653 209.165 52.843 209.722 53.103 210.25 53.43 210.739 53.818 211.182 54.261 211.57 54.75 211.897 55.278 212.157 55.835 212.347 56.413 212.462 57 212.5 57 212.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="655.5 204 655.5 208 655.462 208.587 655.347 209.165 655.157 209.722 654.897 210.25 654.57 210.739 654.182 211.182 653.739 211.57 653.25 211.897 652.722 212.157 652.165 212.347 651.587 212.462 651 212.5 651 212.5" fill="none" stroke="#61afef" stroke-width="1" stroke-linejoin="round"/>
+<g class="terminal">
+<text x="48" y="92" textLength="585" fill="#dcdfe4">Hello from Term::Fabulous::Lite! Tab moves between inputs; Escape</text>
+<text x="48" y="110" textLength="54" fill="#dcdfe4">quits.</text>
+<text x="66" y="164" textLength="171" fill="#dcdfe4">Name   Ada Lovelace</text>
+<text x="66" y="182" textLength="252" fill="#dcdfe4">Size   ( ) Small  ( ) Medium</text>
+<text x="336" y="182" textLength="9" fill="#61afef">(</text>
+<text x="349.5" y="182" text-anchor="middle" fill="#61afef">•</text>
+<text x="354" y="182" textLength="9" fill="#61afef">)</text>
+<text x="372" y="182" textLength="45" fill="#dcdfe4">Large</text>
+<text x="66" y="200" textLength="297" fill="#dcdfe4">News   [ ] Send me the newsletter</text>
+<text x="48" y="254" textLength="162" fill="#dcdfe4">size changed to: l</text>
+</g>
+<g shape-rendering="crispEdges">
+</g>
+</svg>

@@ -50,6 +50,8 @@ examples/cookbook/help-screen.pl
 examples/cookbook/inline-prompt.pl       
 examples/cookbook/kdl-panel.pl           
 examples/cookbook/key-bindings.pl        
+examples/cookbook/lite-inline.pl
+examples/cookbook/lite-program.pl
 examples/cookbook/lib/My/Panel.pm        
 examples/cookbook/login-form.pl          
 examples/cookbook/menu-bar.pl
@@ -188,6 +190,9 @@ lib/Term/Fabulous/Event/TabClose.pm
 lib/Term/Fabulous/Event/TextClick.pm
 lib/Term/Fabulous/Event/ValidityChange.pm
 lib/Term/Fabulous/Layout.pm
+lib/Term/Fabulous/Lite.pm
+lib/Term/Fabulous/Lite/Inline.pm
+lib/Term/Fabulous/Lite/Params.pm
 lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Manual/Charts.pod
 lib/Term/Fabulous/Manual/CustomWidgets.pod
@@ -358,6 +363,8 @@ t/lib/ChartTest.pm
 t/lib/InputTest.pm
 t/lifecycle.t
 t/line-steps.t
+t/lite-inline.t
+t/lite.t
 t/option-list.t
 t/range.t
 t/render-attr.t
@@ -523,6 +530,8 @@ screenshots/cookbook-help-screen.svg
 screenshots/cookbook-inline-prompt.svg
 screenshots/cookbook-kdl-panel.svg
 screenshots/cookbook-key-bindings.svg    
+screenshots/cookbook-lite-inline.svg
+screenshots/cookbook-lite-program.svg
 screenshots/cookbook-login-form.svg      
 screenshots/cookbook-menu-bar.svg
 screenshots/cookbook-minimal-program.svg 

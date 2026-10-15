@@ -1,5 +1,18 @@
 Revision history for Term::Fabulous
 
+0.04    not yet released
+        - Term::Fabulous::Lite: a facade for short programs. It exports
+          TF, whose methods build the widgets with a flat vocabulary
+          (width => 'grow', direction => 'ttb', border => 'Round', the
+          words of the layout files), take the children as trailing
+          arguments, run a program (app, run with quit_keys and focus),
+          print a tree (print, render), load a layout (load) and pick a
+          theme by name or file (theme). Term::Fabulous::Lite::Inline
+          (TF->inline) asks a question below the shell's output and
+          returns the answer: prompt, confirm and choose.
+        - Term::Fabulous::Check: direction, line_sizing, align_x and
+          align_y parse the names a layout file uses; Box uses them.
+
 0.03    2026-10-15
         - Fixes from CPAN Testers: the theme editor no longer needs the PNG
           support of Imager; its preview picture is a TGA, which Imager

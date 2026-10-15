@@ -8,10 +8,15 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names one_of border_style border_sides value_format optional describe);
+our @EXPORT_OK
+	= qw(positive_integer non_negative_integer integer number string boolean glyph color cell_color sizing class_names one_of direction line_sizing align_x align_y border_style border_sides value_format optional describe);
 
 use Carp qw(croak);
-use Clay::XS qw(check_struct sizing_fit sizing_fixed sizing_grow sizing_percent);
+use Clay::XS qw(
+	check_struct sizing_fit sizing_fixed sizing_grow sizing_percent
+	CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_BACK_TO_FRONT CLAY_LINE_SIZING_GROW CLAY_LINE_SIZING_FIT
+	CLAY_ALIGN_X_LEFT CLAY_ALIGN_X_CENTER CLAY_ALIGN_X_RIGHT CLAY_ALIGN_Y_TOP CLAY_ALIGN_Y_CENTER CLAY_ALIGN_Y_BOTTOM
+);
 use Feature::Compat::Try;
 use Scalar::Util qw(blessed looks_like_number);
 use Term::Fabulous::Color;
@@ -136,6 +141,48 @@ sub class_names ( $owner, $name, $value ) {
 sub one_of ( $owner, $name, $value, @allowed ) {
 	_fail( $owner, $name, 'one of ' . join( ', ', sort @allowed ), $value ) unless _is_plain($value) && grep { $_ eq $value } @allowed;
 	return $value;
+}
+
+# The names a layout file and Term::Fabulous::Lite use for the Clay
+# layout directions and child alignments.
+my %DIRECTION_BY_NAME = (
+	top_to_bottom      => CLAY_TOP_TO_BOTTOM,
+	ttb                => CLAY_TOP_TO_BOTTOM,
+	down               => CLAY_TOP_TO_BOTTOM,
+	left_to_right      => CLAY_LEFT_TO_RIGHT,
+	ltr                => CLAY_LEFT_TO_RIGHT,
+	right              => CLAY_LEFT_TO_RIGHT,
+	wrap               => CLAY_LEFT_TO_RIGHT_WRAP,
+	ltr_wrap           => CLAY_LEFT_TO_RIGHT_WRAP,
+	left_to_right_wrap => CLAY_LEFT_TO_RIGHT_WRAP,
+	stack              => CLAY_BACK_TO_FRONT,
+	back_to_front      => CLAY_BACK_TO_FRONT,
+	btf                => CLAY_BACK_TO_FRONT,
+);
+
+my %LINE_SIZING_BY_NAME = ( grow => CLAY_LINE_SIZING_GROW, fit => CLAY_LINE_SIZING_FIT );
+
+my %ALIGN_X_BY_NAME = ( left => CLAY_ALIGN_X_LEFT, center => CLAY_ALIGN_X_CENTER, right  => CLAY_ALIGN_X_RIGHT );
+my %ALIGN_Y_BY_NAME = ( top  => CLAY_ALIGN_Y_TOP,  center => CLAY_ALIGN_Y_CENTER, bottom => CLAY_ALIGN_Y_BOTTOM );
+
+sub _named ( $owner, $name, $value_by_name, $value ) {
+	return $value_by_name->{ one_of( $owner, $name, $value, keys %$value_by_name ) };
+}
+
+sub direction ( $owner, $name, $value ) {
+	return _named( $owner, $name, \%DIRECTION_BY_NAME, $value );
+}
+
+sub line_sizing ( $owner, $name, $value ) {
+	return _named( $owner, $name, \%LINE_SIZING_BY_NAME, $value );
+}
+
+sub align_x ( $owner, $name, $value ) {
+	return _named( $owner, $name, \%ALIGN_X_BY_NAME, $value );
+}
+
+sub align_y ( $owner, $name, $value ) {
+	return _named( $owner, $name, \%ALIGN_Y_BY_NAME, $value );
 }
 
 # A border style item, given as an item or its name. 'none' is accepted
@@ -309,6 +356,35 @@ C<[r, g, b, a]>.
 One of a fixed set of words, given after the value. Anything else
 dies, listing the words in sorted order:
 C<My::Widget: side must be one of bottom, left, right, top, got 'middle'>.
+
+=head2 direction
+
+	my $direction = direction( $self, direction => 'ttb' );
+
+A Clay layout direction by name: C<top_to_bottom>, C<ttb> or C<down>
+(C<CLAY_TOP_TO_BOTTOM>); C<left_to_right>, C<ltr> or C<right>
+(C<CLAY_LEFT_TO_RIGHT>); C<wrap>, C<ltr_wrap> or C<left_to_right_wrap>
+(C<CLAY_LEFT_TO_RIGHT_WRAP>); C<stack>, C<back_to_front> or C<btf>
+(C<CLAY_BACK_TO_FRONT>). Returns the constant. Any other value dies
+like L</one_of>, listing the names.
+
+=head2 line_sizing
+
+	my $line_sizing = line_sizing( $self, line_sizing => 'fit' );
+
+How the rows of a wrapping layout share the space left over below
+them: C<grow> (C<CLAY_LINE_SIZING_GROW>) or C<fit>
+(C<CLAY_LINE_SIZING_FIT>). Returns the constant; any other value dies
+like L</one_of>.
+
+=head2 align_x, align_y
+
+	my $x = align_x( $self, 'child_alignment x' => 'center' );
+	my $y = align_y( $self, 'child_alignment y' => 'bottom' );
+
+A Clay child alignment by name: C<left>, C<center> or C<right> for
+C<align_x>, C<top>, C<center> or C<bottom> for C<align_y>. Returns the
+constant; any other value dies like L</one_of>.
 
 =head2 border_style
 
