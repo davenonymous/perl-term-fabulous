@@ -42,6 +42,8 @@ ends (a Term::Fabulous::Static report) is shown with its output.
   --title TEXT    the window title (default: perl SCRIPT ARGUMENT ...)
   --shell LINE    a line a shell printed before the program started, shown
                   above an inline region; repeat it for more lines
+  --cwd PATH      the directory the program runs in (default: a fresh
+                  temporary directory)
   --clock TIME    the time the program's clock starts at, in UTC
                   (default: 2026-06-01T09:41:00Z)
   --scale N       pixels per unit of a PNG (default: 2, sharp on high-resolution screens)
@@ -50,7 +52,7 @@ USAGE
 
 sub main () {
 	my %option = ( size => '80x24', scale => 2 );
-	GetOptions( \%option, 'output=s', 'size=s', 'steps=s', 'title=s', 'clock=s', 'shell=s@', 'scale=i', 'help' ) or die usage();
+	GetOptions( \%option, 'output=s', 'size=s', 'steps=s', 'title=s', 'clock=s', 'shell=s@', 'cwd=s', 'scale=i', 'help' ) or die usage();
 	if ( $option{help} ) {
 		print usage();
 		return 0;
@@ -64,6 +66,7 @@ sub main () {
 	my $screen = Term::Fabulous::Screenshot::Runner->new->capture(
 		script    => $scenario->script,
 		arguments => $scenario->arguments,
+		cwd       => $scenario->cwd,
 		columns   => $scenario->columns,
 		rows      => $scenario->rows,
 		epoch     => $scenario->epoch,
@@ -90,6 +93,7 @@ sub scenario_kdl ( $script, $arguments, $columns, $rows, $option ) {
 	my $quote    = sub ($text) { '"' . ( $text =~ s/(["\\])/\\$1/gr =~ s/([\x00-\x1f\x7f])/sprintf '\\u{%x}', ord $1/ger ) . '"' };
 	my @settings = ( 'script ' . $quote->($script), "size $columns $rows" );
 	push @settings, 'args ' . join( ' ', map { $quote->($_) } @$arguments ) if @$arguments;
+	push @settings, 'cwd ' . $quote->( $option->{cwd} ) if defined $option->{cwd};
 	push @settings, 'title ' . $quote->( $option->{title} ) if defined $option->{title};
 	push @settings, 'clock ' . $quote->( $option->{clock} ) if defined $option->{clock};
 	push @settings, 'shell ' . join( ' ', map { $quote->($_) } @{ $option->{shell} } ) if $option->{shell};

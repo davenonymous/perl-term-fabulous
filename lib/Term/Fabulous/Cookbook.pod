@@ -165,6 +165,10 @@ L<Scroll a ScrollBox from code (keep a log at the newest line)|Term::Fabulous::C
 
 L<Show the output of a running command|Term::Fabulous::Cookbook::LiveData/Show the output of a running command>
 
+=item *
+
+L<A live dashboard with the TF helpers (chart, gauges, status bar)|Term::Fabulous::Cookbook::LiveData/A live dashboard with the TF helpers (chart, gauges, status bar)>
+
 =back
 
 =item L<Term::Fabulous::Cookbook::Forms>
@@ -211,7 +215,7 @@ L<Ask for input below the shell's output (inline mode)|Term::Fabulous::Cookbook:
 
 =item *
 
-L<Ask three questions below the shell's output (TF-E<gt>inline)|Term::Fabulous::Cookbook::Forms/Ask three questions below the shell's output (TF-E<gt>inline)>
+L<Ask several questions at once below the shell's output (TF-E<gt>inline-E<gt>form)|Term::Fabulous::Cookbook::Forms/Ask several questions at once below the shell's output (TF-E<gt>inline-E<gt>form)>
 
 =item *
 
@@ -336,6 +340,10 @@ L<Describe a table in a KDL layout (columns, lines, sort, groups)|Term::Fabulous
 =item *
 
 L<Print a table as a report (Static)|Term::Fabulous::Cookbook::Tables/Print a table as a report (Static)>
+
+=item *
+
+L<Browse the files of a directory with the TF helpers|Term::Fabulous::Cookbook::Tables/Browse the files of a directory with the TF helpers>
 
 =back
 
@@ -536,6 +544,10 @@ L<Render a report to a file or pipe (Static)|Term::Fabulous::Cookbook::Output/Re
 =item *
 
 L<Test a widget without a terminal|Term::Fabulous::Cookbook::Output/Test a widget without a terminal>
+
+=item *
+
+L<Print a report with the TF helpers (table, bars, sparkline)|Term::Fabulous::Cookbook::Output/Print a report with the TF helpers (table, bars, sparkline)>
 
 =back
 

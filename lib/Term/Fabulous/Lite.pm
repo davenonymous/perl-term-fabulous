@@ -359,6 +359,14 @@ C<background_color> and C<text_color>, any color the widget accepts
 
 C<preferred_columns> of a text field, slider or progress bar.
 
+=back
+
+A Lite option that is also a parameter of the widget's C<new> goes to
+the widget untouched: C<border> and C<columns> of a Table are the
+table's frame style and its column specs.
+
+=over
+
 =item C<on>
 
 A hash of event name to handler, registered with the widget's C<on>

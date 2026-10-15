@@ -229,6 +229,7 @@ sub screenshot_worker ( $scenario, $work_dir ) {    ## no critic (Subroutines::R
 		my $screen = Term::Fabulous::Screenshot::Runner->new->capture(
 			script    => $scenario->script,
 			arguments => $scenario->arguments,
+			cwd       => $scenario->cwd,
 			columns   => $scenario->columns,
 			rows      => $scenario->rows,
 			epoch     => $scenario->epoch,

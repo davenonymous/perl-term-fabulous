@@ -51,6 +51,9 @@ examples/cookbook/inline-prompt.pl
 examples/cookbook/kdl-panel.pl           
 examples/cookbook/key-bindings.pl        
 examples/cookbook/lite-inline.pl
+examples/cookbook/lite-dashboard.pl
+examples/cookbook/lite-report.pl
+examples/cookbook/lite-table.pl
 examples/cookbook/lite-program.pl
 examples/cookbook/lib/My/Panel.pm        
 examples/cookbook/login-form.pl          
@@ -531,6 +534,9 @@ screenshots/cookbook-inline-prompt.svg
 screenshots/cookbook-kdl-panel.svg
 screenshots/cookbook-key-bindings.svg    
 screenshots/cookbook-lite-inline.svg
+screenshots/cookbook-lite-dashboard.svg
+screenshots/cookbook-lite-report.svg
+screenshots/cookbook-lite-table.svg
 screenshots/cookbook-lite-program.svg
 screenshots/cookbook-login-form.svg      
 screenshots/cookbook-menu-bar.svg

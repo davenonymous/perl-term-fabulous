@@ -502,7 +502,7 @@ L<Term::Fabulous::Cookbook::GettingStarted/Quit with q or Escape>.
 L<Term::Fabulous/INLINE MODE>,
 L<Term::Fabulous::Cookbook::Forms/Ask for input below the shell's output (inline mode)>,
 L<Term::Fabulous::Lite::Inline> (one call per question),
-L<Term::Fabulous::Cookbook::Forms/Ask three questions below the shell's output (TF-E<gt>inline)>.
+L<Term::Fabulous::Cookbook::Forms/Ask several questions at once below the shell's output (TF-E<gt>inline-E<gt>form)>.
 
 =item Timers, animation, background work, sockets, child processes
 

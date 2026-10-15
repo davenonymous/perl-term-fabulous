@@ -8,10 +8,14 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Clay::UI::Enum::Result;
+use List::Util qw(max);
+use Scalar::Util qw(blessed);
 use Term::Fabulous;
 use Term::Fabulous::Check qw(describe string);
 use Term::Fabulous::Lite ();
 use Term::Fabulous::OptionList;
+use Term::Fabulous::Static;
+use Term::Fabulous::Unicode qw(string_columns);
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::RadioButton;
 use Term::Fabulous::Widget::RadioGroup;
@@ -91,15 +95,21 @@ sub prompt ( $class, $question, %options ) {
 	return $answer;
 }
 
+# The ok and cancel buttons of a question, bordered and the first one
+# primary, as a Prompt shows them; their labels come from the options.
+sub _buttons ( $what, $options ) {
+	my %label = ( ok => string( OWNER, "$what ok", $options->{ok} // 'OK' ), cancel => string( OWNER, "$what cancel", $options->{cancel} // 'Cancel' ) );
+	return map { $_ => TF->button( $label{$_}, id => $_, border => 1, padding => [ 0, 1 ], classes => [ $_ eq 'ok' ? 'primary' : () ] ) } qw(ok cancel);
+}
+
 sub confirm ( $class, $question, %options ) {
 	_checked_question( confirm => $question );
 	_checked_options( confirm => \%options, qw(ok cancel default) );
-	my %label   = ( ok => string( OWNER, 'confirm ok', $options{ok} // 'OK' ), cancel => string( OWNER, 'confirm cancel', $options{cancel} // 'Cancel' ) );
 	my $default = $options{default} // 'ok';
 	die OWNER . ": confirm default must be ok or cancel, got " . describe($default) unless !ref $default && ( $default eq 'ok' || $default eq 'cancel' );
 
 	my ( $ui, $answer );
-	my %button  = map { $_ => TF->button( $label{$_}, id => $_, border => 1, padding => [ 0, 1 ], classes => [ $_ eq 'ok' ? 'primary' : () ] ) } qw(ok cancel);
+	my %button  = _buttons( confirm => \%options );
 	my $buttons = TF->row( gap => 2, $button{ok}, $button{cancel} );
 	my $root    = TF->column( width => 'grow', height => 'grow', TF->text($question), $buttons, TF->text( $options{help} // 'Enter or y answers yes, n answers no, Escape cancels.' ) );
 
@@ -149,6 +159,95 @@ sub choose ( $class, $question, %options ) {
 	return $answer;
 }
 
+# A form's fields: { name, label, input }, the input a widget with a
+# value; the label is optional.
+sub _checked_fields ($fields) {
+	die OWNER . ': form needs fields, an array reference of { name, label, input } hashes, got ' . describe($fields) unless ref $fields eq 'ARRAY' && @$fields;
+	my ( @parsed, %seen );
+	foreach my $field (@$fields) {
+		die OWNER . ': a form field must be a hash reference with a name and an input, got ' . describe($field) unless ref $field eq 'HASH';
+		my %rest  = %$field;
+		my $name  = string( OWNER, 'the name of a form field', delete $rest{name} );
+		my $label = exists $rest{label} ? string( OWNER, "the label of the field '$name'", delete $rest{label} ) : undef;
+		my $input = delete $rest{input};
+		die OWNER . ": the input of the field '$name' must be a widget with a value, got " . describe($input) unless blessed $input && $input->can('value');
+		die OWNER . ": the field '$name' has unknown keys: " . join( ', ', sort keys %rest ) if %rest;
+		die OWNER . ": two fields have the name '$name'" if $seen{$name}++;
+		push @parsed, { name => $name, label => $label, input => $input };
+	}
+	return @parsed;
+}
+
+# One row per field, the labels in a column as wide as the longest.
+sub _field_rows ($fields) {
+	my $label_columns = max( 0, map { string_columns( $_->{label} // '' ) } @$fields );
+	return TF->column(
+		width => 'grow',
+		map { TF->row( gap => 1, width => 'grow', ( $label_columns ? TF->box( width => "fixed($label_columns)", TF->text( $_->{label} // '' ) ) : () ), $_->{input} ) } @$fields
+	);
+}
+
+# The first problem with the values: what is wrong and the input it is
+# about, or nothing. Every input is checked, then the whole form.
+sub _first_problem ( $fields, $check ) {
+	foreach my $field (@$fields) {
+		my $input = $field->{input};
+		my $error = $input->can('validate') ? $input->validate : undef;
+		return ( ( $field->{label} // $field->{name} ) . ": $error", $input ) if defined $error;
+	}
+	my $problem = defined $check ? $check->( _values($fields) ) : undef;
+	return ( $problem, undef ) if $problem;
+	return ();
+}
+
+sub _values ($fields) {
+	return { map { $_->{name} => $_->{input}->value } @$fields };
+}
+
+# The rows a tree takes, drawn once without a terminal at the width the
+# region will have.
+sub _rows_of ($root) {
+	my @lines = Term::Fabulous::Static->new( root => $root, width => DEFAULT_WIDTH )->render_lines( colors => 0 );
+	return scalar @lines;
+}
+
+sub form ( $class, $title, %options ) {
+	_checked_question( form => $title );
+	_checked_options( form => \%options, qw(fields ok cancel check) );
+	my @fields = _checked_fields( $options{fields} );
+	my $check  = $options{check};
+	die OWNER . ': form check must be a code reference, got ' . describe($check) if defined $check && ref $check ne 'CODE';
+
+	my ( $ui, $answer );
+	my $help_text = $options{help} // 'Tab moves, Enter answers, Escape cancels.';
+	my $help      = TF->text($help_text);
+	my %button    = _buttons( form => \%options );
+	my $root      = TF->column( width => 'grow', height => 'fit', TF->text( $title, bold => 1 ), _field_rows( \@fields ), TF->row( gap => 2, $button{ok}, $button{cancel} ), $help );
+
+	# The ok button answers only with values that pass every check; the
+	# problem takes the help line and the input it is about gets the focus.
+	my $answered = sub ($accepted) {
+		if ($accepted) {
+			my ( $problem, $input ) = _first_problem( \@fields, $check );
+			if ( defined $problem ) {
+				$help->text($problem);
+				$ui->interaction->set_focused_widget($input) if defined $input;
+				return;
+			}
+			$help->text($help_text);
+			$answer = _values( \@fields );
+		}
+		$ui->loop->stop;
+		return;
+	};
+	$button{ok}->on( Activate => sub ($event) { $answered->(1); return } );
+	$button{cancel}->on( Activate => sub ($event) { $answered->(0); return } );
+	$root->on( Submit => sub ($event) { $answered->(1); return } );    # Enter in a text field
+	_cancel_on_escape( $root, \$ui, \$answer );
+	_ask( $root, _rows_of($root), $fields[0]{input}, \$ui, %options );
+	return $answer;
+}
+
 1;
 
 __END__
@@ -168,12 +267,21 @@ Term::Fabulous::Lite::Inline - questions below the shell's output, answered sync
 	my $sure = TF->inline->confirm( 'Delete notes.txt?', ok => 'Delete', default => 'cancel' );
 	my $size = TF->inline->choose( 'Which size?', options => [ [ Small => 's' ], [ Medium => 'm' ], [ Large => 'l' ] ], value => 'm' );
 
+	my $order = TF->inline->form(
+		'Your order',
+		fields => [
+			{ name => 'name', label => 'Name', input => TF->text_field( required => 1 ) },
+			{ name => 'size', label => 'Size', input => TF->radio_group( value => 'm', direction => 'ltr', gap => 2, TF->radio_button( 'Small', value => 's' ), TF->radio_button( 'Medium', value => 'm' ) ) },
+		],
+		ok => 'Order',
+	);
+
 	say defined $name ? "Hello, $name!" : 'Cancelled.';
 
 =head1 DESCRIPTION
 
-Each method asks one question in a few rows below the shell's earlier
-output (inline mode, see L<Term::Fabulous/inline>), runs until the
+Each method asks a question (C<form>: several at once) in a few rows
+below the shell's earlier output (inline mode, see L<Term::Fabulous/inline>), runs until the
 user answers, and returns the answer; the rows stay on the screen as
 the last state showed them. Escape cancels every question, and the
 method returns C<undef>. Ctrl+C ends the program as everywhere in
@@ -226,6 +334,32 @@ L<Term::Fabulous::Widget::Prompt> shows them; returns 1 for the first,
 0 for the second, C<undef> after Escape. C<ok> and C<cancel> are the labels (C<OK> and C<Cancel>),
 C<default> the button that starts with the focus (C<ok>, or C<cancel>
 for a destructive question). The keys C<y> and C<n> answer too.
+
+=head2 form
+
+	my $values = TF->inline->form( $title, fields => \@fields, %options );
+
+Several questions at once: a bold title, one row per field with its
+label and input, the buttons C<ok> and C<cancel>, and the help line.
+Returns a hash reference of the values by field name, or C<undef>
+after Cancel or Escape. The region is as high as the form needs,
+measured at 80 columns.
+
+Each field is a hash with a C<name> (the key of its value), an
+optional C<label> and an C<input>, any widget with a C<value>: a
+L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>,
+L<Term::Fabulous::Widget::Checkbox>, L<Term::Fabulous::Widget::RadioGroup>,
+L<Term::Fabulous::Widget::Dropdown> or L<Term::Fabulous::Widget::Slider>,
+built with the C<TF> helpers. The first input starts with the focus;
+Tab moves on to the next, then to the buttons.
+
+The C<ok> button (and Enter in a text field) answers only when every
+input is valid (C<required>, C<validator>, see
+L<Term::Fabulous::Widget::Input>) and C<check>, a code reference that
+gets the values and returns a problem or nothing, is satisfied. The
+problem takes the help line, as C<Label: message>, and the input it is
+about gets the focus. C<ok> and C<cancel> are the labels of the
+buttons (C<OK> and C<Cancel>).
 
 =head2 choose
 

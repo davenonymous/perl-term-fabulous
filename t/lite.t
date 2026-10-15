@@ -66,10 +66,11 @@ subtest 'the option vocabulary' => sub {
 	is TF->box( border => 1 )->bordered,                                      { top => 1, right => 1, bottom => 1, left => 1 },       'border 1 is a border on every side';
 	is TF->box( border => 0 )->bordered,                                      { top => 0, right => 0, bottom => 0, left => 0 },       'border 0 is no border';
 	my $sides = TF->box( border => { top => 1, bottom => 1, style => 'Heavy' } );
-	is $sides->bordered, { top => 1, right => 0, bottom => 1, left => 0 }, 'border as a hash of sides';
-	is $sides->border_style_top->name,                     'Heavy',            'with its style';
-	is TF->text( 'x', fg => '#ff0000' )->text_color,       [ 255, 0, 0, 255 ], 'fg is the text color';
-	is TF->text_field( columns => 12 )->preferred_columns, 12,                 'columns is preferred_columns';
+	is $sides->bordered, { top => 1, right => 0, bottom => 1, left => 0 },                                    'border as a hash of sides';
+	is $sides->border_style_top->name,                                                                        'Heavy',            'with its style';
+	is TF->table( id => 't', border => 'Double', columns => [ { key => 'a', title => 'A' } ] )->border->name, 'Double',           'a table keeps border and columns as its own parameters';
+	is TF->text( 'x', fg => '#ff0000' )->text_color,                                                          [ 255, 0, 0, 255 ], 'fg is the text color';
+	is TF->text_field( columns => 12 )->preferred_columns,                                                    12,                 'columns is preferred_columns';
 
 	my $box_with_layout = TF->box( gap => 2, layout => { padding => { left => 1 } } );
 	is $box_with_layout->layout, { child_gap => 2, padding => { left => 1 } }, 'a Lite option merges into a given layout hash';

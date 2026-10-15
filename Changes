@@ -9,7 +9,10 @@ Revision history for Term::Fabulous
           print a tree (print, render), load a layout (load) and pick a
           theme by name or file (theme). Term::Fabulous::Lite::Inline
           (TF->inline) asks a question below the shell's output and
-          returns the answer: prompt, confirm and choose.
+          returns the answer: prompt, confirm, choose, and form for
+          several fields at once. A Lite option that a widget declares
+          as a parameter of its own (a Table's border and columns)
+          reaches the widget untouched.
         - Term::Fabulous::Check: direction, line_sizing, align_x and
           align_y parse the names a layout file uses; Box uses them.
 

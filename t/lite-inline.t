@@ -9,6 +9,10 @@ use Test2::V0;
 use Term::Fabulous::Lite;
 use Term::Fabulous::Terminal::Memory;
 
+# A question nothing answers would wait forever.
+local $SIG{ALRM} = sub { die "t/lite-inline.t: a question was not answered within 60 seconds\n" };
+alarm 60;
+
 # A memory terminal with the keys queued, as the user would press them.
 sub terminal (@keys) {
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 60, height => 8 );
@@ -68,6 +72,48 @@ subtest 'choose' => sub {
 
 	like dies { TF->inline->choose('Size?') },                  qr/\ATerm::Fabulous::Lite::Inline: choose needs options to choose from/, 'options are needed';
 	like dies { TF->inline->choose( 'Size?', options => [] ) }, qr/choose needs at least one option/,                                    'and at least one';
+};
+
+subtest 'form' => sub {
+	my $fields = sub {
+		return [
+			{ name => 'name', label => 'Name', input => TF->text_field( required => 1 ) },
+			{
+				name  => 'size', label => 'Size',
+				input => TF->radio_group( value => 'm', direction => 'ltr', gap => 2, TF->radio_button( 'Small', value => 's' ), TF->radio_button( 'Medium', value => 'm' ) )
+			},
+			{ name => 'news', input => TF->checkbox('Newsletter') },
+		];
+	};
+	my $terminal = terminal( qw(A d a), 'Tab', 'Left', 'Tab', 'Space', 'Tab', 'Enter' );
+	is TF->inline->form( 'Order', fields => $fields->(), terminal => $terminal ), { name => 'Ada', size => 's', news => 1 }, 'the ok button answers with every value';
+	my @lines = $terminal->lines;
+	like $lines[0],  qr/\AOrder/,                  'the title is the first row';
+	like $lines[1],  qr/\AName\s+Ada/,             'a field row has the label and the input';
+	like $lines[2],  qr/\ASize\s+\(.\) Small/,     'the labels share one column';
+	like $lines[3],  qr/\A\s+\[x\] Newsletter/,    'a field without a label keeps the column';
+	like $lines[-1], qr/Tab moves, Enter answers/, 'the help line is the last row';
+	is scalar @lines, 8, 'the region is as high as the form: title, three fields, three button rows, help';
+
+	is TF->inline->form( 'Order', fields => $fields->(), terminal => terminal( qw(A d a), 'Enter' ) ), { name => 'Ada', size => 'm', news => 0 }, 'Enter in a text field answers too';
+	is TF->inline->form( 'Order', fields => $fields->(), terminal => terminal('Escape') ),                              undef, 'Escape cancels';
+	is TF->inline->form( 'Order', fields => $fields->(), terminal => terminal( 'Tab', 'Tab', 'Tab', 'Tab', 'Enter' ) ), undef, 'the cancel button cancels';
+
+	my $invalid = terminal( 'Enter', 'B', 'Enter', 'Escape' );
+	is TF->inline->form( 'Order', fields => $fields->(), check => sub ($values) { $values->{name} eq 'Ada' ? undef : 'Only Ada may order.' }, terminal => $invalid ), undef,
+		'an invalid form is not answered';
+	like join( "\n", $invalid->lines ), qr/Only Ada may order\./, 'the problem of the whole form takes the help line';
+
+	my $required = terminal( 'Tab', 'Tab', 'Tab', 'Enter', 'Escape' );
+	TF->inline->form( 'Order', fields => $fields->(), terminal => $required );
+	like join( "\n", $required->lines ), qr/Name: Please fill in this field\./, 'a required field names itself in the problem';
+
+	like dies { TF->inline->form('Order') }, qr/\ATerm::Fabulous::Lite::Inline: form needs fields, an array reference of \{ name, label, input \} hashes, got undef/, 'fields are needed';
+	like dies { TF->inline->form( 'Order', fields => [ { name => 'x', input => 'nope' } ] ) }, qr/the input of the field 'x' must be a widget with a value, got 'nope'/, 'an input must be a widget';
+	like dies { TF->inline->form( 'Order', fields => [ { name => 'x', input => TF->text_field, extra => 1 } ] ) }, qr/the field 'x' has unknown keys: extra/, 'unknown field keys die';
+	like dies { TF->inline->form( 'Order', fields => [ { name => 'x', input => TF->text_field }, { name => 'x', input => TF->text_field } ] ) }, qr/two fields have the name 'x'/,
+		'duplicate names die';
+	like dies { TF->inline->form( 'Order', fields => $fields->(), check => 'nope' ) }, qr/form check must be a code reference, got 'nope'/, 'check must be code';
 };
 
 done_testing;

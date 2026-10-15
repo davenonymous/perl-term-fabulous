@@ -80,7 +80,7 @@ L</Ask for input below the shell's output (inline mode)>
 
 =item *
 
-L</Ask three questions below the shell's output (TF-E<gt>inline)>
+L</Ask several questions at once below the shell's output (TF-E<gt>inline-E<gt>form)>
 
 =item *
 
@@ -1402,11 +1402,11 @@ for selecting and copying text, as with C<< mouse => 0 >>.
 
 =back
 
-=head1 Ask three questions below the shell's output (TF->inline)
+=head1 Ask several questions at once below the shell's output (TF->inline->form)
 
-Goal: the inline prompt of the previous recipe in one call per
-question, with the answer as the return value: a text, a choice from
-a list and a yes or no.
+Goal: the inline prompt of the previous recipe as a form of three
+fields in one call, with the answers as a hash: a text, a choice and
+a yes or no, all visible at once below the shell's output.
 
 This program is shipped as F<examples/cookbook/lite-inline.pl>.
 
@@ -1414,30 +1414,28 @@ This program is shipped as F<examples/cookbook/lite-inline.pl>.
 
 	use v5.32;
 	use warnings;
-	use feature 'signatures';
-	no warnings 'experimental::signatures';
 
 	use Term::Fabulous::Lite;    # exports TF
 
-	# Each question takes a few rows below the shell's output, waits for
-	# the answer and returns it; Escape returns undef.
-	sub cancelled () {
-		say 'Cancelled.';
-		exit;
-	}
+	# One form below the shell's output: every field at once, Tab moves
+	# between them, Enter or the Order button answers, Escape cancels.
+	my $order = TF->inline->form(
+		'Your order',
+		fields => [
+			{ name => 'name', label => 'Name', input => TF->text_field( placeholder => 'Your name', required => 1, columns => 30 ) },
+			{ name => 'size', label => 'Size', input => TF->radio_group( value => 'Medium', direction => 'ltr', gap => 2, map { TF->radio_button($_) } qw(Small Medium Large) ) },
+			{ name => 'news', label => '',     input => TF->checkbox('Send me the newsletter') },
+		],
+		ok => 'Order',
+	);
 
-	my $name = TF->inline->prompt( 'What is your name?', placeholder => 'Your name' );
-	cancelled() unless defined $name;
-
-	my $size = TF->inline->choose( 'Which size?', options => [qw(Small Medium Large)], value => 'Medium' );
-	cancelled() unless defined $size;
-
-	my $sure = TF->inline->confirm( "Order a $size one for $name?", ok => 'Order', default => 'cancel' );
-	say $sure ? "Ordered a $size one for $name." : 'Nothing ordered.';
+	say defined $order
+		? sprintf( 'Ordered a %s one for %s%s.', $order->{size}, $order->{name}, $order->{news} ? ', with the newsletter' : '' )
+		: 'Cancelled.';
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-lite-inline.svg" alt="The first of the three questions below a shell's earlier output: the question, the name field holding Ada Lovelace and the help line"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-lite-inline.svg" alt="A form below a shell's earlier output: the title Your order, a name field holding Ada Lovelace, the size radio buttons with Large chosen, a checked newsletter checkbox, the Order and Cancel buttons and the help line"></p>
 
 =end html
 
@@ -1445,25 +1443,26 @@ This program is shipped as F<examples/cookbook/lite-inline.pl>.
 
 =item *
 
-C<TF-E<gt>inline> of L<Term::Fabulous::Lite> gives the three
-questions of L<Term::Fabulous::Lite::Inline>. Each opens the rows it
-needs in inline mode, runs until the user answers, and returns the
-answer: C<prompt> the text, C<choose> the value of the chosen option,
-C<confirm> 1 or 0. Escape returns C<undef> from any of them.
+C<TF-E<gt>inline-E<gt>form> of L<Term::Fabulous::Lite::Inline> takes a
+title and the fields, each a hash with a C<name>, a C<label> and an
+C<input> built with the C<TF> helpers: any widget with a value. It
+opens the rows the form needs in inline mode, runs until the user
+answers, and returns the values by name, or C<undef> after Cancel or
+Escape. The rows stay on the screen when the program goes on.
 
 =item *
 
-The rows of an answered question stay on the screen, so the three
-questions and their answers read like a transcript when the program
-goes on.
+Tab moves from field to field and on to the buttons; Enter in the
+text field presses the first button. The button answers only when
+every input is valid: the name field is C<required>, so an empty name
+puts C<Name: Please fill in this field.> on the help line and the
+focus back into the field. A C<check> code reference can judge the
+values as a whole.
 
 =item *
 
-C<prompt> takes the options of a L<Term::Fabulous::Widget::TextField>
-(C<placeholder>, C<value>, C<mask>, C<required>, C<validator>);
-C<choose> takes C<options> as every option list in Term::Fabulous
-does; C<confirm> names its buttons with C<ok> and C<cancel> and starts
-on the one C<default> names.
+For one question at a time, L<Term::Fabulous::Lite::Inline> also has
+C<prompt>, C<confirm> and C<choose>, each returning its answer.
 
 =back
 

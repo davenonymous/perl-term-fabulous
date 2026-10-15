@@ -2,23 +2,21 @@
 
 use v5.32;
 use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 use Term::Fabulous::Lite;    # exports TF
 
-# Each question takes a few rows below the shell's output, waits for
-# the answer and returns it; Escape returns undef.
-sub cancelled () {
-	say 'Cancelled.';
-	exit;
-}
+# One form below the shell's output: every field at once, Tab moves
+# between them, Enter or the Order button answers, Escape cancels.
+my $order = TF->inline->form(
+	'Your order',
+	fields => [
+		{ name => 'name', label => 'Name', input => TF->text_field( placeholder => 'Your name', required => 1, columns => 30 ) },
+		{ name => 'size', label => 'Size', input => TF->radio_group( value => 'Medium', direction => 'ltr', gap => 2, map { TF->radio_button($_) } qw(Small Medium Large) ) },
+		{ name => 'news', label => '',     input => TF->checkbox('Send me the newsletter') },
+	],
+	ok => 'Order',
+);
 
-my $name = TF->inline->prompt( 'What is your name?', placeholder => 'Your name' );
-cancelled() unless defined $name;
-
-my $size = TF->inline->choose( 'Which size?', options => [qw(Small Medium Large)], value => 'Medium' );
-cancelled() unless defined $size;
-
-my $sure = TF->inline->confirm( "Order a $size one for $name?", ok => 'Order', default => 'cancel' );
-say $sure ? "Ordered a $size one for $name." : 'Nothing ordered.';
+say defined $order
+	? sprintf( 'Ordered a %s one for %s%s.', $order->{size}, $order->{name}, $order->{news} ? ', with the newsletter' : '' )
+	: 'Cancelled.';

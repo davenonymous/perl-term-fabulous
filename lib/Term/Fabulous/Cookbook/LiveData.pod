@@ -42,6 +42,10 @@ L</Scroll a ScrollBox from code (keep a log at the newest line)>
 
 L</Show the output of a running command>
 
+=item *
+
+L</A live dashboard with the TF helpers (chart, gauges, status bar)>
+
 =back
 
 =head1 Update the screen from a timer (a clock)
@@ -566,6 +570,132 @@ status, C<on_exception> a command that could not be started.
 
 The timer at the end keeps the newest line in view, as explained in
 L</Scroll a ScrollBox from code (keep a log at the newest line)>.
+
+=back
+
+=head1 A live dashboard with the TF helpers (chart, gauges, status bar)
+
+Goal: a screen that a timer feeds four times a second: a chart of the
+last minute of traffic, three gauges for the resources and a status
+bar, written with the C<TF> helpers of L<Term::Fabulous::Lite>.
+
+This program is shipped as F<examples/cookbook/lite-dashboard.pl>.
+
+=for code-from examples/cookbook/lite-dashboard.pl
+
+	use v5.32;
+	use warnings;
+	use feature 'signatures';
+	no warnings 'experimental::signatures';
+
+	use IO::Async::Loop;
+	use IO::Async::Timer::Periodic;
+	use Time::HiRes ();
+
+	use Term::Fabulous::Lite;    # exports TF
+
+	# A dashboard that a timer feeds four times a second: a chart of the
+	# last minute of traffic, three gauges and a status bar. q or Escape
+	# quits.
+
+	my $traffic = TF->widget(
+		'LineChart',
+		title      => 'Traffic',
+		x_axis     => { type => 'time', span => 60, format => '%H:%M:%S' },
+		y_axis     => { min  => 0, title => 'Mbit/s' },
+		max_points => 240,
+		series     => [ { name => 'in', type => 'area', line => 1 }, { name => 'out' } ],
+		width      => 'grow',
+		height     => 'grow',
+	);
+	my %label  = ( cpu => 'CPU', memory => 'Memory', disk => 'Disk' );
+	my %gauge  = map { $_ => TF->progress_bar( value => 0, columns => 22 ) } qw(cpu memory disk);
+	my $status = TF->status_bar( 'Collecting the first measurements', parts => [ [ 'q quits', 'dim' ] ] );
+
+	my $root = TF->screen(
+		TF->column(
+			width   => 'grow',
+			height  => 'grow',
+			padding => [ 1, 2 ],
+			gap     => 1,
+			TF->text( 'Server dashboard', bold => 1 ),
+			TF->row(
+				gap    => 2,
+				width  => 'grow',
+				height => 'grow',
+				$traffic,
+				TF->column(
+					border  => 'Round',
+					padding => [ 0, 1 ],
+					gap     => 1,
+					width   => 'fixed(40)',
+					TF->text( 'Resources', bold => 1 ),
+					map { TF->row( gap => 1, TF->box( width => 'fixed(7)', TF->text( $label{$_} ) ), $gauge{$_} ) } qw(cpu memory disk),
+				),
+			),
+		),
+		$status,
+	);
+
+	# Made-up measurements: smooth curves with a little noise.
+	my $tick = 0;
+
+	sub measure () {
+		$tick++;
+		return (
+			in     => 65 + 20 * sin( $tick / 23 ) + 8 * sin( $tick / 3.1 ) + 4 * sin( $tick * 1.7 ),
+			out    => 18 + 6 * sin( $tick / 11 ) + 3 * sin( $tick * 2.3 ),
+			cpu    => 45 + 35 * sin( $tick / 17 ) + 5 * sin( $tick * 1.3 ),
+			memory => 62 + 4 * sin( $tick / 41 ),
+			disk   => 71 + $tick / 400,
+		);
+	}
+
+	my $timer = IO::Async::Timer::Periodic->new(
+		interval => 0.25,
+		on_tick  => sub {
+			my %now = measure();
+			$traffic->append( Time::HiRes::time(), { in => $now{in}, out => $now{out} } );
+			$gauge{$_}->value( $now{$_} ) foreach qw(cpu memory disk);
+			$gauge{cpu}->color( $now{cpu} > 75                                                                                    ? '#e06c75' : '#61afef' );
+			$status->message( sprintf( 'In %.1f Mbit/s, out %.1f Mbit/s, CPU %d%%', @now{qw(in out)}, $now{cpu} ), $now{cpu} > 75 ? 'warning' : 'info' );
+			return;
+		},
+	);
+	$timer->start;
+	IO::Async::Loop->new->add($timer);
+
+	TF->run( $root, quit_keys => [qw(q Escape)] );
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-lite-dashboard.svg" alt="The dashboard: a line chart of the traffic in and out over the last minute on the left, a framed column of CPU, memory and disk gauges on the right, and a status bar with the latest measurements"></p>
+
+=end html
+
+=over
+
+=item *
+
+C<TF-E<gt>widget( 'LineChart', ... )> builds a widget that has no
+helper of its own; the Lite options (C<width>, C<height>) and the
+chart's parameters go together. The chart is the one of
+L<Term::Fabulous::Cookbook::ChartTechniques/A live chart that follows new data (append, max_points, span)>.
+
+=item *
+
+The gauges are L<progress bars|Term::Fabulous::Widget::ProgressBar> in
+a framed column of a fixed width next to the chart that grows; each
+tick sets their C<value>, and the CPU bar turns red above 75 percent.
+The L<status bar|Term::Fabulous::Widget::StatusBar> is the last child
+of the screen, outside the padded column, so it spans the whole width.
+
+=item *
+
+The timer is an L<IO::Async::Timer::Periodic> added to the loop
+before C<TF-E<gt>run>, as in
+L</Update the screen from a timer (a clock)>; the widgets ask for a
+frame when their values change.
 
 =back
 

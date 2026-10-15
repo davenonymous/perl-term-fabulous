@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="780" height="237" viewBox="0 0 780 237" role="img" aria-label="perl examples/cookbook/lite-inline.pl">
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="309" viewBox="0 0 780 309" role="img" aria-label="perl examples/cookbook/lite-inline.pl">
 <title>perl examples/cookbook/lite-inline.pl</title>
 <style>
 .terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
@@ -8,27 +8,51 @@
 </style>
 <defs>
 <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
-<clipPath id="window"><rect x="16" y="16" width="748" height="202" rx="10"/></clipPath>
+<clipPath id="window"><rect x="16" y="16" width="748" height="274" rx="10"/></clipPath>
 </defs>
-<rect x="16" y="16" width="748" height="202" rx="10" fill="#161622" filter="url(#shadow)"/>
+<rect x="16" y="16" width="748" height="274" rx="10" fill="#161622" filter="url(#shadow)"/>
 <rect x="16" y="16" width="748" height="34" fill="#1f2430" clip-path="url(#window)"/>
 <circle cx="36" cy="33" r="6" fill="#ff5f57"/>
 <circle cx="56" cy="33" r="6" fill="#febc2e"/>
 <circle cx="76" cy="33" r="6" fill="#28c840"/>
 <text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/lite-inline.pl</text>
-<rect x="16.5" y="16.5" width="747" height="201" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<rect x="16.5" y="16.5" width="747" height="273" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="30" y="132" width="108" height="18" fill="#343a48"/>
-<rect x="138" y="132" width="9" height="18" fill="#dcdfe4"/>
-<rect x="147" y="132" width="243" height="18" fill="#343a48"/>
+<rect x="75" y="132" width="270" height="18" fill="#242830"/>
+<rect x="75" y="168" width="234" height="18" fill="#343a48"/>
+<rect x="39" y="194" width="63" height="1" fill="#46556e"/>
+<rect x="138" y="194" width="72" height="1" fill="#46556e"/>
+<rect x="34" y="204" width="1" height="18" fill="#46556e"/>
+<rect x="106" y="204" width="1" height="18" fill="#46556e"/>
+<rect x="133" y="204" width="1" height="18" fill="#46556e"/>
+<rect x="214" y="204" width="1" height="18" fill="#46556e"/>
+<rect x="39" y="230" width="63" height="1" fill="#46556e"/>
+<rect x="138" y="230" width="72" height="1" fill="#46556e"/>
 </g>
+<polyline points="34.5 204 34.5 199 34.538 198.413 34.653 197.835 34.843 197.278 35.103 196.75 35.43 196.261 35.818 195.818 36.261 195.43 36.75 195.103 37.278 194.843 37.835 194.653 38.413 194.538 39 194.5 39 194.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="106.5 204 106.5 199 106.462 198.413 106.347 197.835 106.157 197.278 105.897 196.75 105.57 196.261 105.182 195.818 104.739 195.43 104.25 195.103 103.722 194.843 103.165 194.653 102.587 194.538 102 194.5 102 194.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="133.5 204 133.5 199 133.538 198.413 133.653 197.835 133.843 197.278 134.103 196.75 134.43 196.261 134.818 195.818 135.261 195.43 135.75 195.103 136.278 194.843 136.835 194.653 137.413 194.538 138 194.5 138 194.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="214.5 204 214.5 199 214.462 198.413 214.347 197.835 214.157 197.278 213.897 196.75 213.57 196.261 213.182 195.818 212.739 195.43 212.25 195.103 211.722 194.843 211.165 194.653 210.587 194.538 210 194.5 210 194.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="34.5 222 34.5 226 34.538 226.587 34.653 227.165 34.843 227.722 35.103 228.25 35.43 228.739 35.818 229.182 36.261 229.57 36.75 229.897 37.278 230.157 37.835 230.347 38.413 230.462 39 230.5 39 230.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="106.5 222 106.5 226 106.462 226.587 106.347 227.165 106.157 227.722 105.897 228.25 105.57 228.739 105.182 229.182 104.739 229.57 104.25 229.897 103.722 230.157 103.165 230.347 102.587 230.462 102 230.5 102 230.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="133.5 222 133.5 226 133.538 226.587 133.653 227.165 133.843 227.722 134.103 228.25 134.43 228.739 134.818 229.182 135.261 229.57 135.75 229.897 136.278 230.157 136.835 230.347 137.413 230.462 138 230.5 138 230.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
+<polyline points="214.5 222 214.5 226 214.462 226.587 214.347 227.165 214.157 227.722 213.897 228.25 213.57 228.739 213.182 229.182 212.739 229.57 212.25 229.897 211.722 230.157 211.165 230.347 210.587 230.462 210 230.5 210 230.5" fill="none" stroke="#46556e" stroke-width="1" stroke-linejoin="round"/>
 <g class="terminal">
 <text x="30" y="74" textLength="36" fill="#d4d8e0">$ ls</text>
 <text x="30" y="92" textLength="270" fill="#d4d8e0">notes.txt  report.csv  todo.md</text>
 <text x="30" y="110" textLength="351" fill="#d4d8e0">$ perl examples/cookbook/lite-inline.pl</text>
-<text x="30" y="128" textLength="162" fill="#dcdfe4">What is your name?</text>
-<text x="30" y="146" textLength="108" fill="#dcdfe4">Ada Lovelace</text>
-<text x="30" y="164" textLength="270" fill="#dcdfe4">Enter answers, Escape cancels.</text>
+<text x="30" y="128" textLength="90" class="b" fill="#dcdfe4">Your order</text>
+<text x="30" y="146" textLength="153" fill="#dcdfe4">Name Ada Lovelace</text>
+<text x="30" y="164" textLength="234" fill="#dcdfe4">Size ( ) Small  ( ) Medium</text>
+<text x="282" y="164" textLength="9" fill="#61afef">(</text>
+<text x="295.5" y="164" text-anchor="middle" fill="#61afef">•</text>
+<text x="300" y="164" textLength="9" fill="#61afef">)</text>
+<text x="318" y="164" textLength="45" fill="#dcdfe4">Large</text>
+<text x="75" y="182" textLength="27" fill="#61afef">[x]</text>
+<text x="111" y="182" textLength="198" fill="#dcdfe4">Send me the newsletter</text>
+<text x="48" y="218" textLength="45" fill="#dcdfe4">Order</text>
+<text x="147" y="218" textLength="54" fill="#dcdfe4">Cancel</text>
+<text x="30" y="254" textLength="369" fill="#dcdfe4">Tab moves, Enter answers, Escape cancels.</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

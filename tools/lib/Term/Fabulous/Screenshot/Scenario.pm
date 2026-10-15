@@ -31,6 +31,7 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 	field $name      :param :reader;
 	field $script    :param :reader;
 	field $arguments :param :reader = [];
+	field $cwd       :param :reader = undef;    # the directory the program runs in, or undef for a fresh one
 	field $columns   :param :reader = DEFAULT_COLUMNS;
 	field $rows      :param :reader = DEFAULT_ROWS;
 	field $title     :param :reader = undef;
@@ -111,6 +112,9 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 			elsif ( $name eq 'args' ) {
 				$settings{arguments} = [ map { _string_value( $_, $where ) } @{ $setting->args } ];
 			}
+			elsif ( $name eq 'cwd' ) {
+				$settings{cwd} = _single_string( $setting, $where, 'cwd' );
+			}
 			elsif ( $name eq 'size' ) {
 				my @size = _numbers( $setting, $where, 2 );
 				@settings{qw(columns rows)} = @size;
@@ -131,7 +135,7 @@ class Term::Fabulous::Screenshot::Scenario :strict(params) {
 				$settings{steps} = [ map { _compile_step( $_, "$origin: $context: steps" ) } @{ $setting->children } ];
 			}
 			else {
-				croak "Term::Fabulous::Screenshot::Scenario: $where: unknown setting (known: script, args, size, title, clock, shell, steps)";
+				croak "Term::Fabulous::Screenshot::Scenario: $where: unknown setting (known: script, args, cwd, size, title, clock, shell, steps)";
 			}
 		}
 		return %settings;
@@ -313,6 +317,14 @@ Required.
 =item C<args "ARG" ...>
 
 Arguments for the program.
+
+=item C<cwd "PATH">
+
+The directory the program runs in, relative to the distribution's top
+directory (C<"."> is the top directory itself). Default: a fresh
+temporary directory, so a program that writes files leaves nothing
+behind. For a program that reads the files around it, such as a
+directory browser.
 
 =item C<size COLUMNS ROWS>
 

@@ -10,6 +10,7 @@ our $VERSION = '0.03';
 use Exporter 'import';
 our @EXPORT_OK = qw(split_arguments widget_params);
 
+use Object::Pad::MOP::Class qw( :experimental(mop) );
 use Scalar::Util qw(blessed);
 use Term::Fabulous::Check qw(align_x align_y border_style boolean describe direction line_sizing non_negative_integer one_of sizing);
 
@@ -113,6 +114,29 @@ sub _listeners ( $what, $value ) {
 	return {%$value};
 }
 
+# The constructor parameters a class declares, with those of the
+# classes and roles above it; a Table takes its frame as border and its
+# column specs as columns, which the Lite options of those names must
+# leave alone.
+my %OWN_PARAMS_OF;
+
+sub _is_own_param ( $module, $name ) {
+	return $OWN_PARAMS_OF{$module}{$name} // 0 if exists $OWN_PARAMS_OF{$module};
+	my %is_own;
+	my @classes = ( Object::Pad::MOP::Class->for_class($module) );
+	while ( my $meta = shift @classes ) {
+		foreach my $field ( $meta->fields ) {
+			next unless $field->has_attribute('param');
+			my $param = $field->get_attribute_value('param');
+			$param = $field->name =~ s/\A[\$\@%]//r unless defined $param && length $param;
+			$is_own{$param} = 1;
+		}
+		push @classes, $meta->superclasses, $meta->direct_roles;
+	}
+	$OWN_PARAMS_OF{$module} = \%is_own;
+	return $is_own{$name} // 0;
+}
+
 sub _has_path ( $params, @path ) {
 	my $node = $params;
 	foreach my $key (@path) {
@@ -153,13 +177,13 @@ sub widget_params ( $what, $module, $options ) {
 	if ( exists $params{on} ) {
 		$listeners = _listeners( $what, delete $params{on} );
 	}
-	if ( exists $params{border} ) {
+	if ( exists $params{border} && !_is_own_param( $module, 'border' ) ) {
 		my $value = delete $params{border};
 		die OWNER . ": $what has both border and " . join( ', ', grep { exists $params{$_} } qw(bordered border_style) ) . '; give one of them'
 			if exists $params{bordered} || exists $params{border_style};
 		%params = ( %params, _border( $what, $value ) );
 	}
-	foreach my $option ( sort grep { exists $LITE_OPTION{$_} } keys %params ) {
+	foreach my $option ( sort grep { exists $LITE_OPTION{$_} && !_is_own_param( $module, $_ ) } keys %params ) {
 		my $spec  = $LITE_OPTION{$option};
 		my $value = delete $params{$option};
 		die OWNER . ": $what has both $option and " . join( '.', @{ $spec->{path} } ) . '; give one of them' if _has_path( \%params, @{ $spec->{path} } );
@@ -218,7 +242,9 @@ unchanged. A Lite option given together with the full parameter it
 stands for dies, and so does a layout option (C<width>, C<height>,
 C<direction>, C<gap>, C<line_gap>, C<line_sizing>, C<padding>,
 C<align>) for a class without a layout, such as
-L<Term::Fabulous::Widget::Text>.
+L<Term::Fabulous::Widget::Text>. A Lite option that is also a
+constructor parameter of the class (C<border> and C<columns> of a
+L<Term::Fabulous::Widget::Table>) passes through untouched.
 
 =head1 SEE ALSO
 

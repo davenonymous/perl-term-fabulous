@@ -60,7 +60,9 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 
 		my $work_dir     = File::Temp->newdir( 'tf-screenshot-XXXXXX', TMPDIR => 1 );
 		my $capture_file = "$work_dir/.capture.json";
-		my $pty          = IO::Pty->new;
+		my $program_dir  = defined $job{cwd} ? File::Spec->rel2abs( $job{cwd} ) : "$work_dir";
+		croak "Term::Fabulous::Screenshot::Runner: cwd $job{cwd} is not a directory" unless -d $program_dir;
+		my $pty = IO::Pty->new;
 		$pty->slave->set_winsize( $job{rows}, $job{columns}, $job{columns} * CELL_WIDTH_PIXELS, $job{rows} * CELL_HEIGHT_PIXELS )
 			or croak "Term::Fabulous::Screenshot::Runner: cannot set the terminal size: $!";
 		pipe( my $error_reader, my $error_writer ) or croak "Term::Fabulous::Screenshot::Runner: pipe failed: $!";
@@ -77,7 +79,7 @@ class Term::Fabulous::Screenshot::Runner :strict(params) {
 
 		my $pid = fork // croak "Term::Fabulous::Screenshot::Runner: fork failed: $!";
 		if ( $pid == 0 ) {
-			_start_program( $pty, $error_writer, "$work_dir", $config, \@command );
+			_start_program( $pty, $error_writer, $program_dir, $config, \@command );
 		}
 
 		close $error_writer;
@@ -343,6 +345,11 @@ The program to run.
 =item C<arguments>
 
 An array reference of arguments for the program. Optional.
+
+=item C<cwd>
+
+The directory the program runs in. Optional; by default a fresh
+temporary directory, which also holds the capture file.
 
 =item C<columns>, C<rows>
 

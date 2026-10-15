@@ -476,14 +476,36 @@ screenshot "cookbook-own-checks" {
 	}
 }
 
-// The harness follows the cursor through absolute moves only, so it
-// shows one inline region at a time: the first question.
 screenshot "cookbook-lite-inline" {
 	script "examples/cookbook/lite-inline.pl"
-	size 80 8
+	size 80 12
 	shell "$ ls" "notes.txt  report.csv  todo.md" "$ perl examples/cookbook/lite-inline.pl"
 	steps {
 		type "Ada Lovelace"
+		key "Tab" "Right" "Tab" "Space"
+	}
+}
+
+screenshot "cookbook-lite-report" {
+	script "examples/cookbook/lite-report.pl"
+	size 66 19
+}
+
+screenshot "cookbook-lite-dashboard" {
+	script "examples/cookbook/lite-dashboard.pl"
+	size 100 26
+	steps {
+		wait 40
+	}
+}
+
+screenshot "cookbook-lite-table" {
+	script "examples/cookbook/lite-table.pl"
+	args "examples/cookbook"
+	cwd "."
+	size 90 24
+	steps {
+		key "Down" "Down" "Down" "Enter"
 	}
 }
 
