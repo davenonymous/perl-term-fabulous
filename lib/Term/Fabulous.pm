@@ -749,6 +749,13 @@ object (L<Term::Fabulous::Role::Terminal>): the real one by default, or
 L<Term::Fabulous::Terminal::Memory> in tests, which L</step> drives
 without an event loop.
 
+=head1 AI DISCLAIMER
+
+AI has been used in the development of this project, including code
+generation and documentation. If that is a concern for you, this
+project may not be for you. Please consider this before using or
+contributing to the project.
+
 =head1 DOCUMENTATION
 
 The documentation has four parts. If you are new to Term::Fabulous,
