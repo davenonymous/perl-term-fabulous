@@ -6,6 +6,8 @@ no warnings 'experimental::signatures';
 
 use Test2::V0;
 
+use Object::Pad 0.825;
+
 use Clay::XS qw(sizing_fixed sizing_grow);
 use Term::Fabulous;
 use Term::Fabulous::Color;
@@ -100,6 +102,26 @@ subtest 'a theme switch repaints in the new colors' => sub {
 	$ui->step;
 	my $light = Term::Fabulous::Document::Look->of($code);
 	is [ @{ $terminal->cell( 4, 0 ) }[ 1, 2 ] ], [ attr_of( $light->style('code_block')->{color} ), attr_of( $light->style('code_block')->{background} ) ], 'the cached runs follow the theme';
+};
+
+# A look that paints code on another background.
+class My::CodeLook :isa(Term::Fabulous::Document::Look) {
+
+	method recipes :common () {
+		return ( $class->SUPER::recipes, code_block => { color => 'text', background => 'accent' } );
+	}
+}
+
+subtest 'look_class' => sub {
+	my ( $code, $terminal, $ui ) = code_ui( code => 'my $x;', look_class => 'My::CodeLook' );
+	my $look = My::CodeLook->of($code);
+	is $terminal->cell( 4, 0 )->[2], attr_of( $look->style('code_block')->{background} ), 'the block paints with the styles of its look class';
+	$code->look_class('Term::Fabulous::Document::Look');
+	$ui->step;
+	is $terminal->cell( 4, 0 )->[2], attr_of( Term::Fabulous::Document::Look->of($code)->style('code_block')->{background} ), 'and repaints when the class changes';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( look_class => 'Term::Fabulous::Widget::Box' ) }, qr/look_class must be the name of a Term::Fabulous::Document::Look class/,
+		'another class dies';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( look_class => 'No::Such::Look' ) }, qr/look_class must be the name of a Term::Fabulous::Document::Look class/, 'and so does an unknown one';
 };
 
 subtest 'KDL' => sub {

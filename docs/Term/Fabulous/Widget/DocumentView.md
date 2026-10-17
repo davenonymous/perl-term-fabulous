@@ -598,10 +598,8 @@ Class method that returns the name of the
 default is `Term::Fabulous::Document::Look`. A subclass that adds
 kinds of marks overrides it to return a subclass of that class. The
 view uses the class to check the marks of a document and, through
-["document\_look"](#document_look), to style the blocks. Code blocks are the exception:
-they always take their `code_block` and `clipped` styles from
-`Term::Fabulous::Document::Look` itself (see
-[Term::Fabulous::Widget::CodeBlock](CodeBlock.md)).
+["document\_look"](#document_look), to style the blocks, and hands it to every code
+block it builds (see ["look\_class" in Term::Fabulous::Widget::CodeBlock](CodeBlock.md#look_class)).
 
 ## view\_of\_heading, view\_of\_paragraph, view\_of\_item, view\_of\_term, view\_of\_verbatim
 

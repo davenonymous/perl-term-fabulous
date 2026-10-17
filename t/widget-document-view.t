@@ -304,7 +304,16 @@ class My::Rule :isa(Term::Fabulous::Document::Block) {
 	method body_rows :override ($) { return 1 }
 }
 
+class My::Look :isa(Term::Fabulous::Document::Look) {
+
+	method recipes :common () {
+		return ( $class->SUPER::recipes, code_block => { color => 'text', background => 'accent' } );
+	}
+}
+
 class My::View :isa(Term::Fabulous::Widget::DocumentView) {
+
+	method look_class :common () { return 'My::Look' }
 
 	method view_of_rule ( $block, $padding ) {
 		return { widget => $self->boxed( $padding, Term::Fabulous::Widget::Divider->new ), text => undef };
@@ -327,6 +336,11 @@ subtest 'a block kind of a subclass' => sub {
 	like dies { document_ui( $document, 40, 8 ) }, qr/no view_of_rule method for a block of kind 'rule'/, 'the base view dies for a kind it has no builder for';
 	like dies { document_ui( $document, 40, 8, 'My::WrongText' ) }, qr/view_of_rule must return a Term::Fabulous::Widget::RichText, .* as text, got a Term::Fabulous::Widget::Divider/,
 		'and a text that is no RichText or CodeBlock dies when the block is built';
+};
+
+subtest 'the code blocks of a subclass paint with its look' => sub {
+	my ( $view, $h ) = document_ui( document( verbatim('code') ), 40, 8, 'My::View' );
+	is cell_of( $h, 'code' )->[2], attr_of( My::Look->of($view)->style('code_block')->{background} ), 'a verbatim block takes the code_block style of the view\'s look class';
 };
 
 done_testing;

@@ -1833,10 +1833,10 @@ recursively. When a span is complete, its start and end offsets are
 known, and its marks are created. Marks of a paragraph style cover the
 whole paragraph and come first, so that marks inside it are drawn over
 them.
-- Link marks are created in the order of the text, because spans are read
-in order and links do not nest. The view relies on that order when it
-selects links. A parser that creates marks in another order must sort
-the link marks by their start.
+- Links do not nest in OpenDocument, so the link marks of a paragraph
+never overlap; two that did would make the block's constructor die. The
+block orders its link marks by their start itself, so the order in
+which a parser creates them does not matter.
 - The title gets no marks from its paragraph style: "Title" is bold in
 the word processor, but how a title looks is decided by the view's look
 (step 7). The same applies to headings.

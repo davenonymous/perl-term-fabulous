@@ -41,6 +41,18 @@ subtest 'blocks' => sub {
 	my $code = Term::Fabulous::Document::Block::Verbatim->new( text => "a\n\nlonger line", language => 'perl' );
 	is [ $code->kind, [ $code->lines ], $code->language ], [ 'verbatim', [ 'a', '', 'longer line' ], 'perl' ], 'a verbatim block has lines and a language';
 	is [ $code->body_rows(3), $code->row_of_character( 3, 3 ) ], [ 3, 2 ], 'code takes a row per line, whatever the columns';
+	my $empty = Term::Fabulous::Document::Block::Verbatim->new( text => '' );
+	is [ [ $empty->lines ], $empty->body_rows(10) ], [ [''], 1 ], 'an empty verbatim block is one empty line, the row its code block shows';
+
+	my $first  = Term::Fabulous::Document::Mark->new( start => 0, end => 4, kind => 'link', link => 'a' );
+	my $second = Term::Fabulous::Document::Mark->new( start => 5, end => 9, kind => 'link', link => 'b' );
+	like dies { Term::Fabulous::Document::Block::Paragraph->new( text => 'some text', marks => [ Term::Fabulous::Document::Mark->new( start => 2, end => 2, kind => 'link', link => 'x' ) ] ) },
+		qr/the link mark at 2 covers no text/, 'a link mark covers text';
+	like dies { Term::Fabulous::Document::Block::Paragraph->new( text => 'some text', marks => [ $first, Term::Fabulous::Document::Mark->new( start => 3, end => 6, kind => 'link', link => 'x' ) ] ) },
+		qr/the link marks 0 to 4 and 3 to 6 overlap/, 'and link marks do not overlap';
+	my $linked = Term::Fabulous::Document::Block::Paragraph->new( text => 'some text', marks => [ $second, $bold, $first ] );
+	is [ map { $_->link } $linked->links ], [ 'a', 'b' ], 'links come in the order of the text, however they were given';
+	is [ map { $_->kind } $linked->marks ], [ 'link', 'bold', 'link' ], 'while the marks keep their order';
 
 	my $marks     = [$bold];
 	my $paragraph = Term::Fabulous::Document::Block::Paragraph->new( text => 'bold text', marks => $marks, quote => 1 );

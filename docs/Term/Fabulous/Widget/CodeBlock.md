@@ -55,8 +55,9 @@ from the program's spans, and Clay does not have to lay out the text.
 The block is as many rows tall as its code has lines, and as wide as
 its parent allows (`natural_size` requests `sizing_grow` for the
 width). One column on each side is a margin, where the clip marks
-appear. The colors are the `code_block` and `clipped` styles of
-[Term::Fabulous::Document::Look](../Document/Look.md) in the theme the block draws with.
+appear. The colors are the `code_block` and `clipped` styles of the
+block's ["look\_class"](#look_class), [Term::Fabulous::Document::Look](../Document/Look.md) or a subclass
+of it, in the theme the block draws with.
 
 The block shows its code shifted to the left by ["offset"](#offset) columns. It
 does not react to keys or the mouse itself: the widget that contains it
@@ -123,6 +124,16 @@ message that names the parameter.
     paints with at most the offset that brings the end of its widest line
     into view (see ["shown\_offset"](#shown_offset)).
 
+- `look_class`
+
+    The name of the [Term::Fabulous::Document::Look](../Document/Look.md) class whose
+    `code_block` and `clipped` styles the block paints with; default
+    `Term::Fabulous::Document::Look`. A [Term::Fabulous::Widget::DocumentView](DocumentView.md)
+    passes its own [look\_class](DocumentView.md#look_class)
+    to every code block it builds, so a look subclass that restyles code
+    applies to the code blocks of the view too. A value that is not the
+    name of a loaded subclass of the look dies.
+
 # METHODS
 
 The block has all methods of [Term::Fabulous::Widget::Display](Display.md), plus
@@ -178,6 +189,15 @@ $code->offset(8);
 
 Gets or sets the offset, in columns. The block repaints only when the
 change affects what it shows, that is, when ["shown\_offset"](#shown_offset) changes.
+
+## look\_class
+
+```perl
+$code->look_class('My::Look');
+```
+
+Gets or sets the name of the look class (see ["new"](#new)). Setting it
+repaints the block in the styles of the new class.
 
 ## shown\_offset
 
@@ -253,7 +273,7 @@ highlighting to a document view.
 
 The block accepts the properties of
 ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties), plus `code`,
-`language` and `offset`:
+`language`, `offset` and `look_class`:
 
 ```kdl
 use Term::Fabulous::Widget::CodeBlock as CodeBlock

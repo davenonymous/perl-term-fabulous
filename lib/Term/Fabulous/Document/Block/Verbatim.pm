@@ -26,8 +26,10 @@ class Term::Fabulous::Document::Block::Verbatim :isa(Term::Fabulous::Document::B
 		return 'verbatim';
 	}
 
+	# An empty text is one empty line, the row its code block shows.
 	method lines () {
-		return split /\n/, $self->text, -1;
+		my @lines = split /\n/, $self->text, -1;
+		return @lines ? @lines : ('');
 	}
 
 	# Code does not wrap: a row per line, and a character is on the row
@@ -115,7 +117,7 @@ none.
 
 Returns the lines of the text, split at C<"\n">, without the line
 breaks. A text that ends with C<"\n"> has an empty last line, and an
-empty text has no lines at all.
+empty text is one empty line, the row the code block shows for it.
 
 =head2 body_rows, row_of_character
 

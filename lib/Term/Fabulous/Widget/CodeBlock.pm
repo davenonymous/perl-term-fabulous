@@ -35,6 +35,7 @@ class Term::Fabulous::Widget::CodeBlock
 	field $highlighter :param = undef;
 	field $spans       :param = [];
 	field $offset      :param = 0;
+	field $look_class  :param = 'Term::Fabulous::Document::Look';
 
 	# Per line, its clusters as [ cluster, columns, offset in the code ],
 	# and its width in columns. The highlighter's spans until the code,
@@ -51,7 +52,16 @@ class Term::Fabulous::Widget::CodeBlock
 		$highlighter = _checked_highlighter( $self, $highlighter );
 		$spans       = $self->_checked_spans( spans => $spans );
 		$offset      = non_negative_integer( $self, offset => $offset );
+		$look_class  = _checked_look_class( $self, $look_class );
 		$self->_split_lines;
+	}
+
+	# The name of a loaded look class: the base look, or a subclass with
+	# styles of its own, as a document view hands to its code blocks.
+	sub _checked_look_class ( $owner, $value ) {
+		die ref($owner) . ": look_class must be the name of a Term::Fabulous::Document::Look class, got " . describe($value)
+			unless defined $value && !ref $value && length $value && $value->isa('Term::Fabulous::Document::Look');
+		return $value;
 	}
 
 	sub _checked_language ( $owner, $value ) {
@@ -146,6 +156,13 @@ class Term::Fabulous::Widget::CodeBlock
 		return $self->spans;
 	}
 
+	method look_class (@new) {
+		return $look_class unless @new;
+		$look_class = _checked_look_class( $self, $new[0] );
+		$self->mark_changed;
+		return $look_class;
+	}
+
 	# A new offset paints again only when it changes what shows.
 	method offset (@new) {
 		return $offset unless @new;
@@ -203,7 +220,7 @@ class Term::Fabulous::Widget::CodeBlock
 	}
 
 	method paint () {
-		my $look       = Term::Fabulous::Document::Look->of($self);
+		my $look       = $look_class->of($self);
 		my $background = $self->color_attr( $look->style('code_block')->{background} );
 		$self->fill_attrs( 0, $_, $self->columns, ' ', undef, $background ) foreach 0 .. $self->rows - 1;
 
@@ -266,7 +283,7 @@ class Term::Fabulous::Widget::CodeBlock
 	# ---------------------------------------------------------------------
 
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, code => 'scalar', language => 'scalar', offset => 'scalar' );
+		return ( $class->SUPER::layout_properties, code => 'scalar', language => 'scalar', offset => 'scalar', look_class => 'scalar' );
 	}
 }
 
@@ -342,8 +359,9 @@ from the program's spans, and Clay does not have to lay out the text.
 The block is as many rows tall as its code has lines, and as wide as
 its parent allows (C<natural_size> requests C<sizing_grow> for the
 width). One column on each side is a margin, where the clip marks
-appear. The colors are the C<code_block> and C<clipped> styles of
-L<Term::Fabulous::Document::Look> in the theme the block draws with.
+appear. The colors are the C<code_block> and C<clipped> styles of the
+block's L</look_class>, L<Term::Fabulous::Document::Look> or a subclass
+of it, in the theme the block draws with.
 
 The block shows its code shifted to the left by L</offset> columns. It
 does not react to keys or the mouse itself: the widget that contains it
@@ -410,6 +428,16 @@ code is scrolled to the left. The block keeps the value as given, but
 paints with at most the offset that brings the end of its widest line
 into view (see L</shown_offset>).
 
+=item C<look_class>
+
+The name of the L<Term::Fabulous::Document::Look> class whose
+C<code_block> and C<clipped> styles the block paints with; default
+C<Term::Fabulous::Document::Look>. A L<Term::Fabulous::Widget::DocumentView>
+passes its own L<look_class|Term::Fabulous::Widget::DocumentView/look_class>
+to every code block it builds, so a look subclass that restyles code
+applies to the code blocks of the view too. A value that is not the
+name of a loaded subclass of the look dies.
+
 =back
 
 =head1 METHODS
@@ -457,6 +485,13 @@ highlighter again.
 
 Gets or sets the offset, in columns. The block repaints only when the
 change affects what it shows, that is, when L</shown_offset> changes.
+
+=head2 look_class
+
+	$code->look_class('My::Look');
+
+Gets or sets the name of the look class (see L</new>). Setting it
+repaints the block in the styles of the new class.
 
 =head2 shown_offset
 
@@ -522,7 +557,7 @@ highlighting to a document view.
 
 The block accepts the properties of
 L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus C<code>,
-C<language> and C<offset>:
+C<language>, C<offset> and C<look_class>:
 
 =for highlighter language=kdl
 

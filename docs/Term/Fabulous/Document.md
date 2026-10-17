@@ -260,10 +260,10 @@ foreach my $link ( $document->links ) {
 
 Returns every link of the document as a list of array references
 `[ $block_index, $mark ]`, where `$mark` is a
-[Term::Fabulous::Document::Mark](Document/Mark.md) of kind `link`. The links are
-ordered by block, and within a block in the order of
-["links" in Term::Fabulous::Document::Block](Document/Block.md#links). Each call returns new array
-references, so the caller may change them.
+[Term::Fabulous::Document::Mark](Document/Mark.md) of kind `link`. The links are in
+the order of the text: by block, and within a block by start offset
+(see ["links" in Term::Fabulous::Document::Block](Document/Block.md#links)). Each call returns new
+array references, so the caller may change them.
 
 ## find\_section
 

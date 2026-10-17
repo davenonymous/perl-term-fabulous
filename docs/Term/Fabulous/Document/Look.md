@@ -124,12 +124,8 @@ class My::DocumentView :isa(Term::Fabulous::Widget::DocumentView) {
 ```
 
 The view accepts only documents whose marks are links or have a kind
-that the look class lists in ["kinds"](#kinds).
-
-Code blocks are an exception: [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md)
-always takes its `code_block` and `clipped` styles from
-Term::Fabulous::Document::Look itself, so overriding those two kinds in
-a subclass does not change them. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md)
+that the look class lists in ["kinds"](#kinds), and its code blocks paint with
+the same class. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md)
 has a worked example that changes the styles of a document and adds
 mark kinds this way.
 

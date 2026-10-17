@@ -70,7 +70,7 @@ my @lines = $code->lines;
 
 Returns the lines of the text, split at `"\n"`, without the line
 breaks. A text that ends with `"\n"` has an empty last line, and an
-empty text has no lines at all.
+empty text is one empty line, the row the code block shows for it.
 
 ## body\_rows, row\_of\_character
 

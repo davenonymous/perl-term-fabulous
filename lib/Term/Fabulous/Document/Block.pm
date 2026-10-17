@@ -19,6 +19,10 @@ class Term::Fabulous::Document::Block :abstract :strict(params) {
 	field $indent :param :reader = 0;
 	field $quote  :param :reader = 0;
 
+	# The link marks in the order of the text, as the view's RichText
+	# counts its links.
+	field @links;
+
 	ADJUST {
 		$text   = string( $self, text => $text );
 		$indent = non_negative_integer( $self, indent => $indent );
@@ -30,6 +34,21 @@ class Term::Fabulous::Document::Block :abstract :strict(params) {
 			die ref($self) . ": a mark ends at " . $mark->end . ", past the text ($length characters)" if $mark->end > $length;
 		}
 		$marks = [@$marks];
+		@links = $self->_checked_links;
+	}
+
+	# A link covers text and shares none of it with another link: the
+	# RichText that shows the block refuses both, so the block does first.
+	method _checked_links () {
+		my @sorted = sort { $a->start <=> $b->start } grep { $_->is_link } @$marks;
+		foreach my $index ( 0 .. $#sorted ) {
+			my $link = $sorted[$index];
+			die ref($self) . ": the link mark at " . $link->start . " covers no text" if $link->start == $link->end;
+			next unless $index;
+			my $before = $sorted[ $index - 1 ];
+			die ref($self) . ": the link marks " . $before->start . " to " . $before->end . " and " . $link->start . " to " . $link->end . " overlap" if $link->start < $before->end;
+		}
+		return @sorted;
 	}
 
 	method kind;
@@ -39,7 +58,7 @@ class Term::Fabulous::Document::Block :abstract :strict(params) {
 	}
 
 	method links () {
-		return grep { $_->is_link } @$marks;
+		return @links;
 	}
 
 	# The rows the block's body takes when its text wraps to $columns,
@@ -201,7 +220,11 @@ An array reference of L<Term::Fabulous::Document::Mark> objects. The
 default is an empty array. Every mark must lie within the text: a mark
 whose end offset is greater than the length of the text dies, and so
 does an element that is not a mark object. The order of the marks
-matters; see L</marks>. The block keeps a copy of the array.
+matters; see L</marks>. Link marks are checked further: one that
+covers no text (C<start> equal to C<end>) dies, and so do two link
+marks that overlap, because the view shows them as the links of a
+L<Term::Fabulous::Widget::RichText>, which refuses both. The block
+keeps a copy of the array.
 
 =item C<indent>
 
@@ -250,11 +273,10 @@ adds the marks in the order the formatting opens in the source.
 
 	my @links = $block->links;
 
-Returns the marks of kind C<link>, in the order they were given to the
-constructor. The view expects this to be the order of the text, by
-start offset: give the link marks of a block in that order, or the
-view highlights the wrong link when the user selects one with the
-keyboard.
+Returns the marks of kind C<link>, ordered by their start offset,
+whatever order they were given in. This is the order in which the view
+counts the links of a block; link marks never overlap, so the order is
+unambiguous.
 
 =head2 indent
 

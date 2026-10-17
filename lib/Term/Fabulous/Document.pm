@@ -438,10 +438,10 @@ integer less than the number of sections dies.
 
 Returns every link of the document as a list of array references
 C<[ $block_index, $mark ]>, where C<$mark> is a
-L<Term::Fabulous::Document::Mark> of kind C<link>. The links are
-ordered by block, and within a block in the order of
-L<Term::Fabulous::Document::Block/links>. Each call returns new array
-references, so the caller may change them.
+L<Term::Fabulous::Document::Mark> of kind C<link>. The links are in
+the order of the text: by block, and within a block by start offset
+(see L<Term::Fabulous::Document::Block/links>). Each call returns new
+array references, so the caller may change them.
 
 =head2 find_section
 

@@ -130,7 +130,11 @@ parameters die. The parameters every block accepts are:
     default is an empty array. Every mark must lie within the text: a mark
     whose end offset is greater than the length of the text dies, and so
     does an element that is not a mark object. The order of the marks
-    matters; see ["marks"](#marks). The block keeps a copy of the array.
+    matters; see ["marks"](#marks). Link marks are checked further: one that
+    covers no text (`start` equal to `end`) dies, and so do two link
+    marks that overlap, because the view shows them as the links of a
+    [Term::Fabulous::Widget::RichText](../Widget/RichText.md), which refuses both. The block
+    keeps a copy of the array.
 
 - `indent`
 
@@ -185,11 +189,10 @@ adds the marks in the order the formatting opens in the source.
 my @links = $block->links;
 ```
 
-Returns the marks of kind `link`, in the order they were given to the
-constructor. The view expects this to be the order of the text, by
-start offset: give the link marks of a block in that order, or the
-view highlights the wrong link when the user selects one with the
-keyboard.
+Returns the marks of kind `link`, ordered by their start offset,
+whatever order they were given in. This is the order in which the view
+counts the links of a block; link marks never overlap, so the order is
+unambiguous.
 
 ## indent
 

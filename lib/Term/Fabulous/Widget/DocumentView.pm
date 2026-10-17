@@ -294,6 +294,7 @@ class Term::Fabulous::Widget::DocumentView
 			language    => $block->language,
 			highlighter => $highlighter,
 			offset      => $code_offset,
+			look_class  => __CLASS__->look_class,
 			layout      => { sizing => { width => sizing_grow() }, padding => $padding },
 		);
 		return { widget => $code, text => $code };
@@ -1294,10 +1295,8 @@ L<Term::Fabulous::Document::Look> class the view draws with. The
 default is C<Term::Fabulous::Document::Look>. A subclass that adds
 kinds of marks overrides it to return a subclass of that class. The
 view uses the class to check the marks of a document and, through
-L</document_look>, to style the blocks. Code blocks are the exception:
-they always take their C<code_block> and C<clipped> styles from
-C<Term::Fabulous::Document::Look> itself (see
-L<Term::Fabulous::Widget::CodeBlock>).
+L</document_look>, to style the blocks, and hands it to every code
+block it builds (see L<Term::Fabulous::Widget::CodeBlock/look_class>).
 
 =head2 view_of_heading, view_of_paragraph, view_of_item, view_of_term, view_of_verbatim
 
