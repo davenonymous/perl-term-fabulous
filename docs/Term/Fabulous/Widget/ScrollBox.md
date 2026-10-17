@@ -206,6 +206,20 @@ The children you added, as on any [Term::Fabulous::Widget::Box](Box.md). The
 scrollbars are not among them, and `clear_children` and the other
 removal methods leave them alone.
 
+# FOCUS
+
+A widget inside the box that gets the keyboard focus is scrolled into
+view: with Tab, a click, or ["set\_focused\_widget" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#set_focused_widget),
+the box moves the smallest way that shows the widget's whole box, or
+its top rows when it is taller than the viewport, a text with links
+([Term::Fabulous::Widget::Text](Text.md)) like any widget. A widget that gets
+the focus before it
+was ever laid out, right after it was added, is revealed after the
+frame that lays it out. Only the vertical direction is scrolled.
+
+The box itself has no keys and takes no focus; see
+[Term::Fabulous::Scrolling](../Scrolling.md) for scrolling it from a key handler.
+
 # EVENTS
 
 - `OnScroll` ([Clay::UI::Events::OnScroll](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AOnScroll))

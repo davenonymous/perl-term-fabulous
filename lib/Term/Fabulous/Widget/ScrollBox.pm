@@ -22,8 +22,15 @@ class Term::Fabulous::Widget::ScrollBox
 		CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_LEFT_TOP CLAY_CLIP_TO_ATTACHED_PARENT
 		CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 	);
+	use Clay::UI::Enum::Result;
+	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Scrolling qw(reveal_rows);
 	use Term::Fabulous::Widget::Scrollbar;
+
+	# A widget that got the focus before it was laid out is revealed after
+	# the frame that lays it out, or the one after that at the latest.
+	use constant REVEAL_FRAMES => 2;
 
 	# The gutter floats over the whole box and is padded by its border: a
 	# column with the horizontal scrollbar at its bottom, then the
@@ -47,6 +54,10 @@ class Term::Fabulous::Widget::ScrollBox
 	field $_gutter;
 	field %_bar_by_axis;
 
+	# The widget whose box is scrolled into view once a frame has laid it
+	# out, and the frames left to wait for one.
+	field $_pending_reveal;
+
 	# Clay::UI stores these as given; the constructor takes any truth value.
 	sub BUILDARGS ( $class, %params ) {
 		$params{$_} = $params{$_} ? 1 : 0 foreach grep { exists $params{$_} } qw(horizontal vertical);
@@ -67,6 +78,12 @@ class Term::Fabulous::Widget::ScrollBox
 		$_gutter->add_child( $column, $_bar_by_axis{vertical} );
 		$self->_pad_gutter;
 		$self->add_internal_children($_gutter) if $scrollbar;
+	}
+
+	# A descendant that gets the focus is scrolled into view.
+	ADJUST {
+		weaken( my $weak_self = $self );
+		$self->on( OnFocus => sub ($event) { $weak_self->_focus_entered( $event->target ) if defined $weak_self; return Clay::UI::Enum::Result->CONTINUE } );
 	}
 
 	method layout_properties :common () {
@@ -126,6 +143,40 @@ class Term::Fabulous::Widget::ScrollBox
 
 	method track_color (@new) { return @new ? $self->set_look( track_color => $new[0] ) : $self->look_value('track_color') }
 	method thumb_color (@new) { return @new ? $self->set_look( thumb_color => $new[0] ) : $self->look_value('thumb_color') }
+
+	# ---------------------------------------------------------------------
+	# The focus: a descendant that gets it is brought into view
+	# ---------------------------------------------------------------------
+
+	# The box of the widget that got the focus is revealed with the
+	# smallest move: from the last frame when it was laid out, else after
+	# the next frame.
+	method _focus_entered ($target) {
+		return unless blessed $target && refaddr($target) != refaddr($self) && $self->contains($target);
+		$_pending_reveal = { widget => $target, frames => REVEAL_FRAMES };
+		weaken $_pending_reveal->{widget};
+		$self->_reveal_pending;
+		return;
+	}
+
+	method _reveal_pending () {
+		my $pending = $_pending_reveal // return;
+		my $ui      = $self->ui;
+		my $widget  = $pending->{widget};
+		my $box     = defined $ui && defined $widget ? $ui->bounding_box($widget) : undef;
+		if ( defined $box ) {
+			$_pending_reveal = undef;
+			reveal_rows( $ui, $self, $box->{y}, $box->{y} + $box->{height} );
+			return;
+		}
+		if ( !defined $ui || !defined $widget || --$pending->{frames} < 0 || !$ui->can('after_draw') ) {
+			$_pending_reveal = undef;
+			return;
+		}
+		weaken( my $weak_self = $self );
+		$ui->after_draw( sub { $weak_self->_reveal_pending if defined $weak_self; return } );
+		return;
+	}
 }
 
 1;
@@ -329,6 +380,20 @@ L<Term::Fabulous::Widget/reset_look>).
 The children you added, as on any L<Term::Fabulous::Widget::Box>. The
 scrollbars are not among them, and C<clear_children> and the other
 removal methods leave them alone.
+
+=head1 FOCUS
+
+A widget inside the box that gets the keyboard focus is scrolled into
+view: with Tab, a click, or L<Clay::UI::Interaction/set_focused_widget>,
+the box moves the smallest way that shows the widget's whole box, or
+its top rows when it is taller than the viewport, a text with links
+(L<Term::Fabulous::Widget::Text>) like any widget. A widget that gets
+the focus before it
+was ever laid out, right after it was added, is revealed after the
+frame that lays it out. Only the vertical direction is scrolled.
+
+The box itself has no keys and takes no focus; see
+L<Term::Fabulous::Scrolling> for scrolling it from a key handler.
 
 =head1 EVENTS
 

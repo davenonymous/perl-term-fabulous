@@ -17,7 +17,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_TEXT_WRAP_NONE);
 	use List::Util qw(max min);
-	use Scalar::Util qw(blessed refaddr weaken);
+	use Scalar::Util qw(refaddr weaken);
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Widget::Accordion;
 	use Term::Fabulous::Widget::Accordion::Item;
@@ -136,7 +136,6 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		$variant_box = $section{variants};
 
 		weaken( my $weak_self = $self );
-		$self->on( OnFocus  => sub ($event) { $weak_self->_reveal( $event->target ); return Clay::UI::Enum::Result->CONTINUE } );
 		$self->on( KeyPress => sub ($event) { return $weak_self->_scroll_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
 	}
 
@@ -490,12 +489,6 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		my $lowest = min( 0, $view->{height} - ( $state->{content}{height} // 0 ) );
 		$wanted = max( $lowest, min( 0, $wanted ) );
 		$ui->scroll_to( $gallery, { y => $wanted } ) if $wanted != $position;
-		return;
-	}
-
-	method _reveal ($target) {
-		return unless blessed $target && $gallery->contains($target);
-		$self->_scroll_into_view($target);
 		return;
 	}
 

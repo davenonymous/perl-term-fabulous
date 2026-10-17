@@ -250,7 +250,6 @@ $commands->add(
 );
 ```
 
-A text widget has no box of its own, so a menu cannot open below one.
 To open it at a line of text, give the cell with `x` and `y`, as
 `examples/widgets/menu.pl` does for the file under its cursor.
 

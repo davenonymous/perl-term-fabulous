@@ -6,7 +6,7 @@ no warnings 'experimental::signatures';
 
 use Test2::V0;
 
-use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
+use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Layout;
@@ -122,6 +122,37 @@ ScrollBox "log" {
 }
 KDL
 	is [ $built->scrollbar, $built->thumb_color ], [ 0, [ 1, 2, 3, 255 ] ], 'scrollbar and the colors are KDL properties';
+};
+
+subtest 'a focused descendant is scrolled into view' => sub {
+	require Term::Fabulous::Widget::Button;
+	my $box     = Term::Fabulous::Widget::ScrollBox->new( id => 'form', layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my @buttons = map { Term::Fabulous::Widget::Button->new( layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } ) } 1 .. 20;
+	$box->add_child(@buttons);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($box);
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 30, height => 8 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 30, height => 8, terminal => $terminal );
+	$ui->step;
+	$ui->interaction->set_focused_widget( $buttons[15] );
+	$ui->step;
+	my $shown = $ui->bounding_box( $buttons[15] );
+	ok $shown->{y} >= 0 && $shown->{y} + $shown->{height} <= 8, 'the focused button far below lies in the viewport';
+	is $ui->bounding_box( $buttons[15] )->{y}, 7, 'the box scrolled the smallest way: the button is on the last row';
+	$ui->interaction->set_focused_widget( $buttons[2] );
+	$ui->step;
+	ok $ui->bounding_box( $buttons[2] )->{y} >= 0, 'and back up for a button above the viewport';
+
+	my $text = Term::Fabulous::Widget::Text->new( markup => '[link=x]a link[/]' );
+	$box->add_child($text);
+	$ui->interaction->set_focused_widget($text);
+	$ui->step;
+	$ui->step;
+	my $parent_row = $ui->bounding_box($box)->{y};
+	my $frame      = $ui->last_frame;
+	my @rows       = $frame->text_rows($text);
+	is scalar(@rows), 1, 'a text added and focused in one step is revealed after the frame that laid it out';
+	ok $rows[0][0] >= $parent_row && $rows[0][0] < 8, 'on a row of the viewport';
 };
 
 done_testing;

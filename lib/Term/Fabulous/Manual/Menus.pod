@@ -274,7 +274,6 @@ nothing has the focus:
 		}
 	);
 
-A text widget has no box of its own, so a menu cannot open below one.
 To open it at a line of text, give the cell with C<x> and C<y>, as
 F<examples/widgets/menu.pl> does for the file under its cursor.
 

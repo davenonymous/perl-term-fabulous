@@ -199,8 +199,11 @@ subtest 'checks' => sub {
 	my $label = Term::Fabulous::Widget::Text->new( text => 'a label' );
 	$root->add_child($label);
 	$ui->step;
-	like dies { $menu->open( $ui, below => $label ) }, qr/below needs a widget that the last frame drew; a text has no box of its own/, 'a text has no box to open below';
+	ok lives { $menu->open( $ui, below => $label ) }, 'a text is a widget the frame drew, so a menu opens below it';
+	$menu->close;
 	$root->remove_child($label);
+	like dies { $menu->open( $ui, below => Term::Fabulous::Widget::Text->new( text => 'never drawn' ) ) }, qr/below needs a widget that the last frame drew/,
+		'a widget the frame did not draw has no box';
 	like dies { $menu->highlight(9) }, qr/there is no item 9/, 'highlight past the end dies';
 	my $box = Term::Fabulous::Widget::Box->new;
 	$box->add_child($menu);

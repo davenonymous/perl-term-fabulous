@@ -226,8 +226,12 @@ every frame in which the mouse wheel or the scrollbar moved the list,
 and `Mouse` for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
-is attached. When its item is detached it loses the focus and the hover,
-like any removed widget.
+is attached. When its item is detached it loses the hover, like any
+removed widget, and the focus goes to the list, or to the nearest
+widget above it that can take the focus, so that the keys keep
+working where they did; without such a widget, nothing has the focus.
+A focused widget inside an item is scrolled into view like in every
+[ScrollBox](ScrollBox.md#focus).
 
 # KDL PROPERTIES
 

@@ -1,6 +1,11 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - A widget that gets the focus inside a ScrollBox is scrolled into
+          view, and a VirtualList whose window drops the focused widget
+          hands the focus to the list or the nearest widget above it
+          that takes it. Clay::UI 0.07 gives text widgets a bounding box,
+          so a menu opens below a text too.
         - Term::Fabulous::Widget::Text absorbs RichText: one text widget
           with spans, links, markup and the keys and looks of links; the
           RichText and FocusableText classes are gone. A text also has

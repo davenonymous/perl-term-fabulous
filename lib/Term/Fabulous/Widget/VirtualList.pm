@@ -220,9 +220,9 @@ class Term::Fabulous::Widget::VirtualList
 		return $widget;
 	}
 
-	# A text widget has no Clay element of its own, so it has no bounding
-	# box to measure: it is laid out inside a box. Any other widget is
-	# attached as it is.
+	# A text widget is laid out inside a box of its own, so that the slot
+	# can carry padding and a border some day; any other widget is attached
+	# as it is.
 	method _slot ($index) {
 		return $_slot[$index] //= _new_slot( $self->_item($index) );
 	}
@@ -470,7 +470,9 @@ class Term::Fabulous::Widget::VirtualList
 		$self->_size_spacers;
 
 		my %stays = map { refaddr($_) => 1 } @wanted;
+		my $heir  = $self->_focus_heir( \%stays );
 		$_column->remove_children_with( sub { !$stays{ refaddr $_ } } );
+		$self->_take_focus_back($heir) if defined $heir;
 
 		my @runs;    # [ $offset, @children ]: the entering children, run by run
 		foreach my $index ( 0 .. $#wanted ) {
@@ -483,6 +485,29 @@ class Term::Fabulous::Widget::VirtualList
 			my ( $offset, @children ) = @$run;
 			$_column->insert_children( $offset, @children );
 		}
+		return;
+	}
+
+	# The widget that takes the focus when a slot that holds it leaves: the
+	# list itself, or the nearest ancestor that can take it, so that the
+	# keys keep working where they did. undef when no leaving slot holds
+	# the focus, or nothing can take it.
+	method _focus_heir ($stays) {
+		my $ui          = $self->ui // return undef;
+		my $interaction = $ui->interaction;
+		my $focused     = $interaction->get_focused_widget // return undef;
+		return undef unless grep { !$stays->{ refaddr $_ } && $_->contains($focused) } @{ $_column->children };
+		for ( my $node = $self; defined $node; $node = $node->parent ) {
+			return $node if $interaction->can_take_focus($node);
+		}
+		return undef;
+	}
+
+	# Detaching the slot blurred the focus; nothing has it now.
+	method _take_focus_back ($heir) {
+		my $ui          = $self->ui // return;
+		my $interaction = $ui->interaction;
+		$interaction->set_focused_widget($heir) unless defined $interaction->get_focused_widget;
 		return;
 	}
 
@@ -762,8 +787,12 @@ every frame in which the mouse wheel or the scrollbar moved the list,
 and C<Mouse> for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
-is attached. When its item is detached it loses the focus and the hover,
-like any removed widget.
+is attached. When its item is detached it loses the hover, like any
+removed widget, and the focus goes to the list, or to the nearest
+widget above it that can take the focus, so that the keys keep
+working where they did; without such a widget, nothing has the focus.
+A focused widget inside an item is scrolled into view like in every
+L<ScrollBox|Term::Fabulous::Widget::ScrollBox/FOCUS>.
 
 =head1 KDL PROPERTIES
 

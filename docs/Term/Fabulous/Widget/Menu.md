@@ -214,10 +214,9 @@ $menu->open( $ui, below => $button );
 
 Opens the menu as a popup, as described under ["POPUP MENUS"](#popup-menus): at the
 cell `x`, `y` of the screen (both non-negative integers), or below a
-widget. The widget must have been drawn in the last frame, so that its
-place is known. A text widget has no box of its own, so open the menu
-below the box that holds the text, or at the text's cell with `x` and
-`y`. The first enabled item is highlighted. Opening an open menu does
+widget, a text included. The widget must have been drawn in the last
+frame, so that its place is known. The first enabled item is
+highlighted. Opening an open menu does
 nothing. Dies when `$ui` is not a [Term::Fabulous](../../../../README.md), when the place is
 not `x` and `y` or `below` alone, for a widget the last frame did
 not draw, for a disabled menu, and when the menu is a child of another

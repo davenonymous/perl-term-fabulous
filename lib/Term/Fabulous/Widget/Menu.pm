@@ -161,7 +161,7 @@ class Term::Fabulous::Widget::Menu
 		die ref($self) . ": a menu that is a child of another widget cannot open" if defined $self->parent;
 		die ref($self) . ": a disabled menu cannot open" unless $self->is_enabled;
 		my $anchor = $self->_parsed_anchor(%where);
-		die ref($self) . ": below needs a widget that the last frame drew; a text has no box of its own, so open the menu below the box that holds it"
+		die ref($self) . ": below needs a widget that the last frame drew"
 			if exists $anchor->{below} && !defined $ui->bounding_box( $anchor->{below} );
 
 		my $focused = $ui->interaction->get_focused_widget;
@@ -641,10 +641,9 @@ A menu has the methods of L<Term::Fabulous::Widget::Input> plus these.
 
 Opens the menu as a popup, as described under L</POPUP MENUS>: at the
 cell C<x>, C<y> of the screen (both non-negative integers), or below a
-widget. The widget must have been drawn in the last frame, so that its
-place is known. A text widget has no box of its own, so open the menu
-below the box that holds the text, or at the text's cell with C<x> and
-C<y>. The first enabled item is highlighted. Opening an open menu does
+widget, a text included. The widget must have been drawn in the last
+frame, so that its place is known. The first enabled item is
+highlighted. Opening an open menu does
 nothing. Dies when C<$ui> is not a L<Term::Fabulous>, when the place is
 not C<x> and C<y> or C<below> alone, for a widget the last frame did
 not draw, for a disabled menu, and when the menu is a child of another
