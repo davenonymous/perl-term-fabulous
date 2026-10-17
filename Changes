@@ -1,5 +1,12 @@
 Revision history for Term::Fabulous
 
+0.04    not yet released
+        - Fixes from CPAN Testers: on perls built with long doubles, the
+          labels of a radar chart at a quarter turn no longer land one
+          row off (Term::Fabulous::Chart::Radial::point_at returns whole
+          coordinates as whole numbers), and animation_frame counts a
+          clock a rounding error short of a frame boundary as that frame.
+
 0.03    2026-10-15
         - Fixes from CPAN Testers: the theme editor no longer needs the PNG
           support of Imager; its preview picture is a TGA, which Imager

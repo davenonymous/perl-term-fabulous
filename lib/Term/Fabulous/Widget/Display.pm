@@ -18,6 +18,10 @@ class Term::Fabulous::Widget::Display
 	use Clay::XS qw(sizing_fixed);
 	use Time::HiRes ();
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
+
+	# How far short of a frame boundary, in frames, a time still counts as
+	# the frame that starts there.
+	use constant TICK_TOLERANCE => 1e-9;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns);
 
@@ -105,8 +109,12 @@ class Term::Fabulous::Widget::Display
 	# The frame of an animation that shows $count frames, $interval seconds
 	# each, at the current time, and asks for a frame when the next one is
 	# due. Called from paint_key, it keeps the animation going.
+	# A time a rounding error short of a frame boundary counts as the
+	# frame that starts there: which frame a clock on a whole boundary
+	# falls in would otherwise depend on the platform's floating point,
+	# and the frame asked for next could already be due.
 	method animation_frame ( $interval, $count ) {
-		my $tick = int( $self->now / $interval );
+		my $tick = int( $self->now / $interval + TICK_TOLERANCE );
 		$self->request_frame_at( ( $tick + 1 ) * $interval );
 		return $tick % $count;
 	}
@@ -407,6 +415,8 @@ C<$interval> seconds each, at the current time, counted from the
 start of the clock so that every widget with the same interval moves
 in step. Also asks for a frame when the next one is due, so call it
 from L</paint_key> only while the widget animates (see L</ANIMATION>).
+A time a rounding error short of a frame boundary counts as the frame
+that starts there.
 
 =head1 SEE ALSO
 
