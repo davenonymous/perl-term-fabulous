@@ -253,4 +253,22 @@ KDL
 		'the pages with their content';
 };
 
+subtest 'a search reaches an inactive page, and revealing a match activates it' => sub {
+	my ( $tabs, $terminal, $ui ) = tabs();
+	ok $tabs->DOES('Term::Fabulous::Role::Searchable'), 'a Tabs is searchable';
+	my @entries = $tabs->search_texts;
+	my ($hostname) = grep { $_->[1] eq 'Hostname: example.org' } @entries;
+	ok defined $hostname, 'the text of the page that is not shown is among the texts';
+	is $hostname->[0][0],   1, 'its key names the widget by its place among the pages\' texts';
+	is $tabs->active_index, 0, 'the first page is active';
+	my ($text) = @{ $tabs->reveal_text( $hostname->[0], 0 ) };
+	is [ $tabs->active_index, $text->text ], [ 1, 'Hostname: example.org' ], 'revealing it activates its page and names its text';
+	$tabs->highlight_text( $hostname->[0], [ [ 0, 8, 'on accent' ] ] );
+	is $text->highlights->[0][1],                8,                       'highlight_text reaches the text';
+	is $tabs->search_revision( $hostname->[0] ), $text->content_revision, 'the revision is the text\'s';
+	$tabs->clear_text_highlights;
+	is $text->highlights,                       [],     'clear_text_highlights clears it';
+	is $tabs->search_revision( [ 99, undef ] ), 'gone', 'a widget past the pages is gone';
+};
+
 done_testing;

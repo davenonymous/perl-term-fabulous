@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Searchable qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Tabs::Bar;
 use Term::Fabulous::Widget::Tabs::Button;
@@ -16,6 +17,7 @@ our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::Tabs
 	:isa(Term::Fabulous::Widget::Box)
+	:does(Term::Fabulous::Role::Searchable)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -281,6 +283,42 @@ class Term::Fabulous::Widget::Tabs
 		my $target  = roving_target( \@enabled, $self->active_index, $event->main_key_name, keys => 'pages' ) // return 0;
 		$self->choose($target);
 		return 1;
+	}
+
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable): the texts of every
+	# page, shown or not; revealing one activates its page
+	# ---------------------------------------------------------------------
+
+	method _searchables () {
+		return map { searchables_in($_) } @_pages;
+	}
+
+	method search_texts () {
+		return nested_search_texts( [ $self->_searchables ] );
+	}
+
+	method search_revision ($key) {
+		return nested_search_revision( [ $self->_searchables ], $key );
+	}
+
+	method highlight_text ( $key, $ranges ) {
+		nested_highlight_text( [ $self->_searchables ], $key, $ranges );
+		return;
+	}
+
+	method clear_text_highlights () {
+		nested_clear_text_highlights( [ $self->_searchables ] );
+		return;
+	}
+
+	method reveal_text ( $key, $offset ) {
+		my @searchables = $self->_searchables;
+		my $revealed    = nested_reveal_text( \@searchables, $key, $offset );
+		my $widget      = $searchables[ $key->[0] ] // return $revealed;
+		my $page        = first { $_->contains($widget) } @_pages;
+		$self->select($page) if defined $page;
+		return $revealed;
 	}
 }
 
@@ -640,6 +678,19 @@ the pages as well.
 Every writer passes the value to the bar (see
 L<Term::Fabulous::Widget::Tabs::Bar/METHODS>) and shows its change in
 the next frame.
+
+=head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
+
+	my @entries = $tabs->search_texts;    # ( [ [ $index, $key ], $text ], ... )
+	my ($text) = @{ $tabs->reveal_text( $entries[0][0], 0 ) };
+
+The methods of L<Term::Fabulous::Role::Searchable>: a Tabs answers for
+the searchable widgets of all its pages, the pages not shown included,
+with keys of the widget's index among them and the widget's own key
+(see L<Term::Fabulous::Role::Searchable/nested_search_texts>).
+C<reveal_text> selects the page of the widget, without firing
+C<Select>, and returns what the widget returns. The indices change when
+pages or their widgets are added or removed.
 
 =head1 KEYS
 

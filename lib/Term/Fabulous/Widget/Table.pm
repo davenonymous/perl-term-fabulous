@@ -20,6 +20,7 @@ use Term::Fabulous::Widget::Table::Cell;
 use Term::Fabulous::Widget::Table::ColumnChooser;
 use Term::Fabulous::Widget::Table::Grid;
 use Term::Fabulous::Widget::Table::HeaderView;
+use Term::Fabulous::Role::Searchable qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 use Term::Fabulous::Widget::Table::Model;
 use Term::Fabulous::Widget::Table::Pager;
 use Term::Fabulous::Widget::Scrollbar;
@@ -30,6 +31,7 @@ class Term::Fabulous::Widget::Table
 	:does(Clay::UI::Role::Interaction::Focusable)
 	:does(Clay::UI::Role::Interaction::Hoverable)
 	:does(Clay::UI::Role::Core::Preparable)
+	:does(Term::Fabulous::Role::Searchable)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -180,6 +182,13 @@ class Term::Fabulous::Widget::Table
 	field $_body_signature = '';
 	field %_built;
 	field @_grid_keys;
+
+	# What a search marked, by "id\0column": for a text cell the ranges
+	# and the row revision they were set at, for a custom cell the
+	# highlights of the widgets inside it, [ index, key, ranges ] by the
+	# index and key.
+	field %_text_highlights;
+	field %_cell_highlights;
 
 	# The grid lines as last worked out, what they were worked out from,
 	# and a count that tells the lines' looks they changed. Changes of
@@ -672,12 +681,16 @@ class Term::Fabulous::Widget::Table
 		return \%built;
 	}
 
-	# The widget showing a cell: the column's cell widget, or a Text.
+	# The widget showing a cell: the column's cell widget, or a Text. The
+	# highlights a search left for the cell go onto the new widget.
 	method _cell_content ( $built, $column ) {
-		my $key = $column->key;
+		my $key  = $column->key;
+		my $slot = "$built->{id}\0$key";
 		if ( defined $column->cell ) {
 			my $widget = _widget_from( "the cell of column '$key'", $column->cell->( $self->_cell_context( $built->{id}, $column ) ) );
 			delete $built->{text}{$key};
+			my @searchables = searchables_in($widget);
+			nested_highlight_text( \@searchables, [ $_->[0], $_->[1] ], $_->[2] ) foreach values %{ $_cell_highlights{$slot} // {} };
 			return $built->{content}{$key} = $widget;
 		}
 		my $text = Term::Fabulous::Widget::Text->new(
@@ -685,14 +698,18 @@ class Term::Fabulous::Widget::Table
 			wrap_mode      => $WRAP{ $column->wrap },
 			text_alignment => $TEXT_ALIGN{ $column->align },
 		);
+		my $kept = $_text_highlights{$slot};
+		$text->highlights( $kept->{ranges} ) if defined $kept && $kept->{revision} == $model->row_revision( $built->{id} );
 		$built->{text}{$key} = $text;
 		return $built->{content}{$key} = $text;
 	}
 
 	# A row whose data changed: texts are updated, cell widgets brought up
-	# to date by update_cell or built again.
+	# to date by update_cell or built again. What a search marked in the
+	# row pointed into the old data and goes.
 	method _refresh_row ( $built, $grid_columns ) {
 		$built->{revision} = $model->row_revision( $built->{id} );
+		$self->_drop_row_highlights( $built->{id} );
 		foreach my $column ( map { $_->{column} } grep { defined $_->{column} } @$grid_columns ) {
 			my $key = $column->key;
 			if ( my $text = $built->{text}{$key} ) {
@@ -2433,6 +2450,106 @@ class Term::Fabulous::Widget::Table
 
 	# --- Widgets ---------------------------------------------------------
 
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable): every filtered row,
+	# on any page, shown or collapsed
+	# ---------------------------------------------------------------------
+
+	# The texts of the plain columns come from the model, so a search
+	# reaches rows the table never built; the widgets of a custom cell
+	# answer only while the row is built.
+	method search_texts () {
+		my @columns = $model->visible_columns;
+		my @entries;
+		foreach my $id ( $model->filtered_row_ids ) {
+			my $built = $_built{ Term::Fabulous::Widget::Table::Model::row_key($id) };
+			foreach my $column (@columns) {
+				my $key = $column->key;
+				if ( !defined $column->cell ) {
+					push @entries, [ [ $id, $key ], $model->display_of( $id, $key ) ];
+					next;
+				}
+				my $content = defined $built ? $built->{content}{$key} : undef;
+				next unless defined $content;
+				push @entries, map { [ [ $id, $key, @{ $_->[0] } ], $_->[1] ] } nested_search_texts( [ searchables_in($content) ] );
+			}
+		}
+		return @entries;
+	}
+
+	# A key: [ row id, column key ] for a text cell, with the index and the
+	# key of the widget inside for a custom cell.
+	method _search_target ( $what, $key ) {
+		die ref($self) . ": $what needs a key of [ row id, column key ] (and the index and key of a widget in a custom cell), got " . describe($key)
+			unless ref $key eq 'ARRAY' && ( @$key == 2 || @$key == 4 ) && defined $key->[0] && !ref $key->[0] && defined $key->[1] && !ref $key->[1];
+		my ( $id, $column, @nested ) = @$key;
+		return ( $id, $column, @nested ? [@nested] : undef );
+	}
+
+	method search_revision ($key) {
+		my ( $id, $column, $nested ) = $self->_search_target( search_revision => $key );
+		return 'gone' unless $model->has_row($id) && $model->has_column($column);
+		my $revision = join ':', $model->row_revision($id), $model->columns_revision;
+		return $revision unless defined $nested;
+		my $content = $self->cell_widget( $id, $column ) // return 'gone';
+		return join ':', $revision, nested_search_revision( [ searchables_in($content) ], $nested );
+	}
+
+	method highlight_text ( $key, $ranges ) {
+		my ( $id, $column, $nested ) = $self->_search_target( highlight_text => $key );
+		return unless $model->has_row($id);
+		my $slot  = "$id\0$column";
+		my $built = $_built{ Term::Fabulous::Widget::Table::Model::row_key($id) };
+		if ( defined $nested ) {
+			$_cell_highlights{$slot}{ join "\0", map { $_ // '' } @$nested } = [ @$nested, $ranges ];
+			my $content = defined $built ? $built->{content}{$column} : undef;
+			nested_highlight_text( [ searchables_in($content) ], $nested, $ranges ) if defined $content;
+			return;
+		}
+		$_text_highlights{$slot} = { ranges => $ranges, revision => $model->row_revision($id) };
+		my $text = defined $built ? $built->{text}{$column} : undef;
+		$text->highlights($ranges) if defined $text;
+		return;
+	}
+
+	method clear_text_highlights () {
+		%_text_highlights = ();
+		%_cell_highlights = ();
+		foreach my $built ( grep { $_->{kind} eq 'row' } values %_built ) {
+			$_->clear_highlights foreach values %{ $built->{text} };
+			nested_clear_text_highlights( [ map { searchables_in($_) } grep { !$_->isa('Term::Fabulous::Widget::Text') } values %{ $built->{content} } ] );
+		}
+		return;
+	}
+
+	method _drop_row_highlights ($id) {
+		delete @_text_highlights{ grep { index( $_, "$id\0" ) == 0 } keys %_text_highlights };
+		delete @_cell_highlights{ grep { index( $_, "$id\0" ) == 0 } keys %_cell_highlights };
+		return;
+	}
+
+	# Shows the row: the rows and groups above it are expanded, the cursor
+	# goes to it, which turns to its page and scrolls the body. The cell's
+	# widget is there once the table was prepared again.
+	method reveal_text ( $key, $offset ) {
+		my ( $id, $column, $nested ) = $self->_search_target( reveal_text => $key );
+		return [ undef, undef ] unless $model->has_row($id);
+		for ( my $parent = $model->parent_of($id); defined $parent; $parent = $model->parent_of($parent) ) {
+			$model->set_expanded( $parent, 1 );
+		}
+		my @path;
+		foreach my $group_key ( $model->group_by ) {
+			push @path, $model->value_of( $id, $group_key );
+			$model->set_group_collapsed( [@path], 0 );
+		}
+		return [ undef, undef ] unless defined $model->line_index( Term::Fabulous::Widget::Table::Model::row_key($id) );
+		$self->cursor($id);
+		my $built = $_built{ Term::Fabulous::Widget::Table::Model::row_key($id) } // return [ undef, undef ];
+		return [ $built->{text}{$column}, undef ] unless defined $nested;
+		my $content = $built->{content}{$column} // return [ undef, undef ];
+		return nested_reveal_text( [ searchables_in($content) ], $nested, $offset );
+	}
+
 	# The widget a cell shows (its column's cell widget or a Text), once
 	# the row is on the page and the table was prepared.
 	method cell_widget ( $id, $key ) {
@@ -3734,6 +3851,61 @@ The rows the table will take before it is laid out (see
 L<Term::Fabulous::Widget/estimated_rows>): the header, the rows of
 the current page and the pager when there are pages, inside the
 border. The lines between the rows are not counted.
+
+=head2 Methods for searching
+
+The table does L<Term::Fabulous::Role::Searchable>, so a widget that
+searches its contents, such as L<Term::Fabulous::Widget::DocumentView>,
+reaches every row of the table: the rows on other pages, and the rows
+below collapsed rows and groups.
+
+=head3 search_texts
+
+	my @entries = $table->search_texts;    # ( [ [ $id, $key ], $text ], ... )
+
+The text of every visible column of every row the filters let through,
+in the order of the rows and the columns, as the cells show it
+(L<Term::Fabulous::Widget::Table::Column/display_of>): the key is the
+row id and the column key. A column with a C<cell> widget has no text
+of its own; the texts of the searchable widgets inside the cell follow
+instead, with the index and the key of the widget added, and only
+while the row is built (on the current page, after a frame). Group
+labels and column titles are not searched.
+
+=head3 search_revision
+
+	my $revision = $table->search_revision( [ $id, $key ] );
+
+Changes when the row or the columns change; C<'gone'> for a row or a
+column that no longer exists, and for a widget in a custom cell that is
+not built.
+
+=head3 highlight_text
+
+	$table->highlight_text( [ $id, $key ], [ [ $start, $end, 'on selection' ] ] );
+
+Marks ranges of a cell's text, now and whenever the cell is built again
+(on another page, after sorting), until the row's data change or
+L</clear_text_highlights> is called. For a widget in a custom cell the
+highlights go to that widget whenever the cell is built.
+
+=head3 clear_text_highlights
+
+	$table->clear_text_highlights;
+
+Removes every highlight of every cell.
+
+=head3 reveal_text
+
+	my ( $text, $row ) = @{ $table->reveal_text( [ $id, $key ], $offset ) };
+
+Shows the row: expands the rows and the groups above it, and moves the
+cursor to it, which turns to its page, scrolls the body to it and fires
+C<CursorMove>; the selection does not change. Returns the cell's
+L<Text|Term::Fabulous::Widget::Text> once the row is built, which is
+after the next frame when the page turned, else C<undef>; the row is
+always C<undef>. A row the filters keep out cannot be shown and gives
+C<undef> too.
 
 =head2 Widgets of the table
 

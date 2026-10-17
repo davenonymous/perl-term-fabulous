@@ -1402,6 +1402,71 @@ The rows the table will take before it is laid out (see
 the current page and the pager when there are pages, inside the
 border. The lines between the rows are not counted.
 
+## Methods for searching
+
+The table does [Term::Fabulous::Role::Searchable](../Role/Searchable.md), so a widget that
+searches its contents, such as [Term::Fabulous::Widget::DocumentView](DocumentView.md),
+reaches every row of the table: the rows on other pages, and the rows
+below collapsed rows and groups.
+
+### search\_texts
+
+```perl
+my @entries = $table->search_texts;    # ( [ [ $id, $key ], $text ], ... )
+```
+
+The text of every visible column of every row the filters let through,
+in the order of the rows and the columns, as the cells show it
+(["display\_of" in Term::Fabulous::Widget::Table::Column](Table/Column.md#display_of)): the key is the
+row id and the column key. A column with a `cell` widget has no text
+of its own; the texts of the searchable widgets inside the cell follow
+instead, with the index and the key of the widget added, and only
+while the row is built (on the current page, after a frame). Group
+labels and column titles are not searched.
+
+### search\_revision
+
+```perl
+my $revision = $table->search_revision( [ $id, $key ] );
+```
+
+Changes when the row or the columns change; `'gone'` for a row or a
+column that no longer exists, and for a widget in a custom cell that is
+not built.
+
+### highlight\_text
+
+```perl
+$table->highlight_text( [ $id, $key ], [ [ $start, $end, 'on selection' ] ] );
+```
+
+Marks ranges of a cell's text, now and whenever the cell is built again
+(on another page, after sorting), until the row's data change or
+["clear\_text\_highlights"](#clear_text_highlights) is called. For a widget in a custom cell the
+highlights go to that widget whenever the cell is built.
+
+### clear\_text\_highlights
+
+```perl
+$table->clear_text_highlights;
+```
+
+Removes every highlight of every cell.
+
+### reveal\_text
+
+```perl
+my ( $text, $row ) = @{ $table->reveal_text( [ $id, $key ], $offset ) };
+```
+
+Shows the row: expands the rows and the groups above it, and moves the
+cursor to it, which turns to its page, scrolls the body to it and fires
+`CursorMove`; the selection does not change. Returns the cell's
+[Text](Text.md) once the row is built, which is
+after the next frame when the page turned, else `undef`; the row is
+always `undef`. A row the filters keep out cannot be shown and gives
+`undef` too.
+
 ## Widgets of the table
 
 The table builds its widgets itself; these methods give access to them

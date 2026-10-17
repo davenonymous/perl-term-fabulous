@@ -1,6 +1,12 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Widget::Table, Tabs and Accordion::Item do
+          Term::Fabulous::Role::Searchable: a search reaches the cells on
+          every page and under collapsed rows and groups, the pages a
+          Tabs does not show and the bodies of closed accordion items,
+          and revealing a match turns the page, expands the rows and
+          groups, activates the tab or opens the item.
         - A widget that gets the focus inside a ScrollBox is scrolled into
           view, and a VirtualList whose window drops the focused widget
           hands the focus to the list or the nearest widget above it

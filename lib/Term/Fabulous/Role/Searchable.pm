@@ -8,9 +8,10 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(searchables_in);
+our @EXPORT_OK = qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 
 use Scalar::Util qw(blessed);
+use Term::Fabulous::Check qw(describe);
 
 # The widgets of a subtree that answer a search: a widget that does the
 # role answers for everything inside it; the children of any other
@@ -20,6 +21,47 @@ sub searchables_in ($widget) {
 	return $widget if $widget->DOES(__PACKAGE__);
 	return () unless $widget->can('layout_children');
 	return map { searchables_in($_) } @{ $widget->layout_children };
+}
+
+# A widget that holds other searchable widgets (the pages of a Tabs, the
+# body of an accordion item) answers for them with keys of two parts:
+# the index of the inner widget and that widget's own key.
+sub nested_search_texts ($widgets) {
+	return map {
+		my $index = $_;
+		map { [ [ $index, $_->[0] ], $_->[1] ] } $widgets->[$index]->search_texts
+	} 0 .. $#$widgets;
+}
+
+# The inner widget a nested key names, and its own key; no widget when
+# the index is past the widgets that exist now.
+sub _nested ( $what, $widgets, $key ) {
+	die "Term::Fabulous::Role::Searchable: $what needs a key of [ index, key ], got " . describe($key)
+		unless ref $key eq 'ARRAY' && @$key == 2 && defined $key->[0] && !ref $key->[0] && $key->[0] =~ /\A[0-9]+\z/;
+	return ( $widgets->[ $key->[0] ], $key->[1] );
+}
+
+sub nested_search_revision ( $widgets, $key ) {
+	my ( $widget, $inner ) = _nested( nested_search_revision => $widgets, $key );
+	return 'gone' unless defined $widget;
+	return $widget->search_revision($inner);
+}
+
+sub nested_highlight_text ( $widgets, $key, $ranges ) {
+	my ( $widget, $inner ) = _nested( nested_highlight_text => $widgets, $key );
+	$widget->highlight_text( $inner, $ranges ) if defined $widget;
+	return;
+}
+
+sub nested_clear_text_highlights ($widgets) {
+	$_->clear_text_highlights foreach @$widgets;
+	return;
+}
+
+sub nested_reveal_text ( $widgets, $key, $offset ) {
+	my ( $widget, $inner ) = _nested( nested_reveal_text => $widgets, $key );
+	return [ undef, undef ] unless defined $widget;
+	return $widget->reveal_text( $inner, $offset );
 }
 
 use Object::Pad 0.825;
@@ -128,6 +170,24 @@ The widgets at or below C<$widget> that compose this role, in layout
 order: C<$widget> itself if it does, else those found among its
 layout children, the children of a widget that does the role not
 included (it answers for them). Exported on request.
+
+=head2 nested_search_texts, nested_search_revision, nested_highlight_text, nested_clear_text_highlights, nested_reveal_text
+
+	my @entries  = nested_search_texts( \@widgets );             # keys [ $index, $key ]
+	my $revision = nested_search_revision( \@widgets, $key );
+	nested_highlight_text( \@widgets, $key, \@ranges );
+	nested_clear_text_highlights( \@widgets );
+	my $revealed = nested_reveal_text( \@widgets, $key, $offset );
+
+The role's methods for a widget that answers for searchable widgets
+inside it: C<@widgets> are those widgets (from L</searchables_in>), and
+a key names one by its index in the list and that widget's own key.
+A key whose index is past the list, because the widgets changed,
+gives the revision C<'gone'>, highlights nothing and reveals nothing.
+L<Term::Fabulous::Widget::Tabs> uses them for its pages,
+L<Term::Fabulous::Widget::Accordion::Item> for its body, and
+L<Term::Fabulous::Widget::Table> for the widgets of its custom cells.
+All exported on request.
 
 =head1 SEE ALSO
 

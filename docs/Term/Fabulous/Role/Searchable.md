@@ -105,6 +105,26 @@ order: `$widget` itself if it does, else those found among its
 layout children, the children of a widget that does the role not
 included (it answers for them). Exported on request.
 
+## nested\_search\_texts, nested\_search\_revision, nested\_highlight\_text, nested\_clear\_text\_highlights, nested\_reveal\_text
+
+```perl
+my @entries  = nested_search_texts( \@widgets );             # keys [ $index, $key ]
+my $revision = nested_search_revision( \@widgets, $key );
+nested_highlight_text( \@widgets, $key, \@ranges );
+nested_clear_text_highlights( \@widgets );
+my $revealed = nested_reveal_text( \@widgets, $key, $offset );
+```
+
+The role's methods for a widget that answers for searchable widgets
+inside it: `@widgets` are those widgets (from ["searchables\_in"](#searchables_in)), and
+a key names one by its index in the list and that widget's own key.
+A key whose index is past the list, because the widgets changed,
+gives the revision `'gone'`, highlights nothing and reveals nothing.
+[Term::Fabulous::Widget::Tabs](../Widget/Tabs.md) uses them for its pages,
+[Term::Fabulous::Widget::Accordion::Item](../Widget/Accordion/Item.md) for its body, and
+[Term::Fabulous::Widget::Table](../Widget/Table.md) for the widgets of its custom cells.
+All exported on request.
+
 # SEE ALSO
 
 [Term::Fabulous::Widget::Text](../Widget/Text.md), [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md),

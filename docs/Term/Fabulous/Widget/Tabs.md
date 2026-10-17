@@ -390,6 +390,21 @@ Every writer passes the value to the bar (see
 ["METHODS" in Term::Fabulous::Widget::Tabs::Bar](Tabs/Bar.md#methods)) and shows its change in
 the next frame.
 
+## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
+
+```perl
+my @entries = $tabs->search_texts;    # ( [ [ $index, $key ], $text ], ... )
+my ($text) = @{ $tabs->reveal_text( $entries[0][0], 0 ) };
+```
+
+The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md): a Tabs answers for
+the searchable widgets of all its pages, the pages not shown included,
+with keys of the widget's index among them and the widget's own key
+(see ["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#nested_search_texts)).
+`reveal_text` selects the page of the widget, without firing
+`Select`, and returns what the widget returns. The indices change when
+pages or their widgets are added or removed.
+
 # KEYS
 
 While the active tab has the focus, `Left` and `Up` choose the

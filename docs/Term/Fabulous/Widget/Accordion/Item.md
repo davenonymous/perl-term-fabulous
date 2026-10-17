@@ -175,6 +175,20 @@ Updates the header from the item's state and the accordion's settings.
 The accordion calls it when its settings change; call it yourself
 after changing the header's look behind its back. Returns the item.
 
+## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
+
+```perl
+my @entries = $item->search_texts;    # ( [ [ $index, $key ], $text ], ... )
+my ($text) = @{ $item->reveal_text( $entries[0][0], 0 ) };
+```
+
+The methods of [Term::Fabulous::Role::Searchable](../../Role/Searchable.md): an item answers for
+the searchable widgets of its body, open or closed, with keys of the
+widget's index among them and the widget's own key (see
+["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../../Role/Searchable.md#nested_search_texts)).
+`reveal_text` opens the item, without firing `Select`, and returns
+what the widget returns.
+
 # EVENTS
 
 An item fires no events of its own: the accordion fires

@@ -7,6 +7,7 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Searchable qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
@@ -15,6 +16,7 @@ our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::Accordion::Item
 	:isa(Term::Fabulous::Widget::Box)
+	:does(Term::Fabulous::Role::Searchable)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -230,6 +232,38 @@ class Term::Fabulous::Widget::Accordion::Item
 		$_body->layout( { %{ $_body->layout }, padding => { %{ $_body->layout->{padding} // {} }, left => $indent } } );
 		return $self;
 	}
+
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable): the texts of the body,
+	# open or closed; revealing one opens the item
+	# ---------------------------------------------------------------------
+
+	method _searchables () {
+		return searchables_in($_body);
+	}
+
+	method search_texts () {
+		return nested_search_texts( [ $self->_searchables ] );
+	}
+
+	method search_revision ($key) {
+		return nested_search_revision( [ $self->_searchables ], $key );
+	}
+
+	method highlight_text ( $key, $ranges ) {
+		nested_highlight_text( [ $self->_searchables ], $key, $ranges );
+		return;
+	}
+
+	method clear_text_highlights () {
+		nested_clear_text_highlights( [ $self->_searchables ] );
+		return;
+	}
+
+	method reveal_text ( $key, $offset ) {
+		$self->open(1);
+		return nested_reveal_text( [ $self->_searchables ], $key, $offset );
+	}
 }
 
 1;
@@ -394,6 +428,18 @@ The L<Term::Fabulous::Widget::Accordion> the item is in, or C<undef>.
 Updates the header from the item's state and the accordion's settings.
 The accordion calls it when its settings change; call it yourself
 after changing the header's look behind its back. Returns the item.
+
+=head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
+
+	my @entries = $item->search_texts;    # ( [ [ $index, $key ], $text ], ... )
+	my ($text) = @{ $item->reveal_text( $entries[0][0], 0 ) };
+
+The methods of L<Term::Fabulous::Role::Searchable>: an item answers for
+the searchable widgets of its body, open or closed, with keys of the
+widget's index among them and the widget's own key (see
+L<Term::Fabulous::Role::Searchable/nested_search_texts>).
+C<reveal_text> opens the item, without firing C<Select>, and returns
+what the widget returns.
 
 =head1 EVENTS
 

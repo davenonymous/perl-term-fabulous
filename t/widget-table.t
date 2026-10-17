@@ -584,4 +584,81 @@ KDL
 		qr/a table takes no child widgets/, 'child widgets die';
 };
 
+subtest 'a search reaches every page, and revealing a match turns to its page' => sub {
+	my ( $table, $h ) = table_ui( page_size => 2 );
+	ok $table->DOES('Term::Fabulous::Role::Searchable'), 'a table is searchable';
+	my %text_of = map { join( '/', @{ $_->[0] } ) => $_->[1] } $table->search_texts;
+	is $text_of{'5/name'}, 'Eve', 'a row on the last page is among the texts';
+	is $text_of{'3/age'},  '',    'an undefined value is an empty text';
+	is [ map { join '/', @{ $_->[0] } } $table->search_texts ], [
+		map {
+			my $id = $_;
+			map { "$id/$_" } qw(name dept age)
+		} 1 .. 5
+		],
+		'in row order, column by column';
+	my $revision = $table->search_revision( [ 5, 'name' ] );
+	$table->highlight_text( [ 5, 'name' ], [ [ 0, 2, 'on accent' ] ] );
+	is $table->reveal_text( [ 5, 'name' ], 0 ), [ undef, undef ], 'before the table was prepared again, the cell has no widget yet';
+	$h->{ui}->step;
+	is [ $table->page, $table->cursor ], [ 3, 5 ], 'the page turned and the cursor is on the row';
+	my ($text) = @{ $table->reveal_text( [ 5, 'name' ], 0 ) };
+	ref_is $text, $table->cell_widget( 5, 'name' ), 'now the cell text is there';
+	is $text->highlights->[0][1],                2,         'with the highlights the search set before it was built';
+	is $table->search_revision( [ 5, 'name' ] ), $revision, 'the revision stayed';
+	$table->update_row( 5, { name => 'Eva' } );
+	$h->{ui}->step;
+	isnt $table->search_revision( [ 5, 'name' ] ),   $revision, 'a changed row has another revision';
+	is $table->cell_widget( 5, 'name' )->highlights, [],        'and its highlights are gone';
+	is $table->search_revision( [ 9, 'name' ] ),     'gone',    'a row that does not exist is gone';
+	$table->clear_text_highlights;
+	like dies { $table->highlight_text( 'x', [] ) }, qr/highlight_text needs a key of \[ row id, column key \]/, 'keys are checked';
+};
+
+subtest 'revealing a match expands the rows and groups above it' => sub {
+	my ( $table, $h ) = table_ui(
+		children_key => 'children',
+		rows         => [
+			{ id => 1, name => 'Ann', dept => 'Sales', children => [ { id => 2, name => 'Bob', dept => 'Sales', children => [ { id => 3, name => 'Cid', dept => 'Sales' } ] } ] },
+			{ id => 4, name => 'Dan', dept => 'HR' }
+		],
+	);
+	my %text_of = map { join( '/', @{ $_->[0] } ) => $_->[1] } $table->search_texts;
+	is $text_of{'3/name'}, 'Cid', 'a row under collapsed rows is among the texts';
+	$table->reveal_text( [ 3, 'name' ], 0 );
+	$h->{ui}->step;
+	is [ $table->is_expanded(1), $table->is_expanded(2), $table->cursor ], [ 1, 1, 3 ], 'its ancestors are expanded and the cursor is on it';
+
+	$table->group_by('dept');
+	$table->collapse_group('HR');
+	$h->{ui}->step;
+	$table->reveal_text( [ 4, 'name' ], 0 );
+	$h->{ui}->step;
+	is [ $table->is_group_expanded('HR'), $table->cursor ], [ 1, 4 ], 'a collapsed group is opened for its row';
+};
+
+subtest 'the widgets of a custom cell are searched while the row is built' => sub {
+	my ( $table, $h ) = table_ui(
+		columns => [
+			{ key => 'name', title => 'Name' }, { key => 'age', title => 'Age', cell => sub ($cell) { return Term::Fabulous::Widget::Text->new( text => 'aged ' . ( $cell->{row}{age} // '?' ) ) } }
+		],
+		page_size => 2,
+	);
+	my %text_of = map {
+		join( '/', map { $_ // '-' } @{ $_->[0] } ) => $_->[1]
+	} $table->search_texts;
+	is $text_of{'1/age/0/-'}, 'aged 34', 'a text inside the cell widget of a built row';
+	ok !exists $text_of{'5/age/0/-'}, 'not of a row on another page';
+	$table->highlight_text( [ 1, 'age', 0, undef ], [ [ 0, 4, 'on accent' ] ] );
+	ref_is $table->reveal_text( [ 1, 'age', 0, undef ], 0 )->[0], $table->cell_widget( 1, 'age' ), 'reveal_text names the text in the cell';
+	is $table->cell_widget( 1, 'age' )->highlights->[0][1], 4, 'the highlight went onto it';
+	like $table->search_revision( [ 1, 'age', 0, undef ] ), qr/\A[0-9]+:[0-9]+:[0-9]+\z/, 'the revision joins the row, the columns and the widget';
+	is $table->search_revision( [ 5, 'age', 0, undef ] ), 'gone', 'a cell that is not built is gone';
+	$table->page(3);
+	$h->{ui}->step;
+	$table->page(1);
+	$h->{ui}->step;
+	is $table->cell_widget( 1, 'age' )->highlights->[0][1], 4, 'a cell built again gets the highlight back';
+};
+
 done_testing;
