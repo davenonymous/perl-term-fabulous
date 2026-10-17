@@ -116,6 +116,12 @@ class Term::Fabulous::Document :strict(params) {
 		return { %{ $options[ $self->_checked_index( options_of => $index ) ] } };
 	}
 
+	# What made the item: the name of the factory, or widget for an item
+	# given to add.
+	method kind_of ($index) {
+		return $facts[ $self->_checked_index( kind_of => $index ) ]{kind};
+	}
+
 	method index_of ($widget) {
 		return blessed $widget ? $index_of{ refaddr $widget } : undef;
 	}
@@ -633,6 +639,13 @@ that is no item dies.
 	my $options = $document->options_of($index);    # { gap, indent, flush, quote, rows }
 
 How the view lays the item out, as a new hash.
+
+=head2 kind_of
+
+	my $kind = $document->kind_of($index);    # 'heading', 'paragraph', 'term', 'item', 'code', 'rule' or 'widget'
+
+What made an item: the factory (C<item> for L</list_item>), or C<widget>
+for an item given to L</add>.
 
 =head2 index_of
 

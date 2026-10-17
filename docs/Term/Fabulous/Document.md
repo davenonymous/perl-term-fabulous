@@ -241,6 +241,15 @@ my $options = $document->options_of($index);    # { gap, indent, flush, quote, r
 
 How the view lays the item out, as a new hash.
 
+## kind\_of
+
+```perl
+my $kind = $document->kind_of($index);    # 'heading', 'paragraph', 'term', 'item', 'code', 'rule' or 'widget'
+```
+
+What made an item: the factory (`item` for ["list\_item"](#list_item)), or `widget`
+for an item given to ["add"](#add).
+
 ## index\_of
 
 ```perl

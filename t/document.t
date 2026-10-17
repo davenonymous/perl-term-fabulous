@@ -74,8 +74,10 @@ subtest 'factories' => sub {
 };
 
 subtest 'the factories space the items' => sub {
-	is [ map { $SAMPLE->options_of($_)->{gap} } 7, 8, 9, 10 ], [ 1, 0, 1, 0 ], 'a definition follows its term';
-	is [ map { $SAMPLE->options_of($_)->{gap} } 12 .. 15 ],    [ 1, 0, 1, 0 ], 'the items of a list follow each other, a new list is apart';
+	is [ map { $SAMPLE->kind_of($_) } 0, 1, 3, 7, 12 ],        [qw(heading paragraph code term item)], 'kind_of names the factory';
+	is document( [ rule => () ] )->kind_of(0),                 'rule',                                 'a rule too';
+	is [ map { $SAMPLE->options_of($_)->{gap} } 7, 8, 9, 10 ], [ 1, 0, 1, 0 ],                         'a definition follows its term';
+	is [ map { $SAMPLE->options_of($_)->{gap} } 12 .. 15 ],    [ 1, 0, 1, 0 ],                         'the items of a list follow each other, a new list is apart';
 	my $nested = document( [ list_item => '-', 'outer' ], [ list_item => '-', 'inner', indent => 2 ], [ list_item => '-', 'outer again', position => 2 ] );
 	is [ map { $nested->options_of($_)->{gap} } 0 .. 2 ],                                      [ 1, 0, 0 ], 'a nested list starts right under its parent';
 	is document( [ paragraph => 'a' ], [ paragraph => 'b', gap => 3 ] )->options_of(1)->{gap}, 3,           'a gap given wins';
