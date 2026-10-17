@@ -33,9 +33,8 @@ The program is `examples/widgets/code-block.pl`.
 A code block shows lines of code, such as a verbatim paragraph of a
 document. The lines never wrap, and the block draws them on a
 background of their own that sets them apart from the surrounding
-prose. [Term::Fabulous::Widget::DocumentView](DocumentView.md) shows every verbatim
-block of a document with a code block; a program can also use the
-widget on its own.
+prose. The [code](../Document.md#code) factory of a document
+makes one, and a program can also use the widget on its own.
 
 The block is a [Term::Fabulous::Widget::Display](Display.md), a widget that paints
 its cells itself (see
@@ -128,10 +127,9 @@ message that names the parameter.
 
     The name of the [Term::Fabulous::Document::Look](../Document/Look.md) class whose
     `code_block` and `clipped` styles the block paints with; default
-    `Term::Fabulous::Document::Look`. A [Term::Fabulous::Widget::DocumentView](DocumentView.md)
-    passes its own [look\_class](DocumentView.md#look_class)
-    to every code block it builds, so a look subclass that restyles code
-    applies to the code blocks of the view too. A value that is not the
+    `Term::Fabulous::Document::Look`. The [code](../Document.md#code)
+    factory of a document passes the document's look, so a look subclass
+    that restyles code applies to the code blocks of the document too. A value that is not the
     name of a loaded subclass of the look dies.
 
 # METHODS
@@ -328,6 +326,6 @@ CodeBlock "example" {
 # SEE ALSO
 
 [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md),
-[Term::Fabulous::Document::Block::Verbatim](../Document/Block/Verbatim.md),
+[Term::Fabulous::Document](../Document.md),
 [Term::Fabulous::Widget::DocumentView](DocumentView.md),
 [Term::Fabulous::Widget::Display](Display.md), [Term::Fabulous::Text::Style](../Text/Style.md).

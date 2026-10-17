@@ -389,9 +389,8 @@ The program is F<examples/widgets/code-block.pl>.
 A code block shows lines of code, such as a verbatim paragraph of a
 document. The lines never wrap, and the block draws them on a
 background of their own that sets them apart from the surrounding
-prose. L<Term::Fabulous::Widget::DocumentView> shows every verbatim
-block of a document with a code block; a program can also use the
-widget on its own.
+prose. The L<code|Term::Fabulous::Document/code> factory of a document
+makes one, and a program can also use the widget on its own.
 
 The block is a L<Term::Fabulous::Widget::Display>, a widget that paints
 its cells itself (see
@@ -493,10 +492,9 @@ into view (see L</shown_offset>).
 
 The name of the L<Term::Fabulous::Document::Look> class whose
 C<code_block> and C<clipped> styles the block paints with; default
-C<Term::Fabulous::Document::Look>. A L<Term::Fabulous::Widget::DocumentView>
-passes its own L<look_class|Term::Fabulous::Widget::DocumentView/look_class>
-to every code block it builds, so a look subclass that restyles code
-applies to the code blocks of the view too. A value that is not the
+C<Term::Fabulous::Document::Look>. The L<code|Term::Fabulous::Document/code>
+factory of a document passes the document's look, so a look subclass
+that restyles code applies to the code blocks of the document too. A value that is not the
 name of a loaded subclass of the look dies.
 
 =back
@@ -667,7 +665,7 @@ C<language>, C<offset> and C<look_class>:
 =head1 SEE ALSO
 
 L<Term::Fabulous::Cookbook::Documents>,
-L<Term::Fabulous::Document::Block::Verbatim>,
+L<Term::Fabulous::Document>,
 L<Term::Fabulous::Widget::DocumentView>,
 L<Term::Fabulous::Widget::Display>, L<Term::Fabulous::Text::Style>.
 

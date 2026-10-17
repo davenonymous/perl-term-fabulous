@@ -762,8 +762,8 @@ A document with headings, paragraphs, lists, quotes, code and links,
 read from POD, Markdown or another format, is shown by a
 [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), a VirtualList that knows the
 kinds of block such a document has. A parser turns the source into a
-[Term::Fabulous::Document](../Document.md), a list of [blocks](../Document/Block.md)
-whose text carries [marks](../Document/Mark.md) (bold,
+[Term::Fabulous::Document](../Document.md), a list of [blocks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock)
+whose text carries [marks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3AMark) (bold,
 code, a link); the view shows every kind in the styles of the theme,
 wraps the paragraphs, scrolls with the keys, the wheel and the
 scrollbar, selects links with `l` and `L` and follows them with

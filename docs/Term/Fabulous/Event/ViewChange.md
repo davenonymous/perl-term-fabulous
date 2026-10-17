@@ -62,9 +62,9 @@ than 0 requires a `query`.
 my $index = $event->top;
 ```
 
-Returns the index of the block at the top of the view, which may be
+Returns the index of the item at the top of the view, which may be
 only partly visible. Returns `undef` when the view has no document,
-when the document has no blocks, or when the view has not been laid
+when the document has no items, or when the view has not been laid
 out yet.
 
 ## bottom
@@ -73,7 +73,7 @@ out yet.
 my $index = $event->bottom;
 ```
 
-Returns the index of the block at the bottom of the view, which may be
+Returns the index of the item at the bottom of the view, which may be
 only partly visible, or `undef` in the same cases as ["top"](#top).
 
 ## section
@@ -82,12 +82,10 @@ only partly visible, or `undef` in the same cases as ["top"](#top).
 my $number = $event->section;
 ```
 
-Returns the number of the section the top block belongs to, as
-["section\_at" in Term::Fabulous::Document](../Document.md#section_at) counts it: the position of the
-section's heading in
-[heading\_indexes](../Document.md#heading_indexes), from 0.
-Returns `undef` when the top block comes before the first heading, or
-when ["top"](#top) is `undef`.
+Returns the number of the section the top item belongs to, as
+["section\_at" in Term::Fabulous::Document](../Document.md#section_at) counts it, from 0. Returns
+`undef` when the top item comes before the first section, or when
+["top"](#top) is `undef`.
 
 ## section\_title
 
@@ -95,7 +93,7 @@ when ["top"](#top) is `undef`.
 my $title = $event->section_title;
 ```
 
-Returns the text of that section's heading. It is defined exactly when
+Returns the title of that section. It is defined exactly when
 ["section"](#section) is, so that a status line can name the section from the
 event alone.
 
@@ -116,9 +114,8 @@ been laid out.
 my $link = $event->link;
 ```
 
-Returns the target of the selected link, as the parser stored it in the
-link mark (["link" in Term::Fabulous::Document::Mark](../Document/Mark.md#link)), or `undef` when no
-link is selected.
+Returns the target of the selected link, as the document holds it, or
+`undef` when no link is selected.
 
 ## query
 

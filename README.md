@@ -1460,56 +1460,34 @@ Term::Fabulous, and programs do not use them directly.
 
 ## Documents
 
-The document view shows documents of any format through one model: a
-parser turns the source into blocks and marks, and the view shows them.
-[Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) reads POD this way. [Term::Fabulous::Cookbook::Documents](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Cookbook/Documents.md)
-has recipes for documents, from a Markdown reader built on [Markdent](https://metacpan.org/pod/Markdent)
-to a block kind and a mark kind of your own.
+The document view shows a document: a list of widgets, the common ones
+made by the document's factories from text and marks, any other added
+as it is. A parser fills the document, and the view shows, searches
+and links it. [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) reads POD this way.
+[Term::Fabulous::Cookbook::Documents](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Cookbook/Documents.md) has recipes for documents, from
+a Markdown reader built on [Markdent](https://metacpan.org/pod/Markdent) to tables and pictures inside a
+document.
 
 - [Term::Fabulous::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document.md)
 
-    A document as a list of blocks: its headings and sections, its links,
-    and searching its text.
-
-- [Term::Fabulous::Document::Block](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block.md)
-
-    One paragraph of a document, with its text, its marks, its indent and
-    the quotes it is in; the kinds [Term::Fabulous::Document::Block::Heading](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Heading.md),
-    [Term::Fabulous::Document::Block::Paragraph](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Paragraph.md),
-    [Term::Fabulous::Document::Block::Item](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Item.md),
-    [Term::Fabulous::Document::Block::Term](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Term.md) and
-    [Term::Fabulous::Document::Block::Verbatim](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Verbatim.md), and how a format adds
-    kinds of its own.
-
-- [Term::Fabulous::Document::Mark](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Mark.md)
-
-    A kind of styling (bold, code, a link, ...) over a range of a block's
-    text.
+    A document as a list of widgets with the options a view lays them out
+    with: factories for headings, paragraphs, list items, terms, code and
+    rules, its sections and anchors, and searching its text.
 
 - [Term::Fabulous::Document::Look](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Look.md)
 
-    The styles the kinds of marks and blocks are shown in, from the tokens
-    of the theme.
+    The styles the kinds of marks are shown in, as palette tokens of the
+    theme.
 
-- [Term::Fabulous::Document::Geometry](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Geometry.md)
+- [Term::Fabulous::Role::Searchable](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Role/Searchable.md)
 
-    The rows and columns of the blocks on the screen: indents, blank rows,
-    and the height of a block before it was laid out.
-
-- [Term::Fabulous::Document::Overlays](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Overlays.md)
-
-    The selected link and the search matches drawn over a document, and
-    which blocks a change touches.
+    The texts a widget shows, for search and highlights, also those it
+    builds only later or does not show (a table's other pages).
 
 - [Term::Fabulous::Scrolling](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Scrolling.md)
 
     Scroll any container by rows, by pages, to its ends and to a range of
     rows, as a pager does.
-
-- [Term::Fabulous::Text::Wrap](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Wrap.md)
-
-    How many rows a text takes when Clay wraps it, and the row of a
-    character in it.
 
 ## Colors, borders and text
 

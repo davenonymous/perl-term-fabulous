@@ -23,7 +23,7 @@ class Term::Fabulous::Widget::Text
 	use Clay::UI::Enum::Result;
 	use Clay::UI::Revision qw(bump_revision);
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
-	use List::Util qw(first sum0);
+	use List::Util qw(first min sum0);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(boolean class_names color describe non_negative_integer one_of positive_integer);
 	use Term::Fabulous::Color;
@@ -493,15 +493,29 @@ class Term::Fabulous::Widget::Text
 	# ---------------------------------------------------------------------
 
 	# The rows the text takes in the given number of columns, as Clay will
-	# wrap it: at the spaces for the words mode, at the line breaks only
-	# for the newlines mode, never for none.
+	# wrap it: at the spaces and the line breaks for the words mode, at the
+	# line breaks only otherwise (Clay lays out none as newlines).
 	method estimated_rows ($columns) {
 		$columns = positive_integer( $self, columns => $columns );
-		my $mode = $self->wrap_mode // CLAY_TEXT_WRAP_WORDS;
-		return 1 if $mode == CLAY_TEXT_WRAP_NONE;
 		my @lines = split /\n/, $self->text, -1;
-		return scalar @lines if $mode == CLAY_TEXT_WRAP_NEWLINES;
+		return scalar @lines unless $self->_wraps_words;
 		return sum0 map { _wrapped_rows( $_, $columns ) } @lines;
+	}
+
+	# The row, from 0, that the character at the offset lies on when the
+	# text is wrapped to the columns, counted as estimated_rows counts.
+	method row_of_offset ( $offset, $columns ) {
+		$offset  = min( non_negative_integer( $self, offset => $offset ), length $self->text );
+		$columns = positive_integer( $self, columns => $columns );
+		my @lines  = split /\n/, substr( $self->text, 0, $offset ), -1;
+		my $last   = pop(@lines) // '';
+		my $before = $self->_wraps_words ? sum0( map { _wrapped_rows( $_, $columns ) } @lines ) : scalar @lines;
+		my $rest   = ( split /\n/, substr( $self->text, $offset - length $last ), 2 )[0] // '';
+		return $before + ( $self->_wraps_words ? _row_in_line( $rest, length $last, $columns ) : 0 );
+	}
+
+	method _wraps_words () {
+		return ( $self->wrap_mode // CLAY_TEXT_WRAP_WORDS ) == CLAY_TEXT_WRAP_WORDS ? 1 : 0;
 	}
 
 	# Clay wraps a line at the spaces, and only there (a no-break space is
@@ -510,14 +524,22 @@ class Term::Fabulous::Widget::Text
 	# one; a word wider than the row has a row of its own, and runs past
 	# its end.
 	sub _wrapped_rows ( $line, $columns ) {
+		return 1 + _row_in_line( $line, length $line, $columns );
+	}
+
+	# The row of the word that holds the character at the offset of a line
+	# (the last word, past its end).
+	sub _row_in_line ( $line, $offset, $columns ) {
 		my @words = split / /, $line, -1;
-		my ( $rows, $used ) = ( 1, 0 );
+		my ( $row, $used, $position ) = ( 0, 0, 0 );
 		foreach my $index ( 0 .. $#words ) {
 			my $width = _columns_of( $words[$index] ) + ( $index < $#words ? 1 : 0 );
-			if ( $used > 0 && $used + $width > $columns ) { ( $rows, $used ) = ( $rows + 1, $width ) }
+			if ( $used > 0 && $used + $width > $columns ) { ( $row, $used ) = ( $row + 1, $width ) }
 			else                                          { $used += $width }
+			$position += length( $words[$index] ) + 1;
+			last if $offset < $position;
 		}
-		return $rows;
+		return $row;
 	}
 
 	# A printable ASCII character takes one column. Most words are such,
@@ -1269,12 +1291,23 @@ focus now is C<can_focus>, which also asks the C<can_focus> parameter.
 The rows the text will take when it is laid out in that many columns,
 worked out as Clay wraps it: at the spaces and the line breaks for
 C<CLAY_TEXT_WRAP_WORDS>, at the line breaks only for
-C<CLAY_TEXT_WRAP_NEWLINES>, one row for C<CLAY_TEXT_WRAP_NONE>. A word
-wider than the columns takes a row of its own. Widgets that build only
+C<CLAY_TEXT_WRAP_NEWLINES> and C<CLAY_TEXT_WRAP_NONE>, which Clay lays out
+alike. A word wider than the columns takes a row of its own. Widgets that build only
 part of their content, such as L<Term::Fabulous::Widget::DocumentView>,
 ask this before the text was ever laid out; see
 L<Term::Fabulous::Widget/estimated_rows>. C<$columns> must be a
 positive integer.
+
+=head2 row_of_offset
+
+	my $row = $text->row_of_offset( $offset, $columns );
+
+The row, from 0, of the character at C<$offset> when the text is laid
+out in that many columns, wrapped as L</estimated_rows> counts. Past
+the end of the text it is the last row. L<Term::Fabulous::Widget::DocumentView>
+scrolls a search match into view with it when Clay left the match's
+line out of the last frame, below the window. Both arguments are
+checked.
 
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
 

@@ -21,11 +21,11 @@ in [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) and the Markdown 
 A document has three layers:
 
 - A [Term::Fabulous::Document](../Document.md) is an ordered list of _blocks_.
-- A [block](../Document/Block.md) is one paragraph-like unit:
+- A [block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock) is one paragraph-like unit:
 a heading, a paragraph, a list item, the term of a definition list, or
 a code block. Its _kind_ says which. A block holds plain text, with all
 formatting removed.
-- A [mark](../Document/Mark.md) records where the formatting
+- A [mark](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3AMark) records where the formatting
 was: a range of the block's text and the kind of formatting (`bold`,
 `code`, `link`, ...). The view turns kinds into colors and styles of
 the current theme with a [look](../Document/Look.md).
@@ -165,17 +165,17 @@ any defined value: a URL, the name of a section, a hash reference or an
 object of your program. The view hands it back unchanged when the user
 follows the link (see the next recipes). ["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds)
 lists every kind and its colors.
-- A [heading](../Document/Block/Heading.md) has a level from
+- A [heading](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AHeading) has a level from
 1 to 6. Level 1 gets a rule under it. Headings are never indented.
-- A [verbatim block](../Document/Block/Verbatim.md) keeps its
+- A [verbatim block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AVerbatim) keeps its
 lines and never wraps. Its optional `language` is passed to a syntax
 highlighter, if the view has one (see
 ["Highlight the syntax of code blocks (highlighter, CodeBlock)"](#highlight-the-syntax-of-code-blocks-highlighter-codeblock)).
-- A [term](../Document/Block/Term.md) starts an entry of a
+- A [term](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3ATerm) starts an entry of a
 definition list, and the paragraph after it is its definition. Indent
 the definition (here by 4 columns) so that the view keeps it directly
 under the term, without a blank row.
-- Every [item](../Document/Block/Item.md) of a list is a block
+- Every [item](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AItem) of a list is a block
 of its own. `marker` is the bullet or number, and `marker_width` the
 columns from the start of the marker to the start of the text. Give all
 items of one list the same `marker_width`, so that their texts line
@@ -534,16 +534,16 @@ class of the block and its parameters, and collects the text that
 follows. The event that ends the block, or the start of the next block,
 closes it; only then is the block built. Which event becomes which
 block:
-    - `start_header`: a [heading](../Document/Block/Heading.md)
+    - `start_header`: a [heading](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AHeading)
     with the level of the event.
     - `start_paragraph`: a
-    [paragraph](../Document/Block/Paragraph.md), unless it is
+    [paragraph](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AParagraph), unless it is
     the first paragraph of a list item. That one is the text of the item.
-    - `start_list_item`: an [item](../Document/Block/Item.md).
+    - `start_list_item`: an [item](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AItem).
     Its marker, `marker_width` and `position` come from the list it is
     in.
     - `code_block` (a fenced block) and `preformatted` (an indented one): a
-    [verbatim block](../Document/Block/Verbatim.md), with the
+    [verbatim block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AVerbatim), with the
     word after the opening fence as its `language`.
     - `horizontal_rule`: a block of the kind `rule`, a kind that
     Term::Fabulous does not have. The last recipe adds it.
@@ -1121,7 +1121,7 @@ alternatives are tried left to right at each position, a `#` inside a
 string stays part of the string. For real syntax highlighting, a
 highlighter can use a proper tokenizer, such as [PPI](https://metacpan.org/pod/PPI) for Perl.
 - The language comes from the `language` of the
-[verbatim block](../Document/Block/Verbatim.md). The
+[verbatim block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock%3A%3AVerbatim). The
 program sets it directly; a parser takes it from the source, as
 `My::Markdown` does with the word after the opening fence of a code
 block (```` ```perl ````).
@@ -1474,7 +1474,7 @@ class My::Markdown::Rule :isa(Term::Fabulous::Document::Block) :strict(params) {
 1;
 ```
 
-- A block kind is a subclass of [Term::Fabulous::Document::Block](../Document/Block.md) with a
+- A block kind is a subclass of [Term::Fabulous::Document::Block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock) with a
 `kind` method that returns a name. The name decides which method of the
 view builds the widget of the block: `view_of_rule`. Every block takes
 the parameters `text`, `marks`, `indent` and `quote`; the reader
@@ -1482,14 +1482,14 @@ creates a rule with an empty text, and the `ADJUST` block refuses
 anything else.
 - The view does not build widgets for blocks that are far out of view,
 so it must estimate how tall they are, for the scrollbar. It asks
-[body\_rows](../Document/Block.md#body_rows): the rows the
+[body\_rows](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock#body_rows): the rows the
 block takes in the given number of columns, without the blank row
 above it. The default wraps the text the way the layout wraps it; a
 rule is one row. An estimate that is off does no harm beyond a
 scrollbar thumb that jumps a little when the block comes into view.
 - The view also asks a block for the row of a character, to scroll a
 link or a search match into view
-([row\_of\_character](../Document/Block.md#row_of_character)).
+([row\_of\_character](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock#row_of_character)).
 A kind with text and rows above it, say a caption under a frame,
 overrides that too. A rule has no text, so the default is right.
 
@@ -1660,8 +1660,8 @@ end of the document.
 
 The reference of the extension points is in
 ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#block-kinds),
-[Term::Fabulous::Document::Block](../Document/Block.md), [Term::Fabulous::Document::Look](../Document/Look.md)
-and [Term::Fabulous::Document::Geometry](../Document/Geometry.md). [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a
+[Term::Fabulous::Document::Block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock), [Term::Fabulous::Document::Look](../Document/Look.md)
+and [Term::Fabulous::Document::Geometry](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3AGeometry). [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a
 complete reader built the same way, for POD.
 
 # SEE ALSO

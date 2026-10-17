@@ -621,12 +621,25 @@ my $rows = $text->estimated_rows($columns);
 The rows the text will take when it is laid out in that many columns,
 worked out as Clay wraps it: at the spaces and the line breaks for
 `CLAY_TEXT_WRAP_WORDS`, at the line breaks only for
-`CLAY_TEXT_WRAP_NEWLINES`, one row for `CLAY_TEXT_WRAP_NONE`. A word
-wider than the columns takes a row of its own. Widgets that build only
+`CLAY_TEXT_WRAP_NEWLINES` and `CLAY_TEXT_WRAP_NONE`, which Clay lays out
+alike. A word wider than the columns takes a row of its own. Widgets that build only
 part of their content, such as [Term::Fabulous::Widget::DocumentView](DocumentView.md),
 ask this before the text was ever laid out; see
 ["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows). `$columns` must be a
 positive integer.
+
+## row\_of\_offset
+
+```perl
+my $row = $text->row_of_offset( $offset, $columns );
+```
+
+The row, from 0, of the character at `$offset` when the text is laid
+out in that many columns, wrapped as ["estimated\_rows"](#estimated_rows) counts. Past
+the end of the text it is the last row. [Term::Fabulous::Widget::DocumentView](DocumentView.md)
+scrolls a search match into view with it when Clay left the match's
+line out of the last frame, below the window. Both arguments are
+checked.
 
 ## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
 

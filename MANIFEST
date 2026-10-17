@@ -174,16 +174,7 @@ lib/Term/Fabulous/Cookbook/TableRows.pod
 lib/Term/Fabulous/Cookbook/TableStyles.pod
 lib/Term/Fabulous/Cookbook/Tables.pod
 lib/Term/Fabulous/Document.pm
-lib/Term/Fabulous/Document/Block.pm
-lib/Term/Fabulous/Document/Block/Heading.pm
-lib/Term/Fabulous/Document/Block/Item.pm
-lib/Term/Fabulous/Document/Block/Paragraph.pm
-lib/Term/Fabulous/Document/Block/Term.pm
-lib/Term/Fabulous/Document/Block/Verbatim.pm
-lib/Term/Fabulous/Document/Geometry.pm
 lib/Term/Fabulous/Document/Look.pm
-lib/Term/Fabulous/Document/Mark.pm
-lib/Term/Fabulous/Document/Overlays.pm
 lib/Term/Fabulous/Editor.pm
 lib/Term/Fabulous/Enum/BorderStyle.pm
 lib/Term/Fabulous/Enum/WebColor.pm
@@ -266,7 +257,6 @@ lib/Term/Fabulous/Terminal/Termbox.pm
 lib/Term/Fabulous/Terminal/Termbox/Cells.pm
 lib/Term/Fabulous/Text/Markup.pm
 lib/Term/Fabulous/Text/Style.pm
-lib/Term/Fabulous/Text/Wrap.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Theme/Document.pm
@@ -393,9 +383,7 @@ t/chart-transform.t
 t/check.t
 t/color.t
 t/commands.t
-t/document-geometry.t
 t/document-look.t
-t/document-overlays.t
 t/document.t
 t/editor.t
 t/estimated-rows.t
@@ -429,7 +417,6 @@ t/terminal-termbox.t
 t/text-markup.t
 t/text-style.t
 t/text-view.t
-t/text-wrap.t
 t/theme-binding.t
 t/theme-document.t
 t/theme-editor.t

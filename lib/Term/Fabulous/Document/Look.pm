@@ -63,6 +63,18 @@ class Term::Fabulous::Document::Look :strict(params) {
 		return @kinds;
 	}
 
+	# The style of a kind with the palette tokens of its recipe as they
+	# are: a widget that paints it asks its own theme for the colors, so
+	# a theme switch needs no new style.
+	method token_style :common ($kind) {
+		my %recipe = $class->recipes;
+		my $recipe = $recipe{ $kind                                       // '' } // die "$class: unknown kind " . describe($kind) . "; the kinds are " . join( ', ', $class->kinds );
+		my $style  = Term::Fabulous::Text::Style::style( $recipe->{words} // {} );
+		$style->{color}      = $recipe->{color} if defined $recipe->{color};
+		$style->{background} = $recipe->{background} if defined $recipe->{background};
+		return $style;
+	}
+
 	method style ($kind) {
 		my $style = $style_of{ $kind // '' } // die ref($self) . ": unknown kind " . describe($kind) . "; the kinds are " . join( ', ', __CLASS__->kinds );
 		return { %$style, map { ref $style->{$_} ? ( $_ => [ @{ $style->{$_} } ] ) : () } keys %$style };
@@ -123,7 +135,7 @@ Term::Fabulous::Document::Look - Styles for each kind of document text, taken fr
 
 A parser records what a range of text I<is>, such as bold text, code or
 a heading, as a I<mark> of a certain I<kind> (see
-L<Term::Fabulous::Document::Mark>). A look decides how each kind is
+L<Term::Fabulous::Document/FACTORIES>). A look decides how each kind is
 I<shown>. For every kind it holds a style in the sense of
 L<Term::Fabulous::Text::Style>: the style bits to set and clear, a text
 color and a background. A L<Term::Fabulous::Widget::Text> span
@@ -212,15 +224,11 @@ replaces that kind's recipe. Keep all kinds of the base class: the
 document view and L<Term::Fabulous::Widget::CodeBlock> ask for several
 of them by name, and L</style> dies for a kind the look does not have.
 
-A L<Term::Fabulous::Widget::DocumentView> subclass selects the look
-class it draws with by overriding
-L<look_class|Term::Fabulous::Widget::DocumentView/look_class>:
+A document names the look class its factories style marks with:
 
 =for highlighter language=perl
 
-	class My::DocumentView :isa(Term::Fabulous::Widget::DocumentView) {
-		method look_class :common () { return 'My::Look' }
-	}
+	my $document = Term::Fabulous::Document->new( look => 'My::Look' );
 
 The view accepts only documents whose marks are links or have a kind
 that the look class lists in L</kinds>, and its code blocks paint with
@@ -278,6 +286,17 @@ Returns the names of all kinds of the class, sorted. The document view
 checks the mark kinds of every document it is given against this list
 and dies for a kind that is missing.
 
+=head2 token_style
+
+	my $style = Term::Fabulous::Document::Look->token_style('code');    # { set => 0, clear => 0, color => 'warning', background => undef }
+
+Class method. The style of a kind as a style hash whose colors are
+still the palette tokens of its recipe, not colors: what the factories
+of L<Term::Fabulous::Document> give their texts, which look the tokens
+up in their own theme when they paint (see
+L<Term::Fabulous::Text::Style/Palette tokens>). A new hash on every
+call. An unknown or undefined kind dies with the known kinds.
+
 =head1 METHODS
 
 =head2 theme
@@ -300,6 +319,6 @@ message that lists the known kinds.
 
 L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Text::Style>,
 L<Term::Fabulous::Theme>, L<Term::Fabulous::Manual::Looks/THEMES>,
-L<Term::Fabulous::Document::Mark>, L<Term::Fabulous::Widget::DocumentView>.
+L<Term::Fabulous::Document>, L<Term::Fabulous::Widget::DocumentView>.
 
 =cut

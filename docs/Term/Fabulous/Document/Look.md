@@ -30,7 +30,7 @@ class My::Look :isa(Term::Fabulous::Document::Look) {
 
 A parser records what a range of text _is_, such as bold text, code or
 a heading, as a _mark_ of a certain _kind_ (see
-[Term::Fabulous::Document::Mark](Mark.md)). A look decides how each kind is
+["FACTORIES" in Term::Fabulous::Document](../Document.md#factories)). A look decides how each kind is
 _shown_. For every kind it holds a style in the sense of
 [Term::Fabulous::Text::Style](../Text/Style.md): the style bits to set and clear, a text
 color and a background. A [Term::Fabulous::Widget::Text](../Widget/Text.md) span
@@ -113,14 +113,10 @@ replaces that kind's recipe. Keep all kinds of the base class: the
 document view and [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) ask for several
 of them by name, and ["style"](#style) dies for a kind the look does not have.
 
-A [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) subclass selects the look
-class it draws with by overriding
-[look\_class](../Widget/DocumentView.md#look_class):
+A document names the look class its factories style marks with:
 
 ```perl
-class My::DocumentView :isa(Term::Fabulous::Widget::DocumentView) {
-        method look_class :common () { return 'My::Look' }
-}
+my $document = Term::Fabulous::Document->new( look => 'My::Look' );
 ```
 
 The view accepts only documents whose marks are links or have a kind
@@ -187,6 +183,19 @@ Returns the names of all kinds of the class, sorted. The document view
 checks the mark kinds of every document it is given against this list
 and dies for a kind that is missing.
 
+## token\_style
+
+```perl
+my $style = Term::Fabulous::Document::Look->token_style('code');    # { set => 0, clear => 0, color => 'warning', background => undef }
+```
+
+Class method. The style of a kind as a style hash whose colors are
+still the palette tokens of its recipe, not colors: what the factories
+of [Term::Fabulous::Document](../Document.md) give their texts, which look the tokens
+up in their own theme when they paint (see
+["Palette tokens" in Term::Fabulous::Text::Style](../Text/Style.md#palette-tokens)). A new hash on every
+call. An unknown or undefined kind dies with the known kinds.
+
 # METHODS
 
 ## theme
@@ -213,4 +222,4 @@ message that lists the known kinds.
 
 [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md), [Term::Fabulous::Text::Style](../Text/Style.md),
 [Term::Fabulous::Theme](../Theme.md), ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes),
-[Term::Fabulous::Document::Mark](Mark.md), [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md).
+[Term::Fabulous::Document](../Document.md), [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md).

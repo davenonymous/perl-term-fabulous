@@ -2147,58 +2147,36 @@ The user showed or hid a table column in the column chooser.
 
 =head2 Documents
 
-The document view shows documents of any format through one model: a
-parser turns the source into blocks and marks, and the view shows them.
-L<Pod::Fabulous> reads POD this way. L<Term::Fabulous::Cookbook::Documents>
-has recipes for documents, from a Markdown reader built on L<Markdent>
-to a block kind and a mark kind of your own.
+The document view shows a document: a list of widgets, the common ones
+made by the document's factories from text and marks, any other added
+as it is. A parser fills the document, and the view shows, searches
+and links it. L<Pod::Fabulous> reads POD this way.
+L<Term::Fabulous::Cookbook::Documents> has recipes for documents, from
+a Markdown reader built on L<Markdent> to tables and pictures inside a
+document.
 
 =over
 
 =item L<Term::Fabulous::Document>
 
-A document as a list of blocks: its headings and sections, its links,
-and searching its text.
-
-=item L<Term::Fabulous::Document::Block>
-
-One paragraph of a document, with its text, its marks, its indent and
-the quotes it is in; the kinds L<Term::Fabulous::Document::Block::Heading>,
-L<Term::Fabulous::Document::Block::Paragraph>,
-L<Term::Fabulous::Document::Block::Item>,
-L<Term::Fabulous::Document::Block::Term> and
-L<Term::Fabulous::Document::Block::Verbatim>, and how a format adds
-kinds of its own.
-
-=item L<Term::Fabulous::Document::Mark>
-
-A kind of styling (bold, code, a link, ...) over a range of a block's
-text.
+A document as a list of widgets with the options a view lays them out
+with: factories for headings, paragraphs, list items, terms, code and
+rules, its sections and anchors, and searching its text.
 
 =item L<Term::Fabulous::Document::Look>
 
-The styles the kinds of marks and blocks are shown in, from the tokens
-of the theme.
+The styles the kinds of marks are shown in, as palette tokens of the
+theme.
 
-=item L<Term::Fabulous::Document::Geometry>
+=item L<Term::Fabulous::Role::Searchable>
 
-The rows and columns of the blocks on the screen: indents, blank rows,
-and the height of a block before it was laid out.
-
-=item L<Term::Fabulous::Document::Overlays>
-
-The selected link and the search matches drawn over a document, and
-which blocks a change touches.
+The texts a widget shows, for search and highlights, also those it
+builds only later or does not show (a table's other pages).
 
 =item L<Term::Fabulous::Scrolling>
 
 Scroll any container by rows, by pages, to its ends and to a range of
 rows, as a pager does.
-
-=item L<Term::Fabulous::Text::Wrap>
-
-How many rows a text takes when Clay wraps it, and the row of a
-character in it.
 
 =back
 
