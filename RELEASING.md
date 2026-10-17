@@ -28,7 +28,9 @@ This dist uses plain `ExtUtils::MakeMaker` plus
    ```
 
    `make release` refuses to run while `make docs-check` finds anything
-   out of date.
+   out of date, and the pre-commit hook in `.githooks` (installed by
+   `perl Makefile.PL`) refuses any commit that leaves `README.md` or
+   `docs/` behind the pod; see `tools/README.md`.
 
    The POD shows the screenshots with
    `<img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/vVERSION/screenshots/NAME.svg">`,

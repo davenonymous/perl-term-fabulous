@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Refuses a commit whose staged files touch the pod or the Markdown pages
+# while README.md or docs/ do not match the pod. Nothing is regenerated:
+# run 'make readme' and stage what changed. Skip with 'git commit
+# --no-verify'.
+#
+# perl Makefile.PL points core.hooksPath at this directory in a git
+# checkout. See tools/README.md.
+#
+# Copyright (C) 2026 davenonymous.
+
+stagedDocumentationFiles=$(git diff --cached --name-only --diff-filter=ACDMR -- \
+    'lib/*.pm' 'lib/*.pod' README.md docs tools/pod2markdown)
+[ -n "$stagedDocumentationFiles" ] || exit 0
+
+perl -MPod::Markdown -e1 2>/dev/null || {
+    echo "pre-commit: Pod::Markdown is not installed; cpanm Pod::Markdown" >&2
+    exit 1
+}
+
+perl tools/pod2markdown --check || {
+    echo "pre-commit: the Markdown pages are out of date; run 'make readme' and stage the result." >&2
+    exit 1
+}

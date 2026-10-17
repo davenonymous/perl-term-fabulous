@@ -40,6 +40,18 @@ default). See `perldoc tools/pod2markdown`.
 `make docs-check` does the same without writing anything and lists what
 is out of date.
 
+## The pre-commit hook
+
+`perl Makefile.PL` points `core.hooksPath` at `.githooks` in a git
+checkout (unless it is already set to something else, which it reports
+and leaves alone). Its `pre-commit` hook runs `tools/pod2markdown
+--check` whenever the staged files touch a `.pm` or `.pod` file under
+`lib/`, `README.md`, `docs/` or the tool itself, and refuses the commit
+when the Markdown pages do not match the pod; run `make readme` and
+stage the result. It takes about a second and regenerates nothing, so
+partially staged pod cannot slip into the pages unnoticed. The CI
+workflow runs the same check. `git commit --no-verify` skips the hook.
+
 ## How a screenshot is taken
 
 `screenshots/screenshots.kdl` describes each screenshot: the program,
