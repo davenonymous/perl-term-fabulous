@@ -38,8 +38,11 @@ class Term::Fabulous::Widget::DocumentView
 		CODE_STEP          => 8,    # columns the code moves per Left or Right
 		CODE_WHEEL_COLUMNS => 3,    # and per notch of the horizontal wheel
 		REVEAL_FRAMES      => 3,    # frames a reveal may take until its line is in view
-		QUOTE_PADDING      => 1,    # the column between the bar of a quote and its blocks
 	};
+
+	# The columns of a quote, as the geometry counts them, are the bar (a
+	# left border of one cell) and the padding between it and the blocks.
+	use constant QUOTE_PADDING => Term::Fabulous::Document::Geometry::QUOTE_COLUMNS - 1;
 
 	field $document    :param = undef;
 	field $highlighter :param = undef;
@@ -199,6 +202,9 @@ class Term::Fabulous::Widget::DocumentView
 		die ref($self) . ": no $builder method for a block of kind '" . $block->kind . "'" unless $self->can($builder);
 		my $view = $self->$builder( $block, { left => $geometry->left_of($index) - $block->quote * Term::Fabulous::Document::Geometry::QUOTE_COLUMNS, top => $geometry->space_before($index) } );
 		die ref($self) . ": $builder must return { widget => ..., text => ... }, got " . describe($view) unless ref $view eq 'HASH' && blessed $view->{widget};
+		my $text = $view->{text};
+		die ref($self) . ": $builder must return a Term::Fabulous::Widget::RichText, a Term::Fabulous::Widget::CodeBlock or undef as text, got " . describe($text)
+			unless !defined $text || ( blessed $text && ( $text->isa('Term::Fabulous::Widget::RichText') || _is_code($text) ) );
 		$view_of{$index} = $self->_quoted( $block, $view );
 		$self->_restyle($index);
 		return $view_of{$index}{widget};
@@ -336,8 +342,10 @@ class Term::Fabulous::Widget::DocumentView
 	}
 
 	# A theme switch changes every style; the views stay, only their spans
-	# are made again (Term::Fabulous::Role::Themed).
-	method looks_changed (@names) {
+	# are made again (Term::Fabulous::Role::Themed). The ScrollBox pads
+	# its gutter for the border first.
+	method looks_changed :override (@names) {
+		$self->SUPER::looks_changed(@names);
 		my $marker_style = $self->document_look->style('marker');
 		foreach my $index ( keys %view_of ) {
 			$self->_restyle($index);
@@ -1056,7 +1064,8 @@ the L<Term::Fabulous::Widget::RichText> or
 L<Term::Fabulous::Widget::CodeBlock> that shows the block's text, whose
 spans the view sets from the marks and the overlays, or C<undef> for a
 block without such a text. A view method of a name the base class does
-not have dies when the block is built.
+not have dies when the block is built, and so does a C<text> that is
+none of these.
 
 =item *
 

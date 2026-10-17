@@ -71,17 +71,18 @@ class Term::Fabulous::Document::Look :strict(params) {
 	# The look of the theme a widget draws with: its UI's, or the default
 	# theme while it is in none, as Term::Fabulous::Role::Themed decides.
 	# The last look of each class is kept until the theme or the theme
-	# generation changes.
-	my %last_of_class;    # class => [ look, theme address, generation ]
+	# generation changes. The entry holds the theme itself, so that its
+	# address cannot be reused by another theme while the look is kept.
+	my %last_of_class;    # class => [ look, theme, generation ]
 
 	method of :common ($widget) {
 		my $ui         = $widget->ui;
 		my $theme      = defined $ui ? $ui->theme : Term::Fabulous::Theme->default;
 		my $generation = Term::Fabulous::Theme::generation();
 		my $last       = $last_of_class{$class};
-		return $last->[0] if defined $last && $last->[1] == refaddr($theme) && $last->[2] == $generation;
+		return $last->[0] if defined $last && refaddr( $last->[1] ) == refaddr($theme) && $last->[2] == $generation;
 		my $look = $class->new( theme => $theme );
-		$last_of_class{$class} = [ $look, refaddr($theme), $generation ];
+		$last_of_class{$class} = [ $look, $theme, $generation ];
 		return $look;
 	}
 }

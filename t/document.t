@@ -23,7 +23,7 @@ subtest 'marks' => sub {
 	like dies { Term::Fabulous::Document::Mark->new( start => 0, end => 2, kind => 'link' ) },   qr/a link mark needs a link/,  'a link mark needs its link';
 	like dies { Term::Fabulous::Document::Mark->new( start => 0, end => 2, kind => 'bold', link => 'x' ) }, qr/only a link mark has a link/, 'and only a link mark has one';
 	my $code = Term::Fabulous::Document::Mark->new( start => 2, end => 7, kind => 'code' );
-	is [ $code->length, $code->is_link, $code->link ], [ 5, 0, undef ], 'length is end minus start; a code mark is no link';
+	is [ $code->span_length, $code->is_link, $code->link ], [ 5, 0, undef ], 'span_length is end minus start; a code mark is no link';
 	my $link = Term::Fabulous::Document::Mark->new( start => 0, end => 1, kind => 'link', link => { page => 'Other' } );
 	is [ $link->is_link, $link->link ], [ 1, { page => 'Other' } ], 'a link mark keeps any defined value as its link';
 };

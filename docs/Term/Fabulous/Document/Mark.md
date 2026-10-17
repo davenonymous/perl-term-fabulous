@@ -87,10 +87,10 @@ my $offset = $mark->end;
 
 The offset after the last character the mark covers.
 
-## length
+## span\_length
 
 ```perl
-my $characters = $mark->length;
+my $characters = $mark->span_length;
 ```
 
 The number of characters the mark covers, `end - start`.

@@ -30,7 +30,7 @@ class Term::Fabulous::Document::Mark :strict(params) {
 		return $kind eq 'link' ? 1 : 0;
 	}
 
-	method length () {
+	method span_length () {
 		return $end - $start;
 	}
 }
@@ -126,9 +126,9 @@ The offset of the first character the mark covers.
 
 The offset after the last character the mark covers.
 
-=head2 length
+=head2 span_length
 
-	my $characters = $mark->length;
+	my $characters = $mark->span_length;
 
 The number of characters the mark covers, C<< end - start >>.
 

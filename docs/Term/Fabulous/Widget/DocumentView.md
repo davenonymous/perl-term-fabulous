@@ -395,7 +395,8 @@ the [Term::Fabulous::Widget::RichText](RichText.md) or
 [Term::Fabulous::Widget::CodeBlock](CodeBlock.md) that shows the block's text, whose
 spans the view sets from the marks and the overlays, or `undef` for a
 block without such a text. A view method of a name the base class does
-not have dies when the block is built.
+not have dies when the block is built, and so does a `text` that is
+none of these.
 - New kinds of marks need styles: a subclass of
 [Term::Fabulous::Document::Look](../Document/Look.md) with more [recipes](../Document/Look.md#recipes),
 named by the view's ["look\_class"](#look_class).

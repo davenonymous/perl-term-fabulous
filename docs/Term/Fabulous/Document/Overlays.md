@@ -106,7 +106,8 @@ says which blocks are in view, as the hash of
 ["visible\_items" in Term::Fabulous::Widget::VirtualList](../Widget/VirtualList.md#visible_items), or `undef` while
 that is unknown. The selection goes on from the selected link while its
 block is in view (or the view is unknown); otherwise it starts at the
-first link in view, or the last one going back. It stops at the first
+first link in or below the view, or the last link in or above it going
+back. It stops at the first
 and the last link of the document: there, it returns nothing. Otherwise
 it returns the blocks the selection left and entered.
 

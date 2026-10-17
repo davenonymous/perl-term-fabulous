@@ -229,6 +229,15 @@ subtest 'theme switch' => sub {
 	is cell_of( $h, 'NAME' )->[1] & 0xFFFFFF, attr_of( $light->style('heading1')->{color} ) & 0xFFFFFF, 'headings are restyled in the new theme';
 };
 
+subtest 'the border is dropped at runtime' => sub {
+	my ( $view, $h ) = document_ui($LONG);
+	$view->bordered(0);
+	$h->{ui}->step;
+	my @lines = $h->{terminal}->lines;
+	like $lines[0], qr/\A NAME/, 'the content moves into the rows of the border';
+	is scalar( grep { substr( $_, -1 ) ne ' ' } @lines ), scalar @lines, 'and the scrollbar into the last column, on every row';
+};
+
 subtest 'a match deep inside a tall block' => sub {
 	my $code = join "\n", map { $_ == 38 ? "line $_ needle" : "line $_" } 1 .. 45;
 	my ( $view, $h ) = document_ui( document( paragraph('Intro.'), verbatim($code) ) );
@@ -302,12 +311,22 @@ class My::View :isa(Term::Fabulous::Widget::DocumentView) {
 	}
 }
 
+class My::WrongText :isa(Term::Fabulous::Widget::DocumentView) {
+
+	method view_of_rule ( $block, $padding ) {
+		my $divider = Term::Fabulous::Widget::Divider->new;
+		return { widget => $self->boxed( $padding, $divider ), text => $divider };
+	}
+}
+
 subtest 'a block kind of a subclass' => sub {
 	my $document = document( paragraph('Above.'), My::Rule->new( text => '' ), paragraph('Below.') );
 	my ( $view, $h ) = document_ui( $document, 40, 8, 'My::View' );
 	is [ @{ screen($h) }[ 0 .. 4 ] ],            [ '   Above.', '', '   ' . ( "\x{2500}" x 33 ), '', '   Below.' ], 'the subclass shows the rule with its view_of_rule';
 	is $view->geometry->estimated_rows( 1, 40 ), 2,                                                                 'and the block tells its rows';
 	like dies { document_ui( $document, 40, 8 ) }, qr/no view_of_rule method for a block of kind 'rule'/, 'the base view dies for a kind it has no builder for';
+	like dies { document_ui( $document, 40, 8, 'My::WrongText' ) }, qr/view_of_rule must return a Term::Fabulous::Widget::RichText, .* as text, got a Term::Fabulous::Widget::Divider/,
+		'and a text that is no RichText or CodeBlock dies when the block is built';
 };
 
 done_testing;
