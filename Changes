@@ -45,9 +45,8 @@ Revision history for Term::Fabulous
           a document in Perl and from Markdown read with Markdent, follow
           links, search, show a table of contents, highlight code, change
           the styles and add mark kinds, page through any scroll box, and
-          add a block kind and a mark kind of your own. The reference
-          pages of the document view and its model are rewritten for
-          clarity.
+          put a table and a picture into a document and search into the
+          table.
         - Fixes from CPAN Testers: on perls built with long doubles, the
           labels of a radar chart at a quarter turn no longer land one
           row off (Term::Fabulous::Chart::Radial::point_at returns whole

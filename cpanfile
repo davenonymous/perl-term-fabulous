@@ -1,6 +1,6 @@
 requires 'perl', '5.032001';
 
-requires 'Clay::UI', '0.06';    # first CPAN release, ships Clay::XS
+requires 'Clay::UI', '0.07';    # focus_after and entry hooks, text bounding boxes; ships Clay::XS
 requires 'Clay::XS', '0.05';    # stringOffset in text render commands
 requires 'Encode';
 requires 'Exporter';
@@ -35,7 +35,7 @@ on develop => sub {
 	requires 'Perl::Critic';
 	requires 'Perl::Tidy', '20250214';
 	requires 'Pod::Markdown';
-	requires 'Markdent';     # the Markdown reader of Term::Fabulous::Cookbook::Documents, for its screenshots
+	requires 'Markdent';    # the Markdown reader of Term::Fabulous::Cookbook::Documents, for its screenshots
 	recommends 'Imager';                 # PNG output of tools/screenshot, the example pictures of tools/
 	recommends 'Imager::File::SIXEL';    # the sixel pictures in the screenshots of tools/screenshot
 };

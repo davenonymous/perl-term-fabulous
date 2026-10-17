@@ -759,15 +759,15 @@ my $document = Term::Fabulous::Widget::VirtualList->new(
 ## Documents
 
 A document with headings, paragraphs, lists, quotes, code and links,
-read from POD, Markdown or another format, is shown by a
-[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), a VirtualList that knows the
-kinds of block such a document has. A parser turns the source into a
-[Term::Fabulous::Document](../Document.md), a list of [blocks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock)
-whose text carries [marks](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3AMark) (bold,
-code, a link); the view shows every kind in the styles of the theme,
-wraps the paragraphs, scrolls with the keys, the wheel and the
+read from POD, Markdown or another format, and any other widget between
+them, is shown by a [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), a
+VirtualList of the items of a [Term::Fabulous::Document](../Document.md). A reader
+makes the document with its factories, which turn text and marks
+(bold, code, a link) into texts in the styles of the theme, and adds
+tables, pictures or forms as they are; the view wraps the paragraphs, scrolls with the keys, the wheel and the
 scrollbar, selects links with `l` and `L` and follows them with
-`Enter` or a click, searches the text, and reports what it shows after
+`Enter` or a click, searches the text of every item, lets Tab reach the widgets inside, and
+reports what it shows after
 every frame with a [ViewChange](../Event/ViewChange.md):
 
 ```perl
@@ -780,17 +780,15 @@ $view->on( LinkActivate => sub ($event) { open_page( $event->link ); return } );
 ```
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-view.svg" alt="A framed document view: a first-level heading with a rule under it, indented paragraphs with bold and code spans, a bulleted list, a quoted paragraph with a bar on its left, a code block on a darker background, a selected link in inverse colors, and search matches highlighted"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-view.svg" alt="A framed document view scrolled to its Code section: a code block on a darker background, a paragraph with a selected link in inverse colors, a table of factories under the heading Any widget, every match of the word block highlighted, and a status line that names the selected link"></p>
 </div>
 
 The picture shows `examples/widgets/document-view.pl`. Code is shown
 by [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) widgets, which never wrap and
 scroll sideways together. [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a reader built on the
-view; ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#block-kinds) says how a
-viewer for another format adds blocks of its own.
-[Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has recipes for links, search, a
-table of contents, syntax highlighting and styles, and adds a block
-kind and a mark kind of its own.
+view. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has recipes for links,
+search, a table of contents, syntax highlighting and styles, and puts
+a table and a picture into a document.
 
 ## Equal sizes across the tree
 

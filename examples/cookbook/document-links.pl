@@ -52,9 +52,9 @@ sub open_page ( $name, $section ) {
 		$status->message( "$name has no section \"$section\".", 'danger' );
 		return;
 	}
-	push @history, [ $page, $view->top_block // 0 ];
+	push @history, [ $page, $view->top_item // 0 ];
 	$view->document($document) if $name ne $page;
-	$view->show_block($index);
+	$view->show_item($index);
 	$page = $name;
 	return;
 }
@@ -93,7 +93,7 @@ $root->on(
 		}
 		( $page, my $top ) = @$back;
 		$view->document( document_of($page) );
-		$view->show_block($top);
+		$view->show_item($top);
 		return;
 	}
 );

@@ -231,9 +231,9 @@ The pages, in reading order, each with its recipes:
 
 - [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md)
 
-    Documents: build, show, search and style them, and add kinds of your own:
+    Documents: build, show, search and style them, with any widget inside:
 
-    - [Show a document built in Perl (Document, blocks, marks)](Cookbook/Documents.md#show-a-document-built-in-perl-document-blocks-marks)
+    - [Show a document built in Perl (Document, factories, marks)](Cookbook/Documents.md#show-a-document-built-in-perl-document-factories-marks)
     - [Turn Markdown into a document (Markdent)](Cookbook/Documents.md#turn-markdown-into-a-document-markdent)
     - [Follow links: jump to sections, open other pages, go back (LinkActivate)](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
     - [Search a document and show the reader's position (search, ViewChange)](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange)
@@ -241,7 +241,7 @@ The pages, in reading order, each with its recipes:
     - [Highlight the syntax of code blocks (highlighter, CodeBlock)](Cookbook/Documents.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
     - [Change the styles of a document and add mark kinds (Look)](Cookbook/Documents.md#change-the-styles-of-a-document-and-add-mark-kinds-look)
     - [Scroll any scroll box like a pager (Term::Fabulous::Scrolling)](Cookbook/Documents.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
-    - [Add a block kind and a mark kind of your own (view\_of\_KIND, look\_class)](Cookbook/Documents.md#add-a-block-kind-and-a-mark-kind-of-your-own-view_of_kind-look_class)
+    - [Put any widget into a document (a table and a picture)](Cookbook/Documents.md#put-any-widget-into-a-document-a-table-and-a-picture)
 
 - [Term::Fabulous::Cookbook::Output](Cookbook/Output.md)
 

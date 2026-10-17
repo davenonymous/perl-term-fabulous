@@ -733,8 +733,9 @@ screenshot "cookbook-pager-keys" {
 	}
 }
 
-screenshot "cookbook-document-kinds" {
-	script "examples/cookbook/document-kinds.pl"
+screenshot "cookbook-document-widgets" {
+	script "examples/cookbook/document-widgets.pl"
+	args "5.10"
 }
 
 screenshot "cookbook-report-to-file" {

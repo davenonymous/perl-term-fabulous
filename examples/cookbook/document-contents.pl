@@ -51,12 +51,13 @@ $view->document($document);
 # One line per heading, indented by its level, each a link to its
 # section number; a mark in front of the section the reader is in.
 sub show_contents ($current) {
-	my @lines = map {
-		my $heading = $document->heading_of_section($_);
-		my $title   = $heading->text =~ s/\[/\\[/gr;
+	my @sections = $document->sections;
+	my @lines    = map {
+		my $section = $sections[$_];
+		my $title   = $section->{title} =~ s/\[/\\[/gr;
 		my $mark    = defined $current && $current == $_ ? '[bold]>[/] ' : '  ';
-		$mark . '  ' x ( $heading->level - 1 ) . "[link=$_]$title\[/link]";
-	} 0 .. $document->heading_indexes - 1;
+		$mark . '  ' x ( $section->{level} - 1 ) . "[link=$_]$title\[/link]";
+	} 0 .. $#sections;
 	$contents->markup( join "\n", @lines );
 	return;
 }
@@ -78,7 +79,7 @@ $view->on(
 # A click on a heading, or Enter on the selected one, shows its section.
 $contents->on(
 	LinkActivate => sub ($event) {
-		$view->show_block( $document->block_of_section( $event->link ) );
+		$view->show_item( $document->item_of_section( $event->link ) );
 		return;
 	}
 );

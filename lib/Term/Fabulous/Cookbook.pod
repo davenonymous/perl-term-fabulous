@@ -517,13 +517,13 @@ L<Show a photo in sixel graphics (Sixel)|Term::Fabulous::Cookbook::Canvases/Show
 
 =item L<Term::Fabulous::Cookbook::Documents>
 
-Documents: build, show, search and style them, and add kinds of your own:
+Documents: build, show, search and style them, with any widget inside:
 
 =over
 
 =item *
 
-L<Show a document built in Perl (Document, blocks, marks)|Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, blocks, marks)>
+L<Show a document built in Perl (Document, factories, marks)|Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, factories, marks)>
 
 =item *
 
@@ -555,7 +555,7 @@ L<Scroll any scroll box like a pager (Term::Fabulous::Scrolling)|Term::Fabulous:
 
 =item *
 
-L<Add a block kind and a mark kind of your own (view_of_KIND, look_class)|Term::Fabulous::Cookbook::Documents/Add a block kind and a mark kind of your own (view_of_KIND, look_class)>
+L<Put any widget into a document (a table and a picture)|Term::Fabulous::Cookbook::Documents/Put any widget into a document (a table and a picture)>
 
 =back
 

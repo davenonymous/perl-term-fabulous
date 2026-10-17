@@ -1,9 +1,21 @@
 # snapback news
 
-What changed in each release, newest first. The picture shows the
-report of a run: ![a terminal with the report of a backup run](report.png)
+What changed in each release, newest first. From 2.1 on, snapback has
+a logo:
 
----
+![The new logo of snapback, from 2.1 on](../../images/rainbow_circle.png)
+
+## Releases
+
+| Version | Released   | What changed                             |
++---------+------------+------------------------------------------+
+| 2.1     | 2026-09-01 | keep all; the report lists big files     |
+| 2.0     | 2026-03-14 | compress is off by default; no --all     |
+| 1.6     | 2025-11-02 | hooks get the name of the backup         |
+| 1.5     | 2025-06-20 | a dry run shows what keep deletes        |
+| 1.4     | 2025-01-10 | the last release that runs on Perl 5.10  |
+| 1.3     | 2024-08-05 | exclude patterns                         |
+| 1.2     | 2024-02-11 | the first release on CPAN                |
 
 ## 2.1
 

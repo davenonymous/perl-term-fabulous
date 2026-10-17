@@ -8,9 +8,6 @@ no warnings 'experimental::signatures';
 use Clay::XS qw(sizing_grow);
 use Term::Fabulous;
 use Term::Fabulous::Document;
-use Term::Fabulous::Document::Block::Heading;
-use Term::Fabulous::Document::Block::Paragraph;
-use Term::Fabulous::Document::Block::Verbatim;
 use Term::Fabulous::Widget::DocumentView;
 
 # The styles of the kinds of token, and for each language a pattern
@@ -54,19 +51,12 @@ sub highlight ( $code, $language ) {
 	return \@spans;
 }
 
-# A code block with the language a highlighter gets. A parser takes the
-# language from the source, such as the word after ``` in Markdown.
-sub code ( $language, $text ) {
-	return Term::Fabulous::Document::Block::Verbatim->new( language => $language, text => $text =~ s/\n\z//r );
-}
-
-my $document = Term::Fabulous::Document->new(
-	blocks => [
-		Term::Fabulous::Document::Block::Heading->new( level => 2, text => 'Highlighted code' ),
-		Term::Fabulous::Document::Block::Paragraph->new(
-			text => 'Each code block names its language, and the highlighter colors its tokens. Left and Right scroll all code blocks sideways together.'
-		),
-		code( perl => <<'PERL' ),
+# The code items name the language a highlighter gets. A parser takes
+# the language from the source, such as the word after ``` in Markdown.
+my $document = Term::Fabulous::Document->new;
+$document->heading( 2, 'Highlighted code' );
+$document->paragraph('Each code block names its language, and the highlighter colors its tokens. Left and Right scroll all code blocks sideways together.');
+$document->code( <<'PERL' =~ s/\n\z//r, language => 'perl' );
 #!/usr/bin/env perl
 use v5.32;
 use warnings;
@@ -74,16 +64,14 @@ use warnings;
 my ($backup) = @ARGV or die "usage: $0 BACKUP-DIRECTORY\n";
 say "snapback: new backup in $backup";    # a long comment that runs past the right edge of the view, to scroll to
 PERL
-		code( shell => <<'SHELL' ),
+$document->code( <<'SHELL' =~ s/\n\z//r, language => 'shell' );
 snapback --dry-run ~/Documents /mnt/backup    # lists, copies nothing
 SHELL
-		code( ini => <<'INI' ),
+$document->code( <<'INI' =~ s/\n\z//r, language => 'ini' );
 # ~/.snapback
 target = /mnt/backup
 keep   = 14
 INI
-	],
-);
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
 	id          => 'code',

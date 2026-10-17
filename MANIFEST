@@ -44,7 +44,7 @@ examples/cookbook/disable-inputs.pl
 examples/cookbook/document-basics.pl
 examples/cookbook/document-contents.pl
 examples/cookbook/document-from-markup.pl
-examples/cookbook/document-kinds.pl
+examples/cookbook/document-widgets.pl
 examples/cookbook/document-links.pl
 examples/cookbook/document-search.pl
 examples/cookbook/document-styles.pl
@@ -62,9 +62,6 @@ examples/cookbook/inline-prompt.pl
 examples/cookbook/kdl-panel.pl           
 examples/cookbook/key-bindings.pl        
 examples/cookbook/lib/My/Markdown.pm
-examples/cookbook/lib/My/Markdown/Look.pm
-examples/cookbook/lib/My/Markdown/Rule.pm
-examples/cookbook/lib/My/Markdown/View.pm
 examples/cookbook/lib/My/Panel.pm        
 examples/cookbook/login-form.pl          
 examples/cookbook/menu-bar.pl
@@ -357,7 +354,7 @@ screenshots/cookbook-code-highlighting.svg
 screenshots/cookbook-document-basics.svg
 screenshots/cookbook-document-contents.svg
 screenshots/cookbook-document-from-markup.svg
-screenshots/cookbook-document-kinds.svg
+screenshots/cookbook-document-widgets.svg
 screenshots/cookbook-document-links.svg
 screenshots/cookbook-document-search.svg
 screenshots/cookbook-document-styles.svg

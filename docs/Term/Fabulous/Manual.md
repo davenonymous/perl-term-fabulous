@@ -485,13 +485,13 @@ program, and the class pages with the reference.
     ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
     ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling).
 
-- Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
+- Show a long document of headings, paragraphs, lists, quotes, code, links and any widgets; scroll it with the keys, follow its links, search it
 
     ["Documents" in Term::Fabulous::Manual::Layout](Manual/Layout.md#documents),
     [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), [Term::Fabulous::Document](Document.md),
     [Term::Fabulous::Widget::CodeBlock](Widget/CodeBlock.md), [Term::Fabulous::Event::ViewChange](Event/ViewChange.md),
     ["Documents" in Term::Fabulous](../../../README.md#documents), and the recipes of [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md):
-    ["Show a document built in Perl (Document, blocks, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-blocks-marks),
+    ["Show a document built in Perl (Document, factories, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-factories-marks),
     ["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate),
     ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange),
     ["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-table-of-contents-beside-the-document-sections-kdl),
@@ -975,12 +975,12 @@ program, and the class pages with the reference.
     [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md),
     ["Make a widget usable from KDL" in Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md#make-a-widget-usable-from-kdl).
 
-- Show documents of a format of your own: map it to blocks and marks, add kinds of your own
+- Show documents of a format of your own: fill a document with its factories and any widgets
 
-    ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md#block-kinds),
-    [Term::Fabulous::Document::Block](https://metacpan.org/pod/Term%3A%3AFabulous%3A%3ADocument%3A%3ABlock), [Term::Fabulous::Document::Look](Document/Look.md),
+    ["FACTORIES" in Term::Fabulous::Document](Document.md#factories), [Term::Fabulous::Document::Look](Document/Look.md),
+    [Term::Fabulous::Role::Searchable](Role/Searchable.md),
     ["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent),
-    ["Add a block kind and a mark kind of your own (view\_of\_KIND, look\_class)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#add-a-block-kind-and-a-mark-kind-of-your-own-view_of_kind-look_class).
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#put-any-widget-into-a-document-a-table-and-a-picture).
 
 - Check property values the way the built-in widgets do
 

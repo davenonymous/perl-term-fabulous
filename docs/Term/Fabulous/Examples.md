@@ -597,17 +597,17 @@ built.
 
 ### examples/widgets/document-view.pl
 
-[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md): a document built from blocks
-in the program, with headings, paragraphs with marks, a bulleted list,
-a quote, a code block and links, followed by forty paragraphs to scroll
-through. The program searches for the word "block" when it starts, so
+[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md): a document built with the
+factories of [Term::Fabulous::Document](Document.md), with headings, paragraphs with
+marks, a bulleted list, a quote, code, links and a table, followed by
+forty paragraphs to scroll through. The program searches for the word "block" when it starts, so
 the matches are highlighted; the status line below shows the section,
 the percentage and what Enter or n would do.
 
 The picture shows the document after `l` selected the first link.
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-view.svg" alt="A framed document view: a first-level heading with a rule under it, indented paragraphs with bold and code spans, a bulleted list, a quoted paragraph with a bar on its left, a code block on a darker background, a selected link in inverse colors, and search matches highlighted"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-view.svg" alt="A framed document view scrolled to its Code section: a code block on a darker background, a paragraph with a selected link in inverse colors, a table of factories under the heading Any widget, every match of the word block highlighted, and a status line that names the selected link"></p>
 </div>
 
 ### examples/widgets/code-block.pl

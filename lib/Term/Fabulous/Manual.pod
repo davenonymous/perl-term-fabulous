@@ -573,13 +573,13 @@ L<Term::Fabulous::Cookbook::LiveData/Add lines to a scrolling log (ScrollBox)>,
 L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
 L<Term::Fabulous::Cookbook::Documents/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>.
 
-=item Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
+=item Show a long document of headings, paragraphs, lists, quotes, code, links and any widgets; scroll it with the keys, follow its links, search it
 
 L<Term::Fabulous::Manual::Layout/Documents>,
 L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Document>,
 L<Term::Fabulous::Widget::CodeBlock>, L<Term::Fabulous::Event::ViewChange>,
 L<Term::Fabulous/Documents>, and the recipes of L<Term::Fabulous::Cookbook::Documents>:
-L<Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, blocks, marks)>,
+L<Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, factories, marks)>,
 L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>,
 L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>,
 L<Term::Fabulous::Cookbook::Documents/Show a table of contents beside the document (sections, KDL)>,
@@ -1103,12 +1103,12 @@ L<Term::Fabulous::Cookbook::Extending/Write a custom input widget (a toggle swit
 L<Term::Fabulous::Role::CanParseLayout>,
 L<Term::Fabulous::Cookbook::Extending/Make a widget usable from KDL>.
 
-=item Show documents of a format of your own: map it to blocks and marks, add kinds of your own
+=item Show documents of a format of your own: fill a document with its factories and any widgets
 
-L<Term::Fabulous::Widget::DocumentView/BLOCK KINDS>,
-L<Term::Fabulous::Document::Block>, L<Term::Fabulous::Document::Look>,
+L<Term::Fabulous::Document/FACTORIES>, L<Term::Fabulous::Document::Look>,
+L<Term::Fabulous::Role::Searchable>,
 L<Term::Fabulous::Cookbook::Documents/Turn Markdown into a document (Markdent)>,
-L<Term::Fabulous::Cookbook::Documents/Add a block kind and a mark kind of your own (view_of_KIND, look_class)>.
+L<Term::Fabulous::Cookbook::Documents/Put any widget into a document (a table and a picture)>.
 
 =item Check property values the way the built-in widgets do
 

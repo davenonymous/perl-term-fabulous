@@ -71,7 +71,7 @@ WriteMakefile(
 		'Test2::V0' => '0',
 	},
 	PREREQ_PM => {
-		'Clay::UI'                        => '0.06',
+		'Clay::UI'                        => '0.07',
 		'Clay::XS'                        => '0.05',
 		'Encode'                          => '0',
 		'Exporter'                        => '0',
