@@ -1631,7 +1631,8 @@ does what `Ctrl+A` does on the rows (see ["Selection" in Term::Fabulous::Manual:
 - **Click or drag on the scrollbar**: scrolls so that the thumb is
 centered where the pointer is.
 - **Wheel**: scrolls the rows up and down; a horizontal wheel scrolls them
-sideways, and the titles follow.
+sideways, and the titles follow (not while a column is `grow` or
+`percent`: such a table wraps the text of its columns instead).
 - **Pointer over a row**: with `hover => 1`, the line under the
 pointer is drawn in the `hover_color`.
 - **Click on an input in a cell**: goes to the input; the table moves its

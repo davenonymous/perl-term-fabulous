@@ -479,7 +479,10 @@ for example `layout => { sizing => { width => sizing_grow() } }`
 width the other columns leave over, within its limits, and its text
 wraps in that width. When the columns need more width than the table
 has, the rows scroll sideways (see
-["SIZE AND SCROLLING" in Term::Fabulous::Manual::TableStyles](TableStyles.md#size-and-scrolling)).
+["SIZE AND SCROLLING" in Term::Fabulous::Manual::TableStyles](TableStyles.md#size-and-scrolling)), unless a
+column is `grow` or `percent`: then the table does not scroll
+sideways, and its `fit` and `grow` columns get narrower
+instead, down to their longest word, so that their text wraps.
 
 The recipe
 [Size, align and wrap columns](../Cookbook/TableStyles.md#size-align-and-wrap-columns-widths-wrapping-widget-titles)

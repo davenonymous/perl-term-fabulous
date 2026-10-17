@@ -495,6 +495,21 @@ subtest 'scrolling' => sub {
 	ok( ( grep { /\bn1\b/ } @{ screen($h) } ), 'and come back' );
 };
 
+subtest 'a growing column wraps its text instead of scrolling sideways' => sub {
+	my $text = 'The quick brown fox jumps over the lazy dog and keeps on running far away';
+	my ( $table, $h ) = table_ui(
+		columns => [ { key => 'id', title => 'Id' }, { key => 'text', title => 'Text', width => 'grow' } ],
+		rows    => [ { id  => 1,    text  => $text } ],
+		layout  => { sizing => { width => sizing_grow() } },
+	);
+	my @rows = grep { /\x{2502}/ } @{ screen($h) };
+	ok !( grep { !/\x{2502}\z/ } @rows ), 'every row ends at the right side of the frame';
+	ok( ( grep { /\x{2502} on running far away\s+\x{2502}/ } @rows ), 'the text wraps in the column' );
+	$table->update_column( text => width => 'fit' );
+	$h->{ui}->step;
+	ok( ( grep { /The quick brown fox jumps over t\z/ } @{ screen($h) } ), 'a fit column keeps its text on one line and scrolls sideways' );
+};
+
 subtest 'hover and scrollbar' => sub {
 	my ( $table, $h ) = table_ui( rows => [ map { { id => $_, name => "n$_", dept => 'd', age => $_ } } 1 .. 30 ], size => [ 40, 10 ], layout => { sizing => { height => sizing_grow() } } );
 	my $plain = $h->{terminal}->cell( 3, 5 )->[2];

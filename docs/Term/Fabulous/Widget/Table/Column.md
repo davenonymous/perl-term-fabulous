@@ -132,7 +132,9 @@ values die.
     The width includes the cell padding. Header cells, the filter field
     and every cell of the column are sized together, so the column is as
     wide as the widest of them (within the limits). A `grow` or
-    `percent` column needs a table with a width of its own; see
+    `percent` column needs a table with a width of its own, and stops the
+    table from scrolling sideways: when the table is too narrow, its
+    columns get narrower and their text wraps; see
     ["Column widths" in Term::Fabulous::Manual::Tables](../../Manual/Tables.md#column-widths).
 
 - `wrap`

@@ -463,7 +463,9 @@ class Term::Fabulous::Widget::Table
 	}
 
 	# The grids are as wide as their columns, unless a column grows (or is
-	# a share of the width): then they take the width of the table.
+	# a share of the width): then they take the width of the table, and the
+	# body no longer scrolls sideways, since Clay squeezes the columns (and
+	# wraps their text) only inside a box that does not clip them.
 	method _prepare_width ($grid_columns) {
 		my $stretch = any {
 			my $type = defined $_->{column} ? $_->{column}->width->{type} : -1;
@@ -475,6 +477,8 @@ class Term::Fabulous::Widget::Table
 			next if _same( $layout->{sizing}{width}, $width );
 			$widget->layout( { %$layout, sizing => { %{ $layout->{sizing} // {} }, width => $width } } );
 		}
+		my $sideways = $stretch ? 0 : 1;
+		$_body->horizontal($sideways) if $_body->horizontal != $sideways;
 		return;
 	}
 
@@ -4081,7 +4085,8 @@ centered where the pointer is.
 =item *
 
 B<Wheel>: scrolls the rows up and down; a horizontal wheel scrolls them
-sideways, and the titles follow.
+sideways, and the titles follow (not while a column is C<grow> or
+C<percent>: such a table wraps the text of its columns instead).
 
 =item *
 

@@ -1,6 +1,10 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Text in a grow or percent column of a Table wraps: such a
+          table no longer scrolls sideways, so its columns get narrower
+          when it is too narrow for them. Before, the text stayed on one
+          line and the rows scrolled sideways.
         - Term::Fabulous::Widget::Table, Tabs and Accordion::Item do
           Term::Fabulous::Role::Searchable: a search reaches the cells on
           every page and under collapsed rows and groups, the pages a

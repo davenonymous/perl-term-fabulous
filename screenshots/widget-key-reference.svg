@@ -74,7 +74,8 @@
 <text x="120" y="308" textLength="36" class="b" fill="#61afef">Text</text>
 <text x="102" y="326" textLength="306" fill="#dcdfe4">Ctrl+Z, Ctrl+Y          Undo, redo</text>
 <text x="102" y="344" textLength="360" fill="#dcdfe4">Ctrl+C, Ctrl+X, Ctrl+V  Copy, cut, paste</text>
-<text x="102" y="362" textLength="504" fill="#dcdfe4">Ctrl+Left, Ctrl+Right   A word to the left, to the right</text>
+<text x="102" y="362" textLength="450" fill="#dcdfe4">Ctrl+Left, Ctrl+Right   A word to the left, to the</text>
+<text x="318" y="380" textLength="45" fill="#dcdfe4">right</text>
 <text x="111" y="434" textLength="45" fill="#dcdfe4">Close</text>
 <text x="39" y="488" textLength="18" fill="#6e6f72">F1</text>
 <text x="642" y="488" textLength="27" fill="#3c3f45">txt</text>

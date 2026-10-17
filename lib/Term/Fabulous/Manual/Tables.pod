@@ -529,7 +529,10 @@ C<grow> columns share the leftover width. A C<grow> column takes the
 width the other columns leave over, within its limits, and its text
 wraps in that width. When the columns need more width than the table
 has, the rows scroll sideways (see
-L<Term::Fabulous::Manual::TableStyles/SIZE AND SCROLLING>).
+L<Term::Fabulous::Manual::TableStyles/SIZE AND SCROLLING>), unless a
+column is C<grow> or C<percent>: then the table does not scroll
+sideways, and its C<fit> and C<grow> columns get narrower
+instead, down to their longest word, so that their text wraps.
 
 The recipe
 L<Size, align and wrap columns|Term::Fabulous::Cookbook::TableStyles/Size, align and wrap columns (widths, wrapping, widget titles)>

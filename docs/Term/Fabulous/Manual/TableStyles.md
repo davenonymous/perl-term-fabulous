@@ -450,6 +450,9 @@ room, it gets smaller and its rows scroll: the column titles stay at
 the top, the rows scroll up and down below them, and sideways together
 with the titles. The frame stays around the visible part: its four
 sides stay at the edges of the table while the rows scroll inside it.
+A table with a `grow` or `percent` column does not scroll sideways:
+its columns get narrower instead, down to their longest word, and their
+text wraps (see ["Column widths" in Term::Fabulous::Manual::Tables](Tables.md#column-widths)).
 
 To make a table fill its parent, or take part of it, give it a sizing
 like any [Term::Fabulous::Widget::Box](../Widget/Box.md) (see
@@ -471,7 +474,7 @@ the table's background shows to their right. A table higher than its
 lines shows its background below the last line (or the pager).
 
 The rows scroll with the mouse wheel over them (a horizontal wheel, or
-a sideways tilt, scrolls sideways) and follow the cursor: when the
+a sideways tilt, scrolls sideways unless a column grows) and follow the cursor: when the
 cursor moves out of sight, the rows scroll until its line is visible.
 A new page starts at its top. From Perl, `$table->scroll_to_row($id)`
 moves the cursor to a row and scrolls it into view.
