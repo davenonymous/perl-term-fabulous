@@ -789,8 +789,8 @@ scroll sideways together. [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabu
 view; ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#block-kinds) says how a
 viewer for another format adds blocks of its own.
 [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has recipes for links, search, a
-table of contents, syntax highlighting and styles, and a step-by-step
-guide to a reader for a new format.
+table of contents, syntax highlighting and styles, and adds a block
+kind and a mark kind of its own.
 
 ## Equal sizes across the tree
 

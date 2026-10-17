@@ -14,7 +14,7 @@ new backup from a hook.
 ## Why is the second backup so small?
 
 Files that did not change are hard links to the backup before, so only the
-changes take space. See [your first backup](snapback.md#Your first backup).
+changes take space. See [your first backup](snapback.md#Your%20first%20backup).
 
 ## How do I get back to the manual?
 

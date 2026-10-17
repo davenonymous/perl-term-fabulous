@@ -975,12 +975,12 @@ program, and the class pages with the reference.
     [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md),
     ["Make a widget usable from KDL" in Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md#make-a-widget-usable-from-kdl).
 
-- Show documents of a format of your own: write a parser, add block and mark kinds
+- Show documents of a format of your own: map it to blocks and marks, add kinds of your own
 
     ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md#block-kinds),
     [Term::Fabulous::Document::Block](Document/Block.md), [Term::Fabulous::Document::Look](Document/Look.md),
-    ["Turn a simple markup into a document (a small parser)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-a-simple-markup-into-a-document-a-small-parser),
-    ["Write a reader for a new document format (OpenDocument text)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#write-a-reader-for-a-new-document-format-opendocument-text).
+    ["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent),
+    ["Add a block kind and a mark kind of your own (view\_of\_KIND, look\_class)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#add-a-block-kind-and-a-mark-kind-of-your-own-view_of_kind-look_class).
 
 - Check property values the way the built-in widgets do
 

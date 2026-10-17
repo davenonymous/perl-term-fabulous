@@ -5,7 +5,7 @@
 a while and every later one takes seconds.
 
 This manual covers the [installation](#Installation), your
-[first backup](#Your first backup), the [settings](#Settings) and
+[first backup](#Your%20first%20backup), the [settings](#Settings) and
 [hooks](#Hooks). Answers to common questions are in the [FAQ](faq.md).
 
 ## Installation
@@ -53,7 +53,7 @@ compress = no
 ```
 
 - `target` is the backup disk, so you can leave it out on the command line.
-- `keep` is the number of backups to keep; see [keeping old backups](#Keeping old backups).
+- `keep` is the number of backups to keep; see [keeping old backups](#Keeping%20old%20backups).
 - `exclude` lists patterns of files that are never copied.
 - `compress` is ~~yes~~ no by default since version 2.
 

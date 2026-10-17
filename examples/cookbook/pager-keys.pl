@@ -22,7 +22,7 @@ use constant {
 	MARKED => [ 229, 192, 123, 255 ],
 };
 
-my $file = shift // "$FindBin::Bin/lib/My/MiniMark.pm";
+my $file = shift // "$FindBin::Bin/lib/My/Markdown.pm";
 open my $handle, '<:encoding(UTF-8)', $file or die "Cannot read $file: $!\n";
 chomp( my @lines = <$handle> );
 close $handle;

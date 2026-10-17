@@ -16,8 +16,7 @@ text.
 The view does not read any file format itself. A _parser_ turns the
 source into a document, and the view shows the document. This
 separation is what makes the view reusable: the same widget shows POD
-in [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous), Markdown, and the OpenDocument files of the guide
-at the end of this page.
+in [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) and the Markdown pages of the recipes below.
 
 A document has three layers:
 
@@ -31,24 +30,23 @@ was: a range of the block's text and the kind of formatting (`bold`,
 `code`, `link`, ...). The view turns kinds into colors and styles of
 the current theme with a [look](../Document/Look.md).
 
-The first two recipes build documents, by hand and with a small
-parser. The next ones use that parser to show what the view can do:
-links, search, a table of contents, syntax highlighting and styles of
-your own. The last recipe is a step-by-step guide to a reader for a new
-format, OpenDocument text (`.odt`), including a block kind and a mark
-kind that the built-in view does not have.
+The first two recipes build documents, by hand and from Markdown with
+[Markdent](https://metacpan.org/pod/Markdent). The next ones use that reader to show what the view can
+do: links, search, a table of contents, syntax highlighting and styles
+of your own. The last recipe adds a block kind and a mark kind that the
+built-in view does not have, for the rules and pictures of Markdown.
 
 The recipes on this page:
 
 - ["Show a document built in Perl (Document, blocks, marks)"](#show-a-document-built-in-perl-document-blocks-marks)
-- ["Turn a simple markup into a document (a small parser)"](#turn-a-simple-markup-into-a-document-a-small-parser)
+- ["Turn Markdown into a document (Markdent)"](#turn-markdown-into-a-document-markdent)
 - ["Follow links: jump to sections, open other pages, go back (LinkActivate)"](#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
 - ["Search a document and show the reader's position (search, ViewChange)"](#search-a-document-and-show-the-reader-s-position-search-viewchange)
 - ["Show a table of contents beside the document (sections, KDL)"](#show-a-table-of-contents-beside-the-document-sections-kdl)
 - ["Highlight the syntax of code blocks (highlighter, CodeBlock)"](#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
 - ["Change the styles of a document and add mark kinds (Look)"](#change-the-styles-of-a-document-and-add-mark-kinds-look)
 - ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)"](#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
-- ["Write a reader for a new document format (OpenDocument text)"](#write-a-reader-for-a-new-document-format-opendocument-text)
+- ["Add a block kind and a mark kind of your own (view\_of\_KIND, look\_class)"](#add-a-block-kind-and-a-mark-kind-of-your-own-view_of_kind-look_class)
 
 # Show a document built in Perl (Document, blocks, marks)
 
@@ -201,25 +199,27 @@ keys, `PageUp` and `PageDown`, `Home` and `End`, or `j`, `k`,
 `Space`, `b`, `g` and `G` as in `less`. The mouse wheel and the
 scrollbar scroll as well.
 
-# Turn a simple markup into a document (a small parser)
+# Turn Markdown into a document (Markdent)
 
-Goal: show a text file written in a simple markup. The parser here
-reads a small part of Markdown: headings, paragraphs, bulleted and
-numbered lists, block quotes, fenced code blocks, and `**bold**`,
-`*italic*`, `~~strike~~`, `` `code` `` and `[links](target)`. The other
-recipes on this page use it to load their documents.
+Goal: show a Markdown file. Reading Markdown is a solved problem:
+[Markdent](https://metacpan.org/pod/Markdent) from CPAN parses it, with the fenced code blocks and the
+struck-through text of the GitHub dialect. What remains is the part
+that belongs to this page: turning what Markdent found into blocks and
+marks. The other recipes on this page use this reader to load their
+documents.
 
-The parser is shipped as `examples/cookbook/lib/My/MiniMark.pm`:
+The reader is shipped as `examples/cookbook/lib/My/Markdown.pm`. It
+needs Markdent, which you may have to install first
+(`cpanm Markdent`).
 
 ```perl
-package My::MiniMark;
+package My::Markdown;
 
-# A parser for a small part of Markdown, used by the recipes of
-# Term::Fabulous::Cookbook::Documents. It reads headings, paragraphs,
-# bulleted and numbered lists (nested by two spaces), block quotes,
-# fenced code blocks, and **bold**, *italic*, ~~strike~~, `code` and
-# [links](target) that do not nest, and turns them into a
-# Term::Fabulous::Document.
+# Reads Markdown with Markdent and turns it into a Term::Fabulous::Document,
+# for the recipes of Term::Fabulous::Cookbook::Documents. Headings,
+# paragraphs, list items, block quotes, code blocks and horizontal rules
+# become blocks; bold, italic and struck-through text, code, links and
+# images become marks. HTML is left out.
 
 use v5.32;
 use warnings;
@@ -228,7 +228,12 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-class My::MiniMark {
+class My::Markdown {
+        use HTML::Entities qw(decode_entities);
+        use List::Util qw(min);
+        use Markdent::Handler::CaptureEvents;
+        use Markdent::Parser;
+        use My::Markdown::Rule;
         use Term::Fabulous::Document;
         use Term::Fabulous::Document::Block::Heading;
         use Term::Fabulous::Document::Block::Item;
@@ -237,145 +242,243 @@ class My::MiniMark {
         use Term::Fabulous::Document::Mark;
 
         use constant {
-                BULLET_WIDTH => 2,    # "- " becomes a bullet and a space
+                ITEM         => 'Term::Fabulous::Document::Block::Item',
+                BULLET_WIDTH => 2,    # a bullet and a space
                 NUMBER_WIDTH => 4,    # room for "99. "
         };
 
-        my $INLINE = qr{
-                  \*\*(?<bold>.+?)\*\*
-                | \*(?<italic>.+?)\*
-                | ~~(?<strike>.+?)~~
-                | `(?<code>[^`]+)`
-                | \[(?<link>[^\]]+)\]\((?<target>[^)]+)\)
-        }x;
+        # The mark kind of each piece of inline markup Markdent reports
+        my %MARK_KIND = ( strong => 'bold', emphasis => 'italic', strikethrough => 'strike', code => 'code', link => 'link' );
 
-        field @lines;    # the lines not read yet
         field @blocks;    # the blocks made so far
-        field @lists;    # the lists the reader is in, outermost first: { indent, marker_width, position }
-        field $open;    # the paragraph or item whose lines are being collected: { class, text, parameters }
+        field $open;    # the block whose text is being collected: { class, parameters, text, marks, unfinished }
+        field @lists;    # the lists the reader is in, outermost first: { numbered, position, indent, marker_width }
+        field $quote = 0;    # how many block quotes the reader is in
 
         method parse :common ( $source, %document_options ) {
-                my @blocks = $class->new->_blocks_of($source);
+                my $events = Markdent::Handler::CaptureEvents->new;
+                Markdent::Parser->new( dialects => 'GitHub', handler => $events )->parse( markdown => $source );
+                my @blocks = $class->new->_blocks_of( $events->captured_events->events );
                 return Term::Fabulous::Document->new( blocks => \@blocks, %document_options );
         }
 
         method parse_file :common ($path) {
-                open my $handle, '<:encoding(UTF-8)', $path or die "My::MiniMark: cannot read $path: $!\n";
+                open my $handle, '<:encoding(UTF-8)', $path or die "My::Markdown: cannot read $path: $!\n";
                 my $source = do { local $/; <$handle> };
                 close $handle;
                 return $class->parse( $source, source => $path );
         }
 
-        method _blocks_of ($source) {
-                @lines = split /\n/, $source;
-                while ( defined( my $line = shift @lines ) ) {
-                        $self->_read($line);
+        # Every event becomes a call of the method named after it; the inline
+        # markup that becomes a mark is handled in one place. Events without
+        # a method (HTML, the document itself) are skipped.
+        method _blocks_of (@events) {
+                foreach my $event (@events) {
+                        my $kind = $MARK_KIND{ lc $event->name };
+                        if ( defined $kind && $event->is_start ) {
+                                $self->_start_mark( $kind, $kind eq 'link' ? $event->uri : undef );
+                        }
+                        elsif ( defined $kind ) {
+                                $self->_end_mark;
+                        }
+                        elsif ( my $method = $self->can( '_' . $event->event_name ) ) {
+                                $self->$method($event);
+                        }
                 }
-                $self->_close;
+                $self->_close_block;
                 return @blocks;
         }
 
-        method _read ($line) {
-                return $self->_code_block($1) if $line                        =~ /\A```(\w*)\s*\z/;
-                return $self->_close if $line                                 =~ /\A\s*\z/;
-                return $self->_heading( length $1, $2 ) if $line              =~ /\A(#{1,6})\s+(.*)\z/;
-                return $self->_quote( length( $1 =~ s/\s//gr ), $2 ) if $line =~ /\A((?:>\s?)+)(.*)\z/;
-                return $self->_item( length $1, $2, $3 ) if $line             =~ /\A( *)([-*]|[0-9]+\.)\s+(.*)\z/;
-                return $self->_continue($line) if $open;
-                return $self->_paragraph($line);
+        # ---------------------------------------------------------------------
+        # Blocks
+        # ---------------------------------------------------------------------
+
+        method _start_header ($event) {
+                return $self->_open_block( 'Term::Fabulous::Document::Block::Heading', level => $event->level );
         }
 
-        # The open paragraph or item becomes a block, its text split into
-        # plain text and marks.
-        method _close () {
+        method _end_header ($event) {
+                return $self->_close_block;
+        }
+
+        # The first paragraph of a list item is the text of the item; a later
+        # one starts under it.
+        method _start_paragraph ($event) {
+                return if $open && $open->{class} eq ITEM;
+                return $self->_open_block('Term::Fabulous::Document::Block::Paragraph');
+        }
+
+        method _end_paragraph ($event) {
+                return $self->_close_block;
+        }
+
+        method _start_unordered_list ($event) {
+                return $self->_enter_list(0);
+        }
+
+        method _start_ordered_list ($event) {
+                return $self->_enter_list(1);
+        }
+
+        method _end_unordered_list ($event) {
+                return $self->_leave_list;
+        }
+
+        method _end_ordered_list ($event) {
+                return $self->_leave_list;
+        }
+
+        method _start_list_item ($event) {
+                my $list     = $lists[-1];
+                my $position = ++$list->{position};
+                return $self->_open_block(
+                        ITEM,
+                        marker       => $list->{numbered} ? "$position." : "\x{2022}",
+                        marker_width => $list->{marker_width},
+                        position     => $position,
+                        indent       => $list->{indent},
+                );
+        }
+
+        # The text of a tight item has no paragraph around it, so the item is
+        # still open here.
+        method _end_list_item ($event) {
+                return $self->_close_block;
+        }
+
+        method _start_blockquote ($event) {
+                $self->_close_block;
+                $quote++;
+                return;
+        }
+
+        method _end_blockquote ($event) {
+                $self->_close_block;
+                $quote--;
+                return;
+        }
+
+        # A fenced code block, with the word after the opening fence as its
+        # language
+        method _code_block ($event) {
+                my $language = $event->language;
+                return $self->_add_block( 'Term::Fabulous::Document::Block::Verbatim', text => $event->code =~ s/\n\z//r, defined $language && length $language ? ( language => $language ) : () );
+        }
+
+        # An indented code block
+        method _preformatted ($event) {
+                return $self->_add_block( 'Term::Fabulous::Document::Block::Verbatim', text => $event->text =~ s/\n\z//r );
+        }
+
+        # A block kind of our own: see the last recipe of the cookbook page
+        method _horizontal_rule ($event) {
+                return $self->_add_block( 'My::Markdown::Rule', text => '' );
+        }
+
+        # A nested list starts where the text of its parent item starts.
+        method _enter_list ($numbered) {
+                $self->_close_block;
+                push @lists, { numbered => $numbered, position => 0, indent => $self->_indent, marker_width => $numbered ? NUMBER_WIDTH : BULLET_WIDTH };
+                return;
+        }
+
+        method _leave_list () {
+                $self->_close_block;
+                pop @lists;
+                return;
+        }
+
+        # Where the text after the marker of the current list item starts: the
+        # indent of everything inside the item that is not its first paragraph.
+        method _indent () {
+                return 0 unless @lists;
+                return $lists[-1]{indent} + $lists[-1]{marker_width};
+        }
+
+        # Starts collecting the text and marks of a block. Its parameters are
+        # those of Term::Fabulous::Document::Block and its kinds.
+        method _open_block ( $class, %parameters ) {
+                $self->_close_block;
+                $open = { class => $class, parameters => { indent => $self->_indent, quote => $quote, %parameters }, text => '', marks => [], unfinished => [] };
+                return;
+        }
+
+        # Blank space at the end of the text is dropped, and a mark that
+        # covered it ends with the text. Outer marks come first, so that the
+        # view draws the marks nested in them on top.
+        method _close_block () {
                 return unless $open;
-                push @blocks, $open->{class}->new( %{ $open->{parameters} }, _inline( $open->{text} ) );
+                my $text  = $open->{text} =~ s/\s+\z//r;
+                my @marks = map { Term::Fabulous::Document::Mark->new( %$_, end => min( $_->{end}, length $text ) ) } sort { $a->{start} <=> $b->{start} || $b->{end} <=> $a->{end} } $open->{marks}->@*;
+                push @blocks, $open->{class}->new( $open->{parameters}->%*, text => $text, marks => \@marks );
                 $open = undef;
                 return;
         }
 
-        method _code_block ($language) {
-                $self->_close;
-                my @code;
-                push @code, shift @lines while @lines && $lines[0] !~ /\A```\s*\z/;
-                shift @lines;
-                push @blocks, Term::Fabulous::Document::Block::Verbatim->new( text => join( "\n", @code ), length $language ? ( language => $language ) : () );
-                @lists = ();
+        # A block that comes complete: code and rules.
+        method _add_block ( $class, %parameters ) {
+                $self->_close_block;
+                push @blocks, $class->new( indent => $self->_indent, quote => $quote, %parameters );
                 return;
         }
 
-        method _heading ( $level, $text ) {
-                $self->_close;
-                push @blocks, Term::Fabulous::Document::Block::Heading->new( level => $level, text => $text );
-                @lists = ();
+        # ---------------------------------------------------------------------
+        # Text and marks
+        # ---------------------------------------------------------------------
+
+        # The text of a block arrives in pieces, between the events of its
+        # marks. A line end is a space: the view wraps the text itself.
+        method _text ($event) {
+                return $self->_append( $event->text =~ s/\s*\n\s*/ /gr );
+        }
+
+        method _line_break ($event) {
+                return $self->_append(' ');
+        }
+
+        method _html_entity ($event) {
+                return $self->_append( decode_entities( '&' . $event->entity . ';' ) );
+        }
+
+        # A bare address is a link whose text is the address.
+        method _auto_link ($event) {
+                $self->_start_mark( link => $event->uri );
+                $self->_append( $event->uri );
+                return $self->_end_mark;
+        }
+
+        # A picture cannot be shown in the text; its alternative text is, in a
+        # mark kind of our own (see the last recipe of the cookbook page).
+        method _image ($event) {
+                $self->_start_mark('image');
+                $self->_append( $event->alt_text );
+                return $self->_end_mark;
+        }
+
+        method _append ($text) {
+                my $block = $self->_block_being_collected;
+                $text =~ s/\A\s+// unless length $block->{text};
+                $block->{text} .= $text;
                 return;
         }
 
-        # "> text" is a paragraph in one quote, "> > text" in two; a line
-        # with only ">" ends the paragraph.
-        method _quote ( $depth, $text ) {
-                my $continues = $open && ( $open->{parameters}{quote} // 0 ) == $depth;
-                $self->_close unless $continues;
-                return unless length $text;
-                return $self->_continue($text) if $continues;
-                $open  = { class => 'Term::Fabulous::Document::Block::Paragraph', text => $text, parameters => { quote => $depth } };
-                @lists = ();
+        # A mark starts at the end of the text collected so far and ends at the
+        # end of the text when its end event comes.
+        method _start_mark ( $kind, $link = undef ) {
+                my $block = $self->_block_being_collected;
+                push $block->{unfinished}->@*, { kind => $kind, start => length $block->{text}, defined $link ? ( link => $link ) : () };
                 return;
         }
 
-        # Every two spaces before the marker nest the item one list deeper;
-        # its text starts where the text of the item above it starts.
-        method _item ( $spaces, $marker, $text ) {
-                $self->_close;
-                my $level = int( $spaces / 2 );
-                $level = @lists if $level > @lists;
-                splice @lists, $level + 1;
-                my $numbered = $marker =~ /\A[0-9]/;
-                my $parent   = $level ? $lists[ $level - 1 ] : undef;
-                my $list     = $lists[$level] //= {
-                        indent       => $parent   ? $parent->{indent} + $parent->{marker_width} : 0,
-                        marker_width => $numbered ? NUMBER_WIDTH                                : BULLET_WIDTH,
-                        position     => 0,
-                };
-                my $position = ++$list->{position};
-                $open = {
-                        class      => 'Term::Fabulous::Document::Block::Item',
-                        text       => $text,
-                        parameters => { marker => $numbered ? "$position." : "\x{2022}", marker_width => $list->{marker_width}, position => $position, indent => $list->{indent} },
-                };
+        method _end_mark () {
+                my $block = $self->_block_being_collected;
+                my $mark  = pop $block->{unfinished}->@*;
+                push $block->{marks}->@*, { %$mark, end => length $block->{text} };
                 return;
         }
 
-        method _continue ($line) {
-                $open->{text} .= ' ' . ( $line =~ s/\A\s+//r );
-                return;
-        }
-
-        # An indented paragraph after a list item belongs to the item; one at
-        # the left margin ends the lists.
-        method _paragraph ($line) {
-                my $in_item = @lists && $line =~ /\A\s{2}/;
-                @lists = () unless $in_item;
-                my $indent = $in_item ? $lists[-1]{indent} + $lists[-1]{marker_width} : 0;
-                $open = { class => 'Term::Fabulous::Document::Block::Paragraph', text => $line =~ s/\A\s+//r, parameters => { indent => $indent } };
-                return;
-        }
-
-        # The text without the markup, and a mark for every piece of markup.
-        sub _inline ($source) {
-                my ( $text, @marks ) = ('');
-                my $after_last = 0;
-                while ( $source =~ /$INLINE/g ) {
-                        my %found = %+;
-                        $text .= substr( $source, $after_last, $-[0] - $after_last );
-                        $after_last = $+[0];
-                        my ($kind) = grep { defined $found{$_} } qw(bold italic strike code link);
-                        my $start = length $text;
-                        $text .= $found{$kind};
-                        push @marks, Term::Fabulous::Document::Mark->new( start => $start, end => length $text, kind => $kind, $kind eq 'link' ? ( link => $found{target} ) : () );
-                }
-                $text .= substr( $source, $after_last );
-                return ( text => $text, marks => \@marks );
+        method _block_being_collected () {
+                return $open // die "My::Markdown: text outside of a block\n";
         }
 }
 
@@ -393,15 +496,15 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
 use Clay::XS qw(sizing_grow);
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Widget::DocumentView;
 
 my $file     = shift // "$FindBin::Bin/documents/snapback.md";
-my $document = My::MiniMark->parse_file($file);
+my $document = My::Markdown->parse_file($file);
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
         id       => 'manual',
@@ -418,33 +521,61 @@ $ui->run;
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-from-markup.svg" alt="The start of the snapback manual: the title snapback with a rule, a paragraph with bold and italic words, a paragraph with five underlined links, the heading Installation, a code block and a numbered list"></p>
 </div>
 
-- The parser reads the source line by line. A line either completes a
-block on its own (a heading, the fences of a code block) or adds to the
-_open_ block, the paragraph or item whose lines are still being
-collected. A blank line or the start of another block closes the open
-block: only then are its lines joined, its markup removed and the block
-built. Paragraph text is a single line; the view wraps it to the width
-it has.
-- `_inline` removes the markup and creates the marks. It finds each
-piece of markup with one regular expression that has a named group per
-kind, copies the text before the match to the result, then appends the
-marked text and records where it starts and ends in the result. The
-offsets of a mark are always offsets into the text _without_ markup.
-- The parser keeps a stack of the lists it is in. Every two spaces in
-front of a list marker go one list deeper, and a nested list starts
-where the text of its parent item starts. That is the rule from the
-first recipe, now computed: `indent` of the parent plus its
-`marker_width`.
-- A link keeps its target exactly as written between the parentheses,
-for example `#Settings` or `faq.md#Hooks`. The parser does not
-interpret it; the program does, when the user follows the link (see the
-next recipe).
+- Markdent reports what it finds as a stream of _events_:
+`start_header`, `text`, `start_strong`, `end_strong`, `end_header`
+and so on, in the order of the source, and hands them to a handler.
+The reader uses the ready-made [Markdent::Handler::CaptureEvents](https://metacpan.org/pod/Markdent%3A%3AHandler%3A%3ACaptureEvents),
+which records the events, and walks them afterwards; that keeps it a
+plain Object::Pad class. A handler of your own is a [Moose](https://metacpan.org/pod/Moose) class that
+does [Markdent::Role::Handler](https://metacpan.org/pod/Markdent%3A%3ARole%3A%3AHandler); it receives the same events one by
+one.
+- An event that starts a block _opens_ it: the reader remembers the
+class of the block and its parameters, and collects the text that
+follows. The event that ends the block, or the start of the next block,
+closes it; only then is the block built. Which event becomes which
+block:
+    - `start_header`: a [heading](../Document/Block/Heading.md)
+    with the level of the event.
+    - `start_paragraph`: a
+    [paragraph](../Document/Block/Paragraph.md), unless it is
+    the first paragraph of a list item. That one is the text of the item.
+    - `start_list_item`: an [item](../Document/Block/Item.md).
+    Its marker, `marker_width` and `position` come from the list it is
+    in.
+    - `code_block` (a fenced block) and `preformatted` (an indented one): a
+    [verbatim block](../Document/Block/Verbatim.md), with the
+    word after the opening fence as its `language`.
+    - `horizontal_rule`: a block of the kind `rule`, a kind that
+    Term::Fabulous does not have. The last recipe adds it.
+    - `start_blockquote` and `end_blockquote`: no block of their own, but
+    every block between them gets a `quote` one higher.
+- The text of a block arrives in pieces, between the events of its marks,
+and the reader appends them. A line end inside a paragraph becomes a
+space; the view wraps the text itself. The start event of a piece of
+inline markup records a mark whose `start` is the length of the text
+collected so far, and the end event completes it with the length at
+that time as its `end`. The offsets of a mark are therefore always
+offsets into the text _without_ markup, which is what the view
+expects. Which event becomes which mark: `strong` is `bold`,
+`emphasis` is `italic`, `strikethrough` is `strike`, `code` is
+`code`, and `link` is a `link` whose target is the address between
+the parentheses, exactly as written. `auto_link`, an address in angle
+brackets, is a link whose text is the address. `image` becomes a mark
+of the kind `image` over the alternative text of the picture, the
+other kind of the last recipe.
+- The reader keeps a stack of the lists it is in. A nested list, which
+Markdown indents by four spaces, starts where the text of its parent
+item starts: its `indent` is the parent's `indent` plus the parent's
+`marker_width`. That is the rule from the first recipe, now computed.
+A second paragraph of an item and a code block inside one start there
+too.
 - `parse_file` passes the file name as the document's `source`, so the
 program can show it or open relative links from there.
-- This is a teaching parser, not a Markdown implementation. Marks do not
-nest, a code block cannot be part of a list item, and HTML, tables and
-images are not supported. The point is the shape: lines in, blocks and
-marks out.
+- Markdown has more than this: HTML is skipped (the text inside an
+inline tag stays), and a table comes through as a paragraph with its
+bars. The pages of the next recipes have no rule and no picture, so
+the built-in view shows them. The last recipe shows what happens
+otherwise, and what to do about it.
 
 # Follow links: jump to sections, open other pages, go back (LinkActivate)
 
@@ -462,11 +593,11 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::DocumentView;
@@ -479,7 +610,7 @@ my $page  = 'snapback.md';
 my $where = '';    # the section and the percentage, from the last ViewChange
 
 sub document_of ($name) {
-        return $document_of{$name} //= My::MiniMark->parse_file("$directory/$name");
+        return $document_of{$name} //= My::Markdown->parse_file("$directory/$name");
 }
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
@@ -516,7 +647,8 @@ sub open_page ( $name, $section ) {
 }
 
 # A link's target is what the parser put into the mark: here the text
-# between the parentheses of [text](target).
+# between the parentheses of [text](target). A Markdown target cannot
+# contain a space, so the pages write a section name with %20.
 $view->on(
         LinkActivate => sub ($event) {
                 my $target = $event->link;
@@ -524,6 +656,7 @@ $view->on(
                         $status->message( "Open $target in your browser.", 'info' );
                         return;
                 }
+                $target =~ s/%([0-9A-Fa-f]{2})/chr hex $1/ge;
                 my ( $name, $section ) = $target =~ /\A([^#]*)(?:#(.*))?\z/;
                 open_page( length $name ? $name : $page, $section // '' );
                 return;
@@ -570,8 +703,10 @@ as little as possible to keep the selected link visible. `Enter`
 follows the selected link, and so does a click on any link.
 - Following a link fires [LinkActivate](../Event/LinkActivate.md)
 on the view. `$event->link` is the target of the link mark, exactly
-as the parser created it. What a target means is up to the program:
-this one splits it at `#` into a file name and a section name.
+as the parser created it. What a target means is up to the program.
+A Markdown target cannot contain a space, so the pages write `%20`
+for one; this program decodes that, then splits the target at `#`
+into a file name and a section name.
 - [find\_section](../Document.md#find_section) turns a section
 name into the index of the block to show. It tries headings and terms,
 first for an exact match, then ignoring case, then for a heading or
@@ -612,11 +747,11 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE);
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::DocumentView;
@@ -625,7 +760,7 @@ use Term::Fabulous::Widget::TextField;
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
         id       => 'manual',
-        document => My::MiniMark->parse_file("$FindBin::Bin/documents/snapback.md"),
+        document => My::Markdown->parse_file("$FindBin::Bin/documents/snapback.md"),
         layout   => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
 );
 
@@ -740,9 +875,9 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 
@@ -779,7 +914,7 @@ KDL
 
 my $view     = $root->find_by_id('manual');
 my $contents = $root->find_by_id('contents');
-my $document = My::MiniMark->parse_file("$FindBin::Bin/documents/snapback.md");
+my $document = My::Markdown->parse_file("$FindBin::Bin/documents/snapback.md");
 $view->document($document);
 
 # One line per heading, indented by its level, each a link to its
@@ -988,7 +1123,7 @@ highlighter can use a proper tokenizer, such as [PPI](https://metacpan.org/pod/P
 - The language comes from the `language` of the
 [verbatim block](../Document/Block/Verbatim.md). The
 program sets it directly; a parser takes it from the source, as
-`My::MiniMark` does with the word after the opening fence of a code
+`My::Markdown` does with the word after the opening fence of a code
 block (```` ```perl ````).
 - Code never wraps. A line wider than the view ends at its edge with a
 clip mark. `Left` and `Right` scroll all code blocks of the view
@@ -1138,7 +1273,7 @@ given line into view. The document view scrolls with the same
 functions, and so can any program.
 
 This program is shipped as `examples/cookbook/pager-keys.pl`. It shows
-the file named on its command line, or the parser of the second recipe.
+the file named on its command line, or the reader of the second recipe.
 
 ```perl
 use v5.32;
@@ -1163,7 +1298,7 @@ use constant {
         MARKED => [ 229, 192, 123, 255 ],
 };
 
-my $file = shift // "$FindBin::Bin/lib/My/MiniMark.pm";
+my $file = shift // "$FindBin::Bin/lib/My/Markdown.pm";
 open my $handle, '<:encoding(UTF-8)', $file or die "Cannot read $file: $!\n";
 chomp( my @lines = <$handle> );
 close $handle;
@@ -1278,299 +1413,36 @@ program computes the row itself: here every line is one row, so line
 current scroll position, which is negative when the content is scrolled
 down.
 
-# Write a reader for a new document format (OpenDocument text)
+# Add a block kind and a mark kind of your own (view\_of\_KIND, look\_class)
 
-This recipe is a guide in eight steps. It builds a reader for
-OpenDocument text files (`.odt`), the format of LibreOffice Writer and
-other word processors, and shows the complete path from an unknown
-format to a working viewer:
-
-- reading the source and mapping it to blocks and marks;
-- adding a block kind of your own, the document title, with its own
-widget and height;
-- adding a mark kind of your own, underlined text, with its own style;
-- testing the parser without a terminal.
-
-The reader handles a deliberately small part of the format: the title,
-headings, paragraphs, bulleted and numbered lists (also nested), bold,
-italic, underlined and struck-through text, and links. That is enough to
-read a typical letter, recipe or report. Tables, pictures, footnotes and
-page layout are left out; the last step explains how to add them.
-
-This is the finished reader:
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-odt-reader.svg" alt="The pancake recipe from an OpenDocument file: the centered title Pancakes over a double rule, a paragraph with bold and italic words and a selected link, the headings Ingredients and Method with rules, a bulleted list with struck-through text, a numbered list with an underlined phrase and a nested list, a second-level heading Tips, a paragraph with a link and an italic paragraph; the status bar shows Top 100%"></p>
-</div>
-
-## What you need, and the files of the reader
-
-The parser reads the XML inside the file with [XML::Twig](https://metacpan.org/pod/XML%3A%3ATwig), which you
-may have to install first (`cpanm XML::Twig`). The archive is unpacked
-with [IO::Uncompress::Unzip](https://metacpan.org/pod/IO%3A%3AUncompress%3A%3AUnzip), which comes with Perl.
-
-The reader consists of five small modules in
-`examples/cookbook/lib/My/Odt/` and two programs in
-`examples/cookbook/`; the example document is
-`examples/cookbook/documents/pancakes.odt`.
+Goal: show `examples/cookbook/documents/news.md`, the release notes of
+snapback. They have two things the pages of the other recipes do not:
+horizontal rules between the releases, and pictures. The reader of the
+second recipe turns a rule into a block of the kind `rule` and the
+alternative text of a picture into a mark of the kind `image`. Neither
+kind exists in Term::Fabulous, and the program of the second recipe
+refuses the page:
 
 ```text
-My/Odt/Styles.pm    reads the styles: which text is bold, italic, ...; which paragraph is a title; list markers
-My/Odt/Title.pm     the block kind "title"
-My/Odt/Parser.pm    turns the file into a Term::Fabulous::Document
-My/Odt/Look.pm      the styles of the new kinds "title" and "underline"
-My/Odt/View.pm      a document view that shows titles and uses that look
-odt-outline.pl      prints what the parser made, for checking it
-odt-reader.pl       the reader
+$ perl examples/cookbook/document-from-markup.pl examples/cookbook/documents/news.md
+Term::Fabulous::Widget::DocumentView: the document has a mark of kind 'image',
+which Term::Fabulous::Document::Look does not know; the kinds are bold, clipped,
+code, code_block, file, heading1, ..., quote, strike, term
 ```
 
-The parser knows nothing about the screen, and the view knows nothing
-about OpenDocument. Keep that separation in your own readers: it lets
-you test the parser without a terminal (step 6), and it lets the same
-view show documents of any format.
+The view checks the marks of a document when it gets it. It would die
+again when it builds the first rule, because it has no `view_of_rule`.
+Three small classes in `examples/cookbook/lib/My/Markdown/` teach it
+both kinds.
 
-## Step 1: Look inside an OpenDocument file
-
-An OpenDocument file is a ZIP archive. List it with `unzip -l`:
-
-```text
-$ unzip -l examples/cookbook/documents/pancakes.odt
-  Length      Date    Time    Name
----------  ---------- -----   ----
-       39  2026-06-01 09:41   mimetype
-      478  2026-06-01 09:41   META-INF/manifest.xml
-     2069  2026-06-01 09:41   styles.xml
-     4434  2026-06-01 09:41   content.xml
----------                     -------
-     7020                     4 files
-```
-
-Files written by a word processor contain more (pictures, settings,
-metadata), but two are all a reader of the text needs:
-
-- `content.xml`
-
-    The text itself, in the element `<office:text>`, and the
-    _automatic styles_: styles the word processor creates for direct
-    formatting, for example when the user selects a word and presses
-    Ctrl+B. They have generated names such as `T1`.
-
-- `styles.xml`
-
-    The _named styles_ the user chooses from a list in the word
-    processor, such as "Title", "Heading 1" or "Strong Emphasis". In the
-    XML, spaces in names are written as `_20_`: `Strong_20_Emphasis`.
-
-This is the start of the text in `content.xml` of the example, with
-one of its automatic styles (shortened):
-
-```xml
-<office:automatic-styles>
- <style:style style:name="T1" style:family="text">
-  <style:text-properties fo:font-weight="bold"/>
- </style:style>
- ...
- <text:list-style style:name="L2">
-  <text:list-level-style-number text:level="1" style:num-suffix="." style:num-format="1"/>
-  <text:list-level-style-bullet text:level="2" text:bullet-char="◦"/>
- </text:list-style>
-</office:automatic-styles>
-<office:body>
- <office:text>
-  <text:p text:style-name="Title">Pancakes</text:p>
-  <text:p text:style-name="Text_20_body">A quick breakfast for four. It takes
-   <text:span text:style-name="T1">20 minutes</text:span>, ... Read the
-   <text:a xlink:type="simple" xlink:href="#Method|outline">method</text:a> once before you start.</text:p>
-  <text:h text:style-name="Heading_20_1" text:outline-level="1">Ingredients</text:h>
-  <text:list text:style-name="L1">
-   <text:list-item><text:p text:style-name="List_20_Contents">250 g flour</text:p></text:list-item>
-   ...
-```
-
-Three things stand out:
-
-- The formatting is not in the text, but in _styles_. A span of bold
-text is a `<text:span>` whose style, `T1`, says
-`fo:font-weight="bold"`. The parser must look the style up.
-- Styles inherit from a parent style (`style:parent-style-name`). The
-paragraph style `P1` of the example is "Text body" plus italic; the
-"Title" style inherits from "Heading". A title is any paragraph whose
-style is "Title" or inherits from it.
-- Lists say only that they are lists. Whether their items get bullets or
-numbers, and which, is in the _list style_ (`L2` above), per nesting
-level.
-
-## Step 2: Decide what becomes a block and what becomes a mark
-
-Before writing code, map the elements of the format to the document
-model. For this reader:
-
-| OpenDocument                             | Term::Fabulous::Document                                    |
-| ---------------------------------------- | ----------------------------------------------------------- |
-| &lt;text:p> with a "Title" style         | a block of the new kind "title" (My::Odt::Title)            |
-| &lt;text:h text:outline-level="N">       | Heading, level N (1 to 6)                                   |
-| &lt;text:p>                              | Paragraph; empty paragraphs are left out                    |
-| &lt;text:list> / &lt;text:list-item>     | an Item per list item; nested lists are indented            |
-| 2nd and later &lt;text:p> of a list item | Paragraph, indented to the item's text                      |
-| &lt;text:span> whose style is bold, ...  | marks of kind bold, italic, strike, and the new "underline" |
-| a paragraph style that is bold, ...      | the same marks, over the whole paragraph                    |
-| &lt;text:a xlink:href="...">             | a link mark whose target is the href                        |
-| &lt;text:s text:c="N">, &lt;text:tab>    | N spaces, one space                                         |
-| &lt;text:section>                        | its content, read like the body                             |
-| everything else (tables, frames, notes)  | left out                                                    |
-
-Two kinds in this table do not exist in Term::Fabulous: the _title_
-block and the _underline_ mark. A reader for a new format usually needs
-a few such kinds. Steps 4 and 7 add them.
-
-When a format has more structure than the model (a footnote, a table),
-you have three choices: leave it out, flatten it into the existing kinds
-(a table row as a paragraph), or add a block kind. Start with the first
-two and add kinds where readers will notice the difference.
-
-## Step 3: Read the styles
-
-`My::Odt::Styles` collects all styles of both files and answers the
-three questions the parser has: which marks does the text of a style
-get, is a paragraph style a title, and what is the marker of a list item.
+## The block kind
 
 ```perl
-package My::Odt::Styles;
+package My::Markdown::Rule;
 
-# The styles of an OpenDocument text, as far as the reader of
-# Term::Fabulous::Cookbook::Documents needs them: which marks the text of
-# a style gets (bold, italic, underline, strike), which paragraph styles
-# make a title, and the marker of a list item at each level of a list
-# style. Styles come from styles.xml (the named styles a user picks) and
-# content.xml (the automatic styles a word processor makes for direct
-# formatting), and inherit from their parent style.
-
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use Object::Pad 0.825;
-
-class My::Odt::Styles :strict(params) {
-        use constant BULLET => "\x{2022}";
-
-        # Style name => the name of the style it inherits from; style name =>
-        # its own text properties as { attribute => value }; list style name =>
-        # { level => { numbered, bullet, prefix, suffix } }.
-        field %parent_of;
-        field %properties_of;
-        field %levels_of_list;
-
-        # The root elements of styles.xml and content.xml, read with the
-        # namespace prefixes office, style, text and fo.
-        ADJUST :params ( :$roots ) {
-                foreach my $root (@$roots) {
-                        $self->_read_style($_)      foreach $root->descendants('style:style');
-                        $self->_read_list_style($_) foreach $root->descendants('text:list-style');
-                }
-        }
-
-        method _read_style ($style) {
-                my $name   = $style->att('style:name');
-                my $parent = $style->att('style:parent-style-name');
-                $parent_of{$name} = $parent if defined $parent;
-                my $properties = $style->first_child('style:text-properties') or return;
-                $properties_of{$name} = { map { $_ => $properties->att($_) } grep { defined $properties->att($_) } qw(fo:font-weight fo:font-style style:text-underline-style style:text-line-through-style) };
-                return;
-        }
-
-        method _read_list_style ($list_style) {
-                my $name = $list_style->att('style:name');
-                foreach my $level ( $list_style->children ) {
-                        my $number = $level->att('text:level') // next;
-                        $levels_of_list{$name}{$number}
-                                = $level->tag eq 'text:list-level-style-number'
-                                ? { numbered => 1, prefix => $level->att('style:num-prefix') // '', suffix => $level->att('style:num-suffix') // '' }
-                                : { numbered => 0, bullet => $level->att('text:bullet-char') // BULLET };
-                }
-                return;
-        }
-
-        # The style and the styles it inherits from, the style itself first.
-        method _lineage ($name) {
-                my @lineage;
-                while ( defined $name ) {
-                        die "My::Odt::Styles: the style $name inherits from itself\n" if grep { $_ eq $name } @lineage;
-                        push @lineage, $name;
-                        $name = $parent_of{$name};
-                }
-                return @lineage;
-        }
-
-        # The mark kinds of the text of a style. Each property comes from the
-        # nearest style that sets it, so a style can switch off what its
-        # parent switches on.
-        method kinds_of ($name) {
-                my %property;
-                foreach my $style ( $self->_lineage($name) ) {
-                        my $own = $properties_of{$style} // next;
-                        $property{$_} //= $own->{$_} foreach keys %$own;
-                }
-                my $weight = $property{'fo:font-weight'} // 'normal';
-                my @kinds;
-                push @kinds, 'bold' if $weight eq 'bold' || ( $weight =~ /\A[0-9]+\z/ && $weight >= 600 );
-                push @kinds, 'italic' if ( $property{'fo:font-style'} // 'normal' ) ne 'normal';
-                push @kinds, 'underline' if ( $property{'style:text-underline-style'} // 'none' ) ne 'none';
-                push @kinds, 'strike' if ( $property{'style:text-line-through-style'} // 'none' ) ne 'none';
-                return @kinds;
-        }
-
-        # A paragraph is a title when its style is "Title" or inherits from it.
-        method is_title ($name) {
-                return ( grep { $_ eq 'Title' } $self->_lineage($name) ) ? 1 : 0;
-        }
-
-        # The marker of the item at $position (from 1) in a list of the style
-        # at $level (from 1): a bullet, or the number with the prefix and the
-        # suffix of the style ("1."). Lists without a style get bullets.
-        method marker_of ( $list_style, $level, $position ) {
-                my $format = defined $list_style ? $levels_of_list{$list_style}{$level} : undef;
-                return BULLET unless $format;
-                return $format->{numbered} ? "$format->{prefix}$position$format->{suffix}" : $format->{bullet};
-        }
-}
-
-1;
-```
-
-- The constructor receives the root elements of both XML files and reads
-every `<style:style>` and `<text:list-style>` in them. For each
-style it keeps the name of its parent and its own text properties: the
-four attributes that the reader turns into marks.
-- `kinds_of` walks from a style up through its parents. Each property
-comes from the nearest style that sets it, so a style can switch off
-what its parent switches on (`fo:font-weight="normal"` under a bold
-parent). It returns the mark kinds of the style: `bold` for a font
-weight of `bold` or at least 600, `italic` for any slanted font
-style, and `underline` and `strike` for any line style other than
-`none`. `_lineage` dies on a style that inherits from itself, rather
-than looping forever.
-- `is_title` answers whether "Title" is among the styles a paragraph
-style inherits from.
-- `marker_of` builds the marker of an item from the list style: the
-bullet character of the level, or the number with the level's prefix
-and suffix (`1.`). Number formats other than 1, 2, 3 (letters, Roman
-numerals) are shown as plain numbers; supporting them would mean
-converting the position in `marker_of`.
-
-## Step 4: Add a block kind for the title
-
-The title is not a heading: it is not part of the table of contents,
-and it looks different. The built-in kinds have nothing like it, so the
-reader adds a kind.
-
-```perl
-package My::Odt::Title;
-
-# The title of a document, a block kind that the built-in kinds of
-# Term::Fabulous::Document::Block lack. My::Odt::View shows it centered,
-# with a double rule under it.
+# A horizontal rule, a block kind that the built-in kinds of
+# Term::Fabulous::Document::Block lack. My::Markdown::View shows it as a
+# divider across the view.
 
 use v5.32;
 use warnings;
@@ -1581,17 +1453,21 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Document::Block;
 
-class My::Odt::Title :isa(Term::Fabulous::Document::Block) :strict(params) {
+class My::Markdown::Rule :isa(Term::Fabulous::Document::Block) :strict(params) {
 
-        # The view builds a block of kind "title" with its view_of_title.
-        method kind () {
-                return 'title';
+        ADJUST {
+                die "My::Markdown::Rule: a rule has no text" if length $self->text;
         }
 
-        # The rows of the wrapped text, and one for the rule. The view asks
-        # for them before it lays the title out, to size its scrollbar.
+        # The view builds a block of kind "rule" with its view_of_rule.
+        method kind () {
+                return 'rule';
+        }
+
+        # The rows the block takes, which the view asks for before it lays the
+        # block out, to size its scrollbar: one for the divider.
         method body_rows :override ($columns) {
-                return $self->SUPER::body_rows($columns) + 1;
+                return 1;
         }
 }
 
@@ -1600,339 +1476,31 @@ class My::Odt::Title :isa(Term::Fabulous::Document::Block) :strict(params) {
 
 - A block kind is a subclass of [Term::Fabulous::Document::Block](../Document/Block.md) with a
 `kind` method that returns a name. The name decides which method of the
-view builds the widget of the block: `view_of_title` (step 7). Every
-block takes the parameters `text`, `marks`, `indent` and `quote`.
+view builds the widget of the block: `view_of_rule`. Every block takes
+the parameters `text`, `marks`, `indent` and `quote`; the reader
+creates a rule with an empty text, and the `ADJUST` block refuses
+anything else.
 - The view does not build widgets for blocks that are far out of view,
 so it must estimate how tall they are, for the scrollbar. It asks
 [body\_rows](../Document/Block.md#body_rows): the rows the
 block takes in the given number of columns, without the blank row
-above it. The default wraps the text the way the layout wraps it. The
-title adds one row for the rule under its text. An estimate that is
-off does no harm beyond a scrollbar thumb that jumps a little when the
-block comes into view.
-- The view also asks the block for the row of a character, to scroll a
+above it. The default wraps the text the way the layout wraps it; a
+rule is one row. An estimate that is off does no harm beyond a
+scrollbar thumb that jumps a little when the block comes into view.
+- The view also asks a block for the row of a character, to scroll a
 link or a search match into view
 ([row\_of\_character](../Document/Block.md#row_of_character)).
-The rule is under the text, so the default is right for the title. A
-block with rows above its text, such as a border, adds them there too.
+A kind with text and rows above it, say a caption under a frame,
+overrides that too. A rule has no text, so the default is right.
 
-## Step 5: Write the parser
-
-`My::Odt::Parser` reads the file and builds the document. Every method
-reads one kind of element and appends blocks to `@blocks`, in the
-order of the text.
+## The mark kind
 
 ```perl
-package My::Odt::Parser;
+package My::Markdown::Look;
 
-# Reads an OpenDocument text (.odt) into a Term::Fabulous::Document: the
-# title, headings, paragraphs and lists of the text, with bold, italic,
-# underlined and struck text and links as marks. Everything else (tables,
-# pictures, notes, fields) is left out. Needs XML::Twig.
-
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use Object::Pad 0.825;
-
-class My::Odt::Parser :strict(params) {
-        use IO::Uncompress::Unzip qw(unzip $UnzipError);
-        use List::Util qw(max min);
-        use My::Odt::Styles;
-        use My::Odt::Title;
-        use Term::Fabulous::Document;
-        use Term::Fabulous::Document::Block::Heading;
-        use Term::Fabulous::Document::Block::Item;
-        use Term::Fabulous::Document::Block::Paragraph;
-        use Term::Fabulous::Document::Mark;
-        use Term::Fabulous::Unicode qw(string_columns);
-        use XML::Twig;
-
-        # The prefixes the parser uses, whatever prefixes the file declares.
-        use constant NAMESPACES => {
-                'urn:oasis:names:tc:opendocument:xmlns:office:1.0'            => 'office',
-                'urn:oasis:names:tc:opendocument:xmlns:style:1.0'             => 'style',
-                'urn:oasis:names:tc:opendocument:xmlns:text:1.0'              => 'text',
-                'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0' => 'fo',
-                'http://www.w3.org/1999/xlink'                                => 'xlink',
-        };
-
-        # The elements of the text that become blocks, and the method that
-        # reads each. A section holds more of them.
-        my %READER_OF = (
-                'text:h'       => '_heading',
-                'text:p'       => '_paragraph',
-                'text:list'    => '_list',
-                'text:section' => '_body',
-        );
-
-        field $styles :param;
-        field @blocks;
-
-        method parse_file :common ($path) {
-                my %twig_of = map { $_ => _twig_of_member( $path, "$_.xml" ) } qw(styles content);
-                my $parser  = $class->new( styles => My::Odt::Styles->new( roots => [ map { $_->root } @twig_of{qw(styles content)} ] ) );
-                my $text    = $twig_of{content}->root->first_descendant('office:text') or die "My::Odt::Parser: $path is not a text document\n";
-                $parser->_body($text);
-                return Term::Fabulous::Document->new( blocks => [ $parser->blocks ], source => $path );
-        }
-
-        method blocks () {
-                return @blocks;
-        }
-
-        # A file of the archive, parsed. With keep_spaces, XML::Twig keeps
-        # whitespace with a line break between two elements, which it would
-        # drop as indentation; between two spans, it separates two words.
-        sub _twig_of_member ( $path, $member ) {
-                unzip( $path => \my $xml, Name => $member ) or die "My::Odt::Parser: cannot read $member from $path: $UnzipError\n";
-                my $twig = XML::Twig->new( keep_spaces => 1, map_xmlns => NAMESPACES );
-                $twig->parse($xml);
-                return $twig;
-        }
-
-        method _body ( $element, %place ) {
-                foreach my $child ( $element->children ) {
-                        my $reader = $READER_OF{ $child->tag } // next;
-                        $self->$reader( $child, %place );
-                }
-                return;
-        }
-
-        method _heading ( $element, %place ) {
-                my $level = $element->att('text:outline-level') // 1;
-                $level = max( 1, min( 6, $level ) );
-                push @blocks, Term::Fabulous::Document::Block::Heading->new( level => $level, $self->_inline($element) );
-                return;
-        }
-
-        # A paragraph in a list item is indented to the item's text. Empty
-        # paragraphs, which word processors use as spacing, are left out. The
-        # style of a title says how titles look, which is the view's business,
-        # so it gives no marks.
-        method _paragraph ( $element, %place ) {
-                my $style    = $element->att('text:style-name');
-                my $is_title = $styles->is_title($style);
-                my %inline   = $self->_inline( $element, $is_title ? undef : $style );
-                return unless $inline{text} =~ /\S/;
-                push @blocks, $is_title ? My::Odt::Title->new(%inline) : Term::Fabulous::Document::Block::Paragraph->new( %inline, indent => $place{indent} // 0 );
-                return;
-        }
-
-        # All items of a list share the width of the widest marker and a
-        # space, so that their texts line up. A nested list keeps the style
-        # of the list around it unless it names its own.
-        method _list ( $list, %place ) {
-                my $style   = $list->att('text:style-name') // $place{list_style};
-                my $level   = ( $place{level} // 0 ) + 1;
-                my @items   = $list->children('text:list-item') or return;
-                my @markers = map         { $styles->marker_of( $style, $level, $_ ) } 1 .. @items;
-                my $width   = 1 + max map { string_columns($_) } @markers;
-                foreach my $position ( 1 .. @items ) {
-                        my %item = ( marker => $markers[ $position - 1 ], marker_width => $width, position => $position, indent => $place{indent} // 0 );
-                        $self->_list_item( $items[ $position - 1 ], \%item, list_style => $style, level => $level );
-                }
-                return;
-        }
-
-        # The first paragraph of an item is its text. The paragraphs and lists
-        # after it belong to the item and start where its text starts.
-        method _list_item ( $element, $item, %list ) {
-                my @parts  = grep { $_->tag eq 'text:p' || $_->tag eq 'text:list' } $element->children;
-                my $first  = @parts && $parts[0]->tag eq 'text:p' ? shift @parts                                             : undef;
-                my %inline = defined $first                       ? $self->_inline( $first, $first->att('text:style-name') ) : ( text => '' );
-                push @blocks, Term::Fabulous::Document::Block::Item->new( %$item, %inline );
-                my $indent = $item->{indent} + $item->{marker_width};
-                foreach my $part (@parts) {
-                        my $reader = $READER_OF{ $part->tag };
-                        $self->$reader( $part, %list, indent => $indent );
-                }
-                return;
-        }
-
-        # The text of a paragraph or heading without its markup, and its
-        # marks: one over the whole text for each kind of the paragraph's own
-        # style (if given), then the spans and links inside, in the order of
-        # the text.
-        method _inline ( $element, $style = undef ) {
-                my %found = ( text => '', marks => [] );
-                $self->_collect( $element, \%found );
-                my $length = length $found{text};
-                my @whole  = map { Term::Fabulous::Document::Mark->new( start => 0, end => $length, kind => $_ ) } $length && defined $style ? $styles->kinds_of($style) : ();
-                return ( text => $found{text}, marks => [ @whole, @{ $found{marks} } ] );
-        }
-
-        # Text, spaces, spans and links, in order. Whitespace in the XML is
-        # one space; <text:s text:c="3"/> is three. A span gets a mark for
-        # each kind of its style, a link (<text:a>) a link mark to its
-        # address. Other elements, such as notes and bookmarks, are skipped.
-        method _collect ( $element, $found ) {
-                foreach my $node ( $element->children ) {
-                        if ( $node->is_pcdata ) {
-                                $found->{text} .= $node->pcdata =~ s/[ \t\r\n]+/ /gr;
-                                next;
-                        }
-                        my $tag = $node->tag;
-                        if ( $tag eq 'text:s' ) {
-                                $found->{text} .= ' ' x ( $node->att('text:c') // 1 );
-                                next;
-                        }
-                        if ( $tag eq 'text:tab' || $tag eq 'text:line-break' ) {
-                                $found->{text} .= ' ';
-                                next;
-                        }
-                        next unless $tag eq 'text:span' || $tag eq 'text:a';
-
-                        my $start = length $found->{text};
-                        $self->_collect( $node, $found );
-                        my $end = length $found->{text};
-                        next if $end == $start;
-                        my @marks
-                                = $tag eq 'text:a'
-                                ? { kind => 'link', link => $node->att('xlink:href') }
-                                : map { +{ kind => $_ } } $styles->kinds_of( $node->att('text:style-name') );
-                        push @{ $found->{marks} }, map { Term::Fabulous::Document::Mark->new( start => $start, end => $end, %$_ ) } @marks;
-                }
-                return;
-        }
-}
-
-1;
-```
-
-- `parse_file` unpacks and parses both XML files, builds the styles,
-reads the body of the text and returns a [Term::Fabulous::Document](../Document.md).
-It dies with a clear message when the file is not a ZIP archive, lacks
-one of the two files, or is not a text document; XML::Twig dies on
-malformed XML. A viewer for user files should catch these errors and
-show them.
-- `map_xmlns` makes the parser independent of the namespace prefixes a
-file uses: an element is `text:p` whatever prefix the file declares
-for the text namespace. `keep_spaces` keeps whitespace that contains a
-line break between two elements. By default XML::Twig drops it as
-indentation of the XML, but between two spans of a paragraph it
-separates two words. `_collect` then reduces every run of whitespace
-to one space, as the format prescribes.
-- `%READER_OF` maps each element that becomes a block to the method
-that reads it. `_body` reads the children of an element in order and
-skips the elements it does not know, so a table in the text is left out
-without disturbing anything else. A section is read like the body.
-- `_list` works out the markers of all its items first, so that it knows
-the widest one: `marker_width` is the width of the widest marker plus
-a space, and all items of the list share it. A nested list increases
-the level and is indented to the text of its item, as in the
-[first recipe](#show-a-document-built-in-perl-document-blocks-marks).
-The `%place` hash carries this context (indent, list style, level)
-down to the elements inside.
-- `_inline` produces the `text` and `marks` parameters of a block.
-`_collect` walks the children of the paragraph: text is appended,
-spaces and tabs become spaces, and spans and links are entered
-recursively. When a span is complete, its start and end offsets are
-known, and its marks are created. Marks of a paragraph style cover the
-whole paragraph and come first, so that marks inside it are drawn over
-them.
-- Links do not nest in OpenDocument, so the link marks of a paragraph
-never overlap; two that did would make the block's constructor die. The
-block orders its link marks by their start itself, so the order in
-which a parser creates them does not matter.
-- The title gets no marks from its paragraph style: "Title" is bold in
-the word processor, but how a title looks is decided by the view's look
-(step 7). The same applies to headings.
-
-## Step 6: Check the parser without a terminal
-
-A document is plain data, so you can check what the parser made before
-you show it. This program prints every block with its kind and every
-mark with the text it covers. It is shipped as
-`examples/cookbook/odt-outline.pl`.
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/Odt/Parser.pm lives
-
-use My::Odt::Parser;
-
-binmode STDOUT, ':encoding(UTF-8)';
-
-my $document = My::Odt::Parser->parse_file( shift // "$FindBin::Bin/documents/pancakes.odt" );
-
-# A line per block: its kind, then its text, indented as the view
-# indents it and with the marker of an item. Under it a line per mark:
-# its kind and the text it covers.
-foreach my $block ( $document->blocks ) {
-        my $kind   = $block->kind eq 'heading' ? 'heading ' . $block->level : $block->kind;
-        my $marker = $block->kind eq 'item'    ? $block->marker . ' '       : '';
-        printf "%-10s %s%s%s\n", $kind, ' ' x $block->indent, $marker, $block->text;
-        foreach my $mark ( $block->marks ) {
-                my $covered = substr( $block->text, $mark->start, $mark->span_length );
-                printf "%-10s %s%s \"%s\"%s\n", '', ' ' x $block->indent, $mark->kind, $covered, $mark->is_link ? ' -> ' . $mark->link : '';
-        }
-}
-```
-
-For the example document it prints:
-
-```text
-title      Pancakes
-paragraph  A quick breakfast for four. It takes 20 minutes, and the batter can rest overnight in the fridge. Read the method once before you start.
-           bold "20 minutes"
-           italic "overnight"
-           link "method" -> #Method|outline
-heading 1  Ingredients
-item       • 250 g flour
-item       • 500 ml milk
-item       • 3 eggs
-item       • a pinch of salt and two spoons of sugar (the toppings are sweet enough)
-           strike "two spoons of sugar"
-item       • butter for the pan
-heading 1  Method
-item       1. Whisk the flour and the milk until the batter is smooth.
-item       2. Beat in the eggs and the salt, then let the batter rest for at least 30 minutes.
-           underline "at least"
-item       3. Melt a little butter in a pan and pour in a ladle of batter.
-item          ◦ Use a medium heat.
-item          ◦ Turn the pancake when its edges come loose, after about two minutes.
-item       4. Keep the pancakes warm in the oven until all are done.
-heading 2  Tips
-paragraph  For thinner pancakes, add another 100 ml of milk. More recipes are at recipes.example.org.
-           bold "another 100 ml of milk"
-           link "recipes.example.org" -> https://recipes.example.org/
-paragraph  Leftover batter keeps for a day in the fridge.
-           italic "Leftover batter keeps for a day in the fridge."
-```
-
-Check the output against the document in a word processor: every
-heading at the right level, the nested items indented by the width of
-their parent's marker (here 3 columns, for `1.` and a space), every mark
-over the right words. The bold "another 100 ml of milk" comes from the
-named character style "Strong Emphasis" in `styles.xml`, and the
-italic last paragraph from its automatic paragraph style `P1`.
-
-The same checks fit into a test with [Test2::V0](https://metacpan.org/pod/Test2%3A%3AV0): parse a small file
-and compare `[ map { $_->kind } $document->blocks ]`, the texts and
-the marks with what you expect. The constructors of blocks and marks
-already die on inconsistent data, such as a mark that ends after the
-text or an item whose `marker_width` leaves no room after the marker.
-
-## Step 7: Teach the view the new kinds
-
-The built-in view would refuse this document: it dies when it is given
-a document with a mark kind its look does not know (`underline`), and
-it would die again when it builds a block without a `view_of_KIND`
-method (`title`). Two small subclasses fix that. First the look:
-
-```perl
-package My::Odt::Look;
-
-# The styles of My::Odt::View: those of every document view, plus the
-# two kinds the OpenDocument reader adds, underlined text and the title.
+# The styles of My::Markdown::View: those of every document view, plus
+# the mark kind the Markdown reader adds, the alternative text of an
+# image.
 
 use v5.32;
 use warnings;
@@ -1943,15 +1511,14 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Document::Look;
 
-class My::Odt::Look :isa(Term::Fabulous::Document::Look) :strict(params) {
+class My::Markdown::Look :isa(Term::Fabulous::Document::Look) :strict(params) {
 
-        # Colors are palette tokens of the theme, so that the title follows a
+        # Colors are palette tokens of the theme, so that the style follows a
         # switch to another theme.
         method recipes :common () {
                 return (
                         $class->SUPER::recipes,
-                        underline => { words => 'underline' },
-                        title     => { words => 'bold', color => 'accent' },
+                        image => { words => 'italic', color => 'text_muted' },
                 );
         }
 }
@@ -1959,18 +1526,20 @@ class My::Odt::Look :isa(Term::Fabulous::Document::Look) :strict(params) {
 1;
 ```
 
-- `underline` is the mark kind the parser creates for underlined text,
-and `title` the style of the title block. Both are recipes as in the
-recipe ["Change the styles of a document and add mark kinds (Look)"](#change-the-styles-of-a-document-and-add-mark-kinds-look).
+- `image` is a recipe as in
+["Change the styles of a document and add mark kinds (Look)"](#change-the-styles-of-a-document-and-add-mark-kinds-look): the
+alternative text of a picture is shown in italics and the muted text
+color, so that it reads as what it is, a stand-in. The parent's recipes
+stay in front of it; the view needs them.
 
-Then the view:
+## The view
 
 ```perl
-package My::Odt::View;
+package My::Markdown::View;
 
-# A document view that knows the block and mark kinds of the OpenDocument
-# reader: it draws with My::Odt::Look and shows a title (My::Odt::Title)
-# centered, in the title style, with a double rule under it.
+# A document view that knows the block and mark kinds of the Markdown
+# reader: it draws with My::Markdown::Look and shows a rule
+# (My::Markdown::Rule) as a divider.
 
 use v5.32;
 use warnings;
@@ -1981,83 +1550,57 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::DocumentView;
 
-class My::Odt::View :isa(Term::Fabulous::Widget::DocumentView) :strict(params) {
-        use Clay::XS qw(sizing_grow CLAY_ALIGN_X_CENTER CLAY_TEXT_ALIGN_CENTER);
-        use My::Odt::Look;
-        use Term::Fabulous::Widget::Box;
+class My::Markdown::View :isa(Term::Fabulous::Widget::DocumentView) :strict(params) {
+        use My::Markdown::Look;
         use Term::Fabulous::Widget::Divider;
 
         method look_class :common () {
-                return 'My::Odt::Look';
+                return 'My::Markdown::Look';
         }
 
-        # The text is the RichText of rich_text_of, so that the view styles it
-        # and selects its links like those of every other block. A box of the
-        # full width centers it, and its lines are centered when it wraps.
-        # boxed puts it and the rule into the box the view lays out, with the
-        # padding the view gives: the indent and the blank row above.
-        method view_of_title ( $block, $padding ) {
-                my $text = $self->rich_text_of($block);
-                $text->text_alignment(CLAY_TEXT_ALIGN_CENTER);
-                my $centered = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_alignment => { x => CLAY_ALIGN_X_CENTER } } );
-                $centered->add_child($text);
-                my $rule = Term::Fabulous::Widget::Divider->new( line_style => 'Double' );
-                return { widget => $self->boxed( $padding, $centered, $rule ), text => $text };
-        }
-
-        # A title is in the title style; its marks and the search matches go
-        # over it.
-        method spans_of :override ( $index, $look ) {
-                my $spans = $self->SUPER::spans_of( $index, $look );
-                my $block = $self->document->block($index);
-                return $spans unless $block->kind eq 'title';
-                return [ [ 0, length $block->text, $look->style('title') ], @$spans ];
+        # boxed puts the divider into the box the view lays out, with the
+        # padding the view gives: the indent and the blank row above. A rule
+        # has no text for the view to style or search.
+        method view_of_rule ( $block, $padding ) {
+                return { widget => $self->boxed( $padding, Term::Fabulous::Widget::Divider->new ), text => undef };
         }
 }
 
 1;
 ```
 
-- `look_class` makes the view draw with `My::Odt::Look` and accept its
-kinds.
-- `view_of_title` builds the widgets of a title block. The view calls
+- `look_class` makes the view draw with `My::Markdown::Look`, and
+accept documents with marks of its kinds.
+- `view_of_rule` builds the widget of a rule. The view calls
 `view_of_KIND` for every block of kind `KIND` with the block and a
 hash of padding, `{ left => $columns, top => $rows }`: the indent
 of the block and the blank row above it. The method returns a hash
 reference with two entries:
-
     - `widget`
 
         The widget the view shows for the block. It must apply the padding;
         [boxed](../Widget/DocumentView.md#boxed) creates a box of
         the view's width with the padding and the given children, one under the
-        other.
+        other. Here the only child is a [divider](../Widget/Divider.md),
+        the one row that `body_rows` counts.
 
     - `text`
 
         The [RichText](../Widget/RichText.md) that shows the text
         of the block, or `undef` for a block without text. The view styles
         this widget with the marks, the selected link and the search matches.
-        [rich\_text\_of](../Widget/DocumentView.md#rich_text_of)
-        creates it with the text and the links of the block, set up so that the
-        view can select its links.
+        A kind with text creates it with
+        [rich\_text\_of](../Widget/DocumentView.md#rich_text_of),
+        which sets it up so that the view can select its links.
+- A kind with a style of its own, say a caption in the `caption` style
+of the look, also overrides
+[spans\_of](../Widget/DocumentView.md#spans_of), which
+returns the styles of a block's text; its own span goes first, so that
+marks and search matches are drawn over it.
 
-    The title widget is a full-width box that centers the text, followed by
-    a [double rule](../Widget/Divider.md). That is the extra row
-    that `body_rows` of step 4 counts.
+## The program
 
-- `spans_of` returns the styles of a block's text, as
-`[ $start, $end, $style ]`, and the view applies them in order: the
-base class returns the style of a heading or a term over the whole text,
-then those of the marks, then those of the search matches. The subclass
-puts the title style first, so that marks and search matches inside the
-title are drawn over it.
-
-## Step 8: Put the reader together
-
-The program parses the file, shows it in the new view, and adds a status
-bar and the handling of links. It is shipped as
-`examples/cookbook/odt-reader.pl`.
+The program is shipped as `examples/cookbook/document-kinds.pl`:
 
 ```perl
 use v5.32;
@@ -2066,105 +1609,54 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/Odt/*.pm live
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm and My/Markdown/*.pm live
 
-use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-use My::Odt::Parser;
-use My::Odt::View;
+use Clay::XS qw(sizing_grow);
+use My::Markdown;
+use My::Markdown::View;
 use Term::Fabulous;
-use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::StatusBar;
 
-my $file     = shift // "$FindBin::Bin/documents/pancakes.odt";
-my $document = My::Odt::Parser->parse_file($file);
+my $file     = shift // "$FindBin::Bin/documents/news.md";
+my $document = My::Markdown->parse_file($file);
 
-my $view = My::Odt::View->new(
-        id       => 'document',
+my $view = My::Markdown::View->new(
+        id       => 'news',
         document => $document,
         layout   => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
 );
 
-my $where  = '';
-my $status = Term::Fabulous::Widget::StatusBar->new(
-        message => 'l selects a link, Enter follows it',
-        timeout => 4,
-        parts   => sub { return ( [ $where, 'dim' ] ) },
-);
-
-my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-$root->add_child( $view, $status );
-
-$view->on(
-        ViewChange => sub ($event) {
-                $where = sprintf '%s  %d%%', $event->section_title // 'Top', $event->percent;
-                return;
-        }
-);
-
-# LibreOffice writes a link to a heading as "#Heading|outline", a link to
-# a bookmark as "#Name"; anything else is an address for a browser.
-$view->on(
-        LinkActivate => sub ($event) {
-                my $target = $event->link;
-                my ($name) = $target =~ /\A#(.*?)(?:\|outline)?\z/;
-                my $index  = defined $name ? $document->find_section($name) : undef;
-                if ( defined $index ) {
-                        $view->show_block($index);
-                }
-                else {
-                        $status->message( "Open $target in your browser.", 'info' );
-                }
-                return;
-        }
-);
-
-my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
+my $ui = Term::Fabulous->new( root => $view, width => 80, height => 24 );
 $ui->interaction->set_focused_widget($view);
 $ui->run;
 ```
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-odt-reader.svg" alt="The pancake recipe from an OpenDocument file: the centered title Pancakes over a double rule, a paragraph with bold and italic words and a selected link, the headings Ingredients and Method with rules, a bulleted list with struck-through text, a numbered list with an underlined phrase and a nested list, a second-level heading Tips, a paragraph with a link and an italic paragraph; the status bar shows Top 100%"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-kinds.svg" alt="The release notes of snapback: the heading snapback news with a rule, a paragraph that ends in the alternative text of a picture in italics, a divider, the heading 2.1, a bulleted list with a nested list, a paragraph, a divider, the heading 2.0 and the start of a numbered list"></p>
 </div>
 
-The picture shows the reader after `l` selected the first link.
+- The program differs from the one of the second recipe in one line: the
+view is a `My::Markdown::View`. The reader is the same. It knows
+nothing about the screen, and the view knows nothing about Markdown.
+Keep that separation in readers of your own: the same view shows
+documents of any format, and a reader can be checked without a
+terminal, by looking at the blocks it makes.
+- The rule keeps the `indent` and `quote` of its place in the document
+like every block: inside a block quote, the view draws the bars around
+the divider too.
 
-- The program uses `My::Odt::View` where the earlier recipes used
-[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md). Everything else works as
-before: the keys, search with `n` and `N` after a call of `search`,
-`ViewChange`, `LinkActivate`.
-- LibreOffice writes a link to a heading of the same document as
-`#Heading|outline`. The program removes the `|outline` suffix and
-looks the heading up with
-[find\_section](../Document.md#find_section). Other targets
-are web addresses or files, which the program only reports.
-- Try it on your own files: `perl examples/cookbook/odt-reader.pl
-letter.odt`. Text in tables, frames and footnotes is not shown.
+Some directions from here:
 
-## Where to go from here
-
-The same steps apply to any format: look at the source, map it to
-blocks and marks, add the kinds the built-in ones cannot express, check
-the parser without a terminal, and teach a view subclass the new kinds.
-Some directions for this reader:
-
-- **Tables** (`<table:table>`). The simplest approach is a paragraph
-per row with the cells separated by a few spaces. A real table needs a
-block kind whose `view_of_table` builds a [Term::Fabulous::Widget::Table](../Widget/Table.md)
-or a grid of boxes, and whose `body_rows` counts the rows of the table
-and of its borders.
-- **Footnotes** (`<text:note>`). Leave a marker such as `[1]` in the
-text, as a link mark whose target names the note, and append the notes
-as paragraphs at the end of the document.
-- **Pictures** (`<draw:frame>`). Show a placeholder paragraph with the
-name of the picture, or a block kind that shows it with
-[Term::Fabulous::Widget::Image](../Widget/Image.md).
-- **Preformatted text** (the paragraph style "Preformatted Text"). Join
-consecutive paragraphs of that style into one
-[Term::Fabulous::Document::Block::Verbatim](../Document/Block/Verbatim.md), so that the code keeps its
-lines and can be highlighted.
-- **Block quotes** (the paragraph style "Quotations"). Give such
-paragraphs `quote => 1`, and the view draws the bar.
+- **Pictures.** A picture that stands alone in a paragraph can be a block
+of its own kind, whose builder shows it with
+[Term::Fabulous::Widget::Image](../Widget/Image.md) and whose `body_rows` returns the
+rows the picture takes.
+- **Tables.** A block kind whose builder makes a
+[Term::Fabulous::Widget::Table](../Widget/Table.md), and whose `body_rows` counts the
+rows of the table and of its borders. The reader would collect the
+cells of a table instead of its text.
+- **Footnotes.** Leave a marker such as `[1]` in the text, as a link mark
+whose target names the note, and append the notes as paragraphs at the
+end of the document.
 
 The reference of the extension points is in
 ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#block-kinds),

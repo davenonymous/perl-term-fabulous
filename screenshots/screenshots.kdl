@@ -733,12 +733,8 @@ screenshot "cookbook-pager-keys" {
 	}
 }
 
-screenshot "cookbook-odt-reader" {
-	script "examples/cookbook/odt-reader.pl"
-	size 80 34
-	steps {
-		key "l"
-	}
+screenshot "cookbook-document-kinds" {
+	script "examples/cookbook/document-kinds.pl"
 }
 
 screenshot "cookbook-report-to-file" {

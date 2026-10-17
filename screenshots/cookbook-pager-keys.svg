@@ -18,31 +18,31 @@
 <text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/pager-keys.pl</text>
 <rect x="16.5" y="16.5" width="747" height="417" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="745" y="60" width="1" height="126" fill="#464c5a"/>
-<rect x="745" y="186" width="2" height="36" fill="#61afef"/>
-<rect x="745" y="222" width="1" height="180" fill="#464c5a"/>
+<rect x="745" y="60" width="1" height="90" fill="#464c5a"/>
+<rect x="745" y="150" width="2" height="18" fill="#61afef"/>
+<rect x="745" y="168" width="1" height="234" fill="#464c5a"/>
 </g>
 <g class="terminal">
-<text x="111" y="74" textLength="630" fill="#c8d2e6">return $self-&gt;_code_block($1) if $line                        =~ /\A``</text>
-<text x="111" y="92" textLength="630" fill="#c8d2e6">return $self-&gt;_close if $line                                 =~ /\A\s</text>
-<text x="111" y="110" textLength="630" fill="#c8d2e6">return $self-&gt;_heading( length $1, $2 ) if $line              =~ /\A(#</text>
-<text x="111" y="128" textLength="630" fill="#c8d2e6">return $self-&gt;_quote( length( $1 =~ s/\s//gr ), $2 ) if $line =~ /\A((</text>
-<text x="111" y="146" textLength="621" fill="#c8d2e6">return $self-&gt;_item( length $1, $2, $3 ) if $line             =~ /\A(</text>
-<text x="111" y="164" textLength="360" fill="#c8d2e6">return $self-&gt;_continue($line) if $open;</text>
-<text x="111" y="182" textLength="288" fill="#c8d2e6">return $self-&gt;_paragraph($line);</text>
-<text x="75" y="200" textLength="9" fill="#c8d2e6">}</text>
-<text x="43.5" y="218" text-anchor="middle" fill="#c8d2e6"> </text>
-<text x="75" y="236" textLength="585" fill="#c8d2e6"># The open paragraph or item becomes a block, its text split into</text>
-<text x="75" y="254" textLength="207" fill="#c8d2e6"># plain text and marks.</text>
-<text x="75" y="272" textLength="162" fill="#c8d2e6">method _close () {</text>
-<text x="111" y="290" textLength="180" fill="#c8d2e6">return unless $open;</text>
-<text x="111" y="308" textLength="621" fill="#c8d2e6">push @blocks, $open-&gt;{class}-&gt;new( %{ $open-&gt;{parameters} }, _inline(</text>
-<text x="111" y="326" textLength="126" fill="#c8d2e6">$open = undef;</text>
-<text x="111" y="344" textLength="63" fill="#c8d2e6">return;</text>
-<text x="75" y="362" textLength="9" fill="#c8d2e6">}</text>
-<text x="43.5" y="380" text-anchor="middle" fill="#c8d2e6"> </text>
-<text x="75" y="398" textLength="288" fill="#e5c07b">method _code_block ($language) {</text>
-<text x="39" y="416" textLength="144" fill="#96a0b4">MiniMark.pm  43%</text>
+<text x="111" y="74" textLength="180" fill="#c8d2e6">$self-&gt;_close_block;</text>
+<text x="111" y="92" textLength="135" fill="#c8d2e6">return @blocks;</text>
+<text x="75" y="110" textLength="9" fill="#c8d2e6">}</text>
+<text x="43.5" y="128" text-anchor="middle" fill="#c8d2e6"> </text>
+<text x="75" y="146" textLength="639" fill="#c8d2e6"># ---------------------------------------------------------------------</text>
+<text x="75" y="164" textLength="72" fill="#c8d2e6"># Blocks</text>
+<text x="75" y="182" textLength="639" fill="#c8d2e6"># ---------------------------------------------------------------------</text>
+<text x="43.5" y="200" text-anchor="middle" fill="#c8d2e6"> </text>
+<text x="75" y="218" textLength="279" fill="#c8d2e6">method _start_header ($event) {</text>
+<text x="111" y="236" textLength="630" fill="#c8d2e6">return $self-&gt;_open_block( 'Term::Fabulous::Document::Block::Heading',</text>
+<text x="75" y="254" textLength="9" fill="#c8d2e6">}</text>
+<text x="43.5" y="272" text-anchor="middle" fill="#c8d2e6"> </text>
+<text x="75" y="290" textLength="261" fill="#c8d2e6">method _end_header ($event) {</text>
+<text x="111" y="308" textLength="243" fill="#c8d2e6">return $self-&gt;_close_block;</text>
+<text x="75" y="326" textLength="9" fill="#c8d2e6">}</text>
+<text x="43.5" y="344" text-anchor="middle" fill="#c8d2e6"> </text>
+<text x="75" y="362" textLength="621" fill="#c8d2e6"># The first paragraph of a list item is the text of the item; a later</text>
+<text x="75" y="380" textLength="198" fill="#c8d2e6"># one starts under it.</text>
+<text x="75" y="398" textLength="306" fill="#e5c07b">method _start_paragraph ($event) {</text>
+<text x="39" y="416" textLength="144" fill="#96a0b4">Markdown.pm  29%</text>
 </g>
 <g shape-rendering="crispEdges">
 </g>

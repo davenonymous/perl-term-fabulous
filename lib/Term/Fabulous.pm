@@ -2150,8 +2150,8 @@ The user showed or hid a table column in the column chooser.
 The document view shows documents of any format through one model: a
 parser turns the source into blocks and marks, and the view shows them.
 L<Pod::Fabulous> reads POD this way. L<Term::Fabulous::Cookbook::Documents>
-has recipes for documents and a guide to writing a reader for a new
-format.
+has recipes for documents, from a Markdown reader built on L<Markdent>
+to a block kind and a mark kind of your own.
 
 =over
 

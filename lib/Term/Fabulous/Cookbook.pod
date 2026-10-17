@@ -517,7 +517,7 @@ L<Show a photo in sixel graphics (Sixel)|Term::Fabulous::Cookbook::Canvases/Show
 
 =item L<Term::Fabulous::Cookbook::Documents>
 
-Documents: build, show, search and style them, and write a reader for a new format:
+Documents: build, show, search and style them, and add kinds of your own:
 
 =over
 
@@ -527,7 +527,7 @@ L<Show a document built in Perl (Document, blocks, marks)|Term::Fabulous::Cookbo
 
 =item *
 
-L<Turn a simple markup into a document (a small parser)|Term::Fabulous::Cookbook::Documents/Turn a simple markup into a document (a small parser)>
+L<Turn Markdown into a document (Markdent)|Term::Fabulous::Cookbook::Documents/Turn Markdown into a document (Markdent)>
 
 =item *
 
@@ -555,7 +555,7 @@ L<Scroll any scroll box like a pager (Term::Fabulous::Scrolling)|Term::Fabulous:
 
 =item *
 
-L<Write a reader for a new document format (OpenDocument text)|Term::Fabulous::Cookbook::Documents/Write a reader for a new document format (OpenDocument text)>
+L<Add a block kind and a mark kind of your own (view_of_KIND, look_class)|Term::Fabulous::Cookbook::Documents/Add a block kind and a mark kind of your own (view_of_KIND, look_class)>
 
 =back
 

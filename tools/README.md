@@ -150,24 +150,6 @@ perl tools/mandelbrot                            # rewrites examples/images/mand
 perl tools/rainbow-circle --output circle.png
 ```
 
-## The example document
-
-`tools/sample-odt` writes `examples/cookbook/documents/pancakes.odt`,
-the OpenDocument text that the reader in the guide of
-`Term::Fabulous::Cookbook::Documents` shows: a recipe with a title,
-headings, a bulleted and a numbered list with a nested list, bold,
-italic, underlined and struck-through text, a character style from
-`styles.xml`, and links to a web page and to a heading. The XML is laid
-out as LibreOffice writes it, without the parts the reader ignores
-(fonts, page layout, settings). Every file in the archive has the same
-fixed time, so the tool writes the same bytes on every run. It needs
-only core modules.
-
-```sh
-perl tools/sample-odt                    # rewrites examples/cookbook/documents/pancakes.odt
-perl tools/sample-odt --output recipe.odt
-```
-
 ## The modules
 
 All under `tools/lib/Term/Fabulous/Screenshot/`:

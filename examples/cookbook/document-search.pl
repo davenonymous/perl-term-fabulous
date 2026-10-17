@@ -6,11 +6,11 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE);
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::DocumentView;
@@ -19,7 +19,7 @@ use Term::Fabulous::Widget::TextField;
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
 	id       => 'manual',
-	document => My::MiniMark->parse_file("$FindBin::Bin/documents/snapback.md"),
+	document => My::Markdown->parse_file("$FindBin::Bin/documents/snapback.md"),
 	layout   => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
 );
 

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="525" viewBox="0 0 780 525" role="img" aria-label="perl examples/cookbook/document-kinds.pl">
+<title>perl examples/cookbook/document-kinds.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="748" height="490" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="748" height="490" rx="10" fill="#161622" filter="url(#shadow)"/>
+<rect x="16" y="16" width="748" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/document-kinds.pl</text>
+<rect x="16.5" y="16.5" width="747" height="489" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="745" y="60" width="2" height="288" fill="#61afef"/>
+<rect x="39" y="86" width="693" height="1" fill="#5a606e"/>
+<rect x="57" y="176" width="675" height="1" fill="#5a606e"/>
+<rect x="745" y="348" width="1" height="144" fill="#464c5a"/>
+<rect x="57" y="392" width="675" height="1" fill="#5a606e"/>
+</g>
+<g class="terminal">
+<text x="39" y="74" textLength="117" class="b" fill="#61afef">snapback news</text>
+<text x="57" y="128" textLength="648" fill="#dcdfe4">What changed in each release, newest first. The picture shows the report</text>
+<text x="57" y="146" textLength="81" fill="#dcdfe4">of a run:</text>
+<text x="147" y="146" textLength="378" class="i" fill="#8c929e">a terminal with the report of a backup run</text>
+<text x="39" y="218" textLength="27" class="b" fill="#ebeef3">2.1</text>
+<text x="61.5" y="254" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="254" textLength="54" fill="#e5c07b">--keep</text>
+<text x="138" y="254" textLength="63" fill="#dcdfe4">accepts</text>
+<text x="210" y="254" textLength="27" fill="#e5c07b">all</text>
+<text x="246" y="254" textLength="189" fill="#dcdfe4">to keep every backup.</text>
+<text x="61.5" y="272" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="272" textLength="468" fill="#dcdfe4">The report lists the biggest files that were copied.</text>
+<text x="61.5" y="290" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="290" textLength="387" fill="#dcdfe4">Hooks get the name of the backup directory:</text>
+<text x="79.5" y="308" text-anchor="middle" fill="#61afef">•</text>
+<text x="93" y="308" textLength="54" fill="#e5c07b">before</text>
+<text x="156" y="308" textLength="18" fill="#dcdfe4">as</text>
+<text x="183" y="308" textLength="126" fill="#e5c07b">$SNAPBACK_NEXT</text>
+<text x="309" y="308" textLength="243" fill="#dcdfe4">, which does not exist yet;</text>
+<text x="79.5" y="326" text-anchor="middle" fill="#61afef">•</text>
+<text x="93" y="326" textLength="45" fill="#e5c07b">after</text>
+<text x="147" y="326" textLength="18" fill="#dcdfe4">as</text>
+<text x="174" y="326" textLength="126" fill="#e5c07b">$SNAPBACK_LAST</text>
+<text x="300" y="326" textLength="9" fill="#dcdfe4">.</text>
+<text x="57" y="362" textLength="333" fill="#dcdfe4">Upgrading from 2.0 needs no change to</text>
+<text x="399" y="362" textLength="99" fill="#e5c07b">~/.snapback</text>
+<text x="498" y="362" textLength="9" fill="#dcdfe4">.</text>
+<text x="39" y="434" textLength="27" class="b" fill="#ebeef3">2.0</text>
+<text x="57" y="470" textLength="18" fill="#61afef">1.</text>
+<text x="93" y="470" textLength="72" fill="#e5c07b">compress</text>
+<text x="174" y="470" textLength="18" fill="#dcdfe4">is</text>
+<text x="201" y="470" textLength="27" class="b" fill="#dcdfe4">off</text>
+<text x="237" y="470" textLength="225" fill="#dcdfe4">by default. Turn it on in</text>
+<text x="471" y="470" textLength="99" fill="#e5c07b">~/.snapback</text>
+<text x="579" y="470" textLength="117" fill="#dcdfe4">if the backup</text>
+<text x="93" y="488" textLength="126" fill="#dcdfe4">disk is small.</text>
+</g>
+<g shape-rendering="crispEdges">
+</g>
+</svg>

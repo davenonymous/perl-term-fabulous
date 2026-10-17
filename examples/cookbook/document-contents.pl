@@ -6,9 +6,9 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 
@@ -45,7 +45,7 @@ KDL
 
 my $view     = $root->find_by_id('manual');
 my $contents = $root->find_by_id('contents');
-my $document = My::MiniMark->parse_file("$FindBin::Bin/documents/snapback.md");
+my $document = My::Markdown->parse_file("$FindBin::Bin/documents/snapback.md");
 $view->document($document);
 
 # One line per heading, indented by its level, each a link to its

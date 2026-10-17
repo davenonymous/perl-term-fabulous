@@ -1214,8 +1214,9 @@ The view shows the five block kinds Term::Fabulous ships: C<heading>,
 C<paragraph>, C<item>, C<term> and C<verbatim>. A reader for a format
 with other kinds of blocks, such as tables, horizontal rules or images,
 adds them by subclassing the view, and the look if the new blocks need
-styles of their own. A complete walk-through is in the guide of
-L<Term::Fabulous::Cookbook::Documents>. In outline:
+styles of their own. A complete example is in
+L<Term::Fabulous::Cookbook::Documents/Add a block kind and a mark kind of your own (view_of_KIND, look_class)>.
+In outline:
 
 =over
 

@@ -6,11 +6,11 @@ use feature 'signatures';
 no warnings 'experimental::signatures';
 
 use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/MiniMark.pm lives
+use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-use My::MiniMark;
+use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::DocumentView;
@@ -23,7 +23,7 @@ my $page  = 'snapback.md';
 my $where = '';    # the section and the percentage, from the last ViewChange
 
 sub document_of ($name) {
-	return $document_of{$name} //= My::MiniMark->parse_file("$directory/$name");
+	return $document_of{$name} //= My::Markdown->parse_file("$directory/$name");
 }
 
 my $view = Term::Fabulous::Widget::DocumentView->new(
@@ -60,7 +60,8 @@ sub open_page ( $name, $section ) {
 }
 
 # A link's target is what the parser put into the mark: here the text
-# between the parentheses of [text](target).
+# between the parentheses of [text](target). A Markdown target cannot
+# contain a space, so the pages write a section name with %20.
 $view->on(
 	LinkActivate => sub ($event) {
 		my $target = $event->link;
@@ -68,6 +69,7 @@ $view->on(
 			$status->message( "Open $target in your browser.", 'info' );
 			return;
 		}
+		$target =~ s/%([0-9A-Fa-f]{2})/chr hex $1/ge;
 		my ( $name, $section ) = $target =~ /\A([^#]*)(?:#(.*))?\z/;
 		open_page( length $name ? $name : $page, $section // '' );
 		return;
