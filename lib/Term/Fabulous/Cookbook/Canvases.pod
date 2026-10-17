@@ -8,7 +8,7 @@ Term::Fabulous::Cookbook::Canvases - Recipes: draw on a canvas
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::ChartStyles>. Next page: L<Term::Fabulous::Cookbook::Output>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::ChartStyles>. Next page: L<Term::Fabulous::Cookbook::Documents>.
 
 This page shows how to draw freely, without a chart widget: on a
 L<Term::Fabulous::Widget::Canvas>, which holds a character in every
@@ -631,6 +631,6 @@ its cells there empty.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::ChartStyles>. Next page: L<Term::Fabulous::Cookbook::Output>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::ChartStyles>. Next page: L<Term::Fabulous::Cookbook::Documents>.
 
 =cut

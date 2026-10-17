@@ -1462,7 +1462,9 @@ Term::Fabulous, and programs do not use them directly.
 
 The document view shows documents of any format through one model: a
 parser turns the source into blocks and marks, and the view shows them.
-[Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) reads POD this way.
+[Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) reads POD this way. [Term::Fabulous::Cookbook::Documents](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Cookbook/Documents.md)
+has recipes for documents and a guide to writing a reader for a new
+format.
 
 - [Term::Fabulous::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document.md)
 

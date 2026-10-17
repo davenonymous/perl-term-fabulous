@@ -1,0 +1,175 @@
+#!/usr/bin/env perl
+
+# Writes the example document examples/cookbook/documents/pancakes.odt,
+# which the OpenDocument reader of Term::Fabulous::Cookbook::Documents
+# shows: a recipe with a title, headings, a bulleted and a numbered list
+# with a nested list, bold, italic, underlined and struck text, a
+# character style of styles.xml, and links to a web page and to a
+# heading. Its files are laid out as LibreOffice writes them, without
+# what the reader does not look at (fonts, page layout, settings). Needs
+# only core modules.
+#
+#     perl tools/sample-odt                    # writes examples/cookbook/documents/pancakes.odt
+#     perl tools/sample-odt --output FILE.odt
+#
+# See tools/README.md.
+#
+# Copyright (C) 2026 davenonymous.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the same terms as Perl itself.
+
+use v5.32;
+use warnings;
+use utf8;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Encode qw(encode);
+use FindBin;
+use Getopt::Long qw(GetOptions);
+use IO::Compress::Zip qw(:constants $ZipError);
+use POSIX qw(tzset);
+
+use constant NAMESPACES => join ' ', map { qq{xmlns:$_->[0]="$_->[1]"} } (
+	[ office => 'urn:oasis:names:tc:opendocument:xmlns:office:1.0' ],
+	[ style  => 'urn:oasis:names:tc:opendocument:xmlns:style:1.0' ],
+	[ text   => 'urn:oasis:names:tc:opendocument:xmlns:text:1.0' ],
+	[ fo     => 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0' ],
+	[ xlink  => 'http://www.w3.org/1999/xlink' ],
+);
+
+my $MIMETYPE = 'application/vnd.oasis.opendocument.text';
+
+# Every file of the archive has the same time, the start of the virtual
+# clock of the screenshots (2026-06-01 09:41 UTC), so that the archive
+# is the same on every run. ZIP archives store local time, so the tool
+# writes them in UTC.
+use constant FILE_TIME => 1780306860;
+
+my $MANIFEST = <<'XML';
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.3">
+ <manifest:file-entry manifest:full-path="/" manifest:version="1.3" manifest:media-type="application/vnd.oasis.opendocument.text"/>
+ <manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/>
+ <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
+</manifest:manifest>
+XML
+
+# The named styles, which the user picks by name in a word processor.
+my $STYLES = <<"XML";
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document-styles ${\ NAMESPACES} office:version="1.3">
+ <office:styles>
+  <style:style style:name="Standard" style:family="paragraph" style:class="text"/>
+  <style:style style:name="Heading" style:family="paragraph" style:parent-style-name="Standard" style:next-style-name="Text_20_body" style:class="text">
+   <style:text-properties fo:font-size="14pt"/>
+  </style:style>
+  <style:style style:name="Text_20_body" style:display-name="Text body" style:family="paragraph" style:parent-style-name="Standard" style:class="text"/>
+  <style:style style:name="Title" style:family="paragraph" style:parent-style-name="Heading" style:next-style-name="Text_20_body" style:class="chapter">
+   <style:paragraph-properties fo:text-align="center"/>
+   <style:text-properties fo:font-size="28pt" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Heading_20_1" style:display-name="Heading 1" style:family="paragraph" style:parent-style-name="Heading" style:default-outline-level="1" style:class="text">
+   <style:text-properties fo:font-size="130%" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="Heading_20_2" style:display-name="Heading 2" style:family="paragraph" style:parent-style-name="Heading" style:default-outline-level="2" style:class="text">
+   <style:text-properties fo:font-size="115%" fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="List_20_Contents" style:display-name="List Contents" style:family="paragraph" style:parent-style-name="Standard" style:class="html"/>
+  <style:style style:name="Strong_20_Emphasis" style:display-name="Strong Emphasis" style:family="text">
+   <style:text-properties fo:font-weight="bold"/>
+  </style:style>
+ </office:styles>
+</office:document-styles>
+XML
+
+# The document: the styles the word processor made for direct
+# formatting (T1 for bold, ...), and the text.
+my $CONTENT = <<"XML";
+<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content ${\ NAMESPACES} office:version="1.3">
+ <office:automatic-styles>
+  <style:style style:name="P1" style:family="paragraph" style:parent-style-name="Text_20_body">
+   <style:text-properties fo:font-style="italic"/>
+  </style:style>
+  <style:style style:name="T1" style:family="text">
+   <style:text-properties fo:font-weight="bold"/>
+  </style:style>
+  <style:style style:name="T2" style:family="text">
+   <style:text-properties fo:font-style="italic"/>
+  </style:style>
+  <style:style style:name="T3" style:family="text">
+   <style:text-properties style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color"/>
+  </style:style>
+  <style:style style:name="T4" style:family="text">
+   <style:text-properties style:text-line-through-style="solid" style:text-line-through-type="single"/>
+  </style:style>
+  <text:list-style style:name="L1">
+   <text:list-level-style-bullet text:level="1" text:bullet-char="•"/>
+   <text:list-level-style-bullet text:level="2" text:bullet-char="◦"/>
+  </text:list-style>
+  <text:list-style style:name="L2">
+   <text:list-level-style-number text:level="1" style:num-suffix="." style:num-format="1"/>
+   <text:list-level-style-bullet text:level="2" text:bullet-char="◦"/>
+  </text:list-style>
+ </office:automatic-styles>
+ <office:body>
+  <office:text>
+   <text:p text:style-name="Title">Pancakes</text:p>
+   <text:p text:style-name="Text_20_body">A quick breakfast for four. It takes <text:span text:style-name="T1">20 minutes</text:span>, and the batter can rest <text:span text:style-name="T2">overnight</text:span> in the fridge. Read the <text:a xlink:type="simple" xlink:href="#Method|outline">method</text:a> once before you start.</text:p>
+   <text:h text:style-name="Heading_20_1" text:outline-level="1">Ingredients</text:h>
+   <text:list text:style-name="L1">
+    <text:list-item><text:p text:style-name="List_20_Contents">250 g flour</text:p></text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">500 ml milk</text:p></text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">3 eggs</text:p></text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">a pinch of salt and <text:span text:style-name="T4">two spoons of sugar</text:span> (the toppings are sweet enough)</text:p></text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">butter for the pan</text:p></text:list-item>
+   </text:list>
+   <text:h text:style-name="Heading_20_1" text:outline-level="1">Method</text:h>
+   <text:list text:style-name="L2">
+    <text:list-item><text:p text:style-name="List_20_Contents">Whisk the flour and the milk until the batter is smooth.</text:p></text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">Beat in the eggs and the salt, then let the batter rest for <text:span text:style-name="T3">at least</text:span> 30 minutes.</text:p></text:list-item>
+    <text:list-item>
+     <text:p text:style-name="List_20_Contents">Melt a little butter in a pan and pour in a ladle of batter.</text:p>
+     <text:list>
+      <text:list-item><text:p text:style-name="List_20_Contents">Use a medium heat.</text:p></text:list-item>
+      <text:list-item><text:p text:style-name="List_20_Contents">Turn the pancake when its edges come loose, after about two minutes.</text:p></text:list-item>
+     </text:list>
+    </text:list-item>
+    <text:list-item><text:p text:style-name="List_20_Contents">Keep the pancakes warm in the oven until all are done.</text:p></text:list-item>
+   </text:list>
+   <text:h text:style-name="Heading_20_2" text:outline-level="2">Tips</text:h>
+   <text:p text:style-name="Text_20_body">For thinner pancakes, add <text:span text:style-name="Strong_20_Emphasis">another 100 ml of milk</text:span>. More recipes are at <text:a xlink:type="simple" xlink:href="https://recipes.example.org/">recipes.example.org</text:a>.</text:p>
+   <text:p text:style-name="P1">Leftover batter keeps for a day in the fridge.</text:p>
+  </office:text>
+ </office:body>
+</office:document-content>
+XML
+
+sub usage () {
+	return "Usage: perl tools/sample-odt [--output FILE.odt]\n";
+}
+
+sub main () {
+	local $ENV{TZ} = 'UTC';
+	tzset();
+	my $output = "$FindBin::Bin/../examples/cookbook/documents/pancakes.odt";
+	GetOptions( 'output=s' => \$output ) or die usage();
+
+	# The mimetype comes first and uncompressed, so that a program can
+	# recognize the file by its first bytes.
+	my $zip = IO::Compress::Zip->new( $output, Name => 'mimetype', Method => ZIP_CM_STORE, Time => FILE_TIME, Minimal => 1 ) or die "sample-odt: cannot write $output: $ZipError\n";
+	$zip->print($MIMETYPE);
+	my @members = ( [ 'META-INF/manifest.xml', $MANIFEST ], [ 'styles.xml', $STYLES ], [ 'content.xml', $CONTENT ] );
+	foreach my $member (@members) {
+		my ( $name, $xml ) = @$member;
+		$zip->newStream( Name => $name, Method => ZIP_CM_DEFLATE, Time => FILE_TIME, Minimal => 1 ) or die "sample-odt: cannot write $output: $ZipError\n";
+		$zip->print( encode( 'UTF-8', $xml ) );
+	}
+	$zip->close or die "sample-odt: cannot write $output: $ZipError\n";
+	say "sample-odt: wrote $output";
+	return 0;
+}
+
+exit main();

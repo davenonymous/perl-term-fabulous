@@ -856,6 +856,9 @@ by L<Term::Fabulous::Widget::CodeBlock> widgets, which never wrap and
 scroll sideways together. L<Pod::Fabulous> is a reader built on the
 view; L<Term::Fabulous::Widget::DocumentView/BLOCK KINDS> says how a
 viewer for another format adds blocks of its own.
+L<Term::Fabulous::Cookbook::Documents> has recipes for links, search, a
+table of contents, syntax highlighting and styles, and a step-by-step
+guide to a reader for a new format.
 
 =head2 Equal sizes across the tree
 

@@ -35,6 +35,7 @@ on develop => sub {
 	requires 'Perl::Critic';
 	requires 'Perl::Tidy', '20250214';
 	requires 'Pod::Markdown';
+	requires 'XML::Twig';    # the OpenDocument reader of Term::Fabulous::Cookbook::Documents, for its screenshot
 	recommends 'Imager';                 # PNG output of tools/screenshot, the example pictures of tools/
 	recommends 'Imager::File::SIXEL';    # the sixel pictures in the screenshots of tools/screenshot
 };

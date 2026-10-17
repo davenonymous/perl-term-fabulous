@@ -6,7 +6,7 @@ Term::Fabulous::Cookbook - Recipes for common Term::Fabulous tasks
 
 The cookbook is a collection of recipes: short, complete solutions to
 common tasks, each with a program you can run and change. The recipes
-are grouped by topic into fifteen pages. ["THE RECIPES"](#the-recipes) below lists
+are grouped by topic into sixteen pages. ["THE RECIPES"](#the-recipes) below lists
 every page with every recipe on it. Each page lists its own recipes at
 the top and links to the previous and the next page, so you can also
 read the cookbook from start to end.
@@ -228,6 +228,20 @@ The pages, in reading order, each with its recipes:
     - [Show a picture file (Image, fit)](Cookbook/Canvases.md#show-a-picture-file-image-fit)
     - [Embed a logo in the program (Image, base64)](Cookbook/Canvases.md#embed-a-logo-in-the-program-image-base64)
     - [Show a photo in sixel graphics (Sixel)](Cookbook/Canvases.md#show-a-photo-in-sixel-graphics-sixel)
+
+- [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md)
+
+    Documents: build, show, search and style them, and write a reader for a new format:
+
+    - [Show a document built in Perl (Document, blocks, marks)](Cookbook/Documents.md#show-a-document-built-in-perl-document-blocks-marks)
+    - [Turn a simple markup into a document (a small parser)](Cookbook/Documents.md#turn-a-simple-markup-into-a-document-a-small-parser)
+    - [Follow links: jump to sections, open other pages, go back (LinkActivate)](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
+    - [Search a document and show the reader's position (search, ViewChange)](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange)
+    - [Show a table of contents beside the document (sections, KDL)](Cookbook/Documents.md#show-a-table-of-contents-beside-the-document-sections-kdl)
+    - [Highlight the syntax of code blocks (highlighter, CodeBlock)](Cookbook/Documents.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
+    - [Change the styles of a document and add mark kinds (Look)](Cookbook/Documents.md#change-the-styles-of-a-document-and-add-mark-kinds-look)
+    - [Scroll any scroll box like a pager (Term::Fabulous::Scrolling)](Cookbook/Documents.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
+    - [Write a reader for a new document format (OpenDocument text)](Cookbook/Documents.md#write-a-reader-for-a-new-document-format-opendocument-text)
 
 - [Term::Fabulous::Cookbook::Output](Cookbook/Output.md)
 

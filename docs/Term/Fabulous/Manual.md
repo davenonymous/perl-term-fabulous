@@ -36,7 +36,7 @@ The manual is one of four kinds of documentation:
 
     Recipes: complete, runnable programs for common tasks, each with a
     picture and notes on the lines that matter. Its index page lists every
-    recipe; the recipes themselves are on fifteen topic pages, from
+    recipe; the recipes themselves are on sixteen topic pages, from
     [Term::Fabulous::Cookbook::GettingStarted](Cookbook/GettingStarted.md) to
     [Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md).
 
@@ -482,14 +482,21 @@ program, and the class pages with the reference.
     [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md),
     ["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-scroll_state-scroll_to),
     ["Add lines to a scrolling log (ScrollBox)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#add-lines-to-a-scrolling-log-scrollbox),
-    ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
+    ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
+    ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling).
 
 - Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
 
     ["Documents" in Term::Fabulous::Manual::Layout](Manual/Layout.md#documents),
     [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), [Term::Fabulous::Document](Document.md),
     [Term::Fabulous::Widget::CodeBlock](Widget/CodeBlock.md), [Term::Fabulous::Event::ViewChange](Event/ViewChange.md),
-    ["Documents" in Term::Fabulous](../../../README.md#documents).
+    ["Documents" in Term::Fabulous](../../../README.md#documents), and the recipes of [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md):
+    ["Show a document built in Perl (Document, blocks, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-blocks-marks),
+    ["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate),
+    ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange),
+    ["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-table-of-contents-beside-the-document-sections-kdl),
+    ["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock),
+    ["Change the styles of a document and add mark kinds (Look)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#change-the-styles-of-a-document-and-add-mark-kinds-look).
 
 - Mark widgets with states and classes and style them by those
 
@@ -967,6 +974,13 @@ program, and the class pages with the reference.
 
     [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md),
     ["Make a widget usable from KDL" in Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md#make-a-widget-usable-from-kdl).
+
+- Show documents of a format of your own: write a parser, add block and mark kinds
+
+    ["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md#block-kinds),
+    [Term::Fabulous::Document::Block](Document/Block.md), [Term::Fabulous::Document::Look](Document/Look.md),
+    ["Turn a simple markup into a document (a small parser)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-a-simple-markup-into-a-document-a-small-parser),
+    ["Write a reader for a new document format (OpenDocument text)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#write-a-reader-for-a-new-document-format-opendocument-text).
 
 - Check property values the way the built-in widgets do
 

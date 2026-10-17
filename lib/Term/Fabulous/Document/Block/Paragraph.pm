@@ -26,7 +26,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Document::Block::Paragraph - An ordinary paragraph
+Term::Fabulous::Document::Block::Paragraph - An ordinary paragraph block
 
 =head1 SYNOPSIS
 
@@ -34,11 +34,19 @@ Term::Fabulous::Document::Block::Paragraph - An ordinary paragraph
 
 =head1 DESCRIPTION
 
-An ordinary paragraph of a document, or a paragraph inside a list item
-or a block quote, with C<indent> and C<quote> telling how deep. It has
-the parameters and methods of L<Term::Fabulous::Document::Block> and
-nothing more; its L<kind|Term::Fabulous::Document::Block/kind> is
-C<paragraph>.
+A paragraph block holds an ordinary paragraph of text. This includes
+paragraphs inside a list item, inside the definition of a term or
+inside a block quote: the C<indent> and C<quote> parameters record how
+deeply the paragraph is nested (see
+L<Term::Fabulous::Document::Block/new>).
+
+The text is a single line, which the document view wraps to the width
+available, breaking lines only at spaces. A parser therefore joins the
+source lines of a paragraph with single spaces.
+
+A paragraph block has the constructor parameters and methods of
+L<Term::Fabulous::Document::Block> and nothing more; its
+L<kind|Term::Fabulous::Document::Block/kind> is C<paragraph>.
 
 =head1 SEE ALSO
 

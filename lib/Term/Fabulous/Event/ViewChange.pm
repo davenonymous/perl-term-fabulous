@@ -55,7 +55,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Event::ViewChange - What a document view shows has changed
+Term::Fabulous::Event::ViewChange - Reports that what a document view shows has changed
 
 =head1 SYNOPSIS
 
@@ -68,18 +68,18 @@ Term::Fabulous::Event::ViewChange - What a document view shows has changed
 =head1 DESCRIPTION
 
 A L<Term::Fabulous::Widget::DocumentView> fires C<ViewChange> on itself
-after a frame whose view differs from the one it reported last: the
-user scrolled, selected another link, searched, or the program gave it
-another document. It carries a summary of the view, everything a status
-line or a table of contents needs, so they never have to ask the
-widget.
+after a frame in which what it shows differs from what it reported
+last: for example, the user scrolled, selected another link or
+searched, or the program gave the view another document. The event
+carries a summary of the view with everything a status line or a table
+of contents needs, so their listeners do not have to query the view.
 
-The widget learns what a frame showed only after the frame was drawn,
-so the event comes after the frame it describes, and what its
-listeners change shows in the next one.
+The view learns what a frame showed only after the frame has been
+drawn. The event therefore arrives after the frame it describes, and
+whatever its listeners change shows in the following frame.
 
-It is a L<Clay::UI::Events::Event> whose name is C<ViewChange>; it
-bubbles to the widget's ancestors like every event, and
+The event is a L<Clay::UI::Events::Event> named C<ViewChange>. Like
+every event, it bubbles up to the view's ancestors, and
 C<< $event->target >> is the document view.
 
 =head1 CONSTRUCTOR
@@ -88,10 +88,40 @@ C<< $event->target >> is the document view.
 
 	my $event = Term::Fabulous::Event::ViewChange->new( top => 0, bottom => 20, percent => 0 );
 
-The widget builds these events itself; build one yourself only to test
-your listeners. Every parameter is optional; unknown parameters and
-values out of their ranges die. The C<name> and C<bubble_mode>
-parameters of L<Clay::UI::Events::Event> are accepted.
+The document view creates these events itself; create one yourself
+only to test your listeners. Every parameter is optional: C<percent>
+and C<matches> default to 0, all others to C<undef>. The C<name> and
+C<bubble_mode> parameters of L<Clay::UI::Events::Event> are accepted
+as well. Unknown parameters die, and so do values that are out of
+range or inconsistent:
+
+=over
+
+=item *
+
+C<top>, C<bottom>, C<section> and C<match> must be non-negative
+integers or C<undef>;
+
+=item *
+
+C<section> and C<section_title> must be given together, or both left
+out;
+
+=item *
+
+C<percent> must be an integer from 0 to 100;
+
+=item *
+
+C<matches> must be a non-negative integer, and C<match>, if given, a
+number from 1 to C<matches>;
+
+=item *
+
+C<query>, if given, must be a non-empty string, and C<matches> greater
+than 0 requires a C<query>.
+
+=back
 
 =head1 METHODS
 
@@ -99,29 +129,34 @@ parameters of L<Clay::UI::Events::Event> are accepted.
 
 	my $index = $event->top;
 
-The index of the first block in view, or C<undef> while the view shows
-no document.
+Returns the index of the block at the top of the view, which may be
+only partly visible. Returns C<undef> when the view has no document,
+when the document has no blocks, or when the view has not been laid
+out yet.
 
 =head2 bottom
 
 	my $index = $event->bottom;
 
-The index of the last block in view, or C<undef>.
+Returns the index of the block at the bottom of the view, which may be
+only partly visible, or C<undef> in the same cases as L</top>.
 
 =head2 section
 
 	my $number = $event->section;
 
-The number of the section the top block is in, as
-L<Term::Fabulous::Document/section_at> counts it (the position in
-L<heading_indexes|Term::Fabulous::Document/heading_indexes>), or
-C<undef> above the first heading.
+Returns the number of the section the top block belongs to, as
+L<Term::Fabulous::Document/section_at> counts it: the position of the
+section's heading in
+L<heading_indexes|Term::Fabulous::Document/heading_indexes>, from 0.
+Returns C<undef> when the top block comes before the first heading, or
+when L</top> is C<undef>.
 
 =head2 section_title
 
 	my $title = $event->section_title;
 
-The text of the heading of that section, defined exactly when
+Returns the text of that section's heading. It is defined exactly when
 L</section> is, so that a status line can name the section from the
 event alone.
 
@@ -129,31 +164,35 @@ event alone.
 
 	my $percent = $event->percent;
 
-How far the view is scrolled, 0 at the top to 100 at the end, as
-C<less> shows it. A document that fits shows 100.
+Returns how far the view is scrolled, as a rounded integer from 0 at
+the top to 100 at the end, the way C<less> shows it. The view reports
+100 for a document that fits into the view entirely, and before it has
+been laid out.
 
 =head2 link
 
 	my $link = $event->link;
 
-The destination of the selected link, as the parser gave it to the
-mark (L<Term::Fabulous::Document::Mark/link>), or C<undef> when no link
-is selected.
+Returns the target of the selected link, as the parser stored it in the
+link mark (L<Term::Fabulous::Document::Mark/link>), or C<undef> when no
+link is selected.
 
 =head2 query
 
 	my $text = $event->query;
 
-The text of the search, or C<undef> without a search. A search may
-find nothing, so a query can come with no matches; matches never come
-without their query.
+Returns the text of the current search, or C<undef> when there is no
+search. A search may find nothing, so an event can have a query and no
+matches, but it never has matches without a query.
 
 =head2 match, matches
 
 	printf "match %d of %d\n", $event->match, $event->matches if $event->matches;
 
-The number of search matches (0 without a search), and which of them
-the view is at, from 1, or C<undef> when none is current.
+C<matches> returns the number of search matches, 0 without a search.
+C<match> returns the number of the current match, counted from 1, or
+C<undef> when there is no current match. The view always has a current
+match while there are matches.
 
 =head1 SEE ALSO
 

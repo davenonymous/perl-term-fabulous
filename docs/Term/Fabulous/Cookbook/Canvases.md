@@ -4,7 +4,7 @@ Term::Fabulous::Cookbook::Canvases - Recipes: draw on a canvas
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::ChartStyles](ChartStyles.md). Next page: [Term::Fabulous::Cookbook::Output](Output.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::ChartStyles](ChartStyles.md). Next page: [Term::Fabulous::Cookbook::Documents](Documents.md).
 
 This page shows how to draw freely, without a chart widget: on a
 [Term::Fabulous::Widget::Canvas](../Widget/Canvas.md), which holds a character in every
@@ -518,4 +518,4 @@ its cells there empty.
 
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::ChartStyles](ChartStyles.md). Next page: [Term::Fabulous::Cookbook::Output](Output.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::ChartStyles](ChartStyles.md). Next page: [Term::Fabulous::Cookbook::Documents](Documents.md).

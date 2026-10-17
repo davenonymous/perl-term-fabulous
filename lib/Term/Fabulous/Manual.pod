@@ -44,7 +44,7 @@ event loop, testing and writing widgets of your own.
 
 Recipes: complete, runnable programs for common tasks, each with a
 picture and notes on the lines that matter. Its index page lists every
-recipe; the recipes themselves are on fifteen topic pages, from
+recipe; the recipes themselves are on sixteen topic pages, from
 L<Term::Fabulous::Cookbook::GettingStarted> to
 L<Term::Fabulous::Cookbook::Extending>.
 
@@ -570,14 +570,21 @@ L<Term::Fabulous::Manual::Events/SCROLLING>,
 L<Term::Fabulous::Widget::ScrollBox>,
 L<Term::Fabulous/bounding_box, scroll_state, scroll_to>,
 L<Term::Fabulous::Cookbook::LiveData/Add lines to a scrolling log (ScrollBox)>,
-L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
+L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
+L<Term::Fabulous::Cookbook::Documents/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>.
 
 =item Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
 
 L<Term::Fabulous::Manual::Layout/Documents>,
 L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Document>,
 L<Term::Fabulous::Widget::CodeBlock>, L<Term::Fabulous::Event::ViewChange>,
-L<Term::Fabulous/Documents>.
+L<Term::Fabulous/Documents>, and the recipes of L<Term::Fabulous::Cookbook::Documents>:
+L<Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, blocks, marks)>,
+L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>,
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>,
+L<Term::Fabulous::Cookbook::Documents/Show a table of contents beside the document (sections, KDL)>,
+L<Term::Fabulous::Cookbook::Documents/Highlight the syntax of code blocks (highlighter, CodeBlock)>,
+L<Term::Fabulous::Cookbook::Documents/Change the styles of a document and add mark kinds (Look)>.
 
 =item Mark widgets with states and classes and style them by those
 
@@ -1095,6 +1102,13 @@ L<Term::Fabulous::Cookbook::Extending/Write a custom input widget (a toggle swit
 
 L<Term::Fabulous::Role::CanParseLayout>,
 L<Term::Fabulous::Cookbook::Extending/Make a widget usable from KDL>.
+
+=item Show documents of a format of your own: write a parser, add block and mark kinds
+
+L<Term::Fabulous::Widget::DocumentView/BLOCK KINDS>,
+L<Term::Fabulous::Document::Block>, L<Term::Fabulous::Document::Look>,
+L<Term::Fabulous::Cookbook::Documents/Turn a simple markup into a document (a small parser)>,
+L<Term::Fabulous::Cookbook::Documents/Write a reader for a new document format (OpenDocument text)>.
 
 =item Check property values the way the built-in widgets do
 

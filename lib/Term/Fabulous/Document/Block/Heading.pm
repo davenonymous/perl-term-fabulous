@@ -36,7 +36,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Document::Block::Heading - A heading, level 1 to 6
+Term::Fabulous::Document::Block::Heading - A heading block of level 1 to 6
 
 =head1 SYNOPSIS
 
@@ -45,8 +45,21 @@ Term::Fabulous::Document::Block::Heading - A heading, level 1 to 6
 
 =head1 DESCRIPTION
 
-A heading of a document: C<=head1> in POD, C<#> in Markdown. Headings
-are never indented by a list, but may be inside a block quote.
+A heading block holds a heading of a document, such as C<=head1> in POD
+or C<#> in Markdown. Its level runs from 1, the top level, to 6.
+
+Headings divide a document into sections: L<Term::Fabulous::Document>
+lists them in L<Term::Fabulous::Document/heading_indexes> and
+L<Term::Fabulous::Document/headings>, and treats them as targets for
+links to sections (see L<Term::Fabulous::Document/find_section>).
+
+The document view shows the whole text of a heading in the style of
+its level (C<heading1> to C<heading6> of
+L<Term::Fabulous::Document::Look/KINDS>), with marks applied on top,
+and draws a horizontal rule under a first-level heading. A heading is
+never indented: it starts at the left edge of the view's text area and
+ignores the view's L<indent|Term::Fabulous::Widget::DocumentView/indent>.
+It can, however, be inside a block quote.
 
 =head1 CONSTRUCTOR
 
@@ -54,28 +67,32 @@ are never indented by a list, but may be inside a block quote.
 
 	my $heading = Term::Fabulous::Document::Block::Heading->new( text => 'Methods', level => 2 );
 
-The parameters of L<Term::Fabulous::Document::Block/new> plus:
+Creates a heading block. It accepts the parameters of
+L<Term::Fabulous::Document::Block/new>, plus:
 
 =over
 
 =item C<level>
 
-Required. An integer from 1 to 6.
+Required. The level of the heading, an integer from 1 to 6. Any other
+value dies.
 
 =back
 
-An C<indent> other than 0 dies.
+A heading cannot be indented: an C<indent> other than 0 dies. The
+C<quote> parameter is allowed.
 
 =head1 METHODS
 
-The methods of L<Term::Fabulous::Document::Block>, whose
-L<kind|Term::Fabulous::Document::Block/kind> is C<heading>, plus:
+A heading block has the methods of L<Term::Fabulous::Document::Block>;
+its L<kind|Term::Fabulous::Document::Block/kind> is C<heading>. It adds
+one method:
 
 =head2 level
 
 	my $level = $heading->level;
 
-The level, 1 to 6.
+Returns the level of the heading, an integer from 1 to 6.
 
 =head1 SEE ALSO
 

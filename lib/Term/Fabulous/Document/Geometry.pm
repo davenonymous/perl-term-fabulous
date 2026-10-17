@@ -83,7 +83,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Document::Geometry - The rows and columns of the blocks of a document on the screen
+Term::Fabulous::Document::Geometry - Where the blocks of a document go on the screen, in rows and columns
 
 =head1 SYNOPSIS
 
@@ -91,30 +91,43 @@ Term::Fabulous::Document::Geometry - The rows and columns of the blocks of a doc
 
 	my $geometry = Term::Fabulous::Document::Geometry->new( document => $document, indent => 2 );
 
-	my $left  = $geometry->left_of($index);                    # the padding left of the block
-	my $space = $geometry->space_before($index);               # 0 or 1 blank row above it
-	my $rows  = $geometry->estimated_rows( $index, 78 );       # before it was laid out
-	my $row   = $geometry->row_of_character( $index, 120, 78 );
+	my $left  = $geometry->left_of($index);                     # columns of padding left of the block
+	my $space = $geometry->space_before($index);                # 0 or 1 blank row above it
+	my $width = $geometry->text_columns( $index, 78 );          # columns left for its body
+	my $rows  = $geometry->estimated_rows( $index, 78 );        # its height before it is laid out
+	my $row   = $geometry->row_of_character( $index, 120, 78 ); # the row of character 120 in its box
 
 =head1 DESCRIPTION
 
-L<Term::Fabulous::Widget::DocumentView> lays a document out in boxes,
-one per block, and lets Clay wrap their text. Before a block is laid
-out, the view still needs to know how tall it will be, for the
-scrollbar; and to scroll a search match into view, it needs the row of
-a character within the block. This class answers both, and the
-questions they build on: how far a block is indented, the blank row
-above it, and how many columns its body takes. It knows no widget and
-no screen.
+You rarely need this class directly: L<Term::Fabulous::Widget::DocumentView>
+creates and uses it for you. It matters when you write a new kind of
+block (see L<Term::Fabulous::Document::Block>), because the geometry
+relies on the block to report how many rows its body takes and on which
+row a character lies, or when you build your own widget that lays out a
+L<Term::Fabulous::Document> the way the view does.
 
-The height of a body is the block's business
-(L<Term::Fabulous::Document::Block/body_rows>): a paragraph wraps its
-text as Clay does (L<Term::Fabulous::Text::Wrap>), so its estimate is
-exact as long as Clay wraps that way; code takes a row per line; a
-block kind of another format answers for itself.
+The view lays a document out as a column of boxes, one per block, and
+lets Clay wrap the text inside them. Clay knows the height of a box
+only after it has laid the box out, but the view needs heights earlier:
+it estimates the height of every block it has not laid out yet, so that
+the scrollbar reflects the whole document (see
+L<Term::Fabulous::Widget::VirtualList/estimate>). To scroll a search
+match or a selected link into view, it also needs the row of a
+character within its block. This class answers both questions, and the
+ones they depend on: how far a block is indented, whether a blank row
+separates it from the block above, and how many columns remain for its
+body. It works on numbers only and knows nothing of widgets or the
+screen.
 
-A geometry is a value, for one document and one indent: the view makes
-a new one when either changes.
+The height of a block's body is up to the block itself
+(L<Term::Fabulous::Document::Block/body_rows>). A paragraph wraps its
+text the way Clay does (L<Term::Fabulous::Text::Wrap>), so its estimate
+is exact as long as Clay keeps wrapping that way. A verbatim block
+takes one row per line. A block kind added for another format computes
+its own height.
+
+A geometry belongs to one document and one indent and never changes.
+The view creates a new geometry whenever either of them changes.
 
 =head1 CONSTRUCTOR
 
@@ -122,68 +135,123 @@ a new one when either changes.
 
 	my $geometry = Term::Fabulous::Document::Geometry->new( document => $document, indent => 2 );
 
-Both parameters are required: a L<Term::Fabulous::Document>, and the
-columns every block but a heading is indented by, a non-negative
-integer. Anything else dies, and so do unknown parameters.
+Creates the geometry of a document. Both parameters are required:
+
+=over
+
+=item C<document>
+
+The L<Term::Fabulous::Document> whose blocks are measured.
+
+=item C<indent>
+
+A non-negative integer: the number of columns by which every block
+except a heading is indented from the left edge of its box, in addition
+to the block's own indent.
+
+=back
+
+The constructor dies when C<document> is not a Term::Fabulous::Document,
+when C<indent> is not a non-negative integer, and when it gets an
+unknown parameter.
 
 =head1 METHODS
 
-The methods that take a block index die for an index the document has
-no block for, as L<Term::Fabulous::Document/block> does. Column counts
-are those of the block's box: the width of the view inside its border,
-padding and scrollbar.
+The methods that take a block index die when the document has no block
+with that index, as L<Term::Fabulous::Document/block> does.
+
+C<$box_columns> is the width of the block's box, in columns. In the
+document view, a block's box spans the inside of the view: its width
+less its border, padding and scrollbar.
 
 =head2 document, indent
 
-The parameters.
+	my $document = $geometry->document;
+	my $columns  = $geometry->indent;
+
+Return the values given to the constructor.
 
 =head2 left_of
 
 	my $columns = $geometry->left_of($index);
 
-The padding left of the block: two columns for every block quote it is
-in (L<Term::Fabulous::Document::Block/quote>), then, for every block
-but a heading, the indent plus the block's own
-(L<Term::Fabulous::Document::Block/indent>).
+Returns the number of columns between the left edge of the block's box
+and the start of the block. This is two columns for every block quote
+the block is in (L<Term::Fabulous::Document::Block/quote>), room for
+the quote bar and a space. Every block except a heading is then
+indented further by the geometry's L</indent> plus the block's own
+indent (L<Term::Fabulous::Document::Block/indent>). A heading is
+indented by its quote columns only.
 
 =head2 space_before
 
 	my $rows = $geometry->space_before($index);
 
-The blank rows above the block: one, as between paragraphs on paper,
-except above the first block, between the items of one list (an item
-after the first, see L<Term::Fabulous::Document::Block::Item/position>),
-between an item and the first item of a list nested in it (an item
-indented deeper than the item before it) and between a term and the
-indented blocks that define it.
+Returns the number of blank rows above the block: 1 to separate it from
+the block above, as paragraphs are separated on paper, or 0 in these
+cases:
+
+=over
+
+=item *
+
+the block is the first block of the document;
+
+=item *
+
+the block and the block before it are both list items, and the block
+is either not the first item of its list (see
+L<Term::Fabulous::Document::Block::Item/position>) or indented deeper
+than the item before it, which makes it the first item of a list nested
+in that item;
+
+=item *
+
+the block directly follows a term of a definition list, is not a term
+itself and is indented deeper than the term, which makes it the start
+of the term's definition.
+
+=back
 
 =head2 text_columns
 
 	my $columns = $geometry->text_columns( $index, $box_columns );
 
-The columns the block's body takes: what the box leaves after
-L</left_of> and the marker of an item, at least one.
+Returns the number of columns left for the block's body in a box that
+is C<$box_columns> wide: the box width less L</left_of> and, for an
+item, the width of its marker
+(L<Term::Fabulous::Document::Block::Item/marker_width>). The result is
+at least 1, however narrow the box.
 
 =head2 estimated_rows
 
 	my $rows = $geometry->estimated_rows( $index, $box_columns );
 
-The rows the block takes: L</space_before>, then the block's
-L<body_rows|Term::Fabulous::Document::Block/body_rows> in
-L</text_columns>, and a row for the rule under a first-level heading.
+Returns the number of rows the block takes in a box that is
+C<$box_columns> wide, computed without laying it out. It is the sum of
+L</space_before>, the block's
+L<body_rows|Term::Fabulous::Document::Block/body_rows> for
+L</text_columns> columns, and one row for the rule under a first-level
+heading. The view uses it as the estimate of its
+L<Term::Fabulous::Widget::VirtualList>.
 
 =head2 row_of_character
 
 	my $row = $geometry->row_of_character( $index, $offset, $box_columns );
 
-The row, counted from the top of the block's box, of the character at
-the offset in the block's text: past L</space_before>, where the
-block's L<row_of_character|Term::Fabulous::Document::Block/row_of_character>
-puts it in L</text_columns>.
+Returns the row of the character at C<$offset> (counted in characters
+from 0) in the block's text, counted from 0 at the top of the block's
+box in a box that is C<$box_columns> wide. It is L</space_before> plus
+the row the block's
+L<row_of_character|Term::Fabulous::Document::Block/row_of_character>
+reports for L</text_columns> columns. The view adds the result to the
+top of the block's box on the screen to find the screen row it has to
+scroll into view. Dies when C<$offset> is not a non-negative integer.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Document>,
+L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Widget::DocumentView>,
+L<Term::Fabulous::Document>, L<Term::Fabulous::Document::Block>,
 L<Term::Fabulous::Text::Wrap>, L<Term::Fabulous::Widget::VirtualList/estimate>.
 
 =cut

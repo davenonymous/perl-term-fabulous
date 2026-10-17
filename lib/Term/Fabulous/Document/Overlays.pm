@@ -200,7 +200,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Document::Overlays - The selected link and the search matches drawn over a document
+Term::Fabulous::Document::Overlays - Track the selected link and the search matches shown over a document
 
 =head1 SYNOPSIS
 
@@ -208,37 +208,50 @@ Term::Fabulous::Document::Overlays - The selected link and the search matches dr
 
 	my $overlays = Term::Fabulous::Document::Overlays->new( document => $document );
 
+	# Search, starting at the block at the top of the view:
 	restyle($_) foreach $overlays->search( 'hash', $top_block );
-	printf "%d of %d\n", $overlays->current_match, $overlays->match_count;
+	printf "%d of %d\n", $overlays->current_match, $overlays->match_count if $overlays->match_count;
 	restyle($_) foreach $overlays->step_match(1);
 	reveal( $overlays->current_match_start );
 
+	# Select the next link, given the blocks in view:
 	if ( my @touched = $overlays->select_link( 1, { first => 10, last => 24 } ) ) {
 		restyle($_) foreach @touched;
 		say $overlays->selected_link;
 	}
 
-	# In the restyle of a block:
+	# When restyling block $index:
 	$text->stylize( $look->style( $_->[2] ), $_->[0], $_->[1] ) foreach $overlays->spans_of($index);
 	$text->select_link( $overlays->selected_in_block($index) );
 
 =head1 DESCRIPTION
 
-A L<Term::Fabulous::Widget::DocumentView> draws two things over the
-blocks' own styles: the I<selected link>, the one C<Enter> follows, and
-the matches of a I<search>, the current one in a style of its own. This
-class holds both for one L<Term::Fabulous::Document>, and every rule
-about them: where a search starts, how the matches go around, where the
-selection goes next and where it stops.
+You rarely need this class directly: L<Term::Fabulous::Widget::DocumentView>
+creates and uses it for you. It is useful when you write your own
+widget that shows a L<Term::Fabulous::Document> and want link selection
+and search to behave as they do in the document view.
 
-It knows no widgets. Every operation that changes something returns
-the indexes of the blocks whose look changed, each once and in the
-order of the document; the view restyles those and no other. An empty
-list means that no block changed: the view tells its key table that
-nothing happened. L</clear> is the one exception, see there.
+A document view draws two things on top of the blocks' own styles: the
+I<selected link>, which is the link that C<Enter> follows, and the
+I<matches> of a search, with the I<current match> in a style of its own.
+This class keeps track of both for one document and implements all the
+rules about them: where a search starts, how stepping through the
+matches wraps around, which link is selected next, and where the
+selection stops.
 
-A new document gets new overlays. That is the one way to forget them
-all; there is no reset.
+The class knows nothing of widgets. Instead, every method that changes
+the overlays returns the indexes of the blocks it touched, that is, the
+blocks whose overlays may have changed. Each index appears once, and
+the indexes are sorted in document order. The widget restyles these
+blocks and no others. An empty list means that no block changed, so
+the widget can report that a key did nothing; the document view's
+methods for selecting links and stepping through matches then return
+0. L</clear> is an exception, described
+there.
+
+Overlays belong to one document for their whole life; there is no way
+to give them another one. The document view creates new overlays
+whenever it shows a new document.
 
 =head1 CONSTRUCTOR
 
@@ -246,90 +259,137 @@ all; there is no reset.
 
 	my $overlays = Term::Fabulous::Document::Overlays->new( document => $document );
 
+Creates overlays for a document, with no search and no selected link.
 C<document> is a L<Term::Fabulous::Document>, or C<undef> (the default)
-for overlays over nothing: no links, and searches that find nothing.
-Anything else dies, and so do unknown parameters.
+for overlays over no document: there are no links to select, and every
+search finds nothing. The constructor dies for any other value of
+C<document> and for unknown parameters.
 
 =head1 METHODS
+
+Methods that take a direction accept C<1> for forward and C<-1> for
+backward, and die for anything else.
 
 =head2 search
 
 	my @touched = $overlays->search( $text, $top );
 
-Marks every occurrence of the text (see
-L<Term::Fabulous::Document/find_text> for the rules). The current match
-is the first one in the block C<$top> or after it, else the first one:
-the view gives the block at its top, so that a search starts where the
-user is. An empty text ends the search. Returns the blocks that had or
-have matches. A text that is not a string, or a C<$top> that is not a
-non-negative integer, dies.
+Starts a search for C<$text>, replacing any previous search, and marks
+every occurrence in the document. L<Term::Fabulous::Document/find_text>
+defines what counts as an occurrence.
+
+The current match becomes the first match in block C<$top> or in a
+later block; if there is none, it is the first match of the document.
+The document view passes the index of the block at its top, so that a
+search starts where the user is reading.
+
+An empty C<$text> ends the search. Returns the blocks that had matches
+before the call or have matches after it. Dies when C<$text> is not a
+string or C<$top> is not a non-negative integer.
 
 =head2 step_match
 
 	my @touched = $overlays->step_match(1);     # or -1
 
-Makes the next (C<1>) or previous (C<-1>) match current, around from
-the last to the first and back. Returns the blocks of the match left
-and of the match reached; nothing while there are no matches.
+Makes the next (C<1>) or previous (C<-1>) match the current one. The
+step wraps around: forward from the last match goes to the first, and
+backward from the first goes to the last. Returns the blocks of the
+previous and the new current match, or an empty list when there are no
+matches.
 
 =head2 query, match_count, current_match
 
-The text searched for, or C<undef>; the number of matches; and the
-number of the current match from 1, or C<undef>.
+	my $text  = $overlays->query;            # undef without a search
+	my $count = $overlays->match_count;
+	my $which = $overlays->current_match;    # 1 .. $count, or undef
+
+C<query> returns the text searched for, or C<undef> while there is no
+search. C<match_count> returns the number of matches, 0 without any.
+C<current_match> returns the number of the current match, counted from
+1, or C<undef> while there are no matches.
 
 =head2 current_match_start
 
 	my ( $block, $offset ) = $overlays->current_match_start;
 
-Where the current match starts: the index of its block and the
-character offset in the block's text. An empty list without a current
-match.
+Returns where the current match starts: the index of its block and the
+character offset of the match in the block's text. Returns an empty
+list while there is no current match.
 
 =head2 select_link
 
 	my @touched = $overlays->select_link( 1, { first => 10, last => 24 } );
 
-Selects the next (C<1>) or previous (C<-1>) link. The second argument
-says which blocks are in view, as the hash of
-L<Term::Fabulous::Widget::VirtualList/visible_items>, or C<undef> while
-that is unknown. The selection goes on from the selected link while its
-block is in view (or the view is unknown); otherwise it starts at the
-first link in or below the view, or the last link in or above it going
-back. It stops at the first
-and the last link of the document: there, it returns nothing. Otherwise
-it returns the blocks the selection left and entered.
+Selects the next (C<1>) or previous (C<-1>) link of the document. The
+second argument tells which blocks are in view, as the hash reference
+that L<Term::Fabulous::Widget::VirtualList/visible_items> returns, or
+C<undef> while that is not known. The next link is chosen as follows:
+
+=over
+
+=item *
+
+If a link is selected and either its block is in view or the blocks in
+view are not known, the selection moves to the link after (or before)
+it.
+
+=item *
+
+Otherwise, if the blocks in view are known, the selection moves to the
+first link in a block at or after the first block in view (going
+forward), or to the last link in a block at or before the last block in
+view (going backward).
+
+=item *
+
+Otherwise, with no selected link and no information about the view, it
+moves to the first (or last) link of the document.
+
+=back
+
+The selection does not wrap around. When there is no link in the chosen
+direction, the selection stays where it is and the method returns an
+empty list; it does the same when the document has no links. Otherwise
+it returns the blocks of the previously and the newly selected link.
+Dies when the second argument is neither C<undef> nor a hash reference.
 
 =head2 select_link_at
 
 	my @touched = $overlays->select_link_at( $block, $start, $end );
 
-Selects the link of the block from C<$start> to C<$end>, the one a
-click hit. Dies when the block has no such link: a click on a link the
-document does not have is a bug.
+Selects the link of block C<$block> that runs from character offset
+C<$start> to C<$end>, typically the link the user clicked. Returns the
+blocks of the previously and the newly selected link. Dies when an
+argument is not a non-negative integer, and when the block has no link
+with exactly that range: a click on a link the document does not have
+indicates a bug.
 
 =head2 selected_link
 
 	my $link = $overlays->selected_link;    # the mark's link, or undef
 
-The destination of the selected link, whatever the parser gave the
-mark (L<Term::Fabulous::Document::Mark/link>), or C<undef>.
+Returns the destination of the selected link, which is whatever the
+parser stored in the mark (see L<Term::Fabulous::Document::Mark/link>),
+or C<undef> while no link is selected.
 
 =head2 selected_mark
 
 	my ( $block, $mark ) = $overlays->selected_mark;
 
-The selected link as the index of its block and its
-L<Term::Fabulous::Document::Mark>, which tells where it starts and
-ends. An empty list without a selected link.
+Returns the selected link as the index of its block and its
+L<Term::Fabulous::Document::Mark>, which tells where the link starts
+and ends. Returns an empty list while no link is selected.
 
 =head2 selected_in_block
 
 	my $index = $overlays->selected_in_block($block);
 
-Where the selected link is among the links of the block, from 0, as
-the block's L<Term::Fabulous::Widget::RichText> counts its links (see
-L<select_link|Term::Fabulous::Widget::RichText/select_link>); C<undef>
-when the selected link is in another block, or there is none.
+Returns the position of the selected link among the links of block
+C<$block>, counted from 0 in text order. This is the index that the
+block's L<Term::Fabulous::Widget::RichText> expects in its
+L<select_link|Term::Fabulous::Widget::RichText/select_link> method.
+Returns C<undef> when no link is selected or the selected link is in
+another block.
 
 =head2 spans_of
 
@@ -337,25 +397,30 @@ when the selected link is in another block, or there is none.
 		my ( $start, $end, $kind ) = @$span;
 	}
 
-The matches in the block, in the order of the text, as
-C<[ $start, $end, $kind ]>: the kind is C<match>, or C<match_current>
-for the current match, a kind of L<Term::Fabulous::Document::Look>. The
-view turns the kinds into styles of its theme.
+Returns the search matches in block C<$block>, in text order, each as
+an array reference C<[ $start, $end, $kind ]> of character offsets and
+a kind. The kind is C<match_current> for the current match and
+C<match> for all others; both are kinds of
+L<Term::Fabulous::Document::Look>, not styles, so the widget turns them
+into styles of its theme with L<Term::Fabulous::Document::Look/style>.
+Returns an empty list for a block without matches.
 
 =head2 clear
 
 	my @touched = $overlays->clear;
 
-Ends the search and drops the selected link. Returns the blocks that
-had matches or the selected link. A search without matches touched no
-block, so the list can be empty although a search ended: ask
-L</is_empty> before to know whether there was anything to drop.
+Ends the search and deselects the selected link. Returns the blocks
+that had matches or held the selected link. A search without matches
+touched no block, so the list can be empty even though a search ended.
+To find out whether there was anything to clear, call L</is_empty>
+before C<clear>.
 
 =head2 is_empty
 
-	say 'nothing to drop' if $overlays->is_empty;
+	say 'nothing to clear' if $overlays->is_empty;
 
-True while there is neither a search nor a selected link.
+Returns 1 while there is neither a search nor a selected link, and 0
+otherwise. A search counts even when it found nothing.
 
 =head1 SEE ALSO
 

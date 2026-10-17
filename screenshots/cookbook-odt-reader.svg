@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="705" viewBox="0 0 780 705" role="img" aria-label="perl examples/cookbook/odt-reader.pl">
+<title>perl examples/cookbook/odt-reader.pl</title>
+<style>
+.terminal text { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 15px; white-space: pre; }
+.terminal .b { font-weight: bold; }
+.terminal .i { font-style: italic; }
+.title { font-family: 'JetBrains Mono', 'Cascadia Mono', 'SF Mono', Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; font-size: 13px; }
+</style>
+<defs>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.3"/></filter>
+<clipPath id="window"><rect x="16" y="16" width="748" height="670" rx="10"/></clipPath>
+</defs>
+<rect x="16" y="16" width="748" height="670" rx="10" fill="#161622" filter="url(#shadow)"/>
+<rect x="16" y="16" width="748" height="34" fill="#1f2430" clip-path="url(#window)"/>
+<circle cx="36" cy="33" r="6" fill="#ff5f57"/>
+<circle cx="56" cy="33" r="6" fill="#febc2e"/>
+<circle cx="76" cy="33" r="6" fill="#28c840"/>
+<text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/odt-reader.pl</text>
+<rect x="16.5" y="16.5" width="747" height="669" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+<g shape-rendering="crispEdges">
+<rect x="363" y="132" width="54" height="18" fill="#61afef"/>
+<rect x="30" y="654" width="720" height="18" fill="#1e2128"/>
+<rect x="57" y="85" width="675" height="1" fill="#5a606e"/>
+<rect x="57" y="87" width="675" height="1" fill="#5a606e"/>
+<rect x="39" y="194" width="693" height="1" fill="#5a606e"/>
+<rect x="39" y="356" width="693" height="1" fill="#5a606e"/>
+</g>
+<g class="terminal">
+<text x="354" y="74" textLength="72" class="b" fill="#61afef">Pancakes</text>
+<text x="57" y="128" textLength="324" fill="#dcdfe4">A quick breakfast for four. It takes</text>
+<text x="390" y="128" textLength="90" class="b" fill="#dcdfe4">20 minutes</text>
+<text x="480" y="128" textLength="225" fill="#dcdfe4">, and the batter can rest</text>
+<text x="57" y="146" textLength="81" class="i" fill="#dcdfe4">overnight</text>
+<text x="147" y="146" textLength="207" fill="#dcdfe4">in the fridge. Read the</text>
+<text x="363" y="146" textLength="54" fill="#101216">method</text>
+<text x="426" y="146" textLength="198" fill="#dcdfe4">once before you start.</text>
+<text x="39" y="182" textLength="99" class="b" fill="#61afef">Ingredients</text>
+<text x="61.5" y="236" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="236" textLength="99" fill="#dcdfe4">250 g flour</text>
+<text x="61.5" y="254" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="254" textLength="99" fill="#dcdfe4">500 ml milk</text>
+<text x="61.5" y="272" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="272" textLength="54" fill="#dcdfe4">3 eggs</text>
+<text x="61.5" y="290" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="290" textLength="639" fill="#dcdfe4">a pinch of salt and two spoons of sugar (the toppings are sweet enough)</text>
+<text x="61.5" y="308" text-anchor="middle" fill="#61afef">•</text>
+<text x="75" y="308" textLength="162" fill="#dcdfe4">butter for the pan</text>
+<text x="39" y="344" textLength="54" class="b" fill="#61afef">Method</text>
+<text x="57" y="398" textLength="18" fill="#61afef">1.</text>
+<text x="84" y="398" textLength="504" fill="#dcdfe4">Whisk the flour and the milk until the batter is smooth.</text>
+<text x="57" y="416" textLength="18" fill="#61afef">2.</text>
+<text x="84" y="416" textLength="639" fill="#dcdfe4">Beat in the eggs and the salt, then let the batter rest for at least 30</text>
+<text x="84" y="434" textLength="72" fill="#dcdfe4">minutes.</text>
+<text x="57" y="452" textLength="18" fill="#61afef">3.</text>
+<text x="84" y="452" textLength="540" fill="#dcdfe4">Melt a little butter in a pan and pour in a ladle of batter.</text>
+<text x="88.5" y="470" text-anchor="middle" fill="#61afef">◦</text>
+<text x="102" y="470" textLength="162" fill="#dcdfe4">Use a medium heat.</text>
+<text x="88.5" y="488" text-anchor="middle" fill="#61afef">◦</text>
+<text x="102" y="488" textLength="612" fill="#dcdfe4">Turn the pancake when its edges come loose, after about two minutes.</text>
+<text x="57" y="506" textLength="18" fill="#61afef">4.</text>
+<text x="84" y="506" textLength="486" fill="#dcdfe4">Keep the pancakes warm in the oven until all are done.</text>
+<text x="39" y="542" textLength="36" class="b" fill="#ebeef3">Tips</text>
+<text x="57" y="578" textLength="225" fill="#dcdfe4">For thinner pancakes, add</text>
+<text x="291" y="578" textLength="198" class="b" fill="#dcdfe4">another 100 ml of milk</text>
+<text x="489" y="578" textLength="189" fill="#dcdfe4">. More recipes are at</text>
+<text x="57" y="596" textLength="171" fill="#61afef">recipes.example.org</text>
+<text x="228" y="596" textLength="9" fill="#dcdfe4">.</text>
+<text x="57" y="632" textLength="414" class="i" fill="#dcdfe4">Leftover batter keeps for a day in the fridge.</text>
+<text x="39" y="668" textLength="306" fill="#dcdfe4">l selects a link, Enter follows it</text>
+<text x="669" y="668" textLength="72" fill="#787e8a">Top 100%</text>
+</g>
+<g shape-rendering="crispEdges">
+<rect x="255" y="285" width="171" height="1" fill="#dcdfe4"/>
+<rect x="624" y="417" width="72" height="1" fill="#dcdfe4"/>
+<rect x="57" y="597" width="171" height="1" fill="#61afef"/>
+</g>
+</svg>

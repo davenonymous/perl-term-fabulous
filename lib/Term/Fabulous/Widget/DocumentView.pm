@@ -678,7 +678,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::DocumentView - A scrolling, searchable view of a document of blocks
+Term::Fabulous::Widget::DocumentView - A scrollable, searchable view of a structured document
 
 =head1 SYNOPSIS
 
@@ -687,15 +687,18 @@ Term::Fabulous::Widget::DocumentView - A scrolling, searchable view of a documen
 
 	my $view = Term::Fabulous::Widget::DocumentView->new(
 		id       => 'document',
-		document => $document,    # a Term::Fabulous::Document, from a parser
+		document => $document,    # a Term::Fabulous::Document, usually from a parser
 		layout   => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 	);
 
+	# Follow links, and keep a status line up to date.
 	$view->on( LinkActivate => sub ($event) { open_page( $event->link ); return } );
 	$view->on( ViewChange   => sub ($event) { show_position( $event->percent ); return } );
 
+	# Search the text, and jump to a section.
 	$view->search('frobnicate');
-	$view->show_block( $view->document->find_section('METHODS') );
+	my $methods = $view->document->find_section('METHODS');
+	$view->show_block($methods) if defined $methods;
 
 =begin html
 
@@ -707,83 +710,156 @@ The program is F<examples/widgets/document-view.pl>.
 
 =head1 DESCRIPTION
 
-The view shows a L<Term::Fabulous::Document>: every block in the look
-of its kind, wrapped to the view's width, scrolled with the keys, the
-mouse wheel and the scrollbar, its links selected and followed, its
-text searched. It is the main pane of a reader, whatever the format the
-document was parsed from: L<Pod::Fabulous> shows POD with it,
-L<Term::Fabulous::Widget::Markdown> shows Markdown.
+A document view is the main pane of a document reader. It shows a
+L<Term::Fabulous::Document>, which is a list of I<blocks> (headings,
+paragraphs, list items, code and so on) as a parser produced them, and
+lets the user read it: the view wraps the text to its width, scrolls
+with the keyboard, the mouse wheel and the scrollbar, selects and
+follows links, and searches the text.
 
-It is a L<Term::Fabulous::Widget::VirtualList>: it builds widgets only
-for the blocks near the viewport, so a document of thousands of
-paragraphs (L<perlfunc> has about 2000 blocks) opens and scrolls as
-fast as a short one, and stays below Clay's limits on elements and
-words per frame (see L<Term::Fabulous/LIMITATIONS>). It also composes
-L<Clay::UI::Role::Interaction::Focusable>, so it takes the keyboard
-focus. Frame it with a Box around it rather than giving it a border of
-its own: content scrolled under the border of a scroll container shows
-its background in the border's cells.
+The view does not know the format the document was parsed from.
+L<Pod::Fabulous> uses it to show POD, and
+L<Term::Fabulous::Widget::Markdown> (part of Term::Fabulous::Extras)
+uses it to show Markdown. Worked examples for showing documents,
+following links, searching, building a table of contents and writing a
+reader for a new format are in L<Term::Fabulous::Cookbook::Documents>.
 
-=head2 How blocks are shown
+A few terms are used throughout this page:
 
 =over
 
 =item *
 
-Paragraphs, terms and headings are L<Term::Fabulous::Widget::RichText>
-widgets: Clay wraps them, and their marks become spans in the styles of
-the view's look (L<Term::Fabulous::Document::Look>). Link marks become
-links of the RichText instead, with the mark's link as their target; the
-RichText paints them over the spans in the link looks of the theme
-(see L<Term::Fabulous::Widget::RichText/Looks>), so that a link looks
-like a link even when it is code. The RichTexts are created with
-C<< can_focus => 0 >>: they are no Tab stops, the view selects the
-links of all blocks itself (see L</KEYS>). Headings are drawn in the
-style of their level, a first-level heading with a rule under it
-(L<Term::Fabulous::Widget::Divider>); terms in the C<term> style.
+Every block has a I<kind>: C<heading>, C<paragraph>, C<item>, C<term>
+or C<verbatim> for the blocks Term::Fabulous ships (see
+L<Term::Fabulous::Document::Block>), or a kind of its own for a block
+class a reader adds (see L</BLOCK KINDS>).
 
 =item *
 
-An item is a row of two columns: its marker, and its text, which wraps
-within its own column, so that every line starts after the marker.
+I<Marks> label ranges of a block's text as bold, code, a link and so
+on (see L<Term::Fabulous::Document::Mark>). Each mark has a kind as
+well.
 
 =item *
 
-Verbatim blocks are L<Term::Fabulous::Widget::CodeBlock> widgets, which
-do not wrap; the view scrolls them all sideways together.
+The I<look> (L<Term::Fabulous::Document::Look>) turns each kind of mark
+into a style in the colors of the current theme.
+
+=back
+
+The view is a L<Term::Fabulous::Widget::VirtualList>: it builds widgets
+only for the blocks near the visible area. A document with thousands of
+blocks (L<perlfunc> has about 2000) therefore opens and scrolls as fast
+as a short one, and every frame stays within Clay's limits on elements
+and words (see L<Term::Fabulous/LIMITATIONS>). The view also composes
+L<Clay::UI::Role::Interaction::Focusable>, so it can take the keyboard
+focus.
+
+To draw a frame around the view, place it inside a bordered Box rather
+than giving the view a border of its own. A scroll container's own
+border is drawn over its content, so content scrolled under it shows
+its background in the border cells; a Box around the view avoids
+that.
+
+=head2 How blocks are shown
+
+The view builds a widget, or a small tree of widgets, for each block,
+depending on the block's kind:
+
+=over
+
+=item *
+
+Headings, paragraphs and terms are L<Term::Fabulous::Widget::RichText>
+widgets, which Clay wraps to the width of the view. Every mark of the
+block becomes a span in the style the look gives its kind. A heading is
+drawn in the style of its level (C<heading1> to C<heading6>), and a
+first-level heading has a horizontal rule
+(L<Term::Fabulous::Widget::Divider>) under it. A term is drawn in the
+C<term> style.
+
+=item *
+
+Link marks do not become spans. They become links of the RichText, with
+the mark's link as the target, and the RichText paints them on top of
+the spans in the link looks of the theme (see
+L<Term::Fabulous::Widget::RichText/Looks>). A link therefore looks like
+a link even when it is also marked as code. The RichText widgets are
+created with C<< can_focus => 0 >>, so they are not Tab stops; the view
+selects the links of all blocks itself (see L</KEYS>).
+
+=item *
+
+A list item is a row of two columns: the marker (a bullet or a number)
+in the C<marker> style, and the text. The text wraps within its own
+column, so every line of it starts after the marker.
+
+=item *
+
+Verbatim blocks are L<Term::Fabulous::Widget::CodeBlock> widgets. They
+do not wrap; instead, the view scrolls all code blocks sideways
+together (see L</scroll_code>).
 
 =item *
 
 A block inside a block quote (L<Term::Fabulous::Document::Block/quote>)
-has a bar on its left for every quote it is in, in the C<quote> style,
-and a space after the bar.
+gets a vertical bar on its left for each quote it is in, drawn in the
+C<quote> style and followed by one column of space. The blank row above
+a quoted block lies inside its bars, so the bars of the blocks of one
+quote join up.
 
 =item *
 
-Every block but a heading is indented by the view's L</indent> plus
-its own (L<Term::Fabulous::Document::Block/indent>). A blank row
-separates the blocks, except the items of one list (and the first item
-of a list nested in an item from that item) and a term from the
-paragraphs that define it. The view spaces the blocks itself: give its
-layout no C<child_gap>, or the gap is added to every block.
+Every block except a heading is indented by the view's L</indent> plus
+the block's own indent (L<Term::Fabulous::Document::Block/indent>), in
+columns.
+
+=item *
+
+One blank row separates consecutive blocks, with two exceptions. There
+is none between the items of one list, nor between an item and the
+first item of a list nested in it. There is also none between a term
+and the block that follows it, if that block is not a term and is
+indented deeper than the term. The view adds these blank rows itself, so do not give its
+layout a C<child_gap>: the gap would be added between all blocks, on
+top of the blank rows.
 
 =back
 
-L<Term::Fabulous::Document::Geometry> holds these rules, and wraps the
-text of a block as Clay does: the view asks it for the height of a
-block it has not laid out yet, and for the line a search match is on.
+L<Term::Fabulous::Document::Geometry> implements these layout rules and
+wraps text the same way Clay does. The view asks it for the height of a
+block that has not been laid out yet, and for the row of a character
+within a block when it scrolls a link or a search match into view.
 
 =head2 Overlays
 
-Two things are drawn over the blocks' own styles, without building
-anything again: the I<selected link>, the one C<Enter> follows, and the
-matches of a I<search>, the current one in a style of its own. The view
-keeps one selection across all blocks and shows it through the RichText
+Two kinds of highlighting, the I<overlays>, are drawn on top of the
+blocks' own styles without rebuilding any widget:
+
+=over
+
+=item *
+
+The I<selected link> is the link that C<Enter> follows. The view keeps
+one selection for the whole document and shows it through the RichText
 of the link's block, with
-L<select_link|Term::Fabulous::Widget::RichText/select_link>, also when
-the block's view is built again. A theme switch restyles every block in
-the new theme's colors. L<Term::Fabulous::Document::Overlays> holds both
-and their rules, and tells the view which blocks to restyle.
+L<select_link|Term::Fabulous::Widget::RichText/select_link>. The
+selection is shown again when the block's widgets are rebuilt.
+
+=item *
+
+The I<search matches> are the occurrences of the text of the last
+L</search>, drawn in the C<match> style. One of them, the I<current
+match>, is drawn in the C<match_current> style instead;
+L<next_match and previous_match|/"next_match, previous_match"> move it.
+
+=back
+
+L<Term::Fabulous::Document::Overlays> holds both overlays and their
+rules, and tells the view which blocks to restyle after each change.
+When the theme changes, the view restyles every block it has built in
+the colors of the new theme.
 
 =head1 CONSTRUCTOR
 
@@ -791,228 +867,317 @@ and their rules, and tells the view which blocks to restyle.
 
 	my $view = Term::Fabulous::Widget::DocumentView->new( id => 'document', %parameters );
 
-All parameters of L<Term::Fabulous::Widget::VirtualList> except
-C<build>, C<estimate> and C<count>, which the view takes from its
-document (giving them dies); an C<id> is required. Plus:
+Creates a document view. It takes all parameters of
+L<Term::Fabulous::Widget::VirtualList> except C<build>, C<estimate> and
+C<count>, which the view derives from its document; passing any of them
+dies. As for every scroll container, an C<id> is required. Unknown
+parameters and invalid values die. The additional parameters are:
 
 =over
 
 =item C<document>
 
 The L<Term::Fabulous::Document> to show, or C<undef> (the default) for
-an empty view. A document with a mark whose kind the view's look does
-not know dies (see L<Term::Fabulous::Document::Look/KINDS>).
+an empty view. The constructor dies if a mark of the document has a
+kind that the view's look does not know (see
+L<Term::Fabulous::Document::Look/KINDS> and L</look_class>). Link marks
+are exempt from this check, because the RichText widgets draw links
+themselves.
 
 =item C<highlighter>
 
-C<undef> (the default), or a code reference that every code block of
-the view uses to highlight its code; see
+C<undef> (the default), or a code reference that all code blocks of the
+view use to highlight their code, called with the code and the language
+of the verbatim block; see
 L<Term::Fabulous::Widget::CodeBlock/highlighter>.
 
 =item C<indent>
 
-A non-negative integer, default 2: the columns every block but a
-heading is indented by.
+A non-negative integer, default 2: the number of columns by which every
+block except a heading is indented.
 
 =back
 
 =head1 METHODS
 
-The methods of L<Term::Fabulous::Widget::VirtualList>, plus the
-following. The methods that scroll or select return 1 when they
-changed something and 0 when there was nothing to change, so a key
-binding can tell.
+The view has all methods of L<Term::Fabulous::Widget::VirtualList>,
+plus the following. Unless stated otherwise, the methods that scroll,
+select or search return 1 when they changed something and 0 when there
+was nothing to change, so a key binding can tell whether the key had an
+effect.
 
 =head2 document
 
-	$view->document($document);
+	my $document = $view->document;
+	$view->document($new_document);
 
-Accessor. Setting shows the new document from its top, with its code
-not scrolled sideways, drops the selected link and the search, and
-makes the next frame fire a C<ViewChange>.
+Gets or sets the document. Setting it checks the new document as
+L</new> does and shows it from the top: the code blocks are scrolled
+back to their left edge, the selected link and the search are dropped,
+and a C<ViewChange> event fires after the next frame. Setting C<undef>
+empties the view. Returns the document.
 
 =head2 highlighter
 
 	$view->highlighter( \&highlight );
 
-Accessor; setting hands the new highlighter to every code block.
+Gets or sets the highlighter. Setting it passes the new highlighter to
+every code block the view has built, and the view hands it to the code
+blocks it builds later; each code block highlights its code again the
+next time it is painted. Dies for anything but a code reference or
+C<undef>.
 
 =head2 indent
 
 	$view->indent(4);
 
-Accessor; setting builds the views of the blocks again.
+Gets or sets the indent, in columns. Setting it rebuilds the widgets of
+all blocks, so the new indent takes effect in the next frame. Dies for
+anything but a non-negative integer.
 
 =head2 geometry
 
 	my $geometry = $view->geometry;
 
-The L<Term::Fabulous::Document::Geometry> of the document shown, or
-C<undef> without a document.
+Returns the L<Term::Fabulous::Document::Geometry> of the document shown,
+or C<undef> when the view has no document. The view creates a new
+geometry whenever the document or the indent changes.
 
 =head2 document_look
 
 	my $look = $view->document_look;
 
-The L<Term::Fabulous::Document::Look> the view draws with at the
-moment: that of the theme of its UI (see
-L<Term::Fabulous::Document::Look/of>).
+Returns the L<Term::Fabulous::Document::Look> the view currently draws
+with: an object of the class that L</look_class> names, for the theme
+of the view's UI, or for the default theme while the view is not part
+of a UI (see L<Term::Fabulous::Document::Look/of>).
 
 =head2 scroll_lines
 
 	$view->scroll_lines(3);     # down
 	$view->scroll_lines(-1);    # up
 
-Scrolls by rows, stopping at the top and the end. The number of rows,
-and of pages below, must be an integer; anything else dies.
+Scrolls by the given number of rows: down for a positive number, up for
+a negative one. Scrolling stops at the top and at the end of the
+document. Returns 1 if the view moved and 0 if it could not. Before the
+view is part of a UI, the method does nothing and returns 0; after
+that, a number that is not an integer dies.
 
 =head2 scroll_pages
 
-	$view->scroll_pages(1);
+	$view->scroll_pages(1);     # down
+	$view->scroll_pages(-1);    # up
 
-Scrolls by pages; a page is the rows the view shows inside its border
-and padding, less one row, which stays in view (see
-L<Term::Fabulous::Scrolling>).
+Scrolls by the given number of pages. A page is the number of rows the
+view shows inside its border and padding, less one, so that one row of
+the previous page stays in view (see L<Term::Fabulous::Scrolling>).
+Return value and errors are as for L</scroll_lines>.
 
 =head2 scroll_to_top, scroll_to_bottom
 
+	$view->scroll_to_top;
 	$view->scroll_to_bottom;
 
-Scrolls to the first or the last block.
+Scrolls so that the first or the last block starts at the top of the
+view, or as close to the top as the end of the document allows. The
+scroll takes effect in the next frame. Unlike the other scrolling
+methods, these return 1 whenever the view has blocks, even if it is
+already at the top or the end, and 0 when the view is empty.
 
 =head2 show_block
 
 	$view->show_block($index);
 
-Scrolls so that the block starts at the top of the view (or as near as
-the end of the document allows), in the next frame. Returns the view.
+Scrolls so that the block with the given index starts at the top of the
+view, or as close to the top as the end of the document allows. The
+scroll takes effect in the next frame. Returns the view. Dies if the
+document has no block with that index.
 
 =head2 top_block
 
 	my $index = $view->top_block;
 
-The index of the first block in view in the last frame, or C<undef>.
+Returns the index of the block at the top of the view in the last
+frame, or C<undef> if the view has not been laid out yet or shows no
+blocks.
 
 =head2 scroll_code
 
-	$view->scroll_code(8);     # to the right
-	$view->scroll_code(-8);
+	$view->scroll_code(8);     # show columns further right
+	$view->scroll_code(-8);    # back towards the start of the lines
 
-Scrolls every code block sideways by columns: one offset for all of
-them, as C<less -S> scrolls long lines. It reaches as far as the widest
-code block in view allows; the blocks out of view take the same offset,
-so that they match when they come into view. Returns 1 when the offset
-changed, 0 when there is nothing in view to scroll.
+Scrolls all code blocks sideways by the given number of columns. A
+positive number moves the view to the right along the lines, so the
+code shifts to the left and later columns come into view; a negative
+number moves back. All code
+blocks share one horizontal offset, the way C<less -S> scrolls long
+lines. The offset grows only as far as the widest code block that was
+in view in the last frame requires to show the end of its longest line.
+Code blocks out of view take the same offset, so that they line up when
+they come into view.
+
+Returns 1 if the offset changed, and 0 if it did not, for example
+because no code block in view is wider than the view.
 
 =head2 code_offset
 
 	my $columns = $view->code_offset;
 
-How far the code blocks are scrolled sideways by L</scroll_code>.
+Returns the number of columns by which the code blocks are currently
+scrolled sideways (see L</scroll_code>). The offset is 0 after a new
+document is set.
 
 =head2 select_next_link, select_previous_link
 
 	$view->select_next_link;
 
-Selects the next or previous link: from the selected one while its
-block is in view, otherwise from the first link in view (the last,
-going back). The selection stops at the first and the last link of the
-document. The line of the selected link is scrolled into view, with as
-little movement as possible.
+Selects the next or the previous link of the document, and scrolls the
+line it starts on into view, with as little movement as possible.
+
+If the block of the selected link is in view, the selection moves on
+from that link. Otherwise, select_next_link starts at the first link in
+or below the view, and select_previous_link at the last link in or
+above it. The selection does not wrap around: at the last link of the
+document, select_next_link returns 0 and the selection stays where it
+is, and the same applies to select_previous_link at the first link.
+Both return 0 as well when the document has no links.
+
+The scrolling may take a few frames: a block that has not been laid
+out yet is first scrolled to the top of the view, and the view then
+adjusts until the line is visible.
 
 =head2 selected_link
 
 	my $link = $view->selected_link;    # the mark's link, or undef
 
-The destination of the selected link: the one
-L<select_next_link or select_previous_link|/"select_next_link, select_previous_link">
-selected last, or the one clicked last.
+Returns the target of the selected link, as the parser stored it in the
+link mark (L<Term::Fabulous::Document::Mark/link>), or C<undef> if no
+link is selected. The selected link is the one last chosen with
+L<select_next_link or select_previous_link|/"select_next_link, select_previous_link">,
+or the one the user clicked last.
 
 =head2 follow_link
 
 	$view->follow_link;
 
-Fires L<LinkActivate|Term::Fabulous::Event::LinkActivate> on the view
-for the selected link: its C<link> is the mark's link, its C<index>
-the place of the link among the links of its block, and its C<start>
-and C<end> the link's offsets in the block's text. Returns 0 when no
-link is selected.
+Fires a L<LinkActivate|Term::Fabulous::Event::LinkActivate> event on
+the view for the selected link. In the event, C<link> is the target of
+the link mark, C<index> is the position of the link among the links of
+its block, counted from 0, and C<start> and C<end> are the character
+offsets of the link in the block's text. The view does not navigate
+anywhere itself; a listener decides what following the link means.
+Returns 1 when it fired the event, and 0 when no link is selected.
 
 =head2 search
 
 	my $count = $view->search('hash');
 
-Marks every occurrence of the text in the document (see
-L<Term::Fabulous::Document/find_text> for the rules), makes the first
-one at or after the top of the view current and scrolls its line into
-view. Returns the number of matches. An empty text ends the search.
+Searches the document for the text and marks every occurrence as a
+search match. L<Term::Fabulous::Document/find_text> defines the
+matching rules; in short, a text without capital letters matches
+regardless of case. The current match becomes the first match in or
+after the block at the top of the view, or the first match of the
+document if there is none from there on. Its line is scrolled into
+view as described for L<select_next_link|/"select_next_link, select_previous_link">.
+
+Returns the number of matches. A new search replaces the previous one;
+the selected link is not affected. An empty text ends the search and
+returns 0. Dies if the argument is not a string.
 
 =head2 next_match, previous_match
 
 	$view->next_match;
 
-Makes the next or previous match current, around from the last to the
-first, and scrolls it into view.
+Makes the next or the previous match current and scrolls its line into
+view. The current match wraps around from the last match to the first,
+and from the first to the last. Returns 0 when there are no matches,
+and 1 otherwise.
 
 =head2 query, match_count, current_match
 
-	printf "%s: %d of %d\n", $view->query, $view->current_match, $view->match_count;
+	printf "%s: %d of %d\n", $view->query, $view->current_match, $view->match_count if $view->match_count;
 
-The text searched for (or C<undef>), the number of matches, and the
-number of the current match, from 1 (or C<undef>).
+Return the text of the current search (C<undef> without a search), the
+number of matches (0 without a search), and the number of the current
+match, counted from 1 (C<undef> when there are no matches).
 
 =head2 clear_marks
 
 	$view->clear_marks;
 
-Ends the search and drops the selected link.
+Ends the search and drops the selected link in one step. Returns 1 when
+there was a search or a selected link to drop, even a search without
+matches, and 0 otherwise.
 
 =head2 view_state
 
 	my $state = $view->view_state;
 
-What the last frame showed, as the hash of the parameters of a
-L<Term::Fabulous::Event::ViewChange>.
+Returns a summary of what the view shows, as a hash reference with the
+keys of the parameters of L<Term::Fabulous::Event::ViewChange>:
+C<top>, C<bottom>, C<section>, C<section_title>, C<percent>, C<link>,
+C<query>, C<match> and C<matches>. The positions describe the last
+frame; the link and the search are the current ones. After every frame,
+the view compares this summary with the last one it reported and fires
+C<ViewChange> when they differ.
 
 =head2 build, estimate, count
 
-The list's own accessors return what the view gave them; setting them
-dies.
+	my $blocks = $view->count;
+
+Without an argument, these accessors of
+L<Term::Fabulous::Widget::VirtualList> return the values the view
+installed: its builder, its height estimate, and the number of blocks
+of the document (0 without a document). Passing an argument dies,
+because the view derives all three from its document.
 
 =head1 KEYS
 
-While the view has the focus:
+While the view has the focus, it handles these keys:
 
 =for highlighter language=text
 
-	Down, j / Up, k          a row down or up
-	PageDown, Space          a page down
-	PageUp, b                a page up
-	Home, g / End, G         the top or the end of the document
-	Left / Right             the code blocks eight columns sideways
-	l / L                    select the next or previous link
-	Enter                    follow the selected link
-	n / N                    the next or previous search match
-	Escape                   end the search and drop the selected link
+	Down, j            scroll down one row
+	Up, k              scroll up one row
+	PageDown, Space    scroll down one page
+	PageUp, b          scroll up one page
+	Home, g            go to the top of the document
+	End, G             go to the end of the document
+	Left, Right        scroll the code blocks eight columns sideways
+	l, L               select the next or the previous link
+	Enter              follow the selected link
+	n, N               go to the next or the previous search match
+	Escape             end the search and drop the selected link
 
-C<Enter> without a selected link and C<Escape> without anything to
-drop go on to the widgets around, and so does every other key (see
+The view consumes every key in this table, even when the key has
+nothing to do: at the end of the document, C<Down> still belongs to the
+view and does not reach the enclosing widgets. There are two
+exceptions. When no link is selected, the view does not consume
+C<Enter>; the key bubbles up to the enclosing widgets. The same applies
+to C<Escape> when there is neither a search nor a selected link. All
+other keys bubble up as well (see
 L<Term::Fabulous::Manual::Events/KEYBOARD>).
 
 =head1 MOUSE
 
-The wheel and the scrollbar scroll the view, as in every
-L<Term::Fabulous::Widget::ScrollBox>. Each notch of the horizontal
-wheel (or a sideways tilt of the wheel) anywhere over the view scrolls
-the code blocks three columns sideways while they can move, as
-L</scroll_code> does; at the end, the notch goes on to the widgets
-around. A click focuses the view.
+The mouse wheel and the scrollbar scroll the view vertically, as in
+every L<Term::Fabulous::Widget::ScrollBox>. The horizontal wheel (or
+tilting the wheel sideways) scrolls the code blocks three columns per
+notch, as L</scroll_code> does, while the pointer is over a code block.
+(When the view is the root widget of the UI, anywhere over the view
+works: mouse events go to the widget whose painted cells are under the
+pointer, and the blank rows and the text of other blocks belong to no
+painted widget.) Once the code cannot scroll further in that
+direction, the event is passed on to the enclosing widgets. A click on
+the text of a block or on a code block focuses the view.
 
-A left click on a link selects it and follows it: the RichText of its
-block fires L<LinkActivate|Term::Fabulous::Event::LinkActivate>, with
-the mark's link as its C<link>, and the event bubbles up through the
-view, which makes the clicked link its selected link and lets the event
-go on. The link under the mouse pointer looks hovered.
+A left click on a link selects the link and follows it. The RichText of
+the link's block fires
+L<LinkActivate|Term::Fabulous::Event::LinkActivate>, with the target of
+the link mark as its C<link>. As the event bubbles up through the view,
+the view makes the clicked link its selected link and lets the event
+continue, so listeners on the view and on the widgets around it receive
+it. The link under the mouse pointer is drawn as hovered.
 
 =head1 EVENTS
 
@@ -1020,103 +1185,176 @@ go on. The link under the mouse pointer looks hovered.
 
 =item C<LinkActivate> (L<Term::Fabulous::Event::LinkActivate>)
 
-When the user presses C<Enter> on the selected link, or the program
-calls L</follow_link>: fired on the view. When the user clicks a link:
-fired on the RichText of its block, and on its way up through the view
-(see L</MOUSE>). Either way, C<< $event->link >> is the link of the
-mark, whatever the parser put there.
+Fired on the view when the user presses C<Enter> while a link is
+selected, or when the program calls L</follow_link>. When the user
+clicks a link, the RichText of the link's block fires the event, and it
+bubbles up through the view (see L</MOUSE>). In both cases,
+C<< $event->link >> is the target of the link mark, exactly as the
+parser stored it.
 
 =item C<ViewChange> (L<Term::Fabulous::Event::ViewChange>)
 
-After a frame whose view differs from the one reported last.
+Fired on the view after a frame in which the summary that
+L</view_state> returns differs from the one the view reported last, for
+example because the user scrolled, selected a link or searched. It also
+fires after the first frame of a new document. A link target that is a
+reference counts as changed only when it is a different reference.
 
 =item The events of L<Term::Fabulous::Widget::VirtualList>
 
-C<OnScroll> and C<Mouse>, and C<OnFocus> and C<OnBlur> from
+C<OnScroll> and C<Mouse>, as well as C<OnFocus> and C<OnBlur> from
 L<Clay::UI::Role::Interaction::Focusable>.
 
 =back
 
 =head1 BLOCK KINDS
 
-A viewer for a format whose documents have blocks the five built-in
-kinds do not cover (a table, a horizontal rule, a picture) subclasses
-the view and the look:
+The view shows the five block kinds Term::Fabulous ships: C<heading>,
+C<paragraph>, C<item>, C<term> and C<verbatim>. A reader for a format
+with other kinds of blocks, such as tables, horizontal rules or images,
+adds them by subclassing the view, and the look if the new blocks need
+styles of their own. A complete walk-through is in the guide of
+L<Term::Fabulous::Cookbook::Documents>. In outline:
 
 =over
 
 =item *
 
-A new kind of block is a subclass of L<Term::Fabulous::Document::Block>
-whose C<kind> is a word of its own, say C<rule>, and which answers
-L<body_rows|Term::Fabulous::Document::Block/body_rows> for a body that
-is not wrapped text.
+Define the block. A new kind of block is a subclass of
+L<Term::Fabulous::Document::Block> whose C<kind> method returns a word
+of its own, for example C<rule>. If the body of the block is not
+wrapped text, the subclass also overrides
+L<body_rows|Term::Fabulous::Document::Block/body_rows> and
+L<row_of_character|Term::Fabulous::Document::Block/row_of_character>,
+so that the view can estimate the height of the block and scroll to a
+character in it.
 
 =item *
 
-The view builds a block of kind C<KIND> with its method
-C<view_of_KIND>, called as C<< $view->view_of_KIND( $block, $padding ) >>,
-where C<$padding> is C<< { left => $columns, top => $rows } >>, the
-indent of the block and the blank row above it. It returns a hash
-reference C<< { widget => $widget, text => $text } >>: the widget the
-list shows, which takes the padding (L</boxed> makes such a box), and
-the L<Term::Fabulous::Widget::RichText> or
-L<Term::Fabulous::Widget::CodeBlock> that shows the block's text, whose
-spans the view sets from the marks and the overlays, or C<undef> for a
-block without such a text. A view method of a name the base class does
-not have dies when the block is built, and so does a C<text> that is
-none of these.
+Build its widgets. The view builds a block of kind C<KIND> by calling
+its method C<view_of_KIND> as
+C<< $view->view_of_KIND( $block, $padding ) >>. C<$padding> is a hash
+reference C<< { left => $columns, top => $rows } >>: the indent of the
+block and the blank row above it, which the returned widget must apply
+as its padding (L</boxed> creates such a box). The quote bars of a
+quoted block are not part of the padding; the view adds them around
+the returned widget itself.
+
+The method returns a hash reference C<< { widget => $widget, text => $text } >>.
+C<widget> is a new widget without a parent, which the list shows for
+the block. C<text> is the L<Term::Fabulous::Widget::RichText> or
+L<Term::Fabulous::Widget::CodeBlock> inside it that shows the block's
+text, or C<undef> if there is none. The view sets the spans of this
+widget from the block's marks and the overlays (see L</spans_of>).
+
+The view dies when it builds a block whose kind has no C<view_of_KIND>
+method, when the method does not return a hash reference with a
+widget, and when its C<text> is neither of the widget types above nor
+C<undef>.
 
 =item *
 
-New kinds of marks need styles: a subclass of
-L<Term::Fabulous::Document::Look> with more L<recipes|Term::Fabulous::Document::Look/recipes>,
-named by the view's L</look_class>.
+Style new kinds of marks. If the format has marks of kinds the base
+look does not know, subclass L<Term::Fabulous::Document::Look>, add
+L<recipes|Term::Fabulous::Document::Look/recipes> for the new kinds,
+and return the subclass from the view's L</look_class>. The view
+refuses documents with marks of unknown kinds (see L</new>).
 
 =back
 
-The methods a subclass builds with:
+A horizontal rule, for example, needs a block class and a builder:
+
+=for highlighter language=perl
+
+	use Object::Pad;
+	use Term::Fabulous::Widget::Divider;
+
+	class My::Block::Rule :isa(Term::Fabulous::Document::Block) {
+		method kind () { return 'rule' }
+		method body_rows ($columns) { return 1 }
+		method row_of_character ( $offset, $columns ) { return 0 }
+	}
+
+	class My::DocumentView :isa(Term::Fabulous::Widget::DocumentView) {
+		method view_of_rule ( $block, $padding ) {
+			return { widget => $self->boxed( $padding, Term::Fabulous::Widget::Divider->new ), text => undef };
+		}
+	}
+
+The parser then creates the block as C<< My::Block::Rule->new( text => '' ) >>.
+
+The methods below are the building blocks for such subclasses.
 
 =head2 look_class
 
 	method look_class :common () { return 'My::Look' }
 
-Class method. The L<Term::Fabulous::Document::Look> class the view
-draws with; default C<Term::Fabulous::Document::Look>. A subclass
-returns a subclass of it.
+Class method that returns the name of the
+L<Term::Fabulous::Document::Look> class the view draws with. The
+default is C<Term::Fabulous::Document::Look>. A subclass that adds
+kinds of marks overrides it to return a subclass of that class. The
+view uses the class to check the marks of a document and, through
+L</document_look>, to style the blocks. Code blocks are the exception:
+they always take their C<code_block> and C<clipped> styles from
+C<Term::Fabulous::Document::Look> itself (see
+L<Term::Fabulous::Widget::CodeBlock>).
 
 =head2 view_of_heading, view_of_paragraph, view_of_item, view_of_term, view_of_verbatim
 
-The builders of the built-in kinds, as described above; a subclass may
-replace one.
+	my $view_of_block = $view->view_of_paragraph( $block, $padding );
+
+The builders of the built-in kinds, which produce the widgets described
+in L</How blocks are shown>. They follow the contract described above,
+so a subclass may override any of them to show a built-in kind
+differently.
 
 =head2 rich_text_of
 
 	my $text = $view->rich_text_of($block);
 
-A RichText of the block's text with the block's links, and
-C<< can_focus => 0 >>: what the built-in builders show the text with.
+Returns a new L<Term::Fabulous::Widget::RichText> with the block's text
+and the block's link marks as links, each with the mark's link as its
+target. The RichText is created with C<< can_focus => 0 >>, so that the
+view handles the links (see L</Overlays>). The built-in builders show
+their text with it, and a builder of a new kind can use it too.
 
 =head2 boxed
 
 	my $box = $view->boxed( $padding, @children );
 
-A Box with the children in a column, the given padding and the width
-of the view.
+Returns a new L<Term::Fabulous::Widget::Box> that stacks the children
+from top to bottom, grows to the full width available, and applies the
+given padding, a hash reference as passed to a C<view_of_KIND> method.
 
 =head2 spans_of
 
 	my $spans = $view->spans_of( $index, $look );
 
-The spans of a block's text in a look, as C<[ $start, $end, $style ]>:
-the style of a heading or a term over the whole text, the marks, then
-the overlays. A subclass that styles blocks of its own kinds extends
-it.
+Returns the spans of the text of the block with the given index, in the
+given look, as an array reference of C<[ $start, $end, $style ]>, where
+C<$style> is a style hash of the look. The spans come in this order:
+the style of a heading's level or of a term over the whole text, the
+styles of the block's marks except links, and the overlays (C<match> and
+C<match_current>). Later spans are applied on top of earlier ones. The
+view calls this method whenever it restyles a block.
+
+A subclass that styles blocks of its own kinds overrides it. Putting
+its own spans first keeps the overlays on top. This example assumes a
+C<caption> recipe in the view's L</look_class>:
+
+	method spans_of :override ( $index, $look ) {
+		my $spans = $self->SUPER::spans_of( $index, $look );
+		my $block = $self->document->block($index);
+		unshift @$spans, [ 0, length $block->text, $look->style('caption') ] if $block->kind eq 'caption';
+		return $spans;
+	}
 
 =head1 KDL PROPERTIES
 
-The properties of L<Term::Fabulous::Widget::ScrollBox/KDL PROPERTIES>,
-plus C<indent>. The document comes from the program:
+The view accepts the properties of
+L<Term::Fabulous::Widget::ScrollBox/KDL PROPERTIES>, plus C<indent>.
+A layout file cannot give the document; the program sets it with
+L</document> after loading the layout:
 
 =for highlighter language=kdl
 
@@ -1132,10 +1370,15 @@ plus C<indent>. The document comes from the program:
 		}
 	}
 
+=for highlighter language=perl
+
+	$ui->find_by_id('document')->document($document);
+
 =head1 SEE ALSO
 
-L<Term::Fabulous::Document>, L<Term::Fabulous::Widget::CodeBlock>,
-L<Term::Fabulous::Document::Look>, L<Term::Fabulous::Document::Overlays>,
+L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Document>,
+L<Term::Fabulous::Widget::CodeBlock>, L<Term::Fabulous::Document::Look>,
+L<Term::Fabulous::Document::Overlays>,
 L<Term::Fabulous::Document::Geometry>, L<Term::Fabulous::Scrolling>,
 L<Term::Fabulous::Widget::VirtualList>, L<Pod::Fabulous>.
 

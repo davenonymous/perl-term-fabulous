@@ -1,16 +1,16 @@
 # NAME
 
-Term::Fabulous::Document::Mark - A kind of styling over a range of a block's text
+Term::Fabulous::Document::Mark - A formatted range of characters in the text of a block
 
 # SYNOPSIS
 
 ```perl
 use Term::Fabulous::Document::Mark;
 
-# "See perlfunc" with "perlfunc" bold:
+# In the text "See perlfunc", make "perlfunc" (characters 4 to 11) bold:
 my $bold = Term::Fabulous::Document::Mark->new( start => 4, end => 12, kind => 'bold' );
 
-# ... or a link, to whatever the program's links are:
+# Or make it a link; the destination can be any value the program understands:
 my $link = Term::Fabulous::Document::Mark->new( start => 4, end => 12, kind => 'link', link => 'https://perldoc.perl.org/perlfunc' );
 
 foreach my $mark ( $block->marks ) {
@@ -20,27 +20,66 @@ foreach my $mark ( $block->marks ) {
 
 # DESCRIPTION
 
-A mark is what a parser leaves behind once it has taken the formatting
-of a paragraph apart: the range of characters a bold phrase, a code
-span or a link covered in the text of a [Term::Fabulous::Document::Block](Block.md),
-and what _kind_ of thing it is. Marks say what a range is, not how it
-looks; [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) turns the kinds into
-styles of the current theme with a [Term::Fabulous::Document::Look](Look.md),
-so the same document can be shown in any theme.
+A mark records that a range of the text of a
+[Term::Fabulous::Document::Block](Block.md) is formatted in some way. When a
+parser removes the formatting from a paragraph, such as a bold phrase,
+a code span or a link, it keeps the plain text in the block and
+describes each formatted range with a mark: where the range starts and
+ends, and what _kind_ of formatting it is.
 
-Every kind but `link` names a style of the look the view draws with;
-the look of a view dies for a kind it does not know (see
-["KINDS" in Term::Fabulous::Document::Look](Look.md#kinds)). A `link` mark carries the
-link's destination instead, any defined value the program gives it: a
-string, or an object of the program. The view hands it back in the
-[LinkActivate](../Event/LinkActivate.md) event when the user
-follows the link.
+Offsets are character offsets into the block's text, counted from 0, as
+Perl's `substr` and `length` count them; they are not byte offsets
+and not terminal columns. The start offset is the first character the
+mark covers, and the end offset is exclusive: it is the offset of the
+first character after the range. The characters a mark covers are
+therefore `substr( $text, $mark->start, $mark->span_length )`.
 
-Nested formatting gives marks that overlap: `bold` over a whole
-phrase and `italic` over one word of it. The marks of a block are in
-the order the parser opened them.
+A mark describes what a range _is_, not how it looks.
+[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) maps each kind to a style of
+the current theme through a [Term::Fabulous::Document::Look](Look.md), so the
+same document can be shown in any theme.
 
-A mark is a value: it is checked when it is created and never changes.
+A mark is immutable: its parameters are checked when it is created and
+never change afterwards.
+
+## Kinds
+
+Every kind except `link` must name a style of the look the view draws
+with. The built-in look provides `bold`, `italic`, `strike`, `code`
+and `file` for formatting within a paragraph (see
+["KINDS" in Term::Fabulous::Document::Look](Look.md#kinds) for the full list). The mark
+itself accepts any word as its kind; the view dies when it is given a
+document (in `new` or `document`) with a mark whose kind its look
+does not know. A format that
+needs further kinds adds them with a subclass of the look (see
+["BLOCK KINDS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#block-kinds)).
+
+## Link marks
+
+A mark of kind `link` carries the destination of the link in its
+["link"](#link) attribute instead of naming a style. The destination can be
+any defined value: a URL or a page name as a string, a hash reference
+with several fields, or an object of the program. The view does not
+interpret it. When the user follows the link, the view hands the value
+back unchanged in the [LinkActivate](../Event/LinkActivate.md)
+event, and the program decides what to do with it.
+
+The view shows link marks as links of a [Term::Fabulous::Widget::RichText](../Widget/RichText.md),
+so the link marks of a block must follow three rules that the mark and
+the block do not check: a link mark must not be empty (`start` must be
+less than `end`), it must not overlap another link mark of the same
+block, and the link marks of a block must be given in the order of the
+text (see ["links" in Term::Fabulous::Document::Block](Block.md#links)). The view dies when
+it builds a block with an empty or overlapping link mark.
+
+## Overlapping marks
+
+Nested formatting produces marks that overlap, for example `bold` over
+a whole phrase and `italic` over one word of it. Marks of other kinds
+may overlap freely, and a link mark may overlap marks of other kinds.
+The view applies the marks of a block in the order the block holds
+them, so where two marks set the same attribute, the later one wins
+(see ["marks" in Term::Fabulous::Document::Block](Block.md#marks)).
 
 # CONSTRUCTOR
 
@@ -50,24 +89,27 @@ A mark is a value: it is checked when it is created and never changes.
 my $mark = Term::Fabulous::Document::Mark->new( start => 0, end => 4, kind => 'bold' );
 ```
 
-Unknown parameters die. The parameters:
+Creates a mark. Unknown parameters die, and so does a missing required
+parameter. The parameters are:
 
 - `start`, `end`
 
-    Required. The character offsets of the first character the mark
-    covers and of the one after the last: non-negative integers with
-    `start <= end`.
+    Required. The offset of the first character the mark covers and the
+    offset of the first character after it, as non-negative integers. An
+    `end` less than `start` dies; an `end` equal to `start` gives an
+    empty mark. Whether the range lies within the text is checked when the
+    mark is given to a block (see ["new" in Term::Fabulous::Document::Block](Block.md#new)).
 
 - `kind`
 
-    Required. A word (letters, digits and underscores): `link`, or the
-    name of a style of the view's look, such as `bold`, `italic`,
-    `code`, `file` or `strike`.
+    Required. A word, made of letters, digits and underscores: `link`, or
+    the name of a style of the view's look, such as `bold`, `italic`,
+    `strike`, `code` or `file`. Anything else dies.
 
 - `link`
 
-    The destination, any defined value; required for `link` marks and
-    refused for the others.
+    The destination of a link: any defined value. It is required for a mark
+    of kind `link`, and giving a defined value for any other kind dies.
 
 # METHODS
 
@@ -77,7 +119,7 @@ Unknown parameters die. The parameters:
 my $offset = $mark->start;
 ```
 
-The offset of the first character the mark covers.
+Returns the character offset of the first character the mark covers.
 
 ## end
 
@@ -85,7 +127,9 @@ The offset of the first character the mark covers.
 my $offset = $mark->end;
 ```
 
-The offset after the last character the mark covers.
+Returns the character offset of the first character after the range,
+which is one more than the offset of the last character the mark
+covers.
 
 ## span\_length
 
@@ -93,7 +137,7 @@ The offset after the last character the mark covers.
 my $characters = $mark->span_length;
 ```
 
-The number of characters the mark covers, `end - start`.
+Returns the number of characters the mark covers, `end - start`.
 
 ## kind
 
@@ -101,7 +145,7 @@ The number of characters the mark covers, `end - start`.
 my $kind = $mark->kind;    # 'bold', 'link', ...
 ```
 
-The kind.
+Returns the kind of the mark.
 
 ## is\_link
 
@@ -109,7 +153,7 @@ The kind.
 if ( $mark->is_link ) { ... }
 ```
 
-1 for a `link` mark, 0 otherwise.
+Returns 1 for a mark of kind `link`, and 0 for every other kind.
 
 ## link
 
@@ -117,9 +161,11 @@ if ( $mark->is_link ) { ... }
 my $destination = $mark->link;    # or undef
 ```
 
-The destination of a `link` mark, `undef` for the other kinds.
+Returns the destination of a `link` mark, exactly as it was given to
+the constructor, or `undef` for marks of other kinds.
 
 # SEE ALSO
 
 [Term::Fabulous::Document::Block](Block.md), [Term::Fabulous::Document::Look](Look.md),
-[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md).
+[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), [Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md),
+[Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md).

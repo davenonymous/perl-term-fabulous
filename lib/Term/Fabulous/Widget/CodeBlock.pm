@@ -278,7 +278,7 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::CodeBlock - Code on a background of its own, clipped and scrolled sideways
+Term::Fabulous::Widget::CodeBlock - Unwrapped code on its own background, clipped and scrolled sideways
 
 =head1 SYNOPSIS
 
@@ -289,11 +289,14 @@ Term::Fabulous::Widget::CodeBlock - Code on a background of its own, clipped and
 		language => 'perl',
 	);
 
-	# Color the keyword "my":
+	# Style the keyword "my" (characters 0 to 2):
 	$code->spans( [ [ 0, 2, 'bold #c678dd' ] ] );
 
-	# Syntax highlighting: a function from the code to spans.
+	# Syntax highlighting: a function that turns the code into spans.
 	$code->highlighter( sub ( $text, $language ) { return [ my_highlighter( $text, $language ) ] } );
+
+	# Scroll the code eight columns to the left.
+	$code->offset(8);
 
 =begin html
 
@@ -305,41 +308,49 @@ The program is F<examples/widgets/code-block.pl>.
 
 =head1 DESCRIPTION
 
-A code block shows a verbatim paragraph: lines of code, never wrapped,
-on a background that sets them apart from the prose around them. It is
-a L<Term::Fabulous::Widget::Display>, a widget that paints its cells
-itself (see L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>),
+A code block shows lines of code, such as a verbatim paragraph of a
+document. The lines never wrap, and the block draws them on a
+background of their own that sets them apart from the surrounding
+prose. L<Term::Fabulous::Widget::DocumentView> shows every verbatim
+block of a document with a code block; a program can also use the
+widget on its own.
+
+The block is a L<Term::Fabulous::Widget::Display>, a widget that paints
+its cells itself (see
+L<Term::Fabulous::Manual::CustomWidgets/A widget that draws itself>),
 for two reasons:
 
 =over
 
 =item *
 
-Code must not wrap, and a line that is wider than the block must end
-at the block's edge, not run on into the border of the document
-around it. A Display owns exactly its cells, so nothing it paints can
-leave them. Clipped lines show a mark in the margin: C<›> where a line
-goes on to the right, C<‹> where it is scrolled to the left.
+Code must not wrap, and a line that is wider than the block must end at
+the block's edge instead of running into the border of the surrounding
+view. A Display paints only its own cells, so nothing it draws can
+spill outside. A clipped line shows a mark in the margin: C<›> on the
+right where the line continues beyond the right edge, and C<‹> on the
+left of every non-empty line while the code is scrolled sideways. A
+wide character that an edge would cut in half is left out.
 
 =item *
 
-Every character can be painted in a look of its own, from the
-highlighter and from the program's spans, without asking Clay to lay
-the text out.
+Every character can have a style of its own, from the highlighter and
+from the program's spans, and Clay does not have to lay out the text.
 
 =back
 
-The block is as tall as its code has lines and as wide as its parent
-allows (C<natural_size> asks for C<sizing_grow> in width). Its colors
-are the C<code_block> and C<clipped> styles of
-L<Term::Fabulous::Document::Look>, taken from the theme; one column on
-either side is margin.
+The block is as many rows tall as its code has lines, and as wide as
+its parent allows (C<natural_size> requests C<sizing_grow> for the
+width). One column on each side is a margin, where the clip marks
+appear. The colors are the C<code_block> and C<clipped> styles of
+L<Term::Fabulous::Document::Look> in the theme the block draws with.
 
 The block shows its code shifted to the left by L</offset> columns. It
-does not scroll by itself: the widget it is shown in decides, so that
-several blocks can move together.
-L<Term::Fabulous::Widget::DocumentView> scrolls all its code blocks
-sideways with the keys and the horizontal wheel.
+does not react to keys or the mouse itself: the widget that contains it
+decides when to scroll, so that several blocks can move together.
+L<Term::Fabulous::Widget::DocumentView>, for example, scrolls all its
+code blocks sideways together with the C<Left> and C<Right> keys and
+the horizontal mouse wheel.
 
 =head1 CONSTRUCTOR
 
@@ -347,122 +358,171 @@ sideways with the keys and the horizontal wheel.
 
 	my $code = Term::Fabulous::Widget::CodeBlock->new( code => $text, %parameters );
 
-All parameters of L<Term::Fabulous::Widget::Display> (C<id>,
-C<layout>, ...) plus the following. Unknown parameters die, and so do
-invalid values, with a message that names the parameter.
+Creates a code block. It takes all parameters of
+L<Term::Fabulous::Widget::Display> (C<id>, C<layout> and so on), plus
+the following. Unknown parameters die, and so do invalid values, with a
+message that names the parameter.
 
 =over
 
 =item C<code>
 
-The code, a string; lines are separated by C<"\n">. Default: empty.
-Tabs should be expanded beforehand (a tab is shown as one space).
+The code, a string, with lines separated by C<"\n">. Default: the empty
+string. Expand tabs before passing the code: the block shows each tab
+as a single space.
 
 =item C<language>
 
-C<undef> (the default) or a non-empty string: the language the code is
-written in. The block itself does nothing with it but pass it to the
-C<highlighter>.
+C<undef> (the default) or a non-empty string that names the language
+of the code, such as C<perl>. The block does not use it except to pass
+it to the C<highlighter>.
 
 =item C<highlighter>
 
-C<undef> (the default) or a code reference, called as
-C<< $highlighter->( $code, $language ) >> when the block is painted
-for the first time after the code, the language or the highlighter
-changed. It returns an array reference of spans
-C<[ $start, $end, $style ]>: character offsets into the code and a
-style string or hash of L<Term::Fabulous::Text::Style>
-(C<'bold #c678dd'>), the format of the spans of a
-L<Term::Fabulous::Widget::RichText>. The result is kept until one of
-the three changes. A result that is not such an array dies when the
-block is painted. See L</SYNTAX HIGHLIGHTING>.
+C<undef> (the default) or a code reference that computes the syntax
+highlighting. The block calls it as
+C<< $highlighter->( $code, $language ) >> the first time it paints
+after the code, the language or the highlighter changed, and keeps the
+result until one of them changes again.
+
+The highlighter returns an array reference of spans
+C<[ $start, $end, $style ]>. C<$start> and C<$end> are character
+offsets into the code (C<$end> is the offset after the last character
+of the span), and C<$style> is a style string or style hash of
+L<Term::Fabulous::Text::Style>, such as C<'bold #c678dd'>. This is the
+same format as the spans of a L<Term::Fabulous::Widget::RichText>. A
+result in any other format, or a span that does not lie within the
+code, dies when the block is painted. See L</SYNTAX HIGHLIGHTING>.
 
 =item C<spans>
 
-An array reference of spans in the same format, applied after the
-highlighter's, so they win where both style a character: a search
-match stays visible in highlighted code. Default: none.
+An array reference of spans in the same format, for styles that come
+from the program rather than from the language, such as search
+matches. They are applied on top of the highlighter's spans: where both
+style a character, the program's span overrides the colors and style
+bits it sets, so a search match stays visible in highlighted code.
+Default: no spans.
 
 =item C<offset>
 
-A non-negative integer, default 0: how many columns the code is
-scrolled to the left. It is kept as given; the block shows at most the
-offset that brings its widest line's end into view (L</shown_offset>).
+A non-negative integer, default 0: the number of columns by which the
+code is scrolled to the left. The block keeps the value as given, but
+paints with at most the offset that brings the end of its widest line
+into view (see L</shown_offset>).
 
 =back
 
 =head1 METHODS
 
-The methods of L<Term::Fabulous::Widget::Display>, plus the accessors
-of the parameters, which return the value without an argument and set
-it with one, check it like the constructor and show the change in the
-next frame:
+The block has all methods of L<Term::Fabulous::Widget::Display>, plus
+the following. The accessors of the parameters return the current value
+when called without an argument. With an argument, they check the new
+value as L</new> does (an invalid value dies), set it, and return it;
+the change shows in the next frame.
 
 =head2 code
 
 	$code->code("print 42;\n");
 
-Setting the code drops the spans, which pointed into the old code.
+Gets or sets the code. Setting it also removes the program's spans
+(L</spans>), because their offsets refer to the old code, and makes the
+highlighter run again at the next paint.
 
 =head2 language
 
 	$code->language('perl');
 
+Gets or sets the language. Setting it makes the highlighter run again
+at the next paint.
+
 =head2 highlighter
 
 	$code->highlighter( \&highlight );
+
+Gets or sets the highlighter. Setting it discards the stored result of
+the previous highlighter; the new one runs at the next paint.
 
 =head2 spans
 
 	my $spans = $code->spans;    # [ [ 0, 2, { set => ..., clear => ..., color => ..., background => ... } ], ... ]
 
-Reading returns a copy, with each style normalized to a style hash.
+Gets or sets the program's spans. Both the getter and the setter return
+a copy of the spans, in which each style is normalized to a style hash
+of L<Term::Fabulous::Text::Style>. Setting the spans does not run the
+highlighter again.
 
 =head2 offset
 
 	$code->offset(8);
 
+Gets or sets the offset, in columns. The block repaints only when the
+change affects what it shows, that is, when L</shown_offset> changes.
+
 =head2 shown_offset
 
 	my $columns = $code->shown_offset;
 
-The offset the block is painted with: L</offset>, but no more than
+Returns the offset the block paints with: L</offset>, but no more than
 L</max_offset>.
 
 =head2 max_offset
 
 	my $columns = $code->max_offset;
 
-How far the code can scroll: the width of its widest line less the
-columns the last frame showed of it, or 0. Before the first frame, when
-the block has no columns yet, it is the width of the widest line.
+Returns how many columns the code can be scrolled: the width of its
+widest line minus the number of columns the block showed of it in the
+last frame (its width less the two margin columns), or 0 if every line
+fits. Before the first frame, when the block has no width yet, this is
+the width of the widest line.
 
 =head2 line_count
 
 	my $lines = $code->line_count;
 
-The number of lines of the code (at least 1).
+Returns the number of lines of the code, which is at least 1: empty
+code counts as one empty line, and a trailing C<"\n"> adds an empty
+last line.
 
 =head2 widest_line_columns
 
 	my $columns = $code->widest_line_columns;
 
-The width of the widest line, in terminal columns.
+Returns the width of the widest line, in terminal columns; a wide
+character, such as a CJK character, counts as two.
 
 =head1 SYNTAX HIGHLIGHTING
 
-The block does not know any programming language. A highlighter is any
-function from code and a language name to spans, so syntax
-highlighting plugs in from outside: through the C<highlighter>
+The block knows no programming language. A highlighter is any function
+that maps the code and a language name to spans, so syntax highlighting
+is supplied from outside. Pass the highlighter to the C<highlighter>
 parameter of L<Term::Fabulous::Widget::DocumentView/new>, which hands
-it to every code block of the view, or to a single block. A highlighter
-for Perl could use L<PPI> to find the tokens and give each kind of
-token a style; one that does not know the language returns C<[]>.
+it to every code block of the view, or set it on a single block. A
+highlighter that does not know the language returns an empty array
+reference, C<[]>.
+
+A highlighter for Perl could use L<PPI> to find the tokens and give
+each kind of token a style. The following one only marks a few Perl
+keywords:
+
+	my $highlighter = sub ( $code, $language ) {
+		return [] unless defined $language && $language eq 'perl';
+		my @spans;
+		while ( $code =~ /\b(?:my|our|sub|return|if|elsif|else|unless|foreach|while)\b/g ) {
+			push @spans, [ $-[0], $+[0], 'bold #c678dd' ];
+		}
+		return \@spans;
+	};
+
+	$code->highlighter($highlighter);
+
+L<Term::Fabulous::Cookbook::Documents> has a recipe for adding syntax
+highlighting to a document view.
 
 =head1 KDL PROPERTIES
 
-The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<code>, C<language> and C<offset>:
+The block accepts the properties of
+L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus C<code>,
+C<language> and C<offset>:
 
 =for highlighter language=kdl
 
@@ -475,7 +535,9 @@ C<code>, C<language> and C<offset>:
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Document::Block::Verbatim>, L<Term::Fabulous::Widget::DocumentView>,
+L<Term::Fabulous::Cookbook::Documents>,
+L<Term::Fabulous::Document::Block::Verbatim>,
+L<Term::Fabulous::Widget::DocumentView>,
 L<Term::Fabulous::Widget::Display>, L<Term::Fabulous::Text::Style>.
 
 =cut
