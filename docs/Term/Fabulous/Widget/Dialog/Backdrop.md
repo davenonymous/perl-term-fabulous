@@ -54,6 +54,13 @@ tracker's default order limited to the dialog
 Tab goes to the first widget and Shift+Tab to the last; with no
 focusable widget inside, both return the Backdrop.
 
+## focus\_scope
+
+The dialog: the subtree the order above covers. A widget inside the
+dialog that hands the focus on past its own subtree with
+["focus\_after" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#focus_after) therefore stays inside the dialog
+and never lands on the Backdrop.
+
 # SEE ALSO
 
 [Term::Fabulous::Widget::Dialog](../Dialog.md).

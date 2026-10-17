@@ -104,6 +104,13 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		return $self unless defined $dialog;
 		return $self->default_previous_focus( within => $dialog ) // $self;
 	}
+
+	# A widget inside the dialog that hands the focus on past its own
+	# subtree (Clay::UI::Interaction's focus_after) stays inside the
+	# dialog too, and never lands on the backdrop.
+	method focus_scope () {
+		return $dialog // $self;
+	}
 }
 
 1;
@@ -186,6 +193,13 @@ tracker's default order limited to the dialog
 L<Clay::UI::Interaction/default_next_focus>). From the Backdrop itself,
 Tab goes to the first widget and Shift+Tab to the last; with no
 focusable widget inside, both return the Backdrop.
+
+=head2 focus_scope
+
+The dialog: the subtree the order above covers. A widget inside the
+dialog that hands the focus on past its own subtree with
+L<Clay::UI::Interaction/focus_after> therefore stays inside the dialog
+and never lands on the Backdrop.
 
 =head1 SEE ALSO
 
