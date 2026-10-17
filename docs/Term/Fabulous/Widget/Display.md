@@ -263,6 +263,8 @@ The frame, from 0 to `$count - 1`, of an animation whose frames last
 start of the clock so that every widget with the same interval moves
 in step. Also asks for a frame when the next one is due, so call it
 from ["paint\_key"](#paint_key) only while the widget animates (see ["ANIMATION"](#animation)).
+A time a rounding error short of a frame boundary counts as the frame
+that starts there.
 
 # SEE ALSO
 

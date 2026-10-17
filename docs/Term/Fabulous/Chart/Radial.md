@@ -68,6 +68,9 @@ my ( $x, $y ) = point_at( $circle, $distance, $angle, $start );
 
 The reverse: the point in cells at `$distance` cell widths from the
 center and `$angle` turns clockwise from `$start` (default 0).
+A coordinate that is mathematically whole, such as the row of a point
+at a quarter turn, is returned as a whole number, free of the rounding
+noise of `sin` and `cos`.
 
 # SEE ALSO
 
