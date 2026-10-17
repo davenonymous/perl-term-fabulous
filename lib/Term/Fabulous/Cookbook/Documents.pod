@@ -1056,7 +1056,7 @@ This program is shipped as F<examples/cookbook/document-contents.pl>.
 
 	my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 	use Term::Fabulous::Widget::Box as Box
-	use Term::Fabulous::Widget::RichText as RichText
+	use Term::Fabulous::Widget::Text as Text
 	use Term::Fabulous::Widget::DocumentView as DocumentView
 
 	Box "root" {
@@ -1067,7 +1067,7 @@ This program is shipped as F<examples/cookbook/document-contents.pl>.
 			padding left=1 right=1
 			border style=Round
 			bordered #true
-			RichText "contents" { text ""; }
+			Text "contents" { text ""; }
 		}
 
 		// The view is framed by a box around it rather than by a border of its
@@ -1157,10 +1157,10 @@ changes, not after every scrolled row.
 
 =item *
 
-The contents are a L<RichText|Term::Fabulous::Widget::RichText> written
+The contents are a L<Text|Term::Fabulous::Widget::Text> written
 in markup: every heading is a link whose target is its section number.
 A heading that contains C<[> is escaped as C<\[>, so that the markup
-parser does not read it as a tag. A RichText with links is a Tab stop:
+parser does not read it as a tag. A Text with links is a Tab stop:
 C<Tab> moves the focus between the contents and the document, and in
 the contents C<Left>, C<Right> and C<Enter> select and follow the
 links. Setting the markup keeps the focus.
@@ -1876,7 +1876,7 @@ the one row that C<body_rows> counts.
 
 =item C<text>
 
-The L<RichText|Term::Fabulous::Widget::RichText> that shows the text
+The L<Text|Term::Fabulous::Widget::Text> that shows the text
 of the block, or C<undef> for a block without text. The view styles
 this widget with the marks, the selected link and the search matches.
 A kind with text creates it with

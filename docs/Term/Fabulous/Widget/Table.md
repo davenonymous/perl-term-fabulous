@@ -1391,6 +1391,17 @@ $table->row_id('sku');
 Where row ids come from (see ["Row ids" in Term::Fabulous::Manual::Tables](../Manual/Tables.md#row-ids)). Setting it dies while the
 table has rows.
 
+### estimated\_rows
+
+```perl
+my $rows = $table->estimated_rows($columns);
+```
+
+The rows the table will take before it is laid out (see
+["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows)): the header, the rows of
+the current page and the pager when there are pages, inside the
+border. The lines between the rows are not counted.
+
 ## Widgets of the table
 
 The table builds its widgets itself; these methods give access to them

@@ -203,6 +203,16 @@ it with what `paint` reads from other objects, which do not mark this
 widget changed. The values are compared as strings; keep them cheap to
 compute, since the key is computed for every frame.
 
+## estimated\_content\_rows
+
+```perl
+my $rows = $display->estimated_content_rows($columns);
+```
+
+The rows of the ["natural\_size"](#natural_size), or the minimum of its sizing when
+the height grows with the box; see
+["estimated\_content\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_content_rows).
+
 ## color\_attr
 
 ```perl

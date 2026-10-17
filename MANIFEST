@@ -252,6 +252,7 @@ lib/Term/Fabulous/Role/HasOptions.pm
 lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/Terminal.pm
+lib/Term/Fabulous/Role/Searchable.pm
 lib/Term/Fabulous/Role/Themed.pm
 lib/Term/Fabulous/Role/Validatable.pm
 lib/Term/Fabulous/Roving.pm
@@ -314,7 +315,6 @@ lib/Term/Fabulous/Widget/DonutChart.pm
 lib/Term/Fabulous/Widget/Dropdown.pm
 lib/Term/Fabulous/Widget/Element.pm
 lib/Term/Fabulous/Widget/Dropdown/List.pm
-lib/Term/Fabulous/Widget/FocusableText.pm
 lib/Term/Fabulous/Widget/Histogram.pm
 lib/Term/Fabulous/Widget/Image.pm
 lib/Term/Fabulous/Widget/Input.pm
@@ -326,7 +326,6 @@ lib/Term/Fabulous/Widget/ProgressBar.pm
 lib/Term/Fabulous/Widget/RadarChart.pm
 lib/Term/Fabulous/Widget/RadioButton.pm
 lib/Term/Fabulous/Widget/RadioGroup.pm
-lib/Term/Fabulous/Widget/RichText.pm
 lib/Term/Fabulous/Widget/ScatterPlot.pm
 lib/Term/Fabulous/Widget/ScrollBox.pm
 lib/Term/Fabulous/Widget/Scrollbar.pm
@@ -399,6 +398,7 @@ t/document-look.t
 t/document-overlays.t
 t/document.t
 t/editor.t
+t/estimated-rows.t
 t/events.t
 t/layout.t
 t/lib/ChartTest.pm
@@ -468,7 +468,6 @@ t/widget-progress-bar.t
 t/widget-radar-chart.t
 t/widget-radio.t
 t/widget-revision.t
-t/widget-rich-text.t
 t/widget-scroll-box.t
 t/widget-segmented-control.t
 t/widget-sixel.t

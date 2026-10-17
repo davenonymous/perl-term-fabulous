@@ -560,7 +560,7 @@ Term::Fabulous::Widget::VirtualList - A ScrollBox that attaches only the items n
 
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 	use Term::Fabulous::Widget::VirtualList;
-	use Term::Fabulous::Widget::RichText;
+	use Term::Fabulous::Widget::Text;
 
 	my @paragraphs = ...;    # tens of thousands of markup strings
 
@@ -568,7 +568,7 @@ Term::Fabulous::Widget::VirtualList - A ScrollBox that attaches only the items n
 		id       => 'document',                                   # required
 		count    => scalar @paragraphs,
 		build    => sub ($index) {
-			return Term::Fabulous::Widget::RichText->new( markup => $paragraphs[$index] );
+			return Term::Fabulous::Widget::Text->new( markup => $paragraphs[$index] );
 		},
 		estimate => sub ( $index, $columns ) {                    # rows, before the item was laid out
 			return 1 + int( length( $paragraphs[$index] ) / $columns );
@@ -633,7 +633,7 @@ B<Required>. A code reference called as C<< $build->($index) >> with
 the index of an item, from 0 to C<count - 1>, when the item comes near
 the viewport. It returns the item's widget: any widget without a
 parent, a L<Term::Fabulous::Widget::Text>, a
-L<Term::Fabulous::Widget::RichText>, a L<Term::Fabulous::Widget::Box>
+L<Term::Fabulous::Widget::Text>, a L<Term::Fabulous::Widget::Box>
 with children, anything. The list keeps the widget and never calls
 C<build> for that index again until L</rebuild>. A return value that
 is not a widget, a widget that has a parent, or the widget of another
@@ -719,7 +719,7 @@ The widget of an item, built now if the list has not built it yet. Dies
 for an index the list does not have. The widget is attached while the
 item is near the viewport and detached otherwise; it is the same object
 each time. A text widget (a L<Term::Fabulous::Widget::Text> or
-L<Term::Fabulous::Widget::RichText>) is laid out inside a
+L<Term::Fabulous::Widget::Text>) is laid out inside a
 L<Term::Fabulous::Widget::Box> of its own, because a text has no box
 the list could measure; its C<parent> is that box.
 

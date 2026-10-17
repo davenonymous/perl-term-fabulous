@@ -751,7 +751,7 @@ frame costs what the visible part costs.
 my $document = Term::Fabulous::Widget::VirtualList->new(
         id     => 'document',
         count  => scalar @paragraphs,
-        build  => sub ($index) { Term::Fabulous::Widget::RichText->new( markup => $paragraphs[$index] ) },
+        build  => sub ($index) { Term::Fabulous::Widget::Text->new( markup => $paragraphs[$index] ) },
         layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
 );
 ```

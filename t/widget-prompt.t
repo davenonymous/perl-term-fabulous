@@ -163,7 +163,7 @@ subtest 'alert, title and message' => sub {
 	$prompt->title('Done');
 	is $prompt->children->[0]->text, 'Done', 'a title set later goes first';
 	$prompt->message('');
-	is scalar( grep { $_->isa('Term::Fabulous::Widget::RichText') } @{ $prompt->children } ), 0, 'an empty message takes it away';
+	is scalar( grep { $_->isa('Term::Fabulous::Widget::Text') } @{ $prompt->children } ), 1, 'an empty message takes it away; the title stays';
 	$prompt->close;
 };
 

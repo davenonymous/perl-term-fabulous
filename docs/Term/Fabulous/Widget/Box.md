@@ -169,6 +169,19 @@ accessors `layout`, `floating`, `background_color`,
 nothing for applications; the methods in ["SUBCLASS INTERFACE"](#subclass-interface) are for
 widget authors.
 
+## estimated\_rows
+
+```perl
+my $rows = $box->estimated_rows($columns);
+```
+
+The rows the box will take in that many columns, before Clay has laid
+it out (see ["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows)): its padding and
+border around its children's estimates. Children one under the other
+add up, with the child gap between them; side by side, a child with a
+fixed width gets that width, the others share the rest, and the
+tallest decides. A child without an estimate counts one row.
+
 # EVENTS
 
 A Box fires no events of its own. Events fired on its children bubble

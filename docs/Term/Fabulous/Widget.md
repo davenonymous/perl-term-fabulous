@@ -575,6 +575,37 @@ an event name, in the order they were added (an empty array reference
 when there are none). Changing the array does not change the widget.
 Mostly useful in tests.
 
+## estimated\_rows
+
+```perl
+my $rows = $widget->estimated_rows($columns);
+```
+
+The rows the widget will take when it is laid out in that many
+columns, before Clay has laid it out: a guess for a list that builds
+only the items near its viewport and needs the height of the others
+for its scrollbar ([Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md),
+[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md)). A fixed height in the layout
+is the answer; otherwise it is the padding and the border around what
+["estimated\_content\_rows"](#estimated_content_rows) says the content takes. Clay's layout
+corrects a guess that was off. `$columns` must be a positive integer.
+[Term::Fabulous::Widget::Text](Widget/Text.md) has the same method, since a text is
+not a Widget.
+
+## estimated\_content\_rows
+
+```perl
+method estimated_content_rows :override ($columns) { ... }
+```
+
+The rows the content inside the padding and the border takes, given
+the columns left for it: one, unless a subclass knows better. A
+[Term::Fabulous::Widget::Box](Widget/Box.md) composes the estimates of its children,
+a [Term::Fabulous::Widget::Display](Widget/Display.md) answers from its `natural_size`,
+a [Term::Fabulous::Widget::Table](Widget/Table.md) counts its header and the rows of
+its page. Override it in a widget of your own whose height is known
+before the layout.
+
 ## layout
 
 ```perl

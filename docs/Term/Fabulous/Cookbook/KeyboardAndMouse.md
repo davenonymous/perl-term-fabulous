@@ -10,7 +10,7 @@ This page shows how a program reacts to the user: key bindings for
 the whole program, buttons that can be clicked or pressed with the
 keyboard, links inside a text, and clicks on single words. It uses
 [Term::Fabulous::Event::KeyPress](../Event/KeyPress.md), [Term::Fabulous::Widget::Button](../Widget/Button.md),
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) and
+[Term::Fabulous::Widget::Text](../Widget/Text.md) and
 [Term::Fabulous::Event::TextClick](../Event/TextClick.md). The concepts (key names, bubbling,
 focus, clicks and hover) are explained in
 [Term::Fabulous::Manual::Events](../Manual/Events.md). Drawing with the mouse is shown in
@@ -20,7 +20,7 @@ The recipes on this page:
 
 - ["Bind a key to an action"](#bind-a-key-to-an-action)
 - ["Add buttons for the mouse and the keyboard (Button)"](#add-buttons-for-the-mouse-and-the-keyboard-button)
-- ["Follow links in a text (RichText links)"](#follow-links-in-a-text-richtext-links)
+- ["Follow links in a text (Text links)"](#follow-links-in-a-text-text-links)
 - ["React to a click on a word (TextClick)"](#react-to-a-click-on-a-word-textclick)
 
 # Bind a key to an action
@@ -273,7 +273,7 @@ fires [TextClick](../Event/TextClick.md), see
 ["Quit with q or Escape" in Term::Fabulous::Cookbook::GettingStarted](GettingStarted.md#quit-with-q-or-escape). The clock is explained in
 [the recipe Update the screen from a timer](LiveData.md#update-the-screen-from-a-timer-a-clock).
 
-# Follow links in a text (RichText links)
+# Follow links in a text (Text links)
 
 Goal: a help text with links that the user follows with the mouse or
 the keyboard, links whose targets are pages of the program, a URL and
@@ -290,7 +290,6 @@ no warnings 'experimental::signatures';
 use Term::Fabulous;
 use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::RichText;
 use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
@@ -339,13 +338,13 @@ my $root = Term::Fabulous::Widget::Box->new(
 
 # The page wraps at 60 columns: the width of the box around it.
 my $page_box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(60) } } );
-my $page     = Term::Fabulous::Widget::RichText->new( markup => $markup_of_page{start} );
+my $page     = Term::Fabulous::Widget::Text->new( markup => $markup_of_page{start} );
 $page_box->add_child($page);
 my $status = Term::Fabulous::Widget::Text->new( text => 'Tab selects a link, Enter follows it.', text_color => [ 150, 160, 180, 255 ] );
 
 # A footer whose links are given from Perl: any value can be a target,
 # here the code to run.
-my $footer = Term::Fabulous::Widget::RichText->new( text => 'Back   Quit' );
+my $footer = Term::Fabulous::Widget::Text->new( text => 'Back   Quit' );
 $root->add_child( $page_box, $footer, $status );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root, theme => $theme );
@@ -372,7 +371,7 @@ sub go_back () {
 $footer->add_link( \&go_back,               0, 4 );
 $footer->add_link( sub { $ui->loop->stop }, 7, 11 );
 
-# LinkActivate bubbles up from both RichTexts, so one listener on the
+# LinkActivate bubbles up from both Texts, so one listener on the
 # root follows every link, clicked or chosen with the keyboard.
 $root->on(
         LinkActivate => sub ($event) {
@@ -384,7 +383,7 @@ $root->on(
         }
 );
 
-# Keys the focused RichText does not use bubble on to the root.
+# Keys the focused Text does not use bubble on to the root.
 $root->on(
         KeyPress => sub ($event) {
                 my $key = $event->key_name // '';
@@ -406,7 +405,7 @@ link of the start page (`keys`), Enter followed it, and Right selected
 the only link of the new page. The mouse pointer is over `Quit`.
 
 - `[link=TARGET]words[/link]` in the markup of a
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) makes `words` a link to
+[Term::Fabulous::Widget::Text](../Widget/Text.md) makes `words` a link to
 `TARGET`, which is the text between `=` and `]` (see
 [Term::Fabulous::Text::Markup](../Text/Markup.md)). The widget does not go anywhere by
 itself: following a link fires
@@ -417,10 +416,10 @@ program only reports.
 characters `$start` up to (not including) `$end` of the text. Such a
 target can be any value, not only a string: the footer's links carry
 the code they run, and the listener calls it.
-- `LinkActivate` bubbles from the RichText to its ancestors, so one
-listener on the root follows the links of both RichTexts. It fires the
+- `LinkActivate` bubbles from the Text to its ancestors, so one
+listener on the root follows the links of both Texts. It fires the
 same way for a left click on a link and for Enter on the selected link.
-- A RichText with links is a Tab stop. When it gets the focus, its first
+- A Text with links is a Tab stop. When it gets the focus, its first
 link is selected; Left and Right select the previous and the next one.
 Keys it does not use, such as Backspace and Escape here, go on to the
 root. Giving the page new markup keeps the focus, but selects no link
@@ -431,11 +430,11 @@ the words) and `text.link.background` exist in the states normal,
 follows); this program's theme draws links in the `success` green and
 the selected link as dark text on that green. The defaults, an
 underline in the accent color, are in the picture of
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md). A link changes only the color, the
+[Term::Fabulous::Widget::Text](../Widget/Text.md). A link changes only the color, the
 background and the underline of its words: the bold link on the page
-`links` stays bold. See ["Looks" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#looks).
-- For many RichTexts that share one selection, as in a document viewer,
-see ["Links in a bigger widget" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links-in-a-bigger-widget).
+`links` stays bold. See ["Looks" in Term::Fabulous::Widget::Text](../Widget/Text.md#looks).
+- For many Texts that share one selection, as in a document viewer,
+see ["Links in a bigger widget" in Term::Fabulous::Widget::Text](../Widget/Text.md#links-in-a-bigger-widget).
 
 # React to a click on a word (TextClick)
 
@@ -453,14 +452,13 @@ no warnings 'experimental::signatures';
 use Term::Fabulous;
 use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_KEY_MOUSE_RIGHT);
 use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::RichText;
 use Term::Fabulous::Widget::Text;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
 my %meaning_of = (
         cell     => 'one character position of the terminal',
         grapheme => 'what a reader sees as one character',
-        span     => 'a range of a RichText with a look of its own',
+        span     => 'a range of a Text with a look of its own',
         terminal => 'the program that shows this one',
         widget   => 'a part of the screen that draws itself',
 );
@@ -474,12 +472,12 @@ my $root = Term::Fabulous::Widget::Box->new(
         },
 );
 
-# A plain Text and a RichText, wrapped at 48 columns by the box around
+# A plain Text and a Text, wrapped at 48 columns by the box around
 # them. A click on either fires TextClick on it.
 my $article = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(48) }, child_gap => 1 } );
 $article->add_child(
-        Term::Fabulous::Widget::Text->new( text => 'Every widget draws into the cells of the terminal. A wide grapheme takes two cells.' ),
-        Term::Fabulous::Widget::RichText->new( markup => 'A [bold #e5c07b]span[/] changes the look of part of a text; the click reports the spans under the pointer.' ),
+        Term::Fabulous::Widget::Text->new( text   => 'Every widget draws into the cells of the terminal. A wide grapheme takes two cells.' ),
+        Term::Fabulous::Widget::Text->new( markup => 'A [bold #e5c07b]span[/] changes the look of part of a text; the click reports the spans under the pointer.' ),
 );
 
 my $meaning = Term::Fabulous::Widget::Text->new( text => 'Left-click a word to look it up.',                       text_color => [ 152, 195, 121, 255 ] );
@@ -532,7 +530,7 @@ right click on the bold `span`.
 
 - A mouse button pressed on a character of a
 [Term::Fabulous::Widget::Text](../Widget/Text.md) or a
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) fires
+[Term::Fabulous::Widget::Text](../Widget/Text.md) fires
 [TextClick](../Event/TextClick.md) on that text. Every
 button counts, the left, the middle and the right one; dragging,
 releasing and the wheel fire nothing. A click on the empty part of a
@@ -544,7 +542,7 @@ strips what it does not want. On a blank it is `undef`.
 widget's text, counted in characters from 0, also on the second line of
 a wrapped text; `word_start` and `word_end` are the offsets of the
 word's first character and of the character after its last.
-- For a RichText, `$event->spans` lists the spans under the pointer
+- For a Text, `$event->spans` lists the spans under the pointer
 as `[ $start, $end, $style ]`, and `$event->link` is the target of
 the link there, if any.
 - `TextClick` bubbles, so a listener on any box around the texts hears

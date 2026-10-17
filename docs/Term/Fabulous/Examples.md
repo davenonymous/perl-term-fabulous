@@ -567,7 +567,7 @@ in boxes, and in several scripts.
 
 ### examples/widgets/rich-text.pl
 
-[Term::Fabulous::Widget::RichText](Widget/RichText.md): bold words, colored phrases and
+[Term::Fabulous::Widget::Text](Widget/Text.md): bold words, colored phrases and
 highlighted ranges inside one text, from markup and from spans, every
 text style the terminal has, spans that run across the line breaks of
 a wrapped text, and links in their three looks. The picture shows it
@@ -1156,7 +1156,7 @@ The programs of [Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAn
 
 - `follow-links.pl`
 
-    ["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links):
+    ["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links):
     a help text of three pages whose links lead to each other, a footer
     whose links go back and quit, and a theme that draws links in green.
     The picture shows the second page, after Tab and Enter followed the

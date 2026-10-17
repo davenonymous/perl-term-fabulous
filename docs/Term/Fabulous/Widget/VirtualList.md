@@ -7,7 +7,7 @@ Term::Fabulous::Widget::VirtualList - A ScrollBox that attaches only the items n
 ```perl
 use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous::Widget::VirtualList;
-use Term::Fabulous::Widget::RichText;
+use Term::Fabulous::Widget::Text;
 
 my @paragraphs = ...;    # tens of thousands of markup strings
 
@@ -15,7 +15,7 @@ my $document = Term::Fabulous::Widget::VirtualList->new(
         id       => 'document',                                   # required
         count    => scalar @paragraphs,
         build    => sub ($index) {
-                return Term::Fabulous::Widget::RichText->new( markup => $paragraphs[$index] );
+                return Term::Fabulous::Widget::Text->new( markup => $paragraphs[$index] );
         },
         estimate => sub ( $index, $columns ) {                    # rows, before the item was laid out
                 return 1 + int( length( $paragraphs[$index] ) / $columns );
@@ -81,7 +81,7 @@ Unknown parameters die. A VirtualList takes every parameter of
     the index of an item, from 0 to `count - 1`, when the item comes near
     the viewport. It returns the item's widget: any widget without a
     parent, a [Term::Fabulous::Widget::Text](Text.md), a
-    [Term::Fabulous::Widget::RichText](RichText.md), a [Term::Fabulous::Widget::Box](Box.md)
+    [Term::Fabulous::Widget::Text](Text.md), a [Term::Fabulous::Widget::Box](Box.md)
     with children, anything. The list keeps the widget and never calls
     `build` for that index again until ["rebuild"](#rebuild). A return value that
     is not a widget, a widget that has a parent, or the widget of another
@@ -175,7 +175,7 @@ The widget of an item, built now if the list has not built it yet. Dies
 for an index the list does not have. The widget is attached while the
 item is near the viewport and detached otherwise; it is the same object
 each time. A text widget (a [Term::Fabulous::Widget::Text](Text.md) or
-[Term::Fabulous::Widget::RichText](RichText.md)) is laid out inside a
+[Term::Fabulous::Widget::Text](Text.md)) is laid out inside a
 [Term::Fabulous::Widget::Box](Box.md) of its own, because a text has no box
 the list could measure; its `parent` is that box.
 

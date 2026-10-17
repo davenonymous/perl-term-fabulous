@@ -34,7 +34,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Term::Fabulous::Widget::ProgressBar;
 	use Term::Fabulous::Widget::RadioButton;
 	use Term::Fabulous::Widget::RadioGroup;
-	use Term::Fabulous::Widget::RichText;
+	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::ScrollBox;
 	use Term::Fabulous::Widget::SegmentedControl;
 	use Term::Fabulous::Widget::Slider;
@@ -44,7 +44,6 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Term::Fabulous::Widget::Table;
 	use Term::Fabulous::Widget::Tabs;
 	use Term::Fabulous::Widget::Tabs::Page;
-	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextArea;
 	use Term::Fabulous::Widget::TextField;
 	use Term::Fabulous::Widget::Toast;
@@ -218,7 +217,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	}
 
 	method _build_text () {
-		my $links = Term::Fabulous::Widget::RichText->new(
+		my $links = Term::Fabulous::Widget::Text->new(
 			markup => 'Body text in the text color, with [link=one]a link[/link] and [link=two]another one[/link]. Point at a link to see it hovered; Tab to the text and Right to select one.',
 		);
 		return _column( Term::Fabulous::Widget::Text->new( text => 'Plain text, as most widgets draw it.' ), $links );

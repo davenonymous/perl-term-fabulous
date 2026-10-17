@@ -883,7 +883,7 @@ use Term::Fabulous::Layout;
 
 my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 use Term::Fabulous::Widget::Box as Box
-use Term::Fabulous::Widget::RichText as RichText
+use Term::Fabulous::Widget::Text as Text
 use Term::Fabulous::Widget::DocumentView as DocumentView
 
 Box "root" {
@@ -894,7 +894,7 @@ Box "root" {
                 padding left=1 right=1
                 border style=Round
                 bordered #true
-                RichText "contents" { text ""; }
+                Text "contents" { text ""; }
         }
 
         // The view is framed by a box around it rather than by a border of its
@@ -973,10 +973,10 @@ block indexes of all headings, so its length is the number of sections.
 the block at the top of the view belongs to, or `undef` above the
 first heading. The program rebuilds the contents only when this number
 changes, not after every scrolled row.
-- The contents are a [RichText](../Widget/RichText.md) written
+- The contents are a [Text](../Widget/Text.md) written
 in markup: every heading is a link whose target is its section number.
 A heading that contains `[` is escaped as `\[`, so that the markup
-parser does not read it as a tag. A RichText with links is a Tab stop:
+parser does not read it as a tag. A Text with links is a Tab stop:
 `Tab` moves the focus between the contents and the document, and in
 the contents `Left`, `Right` and `Enter` select and follow the
 links. Setting the markup keeps the focus.
@@ -1586,7 +1586,7 @@ reference with two entries:
 
     - `text`
 
-        The [RichText](../Widget/RichText.md) that shows the text
+        The [Text](../Widget/Text.md) that shows the text
         of the block, or `undef` for a block without text. The view styles
         this widget with the marks, the selected link and the search matches.
         A kind with text creates it with

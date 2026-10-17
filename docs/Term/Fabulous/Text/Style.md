@@ -25,14 +25,14 @@ my $look = apply_style( { attrs => TB_ITALIC, color => [ 220, 223, 228, 255 ], b
 
 # DESCRIPTION
 
-A _style_ is what a span of a [Term::Fabulous::Widget::RichText](../Widget/RichText.md)
+A _style_ is what a span of a [Term::Fabulous::Widget::Text](../Widget/Text.md)
 adds to the look of the characters it covers: style bits to set or
 clear, a text color and a background. It is written as a string of
 words, in the manner of Python's `rich` library, or given as a hash.
 This module turns both into one normalized hash, stacks such hashes
 (["compose\_styles"](#compose_styles)) and applies one to a look (["apply\_style"](#apply_style)). These
 two functions are the only place where style bits are combined:
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) composes the styles of nested spans
+[Term::Fabulous::Widget::Text](../Widget/Text.md) composes the styles of nested spans
 with the first, and [Term::Fabulous::Render::Text](../Render/Text.md) paints each run of
 a line with the second.
 
@@ -69,6 +69,16 @@ A style string is words separated by whitespace, in any order:
 
 The last word wins where words contradict (`bold not bold` clears
 bold). Unknown words die with the known ones.
+
+## Palette tokens
+
+A word that names a token of the theme's palette (`accent`,
+`text_muted`, `selection`, ... ; see ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens))
+is a color too: `'bold accent on surface_low'`. It stays the token's
+name in the style, and the widget that paints the style asks its
+theme for the color (["resolve\_style"](#resolve_style)), so a theme switch recolors
+the text. A word that is both a token and a color name is read as the
+token.
 
 ## Style hashes
 
@@ -140,10 +150,23 @@ look: the bits with `clear` removed and `set` added, and each color
 replaced when the style has one. The given look is not changed. The
 colors are passed through as they are, so they may be in any one form
 as long as the look and the style agree: [Term::Fabulous::Render::Text](../Render/Text.md)
-applies RichText runs whose colors are termbox attributes.
+applies Text runs whose colors are termbox attributes.
+
+## resolve\_style
+
+```perl
+my $resolved = resolve_style( $style, $theme );
+```
+
+The style with every palette token among its `color` and
+`background` replaced by the `[r, g, b, a]` the
+[theme](../Theme.md) gives it (`$theme->token`); a style
+without tokens comes back as it is. A token the theme does not know
+dies. [Term::Fabulous::Widget::Text](../Widget/Text.md) and
+[Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) call it when they paint.
 
 # SEE ALSO
 
-[Term::Fabulous::Text::Markup](Markup.md), [Term::Fabulous::Widget::RichText](../Widget/RichText.md),
+[Term::Fabulous::Text::Markup](Markup.md), [Term::Fabulous::Widget::Text](../Widget/Text.md),
 [Term::Fabulous::Color](../Color.md), [Term::Fabulous::Enum::WebColor](../Enum/WebColor.md),
 [Term::Fabulous::Termbox](../Termbox.md).

@@ -377,6 +377,16 @@ Plain functions, called as `Term::Fabulous::Theme::NAME(...)`.
 The names of the families, the tokens, the states (`normal` first)
 and the built-in themes.
 
+## has\_token
+
+```kdl
+if ( Term::Fabulous::Theme::has_token('accent') ) { ... }
+```
+
+Whether the word names a token of the palette; every theme has the
+same tokens. [Term::Fabulous::Text::Style](Text/Style.md) uses it to read a token as
+a color.
+
 ## slots
 
 ```kdl

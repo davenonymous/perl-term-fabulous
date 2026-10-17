@@ -25,12 +25,12 @@ use Term::Fabulous::Widget::Canvas;
 use Term::Fabulous::Widget::Checkbox;
 use Term::Fabulous::Widget::TextArea;
 use Term::Fabulous::Widget::ScrollBox;
-use Term::Fabulous::Widget::RichText;
 use Term::Fabulous::Widget::Text;
-use Term::Fabulous::Widget::TextNode;
+use Clay::UI::Text;
 
-# A Clay::UI text node that fires no events.
-class Test::PlainTextNode :isa(Term::Fabulous::Widget::TextNode) { }
+# A Clay::UI text node that fires no events (a Term::Fabulous text does,
+# since it can take the focus).
+class Test::PlainTextNode :does(Clay::UI::Text) { }
 
 # A Term::Fabulous on a 20x5 memory terminal, and the terminal.
 sub memory_ui {
@@ -457,7 +457,7 @@ subtest 'clicks on text fire TextClick, clicks on links LinkActivate' => sub {
 		layout           => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(10), height => sizing_grow() } },
 	);
 	my $plain = Term::Fabulous::Widget::Text->new( text => 'one two three' );    # wraps after 'two'
-	my $rich = Term::Fabulous::Widget::RichText->new( markup => 'see [link=perl.org]perl[/]' );
+	my $rich = Term::Fabulous::Widget::Text->new( markup => 'see [link=perl.org]perl[/]' );
 	$text_root->add_child( $plain, $rich );
 	my ($text_ui) = memory_ui( root => $text_root );
 	my ( @mouse_targets, @clicks, @activated );
@@ -478,7 +478,7 @@ subtest 'clicks on text fire TextClick, clicks on links LinkActivate' => sub {
 	mouse( $text_ui, key => TB_KEY_MOUSE_LEFT, x => 5, y => 2 );
 	is [ $clicks[-1]->link, $clicks[-1]->link_index ],      [ 'perl.org', 0 ],                 'TextClick names the link under the pointer';
 	is [ map { [ refaddr $_->[0], $_->[1] ] } @activated ], [ [ refaddr $rich, 'perl.org' ] ], 'a left click on a link activates it';
-	ref_is $text_ui->interaction->get_focused_widget, $rich, 'and focuses the RichText';
+	ref_is $text_ui->interaction->get_focused_widget, $rich, 'and focuses the Text';
 	is $rich->selected_link, 0, 'which selects the clicked link';
 
 	mouse( $text_ui, key => TF_KEY_MOUSE_MOVE, x => 4, y => 2, mod => TB_MOD_MOTION );
@@ -487,9 +487,9 @@ subtest 'clicks on text fire TextClick, clicks on links LinkActivate' => sub {
 	is $rich->hovered_link, undef, 'and leaving it drops the hover';
 };
 
-subtest 'a focused RichText moves between its links with the keyboard' => sub {
+subtest 'a focused Text moves between its links with the keyboard' => sub {
 	my $key_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
-	my $rich     = Term::Fabulous::Widget::RichText->new( markup => '[link=a]A[/] [link=b]B[/]' );
+	my $rich     = Term::Fabulous::Widget::Text->new( markup => '[link=a]A[/] [link=b]B[/]' );
 	my $next     = Term::Fabulous::Widget::Button->new( layout => { sizing => { width => sizing_fixed(4), height => sizing_fixed(1) } } );
 	$key_root->add_child( $rich, $next );
 	my ( $key_ui,    $key_terminal ) = memory_ui( root => $key_root );
@@ -500,7 +500,7 @@ subtest 'a focused RichText moves between its links with the keyboard' => sub {
 	$key_ui->step;
 
 	$press->('Tab');
-	ref_is $key_ui->interaction->get_focused_widget, $rich, 'Tab focuses a RichText with links';
+	ref_is $key_ui->interaction->get_focused_widget, $rich, 'Tab focuses a Text with links';
 	is $rich->selected_link, 0, 'which selects its first link';
 	$press->($_) foreach qw(Right Enter Right);
 	is \@activated, ['b'],              'Right selects the next link, Enter follows it';
@@ -526,6 +526,21 @@ subtest 'root must be an event emitter' => sub {
 		qr/Unrecognised parameters.*use_termbox/, 'unknown constructor parameters are rejected';
 	like dies { Term::Fabulous->new( width => 20, height => 5, root => Term::Fabulous::Widget::Box->new, terminal => 'tty' ) },
 		qr/terminal must consume Term::Fabulous::Role::Terminal, got 'tty'/, 'the terminal must be a terminal';
+};
+
+subtest 'a text that gets its first link later handles the keys' => sub {
+	my $late_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $late      = Term::Fabulous::Widget::Text->new( text => 'A B' );
+	$late_root->add_child($late);
+	my ( $late_ui, $late_terminal ) = memory_ui( root => $late_root );
+	$late_ui->step;
+	is $late->can_focus, 0, 'without links a text cannot take the focus';
+	$late->add_link( 'a', 0, 1 )->add_link( 'b', 2, 3 );
+	$late_ui->interaction->set_focused_widget($late);
+	is $late->selected_link, 0, 'the focus selects the first link';
+	$late_terminal->press_key('Right');
+	$late_ui->step;
+	is $late->selected_link, 1, 'and Right selects the next one';
 };
 
 done_testing;

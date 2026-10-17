@@ -79,7 +79,7 @@ Term::Fabulous::Text::Wrap - Predict how many rows a text takes when Clay wraps 
 =head1 DESCRIPTION
 
 Clay lays out the text of a L<Term::Fabulous::Widget::Text> or
-L<Term::Fabulous::Widget::RichText> during a frame, so the number of
+L<Term::Fabulous::Widget::Text> during a frame, so the number of
 rows the text takes is known only after that frame. Some widgets need
 it earlier. A L<Term::Fabulous::Widget::DocumentView>, for example,
 estimates the height of every paragraph it has not laid out yet, and
@@ -125,7 +125,7 @@ the end of that line.
 
 =back
 
-F<t/text-wrap.t> checks the functions against RichText widgets that
+F<t/text-wrap.t> checks the functions against Text widgets that
 Clay laid out on a memory terminal, so a change in Clay's wrapping
 shows up as a test failure.
 

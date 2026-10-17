@@ -64,7 +64,7 @@ interpret it. When the user follows the link, the view hands the value
 back unchanged in the [LinkActivate](../Event/LinkActivate.md)
 event, and the program decides what to do with it.
 
-The view shows link marks as links of a [Term::Fabulous::Widget::RichText](../Widget/RichText.md),
+The view shows link marks as links of a [Term::Fabulous::Widget::Text](../Widget/Text.md),
 so a link mark must cover text (`start` less than `end`) and must not
 overlap another link mark of the same block. The mark itself accepts
 an empty range, as it does for the other kinds; the block checks both

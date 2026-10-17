@@ -77,18 +77,18 @@ that.
 The view builds a widget, or a small tree of widgets, for each block,
 depending on the block's kind:
 
-- Headings, paragraphs and terms are [Term::Fabulous::Widget::RichText](RichText.md)
+- Headings, paragraphs and terms are [Term::Fabulous::Widget::Text](Text.md)
 widgets, which Clay wraps to the width of the view. Every mark of the
 block becomes a span in the style the look gives its kind. A heading is
 drawn in the style of its level (`heading1` to `heading6`), and a
 first-level heading has a horizontal rule
 ([Term::Fabulous::Widget::Divider](Divider.md)) under it. A term is drawn in the
 `term` style.
-- Link marks do not become spans. They become links of the RichText, with
-the mark's link as the target, and the RichText paints them on top of
+- Link marks do not become spans. They become links of the Text, with
+the mark's link as the target, and the Text paints them on top of
 the spans in the link looks of the theme (see
-["Looks" in Term::Fabulous::Widget::RichText](RichText.md#looks)). A link therefore looks like
-a link even when it is also marked as code. The RichText widgets are
+["Looks" in Term::Fabulous::Widget::Text](Text.md#looks)). A link therefore looks like
+a link even when it is also marked as code. The Text widgets are
 created with `can_focus => 0`, so they are not Tab stops; the view
 selects the links of all blocks itself (see ["KEYS"](#keys)).
 - A list item is a row of two columns: the marker (a bullet or a number)
@@ -124,9 +124,9 @@ Two kinds of highlighting, the _overlays_, are drawn on top of the
 blocks' own styles without rebuilding any widget:
 
 - The _selected link_ is the link that `Enter` follows. The view keeps
-one selection for the whole document and shows it through the RichText
+one selection for the whole document and shows it through the Text
 of the link's block, with
-[select\_link](RichText.md#select_link). The
+[select\_link](Text.md#select_link). The
 selection is shown again when the block's widgets are rebuilt.
 - The _search matches_ are the occurrences of the text of the last
 ["search"](#search), drawn in the `match` style. One of them, the _current
@@ -158,7 +158,7 @@ parameters and invalid values die. The additional parameters are:
     an empty view. The constructor dies if a mark of the document has a
     kind that the view's look does not know (see
     ["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds) and ["look\_class"](#look_class)). Link marks
-    are exempt from this check, because the RichText widgets draw links
+    are exempt from this check, because the Text widgets draw links
     themselves.
 
 - `highlighter`
@@ -488,7 +488,7 @@ painted widget.) Once the code cannot scroll further in that
 direction, the event is passed on to the enclosing widgets. A click on
 the text of a block or on a code block focuses the view.
 
-A left click on a link selects the link and follows it. The RichText of
+A left click on a link selects the link and follows it. The Text of
 the link's block fires
 [LinkActivate](../Event/LinkActivate.md), with the target of
 the link mark as its `link`. As the event bubbles up through the view,
@@ -502,7 +502,7 @@ it. The link under the mouse pointer is drawn as hovered.
 
     Fired on the view when the user presses `Enter` while a link is
     selected, or when the program calls ["follow\_link"](#follow_link). When the user
-    clicks a link, the RichText of the link's block fires the event, and it
+    clicks a link, the Text of the link's block fires the event, and it
     bubbles up through the view (see ["MOUSE"](#mouse)). In both cases,
     `$event->link` is the target of the link mark, exactly as the
     parser stored it.
@@ -549,7 +549,7 @@ the returned widget itself.
 
     The method returns a hash reference `{ widget => $widget, text => $text }`.
     `widget` is a new widget without a parent, which the list shows for
-    the block. `text` is the [Term::Fabulous::Widget::RichText](RichText.md) or
+    the block. `text` is the [Term::Fabulous::Widget::Text](Text.md) or
     [Term::Fabulous::Widget::CodeBlock](CodeBlock.md) inside it that shows the block's
     text, or `undef` if there is none. The view sets the spans of this
     widget from the block's marks and the overlays (see ["spans\_of"](#spans_of)).
@@ -619,9 +619,9 @@ differently.
 my $text = $view->rich_text_of($block);
 ```
 
-Returns a new [Term::Fabulous::Widget::RichText](RichText.md) with the block's text
+Returns a new [Term::Fabulous::Widget::Text](Text.md) with the block's text
 and the block's link marks as links, each with the mark's link as its
-target. The RichText is created with `can_focus => 0`, so that the
+target. The Text is created with `can_focus => 0`, so that the
 view handles the links (see ["Overlays"](#overlays)). The built-in builders show
 their text with it, and a builder of a new kind can use it too.
 

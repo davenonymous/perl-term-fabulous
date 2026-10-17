@@ -1,6 +1,20 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Widget::Text absorbs RichText: one text widget
+          with spans, links, markup and the keys and looks of links; the
+          RichText and FocusableText classes are gone. A text also has
+          highlights, a layer over its spans that a search marks without
+          touching them, a content_revision for callers that recorded
+          offsets, and an estimated_rows for lists that need its height
+          before a layout. A color in any style may be a palette token of
+          the theme (bold accent on surface_low), looked up when the text
+          paints, so a theme switch recolors it. Term::Fabulous::Role::
+          Searchable names the texts a widget shows, for search and
+          highlights; Text and CodeBlock do it. Every widget estimates its
+          rows before a layout (Term::Fabulous::Widget::estimated_rows),
+          boxes from their children. Render::Frame::text_rows gives the
+          painted lines of a text.
         - Term::Fabulous::Widget::DocumentView shows a document of blocks
           (headings, paragraphs with marks, lists, quotes, code, links) in
           the styles of the theme: scrolled with the keys, its links

@@ -1184,7 +1184,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	sub _takes_input ($widget) {
-		return $widget->DOES('Clay::UI::Role::Interaction::Focusable') || $widget->DOES('Clay::UI::Role::Interaction::Pressable') ? 1 : 0;
+		return $widget->DOES('Clay::UI::Role::Interaction::Pressable') || ( $widget->DOES('Clay::UI::Role::Interaction::Focusable') && $widget->can_focus ) ? 1 : 0;
 	}
 
 	method _input_under_pointer ( $widget, $x, $y ) {
@@ -2003,6 +2003,16 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method page_count () { return $model->page_count }
+
+	# The rows the table takes before it is laid out: the header, the
+	# lines of the current page, and the pager when there are pages. The
+	# lines between rows are not counted.
+	method estimated_content_rows :override ($columns) {
+		my $rows = scalar $model->page_lines;
+		$rows++ if $show_header;
+		$rows++ if $self->page_count > 1;
+		return max( 1, $rows );
+	}
 
 	method page_size (@new) {
 		return $model->page_size unless @new;
@@ -3715,6 +3725,15 @@ The text of a table whose rows all are filtered out.
 
 Where row ids come from (see L<Term::Fabulous::Manual::Tables/Row ids>). Setting it dies while the
 table has rows.
+
+=head3 estimated_rows
+
+	my $rows = $table->estimated_rows($columns);
+
+The rows the table will take before it is laid out (see
+L<Term::Fabulous::Widget/estimated_rows>): the header, the rows of
+the current page and the pager when there are pages, inside the
+border. The lines between the rows are not counted.
 
 =head2 Widgets of the table
 

@@ -22,7 +22,6 @@ use List::Util qw(max);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::RichText;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::VirtualList;
 
@@ -52,7 +51,7 @@ my $document = Term::Fabulous::Widget::VirtualList->new(
 	count => PARAGRAPHS,
 	build => sub ($index) {
 		$built++;
-		return Term::Fabulous::Widget::RichText->new( markup => markup_of($index) );
+		return Term::Fabulous::Widget::Text->new( markup => markup_of($index) );
 	},
 	estimate => sub ( $index, $columns ) { 1 + int( length( markup_of($index) ) / max( 1, $columns ) ) },
 	layout   => {

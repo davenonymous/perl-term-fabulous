@@ -32,7 +32,7 @@ class Term::Fabulous::Widget::DocumentView
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::CodeBlock;
 	use Term::Fabulous::Widget::Divider;
-	use Term::Fabulous::Widget::RichText;
+	use Term::Fabulous::Widget::Text;
 
 	use constant {
 		CODE_STEP          => 8,    # columns the code moves per Left or Right
@@ -49,8 +49,8 @@ class Term::Fabulous::Widget::DocumentView
 	field $indent      :param = 2;
 
 	# The views built for blocks, by block index: { widget => what the
-	# list shows, text => the RichText or CodeBlock the overlays restyle
-	# (or undef), marker => the RichText of an item's marker, quotes =>
+	# list shows, text => the Text or CodeBlock the overlays restyle
+	# (or undef), marker => the Text of an item's marker, quotes =>
 	# the boxes whose left border is a quote bar }.
 	field %view_of;
 
@@ -94,7 +94,7 @@ class Term::Fabulous::Widget::DocumentView
 	}
 
 	# A document, whose marks name kinds the look knows (a link is no
-	# kind: the RichText paints links itself).
+	# kind: the Text paints links itself).
 	method _checked_document ($value) {
 		return undef unless defined $value;
 		die ref($self) . ": document must be a Term::Fabulous::Document or undef, got " . describe($value) unless blessed $value && $value->isa('Term::Fabulous::Document');
@@ -203,8 +203,8 @@ class Term::Fabulous::Widget::DocumentView
 		my $view = $self->$builder( $block, { left => $geometry->left_of($index) - $block->quote * Term::Fabulous::Document::Geometry::QUOTE_COLUMNS, top => $geometry->space_before($index) } );
 		die ref($self) . ": $builder must return { widget => ..., text => ... }, got " . describe($view) unless ref $view eq 'HASH' && blessed $view->{widget};
 		my $text = $view->{text};
-		die ref($self) . ": $builder must return a Term::Fabulous::Widget::RichText, a Term::Fabulous::Widget::CodeBlock or undef as text, got " . describe($text)
-			unless !defined $text || ( blessed $text && ( $text->isa('Term::Fabulous::Widget::RichText') || _is_code($text) ) );
+		die ref($self) . ": $builder must return a Term::Fabulous::Widget::Text, a Term::Fabulous::Widget::CodeBlock or undef as text, got " . describe($text)
+			unless !defined $text || ( blessed $text && ( $text->isa('Term::Fabulous::Widget::Text') || _is_code($text) ) );
 		$view_of{$index} = $self->_quoted( $block, $view );
 		$self->_restyle($index);
 		return $view_of{$index}{widget};
@@ -246,7 +246,7 @@ class Term::Fabulous::Widget::DocumentView
 	# all blocks with l and L, and shows the selection through the text's
 	# own (see _restyle).
 	method rich_text_of ($block) {
-		return Term::Fabulous::Widget::RichText->new(
+		return Term::Fabulous::Widget::Text->new(
 			text      => $block->text,
 			links     => [ map { [ $_->start, $_->end, $_->link ] } $block->links ],
 			can_focus => 0,
@@ -271,7 +271,7 @@ class Term::Fabulous::Widget::DocumentView
 	# The marker in a column of its own, so that the text's lines start
 	# after it: a hanging indent, done by the layout.
 	method view_of_item ( $block, $padding ) {
-		my $marker = Term::Fabulous::Widget::RichText->new( text => $block->marker, can_focus => 0 );
+		my $marker = Term::Fabulous::Widget::Text->new( text => $block->marker, can_focus => 0 );
 		$marker->stylize( $self->document_look->style('marker') );
 		my $column = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed( $block->marker_width ) } } );
 		$column->add_child($marker);
@@ -309,7 +309,7 @@ class Term::Fabulous::Widget::DocumentView
 	# Styles: the block's own marks, then the overlays
 	# ---------------------------------------------------------------------
 
-	# Links are no spans: the RichText paints its links over the spans, in
+	# Links are no spans: the Text paints its links over the spans, in
 	# the looks of the theme, so a link in code looks like a link.
 	method spans_of ( $index, $look ) {
 		my $block  = $document->block($index);
@@ -772,7 +772,7 @@ depending on the block's kind:
 
 =item *
 
-Headings, paragraphs and terms are L<Term::Fabulous::Widget::RichText>
+Headings, paragraphs and terms are L<Term::Fabulous::Widget::Text>
 widgets, which Clay wraps to the width of the view. Every mark of the
 block becomes a span in the style the look gives its kind. A heading is
 drawn in the style of its level (C<heading1> to C<heading6>), and a
@@ -782,11 +782,11 @@ C<term> style.
 
 =item *
 
-Link marks do not become spans. They become links of the RichText, with
-the mark's link as the target, and the RichText paints them on top of
+Link marks do not become spans. They become links of the Text, with
+the mark's link as the target, and the Text paints them on top of
 the spans in the link looks of the theme (see
-L<Term::Fabulous::Widget::RichText/Looks>). A link therefore looks like
-a link even when it is also marked as code. The RichText widgets are
+L<Term::Fabulous::Widget::Text/Looks>). A link therefore looks like
+a link even when it is also marked as code. The Text widgets are
 created with C<< can_focus => 0 >>, so they are not Tab stops; the view
 selects the links of all blocks itself (see L</KEYS>).
 
@@ -843,9 +843,9 @@ blocks' own styles without rebuilding any widget:
 =item *
 
 The I<selected link> is the link that C<Enter> follows. The view keeps
-one selection for the whole document and shows it through the RichText
+one selection for the whole document and shows it through the Text
 of the link's block, with
-L<select_link|Term::Fabulous::Widget::RichText/select_link>. The
+L<select_link|Term::Fabulous::Widget::Text/select_link>. The
 selection is shown again when the block's widgets are rebuilt.
 
 =item *
@@ -882,7 +882,7 @@ The L<Term::Fabulous::Document> to show, or C<undef> (the default) for
 an empty view. The constructor dies if a mark of the document has a
 kind that the view's look does not know (see
 L<Term::Fabulous::Document::Look/KINDS> and L</look_class>). Link marks
-are exempt from this check, because the RichText widgets draw links
+are exempt from this check, because the Text widgets draw links
 themselves.
 
 =item C<highlighter>
@@ -1172,7 +1172,7 @@ painted widget.) Once the code cannot scroll further in that
 direction, the event is passed on to the enclosing widgets. A click on
 the text of a block or on a code block focuses the view.
 
-A left click on a link selects the link and follows it. The RichText of
+A left click on a link selects the link and follows it. The Text of
 the link's block fires
 L<LinkActivate|Term::Fabulous::Event::LinkActivate>, with the target of
 the link mark as its C<link>. As the event bubbles up through the view,
@@ -1188,7 +1188,7 @@ it. The link under the mouse pointer is drawn as hovered.
 
 Fired on the view when the user presses C<Enter> while a link is
 selected, or when the program calls L</follow_link>. When the user
-clicks a link, the RichText of the link's block fires the event, and it
+clicks a link, the Text of the link's block fires the event, and it
 bubbles up through the view (see L</MOUSE>). In both cases,
 C<< $event->link >> is the target of the link mark, exactly as the
 parser stored it.
@@ -1244,7 +1244,7 @@ the returned widget itself.
 
 The method returns a hash reference C<< { widget => $widget, text => $text } >>.
 C<widget> is a new widget without a parent, which the list shows for
-the block. C<text> is the L<Term::Fabulous::Widget::RichText> or
+the block. C<text> is the L<Term::Fabulous::Widget::Text> or
 L<Term::Fabulous::Widget::CodeBlock> inside it that shows the block's
 text, or C<undef> if there is none. The view sets the spans of this
 widget from the block's marks and the overlays (see L</spans_of>).
@@ -1312,9 +1312,9 @@ differently.
 
 	my $text = $view->rich_text_of($block);
 
-Returns a new L<Term::Fabulous::Widget::RichText> with the block's text
+Returns a new L<Term::Fabulous::Widget::Text> with the block's text
 and the block's link marks as links, each with the mark's link as its
-target. The RichText is created with C<< can_focus => 0 >>, so that the
+target. The Text is created with C<< can_focus => 0 >>, so that the
 view handles the links (see L</Overlays>). The built-in builders show
 their text with it, and a builder of a new kind can use it too.
 

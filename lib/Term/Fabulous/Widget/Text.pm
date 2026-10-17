@@ -8,6 +8,7 @@ no warnings 'experimental::signatures';
 use Object::Pad 0.825;
 
 use Clay::UI::Role::Events::Emitter;
+use Term::Fabulous::Role::Searchable;
 
 our $VERSION = '0.03';
 
@@ -16,16 +17,35 @@ class Term::Fabulous::Widget::Text
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:does(Term::Fabulous::Role::Themed)
 	:does(Clay::UI::Role::Events::Emitter)
+	:does(Term::Fabulous::Role::Searchable)
 	:strict(params)
 {
-	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
+	use Clay::UI::Enum::Result;
 	use Clay::UI::Revision qw(bump_revision);
-	use Term::Fabulous::Check qw(boolean class_names color non_negative_integer one_of);
+	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
+	use List::Util qw(first sum0);
+	use Scalar::Util qw(weaken);
+	use Term::Fabulous::Check qw(boolean class_names color describe non_negative_integer one_of positive_integer);
+	use Term::Fabulous::Color;
+	use Term::Fabulous::Event::LinkActivate;
 	use Term::Fabulous::Event::TextClick;
-	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE);
+	use Term::Fabulous::Render::Attr qw(color_attr);
+	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE TB_KEY_MOUSE_LEFT);
+	use Term::Fabulous::Text::Markup qw(parse_markup);
+	use Term::Fabulous::Text::Style qw(compose_styles resolve_style style);
+	use Term::Fabulous::Theme;
+	use Term::Fabulous::Unicode qw(string_columns);
 
 	my %WRAP_MODE_BY_NAME      = ( words => CLAY_TEXT_WRAP_WORDS, newlines => CLAY_TEXT_WRAP_NEWLINES, none  => CLAY_TEXT_WRAP_NONE );
 	my %TEXT_ALIGNMENT_BY_NAME = ( left  => CLAY_TEXT_ALIGN_LEFT, center   => CLAY_TEXT_ALIGN_CENTER,  right => CLAY_TEXT_ALIGN_RIGHT );
+
+	# The keys a focused text uses; an action returns whether it did
+	# anything, and a key that did nothing goes on to the ancestors.
+	my %ACTION_OF_KEY = (
+		Left  => sub ($self) { $self->select_previous_link },
+		Right => sub ($self) { $self->select_next_link },
+		Enter => sub ($self) { $self->activate_link },
+	);
 
 	field $id        :param :reader = undef;
 	field $bold      :param = 0;
@@ -38,13 +58,73 @@ class Term::Fabulous::Widget::Text
 	# holds a color; the role knows whether it is an explicit one.
 	field $_has_text_color :param(_has_text_color) = 0;
 
+	# The markup the text, spans and links came from, or undef when they
+	# were given directly.
+	field $markup :param = undef;
+
+	# The spans as given, checked in ADJUST; the array holds the checked ones.
+	field $given_spans :param(spans) = undef;
+	field @spans;    # [ $start, $end, $style ]
+
+	# The links as given, checked in ADJUST; the array holds the checked
+	# ones, ordered by their start, none overlapping another.
+	field $given_links :param(links) = undef;
+	field @links;    # [ $start, $end, $target ]
+
+	# The highlights, painted over the spans: what a search marks.
+	field @highlights;    # [ $start, $end, $style ]
+
+	# The selected link (the one Enter follows) and the one under the
+	# mouse pointer, as indices into @links.
+	field $selected_link = undef;
+	field $hovered_link  = undef;
+
+	# Counts the changes of the text, the spans, the markup and the links,
+	# so that offsets recorded by a caller can be told stale.
+	field $content_revision = 0;
+
+	# Whether the key and focus listeners are registered: only once the
+	# text has a link, since only then it can take the focus.
+	field $listening = 0;
+
+	# The runs of the whole text (see line_styles), computed on demand and
+	# dropped whenever the text, its styles, its links or the theme change.
+	field $runs            = undef;
+	field $runs_generation = -1;
+
+	# Markup is parsed before the parent sees the text, so that a markup
+	# string is just another way to give text, spans and links. Clay::UI
+	# validates text_color before any ADJUST of this class runs, so it is
+	# converted while the arguments are still a plain list.
+	sub BUILDARGS ( $class, %params ) {
+		if ( defined $params{markup} ) {
+			die "Term::Fabulous::Widget::Text: markup cannot be given together with text or spans or links" if exists $params{text} || exists $params{spans} || exists $params{links};
+			@params{qw(text spans links)} = parse_markup( $params{markup} );
+		}
+		return %params unless defined $params{text_color};
+		$params{text_color}      = color( $class, text_color => $params{text_color} );
+		$params{_has_text_color} = 1;
+		return %params;
+	}
+
 	ADJUST {
 		$bold      = boolean( $self, bold      => $bold );
 		$italic    = boolean( $self, italic    => $italic );
 		$underline = boolean( $self, underline => $underline );
 		$classes   = class_names( $self, classes => $classes );
 		$self->set_look( text_color => $self->SUPER::text_color ) if $_has_text_color;
+
+		die "Term::Fabulous::Widget::Text: spans must be an array reference of [start, end, style]" if defined $given_spans  && ref $given_spans ne 'ARRAY';
+		die "Term::Fabulous::Widget::Text: links must be an array reference of [start, end, target]" if defined $given_links && ref $given_links ne 'ARRAY';
+		@spans       = map { $self->_checked_span( span => $_ ) } @{ $given_spans // [] };
+		$given_spans = undef;
+		$self->_insert_link( $self->_checked_link($_) ) foreach @{ $given_links // [] };
+		$given_links = undef;
 	}
+
+	# ---------------------------------------------------------------------
+	# Style words and the text color
+	# ---------------------------------------------------------------------
 
 	method _set_style ( $name, $field_ref, @new ) {
 		return $$field_ref unless @new;
@@ -60,15 +140,6 @@ class Term::Fabulous::Widget::Text
 	# The termbox2 style bits the renderer adds to the text color.
 	method style_attrs () {
 		return ( $bold ? TB_BOLD : 0 ) | ( $italic ? TB_ITALIC : 0 ) | ( $underline ? TB_UNDERLINE : 0 );
-	}
-
-	# Clay::UI validates text_color before any ADJUST of this class runs,
-	# so it is converted while the arguments are still a plain list.
-	sub BUILDARGS ( $class, %params ) {
-		return %params unless defined $params{text_color};
-		$params{text_color}      = color( $class, text_color => $params{text_color} );
-		$params{_has_text_color} = 1;
-		return %params;
 	}
 
 	# The value a name stands for in %$value_by_name; an unknown name dies
@@ -117,10 +188,11 @@ class Term::Fabulous::Widget::Text
 	}
 
 	# A text that joins or leaves a tree may be in another UI, with
-	# another theme, from now on.
+	# another theme, from now on; the runs were made with the old one.
 	method tree_changed :override () {
 		$self->SUPER::tree_changed;
 		$self->_forget_own_looks;
+		$runs = undef;
 		return;
 	}
 
@@ -139,13 +211,332 @@ class Term::Fabulous::Widget::Text
 	}
 
 	# ---------------------------------------------------------------------
+	# The text, its spans and its markup
+	# ---------------------------------------------------------------------
+
+	# Setting the text drops the spans, the highlights and the links: they
+	# pointed into the old one.
+	method text :override (@new) {
+		return $self->SUPER::text unless @new;
+		my $text = $self->SUPER::text(@new);
+		@spans      = ();
+		@highlights = ();
+		$markup     = undef;
+		$self->_forget_links;
+		$self->_links_changed;
+		return $text;
+	}
+
+	method markup (@new) {
+		return $markup unless @new;
+		my ( $text, $spans, $links ) = parse_markup( $new[0] );
+		$self->SUPER::text($text);
+		@spans      = @$spans;
+		@highlights = ();
+		$self->_forget_links;
+		$self->_insert_link($_) foreach @$links;
+		$markup = $new[0];
+		$self->_links_changed;
+		return $markup;
+	}
+
+	method spans () {
+		return _copies(@spans);
+	}
+
+	method stylize ( $style, $start = 0, $end = undef ) {
+		push @spans, $self->_span( span => $style, $start, $end // length $self->text );
+		$markup = undef;
+		$self->_content_changed;
+		return $self;
+	}
+
+	method clear_spans () {
+		@spans  = ();
+		$markup = undef;
+		$self->_content_changed;
+		return $self;
+	}
+
+	method content_revision () {
+		return $content_revision;
+	}
+
+	# Highlights are not content: a caller that marks what it found in the
+	# text does not make its own offsets stale.
+	method highlights (@new) {
+		return _copies(@highlights) unless @new;
+		die "Term::Fabulous::Widget::Text: highlights must be an array reference of [start, end, style], got " . describe( $new[0] ) unless ref $new[0] eq 'ARRAY';
+		@highlights = map { $self->_checked_span( highlight => $_ ) } @{ $new[0] };
+		$self->_forget_runs;
+		return $self->highlights;
+	}
+
+	method clear_highlights () {
+		@highlights = ();
+		$self->_forget_runs;
+		return $self;
+	}
+
+	sub _copies (@ranges) {
+		return [ map { [ $_->[0], $_->[1], { %{ $_->[2] } } ] } @ranges ];
+	}
+
+	# A copy of a span or highlight with its offsets checked against the
+	# text and its style normalized.
+	method _checked_span ( $what, $span ) {
+		die "Term::Fabulous::Widget::Text: a $what is [start, end, style]" unless ref $span eq 'ARRAY' && @$span == 3;
+		my ( $start, $end, $style ) = @$span;
+		return $self->_span( $what, $style, $start, $end );
+	}
+
+	method _span ( $what, $style, $start, $end ) {
+		return [ $self->_checked_range( $what, $start, $end ), style($style) ];
+	}
+
+	method _checked_range ( $what, $start, $end ) {
+		$start = non_negative_integer( $self, "$what start", $start );
+		$end   = non_negative_integer( $self, "$what end",   $end );
+		my $length = length $self->text;
+		die "Term::Fabulous::Widget::Text: $what end $end lies before its start $start" if $end < $start;
+		die "Term::Fabulous::Widget::Text: $what end $end lies past the text ($length characters)" if $end > $length;
+		return ( $start, $end );
+	}
+
+	method _content_changed () {
+		$content_revision++;
+		$self->_forget_runs;
+		return;
+	}
+
+	method _forget_runs () {
+		$runs = undef;
+		bump_revision();
+		return;
+	}
+
+	# ---------------------------------------------------------------------
+	# Links
+	# ---------------------------------------------------------------------
+
+	method links () {
+		return [ map { [@$_] } @links ];
+	}
+
+	method add_link ( $target, $start = 0, $end = undef ) {
+		$self->_insert_link( $self->_link( $target, $start, $end // length $self->text ) );
+		$markup = undef;
+		$self->_links_changed;
+		return $self;
+	}
+
+	method clear_links () {
+		$markup = undef;
+		$self->_forget_links;
+		$self->_links_changed;
+		return $self;
+	}
+
+	method link_at ($offset) {
+		$offset = non_negative_integer( $self, offset => $offset );
+		return first { $links[$_][0] <= $offset && $offset < $links[$_][1] } 0 .. $#links;
+	}
+
+	method _checked_link ($link) {
+		die "Term::Fabulous::Widget::Text: a link is [start, end, target]" unless ref $link eq 'ARRAY' && @$link == 3;
+		my ( $start, $end, $target ) = @$link;
+		return $self->_link( $target, $start, $end );
+	}
+
+	method _link ( $target, $start, $end ) {
+		die "Term::Fabulous::Widget::Text: a link needs a target" unless defined $target;
+		( $start, $end ) = $self->_checked_range( 'link', $start, $end );
+		die "Term::Fabulous::Widget::Text: a link must not be empty, got $start to $end" if $start == $end;
+		return [ $start, $end, $target ];
+	}
+
+	# Puts a checked link in its place by start; the selected and the
+	# hovered link stay the same links. The first link makes the text
+	# able to take the focus, so the key and focus listeners start here.
+	method _insert_link ($link) {
+		my ( $start, $end ) = @$link;
+		my $overlapped = first { $_->[0] < $end && $start < $_->[1] } @links;
+		die "Term::Fabulous::Widget::Text: the link $start to $end overlaps the link $overlapped->[0] to $overlapped->[1]" if defined $overlapped;
+		my $position = first { $links[$_][0] > $start } 0 .. $#links;
+		$position //= scalar @links;
+		splice @links, $position, 0, $link;
+		$selected_link++ if defined $selected_link && $selected_link >= $position;
+		$hovered_link++ if defined $hovered_link   && $hovered_link >= $position;
+		$self->_listen unless $listening;
+		return;
+	}
+
+	method _listen () {
+		$listening = 1;
+		weaken( my $weak_self = $self );
+		my $continue = Clay::UI::Enum::Result->CONTINUE;
+		$self->on(
+			KeyPress => sub ($event) {
+				my $action = $ACTION_OF_KEY{ $event->main_key_name // '' } // return $continue;
+				return $action->($weak_self) ? undef : $continue;
+			}
+		);
+		$self->on( OnFocus => sub ($event) { $weak_self->select_next_link unless defined $weak_self->selected_link; return $continue } );
+		$self->on( OnBlur  => sub ($event) { $weak_self->select_link(undef);                                        return $continue } );
+		return;
+	}
+
+	# Without telling the focus: a text that gets new links at once keeps
+	# the focus.
+	method _forget_links () {
+		@links = ();
+		( $selected_link, $hovered_link ) = ();
+		return;
+	}
+
+	# Whether the widget can take the focus may have changed with its links.
+	method _links_changed () {
+		$self->_content_changed;
+		$self->focus_eligibility_changed;
+		return;
+	}
+
+	method _checked_link_index ( $what, $index ) {
+		return undef unless defined $index;
+		$index = non_negative_integer( $self, $what, $index );
+		die "Term::Fabulous::Widget::Text: $what $index is not a link; the text has " . scalar(@links) . " links" if $index > $#links;
+		return $index;
+	}
+
+	method selected_link () {
+		return $selected_link;
+	}
+
+	method select_link ($index) {
+		$index = $self->_checked_link_index( link => $index );
+		return $self if ( $index // -1 ) == ( $selected_link // -1 );
+		$selected_link = $index;
+		$self->_forget_runs;
+		return $self;
+	}
+
+	# The selection stops at the first and the last link.
+	method select_next_link () {
+		my $next = defined $selected_link ? $selected_link + 1 : 0;
+		return 0 if $next > $#links;
+		$self->select_link($next);
+		return 1;
+	}
+
+	method select_previous_link () {
+		my $previous = defined $selected_link ? $selected_link - 1 : $#links;
+		return 0 if $previous < 0;
+		$self->select_link($previous);
+		return 1;
+	}
+
+	method activate_link (@index) {
+		my $index = @index ? $self->_checked_link_index( link => $index[0] ) : $selected_link;
+		return 0 unless defined $index;
+		my ( $start, $end, $target ) = @{ $links[$index] };
+		$self->fire_event( Term::Fabulous::Event::LinkActivate->new( link => $target, index => $index, start => $start, end => $end ) );
+		return 1;
+	}
+
+	method hovered_link () {
+		return $hovered_link;
+	}
+
+	method hover_link ($index) {
+		$index = $self->_checked_link_index( link => $index );
+		return $self if ( $index // -1 ) == ( $hovered_link // -1 );
+		$hovered_link = $index;
+		$self->_forget_runs;
+		return $self;
+	}
+
+	# A text takes the focus while it has links to select.
+	method accepts_focus :override () {
+		return @links ? 1 : 0;
+	}
+
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable): the one text
+	# ---------------------------------------------------------------------
+
+	method search_texts () {
+		return ( [ undef, $self->text ] );
+	}
+
+	method search_revision ($key) {
+		return $content_revision;
+	}
+
+	method highlight_text ( $key, $ranges ) {
+		$self->highlights($ranges);
+		return;
+	}
+
+	method clear_text_highlights () {
+		$self->clear_highlights;
+		return;
+	}
+
+	# The text shows itself; where a character lies is known once it was
+	# painted (Term::Fabulous::Render::Frame's text_rows).
+	method reveal_text ( $key, $offset ) {
+		return [ $self, undef ];
+	}
+
+	# ---------------------------------------------------------------------
+	# Height before layout
+	# ---------------------------------------------------------------------
+
+	# The rows the text takes in the given number of columns, as Clay will
+	# wrap it: at the spaces for the words mode, at the line breaks only
+	# for the newlines mode, never for none.
+	method estimated_rows ($columns) {
+		$columns = positive_integer( $self, columns => $columns );
+		my $mode = $self->wrap_mode // CLAY_TEXT_WRAP_WORDS;
+		return 1 if $mode == CLAY_TEXT_WRAP_NONE;
+		my @lines = split /\n/, $self->text, -1;
+		return scalar @lines if $mode == CLAY_TEXT_WRAP_NEWLINES;
+		return sum0 map { _wrapped_rows( $_, $columns ) } @lines;
+	}
+
+	# Clay wraps a line at the spaces, and only there (a no-break space is
+	# part of its word). It measures every word together with the space
+	# after it, and a word that does not fit on the row starts the next
+	# one; a word wider than the row has a row of its own, and runs past
+	# its end.
+	sub _wrapped_rows ( $line, $columns ) {
+		my @words = split / /, $line, -1;
+		my ( $rows, $used ) = ( 1, 0 );
+		foreach my $index ( 0 .. $#words ) {
+			my $width = _columns_of( $words[$index] ) + ( $index < $#words ? 1 : 0 );
+			if ( $used > 0 && $used + $width > $columns ) { ( $rows, $used ) = ( $rows + 1, $width ) }
+			else                                          { $used += $width }
+		}
+		return $rows;
+	}
+
+	# A printable ASCII character takes one column. Most words are such,
+	# and asking Unicode for every word takes three times as long.
+	sub _columns_of ($word) {
+		return $word =~ /\A[\x20-\x7E]*\z/ ? length $word : string_columns($word);
+	}
+
+	# ---------------------------------------------------------------------
 	# Clicks
 	# ---------------------------------------------------------------------
 
+	# Fires TextClick with what lies at the offset; a left click on a link
+	# selects and follows it.
 	method click_at ( $offset, $button, $x, $y ) {
 		$offset = non_negative_integer( $self, offset => $offset );
 		my $text = $self->text;
 		die ref($self) . ": offset $offset lies past the text (" . length($text) . " characters)" if $offset >= length $text;
+		my $index = $self->link_at($offset);
 		$self->fire_event(
 			Term::Fabulous::Event::TextClick->new(
 				button => $button,
@@ -153,9 +544,13 @@ class Term::Fabulous::Widget::Text
 				y      => $y,
 				offset => $offset,
 				_word_around( $text, $offset ),
-				$self->_click_details($offset),
+				spans => [ grep { $_->[0] <= $offset && $offset < $_->[1] } @{ $self->spans } ],
+				defined $index ? ( link => $links[$index][2], link_index => $index ) : (),
 			)
 		);
+		return $self unless $button == TB_KEY_MOUSE_LEFT && defined $index;
+		$self->select_link($index);
+		$self->activate_link($index);
 		return $self;
 	}
 
@@ -168,11 +563,92 @@ class Term::Fabulous::Widget::Text
 		return ( word => $head . $tail, word_start => $offset - length $head, word_end => $offset + length $tail );
 	}
 
-	# What a subclass adds to a TextClick at the offset: a RichText its
-	# spans and its link there.
-	method _click_details ($offset) {
-		return ();
+	# ---------------------------------------------------------------------
+	# Painting
+	# ---------------------------------------------------------------------
+
+	# The runs the renderer paints a line with: the part of the text's runs
+	# that covers the characters [offset, offset + length). A text without
+	# spans, highlights or links has none; the renderer paints it plain.
+	method line_styles ( $offset, $length ) {
+		return [] if $length <= 0 || !( @spans || @highlights || @links );
+		my $generation = Term::Fabulous::Theme::generation();
+		if ( !defined $runs || $runs_generation != $generation ) {
+			$runs            = $self->_runs_of_text;
+			$runs_generation = $generation;
+		}
+
+		my @slice;
+		my $position = 0;
+		foreach my $run (@$runs) {
+			my $run_start = $position;
+			$position += $run->[0];
+			next if $position <= $offset;
+			last if $run_start >= $offset + $length;
+
+			my $from = $run_start < $offset          ? $offset           : $run_start;
+			my $to   = $position > $offset + $length ? $offset + $length : $position;
+			push @slice, [ $to - $from, @{$run}[ 1 .. 4 ] ];
+		}
+		return \@slice;
 	}
+
+	# The whole text cut at every span, highlight and link boundary, each
+	# piece with the style its spans give it, the highlights over them,
+	# and over those the look of the link it lies in. A run is the tuple
+	# Term::Fabulous::Render::Text paints with:
+	# [ $characters, $set, $clear, $fg_attr, $bg_attr ], the style's bits
+	# and its colors as termbox attributes (undef: the color is not
+	# touched), converted once here rather than in every frame.
+	method _runs_of_text () {
+		my $length = length $self->text;
+		return [ [ $length, 0, 0, undef, undef ] ] unless $length;
+
+		my %seen;
+		my @boundaries = sort { $a <=> $b } grep { !$seen{$_}++ } 0, $length, map { @{$_}[ 0, 1 ] } @spans, @highlights, @links;
+		my @runs;
+		foreach my $index ( 0 .. $#boundaries - 1 ) {
+			my ( $from, $to ) = @boundaries[ $index, $index + 1 ];
+			my @styles = map { $_->[2] } grep { $_->[0] <= $from && $_->[1] >= $to } @spans, @highlights;
+			my $link   = first { $links[$_][0] <= $from && $links[$_][1] >= $to } 0 .. $#links;
+			push @styles, $self->_link_style($link) if defined $link;
+			push @runs,   [ $to - $from, $self->_look_of(@styles) ];
+		}
+		return \@runs;
+	}
+
+	# The look of a link from the theme's text.link slots: underlined in
+	# the normal and the hovered state, not underlined when selected.
+	method _link_style ($index) {
+		my $state
+			= defined $selected_link && $index == $selected_link ? 'selected'
+			: defined $hovered_link  && $index == $hovered_link  ? 'hovered'
+			:                                                      'normal';
+		my $underline = $state eq 'selected' ? 0 : TB_UNDERLINE;
+		return {
+			set        => $underline,
+			clear      => TB_UNDERLINE & ~$underline,
+			color      => $self->look( 'link',            $state ),
+			background => $self->look( 'link.background', $state ),
+		};
+	}
+
+	# The set and clear bits and the color attributes that the given
+	# styles, stacked in order, give a piece of text; a palette token
+	# among the colors is the theme's color for it.
+	method _look_of (@styles) {
+		my $style = resolve_style( compose_styles(@styles), $self->_theme );
+		return ( $style->{set}, $style->{clear}, _attr_of( $style->{color} ), _attr_of( $style->{background} ) );
+	}
+
+	sub _attr_of ($rgba) {
+		return undef unless defined $rgba;
+		return color_attr( Term::Fabulous::Color->new( color => $rgba ) );
+	}
+
+	# ---------------------------------------------------------------------
+	# KDL
+	# ---------------------------------------------------------------------
 
 	method layout_properties :common () {
 		return (
@@ -186,6 +662,7 @@ class Term::Fabulous::Widget::Text
 			italic         => 'boolean',
 			underline      => 'boolean',
 			text           => \&_parse_text,
+			markup         => \&_parse_markup,
 			wrap_mode      => \&_parse_wrap_mode,
 			text_alignment => \&_parse_text_alignment,
 		);
@@ -200,6 +677,13 @@ class Term::Fabulous::Widget::Text
 		my $text = $self->kdl_argument($kid);
 		die "Term::Fabulous::Widget::Text: 'text' needs a string argument" unless $text->is_string;
 		$self->text( $text->value );
+		return;
+	}
+
+	method _parse_markup ($kid) {
+		my $markup_value = $self->kdl_argument($kid);
+		die "Term::Fabulous::Widget::Text: 'markup' needs a string argument" unless $markup_value->is_string;
+		$self->markup( $markup_value->value );
 		return;
 	}
 
@@ -222,7 +706,8 @@ __END__
 
 =head1 NAME
 
-Term::Fabulous::Widget::Text - A piece of text inside a box
+Term::Fabulous::Widget::Text - A piece of text inside a box: plain,
+with styled spans, highlights and links
 
 =head1 SYNOPSIS
 
@@ -244,6 +729,28 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 	# Later, change what it shows:
 	$greeting->text('Hello again');
 
+	# Markup in the syntax of Python's rich library:
+	my $hint = Term::Fabulous::Widget::Text->new(
+		markup => 'Press [bold]Enter[/] to save, [bold red]Esc[/] to leave. [dim]Unsaved changes are lost.[/]',
+	);
+
+	# Or text and spans:
+	my $line = Term::Fabulous::Widget::Text->new(
+		text  => 'error: file not found',
+		spans => [ [ 0, 6, 'bold red' ] ],
+	);
+	$line->stylize( 'underline', 7, 11 );    # "file"
+	$line->stylize('on #3a3f4b');            # the whole text
+
+	# Links, followed with a click or with Tab, Left/Right and Enter:
+	my $help = Term::Fabulous::Widget::Text->new(
+		markup => 'See [link=https://perl.org]perl.org[/link] or the [link=faq]FAQ[/link].',
+	);
+	$help->on( LinkActivate => sub ($event) {
+		open_page( $event->link );    # 'https://perl.org' or 'faq'
+		return;
+	} );
+
 =begin html
 
 <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-text.svg" alt="Colored words, a sentence wrapped left-aligned, centered and right-aligned, and text in five scripts"></p>
@@ -251,6 +758,16 @@ Term::Fabulous::Widget::Text - A piece of text inside a box
 =end html
 
 The program is F<examples/widgets/text.pl>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, a wrapped paragraph whose italic green span and highlighted span continue on the next line, and a line of three links: FAQ underlined in blue, guide selected in dark text on blue, perl.org hovered in white on gray"></p>
+
+=end html
+
+The program is F<examples/widgets/rich-text.pl>. The last two rows show
+links in their three looks: C<FAQ> as every link looks, C<guide>
+selected with Tab and Right, and C<perl.org> under the mouse pointer.
 
 =head1 DESCRIPTION
 
@@ -263,12 +780,41 @@ of its own: every cell shows the background that was painted below it.
 A Text widget is a leaf: it cannot have children, and it has no
 border, padding or background. To give text a background, a border or
 a fixed size, put it in a Box. Mouse events (C<Mouse>, C<MouseMove>)
-go to the box behind a text, and a Text never has the keyboard focus
-(a L<Term::Fabulous::Widget::RichText> with links does). A mouse button
-pressed on a character of the text also fires
-L<TextClick|Term::Fabulous::Event::TextClick> on the Text, with the
-character and the word under the pointer, so that the widgets around
-it can react to the words that were clicked (see L</click_at>).
+go to the box behind a text. A mouse button pressed on a character of
+the text also fires L<TextClick|Term::Fabulous::Event::TextClick> on
+the Text, with the character and the word under the pointer, so that
+the widgets around it can react to the words that were clicked (see
+L</click_at>).
+
+The characters of a text can differ in look: a I<span> covers a range
+of the text and sets or clears style bits (bold, italic, underline,
+reverse, dim, blink, strike, overline, conceal), a text color and a
+background for the characters it covers. Clay lays the text out the
+same way with or without spans; the renderer then paints each wrapped
+line with the spans applied. C<text_color>, C<bold>, C<italic> and
+C<underline> are the base look of the whole text, and a span changes
+it where the span lies.
+
+Spans are given as C<[ $start, $end, $style ]>: the character offsets
+of the first character and of the one after the last, and a style
+string or hash of L<Term::Fabulous::Text::Style> (C<'bold red on
+#202020'>). They may overlap: later spans win where they do. A span
+boundary inside a grapheme cluster (a letter with a combining accent,
+an emoji with a modifier) snaps to the cluster. A color in a style may
+be a palette token of the theme (C<'bold accent'>): the text looks it
+up in its theme when it paints, so a theme switch recolors it.
+
+Markup writes the same thing inline: C<[bold]Enter[/]>; see
+L<Term::Fabulous::Text::Markup> for the syntax.
+
+I<Highlights> are a second set of ranges, painted over the spans and
+kept apart from them: what a search marks in a text, without touching
+the styles the program gave it (see L</highlights>).
+
+A text can also have I<links>: ranges of its text that point to a
+target and that the user can follow with the mouse or the keyboard
+(see L</LINKS>). A text with links is a Tab stop; one without never
+has the keyboard focus.
 
 F<examples/text-features.pl> shows the wrap modes, line height, bold,
 italic and underlined text, wide characters and control characters:
@@ -281,6 +827,8 @@ italic and underlined text, wide characters and control characters:
 
 L<The text section of the looks guide|Term::Fabulous::Manual::Looks/TEXT>
 explains all of this with examples. The class is built on L<Clay::UI::Text>.
+The painter of spans, highlights and links needs L<Clay::XS> 0.05 or
+later, which tells it where every wrapped line starts in the text.
 
 =head1 CONSTRUCTOR
 
@@ -289,7 +837,8 @@ explains all of this with examples. The class is built on L<Clay::UI::Text>.
 	my $text = Term::Fabulous::Widget::Text->new(%parameters);
 
 All parameters are optional; unknown parameters die. Every parameter
-except C<id> also has an accessor of the same name.
+except C<id>, C<spans>, C<links> and C<can_focus> also has an accessor
+of the same name.
 
 =over
 
@@ -342,9 +891,35 @@ Booleans, default 0: draw the characters bold, italic or underlined.
 Any true or false value; references die. Terminals show these styles
 with the font they have, so a font without an italic face may show
 italic text upright. They take no space and do not change the layout.
-These three are the only text styles, and they apply to the whole
-text; a L<Term::Fabulous::Widget::RichText> styles ranges of it. See
+They apply to the whole text; a span styles a range of it. See
 L<Term::Fabulous::Manual::Looks/Bold, italic and underline>.
+
+=item C<spans>
+
+An array reference of spans C<[ $start, $end, $style ]>. Default:
+C<[]>. Offsets are non-negative integers with
+C<< $start <= $end <= length $text >>; C<$style> is a style string or
+hash. Anything else dies.
+
+=item C<links>
+
+An array reference of links C<[ $start, $end, $target ]>. Default:
+C<[]>. Offsets are non-negative integers with
+C<< $start < $end <= length $text >>; C<$target> is any defined value,
+kept as it is. Links must not overlap. Anything else dies.
+
+=item C<markup>
+
+A string in the markup syntax of L<Term::Fabulous::Text::Markup>, which
+gives the text, the spans and the links; it cannot be given together
+with C<text>, C<spans> or C<links>. Invalid markup dies.
+
+=item C<can_focus>
+
+A boolean, default 1: whether the widget takes the keyboard focus
+while it has links (see L</Keyboard>). Pass 0 for a text whose links
+a widget around it selects. Its accessor is that of
+L<Clay::UI::Role::Interaction::Focusable/can_focus>.
 
 =item C<id>
 
@@ -407,8 +982,7 @@ die. Defaults: C<font_id> 0, C<font_size> 16, C<letter_spacing> 0.
 
 Besides the accessors below, a Text widget has the methods C<parent>,
 C<root>, C<ui> and C<on> that every widget has (see
-L<Term::Fabulous::Widget>); C<on> is rarely useful, because no events
-are fired on Text widgets.
+L<Term::Fabulous::Widget>).
 
 =head2 text
 
@@ -419,6 +993,9 @@ Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
 like the constructor parameter. The change shows in the next frame. The
 text is a character string; the layout adapts to the new length.
+Setting the text drops every span, every highlight, every link and the
+markup, because they pointed into the old text. A text that has the
+focus loses it, since it has no links left.
 
 =head2 text_color
 
@@ -532,12 +1109,190 @@ Accessor. Without an argument it returns the current value; with an
 argument it sets it and returns the new value. An invalid value dies
 like the constructor parameter. It has no effect in a terminal.
 
+=head2 markup
+
+	my $markup = $text->markup;    # undef when the text was not given as markup
+	$text->markup('[bold]New[/] text');
+
+Accessor. Without an argument it returns the markup the text, spans
+and links were last set from, or C<undef> when they were given or
+changed directly. With an argument it replaces the text, the spans and
+the links with what the markup says, drops the highlights, and returns
+the markup. No link is selected or hovered afterwards. A text that has
+the focus keeps it when the new markup has links, and loses it when it
+has none. Invalid markup dies and leaves the widget as it was. The
+change shows in the next frame.
+
+=head2 spans
+
+	my $spans = $text->spans;    # [ [ 0, 6, { set => ..., clear => ..., color => ..., background => ... } ], ... ]
+
+The spans, in the order they apply, each with its normalized style
+hash (see L<Term::Fabulous::Text::Style/Style hashes>); a palette
+token stays the token's name. The result is a copy.
+
+=head2 stylize
+
+	$text->stylize( 'bold red', 0, 6 );
+	$text->stylize('on #3a3f4b');    # the whole text
+
+Adds a span after the existing ones, so it wins where they overlap.
+C<$start> defaults to 0, C<$end> to the length of the text. Returns
+the widget, so calls chain. Invalid offsets or styles die. The change
+shows in the next frame.
+
+=head2 clear_spans
+
+	$text->clear_spans;
+
+Drops every span, keeping the text, the highlights and the links.
+Returns the widget.
+
+=head2 highlights
+
+	$text->highlights( [ [ 4, 10, 'on selection' ] ] );
+	my $highlights = $text->highlights;
+
+Accessor for the highlights: ranges C<[ $start, $end, $style ]> like
+spans, painted over the spans and under the links, and kept apart from
+them. Setting replaces every highlight; the spans, the markup and the
+links stay, and so does L</content_revision>, because highlights are
+not content. The reader returns a copy with normalized styles. Invalid
+ranges or styles die. The change shows in the next frame.
+
+=head2 clear_highlights
+
+	$text->clear_highlights;
+
+Drops every highlight. Returns the widget.
+
+=head2 content_revision
+
+	my $revision = $text->content_revision;
+
+A counter that grows whenever the text, the spans, the markup or the
+links change. A caller that recorded offsets into the text compares it
+to tell whether they still point where they did. Highlights, the
+selected link and the hovered link leave it alone.
+
+=head2 links
+
+	my $links = $text->links;    # [ [ 4, 12, 'https://perl.org' ], ... ]
+
+The links C<[ $start, $end, $target ]>, ordered by their start. An
+index into this list is how the other link methods and the events name
+a link. The result is a copy; the targets are the values given.
+
+=head2 add_link
+
+	$text->add_link( 'https://perl.org', 4, 12 );
+	$text->add_link($page);    # the whole text
+
+Adds a link to C<$target>, any defined value. C<$start> defaults to 0,
+C<$end> to the length of the text. The link takes its place by its
+start, so the indices of the links after it grow by one; the selected
+and the hovered link stay the same links. An empty link, one that
+overlaps another, invalid offsets and an undefined target die. Returns
+the widget. The change shows in the next frame.
+
+=head2 clear_links
+
+	$text->clear_links;
+
+Drops every link, and with them the selected and the hovered link.
+Returns the widget. A text that has the focus loses it.
+
+=head2 link_at
+
+	my $index = $text->link_at($offset);    # or undef
+
+The index of the link the character at C<$offset> lies in, or C<undef>.
+
+=head2 selected_link
+
+	my $index = $text->selected_link;    # or undef
+
+The index of the selected link, the one C<Enter> follows, or C<undef>.
+
+=head2 select_link
+
+	$text->select_link(2);
+	$text->select_link(undef);    # none
+
+Selects the link with that index, or none. An index that is not a link
+dies. Returns the widget. The change shows in the next frame.
+
+=head2 select_next_link, select_previous_link
+
+	$text->select_next_link or say 'that was the last link';
+
+Selects the link after (before) the selected one; without a selected
+link, the first (last) link. Returns 1 when the selection moved, 0 at
+the end of the links or without links.
+
+=head2 activate_link
+
+	$text->activate_link;       # the selected link
+	$text->activate_link(1);    # the second link
+
+Fires L<LinkActivate|Term::Fabulous::Event::LinkActivate> on the widget
+for the link with the given index, or for the selected one. Returns 1,
+or 0 when no index was given and no link is selected. An index that is
+not a link dies.
+
+=head2 hovered_link
+
+	my $index = $text->hovered_link;    # or undef
+
+The index of the link under the mouse pointer, or C<undef>.
+
+=head2 hover_link
+
+	$text->hover_link(0);
+
+Called by L<Term::Fabulous> when the pointer moves onto a link
+(C<undef> when it leaves it). Gives the link its hovered look. Returns
+the widget.
+
+=head2 accepts_focus
+
+	my $takes_focus = $text->accepts_focus;
+
+1 while the widget has links, 0 otherwise (see
+L<Clay::UI::Role::Interaction::Focusable>). Whether it can take the
+focus now is C<can_focus>, which also asks the C<can_focus> parameter.
+
+=head2 estimated_rows
+
+	my $rows = $text->estimated_rows($columns);
+
+The rows the text will take when it is laid out in that many columns,
+worked out as Clay wraps it: at the spaces and the line breaks for
+C<CLAY_TEXT_WRAP_WORDS>, at the line breaks only for
+C<CLAY_TEXT_WRAP_NEWLINES>, one row for C<CLAY_TEXT_WRAP_NONE>. A word
+wider than the columns takes a row of its own. Widgets that build only
+part of their content, such as L<Term::Fabulous::Widget::DocumentView>,
+ask this before the text was ever laid out; see
+L<Term::Fabulous::Widget/estimated_rows>. C<$columns> must be a
+positive integer.
+
+=head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
+
+The methods of L<Term::Fabulous::Role::Searchable>, which a Text does
+for its one text: C<search_texts> returns C<[ undef, $text ]>,
+C<search_revision> is L</content_revision>, C<highlight_text> sets
+L</highlights>, C<clear_text_highlights> clears them, and
+C<reveal_text> returns the text itself with no row, since where a
+character lies is known once the text was painted (see
+L<Term::Fabulous::Render::Frame/text_rows>).
+
 =head2 tree_changed
 
 Clay::UI calls it on every widget of a subtree whose place in a tree
 changed (see L<Clay::UI::Role::Layout::HasParent/tree_changed>). A Text
 forgets the looks it fetched here, as
-L<Term::Fabulous::Widget/tree_changed> does.
+L<Term::Fabulous::Widget/tree_changed> does, and the runs it painted
+with, since the new tree may have another theme.
 
 =head2 click_at
 
@@ -549,17 +1304,137 @@ Fires L<TextClick|Term::Fabulous::Event::TextClick> on the widget for a
 press of the mouse button (C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE>
 or C<TB_KEY_MOUSE_RIGHT>) on the character at C<$offset> of the text,
 with the pointer at the cell C<$x>, C<$y>. The event carries the word
-the character belongs to (the run of non-blank characters around it).
-L<Term::Fabulous> calls it after the C<Mouse> event of every button
-press on a character of the text; call it yourself to click a text in
-a test. An offset that is not a character of the text dies. Returns
-the widget.
+the character belongs to (the run of non-blank characters around it),
+the spans that cover the character and the link it lies in, if any.
+For the left button on a link it then selects the link and fires
+C<LinkActivate>. L<Term::Fabulous> calls it after the C<Mouse> event
+of every button press on a character of the text; call it yourself to
+click a text in a test. An offset that is not a character of the text
+dies. Returns the widget.
+
+=head2 line_styles
+
+	my $runs = $text->line_styles( $offset, $length );
+
+Used by the renderer (L<Term::Fabulous::Render::Text>) for each wrapped
+line: the characters C<[ $offset, $offset + $length )> of the text cut
+into runs of one look, as
+C<[ $characters, $set, $clear, $fg_attr, $bg_attr ]>: the number of
+characters, the termbox2 style bits the run's spans, highlights and
+link set and clear, and the text and background attributes they give
+it, C<undef> where the base look stays. An empty list for a text
+without spans, highlights and links, which the renderer paints plain.
+The runs are computed once per change of the text, the spans, the
+highlights, the links, the selected or hovered link, or the theme.
+
+=head1 LINKS
+
+A link is a range of the text with a I<target>: a string from markup
+(C<[link=TARGET]...[/link]>), or any defined value given to L</links>
+or L</add_link>, such as an object of your program. The widget does
+not go anywhere itself; it tells the program which link the user
+followed with a L<LinkActivate|Term::Fabulous::Event::LinkActivate>
+event, which bubbles from the text to its ancestors.
+
+=head2 Looks
+
+A link has one of three looks: I<normal>, I<hovered> while the mouse
+pointer is over it, and I<selected> while it is the link C<Enter>
+follows (a selected link under the pointer looks selected). The picture
+under L</SYNOPSIS> shows all three. The theme gives the colors, from
+the slots C<link> (the color of the words) and C<link.background> of
+the C<text> family (see
+L<Term::Fabulous::Theme/Families, slots and states>); the default
+themes use these tokens:
+
+=over
+
+=item * normal: underlined, in C<accent>, on the background below the
+text;
+
+=item * C<hovered>: underlined, in C<text_bright> on
+C<hover_background>;
+
+=item * C<selected>: C<text_inverse> on C<accent>, not underlined.
+
+=back
+
+A link sets only the color of its words, their underline and, where the
+theme gives the link a background, their background, over whatever the
+spans and highlights give them; the other styles stay. So
+C<[bold][link=x]word[/link][/]> is a bold link, and a red span over a
+link is drawn in the link color.
+
+A theme of your own changes the looks for every text. This one draws
+links in the C<success> green, and the selected link as dark text on
+that green, as in the picture of
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>:
+
+	my $theme = Term::Fabulous::Theme->new(
+		name    => 'green-links',
+		extends => 'dark',
+		slots   => {
+			'text.link'                     => 'success',
+			'text.link.selected'            => 'text_inverse',
+			'text.link.background.selected' => 'success',
+		},
+	);
+	my $ui = Term::Fabulous->new( root => $root, theme => $theme );
+
+A slot name without a state (C<text.link>) sets the normal look; the
+hovered and the selected look keep their own defaults until you set
+them too. Set C<text.link.background> to a token or color to give
+every link a background. The underline is not a theme setting.
+
+=head2 Mouse
+
+A left click on a link focuses the text (when it can take the focus),
+selects the link and fires C<LinkActivate>, after the C<TextClick> of
+the same press (see L<Term::Fabulous::Event::TextClick>). The middle
+and the right button fire only C<TextClick>. The pointer over a link
+gives it the hovered look. L<Term::Fabulous> asks the terminal to
+report the pointer as it moves; on a terminal that does not report
+plain movement, links never look hovered.
+
+=head2 Keyboard
+
+A text with links is a Tab stop, unless it was created with
+C<< can_focus => 0 >>; a text without links never takes the focus.
+When it gets the focus and no link is selected, the first link is
+selected. While it has the focus, C<Right> selects the next link,
+C<Left> the previous one, and C<Enter> fires C<LinkActivate> for the
+selected link; a key that moves nothing (C<Right> on the last link,
+C<Enter> without a selected link) goes on to the ancestors, and every
+other key does too. When it loses the focus, the selection is dropped.
+When its markup is replaced while it has the focus, it keeps the focus
+but selects no link until the user presses C<Right> (the first link)
+or C<Left> (the last).
+
+=head2 Links in a bigger widget
+
+A widget that shows many texts (a document view, a help browser) may
+rather keep the focus itself and move one selection across all of
+them: show the selection with L</select_link> on the text that has it
+(and C<undef> on the others), and follow the selected link from the
+widget's own key handling with L</activate_link>, which fires
+C<LinkActivate> on that text:
+
+	# $block is the text with the selected link, $index the link's index.
+	$block->select_link($index);
+	...
+	$block->activate_link;    # on Enter: LinkActivate bubbles up from $block
+
+Clicks still select the clicked link and fire C<LinkActivate> from the
+text, so the widget can listen for it to move its selection along.
+L<Term::Fabulous::Widget::DocumentView> does all of this for the texts
+of its items.
 
 =head1 EVENTS
 
 A Text fires C<TextClick> (L<Term::Fabulous::Event::TextClick>) when a
-mouse button is pressed on one of its characters; it bubbles to the
-widgets around the text. The recipe
+mouse button is pressed on one of its characters, and C<LinkActivate>
+(L<Term::Fabulous::Event::LinkActivate>) when a link is followed; both
+bubble to the widgets around the text. The recipe
 L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>
 looks up the clicked word. A Text can fire events of your own with
 C<fire_event> (L<Clay::UI::Role::Events::Emitter>), and C<on> adds
@@ -578,6 +1453,10 @@ listeners to it.
 		text_alignment center
 	}
 
+	Text "hint" {
+		markup "Press [bold]Enter[/] to save"
+	}
+
 The node's argument (C<"greeting">) is the C<id>. Inside the block:
 
 =over
@@ -586,6 +1465,14 @@ The node's argument (C<"greeting">) is the C<id>. Inside the block:
 
 Exactly one string. It is used as is, so write any characters directly
 (KDL files are UTF-8).
+
+=item C<markup "...">
+
+Exactly one string in the markup syntax of
+L<Term::Fabulous::Text::Markup>, which gives the text, the spans and
+the links. C<markup> and C<text> replace each other: whichever comes
+last wins. Spans and links cannot be given in KDL other than through
+markup.
 
 =item C<text_color "...">
 
@@ -644,16 +1531,20 @@ The table of the properties a layout may set (see
 L<Term::Fabulous::Role::CanParseLayout/layout_properties>): C<font_id>,
 C<font_size>, C<letter_spacing> and C<line_height> are scalars,
 C<text_color> is a color, C<bold>, C<italic> and C<underline> are
-booleans, and C<text>, C<wrap_mode> and
-C<text_alignment> are structured properties the Text parses itself; see
+booleans, and C<text>, C<markup>, C<wrap_mode> and C<text_alignment>
+are structured properties the Text parses itself; see
 L</KDL PROPERTIES>.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Manual::Looks/TEXT>, L<Term::Fabulous::Widget::Box>,
-L<Term::Fabulous::Widget::RichText>, L<Term::Fabulous::Unicode>,
+L<Term::Fabulous::Text::Style>, L<Term::Fabulous::Text::Markup>,
+L<Term::Fabulous::Event::LinkActivate>, L<Term::Fabulous::Event::TextClick>,
+L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Unicode>,
 L<Clay::UI::Text>,
 L<Term::Fabulous::Cookbook::GettingStarted/Wrap, align and space text>,
-L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, combining accents)>.
+L<Term::Fabulous::Cookbook::GettingStarted/Show non-ASCII text (umlauts, CJK, combining accents)>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>,
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>.
 
 =cut

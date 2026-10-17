@@ -23,7 +23,6 @@ class Term::Fabulous::Widget::Prompt
 	use Term::Fabulous::Unicode qw(string_columns);
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Button;
-	use Term::Fabulous::Widget::RichText;
 	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextField;
 
@@ -64,9 +63,9 @@ class Term::Fabulous::Widget::Prompt
 		$focus    = $self->_checked_focus($focus);
 
 		weaken( my $weak_self = $self );
-		$_title_text   = Term::Fabulous::Widget::Text->new( text => $title, bold => 1 );
-		$_message_text = Term::Fabulous::Widget::RichText->new( markup => $message );
-		$_error_text   = Term::Fabulous::Widget::Text->new( text => '' );
+		$_title_text   = Term::Fabulous::Widget::Text->new( text   => $title, bold => 1 );
+		$_message_text = Term::Fabulous::Widget::Text->new( markup => $message );
+		$_error_text   = Term::Fabulous::Widget::Text->new( text   => '' );
 		$self->add_child($_title_text) if length $title;
 		$self->add_child($_message_text) if length $message;
 		$self->add_child( $self->_field_rows ) if @_fields;

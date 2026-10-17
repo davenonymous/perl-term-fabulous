@@ -355,17 +355,17 @@ the sections below it describe each event.
 - `TextClick` ([Term::Fabulous::Event::TextClick](../Event/TextClick.md))
 
     A mouse button was pressed on a character of a
-    [Term::Fabulous::Widget::Text](../Widget/Text.md) or [Term::Fabulous::Widget::RichText](../Widget/RichText.md).
+    [Term::Fabulous::Widget::Text](../Widget/Text.md) or [Term::Fabulous::Widget::Text](../Widget/Text.md).
     Fired on the text, after the `Mouse` event of the press. Fields:
     `button`, `x`, `y`, `offset`, `word`, `word_start`, `word_end`,
     `spans`, `link`, `link_index`. See ["Clicks on text and links"](#clicks-on-text-and-links).
 
 - `LinkActivate` ([Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md))
 
-    The user followed a link of a [Term::Fabulous::Widget::RichText](../Widget/RichText.md):
-    clicked it, or pressed `Enter` while the RichText had the focus and
+    The user followed a link of a [Term::Fabulous::Widget::Text](../Widget/Text.md):
+    clicked it, or pressed `Enter` while the Text had the focus and
     the link was selected. Also fired by `$rich_text->activate_link`.
-    Fired on the RichText. Fields: `link` (the link's target), `index`,
+    Fired on the Text. Fields: `link` (the link's target), `index`,
     `start`, `end`.
 
 - `SeriesHover` ([Term::Fabulous::Event::SeriesHover](../Event/SeriesHover.md))
@@ -673,7 +673,7 @@ skipped. The order wraps around at the end.
 - when the user presses the left mouse button: the clicked widget, or its
 nearest ancestor that can take the focus, gets it. On text, the
 clicked widget is the Text itself, so a click on a
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) with links focuses it. Clicking where no
+[Term::Fabulous::Widget::Text](../Widget/Text.md) with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
 
@@ -936,7 +936,7 @@ button; not a drag, a release or the wheel) fires `TextClick` on the
 [Term::Fabulous::Widget::Text](../Widget/Text.md) after the `Mouse` event, which still
 goes to the widget behind the text. The event says which character was
 clicked (`offset` in the text, also on a wrapped line), the word it
-belongs to, and for a [Term::Fabulous::Widget::RichText](../Widget/RichText.md) the spans and
+belongs to, and for a [Term::Fabulous::Widget::Text](../Widget/Text.md) the spans and
 the link there. It bubbles, so a container can react to clicks on any
 text inside it:
 
@@ -949,11 +949,11 @@ $article->on(
 );
 ```
 
-A left click on a link of a RichText then selects the link and fires
-`LinkActivate` on the RichText; the pointer over a link gives it its
-hovered look. See ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links) for links,
+A left click on a link of a Text then selects the link and fires
+`LinkActivate` on the Text; the pointer over a link gives it its
+hovered look. See ["LINKS" in Term::Fabulous::Widget::Text](../Widget/Text.md#links) for links,
 their looks and their keys. The recipes
-["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links)
 and
 ["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick)
 are complete programs.

@@ -137,4 +137,24 @@ KDL
 	is [ $root->code, $root->language, $root->offset ], [ "a\nb", 'perl', 2 ], 'code, language and offset can be set in a layout';
 };
 
+subtest 'highlights, tokens and the search role' => sub {
+	my ( $code, $terminal, $ui ) = code_ui( code => "my \$x;\nmy \$y;", spans => [ [ 0, 2, 'bold' ] ] );
+	ok $code->DOES('Term::Fabulous::Role::Searchable'), 'a code block is searchable';
+	is [ $code->search_texts ], [ [ undef, "my \$x;\nmy \$y;" ] ], 'its one text is the code';
+	my $revealed = $code->reveal_text( undef, 8 );
+	ref_is $revealed->[0], $code, 'reveal_text names the widget';
+	is $revealed->[1], 1, 'and the line of the offset';
+	$code->highlight_text( undef, [ [ 3, 5, 'on accent' ] ] );
+	$ui->step;
+	is $code->highlights, [ [ 3, 5, { set => 0, clear => 0, color => undef, background => 'accent' } ] ], 'highlight_text sets the highlights, tokens kept';
+	is [ @{ $terminal->cell( 4, 0 ) }[ 1, 2 ] ], [ attr_of( Term::Fabulous::Document::Look->of($code)->style('code_block')->{color} ) | 0, attr_of( $ui->theme->token('accent') ) ],
+		'painted in the theme\'s color over the spans';
+	is $terminal->cell( 1, 0 )->[1], attr_of( Term::Fabulous::Document::Look->of($code)->style('code_block')->{color} ) | TB_BOLD, 'the spans stay';
+	my $revision = $code->content_revision;
+	$code->clear_text_highlights;
+	is [ $code->highlights, $code->content_revision ], [ [], $revision ], 'clear_text_highlights clears them without counting as a change';
+	$code->code('other');
+	is [ $code->content_revision > $revision, $code->search_revision(undef) ], [ 1, $code->content_revision ], 'new code counts, and search_revision says so';
+};
+
 done_testing;

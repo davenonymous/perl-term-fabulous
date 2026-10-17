@@ -18,7 +18,7 @@ $panel->on( TextClick => sub ($event) {
 # DESCRIPTION
 
 [Term::Fabulous](../../../../README.md) fires `TextClick` on a [Term::Fabulous::Widget::Text](../Widget/Text.md)
-(a [Term::Fabulous::Widget::RichText](../Widget/RichText.md) too) when a mouse button is
+(a [Term::Fabulous::Widget::Text](../Widget/Text.md) too) when a mouse button is
 pressed on one of its characters: the topmost thing painted in the
 cell under the pointer in the last frame is a line of the text, and
 the cell holds a character (not the empty rest of the line). Drags,
@@ -29,7 +29,7 @@ widget around the text as always (see
 ["MOUSE" in Term::Fabulous::Manual::Events](../Manual/Events.md#mouse)), and it bubbles from the text
 to its ancestors, so a container can listen for clicks on any text
 inside it: `$event->target` is the text widget. A left press on a
-link of a RichText fires [LinkActivate](LinkActivate.md)
+link of a Text fires [LinkActivate](LinkActivate.md)
 after it.
 
 The event is a [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent) whose name is `TextClick`.
@@ -78,14 +78,14 @@ below. The `name` and `bubble_mode` parameters of
 
 - `spans`
 
-    The spans of a RichText that cover the character, as
-    ["spans" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#spans) gives them. Default: `[]`.
+    The spans of a Text that cover the character, as
+    ["spans" in Term::Fabulous::Widget::Text](../Widget/Text.md#spans) gives them. Default: `[]`.
 
 - `link`, `link_index`
 
-    The target of the RichText's link the character lies in, and the
+    The target of the Text's link the character lies in, and the
     link's index among the widget's links (see
-    ["links" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links)). Given together or not at
+    ["links" in Term::Fabulous::Widget::Text](../Widget/Text.md#links)). Given together or not at
     all; default `undef`.
 
 # METHODS
@@ -158,7 +158,7 @@ foreach my $span ( @{ $event->spans } ) {
 }
 ```
 
-The spans of a RichText that cover the clicked character, in the order
+The spans of a Text that cover the clicked character, in the order
 they apply: `[ $start, $end, $style ]` with the normalized style hash.
 Empty for a plain Text. The result is a copy.
 

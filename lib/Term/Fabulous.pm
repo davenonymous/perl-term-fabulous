@@ -86,7 +86,7 @@ class Term::Fabulous
 	field $_shown_down     = 0;    # the button state the last frame showed Clay
 	field $_frame_seconds  = 0;    # how long the last frame took to draw
 	field $_frame_ended_at = 0;    # when it was drawn, on the clock
-	field $_hovered_text;    # the RichText whose link is under the pointer, weakened
+	field $_hovered_text;    # the Text whose link is under the pointer, weakened
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -1432,7 +1432,7 @@ the event.
 For every button press (not a drag) whose cell holds a character of a
 text that is the topmost thing drawn there, on the
 L<Term::Fabulous::Widget::Text>, after the C<Mouse> event. A left press
-on a link of a L<Term::Fabulous::Widget::RichText> then fires
+on a link of a L<Term::Fabulous::Widget::Text> then fires
 C<LinkActivate> (L<Term::Fabulous::Event::LinkActivate>) on it. See
 L<Term::Fabulous::Manual::Events/Clicks on text and links>.
 
@@ -1440,7 +1440,7 @@ L<Term::Fabulous::Manual::Events/Clicks on text and links>.
 
 For every report of the pointer moving with no button held, on the same
 widget a C<Mouse> event would go to. The hover state of the widgets,
-and the hovered link of a L<Term::Fabulous::Widget::RichText>, follow
+and the hovered link of a L<Term::Fabulous::Widget::Text>, follow
 these moves.
 
 =item C<Start> (L<Term::Fabulous::Event::Start>)
@@ -1651,7 +1651,7 @@ The general container, with layout options, a background and a border.
 
 Shows text in one color; wraps and aligns it.
 
-=item L<Term::Fabulous::Widget::RichText>
+=item L<Term::Fabulous::Widget::Text>
 
 A Text whose spans set bold, colors and other styles on ranges of it,
 from markup such as C<[bold]Enter[/]>, and whose links the user follows
@@ -1784,10 +1784,10 @@ own state (the divider, the progress bar, the charts, the scrollbar,
 the input widgets), with the
 animation helpers; derive from it to write your own.
 
-=item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>, L<Term::Fabulous::Widget::FocusableText>
+=item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
 
 The L<Clay::UI> roles behind Term::Fabulous::Widget,
-Term::Fabulous::Widget::Text and Term::Fabulous::Widget::RichText.
+Term::Fabulous::Widget::Text and Term::Fabulous::Widget::Text.
 Used internally.
 
 =item L<Term::Fabulous::Widget::Dialog::Backdrop>
@@ -2080,7 +2080,7 @@ character, word, spans and link.
 
 =item L<Term::Fabulous::Event::LinkActivate>
 
-The user followed a link of a RichText, by click or key.
+The user followed a link of a Text, by click or key.
 
 =item L<Term::Fabulous::Event::Close>
 
@@ -2250,11 +2250,11 @@ safe for the terminal.
 =item L<Term::Fabulous::Text::Style>
 
 Style strings such as C<bold red on #202020> and the style hashes
-behind the spans of a RichText.
+behind the spans of a Text.
 
 =item L<Term::Fabulous::Text::Markup>
 
-The C<[bold red]text[/]> markup of a RichText.
+The C<[bold red]text[/]> markup of a Text.
 
 =back
 

@@ -382,17 +382,17 @@ fields.
 =item C<TextClick> (L<Term::Fabulous::Event::TextClick>)
 
 A mouse button was pressed on a character of a
-L<Term::Fabulous::Widget::Text> or L<Term::Fabulous::Widget::RichText>.
+L<Term::Fabulous::Widget::Text> or L<Term::Fabulous::Widget::Text>.
 Fired on the text, after the C<Mouse> event of the press. Fields:
 C<button>, C<x>, C<y>, C<offset>, C<word>, C<word_start>, C<word_end>,
 C<spans>, C<link>, C<link_index>. See L</Clicks on text and links>.
 
 =item C<LinkActivate> (L<Term::Fabulous::Event::LinkActivate>)
 
-The user followed a link of a L<Term::Fabulous::Widget::RichText>:
-clicked it, or pressed C<Enter> while the RichText had the focus and
+The user followed a link of a L<Term::Fabulous::Widget::Text>:
+clicked it, or pressed C<Enter> while the Text had the focus and
 the link was selected. Also fired by C<< $rich_text->activate_link >>.
-Fired on the RichText. Fields: C<link> (the link's target), C<index>,
+Fired on the Text. Fields: C<link> (the link's target), C<index>,
 C<start>, C<end>.
 
 =item C<SeriesHover> (L<Term::Fabulous::Event::SeriesHover>)
@@ -743,7 +743,7 @@ skipped. The order wraps around at the end.
 when the user presses the left mouse button: the clicked widget, or its
 nearest ancestor that can take the focus, gets it. On text, the
 clicked widget is the Text itself, so a click on a
-L<Term::Fabulous::Widget::RichText> with links focuses it. Clicking where no
+L<Term::Fabulous::Widget::Text> with links focuses it. Clicking where no
 widget can take the focus clears the focus. Dragging and the other
 buttons do not move the focus.
 
@@ -1000,7 +1000,7 @@ button; not a drag, a release or the wheel) fires C<TextClick> on the
 L<Term::Fabulous::Widget::Text> after the C<Mouse> event, which still
 goes to the widget behind the text. The event says which character was
 clicked (C<offset> in the text, also on a wrapped line), the word it
-belongs to, and for a L<Term::Fabulous::Widget::RichText> the spans and
+belongs to, and for a L<Term::Fabulous::Widget::Text> the spans and
 the link there. It bubbles, so a container can react to clicks on any
 text inside it:
 
@@ -1011,11 +1011,11 @@ text inside it:
 		}
 	);
 
-A left click on a link of a RichText then selects the link and fires
-C<LinkActivate> on the RichText; the pointer over a link gives it its
-hovered look. See L<Term::Fabulous::Widget::RichText/LINKS> for links,
+A left click on a link of a Text then selects the link and fires
+C<LinkActivate> on the Text; the pointer over a link gives it its
+hovered look. See L<Term::Fabulous::Widget::Text/LINKS> for links,
 their looks and their keys. The recipes
-L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>
 and
 L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>
 are complete programs.

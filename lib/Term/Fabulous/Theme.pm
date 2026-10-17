@@ -298,6 +298,10 @@ class Term::Fabulous::Theme :strict(params) {
 		return @names;
 	}
 
+	sub has_token ($name) {
+		return defined $name && !ref $name && exists $PALETTE{$name} ? 1 : 0;
+	}
+
 	sub states () {
 		return ( 'normal', @STATES );
 	}
@@ -1180,6 +1184,14 @@ Plain functions, called as C<Term::Fabulous::Theme::NAME(...)>.
 
 The names of the families, the tokens, the states (C<normal> first)
 and the built-in themes.
+
+=head2 has_token
+
+	if ( Term::Fabulous::Theme::has_token('accent') ) { ... }
+
+Whether the word names a token of the palette; every theme has the
+same tokens. L<Term::Fabulous::Text::Style> uses it to read a token as
+a color.
 
 =head2 slots
 

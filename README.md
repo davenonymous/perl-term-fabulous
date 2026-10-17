@@ -797,7 +797,7 @@ widget it is fired on to the root, as described in
     For every button press (not a drag) whose cell holds a character of a
     text that is the topmost thing drawn there, on the
     [Term::Fabulous::Widget::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Text.md), after the `Mouse` event. A left press
-    on a link of a [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md) then fires
+    on a link of a [Term::Fabulous::Widget::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Text.md) then fires
     `LinkActivate` ([Term::Fabulous::Event::LinkActivate](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/LinkActivate.md)) on it. See
     ["Clicks on text and links" in Term::Fabulous::Manual::Events](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Manual/Events.md#clicks-on-text-and-links).
 
@@ -805,7 +805,7 @@ widget it is fired on to the root, as described in
 
     For every report of the pointer moving with no button held, on the same
     widget a `Mouse` event would go to. The hover state of the widgets,
-    and the hovered link of a [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md), follow
+    and the hovered link of a [Term::Fabulous::Widget::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Text.md), follow
     these moves.
 
 - `Start` ([Term::Fabulous::Event::Start](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Start.md))
@@ -986,7 +986,7 @@ Term::Fabulous, and programs do not use them directly.
 
     Shows text in one color; wraps and aligns it.
 
-- [Term::Fabulous::Widget::RichText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/RichText.md)
+- [Term::Fabulous::Widget::Text](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Text.md)
 
     A Text whose spans set bold, colors and other styles on ranges of it,
     from markup such as `[bold]Enter[/]`, and whose links the user follows
@@ -1119,10 +1119,10 @@ Term::Fabulous, and programs do not use them directly.
     the input widgets), with the
     animation helpers; derive from it to write your own.
 
-- [Term::Fabulous::Widget::Element](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Element.md), [Term::Fabulous::Widget::TextNode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextNode.md), [Term::Fabulous::Widget::FocusableText](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/FocusableText.md)
+- [Term::Fabulous::Widget::Element](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Element.md), [Term::Fabulous::Widget::TextNode](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextNode.md)
 
     The [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI) roles behind Term::Fabulous::Widget,
-    Term::Fabulous::Widget::Text and Term::Fabulous::Widget::RichText.
+    Term::Fabulous::Widget::Text and Term::Fabulous::Widget::Text.
     Used internally.
 
 - [Term::Fabulous::Widget::Dialog::Backdrop](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dialog/Backdrop.md)
@@ -1395,7 +1395,7 @@ Term::Fabulous, and programs do not use them directly.
 
 - [Term::Fabulous::Event::LinkActivate](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/LinkActivate.md)
 
-    The user followed a link of a RichText, by click or key.
+    The user followed a link of a Text, by click or key.
 
 - [Term::Fabulous::Event::Close](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Close.md)
 
@@ -1557,11 +1557,11 @@ to a block kind and a mark kind of your own.
 - [Term::Fabulous::Text::Style](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Style.md)
 
     Style strings such as `bold red on #202020` and the style hashes
-    behind the spans of a RichText.
+    behind the spans of a Text.
 
 - [Term::Fabulous::Text::Markup](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Markup.md)
 
-    The `[bold red]text[/]` markup of a RichText.
+    The `[bold red]text[/]` markup of a Text.
 
 ## Themes
 

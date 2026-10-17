@@ -24,9 +24,8 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Theme::Document;
 	use Term::Fabulous::Widget::Checkbox;
-	use Term::Fabulous::Widget::RichText;
-	use Term::Fabulous::ThemeEditor::SettingsList;
 	use Term::Fabulous::Widget::Text;
+	use Term::Fabulous::ThemeEditor::SettingsList;
 	use Term::Fabulous::Widget::TextField;
 
 	use constant LIST_ID => 'theme-editor-settings';
@@ -51,8 +50,8 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 		my $tools = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 2, padding => { bottom => 1 } } );
 		$tools->add_child( $search, $only_set );
 
-		$banner  = Term::Fabulous::Widget::RichText->new( text => '' );
-		$details = Term::Fabulous::Widget::RichText->new( text => '' );
+		$banner  = Term::Fabulous::Widget::Text->new( text => '' );
+		$details = Term::Fabulous::Widget::Text->new( text => '' );
 		my $details_box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_fixed(2) }, padding => { top => 0 } } );
 		$details_box->add_child($details);
 

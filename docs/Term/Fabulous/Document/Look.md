@@ -33,12 +33,12 @@ a heading, as a _mark_ of a certain _kind_ (see
 [Term::Fabulous::Document::Mark](Mark.md)). A look decides how each kind is
 _shown_. For every kind it holds a style in the sense of
 [Term::Fabulous::Text::Style](../Text/Style.md): the style bits to set and clear, a text
-color and a background. A [Term::Fabulous::Widget::RichText](../Widget/RichText.md) span
+color and a background. A [Term::Fabulous::Widget::Text](../Widget/Text.md) span
 takes such a style unchanged.
 
-Links are not a kind of the look. A RichText draws its links itself, in
+Links are not a kind of the look. A Text draws its links itself, in
 the link looks of the theme (see
-["Looks" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#looks)).
+["Looks" in Term::Fabulous::Widget::Text](../Widget/Text.md#looks)).
 
 A look takes every color from the palette of a [Term::Fabulous::Theme](../Theme.md)
 (see ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)), never from fixed values. A

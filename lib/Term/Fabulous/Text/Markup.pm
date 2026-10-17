@@ -109,7 +109,7 @@ styled spans and links
 =head1 DESCRIPTION
 
 Markup is text with style tags in square brackets, in the syntax of
-Python's C<rich> library. L<Term::Fabulous::Widget::RichText> takes it
+Python's C<rich> library. L<Term::Fabulous::Widget::Text> takes it
 as its C<markup> parameter; this module does the parsing.
 
 =over
@@ -127,9 +127,9 @@ bracket, without the blanks at its ends (C<[link=https://perl.org]>,
 C<[link=perlfunc/open]>, C<[link=page two]> for the target
 C<page two>). The target is always a string, and cannot contain C<[>
 or C<]>; give other targets from Perl with
-L<add_link|Term::Fabulous::Widget::RichText/add_link>. What the target
+L<add_link|Term::Fabulous::Widget::Text/add_link>. What the target
 means is the program's business (see
-L<Term::Fabulous::Widget::RichText/LINKS>). A link tag without a
+L<Term::Fabulous::Widget::Text/LINKS>). A link tag without a
 target, and a link inside another link, die. Close it with C<[/link]>
 or C<[/]>. A link is no span: style the words with a style tag inside
 or around it, as in C<[bold][link=faq]FAQ[/link][/]>.
@@ -176,6 +176,6 @@ C<Term::Fabulous::Text::Markup:>.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Text::Style>, L<Term::Fabulous::Widget::RichText>.
+L<Term::Fabulous::Text::Style>, L<Term::Fabulous::Widget::Text>.
 
 =cut

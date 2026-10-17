@@ -15,8 +15,9 @@ class Term::Fabulous::Widget
 	:does(Term::Fabulous::Role::Themed)
 	:abstract
 {
-	use List::Util qw(first);
-	use Term::Fabulous::Check qw(boolean class_names color);
+	use Clay::XS qw(CLAY__SIZING_TYPE_FIXED);
+	use List::Util qw(first max);
+	use Term::Fabulous::Check qw(boolean class_names color positive_integer);
 	use Term::Fabulous::Theme;
 
 	my @COLOR_PARAMS = qw(background_color border_color);
@@ -77,6 +78,34 @@ class Term::Fabulous::Widget
 	method _bordered_sides () {
 		my $sides = $self->look_value('bordered');
 		return ref $sides ? $sides : $sides ? \%EVERY_SIDE : \%NO_SIDE;
+	}
+
+	# ---------------------------------------------------------------------
+	# Height before layout
+	# ---------------------------------------------------------------------
+
+	# The rows the widget will take in the given number of columns, before
+	# Clay has laid it out: a fixed height as given; else the padding and
+	# the border around what the content takes, which a subclass knows
+	# (estimated_content_rows). A guess for the scrollbar of a list that
+	# builds only the items near its viewport; Clay's layout corrects it.
+	method estimated_rows ($columns) {
+		$columns = positive_integer( $self, columns => $columns );
+		my $layout = $self->layout;
+		my $height = $layout->{sizing}{height};
+		return $height->{min} if defined $height && $height->{type} == CLAY__SIZING_TYPE_FIXED;
+
+		my $padding = $layout->{padding} // {};
+		my $sides   = $self->_bordered_sides;
+		my $rows    = ( $padding->{top}  // 0 ) + ( $padding->{bottom} // 0 ) + ( $sides->{top}  ? 1 : 0 ) + ( $sides->{bottom} ? 1 : 0 );
+		my $frame   = ( $padding->{left} // 0 ) + ( $padding->{right}  // 0 ) + ( $sides->{left} ? 1 : 0 ) + ( $sides->{right}  ? 1 : 0 );
+		return $rows + $self->estimated_content_rows( max( 1, $columns - $frame ) );
+	}
+
+	# The rows the content inside the padding and the border takes, in
+	# the columns left for it: one, unless a subclass knows better.
+	method estimated_content_rows ($columns) {
+		return 1;
 	}
 
 	# The color this widget lies on: the background of the widget itself
@@ -769,6 +798,33 @@ A new array reference with the listeners registered on this widget for
 an event name, in the order they were added (an empty array reference
 when there are none). Changing the array does not change the widget.
 Mostly useful in tests.
+
+=head2 estimated_rows
+
+	my $rows = $widget->estimated_rows($columns);
+
+The rows the widget will take when it is laid out in that many
+columns, before Clay has laid it out: a guess for a list that builds
+only the items near its viewport and needs the height of the others
+for its scrollbar (L<Term::Fabulous::Widget::VirtualList>,
+L<Term::Fabulous::Widget::DocumentView>). A fixed height in the layout
+is the answer; otherwise it is the padding and the border around what
+L</estimated_content_rows> says the content takes. Clay's layout
+corrects a guess that was off. C<$columns> must be a positive integer.
+L<Term::Fabulous::Widget::Text> has the same method, since a text is
+not a Widget.
+
+=head2 estimated_content_rows
+
+	method estimated_content_rows :override ($columns) { ... }
+
+The rows the content inside the padding and the border takes, given
+the columns left for it: one, unless a subclass knows better. A
+L<Term::Fabulous::Widget::Box> composes the estimates of its children,
+a L<Term::Fabulous::Widget::Display> answers from its C<natural_size>,
+a L<Term::Fabulous::Widget::Table> counts its header and the rows of
+its page. Override it in a widget of your own whose height is known
+before the layout.
 
 =head2 layout
 

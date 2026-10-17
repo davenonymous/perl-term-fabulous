@@ -7,12 +7,14 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Searchable;
 use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::CodeBlock
 	:isa(Term::Fabulous::Widget::Display)
+	:does(Term::Fabulous::Role::Searchable)
 	:strict(params)
 {
 	use Clay::XS qw(sizing_grow);
@@ -21,7 +23,7 @@ class Term::Fabulous::Widget::CodeBlock
 	use Term::Fabulous::Check qw(describe non_negative_integer string);
 	use Term::Fabulous::Document::Look;
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
-	use Term::Fabulous::Text::Style qw(apply_style);
+	use Term::Fabulous::Text::Style qw(apply_style resolve_style);
 	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters);
 
 	# One column on either side of the code, in the code's background,
@@ -36,6 +38,11 @@ class Term::Fabulous::Widget::CodeBlock
 	field $spans       :param = [];
 	field $offset      :param = 0;
 	field $look_class  :param = 'Term::Fabulous::Document::Look';
+
+	# What a search marks in the code, painted over the spans, and a count
+	# of the changes of the code, for callers that recorded offsets.
+	field $highlights       = [];
+	field $content_revision = 0;
 
 	# Per line, its clusters as [ cluster, columns, offset in the code ],
 	# and its width in columns. The highlighter's spans until the code,
@@ -125,8 +132,10 @@ class Term::Fabulous::Widget::CodeBlock
 
 	method code (@new) {
 		return $code unless @new;
-		$code  = string( $self, code => $new[0] );
-		$spans = [];
+		$code       = string( $self, code => $new[0] );
+		$spans      = [];
+		$highlights = [];
+		$content_revision++;
 		$self->_split_lines;
 		$self->mark_changed;
 		return $code;
@@ -154,6 +163,54 @@ class Term::Fabulous::Widget::CodeBlock
 		$runs  = undef;
 		$self->mark_changed;
 		return $self->spans;
+	}
+
+	method highlights (@new) {
+		return [ map { [ $_->[0], $_->[1], { %{ $_->[2] } } ] } @$highlights ] unless @new;
+		$highlights = $self->_checked_spans( highlights => $new[0] );
+		$runs       = undef;
+		$self->mark_changed;
+		return $self->highlights;
+	}
+
+	method clear_highlights () {
+		$highlights = [];
+		$runs       = undef;
+		$self->mark_changed;
+		return $self;
+	}
+
+	method content_revision () {
+		return $content_revision;
+	}
+
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable): the code
+	# ---------------------------------------------------------------------
+
+	method search_texts () {
+		return ( [ undef, $code ] );
+	}
+
+	method search_revision ($key) {
+		return $content_revision;
+	}
+
+	method highlight_text ( $key, $ranges ) {
+		$self->highlights($ranges);
+		return;
+	}
+
+	method clear_text_highlights () {
+		$self->clear_highlights;
+		return;
+	}
+
+	# The code never wraps, so the row of a character is its line.
+	method reveal_text ( $key, $offset ) {
+		$offset = non_negative_integer( $self, offset => $offset );
+		my $line = () = substr( $code, 0, $offset ) =~ /\n/g;
+		return [ $self, $line ];
 	}
 
 	method look_class (@new) {
@@ -209,12 +266,16 @@ class Term::Fabulous::Widget::CodeBlock
 	}
 
 	# The runs of the code in the current look, made again only when the
-	# look (a theme switch) or the spans changed.
+	# look (a theme switch) or the spans changed: the highlighter's spans,
+	# then the program's, then the highlights, each with its palette
+	# tokens turned into the theme's colors.
 	method _runs_in ($look) {
 		return $runs if defined $runs && refaddr($runs_look) == refaddr($look);
-		my $base = $look->style('code_block');
+		my $base  = $look->style('code_block');
+		my $theme = $self->_theme;
+		my @spans = map { [ $_->[0], $_->[1], resolve_style( $_->[2], $theme ) ] } @{ $self->_highlighted_spans }, @$spans, @$highlights;
 		$runs = [ map { +{ %$_, fg => $self->_fg_attr( $_->{look} ), bg => $self->color_attr( $_->{look}{background} ) } }
-				_runs( length $code, { attrs => 0, color => $base->{color}, background => $base->{background} }, @{ $self->_highlighted_spans }, @$spans ) ];
+				_runs( length $code, { attrs => 0, color => $base->{color}, background => $base->{background} }, @spans ) ];
 		$runs_look = $look;
 		return $runs;
 	}
@@ -408,7 +469,7 @@ C<[ $start, $end, $style ]>. C<$start> and C<$end> are character
 offsets into the code (C<$end> is the offset after the last character
 of the span), and C<$style> is a style string or style hash of
 L<Term::Fabulous::Text::Style>, such as C<'bold #c678dd'>. This is the
-same format as the spans of a L<Term::Fabulous::Widget::RichText>. A
+same format as the spans of a L<Term::Fabulous::Widget::Text>. A
 result in any other format, or a span that does not lie within the
 code, dies when the block is painted. See L</SYNTAX HIGHLIGHTING>.
 
@@ -478,6 +539,41 @@ Gets or sets the program's spans. Both the getter and the setter return
 a copy of the spans, in which each style is normalized to a style hash
 of L<Term::Fabulous::Text::Style>. Setting the spans does not run the
 highlighter again.
+
+=head2 highlights
+
+	$code->highlights( [ [ 12, 18, 'on selection' ] ] );
+	my $highlights = $code->highlights;
+
+Accessor for the highlights: ranges C<[ $start, $end, $style ]> like
+L</spans>, painted over the highlighter's spans and the program's,
+and kept apart from them: what a search marks in the code. Setting
+replaces every highlight and leaves L</content_revision> alone. The
+reader returns a copy with normalized styles. Invalid ranges or styles
+die. A color in a style may be a palette token of the theme, which
+the code block looks up when it paints.
+
+=head2 clear_highlights
+
+	$code->clear_highlights;
+
+Drops every highlight. Returns the widget.
+
+=head2 content_revision
+
+	my $revision = $code->content_revision;
+
+A counter that grows whenever the code changes, for callers that
+recorded offsets into it.
+
+=head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
+
+The methods of L<Term::Fabulous::Role::Searchable>, which a code block
+does for its code: C<search_texts> returns C<[ undef, $code ]>,
+C<search_revision> is L</content_revision>, C<highlight_text> sets
+L</highlights>, C<clear_text_highlights> clears them, and
+C<reveal_text> returns the widget itself and the line of the offset,
+since code never wraps.
 
 =head2 offset
 

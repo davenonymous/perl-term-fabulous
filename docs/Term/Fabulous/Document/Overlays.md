@@ -196,8 +196,8 @@ my $index = $overlays->selected_in_block($block);
 
 Returns the position of the selected link among the links of block
 `$block`, counted from 0 in text order. This is the index that the
-block's [Term::Fabulous::Widget::RichText](../Widget/RichText.md) expects in its
-[select\_link](../Widget/RichText.md#select_link) method.
+block's [Term::Fabulous::Widget::Text](../Widget/Text.md) expects in its
+[select\_link](../Widget/Text.md#select_link) method.
 Returns `undef` when no link is selected or the selected link is in
 another block.
 

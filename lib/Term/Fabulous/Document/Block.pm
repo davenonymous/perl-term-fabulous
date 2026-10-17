@@ -19,7 +19,7 @@ class Term::Fabulous::Document::Block :abstract :strict(params) {
 	field $indent :param :reader = 0;
 	field $quote  :param :reader = 0;
 
-	# The link marks in the order of the text, as the view's RichText
+	# The link marks in the order of the text, as the view's Text
 	# counts its links.
 	field @links;
 
@@ -38,7 +38,7 @@ class Term::Fabulous::Document::Block :abstract :strict(params) {
 	}
 
 	# A link covers text and shares none of it with another link: the
-	# RichText that shows the block refuses both, so the block does first.
+	# Text that shows the block refuses both, so the block does first.
 	method _checked_links () {
 		my @sorted = sort { $a->start <=> $b->start } grep { $_->is_link } @$marks;
 		foreach my $index ( 0 .. $#sorted ) {
@@ -223,7 +223,7 @@ does an element that is not a mark object. The order of the marks
 matters; see L</marks>. Link marks are checked further: one that
 covers no text (C<start> equal to C<end>) dies, and so do two link
 marks that overlap, because the view shows them as the links of a
-L<Term::Fabulous::Widget::RichText>, which refuses both. The block
+L<Term::Fabulous::Widget::Text>, which refuses both. The block
 keeps a copy of the array.
 
 =item C<indent>

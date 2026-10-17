@@ -15,7 +15,7 @@ my $row  = wrapped_row( 'some words to wrap', 11, 8 );  # 2: character 11 starts
 # DESCRIPTION
 
 Clay lays out the text of a [Term::Fabulous::Widget::Text](../Widget/Text.md) or
-[Term::Fabulous::Widget::RichText](../Widget/RichText.md) during a frame, so the number of
+[Term::Fabulous::Widget::Text](../Widget/Text.md) during a frame, so the number of
 rows the text takes is known only after that frame. Some widgets need
 it earlier. A [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), for example,
 estimates the height of every paragraph it has not laid out yet, and
@@ -46,7 +46,7 @@ measured alone.
 - A word that is wider than the line gets a line of its own and runs past
 the end of that line.
 
-`t/text-wrap.t` checks the functions against RichText widgets that
+`t/text-wrap.t` checks the functions against Text widgets that
 Clay laid out on a memory terminal, so a change in Clay's wrapping
 shows up as a test failure.
 

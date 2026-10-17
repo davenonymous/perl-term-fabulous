@@ -162,6 +162,21 @@ painted rectangle of those commands; they may overlap. Empty when
 nothing is painted over the rectangle. A sixel picture leaves these
 cells out.
 
+## text\_rows
+
+```perl
+my @rows = $frame->text_rows($text);    # ( [ $row, $first_offset ], ... )
+```
+
+The painted lines of a [Term::Fabulous::Widget::Text](../Widget/Text.md): for every TEXT
+command the widget emitted, the screen row it was painted on and the
+offset in the widget's text of the line's first character, ordered by
+row. A text that was not laid out in this frame has none; one whose
+lower lines Clay left out below the window has fewer than it shows;
+a line without characters has none. A caller that scrolls a character
+into view takes the row of the last line whose offset is not past the
+character's, and treats an offset past the last line as below it.
+
 ## topmost\_at
 
 ```perl

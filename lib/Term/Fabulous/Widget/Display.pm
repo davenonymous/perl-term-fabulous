@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Display
 	:abstract
 {
 	use Clay::XS qw(sizing_fixed);
+	use List::Util qw(max);
 	use Time::HiRes ();
 	use Term::Fabulous::Render::Attr qw(cell_color_attr);
 
@@ -143,6 +144,15 @@ class Term::Fabulous::Widget::Display
 		);
 		$config->{layout} = { %$layout, sizing => { %$sizing, map { $_ => _with_inset( $natural{$_}, $inset{$_} ) } @open } };
 		return;
+	}
+
+	# The rows of the natural size, when it is a number of rows; a display
+	# that grows with its box (a sizing) takes at least the sizing's
+	# minimum, else one row.
+	method estimated_content_rows :override ($columns) {
+		my ( undef, $rows ) = $self->natural_size;
+		return $rows unless ref $rows;
+		return max( 1, $rows->{min} // 0 );
 	}
 
 	# A natural axis as a sizing of the whole widget: a sizing hash with
@@ -366,6 +376,14 @@ of the buffer and a count of the widget's C<mark_changed> calls. Extend
 it with what C<paint> reads from other objects, which do not mark this
 widget changed. The values are compared as strings; keep them cheap to
 compute, since the key is computed for every frame.
+
+=head2 estimated_content_rows
+
+	my $rows = $display->estimated_content_rows($columns);
+
+The rows of the L</natural_size>, or the minimum of its sizing when
+the height grows with the box; see
+L<Term::Fabulous::Widget/estimated_content_rows>.
 
 =head2 color_attr
 

@@ -40,11 +40,10 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use Term::Fabulous::Widget::KeyReference;
 	use Term::Fabulous::Widget::MenuBar;
 	use Term::Fabulous::Widget::Prompt;
-	use Term::Fabulous::Widget::RichText;
+	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::ScrollBox;
 	use Term::Fabulous::Widget::SegmentedControl;
 	use Term::Fabulous::Widget::StatusBar;
-	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextField;
 
 	# How long the text must rest before it is parsed again, in seconds.
@@ -234,11 +233,11 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 		# The preview pane: the editor draws its frame and title, the preview
 		# inside it draws in the theme being edited.
-		$preview_title = Term::Fabulous::Widget::RichText->new( text => 'Preview' );
+		$preview_title = Term::Fabulous::Widget::Text->new( text => 'Preview' );
 		$preview_root  = $self->_preview_widget;
 		$preview_pane  = $self->_pane( $preview_title, $preview_root );
 
-		$settings_title = Term::Fabulous::Widget::RichText->new( text => 'Settings' );
+		$settings_title = Term::Fabulous::Widget::Text->new( text => 'Settings' );
 		$mode_switch    = Term::Fabulous::Widget::SegmentedControl->new( options => [ [ Form => 'form' ], [ Text => 'text' ] ], value => 'form', can_focus => 0 );
 		$mode_switch->on( Change => sub ($event) { $editor->set_mode( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
 		my $title_box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() } } );
@@ -254,8 +253,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		);
 		$form->explain_with( sub ($row) { $editor->_explain($row) } );
 		$text_box    = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-		$errors_text = Term::Fabulous::Widget::RichText->new( text => '' );
-		$welcome     = Term::Fabulous::Widget::RichText->new(
+		$errors_text = Term::Fabulous::Widget::Text->new( text => '' );
+		$welcome     = Term::Fabulous::Widget::Text->new(
 			markup => "No theme is open.\n\n[bold]Ctrl+N[/] makes a new theme, [bold]Ctrl+O[/] opens a theme file, [bold]F1[/] lists every key, [bold]Ctrl+Q[/] quits.",
 		);
 

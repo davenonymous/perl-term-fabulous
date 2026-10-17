@@ -226,18 +226,18 @@ In a KDL layout file:
 
 These are the only text styles a Text widget has, and they apply to
 the whole text. For a bold word inside a sentence, a colored phrase or
-reverse video, use a RichText.
+reverse video, use a Text.
 
 =head2 Styled spans inside one text
 
-A L<Term::Fabulous::Widget::RichText> is a Text whose I<spans> give
+A L<Term::Fabulous::Widget::Text> is a Text whose I<spans> give
 ranges of its characters a look of their own: style bits (bold, italic,
 underline, reverse, dim, blink, strike, overline, conceal), a text
 color and a background. The text wraps and aligns exactly like a Text;
 a span simply continues on the next line. The shortest way to write
 one is markup in the syntax of Python's C<rich> library:
 
-	my $hint = Term::Fabulous::Widget::RichText->new(
+	my $hint = Term::Fabulous::Widget::Text->new(
 		markup => 'Press [bold]Enter[/] to save, [bold #e06c75]Esc[/] to leave.',
 	);
 
@@ -252,7 +252,7 @@ L<Term::Fabulous::Text::Markup> for the tags.
 
 Spans can also be given as character ranges, or added later:
 
-	my $line = Term::Fabulous::Widget::RichText->new(
+	my $line = Term::Fabulous::Widget::Text->new(
 		text  => 'error: config.kdl not found',
 		spans => [ [ 0, 6, 'bold #e06c75' ] ],
 	);
@@ -263,7 +263,7 @@ In a KDL layout file:
 
 =for highlighter language=kdl
 
-	RichText {
+	Text {
 		markup "Press [bold]Enter[/] to save"
 	}
 
@@ -276,12 +276,12 @@ and a wrapped paragraph side by side.
 
 =head2 Links inside a text
 
-A RichText can also hold I<links>, ranges of its text that the user
+A Text can also hold I<links>, ranges of its text that the user
 follows with a click, or with C<Tab>, C<Left>/C<Right> and C<Enter>. The
 widget fires L<LinkActivate|Term::Fabulous::Event::LinkActivate> with
 the link's target and leaves the rest to the program:
 
-	my $help = Term::Fabulous::Widget::RichText->new(
+	my $help = Term::Fabulous::Widget::Text->new(
 		markup => 'Read the [link=faq]FAQ[/link] or [link=https://perl.org]perl.org[/link].',
 	);
 	$help->on( LinkActivate => sub ($event) { show_page( $event->link ); return } );
@@ -292,9 +292,9 @@ theme changes the look with the slots C<text.link> (the color of the
 words) and C<text.link.background>, each in the states normal,
 C<hovered> and C<selected>, such as
 C<< 'text.link.selected' => 'text_inverse' >>. See
-L<Term::Fabulous::Widget::RichText/Looks> for the defaults and a
+L<Term::Fabulous::Widget::Text/Looks> for the defaults and a
 picture, and
-L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (RichText links)>
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>
 for a program with links in colors of its own.
 
 =head2 Wide characters and emoji

@@ -99,7 +99,7 @@ The pages, in reading order, each with its recipes:
 
     - [Bind a key to an action](Cookbook/KeyboardAndMouse.md#bind-a-key-to-an-action)
     - [Add buttons for the mouse and the keyboard (Button)](Cookbook/KeyboardAndMouse.md#add-buttons-for-the-mouse-and-the-keyboard-button)
-    - [Follow links in a text (RichText links)](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+    - [Follow links in a text (Text links)](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links)
     - [React to a click on a word (TextClick)](Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick)
 
 - [Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md)

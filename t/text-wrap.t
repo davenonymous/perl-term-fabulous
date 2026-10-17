@@ -11,7 +11,7 @@ use Term::Fabulous;
 use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Text::Wrap qw(wrapped_rows wrapped_row);
 use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::RichText;
+use Term::Fabulous::Widget::Text;
 
 my $NBSP = "\x{a0}";
 
@@ -42,11 +42,11 @@ subtest 'wrapped_row' => sub {
 	like dies { wrapped_row( 'x',   -1, 3 ) }, qr/offset must be a non-negative integer/, 'with an offset in it';
 };
 
-# The contract with Clay: a RichText laid out in a box of a known width
+# The contract with Clay: a Text laid out in a box of a known width
 # takes the rows the functions say.
 sub laid_out_rows ( $text, $columns ) {
 	my $box = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed($columns) } } );
-	$box->add_child( Term::Fabulous::Widget::RichText->new( text => $text, can_focus => 0 ) );
+	$box->add_child( Term::Fabulous::Widget::Text->new( text => $text, can_focus => 0 ) );
 	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	$root->add_child($box);
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 40, height => 20 );

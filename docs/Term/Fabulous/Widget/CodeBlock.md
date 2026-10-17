@@ -104,7 +104,7 @@ message that names the parameter.
     offsets into the code (`$end` is the offset after the last character
     of the span), and `$style` is a style string or style hash of
     [Term::Fabulous::Text::Style](../Text/Style.md), such as `'bold #c678dd'`. This is the
-    same format as the spans of a [Term::Fabulous::Widget::RichText](RichText.md). A
+    same format as the spans of a [Term::Fabulous::Widget::Text](Text.md). A
     result in any other format, or a span that does not lie within the
     code, dies when the block is painted. See ["SYNTAX HIGHLIGHTING"](#syntax-highlighting).
 
@@ -180,6 +180,47 @@ Gets or sets the program's spans. Both the getter and the setter return
 a copy of the spans, in which each style is normalized to a style hash
 of [Term::Fabulous::Text::Style](../Text/Style.md). Setting the spans does not run the
 highlighter again.
+
+## highlights
+
+```perl
+$code->highlights( [ [ 12, 18, 'on selection' ] ] );
+my $highlights = $code->highlights;
+```
+
+Accessor for the highlights: ranges `[ $start, $end, $style ]` like
+["spans"](#spans), painted over the highlighter's spans and the program's,
+and kept apart from them: what a search marks in the code. Setting
+replaces every highlight and leaves ["content\_revision"](#content_revision) alone. The
+reader returns a copy with normalized styles. Invalid ranges or styles
+die. A color in a style may be a palette token of the theme, which
+the code block looks up when it paints.
+
+## clear\_highlights
+
+```perl
+$code->clear_highlights;
+```
+
+Drops every highlight. Returns the widget.
+
+## content\_revision
+
+```perl
+my $revision = $code->content_revision;
+```
+
+A counter that grows whenever the code changes, for callers that
+recorded offsets into it.
+
+## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
+
+The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), which a code block
+does for its code: `search_texts` returns `[ undef, $code ]`,
+`search_revision` is ["content\_revision"](#content_revision), `highlight_text` sets
+["highlights"](#highlights), `clear_text_highlights` clears them, and
+`reveal_text` returns the widget itself and the line of the offset,
+since code never wraps.
 
 ## offset
 

@@ -20,7 +20,7 @@ my ( $see, undef, $links ) = parse_markup('See [link=https://perl.org]perl.org[/
 # DESCRIPTION
 
 Markup is text with style tags in square brackets, in the syntax of
-Python's `rich` library. [Term::Fabulous::Widget::RichText](../Widget/RichText.md) takes it
+Python's `rich` library. [Term::Fabulous::Widget::Text](../Widget/Text.md) takes it
 as its `markup` parameter; this module does the parsing.
 
 - `[STYLE]`
@@ -36,9 +36,9 @@ as its `markup` parameter; this module does the parsing.
     `[link=perlfunc/open]`, `[link=page two]` for the target
     `page two`). The target is always a string, and cannot contain `[`
     or `]`; give other targets from Perl with
-    [add\_link](../Widget/RichText.md#add_link). What the target
+    [add\_link](../Widget/Text.md#add_link). What the target
     means is the program's business (see
-    ["LINKS" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#links)). A link tag without a
+    ["LINKS" in Term::Fabulous::Widget::Text](../Widget/Text.md#links)). A link tag without a
     target, and a link inside another link, die. Close it with `[/link]`
     or `[/]`. A link is no span: style the words with a style tag inside
     or around it, as in `[bold][link=faq]FAQ[/link][/]`.
@@ -85,4 +85,4 @@ references die with a message starting with
 
 # SEE ALSO
 
-[Term::Fabulous::Text::Style](Style.md), [Term::Fabulous::Widget::RichText](../Widget/RichText.md).
+[Term::Fabulous::Text::Style](Style.md), [Term::Fabulous::Widget::Text](../Widget/Text.md).

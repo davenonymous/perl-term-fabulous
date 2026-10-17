@@ -14,7 +14,7 @@ use Term::Fabulous::Layout;
 
 my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 use Term::Fabulous::Widget::Box as Box
-use Term::Fabulous::Widget::RichText as RichText
+use Term::Fabulous::Widget::Text as Text
 use Term::Fabulous::Widget::DocumentView as DocumentView
 
 Box "root" {
@@ -25,7 +25,7 @@ Box "root" {
 		padding left=1 right=1
 		border style=Round
 		bordered #true
-		RichText "contents" { text ""; }
+		Text "contents" { text ""; }
 	}
 
 	// The view is framed by a box around it rather than by a border of its

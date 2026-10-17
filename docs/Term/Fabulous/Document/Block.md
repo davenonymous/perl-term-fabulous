@@ -133,7 +133,7 @@ parameters die. The parameters every block accepts are:
     matters; see ["marks"](#marks). Link marks are checked further: one that
     covers no text (`start` equal to `end`) dies, and so do two link
     marks that overlap, because the view shows them as the links of a
-    [Term::Fabulous::Widget::RichText](../Widget/RichText.md), which refuses both. The block
+    [Term::Fabulous::Widget::Text](../Widget/Text.md), which refuses both. The block
     keeps a copy of the array.
 
 - `indent`

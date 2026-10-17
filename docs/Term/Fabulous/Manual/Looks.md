@@ -226,11 +226,11 @@ Text {
 
 These are the only text styles a Text widget has, and they apply to
 the whole text. For a bold word inside a sentence, a colored phrase or
-reverse video, use a RichText.
+reverse video, use a Text.
 
 ## Styled spans inside one text
 
-A [Term::Fabulous::Widget::RichText](../Widget/RichText.md) is a Text whose _spans_ give
+A [Term::Fabulous::Widget::Text](../Widget/Text.md) is a Text whose _spans_ give
 ranges of its characters a look of their own: style bits (bold, italic,
 underline, reverse, dim, blink, strike, overline, conceal), a text
 color and a background. The text wraps and aligns exactly like a Text;
@@ -238,7 +238,7 @@ a span simply continues on the next line. The shortest way to write
 one is markup in the syntax of Python's `rich` library:
 
 ```kdl
-my $hint = Term::Fabulous::Widget::RichText->new(
+my $hint = Term::Fabulous::Widget::Text->new(
         markup => 'Press [bold]Enter[/] to save, [bold #e06c75]Esc[/] to leave.',
 );
 ```
@@ -255,7 +255,7 @@ background, and `default` for the terminal's own color. See
 Spans can also be given as character ranges, or added later:
 
 ```kdl
-my $line = Term::Fabulous::Widget::RichText->new(
+my $line = Term::Fabulous::Widget::Text->new(
         text  => 'error: config.kdl not found',
         spans => [ [ 0, 6, 'bold #e06c75' ] ],
 );
@@ -266,7 +266,7 @@ Later spans win where spans overlap, and setting `text` drops them.
 In a KDL layout file:
 
 ```kdl
-RichText {
+Text {
         markup "Press [bold]Enter[/] to save"
 }
 ```
@@ -278,13 +278,13 @@ and a wrapped paragraph side by side.
 
 ## Links inside a text
 
-A RichText can also hold _links_, ranges of its text that the user
+A Text can also hold _links_, ranges of its text that the user
 follows with a click, or with `Tab`, `Left`/`Right` and `Enter`. The
 widget fires [LinkActivate](../Event/LinkActivate.md) with
 the link's target and leaves the rest to the program:
 
 ```perl
-my $help = Term::Fabulous::Widget::RichText->new(
+my $help = Term::Fabulous::Widget::Text->new(
         markup => 'Read the [link=faq]FAQ[/link] or [link=https://perl.org]perl.org[/link].',
 );
 $help->on( LinkActivate => sub ($event) { show_page( $event->link ); return } );
@@ -296,9 +296,9 @@ theme changes the look with the slots `text.link` (the color of the
 words) and `text.link.background`, each in the states normal,
 `hovered` and `selected`, such as
 `'text.link.selected' => 'text_inverse'`. See
-["Looks" in Term::Fabulous::Widget::RichText](../Widget/RichText.md#looks) for the defaults and a
+["Looks" in Term::Fabulous::Widget::Text](../Widget/Text.md#looks) for the defaults and a
 picture, and
-["Follow links in a text (RichText links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-richtext-links)
+["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links)
 for a program with links in colors of its own.
 
 ## Wide characters and emoji

@@ -166,7 +166,7 @@ class Term::Fabulous::Document::Overlays :strict(params) {
 	}
 
 	# Where the selected link is among the links of the block, as the
-	# block's RichText counts them: both are in the order of the text.
+	# block's Text counts them: both are in the order of the text.
 	method selected_in_block ($block) {
 		my $selected_block = $self->_block_of_selection;
 		return undef unless defined $selected_block && $selected_block == $block;
@@ -386,8 +386,8 @@ and ends. Returns an empty list while no link is selected.
 
 Returns the position of the selected link among the links of block
 C<$block>, counted from 0 in text order. This is the index that the
-block's L<Term::Fabulous::Widget::RichText> expects in its
-L<select_link|Term::Fabulous::Widget::RichText/select_link> method.
+block's L<Term::Fabulous::Widget::Text> expects in its
+L<select_link|Term::Fabulous::Widget::Text/select_link> method.
 Returns C<undef> when no link is selected or the selected link is in
 another block.
 
