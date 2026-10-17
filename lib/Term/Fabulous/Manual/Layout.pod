@@ -824,6 +824,39 @@ frame costs what the visible part costs.
 		layout => { sizing => { width => sizing_grow(), height => sizing_grow() }, child_gap => 1 },
 	);
 
+=head2 Documents
+
+A document with headings, paragraphs, lists, quotes, code and links,
+read from POD, Markdown or another format, is shown by a
+L<Term::Fabulous::Widget::DocumentView>, a VirtualList that knows the
+kinds of block such a document has. A parser turns the source into a
+L<Term::Fabulous::Document>, a list of L<blocks|Term::Fabulous::Document::Block>
+whose text carries L<marks|Term::Fabulous::Document::Mark> (bold,
+code, a link); the view shows every kind in the styles of the theme,
+wraps the paragraphs, scrolls with the keys, the wheel and the
+scrollbar, selects links with C<l> and C<L> and follows them with
+C<Enter> or a click, searches the text, and reports what it shows after
+every frame with a L<ViewChange|Term::Fabulous::Event::ViewChange>:
+
+	my $view = Term::Fabulous::Widget::DocumentView->new(
+		id       => 'document',
+		document => $document,    # a Term::Fabulous::Document from a parser
+		layout   => { sizing => { width => sizing_grow(), height => sizing_grow() } },
+	);
+	$view->on( LinkActivate => sub ($event) { open_page( $event->link ); return } );
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-document-view.svg" alt="A framed document view: a first-level heading with a rule under it, indented paragraphs with bold and code spans, a bulleted list, a quoted paragraph with a bar on its left, a code block on a darker background, a selected link in inverse colors, and search matches highlighted"></p>
+
+=end html
+
+The picture shows F<examples/widgets/document-view.pl>. Code is shown
+by L<Term::Fabulous::Widget::CodeBlock> widgets, which never wrap and
+scroll sideways together. L<Pod::Fabulous> is a reader built on the
+view; L<Term::Fabulous::Widget::DocumentView/BLOCK KINDS> says how a
+viewer for another format adds blocks of its own.
+
 =head2 Equal sizes across the tree
 
 Widgets in different parts of the tree can be made equally wide or high

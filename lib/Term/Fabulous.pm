@@ -1706,6 +1706,20 @@ A ScrollBox for thousands of items, the paragraphs of a long document
 say: it builds and lays out only the items near the viewport, with
 spacers standing in for the rest.
 
+=item L<Term::Fabulous::Widget::DocumentView>
+
+A VirtualList that shows a L<Term::Fabulous::Document>: headings,
+paragraphs with bold, italic and code marks, lists, quotes and code
+blocks in the styles of the theme, scrolled with the keys, its links
+selected and followed, its text searched. The main pane of a reader for
+any documentation format (see L</Documents>).
+
+=item L<Term::Fabulous::Widget::CodeBlock>
+
+Lines of code on a background of their own, never wrapped, cut at the
+edge and scrolled sideways, each character in the style a highlighter
+gives it.
+
 =item L<Term::Fabulous::Widget::Scrollbar>
 
 The scrollbar of a scroll container: a track with a thumb that shows
@@ -2038,6 +2052,11 @@ The terminal changed size.
 
 A canvas got a new size from the layout.
 
+=item L<Term::Fabulous::Event::ViewChange>
+
+What a document view shows has changed: the blocks in view, the
+section, the percentage, the selected link and the search.
+
 =item L<Term::Fabulous::Event::Change>
 
 The user changed the value of an input widget.
@@ -2123,6 +2142,61 @@ The user opened or closed a tree row or a group of a table.
 =item L<Term::Fabulous::Event::ColumnsChange>
 
 The user showed or hid a table column in the column chooser.
+
+=back
+
+=head2 Documents
+
+The document view shows documents of any format through one model: a
+parser turns the source into blocks and marks, and the view shows them.
+L<Pod::Fabulous> reads POD this way.
+
+=over
+
+=item L<Term::Fabulous::Document>
+
+A document as a list of blocks: its headings and sections, its links,
+and searching its text.
+
+=item L<Term::Fabulous::Document::Block>
+
+One paragraph of a document, with its text, its marks, its indent and
+the quotes it is in; the kinds L<Term::Fabulous::Document::Block::Heading>,
+L<Term::Fabulous::Document::Block::Paragraph>,
+L<Term::Fabulous::Document::Block::Item>,
+L<Term::Fabulous::Document::Block::Term> and
+L<Term::Fabulous::Document::Block::Verbatim>, and how a format adds
+kinds of its own.
+
+=item L<Term::Fabulous::Document::Mark>
+
+A kind of styling (bold, code, a link, ...) over a range of a block's
+text.
+
+=item L<Term::Fabulous::Document::Look>
+
+The styles the kinds of marks and blocks are shown in, from the tokens
+of the theme.
+
+=item L<Term::Fabulous::Document::Geometry>
+
+The rows and columns of the blocks on the screen: indents, blank rows,
+and the height of a block before it was laid out.
+
+=item L<Term::Fabulous::Document::Overlays>
+
+The selected link and the search matches drawn over a document, and
+which blocks a change touches.
+
+=item L<Term::Fabulous::Scrolling>
+
+Scroll any container by rows, by pages, to its ends and to a range of
+rows, as a pager does.
+
+=item L<Term::Fabulous::Text::Wrap>
+
+How many rows a text takes when Clay wraps it, and the row of a
+character in it.
 
 =back
 

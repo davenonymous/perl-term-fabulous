@@ -572,6 +572,13 @@ L<Term::Fabulous/bounding_box, scroll_state, scroll_to>,
 L<Term::Fabulous::Cookbook::LiveData/Add lines to a scrolling log (ScrollBox)>,
 L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
 
+=item Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
+
+L<Term::Fabulous::Manual::Layout/Documents>,
+L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Document>,
+L<Term::Fabulous::Widget::CodeBlock>, L<Term::Fabulous::Event::ViewChange>,
+L<Term::Fabulous/Documents>.
+
 =item Mark widgets with states and classes and style them by those
 
 L<Term::Fabulous::Widget/add_state>,

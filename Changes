@@ -1,6 +1,19 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Widget::DocumentView shows a document of blocks
+          (headings, paragraphs with marks, lists, quotes, code, links) in
+          the styles of the theme: scrolled with the keys, its links
+          selected with l and L and followed with Enter or a click, its
+          text searched, a ViewChange after every frame that shows
+          something new. With it the document model a parser fills
+          (Term::Fabulous::Document, ::Block and its kinds, ::Mark), the
+          styles (::Document::Look), the geometry of the blocks, the
+          overlays of the selected link and the search, the scrolling
+          functions of Term::Fabulous::Scrolling, the wrap arithmetic of
+          Term::Fabulous::Text::Wrap, Term::Fabulous::Widget::CodeBlock
+          and Term::Fabulous::Event::ViewChange. Extracted from
+          Pod::Fabulous, so that readers for other formats share them.
         - Fixes from CPAN Testers: on perls built with long doubles, the
           labels of a radar chart at a quarter turn no longer land one
           row off (Term::Fabulous::Chart::Radial::point_at returns whole

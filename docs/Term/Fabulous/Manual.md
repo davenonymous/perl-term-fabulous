@@ -484,6 +484,13 @@ program, and the class pages with the reference.
     ["Add lines to a scrolling log (ScrollBox)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#add-lines-to-a-scrolling-log-scrollbox),
     ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
 
+- Show a long document of headings, paragraphs, lists, quotes, code and links; scroll it with the keys, follow its links, search it
+
+    ["Documents" in Term::Fabulous::Manual::Layout](Manual/Layout.md#documents),
+    [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), [Term::Fabulous::Document](Document.md),
+    [Term::Fabulous::Widget::CodeBlock](Widget/CodeBlock.md), [Term::Fabulous::Event::ViewChange](Event/ViewChange.md),
+    ["Documents" in Term::Fabulous](../../../README.md#documents).
+
 - Mark widgets with states and classes and style them by those
 
     ["add\_state" in Term::Fabulous::Widget](Widget.md#add_state),

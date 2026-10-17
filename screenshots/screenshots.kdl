@@ -928,6 +928,18 @@ screenshot "widget-virtual-list" {
 	}
 }
 
+screenshot "widget-document-view" {
+	script "examples/widgets/document-view.pl"
+	size 80 36
+	steps {
+		key "l"
+	}
+}
+
+screenshot "widget-code-block" {
+	script "examples/widgets/code-block.pl"
+}
+
 screenshot "widget-button" {
 	script "examples/widgets/button.pl"
 	size 60 7

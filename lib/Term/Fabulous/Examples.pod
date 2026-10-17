@@ -675,6 +675,36 @@ built.
 
 =end html
 
+=head3 examples/widgets/document-view.pl
+
+L<Term::Fabulous::Widget::DocumentView>: a document built from blocks
+in the program, with headings, paragraphs with marks, a bulleted list,
+a quote, a code block and links, followed by forty paragraphs to scroll
+through. The program searches for the word "block" when it starts, so
+the matches are highlighted; the status line below shows the section,
+the percentage and what Enter or n would do.
+
+The picture shows the document after C<l> selected the first link.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-document-view.svg" alt="A framed document view: a first-level heading with a rule under it, indented paragraphs with bold and code spans, a bulleted list, a quoted paragraph with a bar on its left, a code block on a darker background, a selected link in inverse colors, and search matches highlighted"></p>
+
+=end html
+
+=head3 examples/widgets/code-block.pl
+
+L<Term::Fabulous::Widget::CodeBlock>: a Perl snippet colored by a small
+highlighter, a block whose long lines are cut at the right edge and
+marked, and the same block scrolled sideways; Left and Right scroll the
+two together.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-code-block.svg" alt="Three code blocks on a darker background: a short Perl snippet with a highlighted keyword and a colored variable, a block whose long lines are cut at the right edge with a mark, and the same block scrolled sideways with marks on both sides"></p>
+
+=end html
+
 =head3 examples/widgets/divider.pl
 
 L<Term::Fabulous::Widget::Divider>: a plain line, lines with a text at

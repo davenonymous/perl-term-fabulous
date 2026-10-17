@@ -156,6 +156,17 @@ lib/Term/Fabulous/Cookbook/Output.pod
 lib/Term/Fabulous/Cookbook/TableRows.pod
 lib/Term/Fabulous/Cookbook/TableStyles.pod
 lib/Term/Fabulous/Cookbook/Tables.pod
+lib/Term/Fabulous/Document.pm
+lib/Term/Fabulous/Document/Block.pm
+lib/Term/Fabulous/Document/Block/Heading.pm
+lib/Term/Fabulous/Document/Block/Item.pm
+lib/Term/Fabulous/Document/Block/Paragraph.pm
+lib/Term/Fabulous/Document/Block/Term.pm
+lib/Term/Fabulous/Document/Block/Verbatim.pm
+lib/Term/Fabulous/Document/Geometry.pm
+lib/Term/Fabulous/Document/Look.pm
+lib/Term/Fabulous/Document/Mark.pm
+lib/Term/Fabulous/Document/Overlays.pm
 lib/Term/Fabulous/Editor.pm
 lib/Term/Fabulous/Enum/BorderStyle.pm
 lib/Term/Fabulous/Enum/WebColor.pm
@@ -187,6 +198,7 @@ lib/Term/Fabulous/Event/TabAdd.pm
 lib/Term/Fabulous/Event/TabClose.pm
 lib/Term/Fabulous/Event/TextClick.pm
 lib/Term/Fabulous/Event/ValidityChange.pm
+lib/Term/Fabulous/Event/ViewChange.pm
 lib/Term/Fabulous/Layout.pm
 lib/Term/Fabulous/Manual.pod
 lib/Term/Fabulous/Manual/Charts.pod
@@ -226,6 +238,7 @@ lib/Term/Fabulous/Role/Terminal.pm
 lib/Term/Fabulous/Role/Themed.pm
 lib/Term/Fabulous/Role/Validatable.pm
 lib/Term/Fabulous/Roving.pm
+lib/Term/Fabulous/Scrolling.pm
 lib/Term/Fabulous/Static.pm
 lib/Term/Fabulous/Termbox.pm
 lib/Term/Fabulous/Termbox.xs
@@ -235,6 +248,7 @@ lib/Term/Fabulous/Terminal/Termbox.pm
 lib/Term/Fabulous/Terminal/Termbox/Cells.pm
 lib/Term/Fabulous/Text/Markup.pm
 lib/Term/Fabulous/Text/Style.pm
+lib/Term/Fabulous/Text/Wrap.pm
 lib/Term/Fabulous/TextView.pm
 lib/Term/Fabulous/Theme.pm
 lib/Term/Fabulous/Theme/Document.pm
@@ -253,6 +267,8 @@ lib/Term/Fabulous/Widget.pm
 lib/Term/Fabulous/Widget/AreaChart.pm
 lib/Term/Fabulous/Widget/Accordion.pm
 lib/Term/Fabulous/Widget/Accordion/Item.pm
+lib/Term/Fabulous/Widget/CodeBlock.pm
+lib/Term/Fabulous/Widget/DocumentView.pm
 lib/Term/Fabulous/Widget/FileDialog.pm
 lib/Term/Fabulous/Widget/FileDialog/FolderLine.pm
 lib/Term/Fabulous/Widget/KeyReference.pm
@@ -351,10 +367,15 @@ t/chart-transform.t
 t/check.t
 t/color.t
 t/commands.t
+t/document-geometry.t
+t/document-look.t
+t/document-overlays.t
+t/document.t
 t/editor.t
 t/events.t
 t/layout.t
 t/lib/ChartTest.pm
+t/lib/DocumentTest.pm
 t/lib/InputTest.pm
 t/lifecycle.t
 t/line-steps.t
@@ -369,6 +390,7 @@ t/render-text.t
 t/roving.t
 t/screenshot-box-drawing.t
 t/screenshot-screen.t
+t/scrolling.t
 t/static.t
 t/table-borders.t
 t/table-filter.t
@@ -380,6 +402,7 @@ t/terminal-termbox.t
 t/text-markup.t
 t/text-style.t
 t/text-view.t
+t/text-wrap.t
 t/theme-binding.t
 t/theme-document.t
 t/theme-editor.t
@@ -390,6 +413,8 @@ t/validator.t
 t/viewport.t
 t/web-color.t
 t/widget-accordion.t
+t/widget-code-block.t
+t/widget-document-view.t
 t/widget-file-dialog.t
 t/widget-key-reference.t
 t/widget-menu-bar.t
@@ -437,6 +462,8 @@ typemap
 examples/showcase.pl                     
 examples/widgets/area-chart.pl
 examples/widgets/accordion.pl
+examples/widgets/code-block.pl
+examples/widgets/document-view.pl
 examples/widgets/file-dialog.pl
 examples/widgets/input-validation.pl
 examples/widgets/key-reference.pl
@@ -601,6 +628,8 @@ screenshots/example-web-colors.svg
 screenshots/overview.svg                 
 screenshots/screenshots.kdl              
 screenshots/widget-accordion.svg
+screenshots/widget-code-block.svg
+screenshots/widget-document-view.svg
 screenshots/widget-file-dialog.svg
 screenshots/widget-input-validation.svg
 screenshots/widget-key-reference.svg

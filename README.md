@@ -1041,6 +1041,20 @@ Term::Fabulous, and programs do not use them directly.
     say: it builds and lays out only the items near the viewport, with
     spacers standing in for the rest.
 
+- [Term::Fabulous::Widget::DocumentView](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/DocumentView.md)
+
+    A VirtualList that shows a [Term::Fabulous::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document.md): headings,
+    paragraphs with bold, italic and code marks, lists, quotes and code
+    blocks in the styles of the theme, scrolled with the keys, its links
+    selected and followed, its text searched. The main pane of a reader for
+    any documentation format (see ["Documents"](#documents)).
+
+- [Term::Fabulous::Widget::CodeBlock](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/CodeBlock.md)
+
+    Lines of code on a background of their own, never wrapped, cut at the
+    edge and scrolled sideways, each character in the style a highlighter
+    gives it.
+
 - [Term::Fabulous::Widget::Scrollbar](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Scrollbar.md)
 
     The scrollbar of a scroll container: a track with a thumb that shows
@@ -1353,6 +1367,11 @@ Term::Fabulous, and programs do not use them directly.
 
     A canvas got a new size from the layout.
 
+- [Term::Fabulous::Event::ViewChange](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/ViewChange.md)
+
+    What a document view shows has changed: the blocks in view, the
+    section, the percentage, the selected link and the search.
+
 - [Term::Fabulous::Event::Change](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Change.md)
 
     The user changed the value of an input widget.
@@ -1438,6 +1457,57 @@ Term::Fabulous, and programs do not use them directly.
 - [Term::Fabulous::Event::ColumnsChange](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/ColumnsChange.md)
 
     The user showed or hid a table column in the column chooser.
+
+## Documents
+
+The document view shows documents of any format through one model: a
+parser turns the source into blocks and marks, and the view shows them.
+[Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) reads POD this way.
+
+- [Term::Fabulous::Document](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document.md)
+
+    A document as a list of blocks: its headings and sections, its links,
+    and searching its text.
+
+- [Term::Fabulous::Document::Block](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block.md)
+
+    One paragraph of a document, with its text, its marks, its indent and
+    the quotes it is in; the kinds [Term::Fabulous::Document::Block::Heading](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Heading.md),
+    [Term::Fabulous::Document::Block::Paragraph](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Paragraph.md),
+    [Term::Fabulous::Document::Block::Item](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Item.md),
+    [Term::Fabulous::Document::Block::Term](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Term.md) and
+    [Term::Fabulous::Document::Block::Verbatim](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Block/Verbatim.md), and how a format adds
+    kinds of its own.
+
+- [Term::Fabulous::Document::Mark](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Mark.md)
+
+    A kind of styling (bold, code, a link, ...) over a range of a block's
+    text.
+
+- [Term::Fabulous::Document::Look](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Look.md)
+
+    The styles the kinds of marks and blocks are shown in, from the tokens
+    of the theme.
+
+- [Term::Fabulous::Document::Geometry](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Geometry.md)
+
+    The rows and columns of the blocks on the screen: indents, blank rows,
+    and the height of a block before it was laid out.
+
+- [Term::Fabulous::Document::Overlays](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Document/Overlays.md)
+
+    The selected link and the search matches drawn over a document, and
+    which blocks a change touches.
+
+- [Term::Fabulous::Scrolling](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Scrolling.md)
+
+    Scroll any container by rows, by pages, to its ends and to a range of
+    rows, as a pager does.
+
+- [Term::Fabulous::Text::Wrap](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Text/Wrap.md)
+
+    How many rows a text takes when Clay wraps it, and the row of a
+    character in it.
 
 ## Colors, borders and text
 

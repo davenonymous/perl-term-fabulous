@@ -595,6 +595,32 @@ built.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-virtual-list.svg" alt="A framed document near its end: numbered paragraphs of different lengths, a scrollbar whose thumb sits at the bottom, and a status line saying Paragraphs 49993-49997 of 50000, 19 built"></p>
 </div>
 
+### examples/widgets/document-view.pl
+
+[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md): a document built from blocks
+in the program, with headings, paragraphs with marks, a bulleted list,
+a quote, a code block and links, followed by forty paragraphs to scroll
+through. The program searches for the word "block" when it starts, so
+the matches are highlighted; the status line below shows the section,
+the percentage and what Enter or n would do.
+
+The picture shows the document after `l` selected the first link.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-document-view.svg" alt="A framed document view: a first-level heading with a rule under it, indented paragraphs with bold and code spans, a bulleted list, a quoted paragraph with a bar on its left, a code block on a darker background, a selected link in inverse colors, and search matches highlighted"></p>
+</div>
+
+### examples/widgets/code-block.pl
+
+[Term::Fabulous::Widget::CodeBlock](Widget/CodeBlock.md): a Perl snippet colored by a small
+highlighter, a block whose long lines are cut at the right edge and
+marked, and the same block scrolled sideways; Left and Right scroll the
+two together.
+
+<div>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-code-block.svg" alt="Three code blocks on a darker background: a short Perl snippet with a highlighted keyword and a colored variable, a block whose long lines are cut at the right edge with a mark, and the same block scrolled sideways with marks on both sides"></p>
+</div>
+
 ### examples/widgets/divider.pl
 
 [Term::Fabulous::Widget::Divider](Widget/Divider.md): a plain line, lines with a text at

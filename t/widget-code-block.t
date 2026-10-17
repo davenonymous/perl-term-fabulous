@@ -1,0 +1,118 @@
+use v5.32;
+use warnings;
+use utf8;
+use feature 'signatures';
+no warnings 'experimental::signatures';
+
+use Test2::V0;
+
+use Clay::XS qw(sizing_fixed sizing_grow);
+use Term::Fabulous;
+use Term::Fabulous::Color;
+use Term::Fabulous::Document::Look;
+use Term::Fabulous::Render::Attr qw(color_attr);
+use Term::Fabulous::Terminal::Memory;
+use Term::Fabulous::Termbox qw(TB_BOLD TF_KEY_MOUSE_WHEEL_RIGHT);
+use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Widget::CodeBlock;
+
+# A code block 12 columns wide (10 for the code, a margin on either
+# side) in a 20 x 5 memory terminal.
+sub code_ui (%parameters) {
+	my $code = Term::Fabulous::Widget::CodeBlock->new( layout => { sizing => { width => sizing_fixed(12) } }, %parameters );
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($code);
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 20, height => 5, terminal => $terminal );
+	$ui->step;
+	return ( $code, $terminal, $ui );
+}
+
+sub screen ($terminal) {
+	return [ map { s/\s+\z//r } $terminal->lines ];
+}
+
+sub attr_of ($color) {
+	return color_attr( Term::Fabulous::Color->new( color => $color ) );
+}
+
+subtest 'parameters' => sub {
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => [] ) },                                   qr/code must be a string/,                         'code is a string';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( language => '' ) },                               qr/language must not be empty/,                    'a language has a name';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( highlighter => 'perl' ) },                        qr/highlighter must be a code reference/,          'a highlighter is code';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 3, 'bold' ] ] ) },  qr/does not lie within the code \(2 characters\)/, 'spans lie within the code';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 1, 'shiny' ] ] ) }, qr/shiny/,                                         'span styles are checked';
+	my $code = Term::Fabulous::Widget::CodeBlock->new( code => "a\n\nlonger" );
+	is [ $code->line_count, $code->widest_line_columns, [ $code->natural_size ]->[1] ], [ 3, 6, 3 ], 'as tall as the code has lines';
+};
+
+subtest 'painting and clipping' => sub {
+	my ( $code, $terminal ) = code_ui( code => "short\nexactly 10\nlonger than ten" );
+	is screen($terminal), [ ' short', ' exactly 10', " longer tha\x{203A}", '', '' ], 'lines that do not fit are cut at the margin and marked';
+
+	my $look = Term::Fabulous::Document::Look->of($code);
+	my ( undef, $fg, $bg ) = @{ $terminal->cell( 1, 0 ) };
+	is [ $fg, $bg ],                  [ attr_of( $look->style('code_block')->{color} ), attr_of( $look->style('code_block')->{background} ) ], 'in the code_block look of the theme';
+	is $terminal->cell( 11, 0 )->[2], attr_of( $look->style('code_block')->{background} ),                                                     'the background fills the block';
+};
+
+subtest 'scrolled sideways' => sub {
+	my ( $code, $terminal, $ui ) = code_ui( code => "short\nlonger than ten" );
+	is $code->max_offset, 5, 'the widest line decides how far the code scrolls';
+	$code->offset(99);
+	$ui->step;
+	is [ $code->offset, $code->shown_offset ], [ 99, 5 ], 'an offset beyond the end is kept, and the end is shown';
+	is screen($terminal), [ "\x{2039}", "\x{2039}r than ten", q(), q(), q() ], 'the code moves left, with the marks of what is hidden';
+
+	my @wheel_seen;
+	$ui->root->on( Mouse => sub ($event) { push @wheel_seen, $event->key; return } );
+	$terminal->mouse( key => TF_KEY_MOUSE_WHEEL_RIGHT, x => 3, y => 0 );
+	$ui->step;
+	is \@wheel_seen, [TF_KEY_MOUSE_WHEEL_RIGHT], 'the block leaves the wheel to the widgets around it';
+};
+
+subtest 'highlighter and spans' => sub {
+	my @calls;
+	my ( $code, $terminal, $ui ) = code_ui(
+		code        => 'my $x;',
+		language    => 'perl',
+		highlighter => sub ( $text, $language ) { push @calls, [ $text, $language ]; return [ [ 0, 2, 'bold #ff0000' ], [ 3, 5, '#00ff00' ] ] },
+		spans       => [ [ 4, 5, 'on #0000ff' ] ],
+	);
+	is \@calls,                                  [ [ 'my $x;', 'perl' ] ],                   'the highlighter gets the code and the language';
+	is $terminal->cell( 1, 0 )->[1],             attr_of('#ff0000') | TB_BOLD,               'its spans style the code';
+	is [ @{ $terminal->cell( 5, 0 ) }[ 1, 2 ] ], [ attr_of('#00ff00'), attr_of('#0000ff') ], 'the program\'s spans apply on top';
+
+	$code->spans( [] );
+	$ui->step;
+	is scalar @calls, 1, 'the highlighter result is kept while the code stays';
+	$code->language('kdl');
+	$ui->step;
+	is $calls[-1][1], 'kdl', 'a new language asks again';
+
+	$code->highlighter( sub { 'nonsense' } );
+	like dies { $ui->step }, qr/highlighter result must be an array reference/, 'a highlighter that returns no spans dies';
+};
+
+subtest 'a theme switch repaints in the new colors' => sub {
+	my ( $code, $terminal, $ui ) = code_ui( code => 'my $x;', highlighter => sub { [ [ 0, 2, 'bold' ] ] } );
+	$ui->theme('light');
+	$ui->step;
+	my $light = Term::Fabulous::Document::Look->of($code);
+	is [ @{ $terminal->cell( 4, 0 ) }[ 1, 2 ] ], [ attr_of( $light->style('code_block')->{color} ), attr_of( $light->style('code_block')->{background} ) ], 'the cached runs follow the theme';
+};
+
+subtest 'KDL' => sub {
+	require Term::Fabulous::Layout;
+	my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
+use Term::Fabulous::Widget::CodeBlock as CodeBlock
+CodeBlock "example" {
+	code "a\nb"
+	language "perl"
+	offset 2
+}
+KDL
+	is [ $root->code, $root->language, $root->offset ], [ "a\nb", 'perl', 2 ], 'code, language and offset can be set in a layout';
+};
+
+done_testing;
