@@ -494,7 +494,10 @@ presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
 This recipe builds the dialog from its parts, which shows how a dialog
-works. For a question with a few buttons, a
+works; its buttons have colors of their own. A dialog can also bring
+its own `title` and `buttons`, which answer with an `Answer` event
+(see ["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#title-buttons-and-the-notice-line)).
+For a question with a few buttons, a
 [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) does the same in one call: see the
 next recipe, ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt).
 
@@ -586,7 +589,8 @@ press Quit. See ["focus\_border\_color" in Term::Fabulous::Widget::Button](../Wi
 - Escape closes the dialog (`close_on_escape`, on by default), and so
 does `$dialog->close`; the Cancel button calls it. Closing puts the
 focus back on the text area and fires
-[Close](../Event/Close.md) on the dialog.
+[Close](../Event/Close.md) on the dialog, then
+[Answer](../Event/Answer.md) as dismissed.
 - The Ctrl+Q shortcut lives on the root. The text area types letters
 such as q itself, so they never reach the root, but it passes Ctrl+Q
 on. While the dialog is open, no key gets past it: the backdrop stops

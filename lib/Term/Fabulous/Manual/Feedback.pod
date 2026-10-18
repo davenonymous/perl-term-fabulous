@@ -289,7 +289,8 @@ asks for one value:
 When the user presses a button, the prompt closes, gives the focus back
 to the widget that had it, and fires C<Answer>
 (L<Term::Fabulous::Event::Answer>) with the id of the button and the
-values of the fields. C<Escape> answers with the button C<cancel>.
+values of the fields. C<Escape> answers with the button C<cancel> and
+the values as well, as a I<dismissed> answer.
 
 A prompt of your own takes any input widgets as its fields, each with a
 name and a label. The inputs check their own values, with C<required>
@@ -311,7 +312,10 @@ The recipes
 L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)> and
 L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>
 are complete programs. For a dialog that is not a question, build a
-L<Term::Fabulous::Widget::Dialog> and fill it with any widgets.
+L<Term::Fabulous::Widget::Dialog> and fill it with any widgets. It takes
+a C<title>, C<buttons> and a notice line of its own, and answers with
+the same C<Answer> event (see
+L<Term::Fabulous::Widget::Dialog/Title, buttons and the notice line>).
 
 =head1 FILE DIALOGS
 

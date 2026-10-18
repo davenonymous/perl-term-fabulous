@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(parse_markup);
+our @EXPORT_OK = qw(parse_markup escape_markup);
 
 use Term::Fabulous::Text::Style qw(parse_style);
 
@@ -38,6 +38,12 @@ sub _link_target ( $tag_text, $markup ) {
 	return undef unless defined $target;
 	_fail( "link tag [$tag_text] without a target", $markup ) unless length $target;
 	return $target;
+}
+
+# A text that markup shows as it is: every [ escaped.
+sub escape_markup ($text) {
+	die 'Term::Fabulous::Text::Markup: escape_markup needs a string' if !defined $text || ref $text;
+	return $text =~ s/\[/\\[/gr;
 }
 
 sub parse_markup ($markup) {
@@ -96,7 +102,7 @@ styled spans and links
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Text::Markup qw(parse_markup);
+	use Term::Fabulous::Text::Markup qw(parse_markup escape_markup);
 
 	my ( $text, $spans ) = parse_markup('Press [bold]Enter[/] to [green on #202020]save[/green on #202020].');
 	# $text  is 'Press Enter to save.'
@@ -105,6 +111,8 @@ styled spans and links
 	my ( $see, undef, $links ) = parse_markup('See [link=https://perl.org]perl.org[/link].');
 	# $see   is 'See perl.org.'
 	# $links is [ [ 4, 12, 'https://perl.org' ] ]
+
+	my $safe = escape_markup($file_name);    # '[draft] notes' becomes '\[draft] notes'
 
 =head1 DESCRIPTION
 
@@ -173,6 +181,14 @@ array reference of C<[ $start, $end, $target ]>, ordered by their start;
 empty links are dropped as well. C<undef> and
 references die with a message starting with
 C<Term::Fabulous::Text::Markup:>.
+
+=head2 escape_markup
+
+	my $markup = 'There is no file [bold]' . escape_markup($name) . '[/].';
+
+Returns C<$text> as markup that shows it as it is: every C<[> becomes
+C<\[>, so a file name, a user's input or an error message cannot open
+or close a tag. C<undef> and references die.
 
 =head1 SEE ALSO
 

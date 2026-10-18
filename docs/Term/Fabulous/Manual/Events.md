@@ -164,7 +164,7 @@ the sections below it describe each event.
 | Submit          | the text field or color picker   | yes              |
 | Activate        | the Button                       | yes              |
 | Close           | the Dialog, Toast or popup Menu  | (no parent then) |
-| Answer          | the Prompt or FileDialog         | (no parent then) |
+| Answer          | the Dialog (Prompt, FileDialog)  | (no parent then) |
 | Choose          | the Menu                         | yes, not popups  |
 | Select          | Accordion, Tabs, DocumentTabs    | yes              |
 | TabClose        | the DocumentTabs                 | yes              |
@@ -297,8 +297,8 @@ the sections below it describe each event.
 
 - `Close` ([Term::Fabulous::Event::Close](../Event/Close.md))
 
-    A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) was closed, by `Escape` or from
-    code, a [Term::Fabulous::Widget::Toast](../Widget/Toast.md) went away, by its timeout,
+    A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) was closed, by an answer, by
+    `Escape` or from code, a [Term::Fabulous::Widget::Toast](../Widget/Toast.md) went away, by its timeout,
     its close mark or from code, or a [Term::Fabulous::Widget::Menu](../Widget/Menu.md) that
     was opened as a popup closed. Fired on the dialog, the toast or the
     menu, after it has left the screen, so only listeners on it see it. No
@@ -306,16 +306,17 @@ the sections below it describe each event.
 
 - `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md))
 
-    A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) was answered: the user pressed one
-    of its buttons or `Escape`, or the program called `answer` or
-    `close`. Or a [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md) was answered: the
-    user chose a file or a folder, or cancelled. Fired on the prompt or the
-    file dialog after it closed and gave the focus back, so only listeners
-    on it see it. Fields: `button`, the id of the button (`cancel` for
-    Escape; for a file dialog `open`, `save`, `choose` or `cancel`),
-    `values`, the values of the prompt's fields (for a file dialog
-    `path`, the chosen path), and `dismissed`, true when no button
-    answered.
+    A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) closed, right after its `Close`:
+    the user pressed one of its buttons or `Escape`, or the program called
+    `answer` or `close`. A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) answers this
+    way, and so does a [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md) when the user
+    chose a file or a folder, or cancelled. Fired on the dialog after it
+    closed and gave the focus back, so only listeners on it see it. Fields:
+    `button`, the id of the button (`cancel` for Escape; for a file
+    dialog `open`, `save`, `choose` or `cancel`), `values`, the
+    dialog's values (a prompt's fields; for a file dialog `path`, the
+    chosen path) also when it was dismissed, and `dismissed`, true when no
+    button answered (see ["Answers" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#answers)).
 
 - `Choose` ([Term::Fabulous::Event::Choose](../Event/Choose.md))
 

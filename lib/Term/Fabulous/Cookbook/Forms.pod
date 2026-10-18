@@ -630,7 +630,10 @@ presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
 This recipe builds the dialog from its parts, which shows how a dialog
-works. For a question with a few buttons, a
+works; its buttons have colors of their own. A dialog can also bring
+its own C<title> and C<buttons>, which answer with an C<Answer> event
+(see L<Term::Fabulous::Widget::Dialog/Title, buttons and the notice line>).
+For a question with a few buttons, a
 L<Term::Fabulous::Widget::Prompt> does the same in one call: see the
 next recipe, L</Confirm before quitting (Prompt)>.
 
@@ -734,7 +737,8 @@ press Quit. See L<Term::Fabulous::Widget::Button/focus_border_color>.
 Escape closes the dialog (C<close_on_escape>, on by default), and so
 does C<< $dialog->close >>; the Cancel button calls it. Closing puts the
 focus back on the text area and fires
-L<Close|Term::Fabulous::Event::Close> on the dialog.
+L<Close|Term::Fabulous::Event::Close> on the dialog, then
+L<Answer|Term::Fabulous::Event::Answer> as dismissed.
 
 =item *
 

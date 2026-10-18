@@ -64,7 +64,9 @@ are left, without regard to case. Tab moves to the table, where the
 arrow keys and the mouse wheel scroll it, and to the Close button (in
 the compact layout, see ["Size"](#size), to the Close button first). `Escape`
 or `Close` closes the key reference, and the focus goes back to the
-widget that had it before.
+widget that had it before. Close is the dialog's one button
+(["buttons" in Term::Fabulous::Widget::Dialog](Dialog.md#buttons)), with the id `close`;
+giving `buttons` dies.
 
 ## Size
 
@@ -101,8 +103,9 @@ sides instead of one.
 
 - `title`
 
-    A character string, drawn in bold on the first row. Default: `Keys`.
-    An empty string shows no title.
+    The dialog's title (["title" in Term::Fabulous::Widget::Dialog](Dialog.md#title)), drawn in
+    bold on the first row. Default: `Keys`. An empty string shows no
+    title.
 
 - `commands`
 
@@ -166,9 +169,11 @@ The [Term::Fabulous::Widget::Table](Table.md) of the keys.
 # EVENTS
 
 A key reference fires the events of every dialog: `Close` when it
-closes. The events of its search field and its table bubble through it
-as usual. The `Activate` of its Close button stops at the button,
-which closes the key reference.
+closes, then `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md)): `close`
+from the Close button, `cancel` as dismissed for `Escape` or
+`close`. The events of its search field and its table bubble through
+it as usual. The `Activate` of its Close button stops at the button,
+which answers.
 
 # KDL PROPERTIES
 

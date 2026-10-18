@@ -58,12 +58,14 @@ event, [Answer](../Event/Answer.md), after it closed.
 
 From the top, it shows its title, the folder it lists, the list, a
 field for a name or a path (`File`, or `Name` in folder mode), a row
-with the filter dropdown and the `Show hidden files` checkbox, a line
-that says what is wrong while something is (one row, empty otherwise,
-so the dialog keeps its height), and the buttons. The folder line
-shows as much of the end of the path as fits the width the dialog
-gets, after `...` when its start had to go; so does the message line
-for a path it names.
+with the filter dropdown and the `Show hidden files` checkbox, the
+dialog's notice line, which says what is wrong while something is (at
+least one row, empty otherwise, so the dialog keeps its height:
+`notice_line => 'row'`, see
+["notice\_line" in Term::Fabulous::Widget::Dialog](Dialog.md#notice_line)), and the buttons. The
+folder line shows as much of the end of the path as fits the width the
+dialog gets, after `...` when its start had to go. The notice names a
+path as typed, and wraps when it is too long for one row.
 
 On a screen too low for the whole dialog, the list gives up rows
 first, down to two entries; on a narrower screen than `width`, the
@@ -191,8 +193,12 @@ is not a folder: reading and writing are up to the program.
 
 The `Cancel` button answers `cancel`, with `dismissed` false.
 `Escape`, or ["close"](#close) from the program, answers `cancel` as well,
-with `dismissed` true. A cancelled dialog's values are `{}`. A file
-dialog answers once each time it is opened.
+with `dismissed` true. A cancelled dialog's values are `{}`: a file
+dialog has no values of its own (see
+["Answers" in Term::Fabulous::Widget::Dialog](Dialog.md#answers)). A file dialog answers once
+each time it is opened. Its buttons are the dialog's: the mode's
+(`open`, `save` or `choose`, primary) chooses what the field names
+(see ["choose"](#choose)), and `cancel` answers.
 
 # CONSTRUCTOR
 
@@ -236,8 +242,10 @@ instead of one.
 
 - `title`
 
-    A character string, drawn in bold on the first row. Default: `Open a
-    file`, `Save the file as` or `Choose a folder`, after the mode.
+    The dialog's title (["title" in Term::Fabulous::Widget::Dialog](Dialog.md#title)), drawn in
+    bold on the first row. Default: `Open a file`, `Save the file as` or
+    `Choose a folder`, after the mode. The `buttons` and `notice_line`
+    of a dialog are the file dialog's own; giving them dies.
 
 - `filters`
 

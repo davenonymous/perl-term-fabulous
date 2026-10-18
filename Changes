@@ -1,6 +1,28 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Widget::Dialog owns the parts most dialogs
+          have: a title, buttons (one row; pressing one calls
+          press_button, which answers with its id), a notice line above
+          the buttons (notice($markup, 'info' or 'error'), notice_text,
+          and notice_line => 'shown', 'kept' or 'row' for the room it
+          takes), placement => 'center' or 'right', answer($id,
+          %values) and values. Every dialog now fires Answer after Close
+          whenever it closes: with the button that answered, or as
+          cancel and dismissed for Escape and close, carrying the
+          dialog's values in both cases (a Prompt's fields, nothing for
+          a FileDialog or a plain Dialog). Prompt, FileDialog,
+          KeyReference and the theme editor's value dialog declare their
+          titles and buttons instead of building them; the key
+          reference answers close from its Close button, and the value
+          dialog reports through Change (the preview) and Answer
+          instead of its on_preview, on_apply and on_reset callbacks.
+          The file dialog's notice wraps instead of cutting a long path
+          from the left, and its FolderLine no longer has say, text or
+          after. Prompt's errors for a closed prompt or an unknown
+          button read "answer needs an open dialog" and "the dialog has
+          no button with the id ...". Term::Fabulous::Text::Markup
+          exports escape_markup.
         - Term::Fabulous::Placement::place_popup is the one rule for
           where a popup goes: below or above its anchor (flipping when it
           does not fit and the other side has more room, reporting the

@@ -63,8 +63,10 @@ in the field.
 A prompt is a [Term::Fabulous::Widget::Dialog](Dialog.md) made for the questions
 a program asks again and again: to confirm a step that cannot be
 undone, to ask for a name, or to say that something happened. It has
-a title, a message, optional input fields and a row of buttons, and it
-reports the answer with one event, [Answer](../Event/Answer.md).
+a title, a message, optional input fields and a row of buttons (the
+title and the buttons of ["Title, buttons
+and the notice line" in Term::Fabulous::Widget::Dialog](Dialog.md#title-buttons-and-the-notice-line)), and it reports the answer with one event,
+[Answer](../Event/Answer.md).
 
 ## Prompts in one call
 
@@ -80,7 +82,9 @@ Every button has an id. When the user presses a button, the prompt
 closes, the focus goes back to the widget that had it before, and the
 prompt fires `Answer` with the id of the button and the values of its
 fields. `Escape` closes the prompt as well. It then answers with the
-button id `cancel`, and the event's `dismissed` is true. Name a
+button id `cancel` and the values of its fields, and the event's
+`dismissed` is true (the rule of every dialog, see
+["Answers" in Term::Fabulous::Widget::Dialog](Dialog.md#answers)). Name a
 button `cancel`, as the shortcuts do, and Escape and that button are
 handled by the same code. A prompt answers once each time it is
 opened.
@@ -94,7 +98,8 @@ the inputs, which check their values with their `required` and
 
 A button marked as _primary_ checks the values before it answers. If an
 input is not valid, the prompt stays open, shows the label of the field
-and what is wrong with its value in the line above the buttons, and
+and what is wrong with its value in the notice line above the buttons
+(in the theme's `input.text.invalid` color), and
 moves the focus to that input. An input made of other widgets, such as a
 [Term::Fabulous::Widget::ColorPicker](ColorPicker.md), passes the focus to its first
 invalid part that can take it (the picker's text field), or else to the
@@ -125,15 +130,15 @@ my $prompt = Term::Fabulous::Widget::Prompt->new(%parameters);
 ```
 
 Accepts the parameters of ["new" in Term::Fabulous::Widget::Dialog](Dialog.md#new)
-(`id`, `layout`, `backdrop_color`, `close_on_escape`, ...) and the
-ones below. All are optional, and unknown parameters die. A prompt is
-laid out like a dialog, with two columns of padding at the sides
-instead of one.
+(`id`, `layout`, `backdrop_color`, `close_on_escape`, `title`,
+`buttons`, ...) and the ones below. All are optional, and unknown
+parameters die. A prompt is laid out like a dialog, with two columns of
+padding at the sides instead of one.
 
 - `title`
 
-    A character string, drawn in bold on the first row. Default: `''`, no
-    title.
+    A character string, drawn in bold on the first row, as in every
+    dialog. Default: `''`, no title.
 
 - `message`
 
@@ -169,13 +174,14 @@ instead of one.
 
 - `buttons`
 
-    An array reference of buttons, each a hash reference with an `id`
-    (a string, required, unique), a `label` (a string, required) and
-    `primary` (a boolean, default 0). Primary buttons get the class
-    `primary`, which a theme may give a look of its own (see
+    The buttons of ["buttons" in Term::Fabulous::Widget::Dialog](Dialog.md#buttons): an array
+    reference of hash references with an `id` (a string, required,
+    unique), a `label` (a string, required) and `primary` (a boolean,
+    default 0). Primary buttons get the class `primary`, which a theme may
+    give a look of its own (see
     ["Variants and classes" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#variants-and-classes)), and check the
-    values before they answer. The buttons are drawn in the order given,
-    from the left. Default: one primary button `ok` labelled `OK`.
+    values before they answer. A prompt needs at least one; an empty list
+    dies. Default: one primary button `ok` labelled `OK`.
 
 - `width`
 
@@ -247,7 +253,8 @@ the text.
 # METHODS
 
 A prompt has all methods of [Term::Fabulous::Widget::Dialog](Dialog.md)
-(`open`, `close`, `is_open`, ...) plus these.
+(`open`, `close`, `is_open`, `title`, `button`, `button_ids`,
+`default_button`, ...) plus these.
 
 ## answer
 
@@ -258,8 +265,9 @@ $prompt->answer('ok');
 Answers the prompt as the button with this id does when the user
 presses it: a primary button checks the values first and keeps the
 prompt open while something is wrong. Otherwise the prompt closes and
-fires `Answer`. Dies for an id the prompt has no button of, and when
-the prompt is not open. Returns the prompt.
+fires `Answer` (see ["answer" in Term::Fabulous::Widget::Dialog](Dialog.md#answer)). Dies for
+an id the prompt has no button of, and when the prompt is not open.
+Returns the prompt.
 
 ## values
 
@@ -268,7 +276,7 @@ my $values = $prompt->values;    # { name => 'Ada', email => '' }
 ```
 
 The values of the fields as they are now, by field name, as a new hash
-reference.
+reference. Every answer carries them.
 
 ## input
 
@@ -279,32 +287,13 @@ my $field = $prompt->input('email');
 The input widget of a field. Dies for a name the prompt has no field
 of.
 
-## button
-
-```perl
-$prompt->button('delete')->disabled(1);
-```
-
-The [Term::Fabulous::Widget::Button](Button.md) of a button. Dies for an id the
-prompt has no button of.
-
-## field\_names, button\_ids
+## field\_names
 
 ```perl
 my @names = $prompt->field_names;
-my @ids   = $prompt->button_ids;
 ```
 
-The names of the fields and the ids of the buttons, in order.
-
-## default\_button
-
-```perl
-my $id = $prompt->default_button;
-```
-
-The id of the button that `Enter` in a text field presses: the first
-primary button, or the first button when none is primary.
+The names of the fields, in order.
 
 ## error
 
@@ -312,19 +301,22 @@ primary button, or the first button when none is primary.
 my $problem = $prompt->error;
 ```
 
-What the line above the buttons says is wrong, or `undef` while it
+What the notice line above the buttons says is wrong, as plain text
+(["notice\_text" in Term::Fabulous::Widget::Dialog](Dialog.md#notice_text)), or `undef` while it
 says nothing. Opening the prompt again empties it.
 
-## title, message
+## message
 
 ```perl
-$prompt->title('Delete 4 files?');
 $prompt->message('They go to the trash.');
 ```
 
-Accessors for the parameters of the same names. Writing one changes the
-open prompt with the next frame. An empty string takes the title or the
-message away.
+Accessor for the parameter of the same name. Writing it changes the
+open prompt with the next frame. An empty string takes the message
+away. The title is the dialog's (["title" in Term::Fabulous::Widget::Dialog](Dialog.md#title)).
+
+`Enter` in a text field presses the
+[default\_button](Dialog.md#button-button_ids-is_primary-default_button).
 
 # EVENTS
 

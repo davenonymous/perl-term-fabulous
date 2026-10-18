@@ -53,6 +53,11 @@ widget classes. Choose the base class by what the widget does:
     like [Term::Fabulous::Widget::Button](../Widget/Button.md). See
     ["A box that takes the focus and reacts to the mouse"](#a-box-that-takes-the-focus-and-reacts-to-the-mouse).
 
+- [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md)
+
+    for a dialog with a title, buttons and an answer of its own. See
+    ["A dialog of your own"](#a-dialog-of-your-own).
+
 - Any built-in widget
 
     to change one detail of it, for example which keys a
@@ -558,6 +563,47 @@ text; before it uses a key again it compares the revision, and searches
 again when it changed. The container's revisions name the part at each
 index, so removing a part makes the old keys stale instead of letting
 them reach the part that took its place.
+
+## A dialog of your own
+
+A subclass of [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) declares its title and
+buttons and adds its content; the dialog draws the title, the row of
+buttons and the notice line, and reports every way of closing with one
+[Answer](../Event/Answer.md) event. A button that should do
+more than answer is handled in `press_button`, the inputs the answer
+carries come from `values`:
+
+```perl
+use Term::Fabulous::Widget::Dialog;
+
+class My::RenameDialog :isa(Term::Fabulous::Widget::Dialog) {
+        use Term::Fabulous::Text::Markup qw(escape_markup);
+        use Term::Fabulous::Widget::TextField;
+
+        field $field = Term::Fabulous::Widget::TextField->new;
+
+        sub BUILDARGS ( $class, %params ) {
+                return $class->SUPER::BUILDARGS( %params, title => 'Rename', buttons => [ { id => 'rename', label => 'Rename', primary => 1 }, { id => 'cancel', label => 'Cancel' } ] );
+        }
+
+        ADJUST {
+                $self->add_child($field);
+        }
+
+        method values :override () { return { name => $field->value } }
+
+        # Rename answers only with a name that is free.
+        method press_button :override ($id) {
+                return $self->SUPER::press_button($id) unless $id eq 'rename' && -e $field->value;
+                return $self->notice( escape_markup( $field->value ) . ' is taken.', 'error' );
+        }
+}
+```
+
+`Escape` and `close` answer `cancel` as dismissed, with the values
+too. The dialog puts its title first and the notice line and buttons
+last when it opens (`place_parts`), so the children added in `ADJUST`
+end up between them.
 
 ## Events of your own
 

@@ -261,7 +261,8 @@ Term::Fabulous::Widget::Prompt->confirm(
 When the user presses a button, the prompt closes, gives the focus back
 to the widget that had it, and fires `Answer`
 ([Term::Fabulous::Event::Answer](../Event/Answer.md)) with the id of the button and the
-values of the fields. `Escape` answers with the button `cancel`.
+values of the fields. `Escape` answers with the button `cancel` and
+the values as well, as a _dismissed_ answer.
 
 A prompt of your own takes any input widgets as its fields, each with a
 name and a label. The inputs check their own values, with `required`
@@ -281,7 +282,10 @@ The recipes
 ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#confirm-before-quitting-prompt) and
 ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator)
 are complete programs. For a dialog that is not a question, build a
-[Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) and fill it with any widgets.
+[Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) and fill it with any widgets. It takes
+a `title`, `buttons` and a notice line of its own, and answers with
+the same `Answer` event (see
+["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#title-buttons-and-the-notice-line)).
 
 # FILE DIALOGS
 

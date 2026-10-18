@@ -60,6 +60,11 @@ for a container that takes the focus or reacts to hover and clicks,
 like L<Term::Fabulous::Widget::Button>. See
 L</A box that takes the focus and reacts to the mouse>.
 
+=item L<Term::Fabulous::Widget::Dialog>
+
+for a dialog with a title, buttons and an answer of its own. See
+L</A dialog of your own>.
+
 =item Any built-in widget
 
 to change one detail of it, for example which keys a
@@ -596,6 +601,45 @@ text; before it uses a key again it compares the revision, and searches
 again when it changed. The container's revisions name the part at each
 index, so removing a part makes the old keys stale instead of letting
 them reach the part that took its place.
+
+=head2 A dialog of your own
+
+A subclass of L<Term::Fabulous::Widget::Dialog> declares its title and
+buttons and adds its content; the dialog draws the title, the row of
+buttons and the notice line, and reports every way of closing with one
+L<Answer|Term::Fabulous::Event::Answer> event. A button that should do
+more than answer is handled in C<press_button>, the inputs the answer
+carries come from C<values>:
+
+	use Term::Fabulous::Widget::Dialog;
+
+	class My::RenameDialog :isa(Term::Fabulous::Widget::Dialog) {
+		use Term::Fabulous::Text::Markup qw(escape_markup);
+		use Term::Fabulous::Widget::TextField;
+
+		field $field = Term::Fabulous::Widget::TextField->new;
+
+		sub BUILDARGS ( $class, %params ) {
+			return $class->SUPER::BUILDARGS( %params, title => 'Rename', buttons => [ { id => 'rename', label => 'Rename', primary => 1 }, { id => 'cancel', label => 'Cancel' } ] );
+		}
+
+		ADJUST {
+			$self->add_child($field);
+		}
+
+		method values :override () { return { name => $field->value } }
+
+		# Rename answers only with a name that is free.
+		method press_button :override ($id) {
+			return $self->SUPER::press_button($id) unless $id eq 'rename' && -e $field->value;
+			return $self->notice( escape_markup( $field->value ) . ' is taken.', 'error' );
+		}
+	}
+
+C<Escape> and C<close> answer C<cancel> as dismissed, with the values
+too. The dialog puts its title first and the notice line and buttons
+last when it opens (C<place_parts>), so the children added in C<ADJUST>
+end up between them.
 
 =head2 Events of your own
 

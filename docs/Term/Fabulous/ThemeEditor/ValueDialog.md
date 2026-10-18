@@ -49,17 +49,21 @@ above the buttons says why.
 
 ```perl
 my $dialog = Term::Fabulous::ThemeEditor::ValueDialog->new(
-        key        => 'button.border.color.focused',
-        current    => 'accent',
-        is_set     => 0,
-        default    => 'accent',
-        palette    => $theme->palette,
-        on_preview => sub ($value) { ... },    # undef: show the theme as it is
-        on_apply   => sub ($value) { ... },
-        on_reset   => sub () { ... },
-        list_rows  => 12,    # the rows of the list of tokens or styles
+        key       => 'button.border.color.focused',
+        current   => 'accent',
+        is_set    => 0,
+        default   => 'accent',
+        palette   => $theme->palette,
+        list_rows => 12,    # the rows of the list of tokens or styles
 );
+$dialog->on( Change => sub ($event) { preview( $event->value ); return } );    # undef: the theme as it is
+$dialog->on( Answer => sub ($event) { ... } );
 ```
+
+The dialog is a [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) with the title
+`Edit KEY`, on the right (`placement => 'right'`), with the
+buttons `apply` (primary), `reset` (only for a setting the theme
+sets) and `cancel`, and a notice line that keeps its place.
 
 # METHODS
 
@@ -67,9 +71,23 @@ my $dialog = Term::Fabulous::ThemeEditor::ValueDialog->new(
 
 The setting's key and the value chosen now.
 
-## apply, reset, cancel
+## apply
 
-What the buttons do.
+What `Apply` and `Enter` do: answers `apply` with the value, unless
+the value cannot be applied; then the notice line says why.
+
+# EVENTS
+
+- `Change` ([Term::Fabulous::Event::Change](../Event/Change.md))
+
+    A value was chosen: the value to preview, or `undef` for one the key
+    cannot take. Fired on the dialog; the `Change` events of its inputs do
+    not bubble past it.
+
+- `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md))
+
+    `apply` with `{ value => $value }`, `reset`, `cancel`, or
+    `cancel` dismissed (Escape).
 
 # SEE ALSO
 

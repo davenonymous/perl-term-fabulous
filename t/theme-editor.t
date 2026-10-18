@@ -16,6 +16,7 @@ use Term::Fabulous::Editor;
 use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Theme::Document;
 use Term::Fabulous::ThemeEditor;
+use Term::Fabulous::ThemeEditor::ValueDialog;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
 
@@ -170,6 +171,36 @@ subtest 'editing a setting in the form' => sub {
 	is $tab->document->setting('text_input.border.enabled'), 'true', 'the list chooses true';
 	like $tab->text, qr/enabled=#true/, 'which the file holds as #true';
 	is $editor->ui->preview_theme->look( 'text_input', 'border.enabled' ), 1, 'and the preview frames text fields';
+};
+
+subtest 'the value dialog reports through Change and Answer' => sub {
+	my ( $editor, $press ) = editor();
+	my $ui           = $editor->ui;
+	my $value_dialog = sub (%params) {
+		my $dialog = Term::Fabulous::ThemeEditor::ValueDialog->new( key => 'palette.accent', current => '#5fd3c0', palette => {}, %params );
+		my ( @previews, @answers );
+		$dialog->on( Change => sub ($event) { push @previews, $event->value;                                         return } );
+		$dialog->on( Answer => sub ($event) { push @answers,  [ $event->button, $event->values, $event->dismissed ]; return } );
+		$dialog->open($ui);
+		$ui->step;
+		return ( $dialog, \@previews, \@answers );
+	};
+
+	my ( $dialog, $previews, $answers ) = $value_dialog->();
+	is [ $dialog->title, $dialog->button_ids, $dialog->placement ], [ 'Edit palette.accent', 'apply', 'cancel', 'right' ], 'the title, Apply and Cancel, on the right';
+	$press->( 'Ctrl+A', 'type:#ff0000' );
+	is $previews->[-1], '#ff0000', 'a value typed fires Change for the preview';
+	$press->('Enter');
+	is $answers, [ [ 'apply', { value => '#ff0000' }, 0 ] ], 'Enter answers apply with the value';
+
+	( $dialog, $previews, $answers ) = $value_dialog->( is_set => 1 );
+	is [ $dialog->button_ids ], [qw(apply reset cancel)], 'a setting the theme has offers Reset';
+	$dialog->press_button('reset');
+	is $answers, [ [ 'reset', {}, 0 ] ], 'Reset answers reset';
+
+	( $dialog, $previews, $answers ) = $value_dialog->();
+	$press->('Escape');
+	is $answers, [ [ 'cancel', {}, 1 ] ], 'Escape answers cancel, dismissed';
 };
 
 subtest 'resetting settings' => sub {

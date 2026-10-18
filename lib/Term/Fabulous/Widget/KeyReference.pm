@@ -20,9 +20,8 @@ class Term::Fabulous::Widget::KeyReference
 	use List::Util qw(min sum0 uniq);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(describe positive_integer string);
-	use Term::Fabulous::Widget::Button;
+	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::Table;
-	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextField;
 
 	use constant DEFAULT_WIDTH  => 78;
@@ -33,14 +32,11 @@ class Term::Fabulous::Widget::KeyReference
 	use constant ROOMY_TABLE_MINIMUM => 10;
 	use constant CLOSE_HEIGHT        => 3;    # a bordered button
 
-	field $title :param = 'Keys';
 	field $group :param = 'Everywhere';
 
 	field $search :reader;
 	field $table  :reader;
 
-	field $_title_text;
-	field $_close;
 	field $_search_row;    # the search field and Close, in the compact layout
 	field %_layout_of;    # roomy, compact => the dialog's layout
 	field $_table_height;    # the lines the table needs for all its rows
@@ -52,10 +48,11 @@ class Term::Fabulous::Widget::KeyReference
 	# A key reference is a dialog with room around its table: two columns
 	# at the sides, a row above and below. It grows up to the width and
 	# the height the program asks for, and is never larger than the
-	# screen. Without an id it gets one, for the id of its table.
+	# screen. Without an id it gets one, for the id of its table. Its one
+	# button, Close, answers close.
 	sub BUILDARGS ( $class, %params ) {
-		my $width  = positive_integer( $class, width  => $params{width}  // DEFAULT_WIDTH );
-		my $height = positive_integer( $class, height => $params{height} // DEFAULT_HEIGHT );
+		my $width  = positive_integer( $class, width  => delete $params{width}  // DEFAULT_WIDTH );
+		my $height = positive_integer( $class, height => delete $params{height} // DEFAULT_HEIGHT );
 		my $layout = $params{layout} // {};
 		$params{id} //= 'key-reference-' . ++$generated_ids;
 		$params{layout} = {
@@ -63,11 +60,13 @@ class Term::Fabulous::Widget::KeyReference
 			%$layout,
 			sizing => { width => sizing_grow( 0, $width ), height => sizing_grow( 0, $height ), %{ $layout->{sizing} // {} } },
 		};
+		$params{title} //= 'Keys';
+		die "$class: a key reference has its own buttons" if exists $params{buttons};
+		$params{buttons} = [ { id => 'close', label => 'Close', primary => 1 } ];
 		return $class->SUPER::BUILDARGS(%params);
 	}
 
-	ADJUST :params ( :$commands = undef, :$keys = [], :$width = undef, :$height = undef ) {
-		$title = string( $self, title => $title );
+	ADJUST :params ( :$commands = undef, :$keys = [] ) {
 		$group = string( $self, group => $group );
 		my @rows = ( $self->_command_rows($commands), $self->_parsed_keys($keys) );
 
@@ -75,8 +74,6 @@ class Term::Fabulous::Widget::KeyReference
 		$table  = $self->_table( \@rows );
 		$search->on( Change => sub ( $table, $event ) { $table->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $table );
 
-		$_title_text   = Term::Fabulous::Widget::Text->new( text => $title, bold => 1 ) if length $title;
-		$_close        = $self->_close_button;
 		$_search_row   = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 2, child_alignment => { y => CLAY_ALIGN_Y_CENTER } } );
 		$_table_height = 2 + scalar( uniq map { $_->[0] } @rows ) + @rows;    # the header and its line, a row per group, the rows
 		my $roomy = $self->layout;
@@ -203,34 +200,32 @@ class Term::Fabulous::Widget::KeyReference
 	method _roomy_table_lines ($dialog_height) {
 		my $layout  = $_layout_of{roomy};
 		my $padding = $layout->{padding} // {};
-		my @others  = ( defined $_title_text ? 1 : (), 1, CLOSE_HEIGHT );
+		my @others  = ( length $self->title ? 1 : (), 1, CLOSE_HEIGHT );
 		my $gaps    = ( $layout->{child_gap} // 0 ) * @others;
 		return $dialog_height - 2 - ( $padding->{top} // 0 ) - ( $padding->{bottom} // 0 ) - $gaps - sum0(@others);
 	}
 
+	# Roomy: the title, the search field, the table and Close (the
+	# dialog's button row) below each other.
 	method _arrange_roomy () {
 		$_search_row->clear_children;
 		$self->clear_children;
 		$self->layout( $_layout_of{roomy} );
-		$self->add_child( grep { defined } $_title_text, $search, $table, $_close );
+		$self->add_child( $search, $table );
+		$self->place_parts;
 		$_is_compact = 0;
 		return;
 	}
 
+	# Compact: Close moves next to the search field.
 	method _arrange_compact () {
 		$self->clear_children;
-		$_search_row->add_child( $search, $_close );
+		$_search_row->add_child( $search, $self->button_row );
 		$self->layout( $_layout_of{compact} );
-		$self->add_child( grep { defined } $_title_text, $_search_row, $table );
+		$self->add_child( $_search_row, $table );
+		$self->place_parts;
 		$_is_compact = 1;
 		return;
-	}
-
-	method _close_button () {
-		my $close = Term::Fabulous::Widget::Button->new( bordered => 1, classes => ['primary'], layout => { padding => { left => 1, right => 1 } } );
-		$close->add_child( Term::Fabulous::Widget::Text->new( text => 'Close' ) );
-		$close->on( Activate => sub ( $self, $event ) { $self->close; return }, owner => $self );
-		return $close;
 	}
 }
 
@@ -315,7 +310,9 @@ are left, without regard to case. Tab moves to the table, where the
 arrow keys and the mouse wheel scroll it, and to the Close button (in
 the compact layout, see L</Size>, to the Close button first). C<Escape>
 or C<Close> closes the key reference, and the focus goes back to the
-widget that had it before.
+widget that had it before. Close is the dialog's one button
+(L<Term::Fabulous::Widget::Dialog/buttons>), with the id C<close>;
+giving C<buttons> dies.
 
 =head2 Size
 
@@ -354,8 +351,9 @@ reference.
 
 =item C<title>
 
-A character string, drawn in bold on the first row. Default: C<Keys>.
-An empty string shows no title.
+The dialog's title (L<Term::Fabulous::Widget::Dialog/title>), drawn in
+bold on the first row. Default: C<Keys>. An empty string shows no
+title.
 
 =item C<commands>
 
@@ -415,9 +413,11 @@ The L<Term::Fabulous::Widget::Table> of the keys.
 =head1 EVENTS
 
 A key reference fires the events of every dialog: C<Close> when it
-closes. The events of its search field and its table bubble through it
-as usual. The C<Activate> of its Close button stops at the button,
-which closes the key reference.
+closes, then C<Answer> (L<Term::Fabulous::Event::Answer>): C<close>
+from the Close button, C<cancel> as dismissed for C<Escape> or
+C<close>. The events of its search field and its table bubble through
+it as usual. The C<Activate> of its Close button stops at the button,
+which answers.
 
 =head1 KDL PROPERTIES
 

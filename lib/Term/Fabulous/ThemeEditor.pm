@@ -873,21 +873,28 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		my $effective = $document->effective_setting($key);
 		my $fallback  = $document->without_setting($key)->effective_setting($key);
 		my $palette   = $tab->preview_theme->palette;
-		weaken( my $editor = $self );
-		my $dialog = Term::Fabulous::ThemeEditor::ValueDialog->new(
-			key        => $key,
-			current    => $effective->{spec},
-			is_set     => $effective->{origin} eq 'set' ? 1 : 0,
-			default    => $fallback->{spec},
-			palette    => $palette,
-			on_preview => sub ($value) { $editor->_preview_value( $key, $value ) },
-			on_apply   => sub ($value) { $editor->set_setting( $key, $value ) },
-			on_reset   => sub () { $editor->reset_setting($key) },
-			list_rows  => $self->_list_rows(19),
+		my $dialog    = Term::Fabulous::ThemeEditor::ValueDialog->new(
+			key       => $key,
+			current   => $effective->{spec},
+			is_set    => $effective->{origin} eq 'set' ? 1 : 0,
+			default   => $fallback->{spec},
+			palette   => $palette,
+			list_rows => $self->_list_rows(19),
 		);
+		$dialog->on( Change => sub ( $self, $event ) { $self->_preview_value( $key, $event->value ); return }, owner => $self );
+		$dialog->on( Answer => sub ( $self, $event ) { $self->_value_answered( $key, $event );       return }, owner => $self );
 		$dialog->open($ui);
 		$status->message('Choose a value: the preview shows it. Enter applies, Escape leaves the theme as it was.');
 		return $dialog;
+	}
+
+	# Apply writes the value, Reset removes the setting; anything else
+	# leaves the theme as it was, and the preview shows it again.
+	method _value_answered ( $key, $answer ) {
+		my $button = $answer->button;
+		return $self->set_setting( $key, $answer->value('value') ) if $button eq 'apply';
+		return $self->reset_setting($key) if $button eq 'reset';
+		return $self->_preview_value( $key, undef );
 	}
 
 	# Shows a value in the preview before it is applied (undef: the theme

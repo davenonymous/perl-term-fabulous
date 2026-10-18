@@ -6,7 +6,7 @@ styled spans and links
 # SYNOPSIS
 
 ```perl
-use Term::Fabulous::Text::Markup qw(parse_markup);
+use Term::Fabulous::Text::Markup qw(parse_markup escape_markup);
 
 my ( $text, $spans ) = parse_markup('Press [bold]Enter[/] to [green on #202020]save[/green on #202020].');
 # $text  is 'Press Enter to save.'
@@ -15,6 +15,8 @@ my ( $text, $spans ) = parse_markup('Press [bold]Enter[/] to [green on #202020]s
 my ( $see, undef, $links ) = parse_markup('See [link=https://perl.org]perl.org[/link].');
 # $see   is 'See perl.org.'
 # $links is [ [ 4, 12, 'https://perl.org' ] ]
+
+my $safe = escape_markup($file_name);    # '[draft] notes' becomes '\[draft] notes'
 ```
 
 # DESCRIPTION
@@ -82,6 +84,16 @@ array reference of `[ $start, $end, $target ]`, ordered by their start;
 empty links are dropped as well. `undef` and
 references die with a message starting with
 `Term::Fabulous::Text::Markup:`.
+
+## escape\_markup
+
+```perl
+my $markup = 'There is no file [bold]' . escape_markup($name) . '[/].';
+```
+
+Returns `$text` as markup that shows it as it is: every `[` becomes
+`\[`, so a file name, a user's input or an error message cannot open
+or close a tag. `undef` and references die.
 
 # SEE ALSO
 

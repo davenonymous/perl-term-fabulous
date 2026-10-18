@@ -1,7 +1,7 @@
 # NAME
 
-Term::Fabulous::Widget::Dialog - A box that opens over the whole screen
-and keeps the focus
+Term::Fabulous::Widget::Dialog - A box that opens over the whole screen,
+keeps the focus and answers
 
 # SYNOPSIS
 
@@ -26,6 +26,18 @@ $dialog->on( Close => sub ($event) { $status->text('cancelled'); return } );
 
 # From a key binding or a button:
 $dialog->open($ui);
+
+# A dialog with its own title, buttons and notice line:
+my $export = Term::Fabulous::Widget::Dialog->new(
+        title   => 'Export the table',
+        buttons => [ { id => 'export', label => 'Export', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
+);
+$export->add_child( Term::Fabulous::Widget::Text->new( text => 'All 120 rows go to export.csv.' ) );
+$export->on( Answer => sub ($event) {
+        export_csv() if $event->button eq 'export';    # Escape answers cancel, dismissed
+        return;
+} );
+$export->open($ui);
 ```
 
 <div>
@@ -38,7 +50,7 @@ The program is `examples/widgets/dialog.pl`.
 
 A Dialog is a [Term::Fabulous::Widget::Box](Box.md) that is not part of the
 layout until it is opened. ["open"](#open) puts it in the center of the
-screen, on top of everything else, behind a translucent backdrop that
+screen (or at its right edge, see `placement`), on top of everything else, behind a translucent backdrop that
 dims the rest of the screen, and gives the keyboard focus to the first
 widget inside it. While it is open:
 
@@ -70,6 +82,30 @@ and fires `Close`
 ([Term::Fabulous::Event::Close](../Event/Close.md)) on the dialog. A closed dialog can be
 opened again, as often as needed, and keeps its children and their
 state in between.
+
+## Title, buttons and the notice line
+
+A dialog can bring the parts most dialogs have. A `title` is a bold
+line at the top. `buttons` are one row of bordered buttons at the
+bottom; pressing one makes the dialog ["answer"](#answer) with the button's id.
+The _notice line_ above the buttons says something with ["notice"](#notice),
+for example what is wrong with an input. The children the program adds
+go between the title and the notice line: the dialog puts its parts in
+their places when it opens (see ["place\_parts"](#place_parts)).
+
+## Answers
+
+Every time a dialog closes, it fires two events on itself: `Close`,
+then [Answer](../Event/Answer.md). An answer through
+["answer"](#answer) (a button, or the program) names its button and carries the
+dialog's ["values"](#values) and the values given. A dialog closed without an
+answer (`Escape`, or ["close"](#close) from the program) is _dismissed_: it
+answers with the button `cancel` and the dialog's ["values"](#values), and the
+event's `dismissed` is true. That is one rule for every dialog:
+[Term::Fabulous::Widget::Prompt](Prompt.md) reports its fields as its values,
+[Term::Fabulous::Widget::FileDialog](FileDialog.md) has none (its choice answers
+with the path), and a plain dialog has none. When the listeners run,
+the dialog is closed and the focus is back where it was.
 
 A Dialog comes with a look from the theme's `dialog` family (a dark
 background and a round border in the accent blue in the built-in dark
@@ -114,6 +150,38 @@ plus:
     A boolean. Default: 1: `Escape`, pressed while the focus is inside the
     dialog, closes it. With 0 the program closes the dialog itself.
 
+- `title`
+
+    A character string, drawn in bold on the first row. Default: `''`, no
+    title.
+
+- `buttons`
+
+    An array reference of buttons, each a hash reference with an `id` (a
+    string, required, unique), a `label` (a string, required) and
+    `primary` (a boolean, default 0). They are drawn in one row at the
+    bottom, in the order given, from the left, each bordered with a column
+    of padding on either side; primary buttons get the class `primary`,
+    which a theme may give a look of its own (see
+    ["Variants and classes" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#variants-and-classes)). Pressing one
+    calls ["press\_button"](#press_button), which answers with its id. Unknown keys die.
+    Default: `[]`, no buttons.
+
+- `notice_line`
+
+    When the notice line above the buttons takes room: `shown` (the
+    default), only while it says something; `kept`, always in its place,
+    without rows while it says nothing (the gap above it stays); `row`,
+    always at least one row high, so that a notice does not change the
+    height of the dialog. Anything else dies.
+
+- `placement`
+
+    `center` (the default): the dialog sits in the middle of the screen.
+    `right`: it floats at the right edge of the screen, a column from it,
+    centered from top to bottom, just above its backdrop's `z_index`.
+    Anything else dies.
+
 # METHODS
 
 A Dialog has all methods of [Term::Fabulous::Widget](../Widget.md) plus these:
@@ -137,15 +205,109 @@ widget as a child. Returns the dialog.
 $dialog->close;
 ```
 
-Closes the dialog: removes it from the screen, gives the focus back to
-the widget that had it when the dialog opened (if that widget still
+Dismisses the dialog: removes it from the screen, gives the focus back
+to the widget that had it when the dialog opened (if that widget still
 exists and can take the focus; the backdrop names it as its focus heir,
 see ["focus\_heir" in Term::Fabulous::Widget::Dialog::Backdrop](Dialog/Backdrop.md#focus_heir)) and fires
-`Close` on the dialog. Closing a closed dialog does nothing. A dialog
+`Close` and `Answer` (`cancel`, dismissed) on the dialog. Closing a
+closed dialog does nothing. A dialog
 whose backdrop the program took out of the tree itself (with
 `clear_children` on the root, for example) is still open until
 `close` is called; the focus went back when the backdrop left, and
-`close` then only fires `Close`. Returns the dialog.
+`close` then only fires `Close` and `Answer`. Returns the dialog.
+
+## answer
+
+```perl
+$dialog->answer('export');
+$dialog->answer( save => path => $path );
+```
+
+Closes the dialog and fires `Close` and then `Answer` with this
+button id, the dialog's ["values"](#values) and the values given (which win
+over them), not dismissed (see ["Answers"](#answers)). A dialog with buttons dies
+for an id that is none of them; one without buttons answers with any
+string. Dies when the dialog is not open. Returns the dialog.
+
+## press\_button
+
+```perl
+$dialog->press_button('export');
+```
+
+What pressing a button does. In a Dialog, it answers with the button's
+id. A subclass whose buttons do more first (check the inputs, choose a
+file) overrides it. Returns the dialog.
+
+## values
+
+```perl
+my $values = $dialog->values;
+```
+
+What every answer of the dialog carries, as a new hash reference: an
+empty hash in a Dialog. A subclass with inputs reports them (see
+["values" in Term::Fabulous::Widget::Prompt](Prompt.md#values)).
+
+## notice
+
+```perl
+$dialog->notice( 'The name is taken.', 'error' );
+$dialog->notice('Saved [bold]notes.txt[/].');
+$dialog->notice('');    # says nothing
+my $markup = $dialog->notice;
+```
+
+Says something in the notice line above the buttons, in the rich markup
+of [Term::Fabulous::Text::Markup](../Text/Markup.md) (escape text of the user with
+[escape\_markup](../Text/Markup.md#escape_markup)). The kind
+is `info` (the default, the text color) or `error` (the color of an
+invalid input, the theme's `input.text.invalid`); anything else dies.
+An empty markup says nothing. The line wraps at the width of the
+dialog; when it takes room depends on `notice_line`. Returns the
+dialog. Without arguments, returns the markup shown, or `undef` while
+the line says nothing.
+
+## notice\_text
+
+```perl
+my $text = $dialog->notice_text;
+```
+
+What the notice line says, as plain text without the markup, or
+`undef` while it says nothing.
+
+## title
+
+```perl
+$dialog->title('Export 3 tables');
+```
+
+Accessor for the `title`. Writing it changes the title line at once;
+an empty string takes it away.
+
+## button, button\_ids, is\_primary, default\_button
+
+```perl
+$dialog->button('export')->disabled(1);
+my @ids     = $dialog->button_ids;
+my $checks  = $dialog->is_primary('export');
+my $default = $dialog->default_button;
+```
+
+The [Term::Fabulous::Widget::Button](Button.md) of a button (dying for an id the
+dialog has no button of), the ids of the buttons in order, whether a
+button is primary (1 or 0), and the button that a subclass presses for
+`Enter` in a field: the first primary button, the first button when
+none is, or `undef` without buttons.
+
+## notice\_line, placement
+
+```perl
+$dialog->placement('right');
+```
+
+Accessors for the parameters of the same names.
 
 ## is\_open
 
@@ -178,6 +340,31 @@ argument they return the current value; with one they set it and return
 the stored form. Changes to `backdrop_color` and `z_index` show on an
 open dialog with the next frame.
 
+# SUBCLASS INTERFACE
+
+## place\_parts
+
+```perl
+$self->place_parts;
+```
+
+Puts the parts of the dialog in their places: the title first, the
+notice line (when `notice_line` says it takes room) and the button row
+last. ["open"](#open) calls it, so children added before then end up between
+them. A subclass that rebuilds its children while the dialog is open
+calls it afterwards. A button row the subclass put inside one of its
+own boxes stays there. Returns the dialog.
+
+## button\_row
+
+```perl
+$search_row->add_child( $search, $self->button_row );
+```
+
+The box with the buttons, or `undef` without buttons. A subclass may
+put it somewhere else in the dialog ([Term::Fabulous::Widget::KeyReference](KeyReference.md)
+puts it next to its search field on a short screen).
+
 # EVENTS
 
 Besides the events of every Box (["EVENTS" in Term::Fabulous::Widget::Box](Box.md#events)),
@@ -185,8 +372,14 @@ a Dialog fires:
 
 - `Close` ([Term::Fabulous::Event::Close](../Event/Close.md))
 
-    The dialog was closed, by `Escape` or by ["close"](#close). Fired on the
-    dialog after it has left the screen, so it does not bubble anywhere.
+    The dialog was closed: by an answer, by `Escape` or by ["close"](#close).
+    Fired on the dialog after it has left the screen, so it does not bubble
+    anywhere.
+
+- `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md))
+
+    Right after `Close`, every time: the button that answered and the
+    values, or `cancel` as dismissed (see ["Answers"](#answers)).
 
 Events from the widgets inside the dialog (`Activate` of a Button,
 `Submit` of a text field, `Change`, ...) bubble through the dialog as
@@ -196,8 +389,10 @@ usual, so one listener on the dialog can handle them all.
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties), plus
 `backdrop_color` (a color string), `z_index` (an integer from -32768
-to 32767) and
-`close_on_escape` (`#true` or `#false`).
+to 32767),
+`close_on_escape` (`#true` or `#false`), `title`, `notice_line`
+and `placement` (strings). The buttons come from Perl: they answer
+with events.
 
 A Dialog is added to the widget tree only when it opens, and a Dialog
 that is a child of another widget cannot open. A layout file has only

@@ -193,8 +193,8 @@ subtest 'checks' => sub {
 	like dies { $Prompt->new( fields  => [ { name => 'ok', input => $field } ], focus => 'ok' ) }, qr/focus 'ok' names both a field and a button/,                       'an ambiguous focus dies';
 	like dies { $Prompt->new( focus   => 'nope' ) },                                               qr/focus 'nope' names no field and no button/,                        'an unknown focus dies';
 	like dies { $Prompt->new( width   => 0 ) },                                                    qr/width must be a positive integer, got '0'/,                        'a width of 0 dies';
-	like dies { $Prompt->new->answer('ok') },   qr/answer needs an open prompt/,                 'answering a closed prompt dies';
-	like dies { $Prompt->new->answer('nope') }, qr/the prompt has no button with the id 'nope'/, 'an unknown button dies';
+	like dies { $Prompt->new->answer('ok') },   qr/\ATerm::Fabulous::Widget::Prompt: answer needs an open dialog/,                 'answering a closed prompt dies';
+	like dies { $Prompt->new->answer('nope') }, qr/\ATerm::Fabulous::Widget::Prompt: the dialog has no button with the id 'nope'/, 'an unknown button dies';
 };
 
 done_testing;

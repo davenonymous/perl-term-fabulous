@@ -181,7 +181,7 @@ the sections below it describe each event.
 	Submit           the text field or color picker    yes
 	Activate         the Button                        yes
 	Close            the Dialog, Toast or popup Menu   (no parent then)
-	Answer           the Prompt or FileDialog          (no parent then)
+	Answer           the Dialog (Prompt, FileDialog)   (no parent then)
 	Choose           the Menu                          yes, not popups
 	Select           Accordion, Tabs, DocumentTabs     yes
 	TabClose         the DocumentTabs                  yes
@@ -324,8 +324,8 @@ C<< $button->activate >>. Fired on the button. No fields.
 
 =item C<Close> (L<Term::Fabulous::Event::Close>)
 
-A L<Term::Fabulous::Widget::Dialog> was closed, by C<Escape> or from
-code, a L<Term::Fabulous::Widget::Toast> went away, by its timeout,
+A L<Term::Fabulous::Widget::Dialog> was closed, by an answer, by
+C<Escape> or from code, a L<Term::Fabulous::Widget::Toast> went away, by its timeout,
 its close mark or from code, or a L<Term::Fabulous::Widget::Menu> that
 was opened as a popup closed. Fired on the dialog, the toast or the
 menu, after it has left the screen, so only listeners on it see it. No
@@ -333,16 +333,17 @@ fields.
 
 =item C<Answer> (L<Term::Fabulous::Event::Answer>)
 
-A L<Term::Fabulous::Widget::Prompt> was answered: the user pressed one
-of its buttons or C<Escape>, or the program called C<answer> or
-C<close>. Or a L<Term::Fabulous::Widget::FileDialog> was answered: the
-user chose a file or a folder, or cancelled. Fired on the prompt or the
-file dialog after it closed and gave the focus back, so only listeners
-on it see it. Fields: C<button>, the id of the button (C<cancel> for
-Escape; for a file dialog C<open>, C<save>, C<choose> or C<cancel>),
-C<values>, the values of the prompt's fields (for a file dialog
-C<path>, the chosen path), and C<dismissed>, true when no button
-answered.
+A L<Term::Fabulous::Widget::Dialog> closed, right after its C<Close>:
+the user pressed one of its buttons or C<Escape>, or the program called
+C<answer> or C<close>. A L<Term::Fabulous::Widget::Prompt> answers this
+way, and so does a L<Term::Fabulous::Widget::FileDialog> when the user
+chose a file or a folder, or cancelled. Fired on the dialog after it
+closed and gave the focus back, so only listeners on it see it. Fields:
+C<button>, the id of the button (C<cancel> for Escape; for a file
+dialog C<open>, C<save>, C<choose> or C<cancel>), C<values>, the
+dialog's values (a prompt's fields; for a file dialog C<path>, the
+chosen path) also when it was dismissed, and C<dismissed>, true when no
+button answered (see L<Term::Fabulous::Widget::Dialog/Answers>).
 
 =item C<Choose> (L<Term::Fabulous::Event::Choose>)
 
