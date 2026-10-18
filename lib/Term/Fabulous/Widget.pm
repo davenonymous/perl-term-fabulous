@@ -117,7 +117,7 @@ class Term::Fabulous::Widget
 		my @unknown = grep { $_ ne 'translucent' } sort keys %options;
 		die ref($self) . ": background_below does not take @unknown (known: translucent)" if @unknown;
 		my $lowest_alpha = $options{translucent} ? 1 : 255;
-		for ( my $node = $self; defined $node; $node = $node->parent ) {
+		foreach my $node ( $self, $self->ancestors ) {
 			next unless $node->can('background_color');
 			my $color = $node->background_color // next;
 			return [@$color] if $color->[3] >= $lowest_alpha;
@@ -196,13 +196,13 @@ class Term::Fabulous::Widget
 	# is $id.
 	method find_by_id ($id) {
 		die "Term::Fabulous::Widget: find_by_id needs an id, got undef" unless defined $id;
-		return first { _has_id( $_, $id ) } $self, $self->descendants;
+		return first { _has_id( $_, $id ) } $self->subtree;
 	}
 
 	# The inputs at or below this one, in layout pre-order, whose value is
 	# not valid.
 	method invalid_inputs () {
-		return grep { $_->DOES('Term::Fabulous::Role::Validatable') && !$_->is_valid } $self, $self->descendants;
+		return grep { $_->DOES('Term::Fabulous::Role::Validatable') && !$_->is_valid } $self->subtree;
 	}
 
 	# Text leaves have an id too.

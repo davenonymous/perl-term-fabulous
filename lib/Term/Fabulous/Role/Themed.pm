@@ -237,8 +237,7 @@ role Term::Fabulous::Role::Themed {
 	# A node and every themed widget below it forget their looks; the walk
 	# goes on below nodes that are not themed (the rows of a grid).
 	sub forget_tree_looks ($node) {
-		my @below = $node->can('descendants') ? $node->descendants : ();
-		$_->_forget_own_looks foreach grep { $_->DOES(__PACKAGE__) } $node, @below;
+		$_->_forget_own_looks foreach grep { $_->DOES(__PACKAGE__) } $node->subtree;
 		return;
 	}
 

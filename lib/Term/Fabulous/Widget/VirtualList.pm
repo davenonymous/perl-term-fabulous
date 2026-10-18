@@ -17,9 +17,10 @@ class Term::Fabulous::Widget::VirtualList
 	:does(Clay::UI::Role::Core::Preparable)
 	:strict(params)
 {
+	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_LEFT);
 	use List::Util qw(max min);
-	use Scalar::Util qw(blessed refaddr weaken);
+	use Scalar::Util qw(refaddr weaken);
 	use Term::Fabulous::Check qw(describe non_negative_integer optional);
 	use Term::Fabulous::Widget::Box;
 
@@ -208,7 +209,7 @@ class Term::Fabulous::Widget::VirtualList
 	method _build_item ($index) {
 		my $widget = $build->($index);
 		die ref($self) . ": build must return a widget for item $index, got " . describe($widget)
-			unless blessed $widget && ( $widget->DOES('Clay::UI::Role::Core::Element') || $widget->DOES('Clay::UI::Role::Core::TextNode') );
+			unless is_widget($widget);
 		die ref($self) . ": build returned a widget that already has a parent for item $index" if defined $widget->parent;
 		my $other = $_index_by_widget{ refaddr $widget };
 		die ref($self) . ": build returned the widget of item $other again for item $index" if defined $other;
@@ -493,10 +494,7 @@ class Term::Fabulous::Widget::VirtualList
 		my $interaction = $ui->interaction;
 		my $focused     = $interaction->get_focused_widget // return undef;
 		return undef unless grep { !$stays->{ refaddr $_ } && $_->contains($focused) } @{ $_column->children };
-		for ( my $node = $self; defined $node; $node = $node->parent ) {
-			return $node if $interaction->can_take_focus($node);
-		}
-		return undef;
+		return $self->closest( sub ($node) { $interaction->can_take_focus($node) } );
 	}
 
 	# Detaching the slot blurred the focus; nothing has it now.

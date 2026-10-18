@@ -21,6 +21,7 @@ class Term::Fabulous::Document::Marker :isa(Term::Fabulous::Widget::Text) :stric
 }
 
 class Term::Fabulous::Document :strict(params) {
+	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM);
 	use List::Util qw(first);
 	use Scalar::Util qw(blessed refaddr weaken);
@@ -66,7 +67,7 @@ class Term::Fabulous::Document :strict(params) {
 
 	method add ( $widget, %given ) {
 		die "Term::Fabulous::Document: add needs a widget, got " . describe($widget)
-			unless blessed $widget && ( $widget->DOES('Clay::UI::Role::Core::Element') || $widget->DOES('Clay::UI::Role::Core::TextNode') );
+			unless is_widget($widget);
 		my $known = $index_of{ refaddr $widget };
 		die "Term::Fabulous::Document: the widget is item $known of the document already" if defined $known;
 		die "Term::Fabulous::Document: add needs a widget without a parent; this one is a child of " . ref( $widget->parent ) if defined $widget->parent;
@@ -141,7 +142,7 @@ class Term::Fabulous::Document :strict(params) {
 	# its links are.
 	method texts ($index) {
 		my $item = $self->item($index);
-		return grep { $_->isa('Term::Fabulous::Widget::Text') } $item, $item->DOES('Clay::UI::Role::Core::Element') ? $item->descendants : ();
+		return grep { $_->isa('Term::Fabulous::Widget::Text') } $item->subtree;
 	}
 
 	method searchables ($index) {

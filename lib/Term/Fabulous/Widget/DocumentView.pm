@@ -261,16 +261,12 @@ class Term::Fabulous::Widget::DocumentView
 		return;
 	}
 
-	# The widget and everything below it.
-	sub _tree_of ($widget) {
-		return ( $widget, $widget->DOES('Clay::UI::Role::Core::Element') ? $widget->descendants : () );
-	}
-
 	# The item a widget belongs to: its index, or undef for a widget that
 	# is in none (the view, its scrollbars).
 	method _item_index_of ($widget) {
 		return undef unless defined $document;
-		for ( my $node = $widget; defined $node && refaddr($node) != refaddr($self); $node = $node->parent ) {
+		foreach my $node ( $widget, $widget->ancestors ) {
+			last if refaddr($node) == refaddr($self);
 			my $index = $document->index_of($node);
 			return $index if defined $index;
 		}
@@ -379,7 +375,7 @@ class Term::Fabulous::Widget::DocumentView
 
 	# The code blocks of the items with these indexes that are built.
 	method _built_code (@indexes) {
-		return grep { $_->isa('Term::Fabulous::Widget::CodeBlock') } map { _tree_of( $_->{item} ) } grep { defined } @slot_of{@indexes};
+		return grep { $_->isa('Term::Fabulous::Widget::CodeBlock') } map { $_->{item}->subtree } grep { defined } @slot_of{@indexes};
 	}
 
 	# Scrolls every code block sideways, as far as the widest one in view
@@ -681,7 +677,7 @@ class Term::Fabulous::Widget::DocumentView
 	# The widgets of an item that take the focus with Tab: not its texts,
 	# whose links the view selects.
 	method _interactive_of ($index) {
-		return grep { $_->DOES('Clay::UI::Role::Interaction::Focusable') && !$_->DOES('Clay::UI::Role::Core::TextNode') && $_->can_focus } _tree_of( $document->item($index) );
+		return grep { $_->DOES('Clay::UI::Role::Interaction::Focusable') && !$_->DOES('Clay::UI::Role::Core::TextNode') && $_->can_focus } $document->item($index)->subtree;
 	}
 
 	method _interactive_after ( $index, $focused, $direction ) {

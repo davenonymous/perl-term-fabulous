@@ -15,7 +15,7 @@ class Term::Fabulous::Widget::RadioButton
 	:isa(Term::Fabulous::Widget::Input)
 	:strict(params)
 {
-	use List::Util qw(max);
+	use List::Util qw(first max);
 	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(optional string);
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -61,10 +61,7 @@ class Term::Fabulous::Widget::RadioButton
 	}
 
 	method group () {
-		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
-			return $node if $node->isa('Term::Fabulous::Widget::RadioGroup');
-		}
-		return undef;
+		return first { $_->isa('Term::Fabulous::Widget::RadioGroup') } $self->ancestors;
 	}
 
 	method is_selected () {

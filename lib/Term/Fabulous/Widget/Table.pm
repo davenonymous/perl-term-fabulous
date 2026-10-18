@@ -35,6 +35,7 @@ class Term::Fabulous::Widget::Table
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
+	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Feature::Compat::Try;
 	use Clay::XS qw(
 		sizing_fit sizing_fixed sizing_grow sizing_percent CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM
@@ -574,7 +575,7 @@ class Term::Fabulous::Widget::Table
 
 	sub _widget_from ( $what, $widget ) {
 		die "Term::Fabulous::Widget::Table: $what must return a widget, got " . describe($widget)
-			unless blessed $widget && ( $widget->DOES('Clay::UI::Role::Core::Element') || $widget->DOES('Clay::UI::Role::Core::TextNode') );
+			unless is_widget($widget);
 		return $widget;
 	}
 
@@ -1180,15 +1181,10 @@ class Term::Fabulous::Widget::Table
 
 	# Which part of the table a widget belongs to.
 	method _region_of ($widget) {
-		for ( my $node = $widget; defined $node; $node = $node->parent ) {
-			my $address = refaddr $node;
-			return 'body' if $address == refaddr($_body_row);
-			return 'header' if $address == refaddr($_header_view);
-			return 'pager' if $address == refaddr($_pager);
-			return 'chooser' if defined $_chooser && $address == refaddr($_chooser);
-			return 'table' if $address == refaddr($self);
-		}
-		return 'table';
+		my %region = ( refaddr($_body_row) => 'body', refaddr($_header_view) => 'header', refaddr($_pager) => 'pager', refaddr($self) => 'table' );
+		$region{ refaddr $_chooser } = 'chooser' if defined $_chooser;
+		my $part = $widget->closest( sub ($node) { exists $region{ refaddr $node } } ) // return 'table';
+		return $region{ refaddr $part };
 	}
 
 	# Whether a widget between $widget and the table takes input of its own
@@ -1197,7 +1193,9 @@ class Term::Fabulous::Widget::Table
 	# click on such a button makes its cell the target, so the widgets of
 	# the cell under the pointer count, too.
 	method _inside_input ($event) {
-		for ( my $node = $event->target; defined $node && refaddr($node) != refaddr($self); $node = $node->parent ) {
+		my $target = $event->target;
+		foreach my $node ( $target, $target->ancestors ) {
+			last if refaddr($node) == refaddr($self);
 			return 1 if _takes_input($node);
 			return $self->_input_under_pointer( $node, $event->x, $event->y ) if $node->isa('Term::Fabulous::Widget::Table::Cell');
 		}
@@ -1535,7 +1533,8 @@ class Term::Fabulous::Widget::Table
 	# The table widget a mouse event is about: a toggle or a cell, and the
 	# widget it hit. The scrollbar handles its own clicks.
 	method _hit ($target) {
-		for ( my $node = $target; defined $node && refaddr($node) != refaddr($self); $node = $node->parent ) {
+		foreach my $node ( $target, $target->ancestors ) {
+			last if refaddr($node) == refaddr($self);
 			return ( toggle => $node ) if $node->isa('Term::Fabulous::Widget::Table::Toggle');
 			return ( cell   => $node ) if $node->isa('Term::Fabulous::Widget::Table::Cell');
 		}

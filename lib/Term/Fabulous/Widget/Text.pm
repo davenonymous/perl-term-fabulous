@@ -202,12 +202,9 @@ class Term::Fabulous::Widget::Text
 	method text_config :override () {
 		my $config   = $self->SUPER::text_config;
 		my $explicit = $self->_explicit_text_color;
-		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
-			next unless $node->can('child_text_color');
-			my $color = $node->child_text_color($explicit) // last;
-			return { %$config, text_color => $color };
-		}
-		return { %$config, text_color => $explicit // $self->look('color') };
+		my $colorer  = first { $_->can('child_text_color') } $self->ancestors;
+		my $color    = defined $colorer ? $colorer->child_text_color($explicit) : undef;
+		return { %$config, text_color => $color // $explicit // $self->look('color') };
 	}
 
 	# ---------------------------------------------------------------------

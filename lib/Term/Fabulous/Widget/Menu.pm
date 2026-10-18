@@ -16,6 +16,7 @@ class Term::Fabulous::Widget::Menu
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
+	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Clay::XS qw(CLAY_ATTACH_TO_ROOT);
 	use List::Util qw(first max min);
 	use Scalar::Util qw(blessed refaddr weaken);
@@ -177,7 +178,7 @@ class Term::Fabulous::Widget::Menu
 	method _parsed_anchor (%where) {
 		if ( exists $where{below} ) {
 			my $widget = delete $where{below};
-			die ref($self) . ": below must be a widget, got " . describe($widget) unless blessed $widget && $widget->can('parent');
+			die ref($self) . ": below must be a widget, got " . describe($widget) unless is_widget($widget);
 			die ref($self) . ": open takes x and y, or below, got " . join( ', ', sort keys %where ) if %where;
 			return { below => $widget, column => 0 };
 		}

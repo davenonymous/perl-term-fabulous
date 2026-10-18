@@ -444,7 +444,7 @@ class Term::Fabulous
 		$target->fire_event($mouse_event);
 
 		# A Mouse listener may have taken the text out of the tree.
-		$text->click_at( $offset, $key, $x, $y ) if $is_press && defined $text && $self->_owns($text);
+		$text->click_at( $offset, $key, $x, $y ) if $is_press && defined $text && $self->owns($text);
 
 		# A widget that scrolled itself has used the wheel notch.
 		return if $mouse_event->wheel_used;
@@ -477,19 +477,13 @@ class Term::Fabulous
 	# Whether a press on a widget leaves the focus where it is: the widget
 	# or one of its ancestors says so (a menu bar does).
 	sub _keeps_focus_on_click ($widget) {
-		for ( my $node = $widget; defined $node; $node = $node->parent ) {
-			return 1 if $node->can('keeps_focus_on_click') && $node->keeps_focus_on_click;
-		}
-		return 0;
+		return defined $widget->closest( sub ($node) { $node->can('keeps_focus_on_click') && $node->keeps_focus_on_click } ) ? 1 : 0;
 	}
 
 	# The widget a click focuses: the nearest one that can take focus now.
 	method _focusable_at_or_above ($widget) {
 		my $interaction = $self->interaction;
-		for ( my $node = $widget; defined $node; $node = $node->parent ) {
-			return $node if $interaction->can_take_focus($node);
-		}
-		return undef;
+		return $widget->closest( sub ($node) { $interaction->can_take_focus($node) } );
 	}
 
 	method _on_resize ($event) {
@@ -530,7 +524,7 @@ class Term::Fabulous
 			my $command = $frame->command($index);
 			next if $command->{commandType} == CLAY_RENDER_COMMAND_TYPE_TEXT;
 			my $widget = $self->widget_for( $command->{userData} );
-			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter') && $self->_owns($widget);
+			return $widget if defined $widget && $widget->DOES('Clay::UI::Role::Events::Emitter') && $self->owns($widget);
 		}
 		return undef;
 	}
@@ -543,7 +537,7 @@ class Term::Fabulous
 		my $command = $frame->command($index);
 		return () unless $command->{commandType} == CLAY_RENDER_COMMAND_TYPE_TEXT;
 		my $widget = $self->widget_for( $command->{userData} );
-		return () unless defined $widget && $widget->isa('Term::Fabulous::Widget::Text') && $self->_owns($widget);
+		return () unless defined $widget && $widget->isa('Term::Fabulous::Widget::Text') && $self->owns($widget);
 		my $offset = _offset_at_column( $command, $x ) // return ();
 		return ( $widget, $offset );
 	}
@@ -575,11 +569,6 @@ class Term::Fabulous
 		weaken $_hovered_text;
 		$hovered->hover_link($link);
 		return;
-	}
-
-	method _owns ($widget) {
-		my $ui = $widget->can('ui') ? $widget->ui : undef;
-		return defined $ui && refaddr($ui) == refaddr($self) ? 1 : 0;
 	}
 }
 

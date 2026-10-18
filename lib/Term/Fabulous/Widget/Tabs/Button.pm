@@ -19,6 +19,7 @@ class Term::Fabulous::Widget::Tabs::Button
 {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE CLAY_TEXT_WRAP_NEWLINES);
+	use List::Util qw(first);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(optional string);
 	use Term::Fabulous::Enum::BorderStyle;
@@ -66,10 +67,7 @@ class Term::Fabulous::Widget::Tabs::Button
 
 	# The bar the tab belongs to, if any: the tab's parent is the bar's row.
 	method bar () {
-		for ( my $node = $self->parent; defined $node; $node = $node->parent ) {
-			return $node if $node->isa('Term::Fabulous::Widget::Tabs::Bar');
-		}
-		return undef;
+		return first { $_->isa('Term::Fabulous::Widget::Tabs::Bar') } $self->ancestors;
 	}
 
 	method is_active () {
