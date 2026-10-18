@@ -269,7 +269,7 @@ subtest 'estimated_rows wraps as Clay does' => sub {
 		[ map { laid_out_rows( Term::Fabulous::Widget::Text->new( text => $_->[0] ), $_->[1] ) } @texts ],
 		'the rows of every text';
 	is( Term::Fabulous::Widget::Text->new( text => "a b c\nd e f", wrap_mode => CLAY_TEXT_WRAP_NEWLINES )->estimated_rows(2), 2, 'newlines: one row per line' );
-	is( Term::Fabulous::Widget::Text->new( text => "a b c\nd e f", wrap_mode => CLAY_TEXT_WRAP_NONE )->estimated_rows(2),     2, 'none: as newlines, which is how Clay lays it out' );
+	is( Term::Fabulous::Widget::Text->new( text => "a b c\nd e f", wrap_mode => CLAY_TEXT_WRAP_NONE )->estimated_rows(2),     1, 'none: one row, newlines included, as Clay lays it out' );
 	is( Term::Fabulous::Widget::Text->new->estimated_rows(5), 0, 'an empty text takes no row, as in Clay' );
 	like dies { Term::Fabulous::Widget::Text->new( text => 'x' )->estimated_rows(0) }, qr/columns must be a positive integer, got '0'/, 'a text wraps to a column at least';
 };
@@ -283,8 +283,9 @@ subtest 'row_of_offset' => sub {
 		[ 'xx aaaaaaaaaaaa bb', 16, 10, 2, 'after a word wider than the row' ],
 		[ "aa bb\ncc dd ee",    9,  5,  2, 'a line break starts a row, and the rows of the lines before count' ],
 	);
-	is( Term::Fabulous::Widget::Text->new( text => $_->[0] )->row_of_offset( @$_[ 1, 2 ] ),                                   $_->[3], $_->[4] ) foreach @rows_of;
-	is( Term::Fabulous::Widget::Text->new( text => "a b\nc d", wrap_mode => CLAY_TEXT_WRAP_NEWLINES )->row_of_offset( 6, 1 ), 1,       'without wrapping at words, the line is the row' );
+	is( Term::Fabulous::Widget::Text->new( text => $_->[0] )->row_of_offset( @$_[ 1, 2 ] ), $_->[3], $_->[4] ) foreach @rows_of;
+	is( Term::Fabulous::Widget::Text->new( text => "a b\nc d", wrap_mode => CLAY_TEXT_WRAP_NEWLINES )->row_of_offset( 6, 1 ), 1, 'without wrapping at words, the line is the row' );
+	is( Term::Fabulous::Widget::Text->new( text => "a b\nc d", wrap_mode => CLAY_TEXT_WRAP_NONE )->row_of_offset( 6, 1 ),     0, 'none keeps the whole text on the first row' );
 	like dies { Term::Fabulous::Widget::Text->new( text => 'x' )->row_of_offset( -1, 3 ) }, qr/offset must be a non-negative integer/, 'the offset is checked';
 };
 

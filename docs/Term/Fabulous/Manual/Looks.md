@@ -122,11 +122,10 @@ Import the constants from [Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS):
 
 - `CLAY_TEXT_WRAP_NONE`
 
-    The same as `CLAY_TEXT_WRAP_NEWLINES`: `"\n"` still starts a new
-    line, and nothing else does. The layout engine Clay lays out both modes
-    alike (it only distinguishes `CLAY_TEXT_WRAP_WORDS` from the others), so
-    use `CLAY_TEXT_WRAP_NEWLINES`; to show text on one line, remove its
-    newlines.
+    Never breaks: the whole text is one line, and a `"\n"` in it is shown
+    as the replacement character U+FFFD (see ["Control characters"](#control-characters)). Like
+    `CLAY_TEXT_WRAP_NEWLINES`, a line too wide for its parent is cut off
+    once the widgets beside it cannot get narrower.
 
 ```perl
 use Clay::XS qw(CLAY_TEXT_WRAP_NEWLINES);
@@ -339,7 +338,8 @@ space; every other control character (U+0000 to U+001F except tab and
 newline, U+007F to U+009F) is shown as U+FFFD, the replacement
 character. That includes a carriage return: remove the `"\r"` of
 Windows line ends (`s/\r\n/\n/g`) before you show such text. In Text
-widgets, a newline starts a new line, as described in ["Wrapping"](#wrapping).
+widgets, a newline starts a new line, as described in ["Wrapping"](#wrapping),
+except with `CLAY_TEXT_WRAP_NONE`, which shows it as U+FFFD.
 The last line of the picture at the start of ["TEXT"](#text) shows a tab, a
 bell character and an escape sequence. See
 ["sanitize\_text" in Term::Fabulous::Unicode](../Unicode.md#sanitize_text) for the exact rules.

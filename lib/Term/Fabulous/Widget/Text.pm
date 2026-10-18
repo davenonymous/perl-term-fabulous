@@ -490,9 +490,10 @@ class Term::Fabulous::Widget::Text
 
 	# The rows the text takes in the given number of columns, as Clay will
 	# wrap it: at the spaces and the line breaks for the words mode, at the
-	# line breaks only otherwise (Clay lays out none as newlines).
+	# line breaks only for the newlines mode, never for none.
 	method estimated_rows ($columns) {
 		$columns = positive_integer( $self, columns => $columns );
+		return length $self->text ? 1 : 0 if $self->_stays_on_one_line;
 		my @lines = split /\n/, $self->text, -1;
 		return scalar @lines unless $self->_wraps_words;
 		return sum0 map { _wrapped_rows( $_, $columns ) } @lines;
@@ -503,6 +504,7 @@ class Term::Fabulous::Widget::Text
 	method row_of_offset ( $offset, $columns ) {
 		$offset  = min( non_negative_integer( $self, offset => $offset ), length $self->text );
 		$columns = positive_integer( $self, columns => $columns );
+		return 0 if $self->_stays_on_one_line;
 		my @lines  = split /\n/, substr( $self->text, 0, $offset ), -1;
 		my $last   = pop(@lines) // '';
 		my $before = $self->_wraps_words ? sum0( map { _wrapped_rows( $_, $columns ) } @lines ) : scalar @lines;
@@ -512,6 +514,11 @@ class Term::Fabulous::Widget::Text
 
 	method _wraps_words () {
 		return ( $self->wrap_mode // CLAY_TEXT_WRAP_WORDS ) == CLAY_TEXT_WRAP_WORDS ? 1 : 0;
+	}
+
+	# Clay lays out the none mode as one line, newlines included.
+	method _stays_on_one_line () {
+		return ( $self->wrap_mode // CLAY_TEXT_WRAP_WORDS ) == CLAY_TEXT_WRAP_NONE ? 1 : 0;
 	}
 
 	# Clay wraps a line at the spaces, and only there (a no-break space is
@@ -954,8 +961,9 @@ L<C<find_by_id>|Term::Fabulous::Widget/find_by_id> finds Text widgets by this id
 How lines are broken, one of the L<Clay::XS> constants:
 C<CLAY_TEXT_WRAP_WORDS> (the default: break at C<"\n"> and, where the
 text does not fit, at spaces), C<CLAY_TEXT_WRAP_NEWLINES> (break only
-at C<"\n">) and C<CLAY_TEXT_WRAP_NONE> (the same as C<CLAY_TEXT_WRAP_NEWLINES>, because
-Clay lays out both alike). A line
+at C<"\n">) and C<CLAY_TEXT_WRAP_NONE> (never: the whole text is one
+line, and a C<"\n"> in it is shown as a control character, see
+L<Term::Fabulous::Manual::Looks/Control characters>). A line
 that is not broken keeps its width as long as the widgets beside it can
 still get narrower; after that it is cut off at the right edge of its
 parent (inside a box that scrolls sideways it keeps its width).
@@ -1289,8 +1297,8 @@ focus now is C<can_focus>, which also asks the C<can_focus> parameter.
 The rows the text will take when it is laid out in that many columns,
 worked out as Clay wraps it: at the spaces and the line breaks for
 C<CLAY_TEXT_WRAP_WORDS>, at the line breaks only for
-C<CLAY_TEXT_WRAP_NEWLINES> and C<CLAY_TEXT_WRAP_NONE>, which Clay lays out
-alike. A word wider than the columns takes a row of its own. Widgets that build only
+C<CLAY_TEXT_WRAP_NEWLINES>, never for C<CLAY_TEXT_WRAP_NONE> (one row,
+newlines included). A word wider than the columns takes a row of its own. Widgets that build only
 part of their content, such as L<Term::Fabulous::Widget::DocumentView>,
 ask this before the text was ever laid out; see
 L<Term::Fabulous::Widget/estimated_rows>. C<$columns> must be a

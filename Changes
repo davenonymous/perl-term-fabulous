@@ -1,6 +1,12 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - A Text with wrap_mode CLAY_TEXT_WRAP_NONE stays on one line,
+          as Clay::UI 0.07 lays it out: a "\n" in it is shown as the
+          replacement character U+FFFD instead of starting a new line,
+          and estimated_rows and row_of_offset count the whole text as
+          one row. Before, it broke at newlines like
+          CLAY_TEXT_WRAP_NEWLINES.
         - Text that does not wrap (wrap_mode newlines or none) is cut
           off when its parent is too narrow, once everything beside it
           has shrunk; a newlines text still breaks only at its newlines.

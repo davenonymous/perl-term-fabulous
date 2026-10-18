@@ -126,11 +126,10 @@ its width).
 
 =item C<CLAY_TEXT_WRAP_NONE>
 
-The same as C<CLAY_TEXT_WRAP_NEWLINES>: C<"\n"> still starts a new
-line, and nothing else does. The layout engine Clay lays out both modes
-alike (it only distinguishes C<CLAY_TEXT_WRAP_WORDS> from the others), so
-use C<CLAY_TEXT_WRAP_NEWLINES>; to show text on one line, remove its
-newlines.
+Never breaks: the whole text is one line, and a C<"\n"> in it is shown
+as the replacement character U+FFFD (see L</Control characters>). Like
+C<CLAY_TEXT_WRAP_NEWLINES>, a line too wide for its parent is cut off
+once the widgets beside it cannot get narrower.
 
 =back
 
@@ -335,7 +334,8 @@ space; every other control character (U+0000 to U+001F except tab and
 newline, U+007F to U+009F) is shown as U+FFFD, the replacement
 character. That includes a carriage return: remove the C<"\r"> of
 Windows line ends (C<s/\r\n/\n/g>) before you show such text. In Text
-widgets, a newline starts a new line, as described in L</Wrapping>.
+widgets, a newline starts a new line, as described in L</Wrapping>,
+except with C<CLAY_TEXT_WRAP_NONE>, which shows it as U+FFFD.
 The last line of the picture at the start of L</TEXT> shows a tab, a
 bell character and an escape sequence. See
 L<Term::Fabulous::Unicode/sanitize_text> for the exact rules.

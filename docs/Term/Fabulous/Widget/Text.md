@@ -224,8 +224,9 @@ of the same name.
     How lines are broken, one of the [Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS) constants:
     `CLAY_TEXT_WRAP_WORDS` (the default: break at `"\n"` and, where the
     text does not fit, at spaces), `CLAY_TEXT_WRAP_NEWLINES` (break only
-    at `"\n"`) and `CLAY_TEXT_WRAP_NONE` (the same as `CLAY_TEXT_WRAP_NEWLINES`, because
-    Clay lays out both alike). A line
+    at `"\n"`) and `CLAY_TEXT_WRAP_NONE` (never: the whole text is one
+    line, and a `"\n"` in it is shown as a control character, see
+    ["Control characters" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#control-characters)). A line
     that is not broken keeps its width as long as the widgets beside it can
     still get narrower; after that it is cut off at the right edge of its
     parent (inside a box that scrolls sideways it keeps its width).
@@ -623,8 +624,8 @@ my $rows = $text->estimated_rows($columns);
 The rows the text will take when it is laid out in that many columns,
 worked out as Clay wraps it: at the spaces and the line breaks for
 `CLAY_TEXT_WRAP_WORDS`, at the line breaks only for
-`CLAY_TEXT_WRAP_NEWLINES` and `CLAY_TEXT_WRAP_NONE`, which Clay lays out
-alike. A word wider than the columns takes a row of its own. Widgets that build only
+`CLAY_TEXT_WRAP_NEWLINES`, never for `CLAY_TEXT_WRAP_NONE` (one row,
+newlines included). A word wider than the columns takes a row of its own. Widgets that build only
 part of their content, such as [Term::Fabulous::Widget::DocumentView](DocumentView.md),
 ask this before the text was ever laid out; see
 ["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows). `$columns` must be a
