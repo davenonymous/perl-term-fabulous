@@ -145,11 +145,14 @@ theme does not know or contains a style string that does not parse.
 my $look = Term::Fabulous::Document::Look->of($widget);
 ```
 
-Returns the look of the theme a widget draws with. That is the theme of
-the [Term::Fabulous](../../../../README.md) UI the widget is part of, or the default theme
-(["default" in Term::Fabulous::Theme](../Theme.md#default)) while it is part of none, the same
-rule [Term::Fabulous::Role::Themed](../Role/Themed.md) applies. Call `of` on the look
-class you want; the look is an instance of that class.
+Returns the look of the theme a widget draws with: its
+[drawing\_theme](../Role/Themed.md#drawing_theme), which is
+the theme the [Term::Fabulous](../../../../README.md) UI gives the widget's part of the tree,
+or the default theme (["default" in Term::Fabulous::Theme](../Theme.md#default)) while it is
+part of no UI or of one without themes; the default theme for a widget
+that does not compose [Term::Fabulous::Role::Themed](../Role/Themed.md). So the styles of
+the look and the widget's own looks come from the same theme. Call `of`
+on the look class you want; the look is an instance of that class.
 
 Each look class caches the look it made last and returns it again as
 long as the theme is the same object and no theme has been switched

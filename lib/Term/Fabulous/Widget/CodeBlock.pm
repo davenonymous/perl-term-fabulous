@@ -272,7 +272,7 @@ class Term::Fabulous::Widget::CodeBlock
 	method _runs_in ($look) {
 		return $runs if defined $runs && refaddr($runs_look) == refaddr($look);
 		my $base  = $look->style('code_block');
-		my $theme = $self->_theme;
+		my $theme = $self->drawing_theme;
 		my @spans = map { [ $_->[0], $_->[1], resolve_style( $_->[2], $theme ) ] } @{ $self->_highlighted_spans }, @$spans, @$highlights;
 		$runs = [ map { +{ %$_, fg => $self->_fg_attr( $_->{look} ), bg => $self->color_attr( $_->{look}{background} ) } }
 				_runs( length $code, { attrs => 0, color => $base->{color}, background => $base->{background} }, @spans ) ];

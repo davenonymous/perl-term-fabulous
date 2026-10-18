@@ -80,16 +80,16 @@ class Term::Fabulous::Document::Look :strict(params) {
 		return { %$style, map { ref $style->{$_} ? ( $_ => [ @{ $style->{$_} } ] ) : () } keys %$style };
 	}
 
-	# The look of the theme a widget draws with: its UI's, or the default
-	# theme while it is in none, as Term::Fabulous::Role::Themed decides.
-	# The last look of each class is kept until the theme or the theme
-	# generation changes. The entry holds the theme itself, so that its
-	# address cannot be reused by another theme while the look is kept.
+	# The look of the theme a widget draws with, as
+	# Term::Fabulous::Role::Themed decides (drawing_theme); the default
+	# theme for a widget that is not themed. The last look of each class is
+	# kept until the theme or the theme generation changes. The entry holds
+	# the theme itself, so that its address cannot be reused by another
+	# theme while the look is kept.
 	my %last_of_class;    # class => [ look, theme, generation ]
 
 	method of :common ($widget) {
-		my $ui         = $widget->ui;
-		my $theme      = defined $ui ? $ui->theme : Term::Fabulous::Theme->default;
+		my $theme      = $widget->can('drawing_theme') ? $widget->drawing_theme : Term::Fabulous::Theme->default;
 		my $generation = Term::Fabulous::Theme::generation();
 		my $last       = $last_of_class{$class};
 		return $last->[0] if defined $last && refaddr( $last->[1] ) == refaddr($theme) && $last->[2] == $generation;
@@ -252,11 +252,14 @@ theme does not know or contains a style string that does not parse.
 
 	my $look = Term::Fabulous::Document::Look->of($widget);
 
-Returns the look of the theme a widget draws with. That is the theme of
-the L<Term::Fabulous> UI the widget is part of, or the default theme
-(L<Term::Fabulous::Theme/default>) while it is part of none, the same
-rule L<Term::Fabulous::Role::Themed> applies. Call C<of> on the look
-class you want; the look is an instance of that class.
+Returns the look of the theme a widget draws with: its
+L<drawing_theme|Term::Fabulous::Role::Themed/drawing_theme>, which is
+the theme the L<Term::Fabulous> UI gives the widget's part of the tree,
+or the default theme (L<Term::Fabulous::Theme/default>) while it is
+part of no UI or of one without themes; the default theme for a widget
+that does not compose L<Term::Fabulous::Role::Themed>. So the styles of
+the look and the widget's own looks come from the same theme. Call C<of>
+on the look class you want; the look is an instance of that class.
 
 Each look class caches the look it made last and returns it again as
 long as the theme is the same object and no theme has been switched

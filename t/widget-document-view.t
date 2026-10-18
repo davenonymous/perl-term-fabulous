@@ -9,6 +9,7 @@ use Test2::V0;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
+use Clay::UI;
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);
 use DocumentTest;
 use List::Util qw(first);
@@ -22,6 +23,7 @@ use Term::Fabulous::Event::ViewChange;
 use Term::Fabulous::Render::Attr qw(color_attr);
 use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Termbox qw(TF_KEY_MOUSE_WHEEL_RIGHT);
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
@@ -140,6 +142,17 @@ subtest 'items' => sub {
 	my $bold = cell_of( $h, 'bold,' );
 	is $bold->[0], 'b', 'the bold word';
 	ok $bold->[1] & $look->style('bold')->{set}, 'is drawn bold';
+};
+
+subtest 'a quote builds in a UI that has no theme' => sub {
+	my $view = Term::Fabulous::Widget::DocumentView->new(
+		id     => 'plain', document => document( [ paragraph => 'Quoted.', quote => 1 ] ),
+		layout => { sizing => { width => sizing_fixed(30), height => sizing_fixed(5) } }
+	);
+	my $ui = Clay::UI->new( root => $view, width => 30, height => 5 );
+	ok lives { $ui->render for 1 .. 2 }, 'a plain Clay::UI lays the view out';
+	is $view->window, { first => 0, last => 0 }, 'with the quote built';
+	ref_is $view->document_look->theme, Term::Fabulous::Theme->default, 'in the default theme';
 };
 
 subtest 'block quotes' => sub {

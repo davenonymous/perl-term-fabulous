@@ -24,7 +24,6 @@ class Term::Fabulous::Widget::Accordion::Item
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Check qw(boolean optional string);
-	use Term::Fabulous::Theme;
 
 	# The settings an item shows while it has no accordion to take them
 	# from; the colors come from the default theme's accordion family.
@@ -200,33 +199,47 @@ class Term::Fabulous::Widget::Accordion::Item
 	# ---------------------------------------------------------------------
 
 	# One setting of the look: the accordion's; without one, the default
-	# setting, or the default theme's accordion look.
+	# setting, or the accordion look of the theme the item draws with.
 	method _look ($name) {
 		my $accordion = $self->accordion;
 		return $accordion->$name if defined $accordion;
 		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
 		require Term::Fabulous::Widget::Accordion;
 		my %themed = Term::Fabulous::Widget::Accordion->themed_params;
-		return Term::Fabulous::Theme->default->look( 'accordion', @{ $themed{$name} }[ 0, 1 ] );    # slot and state
+		return $self->family_look( accordion => @{ $themed{$name} }[ 0, 1 ] );    # slot and state
 	}
 
 	# Updates the header's texts, order and colors from the state and the
 	# accordion's settings. Called by the accordion when they change.
 	method refresh_look () {
-		my $enabled = $_header->is_enabled;
-		my $at_end  = $self->_look('toggle_position') eq 'end';
+		$self->_show_look;
+		my @parts = ( ( defined $icon ? $_icon_text : () ), $_title_text );
+		my @order
+			= $self->_look('toggle_position') eq 'end'
+			? ( @parts, Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() } } ), $_toggle_text )
+			: ( $_toggle_text, @parts );
+		$_header->clear_children;
+		$_header->add_child(@order);
+		return $self;
+	}
 
+	# The item joined a UI, or its theme changed (Term::Fabulous::Role::Themed):
+	# the texts and colors follow the theme it draws with now. The order
+	# of the parts depends on no theme.
+	method looks_changed (@names) {
+		$self->_show_look;
+		return;
+	}
+
+	# The glyph, the colors and the indent, from the state and the look.
+	method _show_look () {
+		my $enabled = $_header->is_enabled;
 		$_toggle_text->text( $_is_open      ? $self->_look('open_glyph')                                                 : $self->_look('closed_glyph') );
 		$_toggle_text->text_color( $enabled ? ( $_is_open ? $self->_look('accent_color') : $self->_look('title_color') ) : $self->_look('disabled_color') );
 		$_title_text->text_color( $self->_look('title_color') );
 		$_title_text->bold( $self->_look('title_bold') );
 		$_icon_text->text_color( $self->_look('title_color') );
 		$_header->disabled_color( $self->_look('disabled_color') );
-
-		my @parts = ( ( defined $icon ? $_icon_text : () ), $_title_text );
-		my @order = $at_end ? ( @parts, Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() } } ), $_toggle_text ) : ( $_toggle_text, @parts );
-		$_header->clear_children;
-		$_header->add_child(@order);
 
 		my $background
 			= !$enabled            ? $self->_look('header_background_color')
@@ -237,7 +250,7 @@ class Term::Fabulous::Widget::Accordion::Item
 
 		my $indent = $self->_look('body_indent');
 		$_body->layout( { %{ $_body->layout }, padding => { %{ $_body->layout->{padding} // {} }, left => $indent } } );
-		return $self;
+		return;
 	}
 
 	# ---------------------------------------------------------------------

@@ -15,6 +15,7 @@ use Term::Fabulous::Document::Look;
 use Term::Fabulous::Render::Attr qw(color_attr);
 use Term::Fabulous::Terminal::Memory;
 use Term::Fabulous::Termbox qw(TB_BOLD TF_KEY_MOUSE_WHEEL_RIGHT);
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::CodeBlock;
 
@@ -102,6 +103,33 @@ subtest 'a theme switch repaints in the new colors' => sub {
 	$ui->step;
 	my $light = Term::Fabulous::Document::Look->of($code);
 	is [ @{ $terminal->cell( 4, 0 ) }[ 1, 2 ] ], [ attr_of( $light->style('code_block')->{color} ), attr_of( $light->style('code_block')->{background} ) ], 'the cached runs follow the theme';
+};
+
+# A UI that draws one part of its tree in the light theme.
+class My::SubtreeUI :isa(Term::Fabulous) {
+	field $light_part :param;
+
+	method theme_for :override ($widget) {
+		return Term::Fabulous::Theme->builtin('light') if $light_part->contains($widget);
+		return $self->SUPER::theme_for($widget);
+	}
+}
+
+subtest 'a subtree theme reaches the background and the spans' => sub {
+	my $code = Term::Fabulous::Widget::CodeBlock->new( code => 'my $x;', spans => [ [ 0, 2, 'on accent' ] ], layout => { sizing => { width => sizing_fixed(12) } } );
+	my $part = Term::Fabulous::Widget::Box->new;
+	$part->add_child($code);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($part);
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 );
+	my $ui       = My::SubtreeUI->new( root => $root, width => 20, height => 5, terminal => $terminal, light_part => $part );
+	$ui->step;
+	my ( $light, $dark ) = map { Term::Fabulous::Theme->builtin($_) } qw(light dark);
+	my $light_look = Term::Fabulous::Document::Look->new( theme => $light );
+	isnt attr_of( $light_look->style('code_block')->{background} ), attr_of( Term::Fabulous::Document::Look->new( theme => $dark )->style('code_block')->{background} ), 'the two themes differ';
+	is $terminal->cell( 11, 0 )->[2], attr_of( $light_look->style('code_block')->{background} ), 'the background is the subtree theme\'s';
+	is $terminal->cell( 1,  0 )->[2], attr_of( $light->token('accent') ),                        'and so are the colors of the spans';
+	ref_is( Term::Fabulous::Document::Look->of($code)->theme, $light, 'Look->of asks the theme the widget draws with' );
 };
 
 # A look that paints code on another background.

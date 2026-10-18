@@ -7,7 +7,6 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
@@ -116,13 +115,13 @@ class Term::Fabulous::Widget::Tabs::Button
 	# ---------------------------------------------------------------------
 
 	# One setting of the look: the bar's; without a bar, the default
-	# setting, or the default theme's tabs look.
+	# setting, or the tabs look of the theme the tab draws with.
 	method _look ($name) {
 		my $bar = $self->bar;
 		return $bar->$name if defined $bar;
 		return $DEFAULT_LOOK{$name} if exists $DEFAULT_LOOK{$name};
 		my %themed = Term::Fabulous::Widget::Tabs::Bar->themed_params;
-		return Term::Fabulous::Theme->default->look( 'tabs', @{ $themed{$name} }[ 0, 1 ] );    # slot and state
+		return $self->family_look( tabs => @{ $themed{$name} }[ 0, 1 ] );    # slot and state
 	}
 
 	# The tab's border and background follow the bar's colors and the

@@ -13,6 +13,7 @@ use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous;
 use Term::Fabulous::Layout;
 use Term::Fabulous::Terminal::Memory;
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Accordion;
 use Term::Fabulous::Widget::Accordion::Item;
 use Term::Fabulous::Widget::Box;
@@ -126,6 +127,19 @@ subtest 'closing an item over a focused field focuses its header' => sub {
 	$terminal->press_key('Down');
 	$ui->step;
 	ok $accordion->item(1)->is_focused, 'and the next Down still reaches the accordion';
+};
+
+subtest 'an item without an accordion draws in the theme of its UI' => sub {
+	my $item = Term::Fabulous::Widget::Accordion::Item->new( title => 'Lone' );
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($item);
+	my $ui     = Term::Fabulous->new( root => $root, width => 20, height => 5, terminal => Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 ), theme => 'light' );
+	my %themed = Term::Fabulous::Widget::Accordion->themed_params;
+	my ( $light, $dark ) = map { Term::Fabulous::Theme->builtin($_)->look( accordion => @{ $themed{title_color} }[ 0, 1 ] ) } qw(light dark);
+	isnt $light,                                 $dark,  'the themes have other title colors';
+	is $item->header->children->[1]->text_color, $light, 'its title is in the UI theme\'s color';
+	$ui->theme('dark');
+	is $item->header->children->[1]->text_color, $dark, 'and follows a theme switch';
 };
 
 subtest 'looks' => sub {

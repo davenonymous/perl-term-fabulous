@@ -263,6 +263,22 @@ The theme's value of a slot of the widget's family in a state
 for none, 1 or 0 for a boolean slot (`border.enabled`). A state the
 theme gives no value of its own looks like the normal state.
 
+## drawing\_theme
+
+```perl
+my $theme = $self->drawing_theme;
+```
+
+The [Term::Fabulous::Theme](../Theme.md) the widget draws with: the one its UI gives
+it (["theme\_for" in Term::Fabulous::Render](../Render.md#theme_for), which a UI may answer per
+subtree), the UI's `theme` for a UI without `theme_for`, or the
+default theme (["default" in Term::Fabulous::Theme](../Theme.md#default)) while the widget is in
+no UI or in a UI that has no theme (a plain [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI)). ["look"](#look),
+["family\_look"](#family_look) and ["look\_value"](#look_value) read it; a widget that resolves
+styles or palette tokens itself ([Term::Fabulous::Text::Style](../Text/Style.md)) or
+builds a [Term::Fabulous::Document::Look](../Document/Look.md) asks it too, so that every
+part of the widget draws in one theme.
+
 ## family\_look
 
 ```perl

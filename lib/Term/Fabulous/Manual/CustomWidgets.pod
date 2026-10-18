@@ -382,6 +382,15 @@ L<Term::Fabulous::Theme/Families, slots and states>; a widget whose
 look needs none of them, such as a canvas drawn by its program, needs
 nothing here.
 
+A widget that needs the theme itself, to resolve the palette tokens of
+a style (L<Term::Fabulous::Text::Style/resolve_style>) or to take a
+look of a whole family, asks C<< $self->drawing_theme >> (see
+L<Term::Fabulous::Role::Themed/drawing_theme>), never C<< $ui->theme >>:
+a UI may give a part of its tree another theme
+(L<Term::Fabulous::Render/theme_for>), and outside a UI, or in a plain
+L<Clay::UI>, the widget draws in the default theme. C<look>,
+C<family_look> and L<Term::Fabulous::Document::Look/of> already ask it.
+
 =head2 A box that takes the focus and reacts to the mouse
 
 The focus, hover and press states come from roles of L<Clay::UI>.

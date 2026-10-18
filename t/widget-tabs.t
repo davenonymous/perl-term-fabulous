@@ -13,7 +13,10 @@ use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Layout;
+use Term::Fabulous::Color;
+use Term::Fabulous::Render::Attr qw(color_attr);
 use Term::Fabulous::Terminal::Memory;
+use Term::Fabulous::Theme;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Tabs;
 use Term::Fabulous::Widget::Tabs::Bar;
@@ -245,6 +248,21 @@ subtest 'a bar on its own' => sub {
 	is [ $list->border_style_top->name, $list->border_style_of('right')->name ], [qw(Double Round)], 'a style given to a tab wins over the derived one (it was ignored)';
 	$ui->step;
 	is substr( lines($terminal)->[1], 0, 8 ), "\x{2554}" . ( "\x{2550}" x 6 ) . "\x{2557}", 'and is drawn';
+};
+
+subtest 'a tab without a bar draws in the theme of its UI' => sub {
+	my $tab  = Term::Fabulous::Widget::Tabs::Button->new( title => 'Lone' );
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($tab);
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 20, height => 5 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 20, height => 5, terminal => $terminal, theme => 'light' );
+	$ui->step;
+	my %themed = Term::Fabulous::Widget::Tabs::Bar->themed_params;
+	my ( $light, $dark ) = map { Term::Fabulous::Theme->builtin($_)->look( tabs => @{ $themed{text_color} }[ 0, 1 ] ) } qw(light dark);
+	isnt $light, $dark, 'the themes have other text colors';
+	my ($row) = grep { lines($terminal)->[$_] =~ /Lone/ } 0 .. 4;
+	my $column = index( lines($terminal)->[$row], 'Lone' );
+	is $terminal->cell( $column, $row )->[1] & 0xFFFFFF, color_attr( Term::Fabulous::Color->new( color => $light ) ) & 0xFFFFFF, 'its label is in the UI theme\'s text color';
 };
 
 subtest 'a layout builds pages into the Tabs' => sub {

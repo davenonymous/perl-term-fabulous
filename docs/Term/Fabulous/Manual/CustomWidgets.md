@@ -358,6 +358,15 @@ naming the family. The slots of every family are listed in
 look needs none of them, such as a canvas drawn by its program, needs
 nothing here.
 
+A widget that needs the theme itself, to resolve the palette tokens of
+a style (["resolve\_style" in Term::Fabulous::Text::Style](../Text/Style.md#resolve_style)) or to take a
+look of a whole family, asks `$self->drawing_theme` (see
+["drawing\_theme" in Term::Fabulous::Role::Themed](../Role/Themed.md#drawing_theme)), never `$ui->theme`:
+a UI may give a part of its tree another theme
+(["theme\_for" in Term::Fabulous::Render](../Render.md#theme_for)), and outside a UI, or in a plain
+[Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI), the widget draws in the default theme. `look`,
+`family_look` and ["of" in Term::Fabulous::Document::Look](../Document/Look.md#of) already ask it.
+
 ## A box that takes the focus and reacts to the mouse
 
 The focus, hover and press states come from roles of [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).

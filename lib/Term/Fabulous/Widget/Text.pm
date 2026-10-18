@@ -662,7 +662,7 @@ class Term::Fabulous::Widget::Text
 	# styles, stacked in order, give a piece of text; a palette token
 	# among the colors is the theme's color for it.
 	method _look_of (@styles) {
-		my $style = resolve_style( compose_styles(@styles), $self->_theme );
+		my $style = resolve_style( compose_styles(@styles), $self->drawing_theme );
 		return ( $style->{set}, $style->{clear}, _attr_of( $style->{color} ), _attr_of( $style->{background} ) );
 	}
 
