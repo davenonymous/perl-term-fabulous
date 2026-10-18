@@ -188,9 +188,9 @@ no warnings 'experimental::signatures';
 
 use IO::Async::Loop;
 use IO::Async::Timer::Periodic;
-use List::Util qw(min);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Scrolling qw(scroll_by_columns scroll_by_rows scroll_to_end);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Text;
@@ -210,9 +210,12 @@ $root->add_child(
         )
 );
 
+# follow_end keeps the newest line in view until the user scrolls up;
+# back at the end, the box follows again.
 my $log = Term::Fabulous::Widget::ScrollBox->new(
         id               => 'log',
         horizontal       => 1,    # vertical scrolling is on by default
+        follow_end       => 1,
         background_color => [ 30, 35, 50, 255 ],
         bordered         => 1,
         border_color     => [ 120, 160, 220, 255 ],
@@ -226,35 +229,15 @@ $root->add_child($log);
 
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
-# scroll_state describes the last frame: the scroll position, the visible
-# size of the box (viewport) and the size of its content. The position is
-# 0 at the top and left and negative when scrolled down or right; the
-# lowest one shows the bottom of the content.
-sub lowest_y ($state) { return min( 0, $state->{viewport}{height} - $state->{content}{height} ) }
-
-# Moves the view; scroll_to keeps it within the content.
-sub scroll_by ( $columns, $rows ) {
-        my $state = $ui->scroll_state($log) or return;    # not laid out yet
-        $ui->scroll_to( $log, { x => $state->{position}{x} - $columns, y => $state->{position}{y} - $rows } );
-        return;
-}
-
-# Follow the newest line until the user scrolls up; End follows again.
-my $follow = 1;
-$log->on(
-        OnScroll => sub ($event) {
-                $follow = 0 if $event->delta_y > 0;    # positive: the view moved up
-                return;
-        }
-);
-
+# The moves stop at the edges of the content. Moving up leaves the end,
+# which stops the following; End goes back to it, which resumes it.
 my %action_by_key = (
-        Up    => sub { $follow = 0; scroll_by( 0, -1 ) },
-        Down  => sub { scroll_by( 0,  1 ) },
-        Left  => sub { scroll_by( -4, 0 ) },
-        Right => sub { scroll_by( 4,  0 ) },
-        Home  => sub { $follow = 0; $ui->scroll_to( $log, { x => 0, y => 0 } ) },
-        End   => sub { $follow = 1 },
+        Up    => sub { scroll_by_rows( $ui, $log, -1 ) },
+        Down  => sub { scroll_by_rows( $ui, $log,  1 ) },
+        Left  => sub { scroll_by_columns( $ui, $log, -4 ) },
+        Right => sub { scroll_by_columns( $ui, $log,  4 ) },
+        Home  => sub { $ui->scroll_to( $log, { x => 0, y => 0 } ) },
+        End   => sub { scroll_to_end( $ui, $log ) },
 );
 $root->on(
         KeyPress => sub ($event) {
@@ -279,20 +262,6 @@ $loop->add(
         )->start
 );
 
-# The content height is known only after the frame that lays out a new
-# line, so keep moving to the bottom as long as the view follows.
-$loop->add(
-        IO::Async::Timer::Periodic->new(
-                interval => 1 / 30,
-                on_tick  => sub {
-                        return unless $follow;
-                        my $state = $ui->scroll_state($log) or return;
-                        $ui->scroll_to( $log, { y => lowest_y($state) } ) if $state->{position}{y} != lowest_y($state);
-                        return;
-                },
-        )->start
-);
-
 $ui->run;
 ```
 
@@ -300,29 +269,26 @@ $ui->run;
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-follow-log.svg" alt="A log that shows its newest lines; every fifth line is wider than the box and cut at its edge"></p>
 </div>
 
-- `$ui->scroll_state($scroll_box)` returns a hash that describes the
-scroll box as the last frame left it: `position` (`x` and `y`),
-`viewport` (the visible size of the box, in cells) and `content` (the
-size of everything inside it, padding included). The position is 0 at
-the top and the left and negative when the content is scrolled down or
-right; the lowest possible `y` is the viewport height minus the
-content height. Before the box has been laid out once, `scroll_state`
-returns `undef`, hence `or return`. See ["scroll\_state" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_state);
-[Term::Fabulous](../../../../README.md) inherits it from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
-- `$ui->scroll_to( $scroll_box, { x => ..., y => ... } )` moves
-the view; an axis left out keeps its position. It keeps the position
-within the content, so `scroll_by` need not check the limits, and it
-makes a frame due, which shows the new position even when nothing else
-changed. See ["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to).
-- The content size of a new line is known only after the frame that lays
-it out, so a timer running at the frame rate moves the view to the
-bottom while the log follows. The newest line therefore appears one
-frame (1/30 s) after it was added. The timer compares the positions
-first, so it makes a frame due only when the view has to move.
-- `OnScroll` is fired on the scroll box whenever the mouse wheel changed
-its position during a frame. `delta_y` is positive when the view moved
-up, negative when it moved down. The recipe stops following on the
-first move up. `scroll_to` fires no `OnScroll`.
+- `follow_end => 1` makes the box follow the end of its content
+(see ["follow\_end" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#follow_end)): while it shows
+the last row, a line added at the bottom scrolls into view. The size of
+a new line is known only after the frame that lays it out, so the box
+moves after that frame and the newest line shows one frame later, which
+is due at once. The box stops following as soon as the user scrolls up,
+with the wheel, the scrollbar or a key, and follows again once it shows
+the last row, here with `End`.
+- [Term::Fabulous::Scrolling](../Scrolling.md) moves the view by rows
+(`scroll_by_rows`), by columns (`scroll_by_columns`) and to the end
+(`scroll_to_end`). The moves stop at the edges of the content and do
+nothing before the first frame has laid the box out. Positions it
+reports (`scroll_offset`) are rows from the top, so a program needs
+no knowledge of how Clay keeps them.
+- `$ui->scroll_to( $scroll_box, { x => 0, y => 0 } )` sets
+the position directly, here the top left corner; an axis left out keeps
+its position. It makes a frame due, which shows the new position even
+when nothing else changed. See ["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to) and, for the
+position of the last frame, ["scroll\_state" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_state); [Term::Fabulous](../../../../README.md)
+inherits both from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
 - `horizontal => 1` lets the content be wider than the box. A
 horizontal wheel (or a sideways tilt of the wheel) scrolls it by three
 columns per notch; for a mouse without one, add code such as the Left
@@ -351,8 +317,6 @@ no warnings 'experimental::signatures';
 use Encode qw(decode);
 use IO::Async::Loop;
 use IO::Async::Process;
-use IO::Async::Timer::Periodic;
-use List::Util qw(min);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Box;
@@ -372,9 +336,13 @@ my $root = Term::Fabulous::Widget::Box->new(
 );
 
 # The arguments are bytes, like the command's output.
-my $title  = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+my $title = Term::Fabulous::Widget::Text->new( text => decode( 'UTF-8', "Running: @command" ), text_color => [ 255, 200, 80, 255 ] );
+
+# follow_end keeps the newest line in view (see the recipe "Scroll a
+# ScrollBox from code").
 my $output = Term::Fabulous::Widget::ScrollBox->new(
         id               => 'output',
+        follow_end       => 1,
         background_color => [ 30, 35, 50, 255 ],
         bordered         => 1,
         border_color     => [ 120, 160, 220, 255 ],
@@ -429,20 +397,6 @@ $loop->add($process);
 
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
-# Keep the newest line in view (see the recipe "Scroll a ScrollBox from
-# code").
-$loop->add(
-        IO::Async::Timer::Periodic->new(
-                interval => 1 / 30,
-                on_tick  => sub {
-                        my $state  = $ui->scroll_state($output) or return;
-                        my $lowest = min( 0, $state->{viewport}{height} - $state->{content}{height} );
-                        $ui->scroll_to( $output, { y => $lowest } ) if $state->{position}{y} != $lowest;
-                        return;
-                },
-        )->start
-);
-
 $ui->run;
 ```
 
@@ -470,8 +424,9 @@ valid UTF-8 into U+FFFD. The same decoded lines can go into a
 [Term::Fabulous::Widget::TextArea](../Widget/TextArea.md) or a canvas.
 - Errors (`stderr`) are shown in red. `on_finish` reports the exit
 status, `on_exception` a command that could not be started.
-- The timer at the end keeps the newest line in view, as explained in
-["Scroll a ScrollBox from code (keep a log at the newest line)"](#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
+- `follow_end => 1` keeps the newest line in view, as explained
+in ["Scroll a ScrollBox from code (keep a log at the newest line)"](#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line);
+scrolling up stops it, scrolling back to the end resumes it.
 
 # SEE ALSO
 

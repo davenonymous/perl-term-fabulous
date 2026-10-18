@@ -8,7 +8,10 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(inner_rows page_rows reveal_rows scroll_by_rows scroll_by_pages scroll_to_end scroll_to_start scrolled_percent);
+our @EXPORT_OK = qw(
+	inner_rows page_rows reveal_rows scroll_by_rows scroll_by_columns scroll_by_pages scroll_by_key
+	scroll_to_end scroll_to_start scroll_offset max_scroll_offset scrolled_percent
+);
 
 use List::Util qw(max min);
 use Scalar::Util qw(blessed);
@@ -42,21 +45,56 @@ sub page_rows ( $ui, $widget ) {
 	return max( 1, int( $bottom - $top + 0.5 ) - 1 );
 }
 
+# Clay keeps the scroll position as a negative offset from the start of
+# the content, x for columns, y for rows; this module is the one place
+# that turns it into the positive offset everything else uses.
+my %AXIS = ( rows => [ y => 'height' ], columns => [ x => 'width' ] );
+
+sub _offset ( $state, $axis = 'rows' ) {
+	my ($position) = @{ $AXIS{$axis} };
+	return -( $state->{position}{$position} // 0 );
+}
+
+sub _max_offset ( $state, $axis = 'rows' ) {
+	my ( undef, $size ) = @{ $AXIS{$axis} };
+	return max_offset( $state->{content}{$size}, $state->{viewport}{$size} );
+}
+
 # Scrolls to an offset, within the ends. Clay keeps the position in
 # fractions of a row; a move of less than half a row is none.
-sub _scroll_to ( $ui, $widget, $state, $offset ) {
-	my $from = -$state->{position}{y};
-	my $to   = clamp_offset( $state->{content}{height}, $state->{viewport}{height}, $offset );
+sub _scroll_to ( $ui, $widget, $state, $offset, $axis = 'rows' ) {
+	my ( $position, $size ) = @{ $AXIS{$axis} };
+	my $from = _offset( $state, $axis );
+	my $to   = clamp_offset( $state->{content}{$size}, $state->{viewport}{$size}, $offset );
 	return 0 if int( $to + 0.5 ) == int( $from + 0.5 );
-	$ui->scroll_to( $widget, { y => -$to } );
+	$ui->scroll_to( $widget, { $position => -$to } );
 	return 1;
+}
+
+sub scroll_offset ( $ui, $widget ) {
+	_checked( scroll_offset => $ui, $widget );
+	my $state = $ui->scroll_state($widget) // return undef;
+	return _offset($state);
+}
+
+sub max_scroll_offset ( $ui, $widget ) {
+	_checked( max_scroll_offset => $ui, $widget );
+	my $state = $ui->scroll_state($widget) // return undef;
+	return _max_offset($state);
 }
 
 sub scroll_by_rows ( $ui, $widget, $rows ) {
 	_checked( scroll_by_rows => $ui, $widget );
 	_checked_count( scroll_by_rows => rows => $rows );
 	my $state = $ui->scroll_state($widget) // return 0;
-	return _scroll_to( $ui, $widget, $state, -$state->{position}{y} + $rows );
+	return _scroll_to( $ui, $widget, $state, _offset($state) + $rows );
+}
+
+sub scroll_by_columns ( $ui, $widget, $columns ) {
+	_checked( scroll_by_columns => $ui, $widget );
+	_checked_count( scroll_by_columns => columns => $columns );
+	my $state = $ui->scroll_state($widget) // return 0;
+	return _scroll_to( $ui, $widget, $state, _offset( $state, 'columns' ) + $columns, 'columns' );
 }
 
 sub scroll_by_pages ( $ui, $widget, $pages ) {
@@ -69,13 +107,74 @@ sub scroll_by_pages ( $ui, $widget, $pages ) {
 sub scroll_to_start ( $ui, $widget ) {
 	_checked( scroll_to_start => $ui, $widget );
 	my $state = $ui->scroll_state($widget) // return 0;
+	return _scroll_list_to( $ui, $widget, $state, 'start' ) if _is_list($widget);
 	return _scroll_to( $ui, $widget, $state, 0 );
 }
 
 sub scroll_to_end ( $ui, $widget ) {
 	_checked( scroll_to_end => $ui, $widget );
 	my $state = $ui->scroll_state($widget) // return 0;
-	return _scroll_to( $ui, $widget, $state, max_offset( $state->{content}{height}, $state->{viewport}{height} ) );
+	return _scroll_list_to( $ui, $widget, $state, 'end' ) if _is_list($widget);
+	return _scroll_to( $ui, $widget, $state, _max_offset($state) );
+}
+
+# A VirtualList builds only the items near its view and knows the height
+# of the others as an estimate, so its content height is one too: it is
+# sent to its first or last item, which it measures on the way.
+sub _is_list ($widget) {
+	return $widget->isa('Term::Fabulous::Widget::VirtualList') ? 1 : 0;
+}
+
+sub _scroll_list_to ( $ui, $list, $state, $end ) {
+	my $count = $list->count or return 0;
+	my ( $index, $offset ) = $end eq 'start' ? ( 0, 0 ) : ( $count - 1, _max_offset($state) );
+	my $visible = $list->visible_items;
+	return 0 if int( _offset($state) + 0.5 ) == int( $offset + 0.5 ) && defined $visible && ( $end eq 'start' ? $visible->{first} : $visible->{last} ) == $index;
+	$list->scroll_to_item($index);
+	return 1;
+}
+
+# The keys of a pager, by set: what each one does.
+my %KEY_SETS = (
+	pager => {
+		PageUp      => [ pages => -1 ],
+		PageDown    => [ pages =>  1 ],
+		'Ctrl+Home' => ['start'],
+		'Ctrl+End'  => ['end'],
+	},
+	less => {
+		Down     => [ rows  =>  1 ],
+		j        => [ rows  =>  1 ],
+		Up       => [ rows  => -1 ],
+		k        => [ rows  => -1 ],
+		PageDown => [ pages =>  1 ],
+		Space    => [ pages =>  1 ],
+		PageUp   => [ pages => -1 ],
+		b        => [ pages => -1 ],
+		Home     => ['start'],
+		g        => ['start'],
+		End      => ['end'],
+		G        => ['end'],
+	},
+);
+
+my %MOVE = (
+	rows  => \&scroll_by_rows,
+	pages => \&scroll_by_pages,
+	start => \&scroll_to_start,
+	end   => \&scroll_to_end,
+);
+
+# undef for a key the set does not have; else whether it moved.
+sub scroll_by_key ( $ui, $widget, $key_name, %options ) {
+	_checked( scroll_by_key => $ui, $widget );
+	my @unknown = grep { $_ ne 'keys' } sort keys %options;
+	die "Term::Fabulous::Scrolling: scroll_by_key does not take @unknown (known: keys)" if @unknown;
+	my $set  = one_of( 'Term::Fabulous::Scrolling: scroll_by_key', keys => $options{keys}, sort keys %KEY_SETS );
+	my $move = defined $key_name ? $KEY_SETS{$set}{$key_name} : undef;
+	return undef unless defined $move;
+	my ( $how, @count ) = @$move;
+	return $MOVE{$how}->( $ui, $widget, @count ) ? 1 : 0;
 }
 
 # Screen rows from $from to before $to into view: with the smallest move
@@ -90,7 +189,7 @@ sub reveal_rows ( $ui, $widget, $from, $to, %options ) {
 	my $align = one_of( 'Term::Fabulous::Scrolling: reveal_rows', align => $options{align} // 'nearest', qw(nearest top) );
 	my $state = $ui->scroll_state($widget) // return 0;
 	my ( $top, $bottom ) = inner_rows( $ui, $widget ) or return 0;
-	my $offset  = -$state->{position}{y};
+	my $offset  = _offset($state);
 	my $inner   = $bottom - $top;
 	my $content = $state->{content}{height} - ( $state->{viewport}{height} - $inner );
 	my ( $first, $end ) = ( $from - $top + $offset, $to - $top + $offset );
@@ -103,9 +202,9 @@ sub reveal_rows ( $ui, $widget, $from, $to, %options ) {
 sub scrolled_percent ( $ui, $widget ) {
 	_checked( scrolled_percent => $ui, $widget );
 	my $state = $ui->scroll_state($widget) // return undef;
-	my $last  = max_offset( $state->{content}{height}, $state->{viewport}{height} );
+	my $last  = _max_offset($state);
 	return 100 unless $last > 0;
-	return min( 100, max( 0, int( 100 * -$state->{position}{y} / $last + 0.5 ) ) );
+	return min( 100, max( 0, int( 100 * _offset($state) / $last + 0.5 ) ) );
 }
 
 1;
@@ -120,15 +219,20 @@ Term::Fabulous::Scrolling - Scroll a container by rows, by pages and to its ends
 
 =head1 SYNOPSIS
 
-	use Term::Fabulous::Scrolling qw(scroll_by_rows scroll_by_pages scroll_to_start scroll_to_end scrolled_percent);
+	use Term::Fabulous::Scrolling qw(scroll_by_key scroll_by_rows scroll_by_pages scroll_offset scroll_to_end scrolled_percent);
 
 	my $box = $ui->find_by_id('log');    # a ScrollBox, a VirtualList, a document view
 	scroll_by_rows( $ui, $box, 1 );      # one row down
 	scroll_by_pages( $ui, $box, -1 );    # one page up
 	scroll_to_end( $ui, $box );
 	say scrolled_percent( $ui, $box ), '%';
+	say 'scrolled down by ', scroll_offset( $ui, $box ), ' rows';
 
 	scroll_by_rows( $ui, $box, 1 ) or say 'already at the end';
+
+	# PageUp, PageDown, Ctrl+Home and Ctrl+End, in a KeyPress listener:
+	my $moved = scroll_by_key( $ui, $box, $event->main_key_name, keys => 'pager' );
+	return Clay::UI::Enum::Result->HANDLED if defined $moved;
 
 =head1 DESCRIPTION
 
@@ -171,6 +275,21 @@ use the return value to tell whether the key had an effect.
 
 =item *
 
+Offsets are positive: 0 at the start of the content, growing as it is
+scrolled down (or right). Clay keeps the scroll position as a negative
+number; this module turns it around, so a program never needs to (see
+L</scroll_offset>).
+
+=item *
+
+A L<Term::Fabulous::Widget::VirtualList> (a document view too) knows
+the height of the items it has not built only as an estimate, so
+L</"scroll_to_start, scroll_to_end"> send it to its first or last
+item (L<Term::Fabulous::Widget::VirtualList/scroll_to_item>), which it
+measures on the way.
+
+=item *
+
 Clay keeps the scroll position in fractions of a row. A function
 compares the target position with the current one, both rounded to the
 nearest whole row; when they round to the same row, it does not scroll
@@ -207,6 +326,16 @@ Scrolls the content by C<$rows> rows: down for a positive number, up
 for a negative one, and no further than either end. Returns 1 when the
 content moved and 0 otherwise.
 
+=head2 scroll_by_columns
+
+	my $moved = scroll_by_columns( $ui, $widget, $columns );
+
+Scrolls the content sideways by C<$columns> columns: right for a
+positive number, left for a negative one, and no further than either
+end. For a container that scrolls sideways (a ScrollBox with
+C<< horizontal =E<gt> 1 >>). Returns 1 when the content moved and 0
+otherwise.
+
 =head2 scroll_by_pages
 
 	my $moved = scroll_by_pages( $ui, $widget, $pages );
@@ -222,7 +351,9 @@ content moved and 0 otherwise.
 
 Scroll to the top of the content, or so far down that its last row is
 at the bottom of the view. Return 1 when the content moved and 0
-otherwise.
+otherwise. A VirtualList is asked to show its first or last item
+instead; for it, 1 means it was asked, 0 that it already shows that end
+or has no items.
 
 =head2 reveal_rows
 
@@ -254,6 +385,61 @@ allows: near the end of the content, the content stops at its end.
 
 Another C<align> or another option dies. Returns 1 when the content
 moved and 0 otherwise.
+
+=head2 scroll_by_key
+
+	my $moved = scroll_by_key( $ui, $widget, $event->main_key_name, keys => 'pager' );
+	my $moved = scroll_by_key( $ui, $widget, $event->main_key_name, keys => 'less' );
+
+Scrolls as a key of a pager does. C<keys> names the set of keys, and is
+required:
+
+=for highlighter language=text
+
+	Set      Key                  Move
+	-------  -------------------  ----------------------
+	pager    PageDown             one page down
+	         PageUp               one page up
+	         Ctrl+End             to the end
+	         Ctrl+Home            to the start
+	less     Down, j              one row down
+	         Up, k                one row up
+	         PageDown, Space      one page down
+	         PageUp, b            one page up
+	         End, G               to the end
+	         Home, g              to the start
+
+=for highlighter language=perl
+
+C<pager> is for a container whose arrow keys belong to the widgets
+inside it, C<less> for one that is read like a text, as
+L<Term::Fabulous::Widget::DocumentView> is. Pages are those of
+L</scroll_by_pages>. The key is a name as
+L<Term::Fabulous::Event::KeyPress/main_key_name> returns it.
+
+Returns C<undef> when the key is not in the set (also for C<undef>), so
+that the caller can let it go on; for a key of the set, 1 when the
+content moved and 0 when it did not (it is already at that end, or not
+laid out yet), either way a key the set uses. Another C<keys> or another
+option dies.
+
+=head2 scroll_offset
+
+	my $rows = scroll_offset( $ui, $widget );
+
+How far the content is scrolled down, in rows: 0 at the start, up to
+L</max_scroll_offset> at the end. Clay keeps fractions of a row, so the
+number may have a fraction too. Returns C<undef> before the first frame
+has laid the container out.
+
+=head2 max_scroll_offset
+
+	my $rows = max_scroll_offset( $ui, $widget );
+
+The largest L</scroll_offset>, where the last row of the content is at
+the bottom of the view: the content height less the viewport's, at
+least 0. Returns C<undef> before the first frame has laid the container
+out.
 
 =head2 inner_rows
 

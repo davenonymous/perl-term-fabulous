@@ -26,6 +26,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Commands;
 	use Term::Fabulous::Editor;
+	use Term::Fabulous::Scrolling qw(scroll_by_key);
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Theme::Document;
 	use Term::Fabulous::ThemeEditor::Form;
@@ -350,16 +351,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# PageUp, PageDown, Ctrl+Home and Ctrl+End scroll a scroll box when the
 	# focused widget in it does not use them.
 	sub _scroll_by_key ( $box, $event ) {
-		my %page = ( PageUp => 1, PageDown => -1 );
-		my $name = $event->main_key_name // return 0;
-		return 0 unless exists $page{$name} || $name eq 'Ctrl+Home' || $name eq 'Ctrl+End';
-		my $ui     = $box->ui                // return 0;
-		my $view   = $ui->bounding_box($box) // return 0;
-		my $state  = $ui->scroll_state($box) // return 0;
-		my $lowest = min( 0, $view->{height} - ( $state->{content}{height} // 0 ) );
-		my $target = $name eq 'Ctrl+Home' ? 0 : $name eq 'Ctrl+End' ? $lowest : ( $state->{position}{y} // 0 ) + $page{$name} * ( $view->{height} - 1 );
-		$ui->scroll_to( $box, { y => max( $lowest, min( 0, $target ) ) } );
-		return 1;
+		my $ui = $box->ui // return 0;
+		return defined scroll_by_key( $ui, $box, $event->main_key_name, keys => 'pager' ) ? 1 : 0;
 	}
 
 	# ---------------------------------------------------------------------

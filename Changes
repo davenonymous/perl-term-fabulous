@@ -1,6 +1,20 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Scrolling has the keys of pagers:
+          scroll_by_key($ui, $box, $key_name, keys => 'pager' or
+          'less') scrolls by rows, by pages or to the ends and returns
+          undef for a key that is not in the set; scroll_offset and
+          max_scroll_offset report the position in positive rows, and
+          scroll_by_columns scrolls sideways. scroll_to_start and
+          scroll_to_end send a VirtualList to its first or last item. A
+          ScrollBox with follow_end => 1 keeps the end of its content in
+          view until the user scrolls up, and follows again at the end.
+          DocumentView, the theme editor, the pager, log, command output
+          and showcase examples use them instead of their own key tables,
+          timers and sign flips. The theme editor's custom preview pages
+          by the rows its content shows, without its horizontal
+          scrollbar, as every pager does.
         - Work after a frame is bound to a widget: after_draw takes an
           owner (held weakly, passed in, skipped once it is gone or out
           of the UI), the new each_draw calls its code after every frame

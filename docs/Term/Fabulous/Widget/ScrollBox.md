@@ -118,6 +118,13 @@ Unknown parameters die. A ScrollBox takes every parameter of
     `horizontal` is true. Each takes one column or row inside the border
     from the content.
 
+- `follow_end`
+
+    A boolean, stored as 1 or 0. Default: 0. Whether the box keeps the end
+    of its content in view, as a log or the output of a command wants:
+    while the box shows the last row, content added at the bottom scrolls
+    into view after the frame that lays it out (see ["follow\_end"](#follow_end)).
+
 - `track_color`
 
     The color of the scrollbars' track, anything [Term::Fabulous::Color](../Color.md)
@@ -132,12 +139,13 @@ Unknown parameters die. A ScrollBox takes every parameter of
 
 # METHODS
 
-To read or set the scroll position of a ScrollBox from your program, for
-example to keep a log at its newest line, call the methods
-[scroll\_state and scroll\_to](../../../../README.md#bounding_box-scroll_state-scroll_to)
-of the application object with the box. The recipe
+To scroll a ScrollBox from your program, by rows, by pages, to either
+end or with the keys of a pager, use [Term::Fabulous::Scrolling](../Scrolling.md); to
+keep a log at its newest line, turn on ["follow\_end"](#follow_end). The recipe
 [Scroll a ScrollBox from code](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
-shows them in a complete program.
+shows both in a complete program. Underneath, these use the methods
+[scroll\_state and scroll\_to](../../../../README.md#bounding_box-scroll_state-scroll_to)
+of the application object.
 
 A ScrollBox has all methods of [Term::Fabulous::Widget](../Widget.md) plus these
 accessors (from [Clay::UI::Role::Layout::HasScroll](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasScroll)):
@@ -181,6 +189,30 @@ $box->scrollbar(0);
 
 Accessor for `scrollbar`, used like ["vertical"](#vertical). Switching the
 scrollbars off gives their cells back to the content in the next frame.
+
+## follow\_end
+
+```perl
+$box->follow_end(1);
+```
+
+Accessor for `follow_end`. While it is on, the box checks after every
+frame (see ["each\_frame" in Term::Fabulous::Widget](../Widget.md#each_frame)) whether it still
+follows the end of its content:
+
+- a box that shows the last row follows;
+- a box that follows and was not scrolled up since the last frame, but
+no longer shows the last row (the content grew, or the box got lower),
+is scrolled to the end
+(["scroll\_to\_start, scroll\_to\_end" in Term::Fabulous::Scrolling](../Scrolling.md#scroll_to_start-scroll_to_end)). The
+new content shows one frame after the frame that laid it out, which is
+due at once;
+- a box that was scrolled up (with the wheel, a key, the scrollbar or
+`scroll_to`) stops following, and follows again once it shows the
+last row: the user reads older content undisturbed, and scrolling back
+to the end resumes.
+
+Turning it on starts following at once. Writing returns the new value.
 
 ## track\_color, thumb\_color
 
@@ -268,7 +300,7 @@ The box itself has no keys and takes no focus; see
 # KDL PROPERTIES
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties), plus
-`horizontal`, `vertical` and `scrollbar` (`#true` or `#false`) and
+`horizontal`, `vertical`, `scrollbar` and `follow_end` (`#true` or `#false`) and
 the colors `track_color` and `thumb_color`. The node needs an id
 argument:
 

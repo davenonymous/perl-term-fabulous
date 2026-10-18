@@ -26,7 +26,7 @@ class Term::Fabulous::Widget::ScrollBox
 	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean describe one_of positive_integer);
-	use Term::Fabulous::Scrolling qw(reveal_rows);
+	use Term::Fabulous::Scrolling qw(max_scroll_offset reveal_rows scroll_offset scroll_to_end);
 	use Term::Fabulous::Widget::Scrollbar;
 
 	# A widget that is not laid out yet is revealed after the frame that
@@ -51,9 +51,15 @@ class Term::Fabulous::Widget::ScrollBox
 	);
 	my %SIDE_OF_AXIS = ( vertical => 'right', horizontal => 'bottom' );
 
-	field $scrollbar :param = 1;
+	field $scrollbar  :param = 1;
+	field $follow_end :param = 0;
 	field $_gutter;
 	field %_bar_by_axis;
+
+	# While following the end: whether the box follows (the user has not
+	# scrolled up from the end), and how far the last frame was scrolled.
+	field $_following   = 1;
+	field $_last_offset = 0;
 
 	# Clay::UI stores these as given; the constructor takes any truth value.
 	sub BUILDARGS ( $class, %params ) {
@@ -64,7 +70,9 @@ class Term::Fabulous::Widget::ScrollBox
 	# The colors go to the scrollbars once they exist; undef leaves them
 	# to the theme.
 	ADJUST :params ( :$track_color = undef, :$thumb_color = undef ) {
-		$scrollbar    = boolean( $self, scrollbar => $scrollbar );
+		$scrollbar  = boolean( $self, scrollbar  => $scrollbar );
+		$follow_end = boolean( $self, follow_end => $follow_end );
+		$self->_follow_frames if $follow_end;
 		%_bar_by_axis = map { $_ => Term::Fabulous::Widget::Scrollbar->new( follows => $self, axis => $_, layout => $BAR_LAYOUT{$_} ) } keys %BAR_LAYOUT;
 		$self->set_look( track_color => $track_color ) if defined $track_color;
 		$self->set_look( thumb_color => $thumb_color ) if defined $thumb_color;
@@ -83,7 +91,7 @@ class Term::Fabulous::Widget::ScrollBox
 	}
 
 	method layout_properties :common () {
-		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean', scrollbar => 'boolean' );
+		return ( $class->SUPER::layout_properties, horizontal => 'boolean', vertical => 'boolean', scrollbar => 'boolean', follow_end => 'boolean' );
 	}
 
 	# Whether a scrollbar is shown for an axis: wanted, and the box
@@ -139,6 +147,53 @@ class Term::Fabulous::Widget::ScrollBox
 
 	method track_color (@new) { return @new ? $self->set_look( track_color => $new[0] ) : $self->look_value('track_color') }
 	method thumb_color (@new) { return @new ? $self->set_look( thumb_color => $new[0] ) : $self->look_value('thumb_color') }
+
+	# ---------------------------------------------------------------------
+	# Following the end: new content at the bottom stays in view
+	# ---------------------------------------------------------------------
+
+	# Turning it on follows from now on.
+	method follow_end (@new) {
+		return $follow_end unless @new;
+		$follow_end = boolean( $self, follow_end => $new[0] );
+		( $_following, $_last_offset ) = ( 1, 0 );
+		$self->_follow_frames if $follow_end;
+		return $follow_end;
+	}
+
+	# A box that leaves its UI loses its frame work; it asks again for
+	# its new place.
+	method tree_changed :override () {
+		$self->SUPER::tree_changed;
+		$self->_follow_frames if $follow_end;
+		return;
+	}
+
+	method _follow_frames () {
+		$self->each_frame( sub ($box) { return $box->_follow_frame }, name => 'follow end' );
+		return;
+	}
+
+	# After each frame: a box at the end follows; one that follows and was
+	# not scrolled up goes on to the end the content grew to; one that was
+	# scrolled up stops following until it is at the end again. True once
+	# following was switched off, which ends the frame work.
+	method _follow_frame () {
+		return 1 unless $follow_end;
+		my $ui     = $self->ui;
+		my $offset = scroll_offset( $ui, $self ) // return 0;
+		if ( $offset >= max_scroll_offset( $ui, $self ) - 0.5 ) {
+			$_following = 1;
+		}
+		elsif ( $_following && $offset >= $_last_offset - 0.5 ) {
+			scroll_to_end( $ui, $self );
+		}
+		else {
+			$_following = 0;
+		}
+		$_last_offset = $offset;
+		return 0;
+	}
 
 	# ---------------------------------------------------------------------
 	# Revealing a widget; a descendant that gets the focus is brought into
@@ -301,6 +356,13 @@ shown: a vertical one while C<vertical> is true, a horizontal one while
 C<horizontal> is true. Each takes one column or row inside the border
 from the content.
 
+=item C<follow_end>
+
+A boolean, stored as 1 or 0. Default: 0. Whether the box keeps the end
+of its content in view, as a log or the output of a command wants:
+while the box shows the last row, content added at the bottom scrolls
+into view after the frame that lays it out (see L</follow_end>).
+
 =item C<track_color>
 
 The color of the scrollbars' track, anything L<Term::Fabulous::Color>
@@ -317,12 +379,13 @@ dark theme.
 
 =head1 METHODS
 
-To read or set the scroll position of a ScrollBox from your program, for
-example to keep a log at its newest line, call the methods
-L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
-of the application object with the box. The recipe
+To scroll a ScrollBox from your program, by rows, by pages, to either
+end or with the keys of a pager, use L<Term::Fabulous::Scrolling>; to
+keep a log at its newest line, turn on L</follow_end>. The recipe
 L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/"Scroll a ScrollBox from code (keep a log at the newest line)">
-shows them in a complete program.
+shows both in a complete program. Underneath, these use the methods
+L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
+of the application object.
 
 A ScrollBox has all methods of L<Term::Fabulous::Widget> plus these
 accessors (from L<Clay::UI::Role::Layout::HasScroll>):
@@ -358,6 +421,40 @@ constructor parameter. The change shows in the next frame.
 
 Accessor for C<scrollbar>, used like L</vertical>. Switching the
 scrollbars off gives their cells back to the content in the next frame.
+
+=head2 follow_end
+
+	$box->follow_end(1);
+
+Accessor for C<follow_end>. While it is on, the box checks after every
+frame (see L<Term::Fabulous::Widget/each_frame>) whether it still
+follows the end of its content:
+
+=over
+
+=item *
+
+a box that shows the last row follows;
+
+=item *
+
+a box that follows and was not scrolled up since the last frame, but
+no longer shows the last row (the content grew, or the box got lower),
+is scrolled to the end
+(L<Term::Fabulous::Scrolling/"scroll_to_start, scroll_to_end">). The
+new content shows one frame after the frame that laid it out, which is
+due at once;
+
+=item *
+
+a box that was scrolled up (with the wheel, a key, the scrollbar or
+C<scroll_to>) stops following, and follows again once it shows the
+last row: the user reads older content undisturbed, and scrolling back
+to the end resumes.
+
+=back
+
+Turning it on starts following at once. Writing returns the new value.
 
 =head2 track_color, thumb_color
 
@@ -443,7 +540,7 @@ the box.
 =head1 KDL PROPERTIES
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
-C<horizontal>, C<vertical> and C<scrollbar> (C<#true> or C<#false>) and
+C<horizontal>, C<vertical>, C<scrollbar> and C<follow_end> (C<#true> or C<#false>) and
 the colors C<track_color> and C<thumb_color>. The node needs an id
 argument:
 

@@ -16,7 +16,7 @@ use Term::Fabulous::Widget::Box;
 class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :strict(params) {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_TEXT_WRAP_NONE);
-	use List::Util qw(max min);
+	use Term::Fabulous::Scrolling qw(scroll_by_key);
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Widget::Accordion;
 	use Term::Fabulous::Widget::Accordion::Item;
@@ -468,16 +468,8 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	# PageUp, PageDown, Ctrl+Home and Ctrl+End scroll the gallery when the
 	# focused widget does not use them.
 	method _scroll_key ($event) {
-		my $name     = $event->main_key_name       // return 0;
-		my $ui       = $self->ui                   // return 0;
-		my $view     = $ui->bounding_box($gallery) // return 0;
-		my $state    = $ui->scroll_state($gallery) // return 0;
-		my $position = $state->{position}{y}       // 0;
-		my $lowest   = min( 0, $view->{height} - ( $state->{content}{height} // 0 ) );
-		my %target   = ( PageUp => $position + $view->{height} - 1, PageDown => $position - $view->{height} + 1, 'Ctrl+Home' => 0, 'Ctrl+End' => $lowest );
-		return 0 unless exists $target{$name};
-		$ui->scroll_to( $gallery, { y => max( $lowest, min( 0, $target{$name} ) ) } );
-		return 1;
+		my $ui = $self->ui // return 0;
+		return defined scroll_by_key( $ui, $gallery, $event->main_key_name, keys => 'pager' ) ? 1 : 0;
 	}
 }
 

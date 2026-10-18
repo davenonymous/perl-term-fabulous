@@ -28,7 +28,7 @@ class Term::Fabulous::Widget::DocumentView
 	use Term::Fabulous::Document::Look;
 	use Term::Fabulous::Event::LinkActivate;
 	use Term::Fabulous::Event::ViewChange;
-	use Term::Fabulous::Scrolling qw(inner_rows reveal_rows scroll_by_pages scroll_by_rows scrolled_percent);
+	use Term::Fabulous::Scrolling qw(inner_rows reveal_rows scroll_by_key scroll_by_pages scroll_by_rows scrolled_percent);
 	use Term::Fabulous::Termbox qw(TF_KEY_MOUSE_WHEEL_LEFT TF_KEY_MOUSE_WHEEL_RIGHT);
 	use Term::Fabulous::Widget::Box;
 
@@ -741,27 +741,17 @@ class Term::Fabulous::Widget::DocumentView
 	# Keys
 	# ---------------------------------------------------------------------
 
+	# The keys of less scroll (Term::Fabulous::Scrolling's scroll_by_key);
+	# these are the others.
 	my %ACTION_OF_KEY = (
-		Down     => sub ($self) { $self->scroll_lines(1) },
-		j        => sub ($self) { $self->scroll_lines(1) },
-		Up       => sub ($self) { $self->scroll_lines(-1) },
-		k        => sub ($self) { $self->scroll_lines(-1) },
-		PageDown => sub ($self) { $self->scroll_pages(1) },
-		Space    => sub ($self) { $self->scroll_pages(1) },
-		PageUp   => sub ($self) { $self->scroll_pages(-1) },
-		b        => sub ($self) { $self->scroll_pages(-1) },
-		Home     => sub ($self) { $self->scroll_to_top },
-		g        => sub ($self) { $self->scroll_to_top },
-		End      => sub ($self) { $self->scroll_to_bottom },
-		G        => sub ($self) { $self->scroll_to_bottom },
-		Left     => sub ($self) { $self->scroll_code( -CODE_STEP ) },
-		Right    => sub ($self) { $self->scroll_code(CODE_STEP) },
-		l        => sub ($self) { $self->select_next_link },
-		L        => sub ($self) { $self->select_previous_link },
-		Enter    => sub ($self) { $self->follow_link },
-		n        => sub ($self) { $self->next_match },
-		N        => sub ($self) { $self->previous_match },
-		Escape   => sub ($self) { $self->clear_marks },
+		Left   => sub ($self) { $self->scroll_code( -CODE_STEP ) },
+		Right  => sub ($self) { $self->scroll_code(CODE_STEP) },
+		l      => sub ($self) { $self->select_next_link },
+		L      => sub ($self) { $self->select_previous_link },
+		Enter  => sub ($self) { $self->follow_link },
+		n      => sub ($self) { $self->next_match },
+		N      => sub ($self) { $self->previous_match },
+		Escape => sub ($self) { $self->clear_marks },
 	);
 
 	# A key with an action is used, whether or not the action could move
@@ -773,9 +763,10 @@ class Term::Fabulous::Widget::DocumentView
 	my %PASSES_WHEN_IDLE = map { $_ => 1 } qw(Enter Escape);
 
 	method _key ($event) {
-		my $name    = $event->main_key_name // return $CONTINUE;
+		my $name = $event->main_key_name // return $CONTINUE;
+		my $ui   = $self->ui;
+		return if defined $ui && defined scroll_by_key( $ui, $self, $name, keys => 'less' );
 		my $action  = $ACTION_OF_KEY{$name} // return $CONTINUE;
-		my $ui      = $self->ui;
 		my $focused = defined $ui ? $ui->interaction->get_focused_widget : undef;
 		if ( defined $focused && refaddr($focused) != refaddr($self) ) {
 			return $CONTINUE if $name eq 'Enter';

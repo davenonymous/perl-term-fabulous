@@ -22,6 +22,7 @@ class Term::Fabulous::Widget::VirtualList
 	use List::Util qw(max min);
 	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(describe non_negative_integer optional);
+	use Term::Fabulous::Scrolling qw(scroll_offset);
 	use Term::Fabulous::Widget::Box;
 
 	field $count    :param = 0;
@@ -307,7 +308,7 @@ class Term::Fabulous::Widget::VirtualList
 		return {
 			columns  => int( $column->{width} + 0.5 ),
 			viewport => int( $state->{viewport}{height} + 0.5 ),
-			top      => int( -$state->{position}{y} + 0.5 ),
+			top      => int( scroll_offset( $ui, $self ) + 0.5 ),
 		};
 	}
 

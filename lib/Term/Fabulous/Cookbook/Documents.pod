@@ -1603,7 +1603,7 @@ the file named on its command line, or the reader of the second recipe.
 	use List::Util qw(first);
 	use Text::Tabs qw(expand);
 	use Term::Fabulous;
-	use Term::Fabulous::Scrolling qw(inner_rows reveal_rows scroll_by_pages scroll_by_rows scroll_to_end scroll_to_start scrolled_percent);
+	use Term::Fabulous::Scrolling qw(inner_rows reveal_rows scroll_by_key scroll_offset scrolled_percent);
 	use Term::Fabulous::Widget::Box;
 	use Term::Fabulous::Widget::ScrollBox;
 	use Term::Fabulous::Widget::Text;
@@ -1636,7 +1636,7 @@ the file named on its command line, or the reader of the second recipe.
 	# n marks the next line that starts a sub or a method and scrolls it
 	# into view. reveal_rows takes screen rows: line $index of the text is
 	# on the row where the content starts, plus $index, less how far the
-	# text is scrolled.
+	# text is scrolled (scroll_offset, in rows).
 	my $marked = -1;
 
 	sub mark_next_definition () {
@@ -1646,26 +1646,10 @@ the file named on its command line, or the reader of the second recipe.
 		$rows[$next]->text_color(MARKED);
 		$marked = $next;
 		my ($top) = inner_rows( $ui, $text ) or return 1;    # nothing is laid out before the first frame
-		my $row = $top + $next + sprintf( '%.0f', $ui->scroll_state($text)->{position}{y} );
+		my $row = $top + $next - sprintf( '%.0f', scroll_offset( $ui, $text ) );
 		reveal_rows( $ui, $text, $row, $row + 1 );
 		return 1;
 	}
-
-	# Each function returns 1 when it moved the text and 0 when it could
-	# not, at the start or the end.
-	my %action_of_key = (
-		j        => sub { scroll_by_rows( $ui, $text,  1 ) },
-		Down     => sub { scroll_by_rows( $ui, $text,  1 ) },
-		k        => sub { scroll_by_rows( $ui, $text, -1 ) },
-		Up       => sub { scroll_by_rows( $ui, $text, -1 ) },
-		Space    => sub { scroll_by_pages( $ui, $text,  1 ) },
-		PageDown => sub { scroll_by_pages( $ui, $text,  1 ) },
-		b        => sub { scroll_by_pages( $ui, $text, -1 ) },
-		PageUp   => sub { scroll_by_pages( $ui, $text, -1 ) },
-		g        => sub { scroll_to_start( $ui, $text ) },
-		G        => sub { scroll_to_end( $ui, $text ) },
-		n        => \&mark_next_definition,
-	);
 
 	my $note = 'j k Space b g G scroll, n marks the next definition';
 
@@ -1676,10 +1660,16 @@ the file named on its command line, or the reader of the second recipe.
 	}
 	show_status();
 
+	# The keys of less (j k Space b g G, the arrows, PageUp, PageDown, Home
+	# and End) scroll; scroll_by_key returns undef for any other key, else 1
+	# when it moved the text and 0 when it could not, at the start or the
+	# end. n marks the next definition.
 	$root->on(
 		KeyPress => sub ($event) {
-			my $action = $action_of_key{ $event->key_name // '' } or return Clay::UI::Enum::Result->CONTINUE;
-			$note = $action->() ? '' : 'Nothing more in that direction.';
+			my $name  = $event->main_key_name // return Clay::UI::Enum::Result->CONTINUE;
+			my $moved = $name eq 'n' ? mark_next_definition() : scroll_by_key( $ui, $text, $name, keys => 'less' );
+			return Clay::UI::Enum::Result->CONTINUE unless defined $moved;
+			$note = $moved ? '' : 'Nothing more in that direction.';
 			show_status();
 			return;
 		}
@@ -1715,6 +1705,17 @@ any container of any program.
 
 =item *
 
+L<scroll_by_key|Term::Fabulous::Scrolling/scroll_by_key> knows the keys
+of pagers: C<< keys =E<gt> 'less' >> are those of C<less> (C<j>, C<k>,
+C<Space>, C<b>, C<g>, C<G>, the arrows, C<PageUp>, C<PageDown>, C<Home>
+and C<End>), the ones a document view uses too; C<< keys =E<gt>
+'pager' >> only C<PageUp>, C<PageDown>, C<Ctrl+Home> and C<Ctrl+End>,
+for a box whose arrow keys belong to the widgets inside it. It returns
+C<undef> for a key it does not know, so the handler lets that key go
+on, and handles C<n> itself.
+
+=item *
+
 A I<page> is the number of rows the container shows inside its border
 and padding, less one: the last row of a page stays in view as the first
 row of the next, as in C<less>.
@@ -1722,8 +1723,8 @@ row of the next, as in C<less>.
 =item *
 
 Every function that scrolls returns 1 when it moved the content and 0
-when it could not, at the top or the end. The program shows a note when
-a key did nothing. Before the first frame nothing is laid out: the
+when it could not, at the top or the end; so does C<scroll_by_key> for
+its keys. The program shows a note when a key did nothing. Before the first frame nothing is laid out: the
 functions that scroll return 0, and C<scrolled_percent> returns
 C<undef>, which the program shows as 0%.
 
@@ -1741,9 +1742,9 @@ I<screen rows>, as the last frame laid them out, into view with the
 smallest movement. A widget that is out of view has no position on the
 screen (C<< $ui->bounding_box >> returns C<undef> for it), so the
 program computes the row itself: here every line is one row, so line
-C<$index> is on the first row of the content plus C<$index>, plus the
-current scroll position, which is negative when the content is scrolled
-down.
+C<$index> is on the first row of the content plus C<$index>, less
+L<scroll_offset|Term::Fabulous::Scrolling/scroll_offset>, the number of
+rows the content is scrolled down.
 
 =back
 

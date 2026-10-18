@@ -21,6 +21,7 @@ use lib "$FindBin::Bin/../../lib/";
 use List::Util qw(max);
 use Term::Fabulous;
 use Term::Fabulous::Enum::BorderStyle;
+use Term::Fabulous::Scrolling qw(scroll_by_key);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::VirtualList;
@@ -75,27 +76,16 @@ $root->add_child( $document, $status );
 
 my $ui = Term::Fabulous->new( width => 80, height => 24, root => $root );
 
-# Keys reach the root: nothing in this program takes the focus. A page
-# is the viewport less one row, so the last row stays as a landmark.
-my %action_by_key = (
-	Home     => sub { $document->scroll_to_item(0) },
-	End      => sub { $document->scroll_to_item( PARAGRAPHS - 1 ) },
-	PageUp   => sub { page(1) },
-	PageDown => sub { page(-1) },
-);
+# Keys reach the root: nothing in this program takes the focus. The keys
+# of less scroll the list: Home and End go to its first and last
+# paragraph, a page is the rows inside the border less one, so the last
+# row stays as a landmark.
 $root->on(
 	KeyPress => sub ($event) {
-		my $action = $action_by_key{ $event->main_key_name // '' } or return;
-		$action->();
+		scroll_by_key( $ui, $document, $event->main_key_name, keys => 'less' );
 		return;
 	}
 );
-
-sub page ($direction) {
-	my $state = $ui->scroll_state($document) // return;
-	$ui->scroll_to( $document, { y => $state->{position}{y} + $direction * ( $state->{viewport}{height} - 1 ) } );
-	return;
-}
 
 # After every frame the status line tells what the frame showed; a
 # frame follows only when the text changed.
