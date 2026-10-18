@@ -1,6 +1,15 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Widget::Table::Model has two options for
+          trees in sections: open_when_filtered (a filtered or searched
+          view shows every passing row with its parents open, without
+          changing which rows are expanded) and only_leaves_match (a row
+          with children passes only as the ancestor of one that
+          matches). The theme editor's settings list keeps its rows,
+          sections, search, filters and cursor in a Table::Model with
+          both, instead of a second tree model of its own; its row gives
+          a copy without the children.
         - Term::Fabulous::Widget::Dialog owns the parts most dialogs
           have: a title, buttons (one row; pressing one calls
           press_button, which answers with its id), a notice line above

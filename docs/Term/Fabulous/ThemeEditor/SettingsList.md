@@ -10,7 +10,12 @@ own. A tree of rows in sections, each row showing a swatch, the
 setting (indented, sections with a marker), its value and where the
 value comes from, under a row of titles. Only the rows near the
 viewport are widgets, inside a [Term::Fabulous::Widget::VirtualList](../Widget/VirtualList.md),
-so the list costs the same with every section open. The rows are
+so the list costs the same with every section open. The rows, which
+sections are open, the search, the filters and the cursor are kept in a
+[Term::Fabulous::Widget::Table::Model](../Widget/Table/Model.md) (with `open_when_filtered` and
+`only_leaves_match`): a search or a filter shows the settings it lets
+through with their sections open, and a section never matches by
+itself. The rows are
 painted in the colors of the theme's `table` family: the cursor in
 `table.cursor` (`table.selected` while the list does not have the
 focus), the row under the pointer in `table.hover`, sections in
@@ -48,8 +53,10 @@ section `section => 1` with its rows under `children`.
 
 ## row, has\_row, row\_ids, parent\_of, children\_of, update\_row, refresh
 
-Reading the rows, changing one's texts, and showing the rows again
-after such changes (a search or a filter may take other rows then).
+Reading the rows (`row` gives a copy of a row's data without its
+children; `parent_of`, `children_of` and `row` give nothing for an
+unknown id), changing one's texts, and showing the rows again after
+such changes (a search or a filter may take other rows then).
 
 ## expand, collapse, toggle, expand\_all, collapse\_all, is\_expanded
 
@@ -65,7 +72,8 @@ rows shown.
 
 The row under the cursor; setting it opens the sections above the row
 and scrolls it into view, and dies for a row a search or a filter
-hides.
+hides. When a change hides the row under the cursor, the cursor goes to
+the first row shown.
 
 ## activate, click, hover
 

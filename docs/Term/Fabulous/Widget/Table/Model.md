@@ -61,14 +61,16 @@ next change through the table.
 
 1. Rows pass when they match every filter and the search (see
 ["FILTERING" in Term::Fabulous::Manual::TableRows](../../Manual/TableRows.md#filtering)); in a tree, the ancestors
-of a passing row pass too, so nothing is cut off from its parent.
+of a passing row pass too, so nothing is cut off from its parent. With
+`only_leaves_match`, only rows without children are tested.
 2. Top-level rows are split into groups by the value of each `group_by`
 column in turn; groups are ordered by that value, ascending unless the
 sort says otherwise for the column.
 3. Rows are sorted within each group and, in a tree, within their parent,
 by the sort; rows that compare equal keep their data order.
 4. The lines are listed: each group header, then its contents unless it is
-collapsed; each row, then its children if it is expanded.
+collapsed; each row, then its children if it is expanded (or, with
+`open_when_filtered`, if the view is filtered).
 5. With a `page_size`, the lines are cut into pages of that many lines.
 
 The view is computed when it is first needed after a change and kept
@@ -83,11 +85,15 @@ my $model = Term::Fabulous::Widget::Table::Model->new(
         children_key => 'children',    # or undef for flat rows
         page_size    => 25,            # 0: one page
         expand_new   => 0,             # rows with children start expanded?
+        open_when_filtered => 0,       # a filtered view opens every passing row?
+        only_leaves_match  => 0,       # rows with children pass only as ancestors?
 );
 ```
 
 The table makes its model from its own parameters of the same names;
-see ["new" in Term::Fabulous::Widget::Table](../Table.md#new).
+see ["new" in Term::Fabulous::Widget::Table](../Table.md#new). `open_when_filtered` and
+`only_leaves_match` are options of a model used on its own (the theme
+editor's settings list is one); a table leaves them off.
 
 # METHODS
 
@@ -127,6 +133,26 @@ empty list.
     Accessor for the `expand_new` parameter: whether rows with children
     start expanded when they are added (by `set_rows` or `add_rows`).
     Returns 1 or 0; writing affects only rows added later.
+
+- `open_when_filtered`
+- `open_when_filtered($bool)`
+
+    Accessor for the `open_when_filtered` parameter. With 1, a view that
+    is filtered or searched (see ["is\_filtered"](#is_filtered)) shows every passing row:
+    rows with passing children are open in it (their lines say
+    `expanded`), whatever their own expansion. The expansion itself does
+    not change, so the view is back as it was when the filters are gone.
+    Returns 1 or 0; default 0. A settings list in sections uses it, so that
+    a search shows what it found.
+
+- `only_leaves_match`
+- `only_leaves_match($bool)`
+
+    Accessor for the `only_leaves_match` parameter. With 1, the filters
+    and the search look only at rows without children; a row with children
+    passes only as the ancestor of a row that passes. A section heading
+    that happens to contain the search text then shows nothing by itself.
+    Returns 1 or 0; default 0.
 
 ## Columns
 
