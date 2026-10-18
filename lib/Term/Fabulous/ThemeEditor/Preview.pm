@@ -17,7 +17,6 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_TEXT_WRAP_NONE);
 	use List::Util qw(max min);
-	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Widget::Accordion;
 	use Term::Fabulous::Widget::Accordion::Item;
