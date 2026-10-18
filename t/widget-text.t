@@ -9,7 +9,7 @@ no warnings 'experimental::signatures';
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE);
 use Term::Fabulous::Layout;
 use Term::Fabulous::Static;
-use Term::Fabulous::Termbox qw(TB_BOLD TB_UNDERLINE TB_DEFAULT);
+use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE TB_DEFAULT);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Color;
@@ -69,6 +69,10 @@ subtest 'spans and markup' => sub {
 	ref_is $marked->stylize( 'bold', 1, 3 ), $marked, 'stylize chains';
 	is $marked->stylize('on #000000')->spans, [ [ 1, 3, { %$plain, set => TB_BOLD } ], [ 0, 5, { %$plain, background => [ 0, 0, 0, 255 ] } ] ], 'stylize appends, the whole text by default';
 	is $marked->clear_spans->spans,           [],                                                                                               'clear_spans';
+	$marked->markup('[bold]x[/]yz');
+	my $revision = $marked->content_revision;
+	is $marked->spans( [ [ 1, 3, 'italic' ] ] ),                   [ [ 1, 3, { %$plain, set => TB_ITALIC } ] ], 'spans replaces them all and returns the new ones';
+	is [ $marked->markup, $marked->content_revision > $revision ], [ undef, 1 ],                                'which ends the markup and counts as a change';
 };
 
 subtest 'errors' => sub {

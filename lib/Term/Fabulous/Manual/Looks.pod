@@ -259,8 +259,10 @@ Spans can also be given as character ranges, or added later:
 		spans => [ [ 0, 6, 'bold #e06c75' ] ],
 	);
 	$line->stylize( 'underline', 7, 17 );    # the file name, shown in the next frame
+	$line->spans( [ [ 0, 5, 'bold' ] ] );    # or replace them all
 
 Later spans win where spans overlap, and setting C<text> drops them.
+A L<Term::Fabulous::Widget::CodeBlock> takes its spans the same way.
 In a KDL layout file:
 
 =for highlighter language=kdl

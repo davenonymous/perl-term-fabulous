@@ -7,23 +7,24 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-use Term::Fabulous::Role::Searchable;
+use Term::Fabulous::Role::MarkedText;
 use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::CodeBlock
 	:isa(Term::Fabulous::Widget::Display)
-	:does(Term::Fabulous::Role::Searchable)
+	:does(Term::Fabulous::Role::MarkedText)
 	:strict(params)
 {
 	use Clay::XS qw(sizing_grow);
-	use List::Util qw(max min uniqnum);
+	use List::Util qw(max min);
 	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(describe non_negative_integer string);
 	use Term::Fabulous::Document::Look;
 	use Term::Fabulous::Termbox qw(TB_DEFAULT);
-	use Term::Fabulous::Text::Style qw(apply_style resolve_style);
+	use Term::Fabulous::Text::Marks;
+	use Term::Fabulous::Text::Style qw(apply_style);
 	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters);
 
 	# One column on either side of the code, in the code's background,
@@ -35,14 +36,12 @@ class Term::Fabulous::Widget::CodeBlock
 	field $code        :param = '';
 	field $language    :param = undef;
 	field $highlighter :param = undef;
-	field $spans       :param = [];
 	field $offset      :param = 0;
 	field $look_class  :param = 'Term::Fabulous::Document::Look';
 
-	# What a search marks in the code, painted over the spans, and a count
-	# of the changes of the code, for callers that recorded offsets.
-	field $highlights       = [];
-	field $content_revision = 0;
+	# The program's spans, what a search marks over them, and a count of
+	# the changes of the code (Term::Fabulous::Text::Marks).
+	field $marks;
 
 	# Per line, its clusters as [ cluster, columns, offset in the code ],
 	# and its width in columns. The highlighter's spans until the code,
@@ -53,11 +52,11 @@ class Term::Fabulous::Widget::CodeBlock
 	field $runs;
 	field $runs_look;
 
-	ADJUST {
+	ADJUST :params ( :$spans //= [] ) {
 		$code        = string( $self, code => $code );
 		$language    = _checked_language( $self, $language );
 		$highlighter = _checked_highlighter( $self, $highlighter );
-		$spans       = $self->_checked_spans( spans => $spans );
+		$marks       = Term::Fabulous::Text::Marks->new( owner => ref($self), text => $code, spans => $spans );
 		$offset      = non_negative_integer( $self, offset => $offset );
 		$look_class  = _checked_look_class( $self, $look_class );
 		$self->_split_lines;
@@ -81,23 +80,6 @@ class Term::Fabulous::Widget::CodeBlock
 	sub _checked_highlighter ( $owner, $value ) {
 		die ref($owner) . ": highlighter must be a code reference or undef, got " . describe($value) if defined $value && ref $value ne 'CODE';
 		return $value;
-	}
-
-	# Spans as [ start, end, style ] within the code, each style
-	# normalized to a style hash of Term::Fabulous::Text::Style.
-	method _checked_spans ( $what, $given ) {
-		die ref($self) . ": $what must be an array reference of [start, end, style], got " . describe($given) unless ref $given eq 'ARRAY';
-		my $length = length $code;
-		return [
-			map {
-				die ref($self) . ": $what must be [start, end, style], got " . describe($_) unless ref $_ eq 'ARRAY' && @$_ == 3;
-				my ( $start, $end, $style ) = @$_;
-				$start = non_negative_integer( $self, "$what start", $start );
-				$end   = non_negative_integer( $self, "$what end",   $end );
-				die ref($self) . ": $what span [$start, $end] does not lie within the code ($length characters)" if $start > $end || $end > $length;
-				[ $start, $end, Term::Fabulous::Text::Style::style($style) ];
-			} @$given
-		];
 	}
 
 	method _split_lines () {
@@ -130,12 +112,12 @@ class Term::Fabulous::Widget::CodeBlock
 	# Accessors
 	# ---------------------------------------------------------------------
 
+	# New code drops the spans and the highlights: they pointed into the
+	# old one.
 	method code (@new) {
 		return $code unless @new;
-		$code       = string( $self, code => $new[0] );
-		$spans      = [];
-		$highlights = [];
-		$content_revision++;
+		$code = string( $self, code => $new[0] );
+		$marks->set_text($code);
 		$self->_split_lines;
 		$self->mark_changed;
 		return $code;
@@ -157,54 +139,22 @@ class Term::Fabulous::Widget::CodeBlock
 		return $highlighter;
 	}
 
-	method spans (@new) {
-		return [ map { [ $_->[0], $_->[1], { %{ $_->[2] } } ] } @$spans ] unless @new;
-		$spans = $self->_checked_spans( spans => $new[0] );
-		$runs  = undef;
+	# Term::Fabulous::Role::MarkedText: the marks, and what follows from a
+	# change of them.
+	method text_marks () {
+		return $marks;
+	}
+
+	method marks_changed ($is_content) {
+		$runs = undef;
 		$self->mark_changed;
-		return $self->spans;
-	}
-
-	method highlights (@new) {
-		return [ map { [ $_->[0], $_->[1], { %{ $_->[2] } } ] } @$highlights ] unless @new;
-		$highlights = $self->_checked_spans( highlights => $new[0] );
-		$runs       = undef;
-		$self->mark_changed;
-		return $self->highlights;
-	}
-
-	method clear_highlights () {
-		$highlights = [];
-		$runs       = undef;
-		$self->mark_changed;
-		return $self;
-	}
-
-	method content_revision () {
-		return $content_revision;
-	}
-
-	# ---------------------------------------------------------------------
-	# Searching (Term::Fabulous::Role::Searchable): the code
-	# ---------------------------------------------------------------------
-
-	method search_texts () {
-		return ( [ undef, $code ] );
-	}
-
-	method search_revision ($key) {
-		return $content_revision;
-	}
-
-	method highlight_text ( $key, $ranges ) {
-		$self->highlights($ranges);
 		return;
 	}
 
-	method clear_text_highlights () {
-		$self->clear_highlights;
-		return;
-	}
+	# ---------------------------------------------------------------------
+	# Searching (Term::Fabulous::Role::Searchable, through
+	# Term::Fabulous::Role::MarkedText): the code
+	# ---------------------------------------------------------------------
 
 	# The code never wraps, so the row of a character is its line.
 	method reveal_text ( $key, $offset ) {
@@ -262,20 +212,21 @@ class Term::Fabulous::Widget::CodeBlock
 	}
 
 	method _highlighted_spans () {
-		return $highlighted //= $highlighter ? $self->_checked_spans( 'highlighter result' => $highlighter->( $code, $language ) ) : [];
+		return $highlighted //= $highlighter ? [ $marks->check_spans( 'highlighter span' => $highlighter->( $code, $language ) ) ] : [];
 	}
 
 	# The runs of the code in the current look, made again only when the
-	# look (a theme switch) or the spans changed: the highlighter's spans,
-	# then the program's, then the highlights, each with its palette
-	# tokens turned into the theme's colors.
+	# look (a theme switch) or the marks changed: the highlighter's spans,
+	# then the program's, then the highlights, stacked over the base look
+	# with their palette tokens in the theme's colors
+	# (Term::Fabulous::Text::Marks), as { to, look, fg, bg }, and a last
+	# run past the end.
 	method _runs_in ($look) {
 		return $runs if defined $runs && refaddr($runs_look) == refaddr($look);
-		my $base  = $look->style('code_block');
-		my $theme = $self->drawing_theme;
-		my @spans = map { [ $_->[0], $_->[1], resolve_style( $_->[2], $theme ) ] } @{ $self->_highlighted_spans }, @$spans, @$highlights;
-		$runs = [ map { +{ %$_, fg => $self->_fg_attr( $_->{look} ), bg => $self->color_attr( $_->{look}{background} ) } }
-				_runs( length $code, { attrs => 0, color => $base->{color}, background => $base->{background} }, @spans ) ];
+		my $style = $look->style('code_block');
+		my $base  = { attrs => 0, color => $style->{color}, background => $style->{background} };
+		my @runs  = map { +{ to => $_->[1], look => apply_style( $base, $_->[2] ) } } @{ $marks->runs( theme => $self->drawing_theme, under => $self->_highlighted_spans ) };
+		$runs      = [ map { +{ %$_, fg => $self->_fg_attr( $_->{look} ), bg => $self->color_attr( $_->{look}{background} ) } } @runs, { to => length($code) + 1, look => $base } ];
 		$runs_look = $look;
 		return $runs;
 	}
@@ -313,30 +264,6 @@ class Term::Fabulous::Widget::CodeBlock
 
 	method _fg_attr ($look) {
 		return ( $self->color_attr( $look->{color} ) // TB_DEFAULT ) | $look->{attrs};
-	}
-
-	# The code cut at every span boundary, each piece with the look its
-	# spans give it, applied in their order over the base look:
-	# { to, look }, and a last run past the end. One sweep over the
-	# boundaries keeps the spans that cover the piece at hand.
-	sub _runs ( $length, $base, @spans ) {
-		my ( %starting_at, %ending_at );
-		foreach my $index ( grep { $spans[$_][0] < $spans[$_][1] } 0 .. $#spans ) {
-			push @{ $starting_at{ $spans[$index][0] } }, $index;
-			push @{ $ending_at{ $spans[$index][1] } },   $index;
-		}
-		my @boundaries = sort { $a <=> $b } uniqnum 0, $length, keys %starting_at, keys %ending_at;
-
-		my ( %covering, @runs );
-		foreach my $index ( 1 .. $#boundaries ) {
-			my ( $from, $to ) = @boundaries[ $index - 1, $index ];
-			delete @covering{ @{ $ending_at{$from} // [] } };
-			$covering{$_} = 1 foreach @{ $starting_at{$from} // [] };
-			my $look = $base;
-			$look = apply_style( $look, $spans[$_][2] ) foreach sort { $a <=> $b } keys %covering;
-			push @runs, { to => $to, look => $look };
-		}
-		return ( @runs, { to => $length + 1, look => $base } );
 	}
 
 	# ---------------------------------------------------------------------
@@ -532,11 +459,32 @@ the previous highlighter; the new one runs at the next paint.
 =head2 spans
 
 	my $spans = $code->spans;    # [ [ 0, 2, { set => ..., clear => ..., color => ..., background => ... } ], ... ]
+	$code->spans( [ [ 0, 2, 'bold' ] ] );
 
 Gets or sets the program's spans. Both the getter and the setter return
 a copy of the spans, in which each style is normalized to a style hash
 of L<Term::Fabulous::Text::Style>. Setting the spans does not run the
-highlighter again.
+highlighter again and counts as a change of the content (see
+L</content_revision>). Invalid ranges or styles die (see
+L<Term::Fabulous::Text::Marks/set_spans>). The spans and highlights
+methods are those of a L<Term::Fabulous::Widget::Text> (both from
+L<Term::Fabulous::Role::MarkedText>).
+
+=head2 stylize
+
+	$code->stylize( 'bold', 0, 2 );
+	$code->stylize('dim');    # the whole code
+
+Adds a span after the existing ones, so it wins where they overlap.
+C<$start> defaults to 0, C<$end> to the length of the code. Returns the
+widget.
+
+=head2 clear_spans
+
+	$code->clear_spans;
+
+Drops every span of the program; the highlighter's stay. Returns the
+widget.
 
 =head2 highlights
 
@@ -561,13 +509,13 @@ Drops every highlight. Returns the widget.
 
 	my $revision = $code->content_revision;
 
-A counter that grows whenever the code changes, for callers that
-recorded offsets into it.
+A counter that grows whenever the code or the program's spans change,
+for callers that recorded offsets into it. Highlights leave it alone.
 
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
 
 The methods of L<Term::Fabulous::Role::Searchable>, which a code block
-does for its code: C<search_texts> returns C<[ undef, $code ]>,
+does for its code (through L<Term::Fabulous::Role::MarkedText>): C<search_texts> returns C<[ undef, $code ]>,
 C<search_revision> is L</content_revision>, C<highlight_text> sets
 L</highlights>, C<clear_text_highlights> clears them, and
 C<reveal_text> returns the widget itself and the line of the offset,

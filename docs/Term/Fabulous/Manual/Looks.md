@@ -262,9 +262,11 @@ my $line = Term::Fabulous::Widget::Text->new(
         spans => [ [ 0, 6, 'bold #e06c75' ] ],
 );
 $line->stylize( 'underline', 7, 17 );    # the file name, shown in the next frame
+$line->spans( [ [ 0, 5, 'bold' ] ] );    # or replace them all
 ```
 
 Later spans win where spans overlap, and setting `text` drops them.
+A [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) takes its spans the same way.
 In a KDL layout file:
 
 ```kdl

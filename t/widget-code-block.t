@@ -40,11 +40,11 @@ sub attr_of ($color) {
 }
 
 subtest 'parameters' => sub {
-	like dies { Term::Fabulous::Widget::CodeBlock->new( code => [] ) },                                   qr/code must be a string/,                         'code is a string';
-	like dies { Term::Fabulous::Widget::CodeBlock->new( language => '' ) },                               qr/language must not be empty/,                    'a language has a name';
-	like dies { Term::Fabulous::Widget::CodeBlock->new( highlighter => 'perl' ) },                        qr/highlighter must be a code reference/,          'a highlighter is code';
-	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 3, 'bold' ] ] ) },  qr/does not lie within the code \(2 characters\)/, 'spans lie within the code';
-	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 1, 'shiny' ] ] ) }, qr/shiny/,                                         'span styles are checked';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => [] ) },                                   qr/code must be a string/,                          'code is a string';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( language => '' ) },                               qr/language must not be empty/,                     'a language has a name';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( highlighter => 'perl' ) },                        qr/highlighter must be a code reference/,           'a highlighter is code';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 3, 'bold' ] ] ) },  qr/span end 3 lies past the text \(2 characters\)/, 'spans lie within the code';
+	like dies { Term::Fabulous::Widget::CodeBlock->new( code => 'ab', spans => [ [ 0, 1, 'shiny' ] ] ) }, qr/shiny/,                                          'span styles are checked';
 	my $code = Term::Fabulous::Widget::CodeBlock->new( code => "a\n\nlonger" );
 	is [ $code->line_count, $code->widest_line_columns, [ $code->natural_size ]->[1] ], [ 3, 6, 3 ], 'as tall as the code has lines';
 };
@@ -94,7 +94,7 @@ subtest 'highlighter and spans' => sub {
 	is $calls[-1][1], 'kdl', 'a new language asks again';
 
 	$code->highlighter( sub { 'nonsense' } );
-	like dies { $ui->step }, qr/highlighter result must be an array reference/, 'a highlighter that returns no spans dies';
+	like dies { $ui->step }, qr/highlighter spans must be an array reference/, 'a highlighter that returns no spans dies';
 };
 
 subtest 'a theme switch repaints in the new colors' => sub {
@@ -183,6 +183,10 @@ subtest 'highlights, tokens and the search role' => sub {
 	is [ $code->highlights, $code->content_revision ], [ [], $revision ], 'clear_text_highlights clears them without counting as a change';
 	$code->code('other');
 	is [ $code->content_revision > $revision, $code->search_revision(undef) ], [ 1, $code->content_revision ], 'new code counts, and search_revision says so';
+	$revision = $code->content_revision;
+	ref_is $code->stylize( 'bold', 0, 2 ), $code, 'stylize appends a span, as on a Text';
+	is [ scalar @{ $code->spans }, $code->content_revision > $revision ], [ 1, 1 ], 'and the spans count as content';
+	is $code->clear_spans->spans,                                         [],       'clear_spans';
 };
 
 done_testing;

@@ -309,9 +309,9 @@ role Term::Fabulous::Render
 		weaken $entry->{owner} if $bound;
 		return $entry;
 	}
-	}
+}
 
-	1;
+1;
 
 __END__
 

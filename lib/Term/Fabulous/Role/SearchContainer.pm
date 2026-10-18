@@ -11,7 +11,9 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Role::Searchable;
 
-role Term::Fabulous::Role::SearchContainer :does(Term::Fabulous::Role::Searchable) {
+role Term::Fabulous::Role::SearchContainer
+	:does(Term::Fabulous::Role::Searchable)
+{
 	use Term::Fabulous::Role::Searchable qw(nested_part nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 
 	# The searchable widgets the container answers for, in order.
@@ -43,9 +45,9 @@ role Term::Fabulous::Role::SearchContainer :does(Term::Fabulous::Role::Searchabl
 		$self->reveal_part($part) if defined $part && $self->can('reveal_part');
 		return nested_reveal_text( \@parts, $key, $offset );
 	}
-	}
+}
 
-	1;
+1;
 
 __END__
 

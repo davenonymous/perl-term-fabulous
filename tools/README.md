@@ -183,4 +183,7 @@ line. With `--check` it writes nothing, lists the files that are not
 tidy and exits with status 1. It also hides `ADJUST :params (` from
 perltidy, which would read it as a label before a call and indent the
 rest of the class one level deeper, by showing it a method with a
-signature instead.
+signature instead, and shows it every `role` as a `class` of a stand-in
+name: perltidy does not know the `role` keyword and indents a role with
+attributes (`:does(...)`) one level too deep, its closing brace and the
+`1;` after it included.

@@ -1,6 +1,17 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Text::Marks keeps the spans, highlights and
+          links of one text, checks their ranges with one wording and
+          cuts the text into runs in one sweep; Text and CodeBlock keep
+          their marks in it and share their methods through
+          Term::Fabulous::Role::MarkedText. Both now have spans as an
+          accessor (Text gains the setter), stylize and clear_spans
+          (CodeBlock gains them), highlights and clear_highlights.
+          CodeBlock's range errors read like Text's ("span end 3 lies
+          past the text (2 characters)", "highlighter spans must be an
+          array reference ..."), and setting a code block's spans counts
+          as a change of its content_revision, as on a Text.
         - Term::Fabulous::Role::Themed's drawing_theme (until now the
           private _theme) is the one answer to "the theme a widget draws
           with". Term::Fabulous::Document::Look->of asks it, so a

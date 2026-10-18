@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 use Object::Pad 0.825;
 
 use Clay::UI::Role::Events::Emitter;
-use Term::Fabulous::Role::Searchable;
+use Term::Fabulous::Role::MarkedText;
 
 our $VERSION = '0.03';
 
@@ -17,21 +17,21 @@ class Term::Fabulous::Widget::Text
 	:does(Term::Fabulous::Role::CanParseLayout)
 	:does(Term::Fabulous::Role::Themed)
 	:does(Clay::UI::Role::Events::Emitter)
-	:does(Term::Fabulous::Role::Searchable)
+	:does(Term::Fabulous::Role::MarkedText)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
 	use Clay::UI::Revision qw(bump_revision);
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use List::Util qw(first min sum0);
-	use Term::Fabulous::Check qw(boolean class_names color describe non_negative_integer one_of positive_integer);
+	use Term::Fabulous::Check qw(boolean class_names color non_negative_integer one_of positive_integer);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::LinkActivate;
 	use Term::Fabulous::Event::TextClick;
 	use Term::Fabulous::Render::Attr qw(color_attr);
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_ITALIC TB_UNDERLINE TB_KEY_MOUSE_LEFT);
 	use Term::Fabulous::Text::Markup qw(parse_markup);
-	use Term::Fabulous::Text::Style qw(compose_styles resolve_style style);
+	use Term::Fabulous::Text::Marks;
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Unicode qw(string_columns);
 
@@ -61,26 +61,15 @@ class Term::Fabulous::Widget::Text
 	# were given directly.
 	field $markup :param = undef;
 
-	# The spans as given, checked in ADJUST; the array holds the checked ones.
-	field $given_spans :param(spans) = undef;
-	field @spans;    # [ $start, $end, $style ]
-
-	# The links as given, checked in ADJUST; the array holds the checked
-	# ones, ordered by their start, none overlapping another.
-	field $given_links :param(links) = undef;
-	field @links;    # [ $start, $end, $target ]
-
-	# The highlights, painted over the spans: what a search marks.
-	field @highlights;    # [ $start, $end, $style ]
+	# The spans, the highlights (what a search marks, painted over the
+	# spans) and the links of the text, with the count of its changes
+	# (Term::Fabulous::Text::Marks).
+	field $marks;
 
 	# The selected link (the one Enter follows) and the one under the
-	# mouse pointer, as indices into @links.
+	# mouse pointer, as indices into the links.
 	field $selected_link = undef;
 	field $hovered_link  = undef;
-
-	# Counts the changes of the text, the spans, the markup and the links,
-	# so that offsets recorded by a caller can be told stale.
-	field $content_revision = 0;
 
 	# Whether the key and focus listeners are registered: only once the
 	# text has a link, since only then it can take the focus.
@@ -106,19 +95,15 @@ class Term::Fabulous::Widget::Text
 		return %params;
 	}
 
-	ADJUST {
+	ADJUST :params ( :$spans //= [], :$links //= [] ) {
 		$bold      = boolean( $self, bold      => $bold );
 		$italic    = boolean( $self, italic    => $italic );
 		$underline = boolean( $self, underline => $underline );
 		$classes   = class_names( $self, classes => $classes );
 		$self->set_look( text_color => $self->SUPER::text_color ) if $_has_text_color;
 
-		die "Term::Fabulous::Widget::Text: spans must be an array reference of [start, end, style]" if defined $given_spans  && ref $given_spans ne 'ARRAY';
-		die "Term::Fabulous::Widget::Text: links must be an array reference of [start, end, target]" if defined $given_links && ref $given_links ne 'ARRAY';
-		@spans       = map { $self->_checked_span( span => $_ ) } @{ $given_spans // [] };
-		$given_spans = undef;
-		$self->_insert_link( $self->_checked_link($_) ) foreach @{ $given_links // [] };
-		$given_links = undef;
+		$marks = Term::Fabulous::Text::Marks->new( owner => ref($self), text => $self->SUPER::text, spans => $spans, links => $links );
+		$self->_listen if $marks->link_count;
 	}
 
 	# ---------------------------------------------------------------------
@@ -215,10 +200,9 @@ class Term::Fabulous::Widget::Text
 	method text :override (@new) {
 		return $self->SUPER::text unless @new;
 		my $text = $self->SUPER::text(@new);
-		@spans      = ();
-		@highlights = ();
-		$markup     = undef;
-		$self->_forget_links;
+		$marks->set_text($text);
+		$markup = undef;
+		$self->_forget_link_state;
 		$self->_links_changed;
 		return $text;
 	}
@@ -227,80 +211,23 @@ class Term::Fabulous::Widget::Text
 		return $markup unless @new;
 		my ( $text, $spans, $links ) = parse_markup( $new[0] );
 		$self->SUPER::text($text);
-		@spans      = @$spans;
-		@highlights = ();
-		$self->_forget_links;
-		$self->_insert_link($_) foreach @$links;
+		$marks->set_text($text)->set_spans($spans);
+		$self->_forget_link_state;
+		$marks->add_link( @{$_}[ 2, 0, 1 ] ) foreach @$links;
+		$self->_listen if @$links && !$listening;
 		$markup = $new[0];
 		$self->_links_changed;
 		return $markup;
 	}
 
-	method spans () {
-		return _copies(@spans);
+	# Term::Fabulous::Role::MarkedText: the marks and what follows from a
+	# change of them. Spans given by hand replace the markup's.
+	method text_marks () {
+		return $marks;
 	}
 
-	method stylize ( $style, $start = 0, $end = undef ) {
-		push @spans, $self->_span( span => $style, $start, $end // length $self->text );
-		$markup = undef;
-		$self->_content_changed;
-		return $self;
-	}
-
-	method clear_spans () {
-		@spans  = ();
-		$markup = undef;
-		$self->_content_changed;
-		return $self;
-	}
-
-	method content_revision () {
-		return $content_revision;
-	}
-
-	# Highlights are not content: a caller that marks what it found in the
-	# text does not make its own offsets stale.
-	method highlights (@new) {
-		return _copies(@highlights) unless @new;
-		die "Term::Fabulous::Widget::Text: highlights must be an array reference of [start, end, style], got " . describe( $new[0] ) unless ref $new[0] eq 'ARRAY';
-		@highlights = map { $self->_checked_span( highlight => $_ ) } @{ $new[0] };
-		$self->_forget_runs;
-		return $self->highlights;
-	}
-
-	method clear_highlights () {
-		@highlights = ();
-		$self->_forget_runs;
-		return $self;
-	}
-
-	sub _copies (@ranges) {
-		return [ map { [ $_->[0], $_->[1], { %{ $_->[2] } } ] } @ranges ];
-	}
-
-	# A copy of a span or highlight with its offsets checked against the
-	# text and its style normalized.
-	method _checked_span ( $what, $span ) {
-		die "Term::Fabulous::Widget::Text: a $what is [start, end, style]" unless ref $span eq 'ARRAY' && @$span == 3;
-		my ( $start, $end, $style ) = @$span;
-		return $self->_span( $what, $style, $start, $end );
-	}
-
-	method _span ( $what, $style, $start, $end ) {
-		return [ $self->_checked_range( $what, $start, $end ), style($style) ];
-	}
-
-	method _checked_range ( $what, $start, $end ) {
-		$start = non_negative_integer( $self, "$what start", $start );
-		$end   = non_negative_integer( $self, "$what end",   $end );
-		my $length = length $self->text;
-		die "Term::Fabulous::Widget::Text: $what end $end lies before its start $start" if $end < $start;
-		die "Term::Fabulous::Widget::Text: $what end $end lies past the text ($length characters)" if $end > $length;
-		return ( $start, $end );
-	}
-
-	method _content_changed () {
-		$content_revision++;
+	method marks_changed ($is_content) {
+		$markup = undef if $is_content;
 		$self->_forget_runs;
 		return;
 	}
@@ -316,11 +243,17 @@ class Term::Fabulous::Widget::Text
 	# ---------------------------------------------------------------------
 
 	method links () {
-		return [ map { [@$_] } @links ];
+		return $marks->links;
 	}
 
+	# The selected and the hovered link stay the same links. The first
+	# link makes the text able to take the focus, so the key and focus
+	# listeners start here.
 	method add_link ( $target, $start = 0, $end = undef ) {
-		$self->_insert_link( $self->_link( $target, $start, $end // length $self->text ) );
+		my $position = $marks->add_link( $target, $start, $end );
+		$selected_link++ if defined $selected_link && $selected_link >= $position;
+		$hovered_link++ if defined $hovered_link   && $hovered_link >= $position;
+		$self->_listen unless $listening;
 		$markup = undef;
 		$self->_links_changed;
 		return $self;
@@ -328,43 +261,14 @@ class Term::Fabulous::Widget::Text
 
 	method clear_links () {
 		$markup = undef;
-		$self->_forget_links;
+		$marks->clear_links;
+		$self->_forget_link_state;
 		$self->_links_changed;
 		return $self;
 	}
 
 	method link_at ($offset) {
-		$offset = non_negative_integer( $self, offset => $offset );
-		return first { $links[$_][0] <= $offset && $offset < $links[$_][1] } 0 .. $#links;
-	}
-
-	method _checked_link ($link) {
-		die "Term::Fabulous::Widget::Text: a link is [start, end, target]" unless ref $link eq 'ARRAY' && @$link == 3;
-		my ( $start, $end, $target ) = @$link;
-		return $self->_link( $target, $start, $end );
-	}
-
-	method _link ( $target, $start, $end ) {
-		die "Term::Fabulous::Widget::Text: a link needs a target" unless defined $target;
-		( $start, $end ) = $self->_checked_range( 'link', $start, $end );
-		die "Term::Fabulous::Widget::Text: a link must not be empty, got $start to $end" if $start == $end;
-		return [ $start, $end, $target ];
-	}
-
-	# Puts a checked link in its place by start; the selected and the
-	# hovered link stay the same links. The first link makes the text
-	# able to take the focus, so the key and focus listeners start here.
-	method _insert_link ($link) {
-		my ( $start, $end ) = @$link;
-		my $overlapped = first { $_->[0] < $end && $start < $_->[1] } @links;
-		die "Term::Fabulous::Widget::Text: the link $start to $end overlaps the link $overlapped->[0] to $overlapped->[1]" if defined $overlapped;
-		my $position = first { $links[$_][0] > $start } 0 .. $#links;
-		$position //= scalar @links;
-		splice @links, $position, 0, $link;
-		$selected_link++ if defined $selected_link && $selected_link >= $position;
-		$hovered_link++ if defined $hovered_link   && $hovered_link >= $position;
-		$self->_listen unless $listening;
-		return;
+		return $marks->link_at($offset);
 	}
 
 	method _listen () {
@@ -384,15 +288,14 @@ class Term::Fabulous::Widget::Text
 
 	# Without telling the focus: a text that gets new links at once keeps
 	# the focus.
-	method _forget_links () {
-		@links = ();
+	method _forget_link_state () {
 		( $selected_link, $hovered_link ) = ();
 		return;
 	}
 
 	# Whether the widget can take the focus may have changed with its links.
 	method _links_changed () {
-		$self->_content_changed;
+		$self->_forget_runs;
 		$self->focus_eligibility_changed;
 		return;
 	}
@@ -400,7 +303,8 @@ class Term::Fabulous::Widget::Text
 	method _checked_link_index ( $what, $index ) {
 		return undef unless defined $index;
 		$index = non_negative_integer( $self, $what, $index );
-		die "Term::Fabulous::Widget::Text: $what $index is not a link; the text has " . scalar(@links) . " links" if $index > $#links;
+		my $count = $marks->link_count;
+		die "Term::Fabulous::Widget::Text: $what $index is not a link; the text has $count links" if $index >= $count;
 		return $index;
 	}
 
@@ -419,13 +323,13 @@ class Term::Fabulous::Widget::Text
 	# The selection stops at the first and the last link.
 	method select_next_link () {
 		my $next = defined $selected_link ? $selected_link + 1 : 0;
-		return 0 if $next > $#links;
+		return 0 if $next >= $marks->link_count;
 		$self->select_link($next);
 		return 1;
 	}
 
 	method select_previous_link () {
-		my $previous = defined $selected_link ? $selected_link - 1 : $#links;
+		my $previous = defined $selected_link ? $selected_link - 1 : $marks->link_count - 1;
 		return 0 if $previous < 0;
 		$self->select_link($previous);
 		return 1;
@@ -434,7 +338,7 @@ class Term::Fabulous::Widget::Text
 	method activate_link (@index) {
 		my $index = @index ? $self->_checked_link_index( link => $index[0] ) : $selected_link;
 		return 0 unless defined $index;
-		my ( $start, $end, $target ) = @{ $links[$index] };
+		my ( $start, $end, $target ) = @{ $marks->links->[$index] };
 		$self->fire_event( Term::Fabulous::Event::LinkActivate->new( link => $target, index => $index, start => $start, end => $end ) );
 		return 1;
 	}
@@ -453,30 +357,13 @@ class Term::Fabulous::Widget::Text
 
 	# A text takes the focus while it has links to select.
 	method accepts_focus :override () {
-		return @links ? 1 : 0;
+		return $marks->link_count ? 1 : 0;
 	}
 
 	# ---------------------------------------------------------------------
-	# Searching (Term::Fabulous::Role::Searchable): the one text
+	# Searching (Term::Fabulous::Role::Searchable, through
+	# Term::Fabulous::Role::MarkedText): the one text
 	# ---------------------------------------------------------------------
-
-	method search_texts () {
-		return ( [ undef, $self->text ] );
-	}
-
-	method search_revision ($key) {
-		return $content_revision;
-	}
-
-	method highlight_text ( $key, $ranges ) {
-		$self->highlights($ranges);
-		return;
-	}
-
-	method clear_text_highlights () {
-		$self->clear_highlights;
-		return;
-	}
 
 	# The text shows itself; where a character lies is known once it was
 	# painted (Term::Fabulous::Render::Frame's text_rows).
@@ -570,7 +457,7 @@ class Term::Fabulous::Widget::Text
 				offset => $offset,
 				_word_around( $text, $offset ),
 				spans => [ grep { $_->[0] <= $offset && $offset < $_->[1] } @{ $self->spans } ],
-				defined $index ? ( link => $links[$index][2], link_index => $index ) : (),
+				defined $index ? ( link => $marks->links->[$index][2], link_index => $index ) : (),
 			)
 		);
 		return $self unless $button == TB_KEY_MOUSE_LEFT && defined $index;
@@ -596,7 +483,7 @@ class Term::Fabulous::Widget::Text
 	# that covers the characters [offset, offset + length). A text without
 	# spans, highlights or links has none; the renderer paints it plain.
 	method line_styles ( $offset, $length ) {
-		return [] if $length <= 0 || !( @spans || @highlights || @links );
+		return [] if $length <= 0 || !$marks->has_marks;
 		my $generation = Term::Fabulous::Theme::generation();
 		if ( !defined $runs || $runs_generation != $generation ) {
 			$runs            = $self->_runs_of_text;
@@ -620,26 +507,22 @@ class Term::Fabulous::Widget::Text
 
 	# The whole text cut at every span, highlight and link boundary, each
 	# piece with the style its spans give it, the highlights over them,
-	# and over those the look of the link it lies in. A run is the tuple
+	# and over those the look of the link it lies in, its palette tokens
+	# in the colors of the theme the text draws with
+	# (Term::Fabulous::Text::Marks). A run is the tuple
 	# Term::Fabulous::Render::Text paints with:
 	# [ $characters, $set, $clear, $fg_attr, $bg_attr ], the style's bits
 	# and its colors as termbox attributes (undef: the color is not
 	# touched), converted once here rather than in every frame.
 	method _runs_of_text () {
-		my $length = length $self->text;
-		return [ [ $length, 0, 0, undef, undef ] ] unless $length;
-
-		my %seen;
-		my @boundaries = sort { $a <=> $b } grep { !$seen{$_}++ } 0, $length, map { @{$_}[ 0, 1 ] } @spans, @highlights, @links;
-		my @runs;
-		foreach my $index ( 0 .. $#boundaries - 1 ) {
-			my ( $from, $to ) = @boundaries[ $index, $index + 1 ];
-			my @styles = map { $_->[2] } grep { $_->[0] <= $from && $_->[1] >= $to } @spans, @highlights;
-			my $link   = first { $links[$_][0] <= $from && $links[$_][1] >= $to } 0 .. $#links;
-			push @styles, $self->_link_style($link) if defined $link;
-			push @runs,   [ $to - $from, $self->_look_of(@styles) ];
-		}
-		return \@runs;
+		my $links = $marks->links;
+		my @over  = map { [ @{ $links->[$_] }[ 0, 1 ], $self->_link_style($_) ] } 0 .. $#$links;
+		return [
+			map {
+				my ( $from, $to, $style ) = @$_;
+				[ $to - $from, $style->{set}, $style->{clear}, _attr_of( $style->{color} ), _attr_of( $style->{background} ) ]
+			} @{ $marks->runs( theme => $self->drawing_theme, over => \@over ) }
+		];
 	}
 
 	# The look of a link from the theme's text.link slots: underlined in
@@ -656,14 +539,6 @@ class Term::Fabulous::Widget::Text
 			color      => $self->look( 'link',            $state ),
 			background => $self->look( 'link.background', $state ),
 		};
-	}
-
-	# The set and clear bits and the color attributes that the given
-	# styles, stacked in order, give a piece of text; a palette token
-	# among the colors is the theme's color for it.
-	method _look_of (@styles) {
-		my $style = resolve_style( compose_styles(@styles), $self->drawing_theme );
-		return ( $style->{set}, $style->{clear}, _attr_of( $style->{color} ), _attr_of( $style->{background} ) );
 	}
 
 	sub _attr_of ($rgba) {
@@ -1154,10 +1029,18 @@ change shows in the next frame.
 =head2 spans
 
 	my $spans = $text->spans;    # [ [ 0, 6, { set => ..., clear => ..., color => ..., background => ... } ], ... ]
+	$text->spans( [ [ 0, 6, 'bold red' ] ] );
 
-The spans, in the order they apply, each with its normalized style
-hash (see L<Term::Fabulous::Text::Style/Style hashes>); a palette
-token stays the token's name. The result is a copy.
+Accessor for the spans, in the order they apply, each with its
+normalized style hash (see L<Term::Fabulous::Text::Style/Style hashes>);
+a palette token stays the token's name. The reader returns a copy.
+Writing replaces every span (the markup is then C<undef>) and returns
+the new spans; invalid ranges or styles die (see
+L<Term::Fabulous::Text::Marks/set_spans>). The change shows in the next
+frame. The same accessor, L</stylize>, L</clear_spans>, L</highlights>
+and L</clear_highlights> are those of a
+L<Term::Fabulous::Widget::CodeBlock> (both from
+L<Term::Fabulous::Role::MarkedText>).
 
 =head2 stylize
 
@@ -1318,7 +1201,7 @@ checked.
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
 
 The methods of L<Term::Fabulous::Role::Searchable>, which a Text does
-for its one text: C<search_texts> returns C<[ undef, $text ]>,
+for its one text (through L<Term::Fabulous::Role::MarkedText>): C<search_texts> returns C<[ undef, $text ]>,
 C<search_revision> is L</content_revision>, C<highlight_text> sets
 L</highlights>, C<clear_text_highlights> clears them, and
 C<reveal_text> returns the text itself with no row, since where a

@@ -446,11 +446,19 @@ change shows in the next frame.
 
 ```perl
 my $spans = $text->spans;    # [ [ 0, 6, { set => ..., clear => ..., color => ..., background => ... } ], ... ]
+$text->spans( [ [ 0, 6, 'bold red' ] ] );
 ```
 
-The spans, in the order they apply, each with its normalized style
-hash (see ["Style hashes" in Term::Fabulous::Text::Style](../Text/Style.md#style-hashes)); a palette
-token stays the token's name. The result is a copy.
+Accessor for the spans, in the order they apply, each with its
+normalized style hash (see ["Style hashes" in Term::Fabulous::Text::Style](../Text/Style.md#style-hashes));
+a palette token stays the token's name. The reader returns a copy.
+Writing replaces every span (the markup is then `undef`) and returns
+the new spans; invalid ranges or styles die (see
+["set\_spans" in Term::Fabulous::Text::Marks](../Text/Marks.md#set_spans)). The change shows in the next
+frame. The same accessor, ["stylize"](#stylize), ["clear\_spans"](#clear_spans), ["highlights"](#highlights)
+and ["clear\_highlights"](#clear_highlights) are those of a
+[Term::Fabulous::Widget::CodeBlock](CodeBlock.md) (both from
+[Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)).
 
 ## stylize
 
@@ -647,7 +655,7 @@ checked.
 ## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
 
 The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), which a Text does
-for its one text: `search_texts` returns `[ undef, $text ]`,
+for its one text (through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)): `search_texts` returns `[ undef, $text ]`,
 `search_revision` is ["content\_revision"](#content_revision), `highlight_text` sets
 ["highlights"](#highlights), `clear_text_highlights` clears them, and
 `reveal_text` returns the text itself with no row, since where a

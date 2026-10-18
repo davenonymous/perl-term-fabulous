@@ -239,6 +239,7 @@ lib/Term/Fabulous/Role/HasBorderStyle.pm
 lib/Term/Fabulous/Role/HasOptions.pm
 lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
+lib/Term/Fabulous/Role/MarkedText.pm
 lib/Term/Fabulous/Role/Terminal.pm
 lib/Term/Fabulous/Role/SearchContainer.pm
 lib/Term/Fabulous/Role/Searchable.pm
@@ -253,6 +254,7 @@ lib/Term/Fabulous/Termbox/Event.pm
 lib/Term/Fabulous/Terminal/Memory.pm
 lib/Term/Fabulous/Terminal/Termbox.pm
 lib/Term/Fabulous/Terminal/Termbox/Cells.pm
+lib/Term/Fabulous/Text/Marks.pm
 lib/Term/Fabulous/Text/Markup.pm
 lib/Term/Fabulous/Text/Style.pm
 lib/Term/Fabulous/TextView.pm
@@ -414,6 +416,7 @@ t/table-value.t
 t/termbox.t
 t/terminal-memory.t
 t/terminal-termbox.t
+t/text-marks.t
 t/text-markup.t
 t/text-style.t
 t/text-view.t
