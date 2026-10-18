@@ -1115,7 +1115,9 @@ the entry names it.
 
 - Mouse
 
-    ["MOUSE" in Term::Fabulous::Widget::Table](../Widget/Table.md#mouse): `hover`, `double_click_seconds`.
+    ["MOUSE" in Term::Fabulous::Widget::Table](../Widget/Table.md#mouse): `hover`; the double click
+    interval is the UI's
+    [double\_click\_seconds](../../../../README.md#double_click_seconds).
 
 - Events
 

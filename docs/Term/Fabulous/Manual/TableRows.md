@@ -771,8 +771,7 @@ table shows the page with the cursor's line.
 # SELECTION AND CURSOR
 
 ```text
-Parameters: selection, selection_column, cursor_color, selected_color,
-            double_click_seconds
+Parameters: selection, selection_column, cursor_color, selected_color
 Methods:    selection, selection_column, selected_ids, selected_rows,
             is_selected, set_selection, select, deselect, select_all,
             clear_selection, cursor, cursor_group, scroll_to_row
@@ -935,7 +934,8 @@ $table->on( RowActivate => sub ($event) {
 
 `Enter` on a group header opens or closes the group instead. Two
 clicks on the same line count as a double click when they are at most
-`double_click_seconds` apart (default 0.4). `Enter` in a widget inside
+the UI's [double\_click\_seconds](../../../../README.md#double_click_seconds)
+apart (default 0.4). `Enter` in a widget inside
 a cell, and double clicks on input widgets in cells, do not activate
 the row.
 

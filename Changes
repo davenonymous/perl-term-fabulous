@@ -1,6 +1,16 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous counts clicks: every Mouse press has a
+          click_count, 2 for the second press of a double click, 3 for a
+          triple click, for presses of the same button in the same cell
+          at most double_click_seconds apart (a new parameter of
+          Term::Fabulous->new, default 0.4) on the UI's clock. Table,
+          TextField, TextArea and the theme editor's settings list read
+          it instead of timing presses on the system clock, and the
+          dropdown's type-ahead runs on the UI's clock too, so a test
+          with its own clock can click or type slowly. Table's
+          double_click_seconds parameter is gone; the UI's applies.
         - Term::Fabulous::Unicode::fit_columns($text, $columns, mark =>
           ..., cut => 'end' or 'start') cuts a text to a number of
           columns with a mark where it was cut (an ellipsis, exported as

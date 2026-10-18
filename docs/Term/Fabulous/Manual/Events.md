@@ -196,8 +196,9 @@ the sections below it describe each event.
     wheel was turned. Fired on the topmost widget painted under the pointer
     (see ["MOUSE"](#mouse)). Fields: `key` (which button or wheel direction),
     `x`, `y` (the cell), `modifiers` (Shift, Alt, Ctrl and the motion
-    flag of a drag), `released_button` (which button a release released);
-    methods `use_wheel` and `wheel_used` (see ["SCROLLING"](#scrolling)).
+    flag of a drag), `released_button` (which button a release released),
+    `click_count` (2 for the second press of a double click); methods
+    `use_wheel` and `wheel_used` (see ["SCROLLING"](#scrolling)).
 
 - `MouseMove` ([Term::Fabulous::Event::MouseMove](../Event/MouseMove.md))
 
@@ -888,6 +889,16 @@ Every report with a button or the wheel becomes a `Mouse` event
     For `TB_KEY_MOUSE_RELEASE`: the button that was released
     (`TB_KEY_MOUSE_LEFT`, `TB_KEY_MOUSE_MIDDLE` or `TB_KEY_MOUSE_RIGHT`),
     or `undef` when the terminal did not say.
+
+- `click_count`
+
+    For a button press: its place in a run of quick clicks, 1 for a single
+    click, 2 for a double click, 3 for a triple click. A press continues
+    the run when it is of the same button, in the same cell and at most
+    `double_click_seconds` (a parameter of ["new" in Term::Fabulous](../../../../README.md#new), default
+    0.4) after the press before it, measured on the UI's clock
+    (["now" in Term::Fabulous](../../../../README.md#now)), so a test with its own `clock` can click
+    quickly or slowly. Every other event has 1.
 
 A report of the pointer moving with no button held becomes a
 `MouseMove` event ([Term::Fabulous::Event::MouseMove](../Event/MouseMove.md)) with `x`, `y`

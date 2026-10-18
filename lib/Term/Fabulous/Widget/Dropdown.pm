@@ -25,7 +25,6 @@ class Term::Fabulous::Widget::Dropdown
 	use Term::Fabulous::OptionList;
 	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
-	use Time::HiRes qw(time);
 	use Term::Fabulous::Unicode qw(string_columns);
 
 	use constant ARROW_DOWN        => "\x{25BE}";
@@ -303,7 +302,7 @@ class Term::Fabulous::Widget::Dropdown
 	method _type_ahead ($character) {
 		my @options = $option_list->options;
 		return 0 unless @options;
-		my $now = time;
+		my $now = $self->now;
 		$typed    = $now - $typed_at <= TYPEAHEAD_SECONDS ? $typed . $character : $character;
 		$typed_at = $now;
 
@@ -728,7 +727,8 @@ with it, ignoring case: it selects that option while the list is closed
 (firing C<Change>) and highlights it while the list is open. The
 current option is the selected one while the list is closed and the
 highlighted one while it is open. Characters typed at most one second
-apart form one search string, so typing C<d>, C<a> quickly finds "Dark
+apart (on the UI's clock, L<Term::Fabulous/now>) form one search
+string, so typing C<d>, C<a> quickly finds "Dark
 green" rather than the next option starting with C<a>. A search for a
 single character starts after the current option, so pressing C<d>
 again moves on to the next label starting with C<d>; a longer search

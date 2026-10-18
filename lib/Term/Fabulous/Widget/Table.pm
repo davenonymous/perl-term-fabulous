@@ -46,7 +46,6 @@ class Term::Fabulous::Widget::Table
 	);
 	use List::Util qw(any first max min none);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Time::HiRes ();
 	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Event::CursorMove;
@@ -125,21 +124,20 @@ class Term::Fabulous::Widget::Table
 	field $selection        :param = 'none';
 	field $selection_column :param = undef;
 	field $_explicit_selection_column;    # selection_column as the user set it, else undef
-	field $show_header          :param(header) = 1;
-	field $filter_row           :param         = 0;
-	field $page_sizes           :param         = [ 10, 25, 50, 100 ];
-	field $show_pager           :param(pager)  = undef;
-	field $scrollbar            :param         = 1;
-	field $hover                :param         = 1;
-	field $tree_column          :param         = undef;
-	field $group_label          :param         = undef;
-	field $row_style            :param         = undef;
-	field $header_style         :param         = undef;
-	field $group_style          :param         = undef;
-	field $empty_text           :param         = 'No rows';
-	field $no_match_text        :param         = 'No rows match';
-	field $cell_padding         :param         = 1;
-	field $double_click_seconds :param         = 0.4;
+	field $show_header   :param(header) = 1;
+	field $filter_row    :param         = 0;
+	field $page_sizes    :param         = [ 10, 25, 50, 100 ];
+	field $show_pager    :param(pager)  = undef;
+	field $scrollbar     :param         = 1;
+	field $hover         :param         = 1;
+	field $tree_column   :param         = undef;
+	field $group_label   :param         = undef;
+	field $row_style     :param         = undef;
+	field $header_style  :param         = undef;
+	field $group_style   :param         = undef;
+	field $empty_text    :param         = 'No rows';
+	field $no_match_text :param         = 'No rows match';
+	field $cell_padding  :param         = 1;
 
 	field $border        :param = 'Round';
 	field $border_top    :param = undef;
@@ -202,7 +200,7 @@ class Term::Fabulous::Widget::Table
 	field %_cell_style_of;    # "id\0key" => style hash
 	field $_hover_key;
 	field $_header_cursor;    # grid column index while the header has the keyboard, else undef
-	field @_last_press;    # ( time, line key ) of the last left press on a line
+	field $_last_press_key;    # the line of the last single left press, which a double click must repeat
 	field $_shown_page = 0;
 
 	method theme_family :common () {
@@ -294,8 +292,6 @@ class Term::Fabulous::Widget::Table
 		$empty_text    = string( $self, empty_text    => $empty_text );
 		$no_match_text = string( $self, no_match_text => $no_match_text );
 		$cell_padding  = $self->_padding($cell_padding);
-		die "Term::Fabulous::Widget::Table: double_click_seconds must be a number of at least 0, got " . describe($double_click_seconds)
-			unless defined $double_click_seconds && !ref $double_click_seconds && $double_click_seconds =~ /\A[0-9]*\.?[0-9]+\z/;
 
 		my $outer = optional( \&border_style, $self, border => $border, @NONE_IS_HIDDEN );
 		my %line  = (
@@ -1552,10 +1548,9 @@ class Term::Fabulous::Widget::Table
 
 	method _click_line ( $cell, $event ) {
 		my $line   = $model->line( $cell->line_key // '' ) // return $HANDLED;
-		my $now    = Time::HiRes::time();
-		my $double = @_last_press && $_last_press[1] eq $line->{key} && $now - $_last_press[0] <= $double_click_seconds;
-		@_last_press    = $double ? () : ( $now, $line->{key} );
-		$_header_cursor = undef;
+		my $double = $event->click_count >= 2 && defined $_last_press_key && $_last_press_key eq $line->{key};
+		$_last_press_key = $double ? undef : $line->{key};
+		$_header_cursor  = undef;
 
 		if ( $line->{kind} eq 'group' ) {
 			$self->_move_cursor( $line->{key} );
@@ -2832,12 +2827,6 @@ Never shown with C<'none'>.
 A boolean. Default: 1. Whether the line under the mouse pointer is
 highlighted with the C<hover_color>.
 
-=item C<double_click_seconds>
-
-A number of seconds, at least 0. Default: 0.4. Two clicks on the same
-line at most this far apart are a double click. Only a parameter; there
-is no accessor.
-
 =back
 
 =head3 Parts shown
@@ -4022,9 +4011,12 @@ selection column selects or deselects that row and keeps the others.
 
 =item *
 
-B<Double click on a row> (two clicks on the same line within
-C<double_click_seconds>): each click does what a click does (moves the
-cursor, selects), then the second one fires C<RowActivate>.
+B<Double click on a row> (two clicks on the same line, a
+L<click_count|Term::Fabulous::Event::Mouse/click_count> of 2 within the
+UI's L<double_click_seconds|Term::Fabulous/double_click_seconds>): each
+click does what a click does (moves the cursor, selects), then the
+second one fires C<RowActivate>. A third quick click is a single click
+again, a fourth a double click.
 
 =item *
 
@@ -4148,8 +4140,8 @@ A table can be part of a KDL layout (see
 L<Term::Fabulous::Manual::KDL/KDL LAYOUT FILES>). The layout describes the
 table: its columns, sort, grouping, lines, colors and options. The rows,
 everything that is a code reference (mutators, cell widgets,
-callbacks), the style hashes C<header_style> and C<group_style> of the
-table, and C<double_click_seconds> come from Perl.
+callbacks) and the style hashes C<header_style> and C<group_style> of
+the table come from Perl.
 
 =for highlighter language=kdl
 

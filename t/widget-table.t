@@ -35,15 +35,17 @@ my @EVENTS = qw(SelectionChange CursorMove RowActivate SortChange PageChange Exp
 
 # A focused table on a memory terminal; returns the table and a harness
 # with the terminal, the UI and the names of the events fired since the
-# last look.
+# last look. A clock goes to the UI.
 sub table_ui (%args) {
 	my $size  = delete $args{size} // [ 40, 14 ];
+	my @clock = exists $args{clock} ? ( clock => delete $args{clock} ) : ();
 	my $table = Term::Fabulous::Widget::Table->new( id => 'people', row_id => 'id', columns => [@COLUMNS], rows => [@PEOPLE], %args );
 	my $root  = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	$root->add_child($table);
 	my $terminal = Term::Fabulous::Terminal::Memory->new( width => $size->[0], height => $size->[1] );
-	my $ui       = Term::Fabulous->new( root => $root, width => $size->[0], height => $size->[1], terminal => $terminal );
+	my $ui       = Term::Fabulous->new( root => $root, width => $size->[0], height => $size->[1], terminal => $terminal, @clock );
 	my %h        = ( terminal => $terminal, ui => $ui, events => [] );
+
 	foreach my $name (@EVENTS) {
 		$table->on( $name => sub ($event) { push @{ $h{events} }, [ $name, $event ]; return } );
 	}
@@ -210,7 +212,7 @@ subtest 'header keys' => sub {
 };
 
 subtest 'mouse' => sub {
-	my ( $table, $h ) = table_ui( selection => 'multiple' );
+	my ( $table, $h ) = table_ui( selection => 'multiple', clock => sub { 1000 } );    # every click is quick
 
 	# The selection column is 5 cells wide, the rows start on screen row 3.
 	click( $h, 8, 4 );
@@ -234,6 +236,30 @@ subtest 'mouse' => sub {
 	is [ map { $_->row_id } map { $_->[1] } grep { $_->[0] eq 'RowActivate' } @{ $h->{events} } ], [5], 'a double click activates';
 	mouse( $h, key => TB_KEY_MOUSE_RIGHT, x => 9, y => 1 );
 	ok $table->is_column_chooser_open, 'a right click on the header opens the column chooser';
+};
+
+subtest 'double clicks on the clock of the UI' => sub {
+	my $now = 1000;
+	my ( $table, $h ) = table_ui( clock => sub { $now } );
+	my $activated = sub {
+		[ map { $_->[1]->row_id } grep { $_->[0] eq 'RowActivate' } splice @{ $h->{events} } ]
+	};
+	click( $h, 9, 7 );
+	$now += 0.3;
+	click( $h, 9, 7 );
+	is $activated->(), [5], 'two clicks 0.3 seconds apart activate the row';
+	click( $h, 9, 7 );
+	is $activated->(), [], 'a third quick click is a single click';
+	click( $h, 9, 7 );
+	is $activated->(), [5], 'and a fourth a double click again';
+	$now += 1;
+	click( $h, 9, 6 );
+	$now += 0.5;
+	click( $h, 9, 6 );
+	is $activated->(), [], 'two clicks 0.5 seconds apart do not';
+	click( $h, 9, 5 );
+	click( $h, 9, 6 );
+	is $activated->(), [], 'nor two quick clicks on two lines';
 };
 
 subtest 'mouse on trees and groups' => sub {

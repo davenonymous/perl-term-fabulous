@@ -70,6 +70,10 @@ hides.
 ## activate, click, hover
 
 What `Enter`, a click and the pointer do to a row.
+`click( $index, $column, $click_count )` takes the click's place in
+a run of quick clicks
+(["click\_count" in Term::Fabulous::Event::Mouse](../Event/Mouse.md#click_count), default 1); the second
+click of a double click on the same row activates it.
 
 ## shown\_count, shown\_row, hover\_index, value\_columns
 

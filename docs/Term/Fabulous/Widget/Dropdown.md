@@ -371,7 +371,8 @@ with it, ignoring case: it selects that option while the list is closed
 (firing `Change`) and highlights it while the list is open. The
 current option is the selected one while the list is closed and the
 highlighted one while it is open. Characters typed at most one second
-apart form one search string, so typing `d`, `a` quickly finds "Dark
+apart (on the UI's clock, ["now" in Term::Fabulous](../../../../README.md#now)) form one search
+string, so typing `d`, `a` quickly finds "Dark
 green" rather than the next option starting with `a`. A search for a
 single character starts after the current option, so pressing `d`
 again moves on to the next label starting with `d`; a longer search

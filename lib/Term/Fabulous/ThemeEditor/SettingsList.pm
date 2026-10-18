@@ -29,11 +29,9 @@ class Term::Fabulous::ThemeEditor::SettingsList
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Widget::VirtualList;
 	use Term::Fabulous::Unicode qw(string_columns);
-	use Time::HiRes ();
 
-	use constant DOUBLE_CLICK_SECONDS => 0.4;
-	use constant SWATCH_COLUMNS       => 4;
-	use constant ORIGIN_COLUMNS       => 8;
+	use constant SWATCH_COLUMNS => 4;
+	use constant ORIGIN_COLUMNS => 8;
 
 	field $on_activate :param;    # code: Enter or a double click on a setting row ( $id )
 	field $on_cursor   :param;    # code: the cursor moved ( $id )
@@ -51,7 +49,7 @@ class Term::Fabulous::ThemeEditor::SettingsList
 	field $value_columns = 10;
 	field $header;
 	field $body;
-	field @last_click;    # [ time, index ]
+	field $last_click;    # the index of the last single click, which a double click must repeat
 
 	ADJUST {
 		my $id = $self->id // die "Term::Fabulous::ThemeEditor::SettingsList: an id is required";
@@ -355,23 +353,23 @@ class Term::Fabulous::ThemeEditor::SettingsList
 	}
 
 	# A click puts the cursor on a row; on a section's marker it opens or
-	# closes the section, and a second click on the same row activates it.
-	method click ( $index, $column ) {
-		return unless defined $self->shown_row($index);
-		my $entry = $self->shown_row($index);
+	# closes the section, and the second click of a double click on the
+	# same row activates it. $click_count is the click's place in a run
+	# of quick clicks (Term::Fabulous::Event::Mouse).
+	method click ( $index, $column, $click_count = 1 ) {
+		my $entry = $self->shown_row($index) // return;
 		$self->_move_to($index);
-		my $now = Time::HiRes::time();
 		if ( $entry->{row}{section} && $column >= SWATCH_COLUMNS + 2 * $entry->{depth} && $column < SWATCH_COLUMNS + 2 * $entry->{depth} + 2 ) {
-			@last_click = ();
+			$last_click = undef;
 			$self->toggle( $entry->{row}{id} );
 			return;
 		}
-		if ( @last_click && $last_click[1] == $index && $now - $last_click[0] <= DOUBLE_CLICK_SECONDS ) {
-			@last_click = ();
+		if ( $click_count >= 2 && defined $last_click && $last_click == $index ) {
+			$last_click = undef;
 			$self->activate( $entry->{row}{id} );
 			return;
 		}
-		@last_click = ( $now, $index );
+		$last_click = $index;
 		return;
 	}
 
@@ -414,7 +412,7 @@ class Term::Fabulous::ThemeEditor::SettingsList::Row :isa(Term::Fabulous::Widget
 		return if $index < 0 || !defined $list;
 		return unless $event->key == TB_KEY_MOUSE_LEFT && !( $event->modifiers & TB_MOD_MOTION );
 		my ($column) = $self->cell_at($event);
-		$list->click( $index, $column // 0 );
+		$list->click( $index, $column // 0, $event->click_count );
 		return;
 	}
 
@@ -560,6 +558,10 @@ hides.
 =head2 activate, click, hover
 
 What C<Enter>, a click and the pointer do to a row.
+C<< click( $index, $column, $click_count ) >> takes the click's place in
+a run of quick clicks
+(L<Term::Fabulous::Event::Mouse/click_count>, default 1); the second
+click of a double click on the same row activates it.
 
 =head2 shown_count, shown_row, hover_index, value_columns
 

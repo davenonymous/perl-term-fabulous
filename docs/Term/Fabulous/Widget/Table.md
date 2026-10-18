@@ -240,12 +240,6 @@ of the same name, described under ["METHODS"](#methods).
     A boolean. Default: 1. Whether the line under the mouse pointer is
     highlighted with the `hover_color`.
 
-- `double_click_seconds`
-
-    A number of seconds, at least 0. Default: 0.4. Two clicks on the same
-    line at most this far apart are a double click. Only a parameter; there
-    is no accessor.
-
 ### Parts shown
 
 - `header`
@@ -1618,9 +1612,12 @@ plain click selects only that row; `Ctrl`+click or `Alt`+click
 selects or deselects it and keeps the others; `Shift`+click selects
 the range from where the range started to that row; a click into the
 selection column selects or deselects that row and keeps the others.
-- **Double click on a row** (two clicks on the same line within
-`double_click_seconds`): each click does what a click does (moves the
-cursor, selects), then the second one fires `RowActivate`.
+- **Double click on a row** (two clicks on the same line, a
+[click\_count](../Event/Mouse.md#click_count) of 2 within the
+UI's [double\_click\_seconds](../../../../README.md#double_click_seconds)): each
+click does what a click does (moves the cursor, selects), then the
+second one fires `RowActivate`. A third quick click is a single click
+again, a fourth a double click.
 - **Click on a group header** or on the marker of a tree row: opens or
 closes it (`Expand` or `Collapse`) and moves the cursor there.
 - **Click on a column title**: sorts by it alone (ascending, descending,
@@ -1717,8 +1714,8 @@ A table can be part of a KDL layout (see
 ["KDL LAYOUT FILES" in Term::Fabulous::Manual::KDL](../Manual/KDL.md#kdl-layout-files)). The layout describes the
 table: its columns, sort, grouping, lines, colors and options. The rows,
 everything that is a code reference (mutators, cell widgets,
-callbacks), the style hashes `header_style` and `group_style` of the
-table, and `double_click_seconds` come from Perl.
+callbacks) and the style hashes `header_style` and `group_style` of
+the table come from Perl.
 
 ```kdl
 use Term::Fabulous::Widget::Table as Table

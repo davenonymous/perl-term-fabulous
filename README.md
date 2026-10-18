@@ -244,6 +244,17 @@ add timers first. Unknown parameters die
     `Mouse` or `MouseMove` events are fired. Inline mode has no mouse
     support: `mouse` with a true value and `inline` together die.
 
+- `double_click_seconds`
+
+    A number of seconds, at least 0. Default: 0.4. A button press in the
+    same cell as the press of the same button before it, at most this long
+    after it (on the `clock`), continues a run of clicks: the `Mouse`
+    event of a double click has a
+    [click\_count](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Event/Mouse.md#click_count) of 2, a triple
+    click 3. Every widget that tells double clicks apart ([Term::Fabulous::Widget::Table](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Table.md),
+    [Term::Fabulous::Widget::TextField](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextField.md), [Term::Fabulous::Widget::TextArea](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/TextArea.md))
+    reads that count. Anything else dies.
+
 - `kitty_keyboard`
 
     A boolean. Default: 1. With 1, ["run"](#run) asks the terminal whether it
@@ -283,8 +294,9 @@ add timers first. Unknown parameters die
 
     Optional, for tests. A code reference that returns the current time in
     seconds, default `Time::HiRes::time`. Frame pacing reads it: how long
-    a frame took and when it ended (see ["run"](#run)), and so do ["now"](#now) and
-    the widgets that animate (see ["request\_frame\_at"](#request_frame_at)). A test gives it a
+    a frame took and when it ended (see ["run"](#run)), and so do ["now"](#now), the
+    widgets that animate (see ["request\_frame\_at"](#request_frame_at)) and the count of a run
+    of clicks (see `double_click_seconds`). A test gives it a
     clock it controls to check the pacing with `step( paced => 1 )`
     or to move an animation on. Anything but a code reference dies.
 
@@ -561,6 +573,15 @@ my $enabled = $ui->mouse;
 
 Returns whether the mouse is reported: the `mouse` constructor
 parameter, or its default (1, or 0 in inline mode). Read only.
+
+## double\_click\_seconds
+
+```perl
+my $seconds = $ui->double_click_seconds;
+```
+
+Returns the `double_click_seconds` constructor parameter, or its
+default (0.4). Read only.
 
 ## kitty\_keyboard
 

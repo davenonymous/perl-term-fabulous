@@ -116,6 +116,12 @@ parameters die. Besides the parameters below, the `name` and
     `TB_KEY_MOUSE_RIGHT`. Default: `undef`, the terminal did not say.
     Anything else dies.
 
+- `click_count`
+
+    Optional. A positive integer: the place of a button press in a run of
+    quick clicks, 2 for the second press of a double click (see
+    ["click\_count"](#click_count)). Default: 1. Anything else dies.
+
 An event object can be fired only once. Build a new one for every
 `fire_event` call.
 
@@ -123,12 +129,14 @@ An event object can be fired only once. Build a new one for every
 
 ```perl
 my $event = Term::Fabulous::Event::Mouse->of($termbox_event);
+my $event = Term::Fabulous::Event::Mouse->of( $termbox_event, click_count => 2 );
 ```
 
 Builds an event from a `Term::Fabulous::Termbox::Event`: `key`, `x`, `y` and
 `modifiers` from its `key`, `x`, `y` and `mod`, and for a release
 `released_button` from its `ch` (see
-["tf\_install\_input\_parser" in Term::Fabulous::Termbox](../Termbox.md#tf_install_input_parser)). Called by
+["tf\_install\_input\_parser" in Term::Fabulous::Termbox](../Termbox.md#tf_install_input_parser)). Further parameters
+of ["new"](#new), such as `click_count`, follow the event. Called by
 [Term::Fabulous](../../../../README.md); class method.
 
 # METHODS
@@ -211,6 +219,23 @@ For a `TB_KEY_MOUSE_RELEASE`: the key of the button that was released,
 `undef` when the terminal did not say. [Term::Fabulous](../../../../README.md) takes a
 release that names no button for a release of the left button. For
 every other key: `undef`.
+
+## click\_count
+
+```perl
+$self->open_item if $event->key == TB_KEY_MOUSE_LEFT && $event->click_count == 2;
+```
+
+For a button press: its place in a run of clicks. [Term::Fabulous](../../../../README.md)
+counts a press of the same button in the same cell at most
+[double\_click\_seconds](../../../../README.md#double_click_seconds) after the
+press before it as the next click of a run, on the UI's clock
+(["now" in Term::Fabulous](../../../../README.md#now)): 1 for a single click, 2 for a double click, 3
+for a triple click. A press of another button or in another cell, or
+one that comes later, starts a new run at 1. Releases, drags and wheel
+notches are 1. What a cell shows can change between two presses (a
+table that sorts itself, a list that scrolls), so a widget that acts on
+a double click also checks that both presses hit the same part of it.
 
 ## use\_wheel
 

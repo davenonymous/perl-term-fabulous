@@ -100,6 +100,41 @@ subtest 'a press and a release within one frame both reach Clay' => sub {
 	is $ui->pointer_state, { x => 2, y => 1, down => 0 }, 'and leave the newest report as the pointer';
 };
 
+subtest 'presses count their clicks on the clock of the UI' => sub {
+	my $now = 1000;
+	my $box = Term::Fabulous::Widget::Box->new( background_color => [ 1, 1, 1, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my ( $clocked, $clocked_terminal ) = memory_ui( root => $box, clock => sub { $now } );
+	my @counts;
+	$box->on( Mouse => sub { push @counts, $_[0]->click_count; return } );
+	my $press = sub { mouse( $clocked, key => TB_KEY_MOUSE_LEFT, x => 1, y => 1, @_ ); return };
+
+	$press->() foreach 1 .. 3;
+	is [ splice @counts ], [ 1, 2, 3 ], 'quick presses in one cell count 1, 2, 3';
+	$now += 0.4;
+	$press->();
+	is [ splice @counts ], [4], 'a press double_click_seconds after the one before continues the run';
+	$now += 0.41;
+	$press->();
+	is [ splice @counts ], [1], 'a slower one starts a new run';
+	$press->( x => 2 );
+	is [ splice @counts ], [1], 'so does a press in another cell';
+	$press->( x => 2, key => TB_KEY_MOUSE_RIGHT );
+	is [ splice @counts ], [1], 'and a press of another button';
+	mouse( $clocked, key => TB_KEY_MOUSE_RELEASE, x => 2, y => 1 );
+	$press->( x => 2, key => TB_KEY_MOUSE_RIGHT, mod => TB_MOD_MOTION );
+	mouse( $clocked, key => TB_KEY_MOUSE_WHEEL_UP, x => 2, y => 1 );
+	is [ splice @counts ], [ 1, 1, 1 ], 'releases, drags and wheel notches count 1';
+	$press->( x => 2, key => TB_KEY_MOUSE_RIGHT );
+	is [ splice @counts ], [2], 'and do not end a run';
+
+	my ($slow) = memory_ui( root => Term::Fabulous::Widget::Box->new, double_click_seconds => 1.5 );
+	is $slow->double_click_seconds, 1.5, 'double_click_seconds is a parameter';
+	is $ui->double_click_seconds,   0.4, 'with a default of 0.4 seconds';
+	like dies { memory_ui( root => Term::Fabulous::Widget::Box->new, double_click_seconds => -1 ) }, qr/\ATerm::Fabulous: double_click_seconds must be a number of at least 0, got '-1'/,
+		'a negative interval dies';
+	like dies { Term::Fabulous::Event::Mouse->new( key => TB_KEY_MOUSE_LEFT, x => 0, y => 0, click_count => 0 ) }, qr/click_count must be a positive integer/, 'a click_count of 0 dies';
+};
+
 subtest 'MouseMove follows the pointer without a button' => sub {
 	%targets = ();
 	$terminal->mouse( key => TF_KEY_MOUSE_MOVE, x => 1, y => 1, mod => TB_MOD_MOTION );

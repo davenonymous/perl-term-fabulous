@@ -61,6 +61,7 @@ class Term::Fabulous
 
 	field $inline                           :param :reader = undef;    # the rows of the inline region, or undef for the full screen
 	field $mouse                            :param :reader = undef;
+	field $double_click_seconds             :param :reader = 0.4;
 	field $kitty_keyboard                   :param :reader = 1;
 	field $stop_on_ctrl_c                   :param :reader = 1;
 	field $terminal                         :param :reader //= Term::Fabulous::Terminal::Termbox->new;
@@ -87,6 +88,7 @@ class Term::Fabulous
 	field $_frame_seconds  = 0;    # how long the last frame took to draw
 	field $_frame_ended_at = 0;    # when it was drawn, on the clock
 	field $_hovered_text;    # the Text whose link is under the pointer, weakened
+	field $_last_press;    # { key, x, y, at, count } of the last button press
 
 	sub BUILDARGS ( $class, %params ) {
 		die "Term::Fabulous: measure_text cannot be replaced; text is always measured in terminal columns" if exists $params{measure_text};
@@ -110,6 +112,8 @@ class Term::Fabulous
 			unless ref $clock eq 'CODE';
 		die "Term::Fabulous: stop_on_ctrl_c must be a boolean, got a " . ref($stop_on_ctrl_c) . " reference" if ref $stop_on_ctrl_c;
 		$stop_on_ctrl_c = $stop_on_ctrl_c ? 1 : 0;
+		die "Term::Fabulous: double_click_seconds must be a number of at least 0, got " . ( defined $double_click_seconds ? "'$double_click_seconds'" : 'undef' )
+			unless defined $double_click_seconds && !ref $double_click_seconds && looks_like_number($double_click_seconds) && $double_click_seconds >= 0;
 	}
 
 	method cell_target () {
@@ -440,7 +444,7 @@ class Term::Fabulous
 		my $is_press = $IS_BUTTON{$key} && !( $event->mod & TB_MOD_MOTION );
 		$self->interaction->set_focused_widget( $self->_focusable_at_or_above( $text // $target ) )
 			if $is_press && $key == TB_KEY_MOUSE_LEFT && !_keeps_focus_on_click($target);
-		my $mouse_event = Term::Fabulous::Event::Mouse->of($event);
+		my $mouse_event = Term::Fabulous::Event::Mouse->of( $event, click_count => $is_press ? $self->_count_press( $key, $x, $y ) : 1 );
 		$target->fire_event($mouse_event);
 
 		# A Mouse listener may have taken the text out of the tree.
@@ -453,6 +457,17 @@ class Term::Fabulous
 		$_wheel_columns += WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_LEFT;
 		$_wheel_columns -= WHEEL_NOTCH_COLUMNS if $key == TF_KEY_MOUSE_WHEEL_RIGHT;
 		return;
+	}
+
+	# A press of the same button in the same cell at most
+	# double_click_seconds after the one before continues its run of
+	# clicks; any other press starts a new run. Returns the press's place
+	# in its run, 1 for a single click.
+	method _count_press ( $key, $x, $y ) {
+		my ( $now, $last ) = ( $self->now, $_last_press );
+		my $continues = defined $last && $last->{key} == $key && $last->{x} == $x && $last->{y} == $y && $now - $last->{at} <= $double_click_seconds;
+		$_last_press = { key => $key, x => $x, y => $y, at => $now, count => $continues ? $last->{count} + 1 : 1 };
+		return $_last_press->{count};
 	}
 
 	# Motion replaces the newest queued state; a press or a release adds
@@ -871,6 +886,17 @@ for itself, so the user can select and copy text as usual, and no
 C<Mouse> or C<MouseMove> events are fired. Inline mode has no mouse
 support: C<mouse> with a true value and C<inline> together die.
 
+=item C<double_click_seconds>
+
+A number of seconds, at least 0. Default: 0.4. A button press in the
+same cell as the press of the same button before it, at most this long
+after it (on the C<clock>), continues a run of clicks: the C<Mouse>
+event of a double click has a
+L<click_count|Term::Fabulous::Event::Mouse/click_count> of 2, a triple
+click 3. Every widget that tells double clicks apart (L<Term::Fabulous::Widget::Table>,
+L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>)
+reads that count. Anything else dies.
+
 =item C<kitty_keyboard>
 
 A boolean. Default: 1. With 1, L</run> asks the terminal whether it
@@ -910,8 +936,9 @@ else dies (C<Term::Fabulous: terminal must consume Term::Fabulous::Role::Termina
 
 Optional, for tests. A code reference that returns the current time in
 seconds, default C<Time::HiRes::time>. Frame pacing reads it: how long
-a frame took and when it ended (see L</run>), and so do L</now> and
-the widgets that animate (see L</request_frame_at>). A test gives it a
+a frame took and when it ended (see L</run>), and so do L</now>, the
+widgets that animate (see L</request_frame_at>) and the count of a run
+of clicks (see C<double_click_seconds>). A test gives it a
 clock it controls to check the pacing with C<< step( paced => 1 ) >>
 or to move an animation on. Anything but a code reference dies.
 
@@ -1215,6 +1242,13 @@ Returns the C<inline> constructor parameter. Read only.
 
 Returns whether the mouse is reported: the C<mouse> constructor
 parameter, or its default (1, or 0 in inline mode). Read only.
+
+=head2 double_click_seconds
+
+	my $seconds = $ui->double_click_seconds;
+
+Returns the C<double_click_seconds> constructor parameter, or its
+default (0.4). Read only.
 
 =head2 kitty_keyboard
 

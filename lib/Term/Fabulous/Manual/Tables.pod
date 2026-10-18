@@ -1182,7 +1182,9 @@ L<Term::Fabulous::Widget::Table/KEYS>.
 
 =item Mouse
 
-L<Term::Fabulous::Widget::Table/MOUSE>: C<hover>, C<double_click_seconds>.
+L<Term::Fabulous::Widget::Table/MOUSE>: C<hover>; the double click
+interval is the UI's
+L<double_click_seconds|Term::Fabulous/double_click_seconds>.
 
 =item Events
 

@@ -215,8 +215,9 @@ A mouse button was pressed or released, the mouse was dragged, or the
 wheel was turned. Fired on the topmost widget painted under the pointer
 (see L</MOUSE>). Fields: C<key> (which button or wheel direction),
 C<x>, C<y> (the cell), C<modifiers> (Shift, Alt, Ctrl and the motion
-flag of a drag), C<released_button> (which button a release released);
-methods C<use_wheel> and C<wheel_used> (see L</SCROLLING>).
+flag of a drag), C<released_button> (which button a release released),
+C<click_count> (2 for the second press of a double click); methods
+C<use_wheel> and C<wheel_used> (see L</SCROLLING>).
 
 =item C<MouseMove> (L<Term::Fabulous::Event::MouseMove>)
 
@@ -966,6 +967,16 @@ C<TB_MOD_ALT> and C<TB_MOD_CTRL> for the keys held during the click.
 For C<TB_KEY_MOUSE_RELEASE>: the button that was released
 (C<TB_KEY_MOUSE_LEFT>, C<TB_KEY_MOUSE_MIDDLE> or C<TB_KEY_MOUSE_RIGHT>),
 or C<undef> when the terminal did not say.
+
+=item C<click_count>
+
+For a button press: its place in a run of quick clicks, 1 for a single
+click, 2 for a double click, 3 for a triple click. A press continues
+the run when it is of the same button, in the same cell and at most
+C<double_click_seconds> (a parameter of L<Term::Fabulous/new>, default
+0.4) after the press before it, measured on the UI's clock
+(L<Term::Fabulous/now>), so a test with its own C<clock> can click
+quickly or slowly. Every other event has 1.
 
 =back
 

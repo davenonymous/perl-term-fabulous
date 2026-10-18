@@ -68,6 +68,20 @@ subtest 'keys while closed' => sub {
 	ok !$dropdown->is_open, 'Escape does not open';
 };
 
+subtest 'typing searches on the clock of the UI' => sub {
+	my $now      = 1000;
+	my $dropdown = Term::Fabulous::Widget::Dropdown->new( options => [qw(Black Blue Brown Red)], value => 'Red' );
+	my $ui       = layout_ui( $dropdown, { clock => sub { $now } } );
+	press( $dropdown, 'b' );
+	is $dropdown->value, 'Black', 'a letter finds the next label that starts with it';
+	$now += 0.5;
+	press( $dropdown, 'r' );
+	is $dropdown->value, 'Brown', 'letters typed within a second search together';
+	$now += 1.5;
+	press( $dropdown, 'r' );
+	is $dropdown->value, 'Red', 'a letter typed later starts a new search';
+};
+
 subtest 'the open list' => sub {
 	my ( $dropdown, $ui, $changes ) = dropdown( max_visible_options => 4, value => 'Green' );
 	press( $dropdown, 'Enter' );
