@@ -1,6 +1,12 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Text that does not wrap (wrap_mode newlines or none) is cut
+          off when its parent is too narrow, once everything beside it
+          has shrunk; a newlines text still breaks only at its newlines.
+          A long word in a grow or percent Table column with wrap
+          'none' or 'newlines' no longer pushes the table past its
+          parent. Needs the cut-off patch of Clay::UI 0.07.
         - Text in a grow or percent column of a Table wraps: such a
           table no longer scrolls sideways, so its columns get narrower
           when it is too narrow for them. Before, the text stayed on one

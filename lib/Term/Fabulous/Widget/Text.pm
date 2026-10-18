@@ -960,14 +960,16 @@ C<CLAY_TEXT_WRAP_WORDS> (the default: break at C<"\n"> and, where the
 text does not fit, at spaces), C<CLAY_TEXT_WRAP_NEWLINES> (break only
 at C<"\n">) and C<CLAY_TEXT_WRAP_NONE> (the same as C<CLAY_TEXT_WRAP_NEWLINES>, because
 Clay lays out both alike). A line
-that is not broken may be wider than the parent; it is cut off at the
-right edge of the terminal.
+that is not broken keeps its width as long as the widgets beside it can
+still get narrower; after that it is cut off at the right edge of its
+parent (inside a box that scrolls sideways it keeps its width).
 
 With every mode, only spaces are break points: a single word that is
 wider than the space available, or text without spaces such as a
-Japanese sentence, is never broken: it runs past the right edge of its parent and is cut
-off only at the edge of the terminal or of an enclosing
-L<Term::Fabulous::Widget::ScrollBox>. See
+Japanese sentence, is never broken. With C<CLAY_TEXT_WRAP_WORDS> it
+runs past the right edge of its parent and is cut off only at the edge
+of the terminal or of an enclosing L<Term::Fabulous::Widget::ScrollBox>;
+with the other modes it is cut off like any line. See
 L<Term::Fabulous::Manual::Looks/Wrapping>.
 
 =item C<text_alignment>

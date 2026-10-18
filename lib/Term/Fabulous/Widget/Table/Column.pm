@@ -348,7 +348,9 @@ L<Term::Fabulous::Manual::Tables/Column widths>.
 C<'words'> (the default), C<'newlines'> or C<'none'>: how the text of
 a default cell breaks into lines when the column is narrower than the
 text (see L<Term::Fabulous::Widget::Text/wrap_mode>). Rows grow to the
-height of their tallest cell.
+height of their tallest cell. With C<'newlines'> and C<'none'>, a line
+keeps its width while the other columns can still get narrower; then it
+is cut off inside the cell padding, a single long word too.
 
 =item C<sortable>
 

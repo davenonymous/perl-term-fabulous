@@ -510,6 +510,29 @@ subtest 'a growing column wraps its text instead of scrolling sideways' => sub {
 	ok( ( grep { /The quick brown fox jumps over t\z/ } @{ screen($h) } ), 'a fit column keeps its text on one line and scrolls sideways' );
 };
 
+subtest 'a growing column cuts off a word that is longer than its width' => sub {
+	my ( $table, $h ) = table_ui(
+		columns => [ { key => 'id', title => 'Id' }, { key => 'url', title => 'URL', width => 'grow', wrap => 'none' } ],
+		rows    => [ { id  => 1,    url   => 'https://example.com/a/very/long/path/without/any/spaces/in/it' } ],
+		layout  => { sizing => { width => sizing_grow() } },
+	);
+	my @rows = grep { /\x{2502}/ } @{ screen($h) };
+	ok !( grep { !/\x{2502}\z/ } @rows ), 'every row ends at the right side of the frame';
+	ok( ( grep { /\x{2502} https:\/\/example\.com\S*\s*\x{2502}\z/ } @rows ), 'the word is cut off inside the column' );
+};
+
+subtest 'a percent column keeps its share of the width with a long text' => sub {
+	my ( $table, $h ) = table_ui(
+		columns => [ { key => 'key', title => 'Key', width => 'percent(40)', wrap => 'none' }, { key => 'value', title => 'Value', width => 'grow', wrap => 'none' } ],
+		rows    => [ { id  => 1,     key   => 'extraKnownMarketplaces.claude-globals.source.path', value => 'directory' } ],
+		layout  => { sizing => { width => sizing_grow() } },
+	);
+	my @lines = @{ screen($h) };
+	my @rows  = grep { /\x{2502}/ } @lines;
+	ok !( grep { !/\x{2502}\z/ } @rows ), 'every row ends at the right side of the frame';
+	ok( index( $lines[0], "\x{252C}" ) <= 17, 'the key column is about 40% of the 40 columns wide' );
+};
+
 subtest 'hover and scrollbar' => sub {
 	my ( $table, $h ) = table_ui( rows => [ map { { id => $_, name => "n$_", dept => 'd', age => $_ } } 1 .. 30 ], size => [ 40, 10 ], layout => { sizing => { height => sizing_grow() } } );
 	my $plain = $h->{terminal}->cell( 3, 5 )->[2];

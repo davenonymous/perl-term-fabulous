@@ -118,10 +118,11 @@ L</TEXT> shows it: a text in a box 24 columns wide, wrapped at spaces.
 =item C<CLAY_TEXT_WRAP_NEWLINES>
 
 Breaks only at C<"\n">. The Text is as wide as its longest line: a parent
-with C<fit> sizing grows to it (the second panel in the picture), while
-a line that is wider than a fixed-size parent runs past the parent's
-right edge and is cut off only at the edge of the terminal or of an
-enclosing L<Term::Fabulous::Widget::ScrollBox>.
+with C<fit> sizing grows to it (the second panel in the picture). A line
+that is wider than a fixed-size parent keeps its width as long as the
+widgets beside it can still get narrower; after that it is cut off at
+the parent's right edge (inside a box that scrolls sideways it keeps
+its width).
 
 =item C<CLAY_TEXT_WRAP_NONE>
 
@@ -143,9 +144,11 @@ newlines.
 
 Only spaces are break points. A word longer than the available width
 is not broken, and neither is text without spaces, such as a Japanese
-sentence: it runs past the right edge of its parent and is cut off only
-at the edge of the terminal or of an enclosing ScrollBox. A tab is not a
-break point either (see L</Control characters>).
+sentence. With C<CLAY_TEXT_WRAP_WORDS> it runs past the right edge of
+its parent and is cut off only at the edge of the terminal or of an
+enclosing ScrollBox; with the other modes it is cut off at the parent's
+edge like any long line. A tab is not a break point either (see
+L</Control characters>).
 
 In a KDL layout file, write C<wrap_mode newlines> (C<words>,
 C<newlines> or C<none>).

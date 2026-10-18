@@ -226,14 +226,16 @@ of the same name.
     text does not fit, at spaces), `CLAY_TEXT_WRAP_NEWLINES` (break only
     at `"\n"`) and `CLAY_TEXT_WRAP_NONE` (the same as `CLAY_TEXT_WRAP_NEWLINES`, because
     Clay lays out both alike). A line
-    that is not broken may be wider than the parent; it is cut off at the
-    right edge of the terminal.
+    that is not broken keeps its width as long as the widgets beside it can
+    still get narrower; after that it is cut off at the right edge of its
+    parent (inside a box that scrolls sideways it keeps its width).
 
     With every mode, only spaces are break points: a single word that is
     wider than the space available, or text without spaces such as a
-    Japanese sentence, is never broken: it runs past the right edge of its parent and is cut
-    off only at the edge of the terminal or of an enclosing
-    [Term::Fabulous::Widget::ScrollBox](ScrollBox.md). See
+    Japanese sentence, is never broken. With `CLAY_TEXT_WRAP_WORDS` it
+    runs past the right edge of its parent and is cut off only at the edge
+    of the terminal or of an enclosing [Term::Fabulous::Widget::ScrollBox](ScrollBox.md);
+    with the other modes it is cut off like any line. See
     ["Wrapping" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#wrapping).
 
 - `text_alignment`

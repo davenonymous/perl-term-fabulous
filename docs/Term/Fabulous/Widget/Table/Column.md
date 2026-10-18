@@ -142,7 +142,9 @@ values die.
     `'words'` (the default), `'newlines'` or `'none'`: how the text of
     a default cell breaks into lines when the column is narrower than the
     text (see ["wrap\_mode" in Term::Fabulous::Widget::Text](../Text.md#wrap_mode)). Rows grow to the
-    height of their tallest cell.
+    height of their tallest cell. With `'newlines'` and `'none'`, a line
+    keeps its width while the other columns can still get narrower; then it
+    is cut off inside the cell padding, a single long word too.
 
 - `sortable`
 

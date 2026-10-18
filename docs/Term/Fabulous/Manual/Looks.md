@@ -114,10 +114,11 @@ Import the constants from [Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS):
 - `CLAY_TEXT_WRAP_NEWLINES`
 
     Breaks only at `"\n"`. The Text is as wide as its longest line: a parent
-    with `fit` sizing grows to it (the second panel in the picture), while
-    a line that is wider than a fixed-size parent runs past the parent's
-    right edge and is cut off only at the edge of the terminal or of an
-    enclosing [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md).
+    with `fit` sizing grows to it (the second panel in the picture). A line
+    that is wider than a fixed-size parent keeps its width as long as the
+    widgets beside it can still get narrower; after that it is cut off at
+    the parent's right edge (inside a box that scrolls sideways it keeps
+    its width).
 
 - `CLAY_TEXT_WRAP_NONE`
 
@@ -139,9 +140,11 @@ my $listing = Term::Fabulous::Widget::Text->new(
 
 Only spaces are break points. A word longer than the available width
 is not broken, and neither is text without spaces, such as a Japanese
-sentence: it runs past the right edge of its parent and is cut off only
-at the edge of the terminal or of an enclosing ScrollBox. A tab is not a
-break point either (see ["Control characters"](#control-characters)).
+sentence. With `CLAY_TEXT_WRAP_WORDS` it runs past the right edge of
+its parent and is cut off only at the edge of the terminal or of an
+enclosing ScrollBox; with the other modes it is cut off at the parent's
+edge like any long line. A tab is not a break point either (see
+["Control characters"](#control-characters)).
 
 In a KDL layout file, write `wrap_mode newlines` (`words`,
 `newlines` or `none`).
