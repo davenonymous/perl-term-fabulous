@@ -422,6 +422,7 @@ t/text-style.t
 t/text-view.t
 t/theme-binding.t
 t/theme-document.t
+t/theme-editor-settings-list.t
 t/theme-editor.t
 t/theme-file.t
 t/theme.t

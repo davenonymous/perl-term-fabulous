@@ -23,7 +23,7 @@ class Term::Fabulous::Widget::DocumentTabs
 	use Term::Fabulous::Event::TabAdd;
 	use Term::Fabulous::Event::TabClose;
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_MIDDLE TB_MOD_MOTION);
-	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters string_columns);
+	use Term::Fabulous::Unicode qw(fit_columns string_columns);
 
 	use constant MODIFIED   => "\x{25CF}";    # a dot: unsaved changes
 	use constant ERROR      => '!';
@@ -31,7 +31,6 @@ class Term::Fabulous::Widget::DocumentTabs
 	use constant NEW        => ' + ';
 	use constant MORE_LEFT  => "\x{25C2}";
 	use constant MORE_RIGHT => "\x{25B8}";
-	use constant ELLIPSIS   => "\x{2026}";
 
 	# The columns of a tab besides its title: " title mark " and, when it
 	# can be closed, "x ".
@@ -204,7 +203,7 @@ class Term::Fabulous::Widget::DocumentTabs
 		my $attrs        = $self->_attrs;
 		my $tabs_end     = $width - 1 - ( $new_button ? length NEW : 0 );
 		my $room         = $tabs_end - 1;
-		my @titles       = map { _cut( $_->{title}, $room - _columns_besides_title($_) ) } @_shown_tabs;
+		my @titles       = map { fit_columns( $_->{title}, $room - _columns_besides_title($_) ) } @_shown_tabs;
 		my @labels       = map { _label( $_shown_tabs[$_], $titles[$_] ) } 0 .. $#_shown_tabs;
 		my @widths       = map { string_columns($_) } @labels;
 		my $shown_active = $self->_shown_active;
@@ -266,19 +265,6 @@ class Term::Fabulous::Widget::DocumentTabs
 		my $first = 0;
 		$first++ while $first < $target && sum0( @{$widths}[ $first .. $target ] ) + ( $first > 0 ? 1 : 0 ) > $room;
 		return $first;
-	}
-
-	# A text cut to a number of columns, ending in an ellipsis when cut.
-	sub _cut ( $text, $room ) {
-		return '' if $room <= 0;
-		return $text if string_columns($text) <= $room;
-		my ( $kept, $width ) = ( '', 0 );
-		foreach my $cluster ( grapheme_clusters($text) ) {
-			my $columns = cluster_columns($cluster);
-			last if $width + $columns > $room - 1;
-			( $kept, $width ) = ( $kept . $cluster, $width + $columns );
-		}
-		return $kept . ELLIPSIS;
 	}
 
 	# ---------------------------------------------------------------------

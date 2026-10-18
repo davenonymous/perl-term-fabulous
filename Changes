@@ -1,6 +1,18 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Unicode::fit_columns($text, $columns, mark =>
+          ..., cut => 'end' or 'start') cuts a text to a number of
+          columns with a mark where it was cut (an ellipsis, exported as
+          ELLIPSIS, by default), never splits a grapheme cluster and is
+          never wider than the room; a mark wider than the room is cut
+          itself. The status bar, the document tabs, chart texts, the
+          truncate mutator, the file dialog's folder line, the theme
+          editor's settings list and the dropdown list cut through it.
+          The settings list no longer splits an emoji from its variation
+          selector, and the folder line's "..." no longer takes three
+          columns where it has one or two. FileDialog::FolderLine's
+          cut_from_the_left is gone.
         - Term::Fabulous::Text::Marks keeps the spans, highlights and
           links of one text, checks their ranges with one wording and
           cuts the text into runs in one sweep; Text and CodeBlock keep

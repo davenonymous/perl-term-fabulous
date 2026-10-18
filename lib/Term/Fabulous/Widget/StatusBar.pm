@@ -21,10 +21,9 @@ class Term::Fabulous::Widget::StatusBar
 	use List::Util qw(max sum0);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(describe number one_of string);
-	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters string_columns);
+	use Term::Fabulous::Unicode qw(fit_columns string_columns);
 
 	use constant PART_GAP => 2;    # columns between two parts
-	use constant ELLIPSIS => "\x{2026}";
 
 	# The kinds of a message, and the kinds a part may have besides them,
 	# each with the themed parameter that colors it.
@@ -220,21 +219,8 @@ class Term::Fabulous::Widget::StatusBar
 			$x = $self->paint_text( $x, 0, $part->[0], $self->_attr_of_kind( $part->[1] ), undef, $columns - 1 ) + PART_GAP;
 		}
 		my $room = ( @_shown_parts ? $parts_start - PART_GAP : $columns - 1 ) - 1;
-		$self->paint_text( 1, 0, _cut( $message, $room ), $self->_attr_of_kind($kind), undef );
+		$self->paint_text( 1, 0, fit_columns( $message, $room ), $self->_attr_of_kind($kind), undef );
 		return;
-	}
-
-	# A text cut to a number of columns, ending in an ellipsis when cut.
-	sub _cut ( $text, $room ) {
-		return '' if $room <= 0;
-		return $text if string_columns($text) <= $room;
-		my ( $kept, $width ) = ( '', 0 );
-		foreach my $cluster ( grapheme_clusters($text) ) {
-			my $columns = cluster_columns($cluster);
-			last if $width + $columns > $room - 1;
-			( $kept, $width ) = ( $kept . $cluster, $width + $columns );
-		}
-		return $kept . ELLIPSIS;
 	}
 }
 

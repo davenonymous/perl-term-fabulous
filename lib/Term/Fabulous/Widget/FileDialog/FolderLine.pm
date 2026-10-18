@@ -18,7 +18,7 @@ class Term::Fabulous::Widget::FileDialog::FolderLine
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(max min);
 	use Term::Fabulous::Check qw(string);
-	use Term::Fabulous::Unicode qw(cluster_columns grapheme_clusters string_columns);
+	use Term::Fabulous::Unicode qw(fit_columns string_columns);
 
 	use constant CUT       => '...';
 	use constant PATH_ROOM => 10;
@@ -64,24 +64,9 @@ class Term::Fabulous::Widget::FileDialog::FolderLine
 		my $color = $self->color_attr( $self->family_look( text => 'color' ) );
 		my $x     = $self->paint_text( 0, 0, $label, $color, undef );
 		my $room  = $self->columns - $x;
-		$x = $self->paint_text( $x, 0, cut_from_the_left( $path, max( $room - string_columns($after), min( $room, PATH_ROOM ) ) ), $color, undef );
+		$x = $self->paint_text( $x, 0, fit_columns( $path, max( $room - string_columns($after), min( $room, PATH_ROOM ) ), mark => CUT, cut => 'start' ), $color, undef );
 		$self->paint_text( $x, 0, $after, $color, undef );
 		return;
-	}
-
-	# The end of a text that fits a number of columns, after "..." when
-	# its start had to go.
-	sub cut_from_the_left ( $text, $room ) {
-		return '' if $room <= 0;
-		return $text if string_columns($text) <= $room;
-		my $room_left = $room - string_columns(CUT);
-		my ( $kept, $width ) = ( '', 0 );
-		foreach my $cluster ( reverse grapheme_clusters($text) ) {
-			my $columns = cluster_columns($cluster);
-			last if $width + $columns > $room_left;
-			( $kept, $width ) = ( $cluster . $kept, $width + $columns );
-		}
-		return CUT . $kept;
 	}
 }
 
@@ -103,7 +88,9 @@ It is a L<Term::Fabulous::Widget::Display> one row high that grows to
 the width of its parent and paints a label (C<Folder:>), a path and a
 text after the path in the theme's C<text.color>. When the path does
 not fit the width the line gets, its start is cut off and replaced by
-C<...>, so the end of the path, the folder itself, stays in view. On a
+C<...> (by L<Term::Fabulous::Unicode/fit_columns>), so the end of the
+path, the folder itself, stays in view; with fewer than three columns
+for the path, the C<...> is cut to them. On a
 line too narrow for the label, ten columns of the path and the text
 after it, the path keeps up to ten columns and the text after it is
 cut at the right; a label too long for the line is cut at the right.
@@ -146,14 +133,6 @@ line.
 
 The whole text of the line, uncut: the label, the path and the text
 after it.
-
-=head2 cut_from_the_left
-
-	my $shown = Term::Fabulous::Widget::FileDialog::FolderLine::cut_from_the_left( $path, 20 );
-
-A function: the end of a text that fits a number of columns, after
-C<...> when its start had to go. Returns the text itself when it fits,
-and an empty string for no room.
 
 =head1 SEE ALSO
 

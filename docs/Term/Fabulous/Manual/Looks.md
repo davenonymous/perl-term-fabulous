@@ -324,12 +324,15 @@ a zero-width joiner or a pair of regional indicators makes a cluster two
 cells wide. Use
 [string\_columns](../Unicode.md#string_columns) from
 [Term::Fabulous::Unicode](../Unicode.md) to find out
-how many columns a string takes, for example to pad a label:
+how many columns a string takes, for example to pad a label, and
+[fit\_columns](../Unicode.md#fit_columns) to cut one to the
+columns it has without splitting a cluster:
 
 ```perl
-use Term::Fabulous::Unicode qw(string_columns);
+use Term::Fabulous::Unicode qw(fit_columns string_columns);
 
 my $columns = string_columns('日本語');    # 6
+my $shown   = fit_columns( '日本語', 5 );     # "日本\x{2026}": 5 columns at most
 ```
 
 ## Control characters

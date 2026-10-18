@@ -6,12 +6,14 @@ termbox2 draws it
 # SYNOPSIS
 
 ```perl
-use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns terminal_is_utf8);
+use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns fit_columns terminal_is_utf8);
 
 my $columns  = string_columns("\x{3042}!");          # 3: a wide Hiragana letter and '!'
 my @clusters = grapheme_clusters("e\x{301}x");       # ("e\x{301}", "x"): e with a combining accent, x
 my $width    = cluster_columns("\x{1F600}");          # 2 under a UTF-8 locale
 my $safe     = sanitize_text("a\tb\e]0;title\a");      # "a b\x{FFFD}]0;title\x{FFFD}"
+my $label    = fit_columns( 'Quarterly report', 8 );   # "Quarter\x{2026}"
+my $folder   = fit_columns( '/home/ada/notes', 9, mark => '...', cut => 'start' );    # ".../notes"
 
 warn "Wide characters will be misaligned\n" unless terminal_is_utf8();
 ```
@@ -34,7 +36,7 @@ emoji (2) presentation. This module calls those same functions through
 widths termbox2 uses, on every platform. Term::Fabulous uses it to
 measure text for the layout and to draw text and canvas cells; use it
 yourself when you need to know how wide a string will be on screen, for
-example to pad or truncate a label.
+example to pad a label, or cut it to the room it has with ["fit\_columns"](#fit_columns).
 
 All functions take and return Perl character strings (decoded text),
 not UTF-8 encoded bytes.
@@ -136,6 +138,43 @@ for layout.
 
 Results are cached per text; the cache is emptied when it reaches 4096
 entries.
+
+## fit\_columns
+
+```perl
+my $shown = fit_columns( $text, $columns );
+my $shown = fit_columns( $text, $columns, mark => '~', cut => 'start' );
+```
+
+Returns `$text` cut to at most `$columns` columns (measured by
+["string\_columns"](#string_columns)), with a mark where it was cut:
+
+- A text that fits is returned unchanged.
+- Otherwise as many whole grapheme clusters as fit together with the mark
+are kept: from the start of the text followed by the mark (`cut =>
+'end'`, the default), or from its end after the mark (`cut =>
+'start'`, for a path whose end matters). A cluster is never split, so a
+wide character that does not fit leaves its column empty and the result
+is a column narrower than the room. The clusters come from
+["grapheme\_clusters"](#grapheme_clusters), so a cut text is sanitized.
+- `mark` is the text that shows the cut, by default ["ELLIPSIS"](#ellipsis). When
+the mark alone is wider than the room, the mark itself is cut at its
+end to the room (`'...'` into two columns gives `'..'`).
+- No room (`$columns` 0 or less) gives the empty string.
+
+The result is never wider than `$columns`. Dies with a message that
+starts with `Term::Fabulous::Unicode: fit_columns` when `$text` or
+`mark` is not a string, `$columns` is not a whole number, `cut` is
+neither `'end'` nor `'start'`, or another option is given.
+
+## ELLIPSIS
+
+```perl
+use Term::Fabulous::Unicode qw(ELLIPSIS);
+```
+
+The constant `"\x{2026}"` (HORIZONTAL ELLIPSIS, one column): the mark
+["fit\_columns"](#fit_columns) puts where it cuts unless it is given another.
 
 ## terminal\_is\_utf8
 

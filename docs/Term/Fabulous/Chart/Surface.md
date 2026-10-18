@@ -72,7 +72,8 @@ my $columns = $surface->text( $x, $y, $text, $fg, bg => $rgb, flags => TB_BOLD, 
 ```
 
 Writes a character string, two cells per wide character. With `max`, text
-wider than that is cut and ends in an ellipsis. Returns the number of
+wider than that is cut and ends in an ellipsis (see
+["fit\_columns" in Term::Fabulous::Unicode](../Unicode.md#fit_columns)). Returns the number of
 columns written; text that would cross the right edge is cut there.
 
 ## text\_columns

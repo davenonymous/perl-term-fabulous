@@ -143,8 +143,10 @@ truncate( 20, ellipsis => '...' )
 ```
 
 Text that is wider than that many terminal columns is cut so that it
-fits with the ellipsis (default `"\x{2026}"`, one column). Wide
-characters count as two columns; no character is cut in half. To keep
+fits with the ellipsis (default `"\x{2026}"`, one column), by
+["fit\_columns" in Term::Fabulous::Unicode](../../Unicode.md#fit_columns). Wide characters count as two
+columns; no character is cut in half. Dies when the ellipsis is wider
+than the columns. To keep
 long text whole but narrow, give the column a maximum width instead
 (`width => 'fit(0, 20)'`), and it wraps.
 

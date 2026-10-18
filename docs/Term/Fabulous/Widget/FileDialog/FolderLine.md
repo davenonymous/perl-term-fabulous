@@ -12,7 +12,9 @@ It is a [Term::Fabulous::Widget::Display](../Display.md) one row high that grows
 the width of its parent and paints a label (`Folder:`), a path and a
 text after the path in the theme's `text.color`. When the path does
 not fit the width the line gets, its start is cut off and replaced by
-`...`, so the end of the path, the folder itself, stays in view. On a
+`...` (by ["fit\_columns" in Term::Fabulous::Unicode](../../Unicode.md#fit_columns)), so the end of the
+path, the folder itself, stays in view; with fewer than three columns
+for the path, the `...` is cut to them. On a
 line too narrow for the label, ten columns of the path and the text
 after it, the path keeps up to ten columns and the text after it is
 cut at the right; a label too long for the line is cut at the right.
@@ -63,16 +65,6 @@ my $text = $line->text;
 
 The whole text of the line, uncut: the label, the path and the text
 after it.
-
-## cut\_from\_the\_left
-
-```perl
-my $shown = Term::Fabulous::Widget::FileDialog::FolderLine::cut_from_the_left( $path, 20 );
-```
-
-A function: the end of a text that fits a number of columns, after
-`...` when its start had to go. Returns the text itself when it fits,
-and an empty string for no room.
 
 # SEE ALSO
 

@@ -391,10 +391,11 @@ class Term::Fabulous::ThemeEditor::SettingsList::Row :isa(Term::Fabulous::Widget
 	use List::Util qw(max min);
 	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Termbox qw(TB_BOLD TB_KEY_MOUSE_LEFT TB_MOD_MOTION);
-	use Term::Fabulous::Unicode qw(string_columns);
+	use Term::Fabulous::Unicode qw(fit_columns);
 
 	use constant OPEN   => "\x{25BE} ";
 	use constant CLOSED => "\x{25B8} ";
+	use constant CUT    => '~';    # marks a cut setting or value
 
 	field $list :param :weak;
 	field $index :param;
@@ -407,15 +408,6 @@ class Term::Fabulous::ThemeEditor::SettingsList::Row :isa(Term::Fabulous::Widget
 
 	method natural_size () {
 		return ( 0, 1 );
-	}
-
-	# A text cut to a number of columns, a ~ marking the cut.
-	sub _fit ( $text, $columns ) {
-		return $text if string_columns($text) <= $columns;
-		return '' if $columns < 1;
-		my $cut = $text;
-		chop $cut while length $cut && string_columns($cut) > $columns - 1;
-		return "$cut~";
 	}
 
 	method _mouse ($event) {
@@ -487,8 +479,8 @@ class Term::Fabulous::ThemeEditor::SettingsList::Row :isa(Term::Fabulous::Widget
 		}
 		my $indent = '  ' x $entry->{depth};
 		my $marker = !$row->{section} ? '  ' : ( $list->is_expanded( $row->{id} ) || length $list->search ) ? OPEN : CLOSED;
-		$self->paint_text( $swatch,          0, _fit( $indent . $marker . $row->{setting}, $label - 1 ), $fg, $bg );
-		$self->paint_text( $swatch + $label, 0, _fit( $row->{value} // '', $values - 1 ), $row->{section} ? $self->_look('muted') : $fg, $bg );
+		$self->paint_text( $swatch,          0, fit_columns( $indent . $marker . $row->{setting}, $label - 1, mark => CUT ), $fg, $bg );
+		$self->paint_text( $swatch + $label, 0, fit_columns( $row->{value} // '', $values - 1, mark => CUT ), $row->{section} ? $self->_look('muted') : $fg, $bg );
 		$self->paint_text( $swatch + $label + $values, 0, $row->{origin} // '', $row->{set} ? $self->_look('group.text') : $self->_look('muted'), $bg );
 		return;
 	}
