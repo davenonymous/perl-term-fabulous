@@ -12,7 +12,6 @@ our @EXPORT_OK = qw(framed);
 
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_fixed sizing_grow);
-use Scalar::Util qw(weaken);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 
@@ -21,10 +20,20 @@ use Term::Fabulous::Widget::ScrollBox;
 sub framed ( $table, $rows, $min_rows = $rows ) {
 	die "Term::Fabulous::Widget::Table::Frame: min_rows $min_rows is more than rows $rows" if $min_rows > $rows;
 	my $frame = $min_rows == $rows ? _fixed_frame( $table, $rows ) : _shrinking_frame( $table, $rows, $min_rows );
-	weaken( my $weak_frame = $frame );
-	weaken( my $weak_table = $table );
-	$table->on( OnFocus => sub ($event) { $weak_frame->border_color( $weak_frame->family_look( input => 'accent' ) ) if $event->target == $weak_table; return Clay::UI::Enum::Result->CONTINUE } );
-	$table->on( OnBlur  => sub ($event) { $weak_frame->reset_look('border_color') if $event->target == $weak_table;                                    return Clay::UI::Enum::Result->CONTINUE } );
+	$table->on(
+		OnFocus => sub ( $frame, $event ) {
+			$frame->border_color( $frame->family_look( input => 'accent' ) ) if $event->target == $event->current_target;
+			return Clay::UI::Enum::Result->CONTINUE;
+		},
+		owner => $frame,
+	);
+	$table->on(
+		OnBlur => sub ( $frame, $event ) {
+			$frame->reset_look('border_color') if $event->target == $event->current_target;
+			return Clay::UI::Enum::Result->CONTINUE;
+		},
+		owner => $frame,
+	);
 	return $frame;
 }
 

@@ -73,8 +73,7 @@ class Term::Fabulous::Widget::KeyReference
 
 		$search = Term::Fabulous::Widget::TextField->new( placeholder => 'Search keys and actions', layout => { sizing => { width => sizing_grow() } } );
 		$table  = $self->_table( \@rows );
-		weaken( my $weak_table = $table );
-		$search->on( Change => sub ($event) { $weak_table->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$search->on( Change => sub ( $table, $event ) { $table->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $table );
 
 		$_title_text   = Term::Fabulous::Widget::Text->new( text => $title, bold => 1 ) if length $title;
 		$_close        = $self->_close_button;

@@ -343,8 +343,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			layout     => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },
 		);
 		$holder->add_child($widget);
-		weaken( my $weak_holder = $holder );
-		$holder->on( KeyPress => sub ($event) { return _scroll_by_key( $weak_holder, $event ) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$holder->on( KeyPress => sub ( $holder, $event ) { return _scroll_by_key( $holder, $event ) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $holder );
 		return $holder;
 	}
 

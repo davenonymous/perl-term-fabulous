@@ -17,7 +17,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_LEFT_TO_RIGHT_WRAP CLAY_TEXT_WRAP_NONE);
 	use List::Util qw(max min);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Theme;
 	use Term::Fabulous::Widget::Accordion;
 	use Term::Fabulous::Widget::Accordion::Item;
@@ -182,8 +182,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 			tabs    => [ { title => 'notes' }, { title => 'draft', modified => 1 }, { title => 'broken', error => 1 }, { title => 'pinned', closable => 0 } ],
 			layout  => { sizing => { width => sizing_grow() } },
 		);
-		weaken( my $weak_tabs = $tabs );
-		$tabs->on( Select => sub ($event) { $weak_tabs->active( $event->index ); return } );
+		$tabs->on( Select => sub ( $tabs, $event ) { $tabs->active( $event->index ); return }, owner => $tabs );
 		return $tabs;
 	}
 
