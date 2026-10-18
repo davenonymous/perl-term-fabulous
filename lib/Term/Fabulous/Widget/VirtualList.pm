@@ -17,7 +17,6 @@ class Term::Fabulous::Widget::VirtualList
 	:does(Clay::UI::Role::Core::Preparable)
 	:strict(params)
 {
-	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_LEFT);
 	use List::Util qw(max min);
 	use Scalar::Util qw(blessed refaddr weaken);
@@ -71,9 +70,6 @@ class Term::Fabulous::Widget::VirtualList
 		$_column = Term::Fabulous::Widget::Box->new( layout => $self->_column_layout );
 		%_spacer = map { $_ => Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(0), height => sizing_fixed(0) } } ) } qw(above below);
 		$self->add_internal_children($_column);
-
-		weaken( my $weak = $self );
-		$self->on( OnScroll => sub { $weak->request_prepare if defined $weak; return Clay::UI::Enum::Result->CONTINUE } );    # the event bubbles on
 		$self->request_prepare;
 	}
 
