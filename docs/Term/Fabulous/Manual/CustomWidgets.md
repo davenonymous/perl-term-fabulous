@@ -519,6 +519,37 @@ To scroll a child of a ScrollBox into view, call the box's
 [reveal](../Widget/ScrollBox.md#reveal), which waits for the
 child's layout by itself.
 
+## Widgets a search finds
+
+A [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) searches the widgets of its
+items that do [Term::Fabulous::Role::Searchable](../Role/Searchable.md); Text and CodeBlock
+do it for their text, a Table from its rows. A widget of your own that
+shows text it builds only later does the role itself. A container that
+holds searchable widgets which are not always in the tree (pages,
+a collapsible body) composes [Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md)
+instead: it lists them in `searchable_parts` and makes one visible in
+`reveal_part`, and the role answers the search for all of them, as
+Tabs and Accordion::Item do:
+
+```perl
+use Term::Fabulous::Role::SearchContainer;
+
+class My::Drawer :isa(Term::Fabulous::Widget::Box) :does(Term::Fabulous::Role::SearchContainer) {
+        use Term::Fabulous::Role::Searchable qw(searchables_in);    # a class block is a package of its own
+
+        field $content = Term::Fabulous::Widget::Box->new;
+
+        method searchable_parts () { return searchables_in($content) }
+        method reveal_part ($part) { $self->add_child($content) unless $self->has_child($content); return }
+}
+```
+
+A search remembers its matches with the key and the revision of each
+text; before it uses a key again it compares the revision, and searches
+again when it changed. The container's revisions name the part at each
+index, so removing a part makes the old keys stale instead of letting
+them reach the part that took its place.
+
 ## Events of your own
 
 A widget can tell its users what happened with an event of its own,

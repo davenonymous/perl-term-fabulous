@@ -28,6 +28,8 @@ use Term::Fabulous::Widget::Dialog;
 use Term::Fabulous::Widget::Divider;
 use Term::Fabulous::Widget::DocumentView;
 use Term::Fabulous::Widget::Table;
+use Term::Fabulous::Widget::Tabs;
+use Term::Fabulous::Widget::Tabs::Page;
 use Term::Fabulous::Widget::Text;
 
 # The view of a document, focused, filling a memory terminal of the
@@ -364,6 +366,22 @@ subtest 'any widget is an item, and its text is searched' => sub {
 	$table->update_row( 5, { note => 'renamed' } );
 	$h->{ui}->step;
 	is [ $view->next_match, $view->match_count ], [ 0, 0 ], 'a changed row makes the search run again, which finds nothing now';
+};
+
+subtest 'a search runs again when a part of a container was replaced' => sub {
+	my $tabs  = Term::Fabulous::Widget::Tabs->new( layout => { sizing => { height => sizing_fixed(6) } } );
+	my @pages = map { Term::Fabulous::Widget::Tabs::Page->new( title => $_ ) } qw(First Second);
+	$pages[0]->add_child( Term::Fabulous::Widget::Text->new( text => 'alpha beta gamma' ) );
+	$pages[1]->add_child( Term::Fabulous::Widget::Text->new( text => 'beta' ) );
+	$tabs->add_child(@pages);
+	my $document = document( [ paragraph => 'Above.' ] );
+	$document->add($tabs);
+	my ( $view, $h ) = document_ui( $document, 40, 12 );
+	is $view->search('gamma'), 1, 'the match on the first page';
+	$h->{ui}->step;
+	$tabs->remove_child( $pages[0] );
+	$h->{ui}->step;
+	is [ $view->next_match, $view->match_count ], [ 0, 0 ], 'with its page gone, the next match runs the search again instead of highlighting the text that took its place';
 };
 
 subtest 'a link in a caption' => sub {

@@ -280,8 +280,8 @@ subtest 'a search reaches an inactive page, and revealing a match activates it' 
 	my ($text) = @{ $tabs->reveal_text( $hostname->[0], 0 ) };
 	is [ $tabs->active_index, $text->text ], [ 1, 'Hostname: example.org' ], 'revealing it activates its page and names its text';
 	$tabs->highlight_text( $hostname->[0], [ [ 0, 8, 'on accent' ] ] );
-	is $text->highlights->[0][1],                8,                       'highlight_text reaches the text';
-	is $tabs->search_revision( $hostname->[0] ), $text->content_revision, 'the revision is the text\'s';
+	is $text->highlights->[0][1],                8,                                                    'highlight_text reaches the text';
+	is $tabs->search_revision( $hostname->[0] ), $text->search_serial . ':' . $text->content_revision, 'the revision names the text and its own revision';
 	$tabs->clear_text_highlights;
 	is $text->highlights,                       [],     'clear_text_highlights clears it';
 	is $tabs->search_revision( [ 99, undef ] ), 'gone', 'a widget past the pages is gone';

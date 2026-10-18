@@ -1,6 +1,14 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Role::SearchContainer: a container lists the
+          searchable widgets it holds (searchable_parts) and may show
+          one (reveal_part); the role answers the search for them. Tabs
+          and Accordion::Item compose it. The revision of a nested key
+          names the widget at its index (search_serial), so a search
+          that kept a key into a page that was removed searches again
+          instead of dying in highlight_text on the page that took its
+          place. Role::Searchable exports nested_part.
         - Term::Fabulous::Scrolling has the keys of pagers:
           scroll_by_key($ui, $box, $key_name, keys => 'pager' or
           'less') scrolls by rows, by pages or to the ends and returns

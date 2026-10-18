@@ -1880,8 +1880,10 @@ end of the document.
 
 B<Widgets of your own.> A widget that shows text it builds only later,
 as a table does with its pages, does
-L<Term::Fabulous::Role::Searchable> to be found by a search; one whose
-height is known before the layout overrides
+L<Term::Fabulous::Role::Searchable> to be found by a search; a container
+that holds searchable widgets out of view (pages, a collapsed body) does
+L<Term::Fabulous::Role::SearchContainer>; one whose height is known
+before the layout overrides
 L<estimated_content_rows|Term::Fabulous::Widget/estimated_content_rows>.
 
 =back

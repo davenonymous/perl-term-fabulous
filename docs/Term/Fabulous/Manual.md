@@ -980,7 +980,7 @@ program, and the class pages with the reference.
 - Show documents of a format of your own: fill a document with its factories and any widgets
 
     ["FACTORIES" in Term::Fabulous::Document](Document.md#factories), [Term::Fabulous::Document::Look](Document/Look.md),
-    [Term::Fabulous::Role::Searchable](Role/Searchable.md),
+    [Term::Fabulous::Role::Searchable](Role/Searchable.md), [Term::Fabulous::Role::SearchContainer](Role/SearchContainer.md),
     ["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent),
     ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#put-any-widget-into-a-document-a-table-and-a-picture).
 

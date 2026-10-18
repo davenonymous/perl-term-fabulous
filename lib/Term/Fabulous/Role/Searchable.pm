@@ -8,7 +8,7 @@ no warnings 'experimental::signatures';
 our $VERSION = '0.03';
 
 use Exporter 'import';
-our @EXPORT_OK = qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
+our @EXPORT_OK = qw(searchables_in nested_part nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 
 use Scalar::Util qw(blessed);
 use Term::Fabulous::Check qw(describe);
@@ -41,10 +41,18 @@ sub _nested ( $what, $widgets, $key ) {
 	return ( $widgets->[ $key->[0] ], $key->[1] );
 }
 
+sub nested_part ( $widgets, $key ) {
+	my ($widget) = _nested( nested_part => $widgets, $key );
+	return $widget;
+}
+
+# The revision names the widget at the index too: after the widgets
+# changed, an old key may lead to another widget, whose own revision
+# starts like any other.
 sub nested_search_revision ( $widgets, $key ) {
 	my ( $widget, $inner ) = _nested( nested_search_revision => $widgets, $key );
 	return 'gone' unless defined $widget;
-	return $widget->search_revision($inner);
+	return $widget->search_serial . ':' . $widget->search_revision($inner);
 }
 
 sub nested_highlight_text ( $widgets, $key, $ranges ) {
@@ -72,6 +80,16 @@ role Term::Fabulous::Role::Searchable {
 	method highlight_text;
 	method clear_text_highlights;
 	method reveal_text;
+
+	# Numbers every searchable widget for the life of the process; an
+	# address could be taken again by a widget made after one was freed.
+	my $last_serial = 0;
+
+	field $search_serial :reader;
+
+	ADJUST {
+		$search_serial = ++$last_serial;
+	}
 }
 
 1;
@@ -107,8 +125,17 @@ pages, does it from its own data, so that a search reaches text that
 is not on the screen. L<Term::Fabulous::Widget::DocumentView> searches
 its items through this role.
 
-The role declares the methods below and provides none, so a class that
-composes it defines all of them.
+The role declares the methods below, which a class that composes it
+defines, and provides L</search_serial>. A widget that holds other
+searchable widgets and answers for them composes
+L<Term::Fabulous::Role::SearchContainer> instead, which provides the
+methods.
+
+Keys are only valid together with their revision: a caller that keeps a
+key (a search that remembers its matches) keeps the
+L</search_revision> it read with it, and compares the two before it
+uses the key again; when the revision differs, the text changed and the
+caller searches again.
 
 =head1 REQUIRED METHODS
 
@@ -160,6 +187,18 @@ character at the offset lies, when the widget knows it before a layout
 view uses the row, else the text widget's painted lines, else the
 widget's own box.
 
+=head1 PROVIDED METHODS
+
+=head2 search_serial
+
+	my $serial = $widget->search_serial;
+
+A number that names the widget among all searchable widgets made by the
+process, given at construction and never reused, also not after the
+widget is freed. L</nested_search_revision> puts it into the revisions
+of the texts a container answers for, so that a key that leads to
+another widget after the widgets changed reads as changed.
+
 =head1 FUNCTIONS
 
 =head2 searchables_in
@@ -171,26 +210,66 @@ order: C<$widget> itself if it does, else those found among its
 layout children, the children of a widget that does the role not
 included (it answers for them). Exported on request.
 
-=head2 nested_search_texts, nested_search_revision, nested_highlight_text, nested_clear_text_highlights, nested_reveal_text
+=head2 Nested keys
 
-	my @entries  = nested_search_texts( \@widgets );             # keys [ $index, $key ]
+The functions below are the role's methods for a widget that answers
+for searchable widgets inside it (its I<parts>):
+C<\@widgets> are those widgets (from L</searchables_in>), and a key names
+one by its index in the list and that widget's own key,
+C<[ $index, $key ]>. Keys are positions, so a key still means "the same
+place" after its widget was built again (a table re-applies highlights
+to rebuilt cells by position). A key whose index is past the list names
+no widget; a key that is not C<[ index, key ]> dies.
+L<Term::Fabulous::Role::SearchContainer> provides the role's methods
+with them, for L<Term::Fabulous::Widget::Tabs> and
+L<Term::Fabulous::Widget::Accordion::Item>;
+L<Term::Fabulous::Widget::Table> calls them for the widgets of its
+custom cells. All exported on request.
+
+=head2 nested_part
+
+	my $widget = nested_part( \@widgets, $key );
+
+The widget the key names, or C<undef> when its index is past the list.
+
+=head2 nested_search_texts
+
+	my @entries = nested_search_texts( \@widgets );    # keys [ $index, $key ]
+
+The texts of all the widgets, in order, with nested keys.
+
+=head2 nested_search_revision
+
 	my $revision = nested_search_revision( \@widgets, $key );
+
+The revision of the widget at the index and its own revision,
+C<"$serial:$revision"> (see L</search_serial>): when another widget comes
+to the index (a page was removed before it), the revision changes, so a
+caller that compares revisions searches again instead of using the key.
+C<'gone'> for a key whose index is past the list.
+
+=head2 nested_highlight_text
+
 	nested_highlight_text( \@widgets, $key, \@ranges );
+
+Highlights the text in the widget the key names; nothing for a key past
+the list.
+
+=head2 nested_clear_text_highlights
+
 	nested_clear_text_highlights( \@widgets );
+
+Clears the highlights of every widget.
+
+=head2 nested_reveal_text
+
 	my $revealed = nested_reveal_text( \@widgets, $key, $offset );
 
-The role's methods for a widget that answers for searchable widgets
-inside it: C<@widgets> are those widgets (from L</searchables_in>), and
-a key names one by its index in the list and that widget's own key.
-A key whose index is past the list, because the widgets changed,
-gives the revision C<'gone'>, highlights nothing and reveals nothing.
-L<Term::Fabulous::Widget::Tabs> uses them for its pages,
-L<Term::Fabulous::Widget::Accordion::Item> for its body, and
-L<Term::Fabulous::Widget::Table> for the widgets of its custom cells.
-All exported on request.
+The widget's C<reveal_text>; C<[ undef, undef ]> for a key past the list.
 
 =head1 SEE ALSO
 
+L<Term::Fabulous::Role::SearchContainer>,
 L<Term::Fabulous::Widget::Text>, L<Term::Fabulous::Widget::CodeBlock>,
 L<Term::Fabulous::Widget::DocumentView>.
 

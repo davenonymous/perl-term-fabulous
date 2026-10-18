@@ -194,12 +194,23 @@ my @entries = $item->search_texts;    # ( [ [ $index, $key ], $text ], ... )
 my ($text) = @{ $item->reveal_text( $entries[0][0], 0 ) };
 ```
 
-The methods of [Term::Fabulous::Role::Searchable](../../Role/Searchable.md): an item answers for
-the searchable widgets of its body, open or closed, with keys of the
+The methods of [Term::Fabulous::Role::Searchable](../../Role/Searchable.md), from
+[Term::Fabulous::Role::SearchContainer](../../Role/SearchContainer.md): an item answers for the
+searchable widgets of its body, open or closed, with keys of the
 widget's index among them and the widget's own key (see
 ["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../../Role/Searchable.md#nested_search_texts)).
 `reveal_text` opens the item, without firing `Select`, and returns
 what the widget returns.
+
+## searchable\_parts, reveal\_part
+
+```perl
+my @widgets = $item->searchable_parts;
+```
+
+For [Term::Fabulous::Role::SearchContainer](../../Role/SearchContainer.md): the searchable widgets of
+the body, in order, and the step that opens the item before one of them
+reveals a text. You do not call them yourself.
 
 # EVENTS
 

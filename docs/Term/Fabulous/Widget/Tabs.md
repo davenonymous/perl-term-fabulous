@@ -410,13 +410,26 @@ my @entries = $tabs->search_texts;    # ( [ [ $index, $key ], $text ], ... )
 my ($text) = @{ $tabs->reveal_text( $entries[0][0], 0 ) };
 ```
 
-The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md): a Tabs answers for
-the searchable widgets of all its pages, the pages not shown included,
+The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), from
+[Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md): a Tabs answers for the
+searchable widgets of all its pages, the pages not shown included,
 with keys of the widget's index among them and the widget's own key
 (see ["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#nested_search_texts)).
 `reveal_text` selects the page of the widget, without firing
 `Select`, and returns what the widget returns. The indices change when
-pages or their widgets are added or removed.
+pages or their widgets are added or removed; `search_revision` then
+changes too (it names the widget at the index), so a search that
+compares revisions runs again.
+
+## searchable\_parts, reveal\_part
+
+```perl
+my @widgets = $tabs->searchable_parts;
+```
+
+For [Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md): the searchable widgets of
+all pages, in order, and the step that selects the page holding one of
+them before it reveals a text. You do not call them yourself.
 
 # KEYS
 

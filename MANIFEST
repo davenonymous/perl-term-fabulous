@@ -240,6 +240,7 @@ lib/Term/Fabulous/Role/HasOptions.pm
 lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/Terminal.pm
+lib/Term/Fabulous/Role/SearchContainer.pm
 lib/Term/Fabulous/Role/Searchable.pm
 lib/Term/Fabulous/Role/Themed.pm
 lib/Term/Fabulous/Role/Validatable.pm
@@ -400,6 +401,7 @@ t/render-frame-work.t
 t/render-frame.t
 t/render-rectangle.t
 t/render-text.t
+t/role-search-container.t
 t/roving.t
 t/screenshot-box-drawing.t
 t/screenshot-screen.t

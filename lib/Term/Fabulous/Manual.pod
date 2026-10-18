@@ -1108,7 +1108,7 @@ L<Term::Fabulous::Cookbook::Extending/Make a widget usable from KDL>.
 =item Show documents of a format of your own: fill a document with its factories and any widgets
 
 L<Term::Fabulous::Document/FACTORIES>, L<Term::Fabulous::Document::Look>,
-L<Term::Fabulous::Role::Searchable>,
+L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Role::SearchContainer>,
 L<Term::Fabulous::Cookbook::Documents/Turn Markdown into a document (Markdent)>,
 L<Term::Fabulous::Cookbook::Documents/Put any widget into a document (a table and a picture)>.
 

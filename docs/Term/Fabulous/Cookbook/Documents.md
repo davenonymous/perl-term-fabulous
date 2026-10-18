@@ -1584,8 +1584,10 @@ whose target names the note, and add the notes as paragraphs at the
 end of the document.
 - **Widgets of your own.** A widget that shows text it builds only later,
 as a table does with its pages, does
-[Term::Fabulous::Role::Searchable](../Role/Searchable.md) to be found by a search; one whose
-height is known before the layout overrides
+[Term::Fabulous::Role::Searchable](../Role/Searchable.md) to be found by a search; a container
+that holds searchable widgets out of view (pages, a collapsed body) does
+[Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md); one whose height is known
+before the layout overrides
 [estimated\_content\_rows](../Widget.md#estimated_content_rows).
 
 [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a complete reader built the same way, for POD.

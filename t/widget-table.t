@@ -699,7 +699,8 @@ subtest 'the widgets of a custom cell are searched while the row is built' => su
 	$table->highlight_text( [ 1, 'age', 0, undef ], [ [ 0, 4, 'on accent' ] ] );
 	ref_is $table->reveal_text( [ 1, 'age', 0, undef ], 0 )->[0], $table->cell_widget( 1, 'age' ), 'reveal_text names the text in the cell';
 	is $table->cell_widget( 1, 'age' )->highlights->[0][1], 4, 'the highlight went onto it';
-	like $table->search_revision( [ 1, 'age', 0, undef ] ), qr/\A[0-9]+:[0-9]+:[0-9]+\z/, 'the revision joins the row, the columns and the widget';
+	my $serial = $table->cell_widget( 1, 'age' )->search_serial;
+	like $table->search_revision( [ 1, 'age', 0, undef ] ), qr/\A[0-9]+:[0-9]+:$serial:[0-9]+\z/, 'the revision joins the row, the columns, the widget and its revision';
 	is $table->search_revision( [ 5, 'age', 0, undef ] ), 'gone', 'a cell that is not built is gone';
 	$table->page(3);
 	$h->{ui}->step;
