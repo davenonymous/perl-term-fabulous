@@ -63,6 +63,24 @@ the header), and a non-spanning line draws the line below it when the
 next line spans the columns, so that the junctions of its columns are
 part of its own corners.
 
+A _ledge_ is a line that holds nothing and draws only an edge of the
+frame: the table's footer, which draws the bottom edge below the
+scrolling rows, and its top without column titles. A ledge is the
+first or the last line (any other dies), and there is no line between
+it and its neighbour, whatever the styles say.
+
+## The scrollbar column
+
+With `gutter`, a column for the scrollbar follows the last grid
+column. The cells of the last column then draw no right side: the
+frame's right side, in the table's `border_right`, is drawn by three
+_strips_ beside the header lines, the body and the last line, which
+the result returns under `gutter`. The horizontal lines that reach the
+frame run on beside the strips: the header strip draws the top edge
+and the line below the header lines, the footer strip the bottom edge,
+each with the corner or junction where it meets the right side. Lines
+between rows end at the last cell.
+
 ## A frame in a block style
 
 A frame side in a style without joint glyphs (`Outer`, `Inner`,
@@ -80,27 +98,34 @@ on the background outside the box (glyph location 1 or 2, as
 ## resolve\_borders
 
 ```perl
-my $cells = resolve_borders(%arguments);
+my $resolved = resolve_borders(%arguments);
+my $cells    = $resolved->{lines};
+my $strips   = $resolved->{gutter};
 ```
 
 Arguments: `columns` (the number of grid columns), `header` (how many
-of the lines are header lines, default 0), `table`, `column_styles`
-(one hash per column) and `lines` (one hash per line, header lines
-first, each with `spanning`, `style` and `cells`, one hash per cell
-or one for a spanning line), with the keys named above. Every hash and
-key is optional; styles are [Term::Fabulous::Enum::BorderStyle](../../Enum/BorderStyle.md) items.
+of the lines are header lines, default 0), `gutter` (whether the
+scrollbar column follows the last grid column, default 0), `table`,
+`column_styles` (one hash per column) and `lines` (one hash per
+line, header lines first, each with `spanning`, `ledge`, `style`
+and `cells`, one hash per cell or one for a spanning line), with the
+keys named above. Every hash and key is optional; styles are
+[Term::Fabulous::Enum::BorderStyle](../../Enum/BorderStyle.md) items.
 
-Returns an array reference with one entry per line, an array reference
-with one hash per cell: `sides` maps each side the cell draws
-(`top`, `right`, `bottom`, `left`) to its style (`Blank` for a
-segment without a line on a line that exists), `corners` maps each
-corner the cell draws (`top_left`, `top_right`, `bottom_left`,
-`bottom_right`; a corner is drawn where two drawn sides meet) to its
-glyph (a space where no line passes; a corner of a block-style frame
-is left out, see ["A frame in a block style"](#a-frame-in-a-block-style)), and `outer` lists the
-drawn sides of the outer frame of the table that are drawn on the
-background outside it (for
-["outer\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../../Role/HasBorderStyle.md#outer_border_sides)).
+Returns a hash reference. `lines` is an array reference with one
+entry per line, an array reference with one hash per cell: `sides`
+maps each side the cell draws (`top`, `right`, `bottom`, `left`)
+to its style (`Blank` for a segment without a line on a line that
+exists), `corners` maps each corner the cell draws (`top_left`,
+`top_right`, `bottom_left`, `bottom_right`; a corner is drawn where
+two drawn sides meet) to its glyph (a space where no line passes; a
+corner of a block-style frame is left out, see ["A frame in a block
+style"](#a-frame-in-a-block-style)), and `outer` lists the drawn sides of the outer frame of the
+table that are drawn on the background outside it (for
+["outer\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../../Role/HasBorderStyle.md#outer_border_sides)). `gutter`
+is `undef`, or with `gutter` a hash of the same kind for each of the
+three strips of the scrollbar column, `header`, `body` and
+`footer` (see ["The scrollbar column"](#the-scrollbar-column)).
 
 # SEE ALSO
 

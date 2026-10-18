@@ -1987,7 +1987,7 @@ The rows of a table and the lines it shows, without widgets.
 How a table checks its style hashes and works out its grid lines. Used
 internally by the table.
 
-=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::HeaderView>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
+=item L<Term::Fabulous::Widget::Table::Cell>, L<Term::Fabulous::Widget::Table::Toggle>, L<Term::Fabulous::Widget::Table::Grid>, L<Term::Fabulous::Widget::Table::EdgeView>, L<Term::Fabulous::Widget::Table::Pager>, L<Term::Fabulous::Widget::Table::ColumnChooser>
 
 The widgets a table is built of: cells, the open and close markers,
 the grids, the header, the page controls and the column chooser (the

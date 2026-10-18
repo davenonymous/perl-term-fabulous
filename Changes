@@ -1,6 +1,17 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - The frame of a Widget::Table stays while its rows scroll: the
+          bottom (and, without column titles, the top) is a ledge of its
+          own below (above) the scrolling body, drawn in the table's
+          line_color, instead of a side of the last (first) row. The
+          scrollbar moved inside the frame, into a column right of the
+          last column without a line of its own, which appears only
+          while the rows do not fit, so a table that does not scroll is
+          as wide as its columns. Table::Borders::resolve_borders takes
+          ledge lines and a gutter flag and returns { lines, gutter };
+          Table::HeaderView is Table::EdgeView, the view of the header
+          and of the footer.
         - Widget::estimated_rows counts only the border sides that are
           drawn (a Hidden side takes no room) and the room a ScrollBox
           keeps for its scrollbars, through the new content_padding

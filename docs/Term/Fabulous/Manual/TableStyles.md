@@ -420,10 +420,12 @@ level has one.
 A piece of line takes the `border_color` of the cell that draws it:
 the cell to its right for a vertical line (the last cell of a row for
 the right side of the frame), and the cell below it for a horizontal
-line, with three exceptions: the column titles draw the line below
-them, the last row draws the bottom of the frame, and the row above a
-group header draws the line between them. So `border_color` in a
-row style colors the line above the row and the lines left of its cells.
+line, with two exceptions: the column titles draw the line below
+them, and the row above a group header draws the line between them. So
+`border_color` in a row style colors the line above the row and
+the lines left of its cells. The top of the frame without column
+titles and its bottom belong to no row: the table draws them in its
+`line_color`, and they stay while the rows scroll.
 
 ## Cell padding
 
@@ -481,22 +483,24 @@ cursor moves out of sight, the rows scroll until its line is visible.
 A new page starts at its top. From Perl, `$table->scroll_to_row($id)`
 moves the cursor to a row and scrolls it into view.
 
-The _scrollbar_ is one column right of the frame. While the rows do
-not fit, it shows a track with a thumb for the visible part; clicking
-or dragging on it scrolls. `scrollbar => 0` removes it, and the
-column it takes. Its colors are the table's `line_color` (the track)
-and `text_color` (the thumb); see
+While the rows do not fit, a _scrollbar_ column appears inside the
+frame, right of the last column and without a line of its own: the
+scrollbar shows a track with a thumb for the visible part, and
+clicking or dragging on it scrolls. The column goes away when the rows
+fit again, so a table that does not scroll is exactly as wide as its
+columns. `scrollbar => 0` never shows it. Its colors are the
+table's `line_color` (the track) and `text_color` (the thumb); see
 [Term::Fabulous::Widget::Scrollbar](../Widget/Scrollbar.md).
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, and the scrollbar right of the frame shows a thumb in its middle"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, the bottom of the frame at the bottom, and the scrollbar inside the frame shows a thumb in its middle"></p>
 </div>
 
 The picture shows a table higher than its room, scrolled down to the
 cursor's line: the column titles and the filter row stay at the top,
-and the thumb of the scrollbar shows which part of the rows is visible.
-It is `examples/table-files.pl`, described in
-[Term::Fabulous::Examples](../Examples.md).
+the frame's bottom stays at the bottom, and the thumb of the scrollbar
+shows which part of the rows is visible. It is
+`examples/table-files.pl`, described in [Term::Fabulous::Examples](../Examples.md).
 
 # PRINTING A TABLE
 

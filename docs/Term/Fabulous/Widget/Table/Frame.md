@@ -15,9 +15,11 @@ $dialog->add_child( framed( $list, 10 ) );
 
 The widgets that show a list in a [Term::Fabulous::Widget::Table](../Table.md)
 (the file dialog, the color picker and the theme editor's value dialog)
-put the table in a frame of its own, because a table's own frame
-scrolls with its rows. This module makes that frame. It is internal to
-Term::Fabulous and not meant to be used directly.
+put the table in a frame of its own: a plain [Term::Fabulous::Widget::Box](../Box.md)
+border that shows the focus and, unlike the table's own frame, can be
+asked for a height that gives way to the widgets around it. This
+module makes that frame. It is internal to Term::Fabulous and not
+meant to be used directly.
 
 # FUNCTIONS
 

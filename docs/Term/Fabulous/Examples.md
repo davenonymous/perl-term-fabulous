@@ -454,7 +454,7 @@ rows scroll, while the column titles and the filter row stay in place.
 See ["SIZE AND SCROLLING" in Term::Fabulous::Manual::TableStyles](Manual/TableStyles.md#size-and-scrolling).
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, and the scrollbar right of the frame shows a thumb in its middle"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/example-table-files-scrolling.svg" alt="A file tree table with all folders open, scrolled down: the column titles and the filter row stay at the top, the bottom of the frame at the bottom, and the scrollbar inside the frame shows a thumb in its middle"></p>
 </div>
 
 ## Charts and canvases

@@ -596,8 +596,8 @@ every cell (see L<Term::Fabulous::Manual::TableStyles/Cell padding>).
 
 =item *
 
-C<< scrollbar => 0 >> removes the scrollbar column right of each table;
-these tables always fit.
+The scrollbar column inside the frame appears only while the rows do
+not fit; these tables always fit, so none shows one.
 
 =back
 

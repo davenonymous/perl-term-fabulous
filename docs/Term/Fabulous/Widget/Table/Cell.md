@@ -5,8 +5,10 @@ Term::Fabulous::Widget::Table::Cell - A cell of a table
 # DESCRIPTION
 
 The box [Term::Fabulous::Widget::Table](../Table.md) puts around every cell it
-shows: header cells, filter fields, data cells and the cells that span
-the columns (group headers, the text of an empty table). It is a
+shows: header cells, filter fields, data cells, the cells that span
+the columns (group headers, the text of an empty table) and the empty
+cells of the ledges that draw the top of the frame (without column
+titles) and its bottom. It is a
 [Term::Fabulous::Widget::Box](../Box.md) that composes
 [Clay::UI::Role::Layout::GridCell](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AGridCell), so the table's grids size it as the
 cell of its column and row. The table gives it its background, padding
@@ -22,13 +24,13 @@ cell (or a widget inside it) as its target, and `line_key`,
 
 ## part
 
-`'header'`, `'filter'` or `'body'`.
+`'header'`, `'filter'`, `'body'` or `'ledge'`.
 
 ## line\_key
 
 The key of the line of the table's model the cell belongs to (see
-["Lines" in Term::Fabulous::Widget::Table::Model](Model.md#lines)), or `undef` in the
-header.
+["Lines" in Term::Fabulous::Widget::Table::Model](Model.md#lines)), or `undef` outside the
+body.
 
 ## column\_key
 

@@ -23,12 +23,12 @@
 <rect x="84" y="96" width="540" height="90" fill="#1c212d"/>
 <rect x="624" y="96" width="54" height="378" fill="#121418"/>
 <rect x="84" y="186" width="36" height="18" fill="#1c212d"/>
-<rect x="120" y="186" width="459" height="18" fill="#242832"/>
-<rect x="579" y="186" width="45" height="18" fill="#1c212d"/>
+<rect x="120" y="186" width="468" height="18" fill="#242832"/>
+<rect x="588" y="186" width="36" height="18" fill="#1c212d"/>
 <rect x="84" y="204" width="540" height="54" fill="#1c212d"/>
 <rect x="84" y="258" width="36" height="18" fill="#1c212d"/>
-<rect x="120" y="258" width="459" height="18" fill="#343a48"/>
-<rect x="579" y="258" width="45" height="18" fill="#1c212d"/>
+<rect x="120" y="258" width="468" height="18" fill="#343a48"/>
+<rect x="588" y="258" width="36" height="18" fill="#1c212d"/>
 <rect x="84" y="276" width="540" height="54" fill="#1c212d"/>
 <rect x="84" y="330" width="72" height="18" fill="#1c212d"/>
 <rect x="156" y="330" width="441" height="18" fill="#242830"/>
@@ -45,7 +45,7 @@
 <rect x="120" y="176" width="468" height="1" fill="#61afef"/>
 <rect x="115" y="186" width="1" height="126" fill="#61afef"/>
 <rect x="592" y="186" width="1" height="126" fill="#61afef"/>
-<rect x="120" y="212" width="459" height="1" fill="#586070"/>
+<rect x="120" y="212" width="468" height="1" fill="#586070"/>
 <rect x="120" y="320" width="468" height="1" fill="#61afef"/>
 <rect x="120" y="392" width="54" height="1" fill="#46556e"/>
 <rect x="210" y="392" width="72" height="1" fill="#46556e"/>
@@ -76,11 +76,11 @@
 <g class="terminal">
 <text x="111" y="146" textLength="99" class="b" fill="#dcdfe4">Open a file</text>
 <text x="111" y="164" textLength="486" fill="#dcdfe4">Folder: ...ace/Documents/garden-club/season-2026/notes</text>
-<text x="129" y="200" textLength="369" class="b" fill="#ebeef3">Name                       Size  Modified</text>
+<text x="129" y="200" textLength="378" class="b" fill="#ebeef3">Name                        Size  Modified</text>
 <text x="129" y="236" textLength="27" fill="#dcdfe4">../</text>
-<text x="129" y="254" textLength="441" fill="#dcdfe4">garden.txt                100 B  2026-05-31 10:30</text>
-<text x="129" y="272" textLength="441" fill="#dcdfe4">groceries.txt              18 B  2026-05-28 10:30</text>
-<text x="129" y="290" textLength="441" fill="#dcdfe4">ideas.md                   38 B  2026-05-30 10:30</text>
+<text x="129" y="254" textLength="450" fill="#dcdfe4">garden.txt                 100 B  2026-05-31 10:30</text>
+<text x="129" y="272" textLength="450" fill="#dcdfe4">groceries.txt               18 B  2026-05-28 10:30</text>
+<text x="129" y="290" textLength="450" fill="#dcdfe4">ideas.md                    38 B  2026-05-30 10:30</text>
 <text x="111" y="344" textLength="162" fill="#dcdfe4">File groceries.txt</text>
 <text x="111" y="362" textLength="45" fill="#dcdfe4">Notes</text>
 <text x="205.5" y="362" text-anchor="middle" fill="#61afef">▾</text>

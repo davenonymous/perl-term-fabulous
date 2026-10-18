@@ -250,8 +250,8 @@ of the same name, described under ["METHODS"](#methods).
 
 - `scrollbar`
 
-    A boolean. Default: 1. Whether the scrollbar column is shown right of
-    the rows.
+    A boolean. Default: 1. Whether the scrollbar column is shown inside
+    the frame, right of the rows, while they do not fit.
 
 - `empty_text`
 
@@ -1350,7 +1350,7 @@ Whether the column titles are shown.
 $table->scrollbar(0);
 ```
 
-Whether the scrollbar column is shown.
+Whether the scrollbar column is shown while the rows do not fit.
 
 ### hover
 

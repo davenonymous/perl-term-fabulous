@@ -133,7 +133,7 @@ subtest 'drawing' => sub {
 	is static_lines($bare), [' Ann  Sales  34'], 'no header, no lines';
 
 	my $narrow = Term::Fabulous::Widget::Table->new( id => 'w', columns => [ { key => 'a' }, { key => 'b' } ], rows => [ { a => 'xx', b => 'yy' } ] );
-	is static_lines( $narrow, 11 ), [
+	is static_lines( $narrow, 10 ), [
 		"\x{256D}\x{2500}\x{2500}\x{2500}\x{2500}\x{252C}\x{2500}\x{2500}\x{2500}\x{2500}",
 		"\x{2502} a  \x{2502} b",
 		"\x{251C}\x{2500}\x{2500}\x{2500}\x{2500}\x{253C}\x{2500}\x{2500}\x{2500}\x{2500}",
@@ -551,6 +551,30 @@ subtest 'scrolling' => sub {
 	ok( ( grep { /\bn25\b/ } @{ screen( { terminal => $terminal } ) } ), 'a cursor set before the table was in a UI is scrolled into view after the first frame' );
 };
 
+subtest 'the frame stays while the rows scroll' => sub {
+	my ( $table, $h ) = table_ui( rows => [ map { { id => $_, name => "n$_", dept => 'd', age => $_ } } 1 .. 30 ], size => [ 40, 10 ], layout => { sizing => { height => sizing_grow() } } );
+	my $lines = screen($h);
+	like $lines->[0],   qr/\A\x{256D}\x{2500}+\x{252C}.*\x{2500}\x{256E}\z/, 'the top of the frame runs on over the scrollbar column';
+	like $lines->[9],   qr/\A\x{2570}\x{2500}+\x{2534}.*\x{2500}\x{256F}\z/, 'the bottom of the frame is the last line';
+	like $lines->[3],   qr/\bn1\b.*\x{2503}\x{2502}\z/,                      'the scrollbar is inside the frame, right of the last column';
+	unlike $lines->[1], qr/\x{2502}\s\x{2502}\z/,                            'the header has no line left of the scrollbar column';
+	keys_to( $h, 'Ctrl+End' );
+	$lines = screen($h);
+	ok( ( grep { /\bn30\b/ } @$lines ), 'the last row is in view' );
+	like $lines->[9], qr/\A\x{2570}.*\x{256F}\z/, 'and the bottom of the frame still is';
+
+	my ( $bare, $g )
+		= table_ui( rows => [ map { { id => $_, name => "n$_", dept => 'd', age => $_ } } 1 .. 30 ], header => 0, size => [ 40, 10 ], layout => { sizing => { height => sizing_grow() } } );
+	keys_to( $g, 'Ctrl+End' );
+	$lines = screen($g);
+	like $lines->[0], qr/\A\x{256D}\x{2500}+\x{252C}/, 'without column titles, the top of the frame stays too';
+	ok( ( grep { /\bn30\b/ } @$lines ), 'with the last row in view' );
+
+	my ( $fits, $f ) = table_ui( size => [ 40, 14 ] );
+	$lines = screen($f);
+	like $lines->[3], qr/\x{2502} Ann\s+\x{2502} Sales \x{2502}\s+34 \x{2502}\z/, 'rows that fit have no scrollbar column';
+};
+
 subtest 'a growing column wraps its text instead of scrolling sideways' => sub {
 	my $text = 'The quick brown fox jumps over the lazy dog and keeps on running far away';
 	my ( $table, $h ) = table_ui(
@@ -560,10 +584,10 @@ subtest 'a growing column wraps its text instead of scrolling sideways' => sub {
 	);
 	my @rows = grep { /\x{2502}/ } @{ screen($h) };
 	ok !( grep { !/\x{2502}\z/ } @rows ), 'every row ends at the right side of the frame';
-	ok( ( grep { /\x{2502} on running far away\s+\x{2502}/ } @rows ), 'the text wraps in the column' );
+	ok( ( grep { /\x{2502} running far away\s+\x{2502}/ } @rows ), 'the text wraps in the column' );
 	$table->update_column( text => width => 'fit' );
 	$h->{ui}->step;
-	ok( ( grep { /The quick brown fox jumps over t\z/ } @{ screen($h) } ), 'a fit column keeps its text on one line and scrolls sideways' );
+	ok( ( grep { /The quick brown fox jumps over th\z/ } @{ screen($h) } ), 'a fit column keeps its text on one line and scrolls sideways' );
 };
 
 subtest 'a growing column cuts off a word that is longer than its width' => sub {
@@ -598,7 +622,7 @@ subtest 'hover and scrollbar' => sub {
 
 	my ($bar_x) = grep { ( $h->{terminal}->cell( $_, 3 ) // [''] )->[0] eq "\x{2503}" } 0 .. 39;
 	ok defined $bar_x, 'a scrollbar shows the thumb';
-	mouse( $h, key => TB_KEY_MOUSE_LEFT, x => $bar_x, y => 9 );
+	mouse( $h, key => TB_KEY_MOUSE_LEFT, x => $bar_x, y => 8 );
 	ok( ( grep { /\bn30\b/ } @{ screen($h) } ), 'a click at the end of the scrollbar shows the end' );
 	mouse( $h, key => TB_KEY_MOUSE_LEFT, x => $bar_x, y => 3, mod => TB_MOD_MOTION );
 	ok( ( grep { /\bn1\b/ } @{ screen($h) } ), 'dragging to the top shows the start' );

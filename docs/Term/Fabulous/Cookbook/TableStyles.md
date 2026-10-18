@@ -481,8 +481,8 @@ line style. See
 - Every grid line takes a terminal row or column. The last example also
 sets `cell_padding => 2`, two columns of space left and right in
 every cell (see ["Cell padding" in Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md#cell-padding)).
-- `scrollbar => 0` removes the scrollbar column right of each table;
-these tables always fit.
+- The scrollbar column inside the frame appears only while the rows do
+not fit; these tables always fit, so none shows one.
 
 # SEE ALSO
 

@@ -332,10 +332,10 @@ lib/Term/Fabulous/Widget/Table/Borders.pm
 lib/Term/Fabulous/Widget/Table/Cell.pm
 lib/Term/Fabulous/Widget/Table/Column.pm
 lib/Term/Fabulous/Widget/Table/ColumnChooser.pm
+lib/Term/Fabulous/Widget/Table/EdgeView.pm
 lib/Term/Fabulous/Widget/Table/Filter.pm
 lib/Term/Fabulous/Widget/Table/Frame.pm
 lib/Term/Fabulous/Widget/Table/Grid.pm
-lib/Term/Fabulous/Widget/Table/HeaderView.pm
 lib/Term/Fabulous/Widget/Table/Model.pm
 lib/Term/Fabulous/Widget/Table/Mutator.pm
 lib/Term/Fabulous/Widget/Table/Pager.pm

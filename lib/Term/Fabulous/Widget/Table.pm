@@ -19,7 +19,7 @@ use Term::Fabulous::Widget::TextField;
 use Term::Fabulous::Widget::Table::Cell;
 use Term::Fabulous::Widget::Table::ColumnChooser;
 use Term::Fabulous::Widget::Table::Grid;
-use Term::Fabulous::Widget::Table::HeaderView;
+use Term::Fabulous::Widget::Table::EdgeView;
 use Term::Fabulous::Role::Searchable qw(searchables_in nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);
 use Term::Fabulous::Widget::Table::Model;
 use Term::Fabulous::Widget::Table::Pager;
@@ -155,25 +155,48 @@ class Term::Fabulous::Widget::Table
 	field $model :reader;
 	field %_line_style;    # table-wide lines: border_* , column_lines, row_lines, header_line
 
-	# The widgets of the table.
-	field $_header_row;    # the header view and, with a scrollbar, a spacer as wide as it
+	# The widgets of the table: three rows, each a view of a grid (the
+	# header, the scrolling body, the footer) and, while the rows scroll,
+	# a strip of the scrollbar column beside it, which draws the frame's
+	# right side there. The strips of the header and the footer hold a
+	# blank column, the body's the scrollbar.
+	field $_header_row;
 	field $_header_view;
-	field $_header_spacer;
 	field $_header_grid;
+	field $_header_strip;
 	field $_body_row;
 	field $_body;
 	field $_body_grid;
+	field $_body_strip;
 	field $_scrollbar;
+	field $_footer_row;
+	field $_footer_view;
+	field $_footer_grid;
+	field $_footer_strip;
 	field $_pager;
 	field $_chooser;
 
 	# The header as built: a signature of what it was built from, and per
-	# grid column { cell, title, marker, mark } and { cell, field }.
+	# grid column { cell, title, marker, mark } and { cell, field }; or,
+	# without header rows, the cells of the ledge that draws the frame's
+	# top. The footer is the ledge that draws its bottom.
 	field $_header_signature = '';
 	field @_header_cells;
 	field @_filter_cells;
+	field @_top_ledge_cells;
 	field %_filter_text;
 	field %_filter_error;
+	field $_footer_signature = '';
+	field @_footer_cells;
+
+	# Whether the scrollbar column is shown: wanted, and the rows did not
+	# fit in the last frame. The strips as dressed, by part, and the
+	# column inside the header strip that fills the header rows'
+	# backgrounds, with what it was filled from.
+	field $_gutter_shown = 0;
+	field %_strip_dressed;
+	field $_header_fills;
+	field $_header_fills_signature = '';
 
 	# The body as built: the signature of its columns, the lines by key
 	# (see _build_line) and the order of the grid's rows.
@@ -188,11 +211,13 @@ class Term::Fabulous::Widget::Table
 	field %_text_highlights;
 	field %_cell_highlights;
 
-	# The grid lines as last worked out, what they were worked out from,
-	# and a count that tells the lines' looks they changed. Changes of
-	# styles count in _style_revision.
+	# The grid lines as last worked out (per line, and the strips of the
+	# scrollbar column), what they were worked out from, and a count that
+	# tells the lines' looks they changed. Changes of styles count in
+	# _style_revision.
 	field $_borders_signature  = '';
 	field $_borders            = [];
+	field $_strip_borders      = undef;
 	field $_borders_generation = 0;
 	field $_style_revision     = 0;
 
@@ -266,6 +291,7 @@ class Term::Fabulous::Widget::Table
 
 		$self->_build_frame;
 		$self->_listen;
+		$self->_watch_gutter;
 		$self->request_prepare;
 	}
 
@@ -349,28 +375,41 @@ class Term::Fabulous::Widget::Table
 		$_body_grid   = Term::Fabulous::Widget::Table::Grid->new( layout => { sizing => { width => sizing_grow(), height => sizing_fit() } }, share_columns_with => $_header_grid );
 		$_body->add_child($_body_grid);
 
-		$_header_view = Term::Fabulous::Widget::Table::HeaderView->new(
-			follows => $_body,
-			layout  => { sizing => { width => sizing_grow(), height => sizing_fit() } },
-		);
+		$_footer_grid = Term::Fabulous::Widget::Table::Grid->new( layout => { sizing => { width => sizing_grow(), height => sizing_fit() } }, share_columns_with => $_header_grid );
+		( $_header_view, $_footer_view ) = map { Term::Fabulous::Widget::Table::EdgeView->new( follows => $_body, layout => { sizing => { width => sizing_grow(), height => sizing_fit() } } ) } 1 .. 2;
 		$_header_view->add_child($_header_grid);
-		$_header_row    = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT, sizing => { width => sizing_grow(), height => sizing_fit() } } );
-		$_header_spacer = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(1), height => sizing_grow() } } );
-		$_header_row->add_child($_header_view);
+		$_footer_view->add_child($_footer_grid);
 
-		$_body_row = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT, sizing => { width => sizing_grow(), height => sizing_fit() } } );
-		$_body_row->add_child($_body);
 		$_scrollbar = Term::Fabulous::Widget::Scrollbar->new(
 			follows     => $_body,
 			thumb_color => $self->text_color,
 			track_color => $self->line_color,
 			layout      => { sizing => { width => sizing_fixed(1), height => sizing_grow() } },
 		);
+		$_header_fills = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(1), height => sizing_grow() } } );
+		$_header_strip = _new_strip($_header_fills);
+		$_body_strip   = _new_strip($_scrollbar);
+		$_footer_strip = _new_strip( Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fixed(1), height => sizing_fit() } } ) );
 
+		( $_header_row, $_body_row, $_footer_row ) = map { _new_row($_) } $_header_view, $_body, $_footer_view;
 		$_pager = $self->_new_pager;
 		$self->_wire_pager;
-		$self->add_child( $_header_row, $_body_row );
+		$self->add_child( $_header_row, $_body_row, $_footer_row );
 		return;
+	}
+
+	sub _new_row ($view) {
+		my $row = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_LEFT_TO_RIGHT, sizing => { width => sizing_grow(), height => sizing_fit() } } );
+		$row->add_child($view);
+		return $row;
+	}
+
+	# A strip of the scrollbar column: its content (a blank column or the
+	# scrollbar) and, once dressed, the frame's right side.
+	sub _new_strip ($content) {
+		my $strip = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_fit(), height => sizing_grow() } } );
+		$strip->add_child($content);
+		return $strip;
 	}
 
 	method _new_pager () {
@@ -437,10 +476,11 @@ class Term::Fabulous::Widget::Table
 		my @grid_columns = $self->_grid_columns;
 		my @lines        = $self->_body_lines;
 		$self->_prepare_width( \@grid_columns );
+		$self->_prepare_gutter;
 		$self->_prepare_header( \@grid_columns );
+		$self->_prepare_footer( \@grid_columns );
 		$self->_prepare_body( \@grid_columns, \@lines );
 		$self->_dress( \@grid_columns, \@lines );
-		$self->_prepare_scrollbar;
 		$self->_prepare_pager;
 		$self->_prepare_scrolling;
 		return;
@@ -456,7 +496,7 @@ class Term::Fabulous::Widget::Table
 			$type == CLAY__SIZING_TYPE_GROW || $type == CLAY__SIZING_TYPE_PERCENT;
 		} @$grid_columns;
 		my $width = $stretch ? sizing_grow() : sizing_fit();
-		foreach my $widget ( $_header_row, $_header_view, $_header_grid, $_body_row, $_body, $_body_grid ) {
+		foreach my $widget ( $_header_row, $_header_view, $_header_grid, $_body_row, $_body, $_body_grid, $_footer_row, $_footer_view, $_footer_grid ) {
 			my $layout = $widget->layout;
 			next if _same( $layout->{sizing}{width}, $width );
 			$widget->layout( { %$layout, sizing => { %{ $layout->{sizing} // {} }, width => $width } } );
@@ -488,15 +528,35 @@ class Term::Fabulous::Widget::Table
 			$_header_grid->append_row( [ map { $_->{cell} } @_filter_cells ] ) if @_filter_cells;
 		}
 
-		# Without header rows, a row no taller than nothing keeps the header
-		# grid, and with it the body, as wide as the columns.
-		$_header_grid->append_row( [ map { $self->_ruler_cell($_) } @$grid_columns ] ) unless @_header_cells || @_filter_cells;
+		# Without header rows, the frame's top is a ledge, which also keeps
+		# the header grid, and with it the body, as wide as the columns.
+		@_top_ledge_cells = @_header_cells || @_filter_cells ? () : map { { cell => $self->_ledge_cell($_) } } @$grid_columns;
+		$_header_grid->append_row( [ map { $_->{cell} } @_top_ledge_cells ] ) if @_top_ledge_cells;
 		return;
 	}
 
-	method _ruler_cell ($grid_column) {
-		my $cell = $self->_new_cell( header => undef, $grid_column->{key}, $grid_column->{column} );
-		$cell->layout( { %{ $cell->layout }, sizing => { %{ $cell->layout->{sizing} }, height => sizing_fixed(0) } } );
+	# The footer: the ledge that draws the frame's bottom.
+	method _prepare_footer ($grid_columns) {
+		my $signature = join "\0", $model->columns_revision, $selection, map { $_->{key} } @$grid_columns;
+		return if $signature eq $_footer_signature;
+		$_footer_signature = $signature;
+		$_footer_grid->clear_rows;
+		@_footer_cells = map { { cell => $self->_ledge_cell($_) } } @$grid_columns;
+		$_footer_grid->append_row( [ map { $_->{cell} } @_footer_cells ] );
+		return;
+	}
+
+	# A cell of a ledge: a child of no height inside (Clay gives a childless
+	# box no height, border or not), so it is as high as the one frame side
+	# it draws.
+	method _ledge_cell ($grid_column) {
+		my $column = $grid_column->{column};
+		my $cell   = Term::Fabulous::Widget::Table::Cell->new(
+			part       => 'ledge',
+			column_key => $grid_column->{key},
+			layout     => { sizing => { width => defined $column ? $column->width : sizing_fit(), height => sizing_fit() } },
+		);
+		$cell->add_child( Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_fixed(0) } } ) );
 		return $cell;
 	}
 
@@ -827,20 +887,23 @@ class Term::Fabulous::Widget::Table
 	# cursor dresses the two lines and their neighbours.
 	method _dress ( $grid_columns, $lines ) {
 		my $follows_data = $self->_styles_follow_data($grid_columns);
-		my @header_rows  = ( ( @_header_cells ? [ \@_header_cells, 'header' ] : () ), ( @_filter_cells ? [ \@_filter_cells, 'filter' ] : () ) );
-		my $signature    = join "\0", $model->columns_revision, $_style_revision, scalar @header_rows, scalar @$grid_columns,
+		my @header_rows  = $self->_header_rows;
+		my $signature    = join "\0", $model->columns_revision, $_style_revision, $_gutter_shown, scalar @header_rows, scalar @$grid_columns,
 			map { $_->{key} . ( $follows_data && $_->{kind} eq 'row' ? ':' . $model->row_revision( $_->{id} ) : '' ) } @$lines;
 		if ( $signature ne $_borders_signature ) {
 			$_borders_signature = $signature;
-			$_borders           = $self->_resolve_lines( $grid_columns, \@header_rows, $lines );
+			my $resolved = $self->_resolve_lines( $grid_columns, \@header_rows, $lines );
+			( $_borders, $_strip_borders ) = @{$resolved}{qw(lines gutter)};
 			$_borders_generation++;
 		}
 
 		my $column_count = scalar @$grid_columns;
+		my $ledge_look   = $self->_ledge_look;
 		my @header_looks = map {
 			my ( $cells, $part ) = @$_;
-			[ map { $part eq 'header' ? $self->_header_look( $_, $grid_columns->[$_] ) : $self->_filter_look( $cells->[$_], $grid_columns->[$_] ) } 0 .. $#$cells ]
+			[ map { $part eq 'header' ? $self->_header_look( $_, $grid_columns->[$_] ) : $part eq 'filter' ? $self->_filter_look( $cells->[$_], $grid_columns->[$_] ) : $ledge_look } 0 .. $#$cells ]
 		} @header_rows;
+		my @footer_looks = ($ledge_look) x $column_count;
 
 		my $focused    = $self->_has_focus_within;
 		my $cursor     = $model->cursor;
@@ -860,7 +923,7 @@ class Term::Fabulous::Widget::Table
 			$built->{backgrounds} = _backgrounds( $built->{looks}, $column_count );
 		}
 
-		my @backgrounds  = ( ( map { _backgrounds( $_, $column_count ) } @header_looks ), map { $_built{ $_->{key} }{backgrounds} } @$lines );
+		my @backgrounds  = ( ( map { _backgrounds( $_, $column_count ) } @header_looks ), ( map { $_built{ $_->{key} }{backgrounds} } @$lines ), _backgrounds( \@footer_looks, $column_count ) );
 		my $base         = $self->_base_background;
 		my $backdrops_of = sub ($at) {
 			my $borders = $_borders->[$at];
@@ -877,6 +940,11 @@ class Term::Fabulous::Widget::Table
 		}
 		$self->_mark_header($grid_columns) if @_header_cells;
 
+		my $footer_at        = @header_rows + @$lines;
+		my $footer_backdrops = $backdrops_of->($footer_at);
+		$self->_dress_cell( $_footer_cells[$_]{cell}, $footer_looks[$_], $_borders->[$footer_at][$_], $footer_backdrops->[$_], \$_footer_cells[$_]{dressed} ) foreach 0 .. $#_footer_cells;
+		$self->_dress_strips( \@header_rows, $base ) if $_gutter_shown;
+
 		my @background_keys = map { join "\x{1F}", @$_ } @backgrounds;
 		my $base_key        = _flat($base);
 		foreach my $index ( 0 .. $#$lines ) {
@@ -887,6 +955,36 @@ class Term::Fabulous::Widget::Table
 			$built->{dress_key} = $dress_key;
 			$self->_dress_line( $built, $line, $grid_columns, $built->{looks}, $_borders->[$at], $backdrops_of->($at) );
 		}
+		return;
+	}
+
+	# The rows of the header grid as built, [ cells, part ] each: the
+	# column titles and the filter row, or the ledge instead of both.
+	method _header_rows () {
+		return ( ( @_header_cells ? [ \@_header_cells, 'header' ] : () ), ( @_filter_cells ? [ \@_filter_cells, 'filter' ] : () ), ( @_top_ledge_cells ? [ \@_top_ledge_cells, 'ledge' ] : () ) );
+	}
+
+	# The strips of the scrollbar column: the frame's right side and the
+	# lines that run on beside the header and the footer, on the table's
+	# background. Inside the header strip, a blank column in the background
+	# of each header row, so that the rows reach the frame.
+	method _dress_strips ( $header_rows, $base ) {
+		my $look  = { background_color => $base, border_color => $self->line_color };
+		my %strip = ( header => $_header_strip, body => $_body_strip, footer => $_footer_strip );
+		$self->_dress_cell( $strip{$_}, $look, $_strip_borders->{$_}, undef, \$_strip_dressed{$_} ) foreach sort keys %strip;
+
+		my $filter_height = 1 + $cell_padding->{top} + $cell_padding->{bottom};
+		my @fills         = map {
+			my $part = $_->[1];
+				  $part eq 'header' ? [ $header_style->{background_color} // $self->header_background_color, sizing_grow() ]
+				: $part eq 'filter' ? [ $self->filter_background_color, sizing_fixed($filter_height) ]
+				: ()
+		} @$header_rows;
+		my $signature = join "\0", map { _flat($_) } @fills;
+		return if $signature eq $_header_fills_signature;
+		$_header_fills_signature = $signature;
+		$_header_fills->clear_children;
+		$_header_fills->add_child( Term::Fabulous::Widget::Box->new( background_color => $_->[0], layout => { sizing => { width => sizing_grow(), height => $_->[1] } } ) ) foreach @fills;
 		return;
 	}
 
@@ -938,11 +1036,11 @@ class Term::Fabulous::Widget::Table
 		return $state eq 'cursor' ? $self->cursor_color : $state eq 'selected' ? $self->selected_color : $state eq 'hover' ? $self->hover_color : undef;
 	}
 
-	# The grid lines of the header rows and the lines.
+	# The grid lines of the header rows, the lines and the footer, and the
+	# strips of the scrollbar column while it is shown.
 	method _resolve_lines ( $grid_columns, $header_rows, $lines ) {
-		my @border_lines = map {
-			{ style => $header_style, cells => [ map { {} } @$grid_columns ] }
-		} @$header_rows;
+		my @no_styles    = map { {} } @$grid_columns;
+		my @border_lines = map { $_->[1] eq 'ledge' ? { ledge => 1, cells => [@no_styles] } : { style => $header_style, cells => [@no_styles] } } @$header_rows;
 		foreach my $line (@$lines) {
 			if ( $line->{kind} eq 'row' ) {
 				my $id = $line->{id};
@@ -954,9 +1052,11 @@ class Term::Fabulous::Widget::Table
 			}
 			push @border_lines, { spanning => 1, style => $line->{kind} eq 'group' ? $group_style : {}, cells => [ {} ] };
 		}
+		push @border_lines, { ledge => 1, cells => [@no_styles] };
 		return resolve_borders(
 			columns       => scalar @$grid_columns,
 			header        => scalar @$header_rows,
+			gutter        => $_gutter_shown,
 			table         => \%_line_style,
 			column_styles => [ map { defined $_->{column} ? $_->{column}->style : {} } @$grid_columns ],
 			lines         => \@border_lines,
@@ -1097,6 +1197,10 @@ class Term::Fabulous::Widget::Table
 		return;
 	}
 
+	method _ledge_look () {
+		return { background_color => $self->_base_background, border_color => $self->line_color };
+	}
+
 	method _empty_look () {
 		return { background_color => $self->_base_background, text_color => $self->muted_color, border_color => $self->line_color, italic => 1 };
 	}
@@ -1139,11 +1243,33 @@ class Term::Fabulous::Widget::Table
 	# Scrollbar, pager, scrolling
 	# ---------------------------------------------------------------------
 
-	# The scrollbar right of the body, and a spacer as wide as it right of
-	# the header, so that header and body are clipped at the same width.
-	method _prepare_scrollbar () {
-		_show_child( $_body_row,   $_scrollbar,     $scrollbar );
-		_show_child( $_header_row, $_header_spacer, $scrollbar );
+	# The scrollbar column, while the rows did not fit in the last frame:
+	# the strips beside the header, the body and the footer.
+	method _prepare_gutter () {
+		$_gutter_shown = $self->_gutter_wanted;
+		_show_child( $_header_row, $_header_strip, $_gutter_shown );
+		_show_child( $_body_row,   $_body_strip,   $_gutter_shown );
+		_show_child( $_footer_row, $_footer_strip, $_gutter_shown );
+		return;
+	}
+
+	method _gutter_wanted () {
+		return 0 unless $scrollbar;
+		my $ui    = $self->ui                 // return 0;
+		my $state = $ui->scroll_state($_body) // return 0;
+		return $state->{content}{height} > $state->{viewport}{height} ? 1 : 0;
+	}
+
+	# Whether the rows fit is known after a frame; one that changes it
+	# prepares the next.
+	method _watch_gutter () {
+		$self->each_frame(
+			sub ($table) {
+				$table->request_prepare if $table->_gutter_wanted != $_gutter_shown;
+				return 0;
+			},
+			name => 'gutter'
+		);
 		return;
 	}
 
@@ -2915,8 +3041,8 @@ header.
 
 =item C<scrollbar>
 
-A boolean. Default: 1. Whether the scrollbar column is shown right of
-the rows.
+A boolean. Default: 1. Whether the scrollbar column is shown inside
+the frame, right of the rows, while they do not fit.
 
 =item C<empty_text>
 
@@ -3848,7 +3974,7 @@ Whether the column titles are shown.
 
 	$table->scrollbar(0);
 
-Whether the scrollbar column is shown.
+Whether the scrollbar column is shown while the rows do not fit.
 
 =head3 hover
 

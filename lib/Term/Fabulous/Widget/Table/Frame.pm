@@ -15,8 +15,8 @@ use Clay::XS qw(sizing_fixed sizing_grow);
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::ScrollBox;
 
-# A table in a frame of its own (a table's own frame scrolls with its
-# rows), drawn in the accent while the table has the focus.
+# A table in a frame of its own, drawn in the accent while the table has
+# the focus, and of a height that gives way to the widgets around it.
 sub framed ( $table, $rows, $min_rows = $rows ) {
 	die "Term::Fabulous::Widget::Table::Frame: min_rows $min_rows is more than rows $rows" if $min_rows > $rows;
 	my $frame = $min_rows == $rows ? _fixed_frame( $table, $rows ) : _shrinking_frame( $table, $rows, $min_rows );
@@ -82,9 +82,11 @@ Term::Fabulous::Widget::Table::Frame - A frame around a table that shows its foc
 
 The widgets that show a list in a L<Term::Fabulous::Widget::Table>
 (the file dialog, the color picker and the theme editor's value dialog)
-put the table in a frame of its own, because a table's own frame
-scrolls with its rows. This module makes that frame. It is internal to
-Term::Fabulous and not meant to be used directly.
+put the table in a frame of its own: a plain L<Term::Fabulous::Widget::Box>
+border that shows the focus and, unlike the table's own frame, can be
+asked for a height that gives way to the widgets around it. This
+module makes that frame. It is internal to Term::Fabulous and not
+meant to be used directly.
 
 =head1 FUNCTIONS
 
