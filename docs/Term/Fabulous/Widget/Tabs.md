@@ -38,14 +38,14 @@ program is `examples/widgets/tabs.pl`.
 
 A Tabs widget shows one of several pages at a time, chosen with the
 tabs of its bar. The bar is drawn as a row of boxes that join the
-border of the page: the active tab is one cell larger and open toward
-the page, so that it and the page are one shape, while the others are
-closed by the page's line and look as if they stood behind it:
+border of the page: the active tab is open toward the page, so that it
+and the page are one shape, while the others are closed by the page's
+line and look as if they stood behind it (with `active_padding`, the
+active tab also stands out of the row by that many cells):
 
 ```text
- ╭─────────╮
- │ General │ ╭─────────╮ ╭───────╮
- │         │ │ Network │ │ Users │
+ ╭─────────╮ ╭─────────╮ ╭───────╮
+ │ General │ │ Network │ │ Users │
 ╭╯         ╰─┴─────────┴─┴───────┴───────╮
 │                                        │
 │  Language   en                         │
@@ -115,6 +115,12 @@ The look parameters are:
     Non-negative integers, all 1 by default: the cells between two tabs,
     between the ends of the bar and the outer tabs, and on each side of a
     label along its writing direction.
+
+- `active_padding`
+
+    A non-negative integer. Default: 0. The cells the active tab grows
+    toward the page beyond the other tabs, so that it stands out of the
+    row.
 
 - `line_style`
 
@@ -317,6 +323,14 @@ $tabs->tab_padding(2);
 
 Accessor for the `tab_padding` parameter.
 
+## active\_padding
+
+```perl
+$tabs->active_padding(1);
+```
+
+Accessor for the `active_padding` parameter.
+
 ## line\_style
 
 ```perl
@@ -470,8 +484,8 @@ bubble through the Tabs as well.
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-properties), plus
 `side`, `orientation`, `tab_alignment`, `tab_gap`, `tab_margin`,
-`tab_padding` and `line_style` (strings and numbers),
-`active_bold` and `page_border` (`#true` / `#false`),
+`tab_padding`, `active_padding` and `line_style` (strings and
+numbers), `active_bold` and `page_border` (`#true` / `#false`),
 `focus_border_color` (a color string, or `#null` for no focus look)
 and the colors `line_color`, `text_color`, `active_text_color`,
 `hover_background_color` and `disabled_color`. The pages are `Page`

@@ -34,7 +34,7 @@ class Term::Fabulous::Widget::Tabs
 	# The look is the bar's; these constructor parameters go to it. The
 	# themed ones live on the bar (see forwarded_looks).
 	my @BAR_LOOKS  = qw(line_style line_color text_color active_text_color hover_background_color focus_border_color disabled_color);
-	my @BAR_PARAMS = ( qw(side orientation tab_alignment tab_gap tab_margin tab_padding active_bold page_border), @BAR_LOOKS );
+	my @BAR_PARAMS = ( qw(side orientation tab_alignment tab_gap tab_margin tab_padding active_padding active_bold page_border), @BAR_LOOKS );
 
 	# The bar, the slot that shows the active page, and the pages, in the
 	# order of the bar's tabs.
@@ -249,14 +249,15 @@ class Term::Fabulous::Widget::Tabs
 		return $value;
 	}
 
-	method side          (@new) { return $self->_forward( side          => 1, 1, @new ) }
-	method orientation   (@new) { return $self->_forward( orientation   => 0, 0, @new ) }
-	method tab_alignment (@new) { return $self->_forward( tab_alignment => 0, 0, @new ) }
-	method tab_gap       (@new) { return $self->_forward( tab_gap       => 0, 0, @new ) }
-	method tab_margin    (@new) { return $self->_forward( tab_margin    => 0, 0, @new ) }
-	method tab_padding   (@new) { return $self->_forward( tab_padding   => 0, 0, @new ) }
-	method active_bold   (@new) { return $self->_forward( active_bold   => 0, 0, @new ) }
-	method page_border   (@new) { return $self->_forward( page_border   => 0, 1, @new ) }
+	method side           (@new) { return $self->_forward( side           => 1, 1, @new ) }
+	method orientation    (@new) { return $self->_forward( orientation    => 0, 0, @new ) }
+	method tab_alignment  (@new) { return $self->_forward( tab_alignment  => 0, 0, @new ) }
+	method tab_gap        (@new) { return $self->_forward( tab_gap        => 0, 0, @new ) }
+	method tab_margin     (@new) { return $self->_forward( tab_margin     => 0, 0, @new ) }
+	method tab_padding    (@new) { return $self->_forward( tab_padding    => 0, 0, @new ) }
+	method active_padding (@new) { return $self->_forward( active_padding => 0, 0, @new ) }
+	method active_bold    (@new) { return $self->_forward( active_bold    => 0, 0, @new ) }
+	method page_border    (@new) { return $self->_forward( page_border    => 0, 1, @new ) }
 
 	# The looks live on the bar (Term::Fabulous::Role::Themed): the bar
 	# takes them from the constructor, and reset_look returns them to the
@@ -276,7 +277,7 @@ class Term::Fabulous::Widget::Tabs
 	method layout_properties :common () {
 		return (
 			$class->SUPER::layout_properties,
-			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding) ),
+			( map { $_ => 'scalar' } qw(side orientation tab_alignment tab_gap tab_margin tab_padding active_padding) ),
 			( map { $_ => 'boolean' } qw(active_bold page_border) ),
 		);
 	}
@@ -355,15 +356,15 @@ program is F<examples/widgets/tabs.pl>.
 
 A Tabs widget shows one of several pages at a time, chosen with the
 tabs of its bar. The bar is drawn as a row of boxes that join the
-border of the page: the active tab is one cell larger and open toward
-the page, so that it and the page are one shape, while the others are
-closed by the page's line and look as if they stood behind it:
+border of the page: the active tab is open toward the page, so that it
+and the page are one shape, while the others are closed by the page's
+line and look as if they stood behind it (with C<active_padding>, the
+active tab also stands out of the row by that many cells):
 
 =for highlighter language=text
 
-	 ╭─────────╮
-	 │ General │ ╭─────────╮ ╭───────╮
-	 │         │ │ Network │ │ Users │
+	 ╭─────────╮ ╭─────────╮ ╭───────╮
+	 │ General │ │ Network │ │ Users │
 	╭╯         ╰─┴─────────┴─┴───────┴───────╮
 	│                                        │
 	│  Language   en                         │
@@ -436,6 +437,12 @@ the bar.
 Non-negative integers, all 1 by default: the cells between two tabs,
 between the ends of the bar and the outer tabs, and on each side of a
 label along its writing direction.
+
+=item C<active_padding>
+
+A non-negative integer. Default: 0. The cells the active tab grows
+toward the page beyond the other tabs, so that it stands out of the
+row.
 
 =item C<line_style>
 
@@ -609,6 +616,12 @@ Accessor for the C<tab_margin> parameter.
 
 Accessor for the C<tab_padding> parameter.
 
+=head2 active_padding
+
+	$tabs->active_padding(1);
+
+Accessor for the C<active_padding> parameter.
+
 =head2 line_style
 
 	$tabs->line_style('Heavy');
@@ -748,8 +761,8 @@ bubble through the Tabs as well.
 
 The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<side>, C<orientation>, C<tab_alignment>, C<tab_gap>, C<tab_margin>,
-C<tab_padding> and C<line_style> (strings and numbers),
-C<active_bold> and C<page_border> (C<#true> / C<#false>),
+C<tab_padding>, C<active_padding> and C<line_style> (strings and
+numbers), C<active_bold> and C<page_border> (C<#true> / C<#false>),
 C<focus_border_color> (a color string, or C<#null> for no focus look)
 and the colors C<line_color>, C<text_color>, C<active_text_color>,
 C<hover_background_color> and C<disabled_color>. The pages are C<Page>

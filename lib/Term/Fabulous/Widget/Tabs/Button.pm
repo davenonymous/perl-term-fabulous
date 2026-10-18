@@ -27,10 +27,11 @@ class Term::Fabulous::Widget::Tabs::Button
 	# bar's defaults are these as well. The colors and the line style come
 	# from the theme's tabs family (see Term::Fabulous::Widget::Tabs::Bar).
 	my %DEFAULT_LOOK = (
-		side        => 'top',
-		orientation => 'horizontal',
-		tab_padding => 1,
-		active_bold => 0,
+		side           => 'top',
+		orientation    => 'horizontal',
+		tab_padding    => 1,
+		active_padding => 0,
+		active_bold    => 0,
 	);
 
 	# The side of a tab that faces the page, by the side of the bar.
@@ -71,7 +72,8 @@ class Term::Fabulous::Widget::Tabs::Button
 		return $_active;
 	}
 
-	# Set by the bar: the active tab is one cell larger toward the page.
+	# Set by the bar: the active tab is open toward the page and grows
+	# active_padding cells that way.
 	method _set_active ($flag) {
 		$_active = $flag ? 1 : 0;
 		$self->refresh_look;
@@ -164,11 +166,11 @@ class Term::Fabulous::Widget::Tabs::Button
 		my $vertical  = $self->_look('orientation') eq 'vertical';
 		my $page_side = $PAGE_SIDE{$side};
 
-		# The padding lies along the label; the active tab gets a cell more
-		# toward the page.
+		# The padding lies along the label; the active tab gets
+		# active_padding cells more toward the page.
 		my $padding = $self->_look('tab_padding');
 		my %padding = $vertical ? ( top => $padding, bottom => $padding ) : ( left => $padding, right => $padding );
-		$padding{$page_side} = ( $padding{$page_side} // 0 ) + 1 if $_active;
+		$padding{$page_side} = ( $padding{$page_side} // 0 ) + $self->_look('active_padding') if $_active;
 		$self->layout( { %{ $self->layout }, layout_direction => $vertical ? CLAY_TOP_TO_BOTTOM : CLAY_LEFT_TO_RIGHT, child_gap => 1, padding => \%padding } );
 
 		my $wrap_mode = $vertical ? CLAY_TEXT_WRAP_NEWLINES : CLAY_TEXT_WRAP_NONE;
@@ -212,10 +214,11 @@ bar
 A tab button is one tab of a L<Term::Fabulous::Widget::Tabs::Bar>: a
 L<Term::Fabulous::Widget::Button> with a border on three sides, open
 toward the page, that shows a title and an optional icon. The bar
-makes one tab the I<active> one: it is drawn one cell larger toward
-the page, so that it joins the page's border, and its label is drawn
-in the bar's C<active_text_color>. The other tabs are closed by the
-line of the bar and show their labels in C<text_color>.
+makes one tab the I<active> one: it is open toward the page, so that
+it joins the page's border, grows C<active_padding> cells that way,
+and its label is drawn in the bar's C<active_text_color>. The other
+tabs are closed by the line of the bar and show their labels in
+C<text_color>.
 
 The look (the side the bar is on, whether the label is written
 horizontally or downwards, the padding, the line style and the
@@ -310,9 +313,9 @@ behind its back. Returns the tab.
 
 Class method: the look a tab shows outside a bar, as a hash of the
 bar's look parameters (C<side>, C<orientation>, C<tab_padding>,
-C<line_style>, C<line_color>, C<text_color>, C<active_text_color>,
-C<active_bold>, C<hover_background_color>, C<focus_border_color>,
-C<disabled_color>) and their defaults.
+C<active_padding>, C<line_style>, C<line_color>, C<text_color>,
+C<active_text_color>, C<active_bold>, C<hover_background_color>,
+C<focus_border_color>, C<disabled_color>) and their defaults.
 
 =head1 EVENTS
 

@@ -24,10 +24,19 @@ say $bar->active->title;    # Grid
 
 A tab bar is the strip of tabs of a [Term::Fabulous::Widget::Tabs](../Tabs.md):
 a row of [Term::Fabulous::Widget::Tabs::Button](Button.md)s and the line that
-joins them with the page. One tab is the _active_ one. It is drawn
-one cell larger toward the page and open on that side, so that it and
-the page are one shape, while the other tabs are closed by the line
-and so look as if they stood behind the page:
+joins them with the page. One tab is the _active_ one. It is open
+toward the page, so that it and the page are one shape, while the
+other tabs are closed by the line and so look as if they stood behind
+the page:
+
+```text
+ ╭─────────╮ ╭─────────╮ ╭───────╮
+ │ General │ │ Network │ │ Users │
+╭╯         ╰─┴─────────┴─┴───────┴───────╮
+```
+
+With `active_padding`, the active tab is drawn that many cells larger
+toward the page and so stands out of the row:
 
 ```text
  ╭─────────╮
@@ -101,6 +110,12 @@ are optional; unknown parameters die.
     A non-negative integer. Default: 1. The cells on each side of a label
     along its writing direction: left and right of a horizontal label,
     above and below a vertical one.
+
+- `active_padding`
+
+    A non-negative integer. Default: 0. The cells the active tab grows
+    toward the page beyond the other tabs, so that it stands out of the
+    row; 0 keeps all tabs the same size.
 
 - `line_style`
 
@@ -302,6 +317,14 @@ $bar->tab_padding(2);
 
 Accessor for the `tab_padding` parameter.
 
+## active\_padding
+
+```perl
+$bar->active_padding(1);
+```
+
+Accessor for the `active_padding` parameter.
+
 ## line\_style
 
 ```perl
@@ -429,8 +452,8 @@ as well.
 
 The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](../Box.md#kdl-properties), plus
 `side`, `orientation`, `tab_alignment`, `tab_gap`, `tab_margin`,
-`tab_padding` and `line_style` (strings and numbers),
-`active_bold` and `page_border` (`#true` / `#false`),
+`tab_padding`, `active_padding` and `line_style` (strings and
+numbers), `active_bold` and `page_border` (`#true` / `#false`),
 `focus_border_color` (a color string, or `#null` for no focus look)
 and the colors `line_color`, `text_color`, `active_text_color`,
 `hover_background_color` and `disabled_color`. The tabs are child

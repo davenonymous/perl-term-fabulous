@@ -1,6 +1,10 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Widget::Tabs and Tabs::Bar have active_padding, the cells the
+          active tab grows toward the page beyond the other tabs; it was
+          always one cell and is 0 by default now, so all tabs are the
+          same size unless asked otherwise.
         - The frame of a Widget::Table stays while its rows scroll: the
           bottom (and, without column titles, the top) is a ledge of its
           own below (above) the scrolling body, drawn in the table's

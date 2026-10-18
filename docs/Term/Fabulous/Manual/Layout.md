@@ -952,9 +952,10 @@ foreach my $section ( [ General => \@general_rows ], [ Network => \@network_rows
 ```
 
 The tabs are drawn as boxes that join the border of the page: the
-active tab is one cell larger and open toward the page, so that the
-two are one shape, while the other tabs are closed by the page's line
-and look as if they stood behind it. The user switches with a click,
+active tab is open toward the page, so that the two are one shape,
+while the other tabs are closed by the page's line and look as if
+they stood behind it (`active_padding` makes the active tab stand
+out of the row by that many cells). The user switches with a click,
 with `Left`, `Right`, `Up`, `Down`, `Home` and `End` while the
 active tab has the focus (only the active tab takes the focus, so
 `Tab` stops at the bar once), and with `Ctrl+PageUp` and
