@@ -48,6 +48,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 		}
 		$self->add_child( @_boxes, Term::Fabulous::Widget::Text->new( text => 'Esc closes', text_color => $muted_color ) );
 
+		# The after_draw callback below must not keep the chooser alive.
 		weaken( my $weak_self = $self );
 		$self->on(
 			KeyPress => sub ($event) {
@@ -61,11 +62,12 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 		# Closes once the focus has left it; the new focus is only known after
 		# the OnBlur, so the check waits for the frame.
 		$self->on(
-			OnBlur => sub ($event) {
-				my $ui = $weak_self ? $weak_self->ui : undef;
+			OnBlur => sub ( $self, $event ) {
+				my $ui = $self->ui;
 				$ui->after_draw( sub { $weak_self->_close_unless_focused if $weak_self } ) if defined $ui && $ui->can('after_draw');
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 	}
 

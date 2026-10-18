@@ -55,7 +55,7 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 		my $details_box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_fixed(2) }, padding => { top => 0 } } );
 		$details_box->add_child($details);
 
-		weaken( my $weak_self = $self );
+		weaken( my $weak_self = $self );    # for the list's callbacks, which it keeps
 		$list = Term::Fabulous::ThemeEditor::SettingsList->new(
 			id          => LIST_ID,
 			on_activate => sub ($id) { $weak_self->_activate($id) },
@@ -63,16 +63,17 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 		);
 		$self->add_child( $tools, $list, $details_box );
 
-		$search->on( Change => sub ($event) { $weak_self->list->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
-		$search->on( Submit => sub ($event) { $weak_self->focus_list;                    return } );
+		$search->on( Change => sub ( $self, $event ) { $self->list->search( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$search->on( Submit => sub ( $self, $event ) { $self->focus_list;                    return },                                  owner => $self );
 		$search->on(
-			KeyPress => sub ($event) {
+			KeyPress => sub ( $self, $event ) {
 				return Clay::UI::Enum::Result->CONTINUE unless ( $event->main_key_name // '' ) eq 'Down';
-				$weak_self->focus_list;
+				$self->focus_list;
 				return Clay::UI::Enum::Result->HANDLED;
-			}
+			},
+			owner => $self
 		);
-		$only_set->on( Change => sub ($event) { $weak_self->_filter_only_set( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$only_set->on( Change => sub ( $self, $event ) { $self->_filter_only_set( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	method _filter_only_set ($on) {

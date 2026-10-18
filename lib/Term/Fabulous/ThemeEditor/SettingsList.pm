@@ -56,7 +56,7 @@ class Term::Fabulous::ThemeEditor::SettingsList
 	ADJUST {
 		my $id = $self->id // die "Term::Fabulous::ThemeEditor::SettingsList: an id is required";
 		$self->layout( { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-		weaken( my $weak_self = $self );
+		weaken( my $weak_self = $self );    # for the rows the list builds, which it keeps
 		$header = Term::Fabulous::ThemeEditor::SettingsList::Row->new( list => $self, index => -1, layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } } );
 		$body   = Term::Fabulous::Widget::VirtualList->new(
 			id    => "$id/rows",
@@ -66,7 +66,7 @@ class Term::Fabulous::ThemeEditor::SettingsList
 			layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },
 		);
 		$self->add_child( $header, $body );
-		$self->on( KeyPress => sub ($event) { return $weak_self->_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	# ---------------------------------------------------------------------
@@ -400,10 +400,9 @@ class Term::Fabulous::ThemeEditor::SettingsList::Row :isa(Term::Fabulous::Widget
 	field $index :param;
 
 	ADJUST {
-		weaken( my $weak_self = $self );
-		$self->on( Mouse          => sub ($event) { $weak_self->_mouse($event); return Clay::UI::Enum::Result->CONTINUE } );
-		$self->on( MouseMove      => sub ($event) { $weak_self->_moved;         return Clay::UI::Enum::Result->CONTINUE } );
-		$self->on( OnHoverStopped => sub ($event) { $weak_self->_left;          return Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( Mouse          => sub ( $self, $event ) { $self->_mouse($event); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$self->on( MouseMove      => sub ( $self, $event ) { $self->_moved;         return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$self->on( OnHoverStopped => sub ( $self, $event ) { $self->_left;          return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	method natural_size () {

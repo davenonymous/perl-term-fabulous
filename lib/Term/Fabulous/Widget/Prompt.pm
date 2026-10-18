@@ -17,7 +17,7 @@ class Term::Fabulous::Widget::Prompt
 {
 	use Clay::XS qw(sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM);
 	use List::Util qw(first max);
-	use Scalar::Util qw(blessed weaken);
+	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Check qw(boolean describe optional positive_integer string);
 	use Term::Fabulous::Event::Answer;
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -62,7 +62,6 @@ class Term::Fabulous::Widget::Prompt
 		@_buttons = $self->_parsed_buttons($buttons);
 		$focus    = $self->_checked_focus($focus);
 
-		weaken( my $weak_self = $self );
 		$_title_text   = Term::Fabulous::Widget::Text->new( text   => $title, bold => 1 );
 		$_message_text = Term::Fabulous::Widget::Text->new( markup => $message );
 		$_error_text   = Term::Fabulous::Widget::Text->new( text   => '' );
@@ -71,7 +70,7 @@ class Term::Fabulous::Widget::Prompt
 		$self->add_child( $self->_field_rows ) if @_fields;
 		$self->add_child( $self->_button_row );
 
-		$self->on( Submit => sub ($event) { $weak_self->answer( $weak_self->default_button ); return } );
+		$self->on( Submit => sub ( $self, $event ) { $self->answer( $self->default_button ); return }, owner => $self );
 	}
 
 	# ---------------------------------------------------------------------
@@ -146,13 +145,12 @@ class Term::Fabulous::Widget::Prompt
 	}
 
 	method _button_row () {
-		weaken( my $weak_self = $self );
 		my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
 		foreach my $button (@_buttons) {
 			my $id     = $button->{id};
 			my $widget = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $button->{primary} ? ['primary'] : [], layout => { padding => { left => 1, right => 1 } } );
 			$widget->add_child( Term::Fabulous::Widget::Text->new( text => $button->{label} ) );
-			$widget->on( Activate => sub ($event) { $weak_self->answer($id); return } );
+			$widget->on( Activate => sub ( $self, $event ) { $self->answer($id); return }, owner => $self );
 			$button->{widget} = $widget;
 			$row->add_child($widget);
 		}

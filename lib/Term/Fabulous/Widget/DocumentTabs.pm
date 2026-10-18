@@ -18,7 +18,6 @@ class Term::Fabulous::Widget::DocumentTabs
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(sum0);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(boolean describe non_negative_integer optional string);
 	use Term::Fabulous::Event::Select;
 	use Term::Fabulous::Event::TabAdd;
@@ -53,8 +52,7 @@ class Term::Fabulous::Widget::DocumentTabs
 		$_tabs      = $self->_checked_tabs($tabs);
 		$active     = $self->_checked_active($active);
 		$new_button = boolean( $self, new_button => $new_button );
-		weaken( my $weak_self = $self );
-		$self->on( Mouse => sub ($event) { return $weak_self ? $weak_self->_on_mouse($event) : $CONTINUE } );
+		$self->on( Mouse => sub ( $self, $event ) { return $self->_on_mouse($event) }, owner => $self );
 	}
 
 	method theme_family :common () {

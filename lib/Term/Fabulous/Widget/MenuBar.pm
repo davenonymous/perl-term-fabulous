@@ -42,13 +42,13 @@ class Term::Fabulous::Widget::MenuBar
 		# A choice bubbles from the open menu through the bar, which closes
 		# there, and goes on to the bar's ancestors. A listener on the menu
 		# that stops it leaves the closing to menu_chosen.
-		weaken( my $weak_self = $self );
-		$self->on( Choose => sub ($event) { $weak_self->menu_chosen( $event->target ); return Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( Choose => sub ( $self, $event ) { $self->menu_chosen( $event->target ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		$self->on(
-			MouseMove => sub ($event) {
-				$weak_self->_pointer_over($event) if refaddr( $event->target ) == refaddr($weak_self);
+			MouseMove => sub ( $self, $event ) {
+				$self->_pointer_over($event) if refaddr( $event->target ) == refaddr($self);
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 	}
 
@@ -261,8 +261,7 @@ class Term::Fabulous::Widget::MenuBar
 	# Opens menus for the keys that reach a widget, usually the root.
 	method listen ($widget) {
 		die ref($self) . ": listen needs a widget that fires events, got " . describe($widget) unless blessed $widget && $widget->can('on');
-		weaken( my $weak_self = $self );
-		$widget->on( KeyPress => sub ($event) { return $weak_self && $weak_self->handle_shortcut($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$widget->on( KeyPress => sub ( $self, $event ) { return $self->handle_shortcut($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		return $self;
 	}
 

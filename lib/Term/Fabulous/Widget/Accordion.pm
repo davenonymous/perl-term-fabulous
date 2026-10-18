@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::Accordion
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
 	use List::Util qw(first);
-	use Scalar::Util qw(blessed refaddr weaken);
+	use Scalar::Util qw(blessed refaddr);
 	use Term::Fabulous::Check qw(boolean describe non_negative_integer one_of string);
 	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Event::Select;
@@ -48,8 +48,7 @@ class Term::Fabulous::Widget::Accordion
 		my $layout = $self->layout;
 		$self->layout( { %$layout, layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), %{ $layout->{sizing} // {} } } } );
 
-		weaken( my $weak_self = $self );
-		$self->on( KeyPress => sub ($event) { return $weak_self && $weak_self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	# ---------------------------------------------------------------------

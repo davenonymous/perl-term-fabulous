@@ -398,12 +398,11 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method _wire_pager () {
-		weaken( my $weak = $self );
-		my %step = ( first => sub { 1 }, previous => sub { $weak->page - 1 }, next => sub { $weak->page + 1 }, last => sub { $weak->page_count } );
+		my %step = ( first => sub ($self) { 1 }, previous => sub ($self) { $self->page - 1 }, next => sub ($self) { $self->page + 1 }, last => sub ($self) { $self->page_count } );
 		foreach my $name ( sort keys %step ) {
-			$_pager->button($name)->on( Activate => sub ($event) { $weak->_turn_page( $step{$name}->() ); return } );
+			$_pager->button($name)->on( Activate => sub ( $self, $event ) { $self->_turn_page( $step{$name}->($self) ); return }, owner => $self );
 		}
-		$_pager->size_list->on( Change => sub ($event) { $weak->_change_page_size( $event->value ); return } );
+		$_pager->size_list->on( Change => sub ( $self, $event ) { $self->_change_page_size( $event->value ); return }, owner => $self );
 		return;
 	}
 
@@ -566,9 +565,8 @@ class Term::Fabulous::Widget::Table
 			focus_background_color => $self->cursor_color,
 			layout                 => { sizing => { width => sizing_grow(0) } },    # one row high, as wide as the column
 		);
-		weaken( my $weak = $self );
-		$field->on( Change => sub ($event) { $weak->_filter_typed( $key, $event->value ); return } );
-		$field->on( Submit => sub ($event) { $weak->_focus_self;                          return } );
+		$field->on( Change => sub ( $self, $event ) { $self->_filter_typed( $key, $event->value ); return }, owner => $self );
+		$field->on( Submit => sub ( $self, $event ) { $self->_focus_self;                          return }, owner => $self );
 		$cell->add_child($field);
 		return { cell => $cell, field => $field };
 	}
@@ -1168,14 +1166,13 @@ class Term::Fabulous::Widget::Table
 	# ---------------------------------------------------------------------
 
 	method _listen () {
-		weaken( my $weak = $self );
-		$self->on( KeyPress  => sub ($event) { return $weak ? $weak->_on_key($event)   : $CONTINUE } );
-		$self->on( Mouse     => sub ($event) { return $weak ? $weak->_on_mouse($event) : $CONTINUE } );
-		$self->on( MouseMove => sub ($event) { $weak->_on_mouse_move($event) if $weak; return $CONTINUE } );
+		$self->on( KeyPress  => sub ( $self, $event ) { return $self->_on_key($event) },                   owner => $self );
+		$self->on( Mouse     => sub ( $self, $event ) { return $self->_on_mouse($event) },                 owner => $self );
+		$self->on( MouseMove => sub ( $self, $event ) { $self->_on_mouse_move($event); return $CONTINUE }, owner => $self );
 		foreach my $name (qw(OnFocus OnBlur)) {
-			$self->on( $name => sub ($event) { $weak->_changed if $weak; return $CONTINUE } );
+			$self->on( $name => sub ( $self, $event ) { $self->_changed; return $CONTINUE }, owner => $self );
 		}
-		$self->on( OnHoverStopped => sub ($event) { $weak->_hover_line(undef) if $weak && refaddr( $event->target ) == refaddr($weak); return $CONTINUE } );
+		$self->on( OnHoverStopped => sub ( $self, $event ) { $self->_hover_line(undef) if refaddr( $event->target ) == refaddr($self); return $CONTINUE }, owner => $self );
 		return;
 	}
 

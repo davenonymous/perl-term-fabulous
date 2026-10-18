@@ -24,7 +24,7 @@ class Term::Fabulous::Widget::Button
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(color optional);
 	use Term::Fabulous::Event::Activate;
 
@@ -33,20 +33,21 @@ class Term::Fabulous::Widget::Button
 	my %ACTIVATES = map { $_ => 1 } qw(Enter Space);
 
 	ADJUST {
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$self->on(
-			OnRelease => sub ($event) {
-				$weak_self->activate if refaddr( $event->target ) == refaddr($weak_self) && $weak_self->is_enabled;
+			OnRelease => sub ( $self, $event ) {
+				$self->activate if refaddr( $event->target ) == refaddr($self) && $self->is_enabled;
 				return $continue;
-			}
+			},
+			owner => $self
 		);
 		$self->on(
-			KeyPress => sub ($event) {
-				return $continue unless $ACTIVATES{ $event->main_key_name // '' } && $weak_self->is_enabled;
-				$weak_self->activate;
+			KeyPress => sub ( $self, $event ) {
+				return $continue unless $ACTIVATES{ $event->main_key_name // '' } && $self->is_enabled;
+				$self->activate;
 				return;
-			}
+			},
+			owner => $self
 		);
 	}
 

@@ -21,7 +21,7 @@ class Term::Fabulous::Widget::Chart
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow);
 	use List::Util qw(max min sum0);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(boolean describe one_of);
 	use Term::Fabulous::Chart::Palette qw(palette_colors is_palette_name palette_names chart_color mix_rgb is_light_rgb ink_colors);
 	use Term::Fabulous::Chart::Surface;
@@ -74,15 +74,15 @@ class Term::Fabulous::Widget::Chart
 			( $_ink{$name} ) = chart_color( $self, $name, $given{$name} ) if defined $given{$name};
 		}
 
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( MouseMove => sub ($event) { $weak_self->_pointer_moved($event) if defined $weak_self; return $continue } );
-		$self->on( Mouse     => sub ($event) { $weak_self->_pointer_moved($event) if defined $weak_self; return $continue } );
+		$self->on( MouseMove => sub ( $self, $event ) { $self->_pointer_moved($event); return $continue }, owner => $self );
+		$self->on( Mouse     => sub ( $self, $event ) { $self->_pointer_moved($event); return $continue }, owner => $self );
 		$self->on(
-			OnHoverStopped => sub ($event) {
-				$weak_self->_hover_target(undef) if defined $weak_self && refaddr( $event->target ) == refaddr($weak_self);
+			OnHoverStopped => sub ( $self, $event ) {
+				$self->_hover_target(undef) if refaddr( $event->target ) == refaddr($self);
 				return $continue;
-			}
+			},
+			owner => $self
 		);
 	}
 

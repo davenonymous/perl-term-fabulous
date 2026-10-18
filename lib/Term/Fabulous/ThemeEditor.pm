@@ -214,7 +214,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# ---------------------------------------------------------------------
 
 	method _build_screen () {
-		weaken( my $editor = $self );
+		weaken( my $editor = $self );    # for the callbacks the parts keep
 		my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
 
 		$menu = Term::Fabulous::Widget::MenuBar->new(
@@ -227,9 +227,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			tabs   => sub { $editor->_tab_summaries },
 			layout => { sizing => { width => sizing_grow(), height => sizing_fixed(1) } },
 		);
-		$strip->on( Select   => sub ($event) { $editor->select_tab( $event->index ); return } );
-		$strip->on( TabClose => sub ($event) { $editor->close_tab( $event->index );  return } );
-		$strip->on( TabAdd   => sub ($event) { $editor->_ask_new_theme;              return } );
+		$strip->on( Select   => sub ( $self, $event ) { $self->select_tab( $event->index ); return }, owner => $self );
+		$strip->on( TabClose => sub ( $self, $event ) { $self->close_tab( $event->index );  return }, owner => $self );
+		$strip->on( TabAdd   => sub ( $self, $event ) { $self->_ask_new_theme;              return }, owner => $self );
 
 		# The preview pane: the editor draws its frame and title, the preview
 		# inside it draws in the theme being edited.
@@ -239,7 +239,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 		$settings_title = Term::Fabulous::Widget::Text->new( text => 'Settings' );
 		$mode_switch    = Term::Fabulous::Widget::SegmentedControl->new( options => [ [ Form => 'form' ], [ Text => 'text' ] ], value => 'form', can_focus => 0 );
-		$mode_switch->on( Change => sub ($event) { $editor->set_mode( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$mode_switch->on( Change => sub ( $self, $event ) { $self->set_mode( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		my $title_box = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() } } );
 		$title_box->add_child($settings_title);
 		my $settings_head = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 } );
@@ -273,20 +273,22 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			( defined $terminal ? ( terminal => $terminal ) : () ),
 		);
 		$ui->add_preview_root($preview_root);
-		$root->on( KeyPress => sub ($event) { return $editor->_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
-		$root->on( OnFocus  => sub ($event) { $editor->_focus_moved; return Clay::UI::Enum::Result->CONTINUE } );
+		$root->on( KeyPress => sub ( $self, $event ) { return $self->_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$root->on( OnFocus  => sub ( $self, $event ) { $self->_focus_moved; return Clay::UI::Enum::Result->CONTINUE },                                    owner => $self );
 		$root->on(
-			Start => sub ($event) {
-				$editor->status->message('The terminal is narrow: F7 hides the preview, so the settings get the whole width.') if $event->width < 100;
+			Start => sub ( $self, $event ) {
+				$self->status->message('The terminal is narrow: F7 hides the preview, so the settings get the whole width.') if $event->width < 100;
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 		$root->on(
-			MouseMove => sub ($event) {
-				my $list = $editor->form->list;
+			MouseMove => sub ( $self, $event ) {
+				my $list = $self->form->list;
 				$list->hover(undef) unless blessed $event->target && $list->contains( $event->target );
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 		$status->message('Welcome. F1 lists every key; F10 or Alt with an underlined letter opens a menu.');
 		return;
@@ -450,9 +452,8 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	method _add_tab ($tab) {
-		weaken( my $editor   = $self );
-		weaken( my $weak_tab = $tab );
-		$tab->area->on( Change => sub ($event) { $editor->_text_changed($weak_tab); return Clay::UI::Enum::Result->CONTINUE } );
+		weaken( my $weak_tab = $tab );    # the tab holds its area, which keeps the listener
+		$tab->area->on( Change => sub ( $self, $event ) { $self->_text_changed($weak_tab); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		push @tabs, $tab;
 		$self->select_tab($#tabs);
 		return $tab;
@@ -1339,7 +1340,6 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	method _ask_open () {
-		weaken( my $editor = $self );
 		my $tab    = $self->active_tab;
 		my $start  = defined $tab && defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
 		my $dialog = Term::Fabulous::Widget::FileDialog->new(
@@ -1350,18 +1350,19 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			directory => -d $start ? $start : $directory,
 		);
 		$dialog->on(
-			Answer => sub ($event) {
+			Answer => sub ( $self, $event ) {
 				return if $event->button eq 'cancel';
 				try {
-					$editor->open_file( $event->values->{path} );
-					$editor->_focus_settings;
+					$self->open_file( $event->values->{path} );
+					$self->_focus_settings;
 				}
 				catch ($error) {
 					$error =~ s/\ATerm::Fabulous::Theme::Document: //;
-					$editor->_tell( 'Cannot open the file', $error );
+					$self->_tell( 'Cannot open the file', $error );
 				}
 				return;
-			}
+			},
+			owner => $self
 		);
 		$dialog->open($ui);
 		return;
@@ -1429,7 +1430,6 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 
 	method _save_as ( $tab = $self->active_tab, $then = undef ) {
 		return unless defined $tab;
-		weaken( my $editor = $self );
 		my $start  = defined $tab->path ? dirname( abs_path( $tab->path ) // $tab->path ) : $directory;
 		my $name   = defined $tab->path ? basename( $tab->path )                          : encode( 'UTF-8', ( $tab->document->name // _title_of($tab) ) . '.kdl' );
 		my $dialog = Term::Fabulous::Widget::FileDialog->new(
@@ -1443,11 +1443,12 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			name              => $name,
 		);
 		$dialog->on(
-			Answer => sub ($event) {
+			Answer => sub ( $self, $event ) {
 				return if $event->button eq 'cancel';
-				$editor->_write( $tab, $event->values->{path} ) && $then && $then->();
+				$self->_write( $tab, $event->values->{path} ) && $then && $then->();
 				return;
-			}
+			},
+			owner => $self
 		);
 		$dialog->open($ui);
 		return;

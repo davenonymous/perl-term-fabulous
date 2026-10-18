@@ -24,7 +24,6 @@ class Term::Fabulous::Widget::Text
 	use Clay::UI::Revision qw(bump_revision);
 	use Clay::XS qw(CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT);
 	use List::Util qw(first min sum0);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(boolean class_names color describe non_negative_integer one_of positive_integer);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::LinkActivate;
@@ -370,16 +369,16 @@ class Term::Fabulous::Widget::Text
 
 	method _listen () {
 		$listening = 1;
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$self->on(
-			KeyPress => sub ($event) {
+			KeyPress => sub ( $self, $event ) {
 				my $action = $ACTION_OF_KEY{ $event->main_key_name // '' } // return $continue;
-				return $action->($weak_self) ? undef : $continue;
-			}
+				return $action->($self) ? undef : $continue;
+			},
+			owner => $self
 		);
-		$self->on( OnFocus => sub ($event) { $weak_self->select_next_link unless defined $weak_self->selected_link; return $continue } );
-		$self->on( OnBlur  => sub ($event) { $weak_self->select_link(undef);                                        return $continue } );
+		$self->on( OnFocus => sub ( $self, $event ) { $self->select_next_link unless defined $self->selected_link; return $continue }, owner => $self );
+		$self->on( OnBlur  => sub ( $self, $event ) { $self->select_link(undef);                                   return $continue }, owner => $self );
 		return;
 	}
 

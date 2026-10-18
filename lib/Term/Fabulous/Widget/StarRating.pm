@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::StarRating
 {
 	use Clay::UI::Enum::Result;
 	use List::Util ();    # max is a method here
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(boolean non_negative_integer optional positive_integer);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Range;
@@ -66,10 +66,9 @@ class Term::Fabulous::Widget::StarRating
 			value          => $value,
 		);
 
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_star_at($event) ) if $weak_self;                            return $continue } );
-		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
+		$self->on( MouseMove      => sub ( $self, $event ) { $self->_hover_at( $self->_star_at($event) );                            return $continue }, owner => $self );
+		$self->on( OnHoverStopped => sub ( $self, $event ) { $self->_hover_at(undef) if refaddr( $event->target ) == refaddr($self); return $continue }, owner => $self );
 	}
 
 	method _checked_half_glyph ($value) {

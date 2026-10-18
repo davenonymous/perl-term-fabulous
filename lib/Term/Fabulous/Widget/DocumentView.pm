@@ -88,13 +88,13 @@ class Term::Fabulous::Widget::DocumentView
 		$document    = $self->_checked_document($document);
 		$document->_attach_view($self) if defined $document;
 
-		weaken( my $weak_self = $self );
+		weaken( my $weak_self = $self );    # for the build and estimate code, which the list keeps
 		$self->SUPER::build( sub ($index) { return $weak_self->_build_slot($index) } );
 		$self->SUPER::estimate( sub ( $index, $columns ) { return $weak_self->_item_rows( $index, $columns ) } );
-		$self->on( KeyPress     => sub ($event) { return $weak_self->_key($event) } );
-		$self->on( Mouse        => sub ($event) { return $weak_self->_wheel($event) } );
-		$self->on( LinkActivate => sub ($event) { return $weak_self->_link_clicked($event) } );
-		$self->on( OnFocus      => sub ($event) { $weak_self->_focus_arrived( $event->target ) if defined $weak_self; return $CONTINUE } );
+		$self->on( KeyPress     => sub ( $self, $event ) { return $self->_key($event) },                                owner => $self );
+		$self->on( Mouse        => sub ( $self, $event ) { return $self->_wheel($event) },                              owner => $self );
+		$self->on( LinkActivate => sub ( $self, $event ) { return $self->_link_clicked($event) },                       owner => $self );
+		$self->on( OnFocus      => sub ( $self, $event ) { $self->_focus_arrived( $event->target ); return $CONTINUE }, owner => $self );
 		$self->_show_document;
 	}
 

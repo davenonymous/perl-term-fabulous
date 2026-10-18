@@ -24,7 +24,6 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_CENTER_CENTER
 		CLAY_ALIGN_X_CENTER CLAY_ALIGN_Y_CENTER sizing_grow
 	);
-	use Scalar::Util qw(weaken);
 
 	field $dialog :param :weak :reader;
 	field $z_index :param;
@@ -45,13 +44,13 @@ class Term::Fabulous::Widget::Dialog::Backdrop
 		);
 		$self->glyphs_show_through(1);
 
-		weaken( my $weak_self = $self );
-		$self->on( KeyPress => sub ($event) { return $weak_self->_handle_key($event) } );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_handle_key($event) }, owner => $self );
 		$self->on(
-			OnBlur => sub ($event) {
-				$weak_self->_keep_focus if defined $weak_self;
+			OnBlur => sub ( $self, $event ) {
+				$self->_keep_focus;
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 	}
 

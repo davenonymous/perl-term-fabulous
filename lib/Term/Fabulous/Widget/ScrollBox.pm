@@ -82,8 +82,7 @@ class Term::Fabulous::Widget::ScrollBox
 
 	# A descendant that gets the focus is scrolled into view.
 	ADJUST {
-		weaken( my $weak_self = $self );
-		$self->on( OnFocus => sub ($event) { $weak_self->_focus_entered( $event->target ) if defined $weak_self; return Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( OnFocus => sub ( $self, $event ) { $self->_focus_entered( $event->target ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	method layout_properties :common () {

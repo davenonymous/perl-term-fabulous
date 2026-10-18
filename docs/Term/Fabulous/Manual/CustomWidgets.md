@@ -388,23 +388,24 @@ class My::Tile
         :strict(params)
 {
         use Clay::UI::Enum::Result;
-        use Scalar::Util qw(refaddr weaken);
+        use Scalar::Util qw(refaddr);
         use Term::Fabulous::Event::Activate;
 
         ADJUST {
-                weaken( my $weak_self = $self );    # a listener must not keep its widget alive
                 $self->on(
-                        OnRelease => sub ($event) {
-                                $weak_self->activate if refaddr( $event->target ) == refaddr($weak_self);
+                        OnRelease => sub ( $self, $event ) {    # the owner: the tile
+                                $self->activate if refaddr( $event->target ) == refaddr($self);
                                 return Clay::UI::Enum::Result->CONTINUE;
-                        }
+                        },
+                        owner => $self
                 );
                 $self->on(
-                        KeyPress => sub ($event) {
+                        KeyPress => sub ( $self, $event ) {
                                 return Clay::UI::Enum::Result->CONTINUE unless ( $event->main_key_name // '' ) eq 'Enter';
-                                $weak_self->activate;
+                                $self->activate;
                                 return;    # used: stop here
-                        }
+                        },
+                        owner => $self
                 );
         }
 
@@ -425,9 +426,15 @@ $tile->on( Activate => sub ($event) { open_details(); return } );
 ```
 
 The listeners check `$event->target`, because events of the
-children bubble through the widget too. They hold a weak reference to
-the widget: a listener that refers to its own widget directly keeps it
-alive forever.
+children bubble through the widget too. They are registered with
+`owner => $self`: a widget keeps its listeners, so a listener that
+refers to its own widget directly would keep it alive forever. An
+owner-bound listener holds its owner weakly and gets it as its first
+argument, named `$self` here so that the closure cannot reach the
+method's own `$self` by mistake (see
+["owner" in Clay::UI::Role::Events::Listener](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AListener#owner)). The same goes for a
+listener a widget puts on one of its parts, such as a button inside
+it.
 
 Two more methods change how Term::Fabulous draws a widget and its
 children. [Term::Fabulous::Widget::Button](../Widget/Button.md) uses both:

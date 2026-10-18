@@ -26,25 +26,25 @@ class Term::Fabulous::Widget::Input
 	:abstract
 {
 	use Clay::UI::Enum::Result;
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Termbox qw(TB_REVERSE);
 	use Term::Fabulous::Color;
 	use Term::Fabulous::Event::Change;
 
 	ADJUST {
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		my $own      = sub ($event) { defined $weak_self && refaddr( $event->target ) == refaddr($weak_self) };
+		my $own      = sub ( $self, $event ) { refaddr( $event->target ) == refaddr($self) };
 
-		$self->on( OnFocus  => sub ($event) { $weak_self->focus_changed(1) if $own->($event); return $continue } );
-		$self->on( OnBlur   => sub ($event) { $weak_self->focus_changed(0) if $own->($event); return $continue } );
-		$self->on( KeyPress => sub ($event) { return $weak_self->_dispatch( handle_key   => $event ) } );
-		$self->on( Mouse    => sub ($event) { return $weak_self->_dispatch( handle_mouse => $event ) } );
+		$self->on( OnFocus  => sub ( $self, $event ) { $self->focus_changed(1) if $own->( $self, $event ); return $continue }, owner => $self );
+		$self->on( OnBlur   => sub ( $self, $event ) { $self->focus_changed(0) if $own->( $self, $event ); return $continue }, owner => $self );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_dispatch( handle_key => $event ) },                      owner => $self );
+		$self->on( Mouse    => sub ( $self, $event ) { return $self->_dispatch( handle_mouse => $event ) },                    owner => $self );
 		$self->on(
-			OnRelease => sub ($event) {
-				$weak_self->activate if $own->($event) && $weak_self->is_enabled;
+			OnRelease => sub ( $self, $event ) {
+				$self->activate if $own->( $self, $event ) && $self->is_enabled;
 				return $continue;
-			}
+			},
+			owner => $self
 		);
 	}
 

@@ -166,7 +166,6 @@ class Term::Fabulous::Widget::FileDialog
 	# ---------------------------------------------------------------------
 
 	method _build ($name) {
-		weaken( my $weak_self = $self );
 		my @size_column = $mode eq 'folder' ? () : ( { key => 'size', title => 'Size', width => 'fit', sortable => 0, align => 'right' } );
 		$_folder_line = Term::Fabulous::Widget::FileDialog::FolderLine->new;
 		$_list        = Term::Fabulous::Widget::Table->new(
@@ -183,23 +182,24 @@ class Term::Fabulous::Widget::FileDialog
 			],
 			layout => { sizing => { width => sizing_grow(), height => sizing_grow() } },
 		);
-		$_list->on( RowActivate => sub ($event) { $weak_self->_enter( $event->row_id );   return } );
-		$_list->on( CursorMove  => sub ($event) { $weak_self->_pointed( $event->row_id ); return Clay::UI::Enum::Result->CONTINUE } );
-		$_list->on( KeyPress    => sub ($event) { return ( $event->main_key_name // '' ) eq 'Backspace' && $weak_self->_up ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$_list->on( RowActivate => sub ( $self, $event ) { $self->_enter( $event->row_id );   return },                                  owner => $self );
+		$_list->on( CursorMove  => sub ( $self, $event ) { $self->_pointed( $event->row_id ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$_list->on( KeyPress => sub ( $self, $event ) { return ( $event->main_key_name // '' ) eq 'Backspace' && $self->_up ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE },
+			owner => $self );
 
 		$_field = Term::Fabulous::Widget::TextField->new( value => $name, placeholder => $MODE{$mode}{placeholder}, layout => { sizing => { width => sizing_grow() } } );
-		$_field->on( Submit => sub ($event) { $weak_self->_submitted( $event->value ); return } );
+		$_field->on( Submit => sub ( $self, $event ) { $self->_submitted( $event->value ); return }, owner => $self );
 		my $field_row = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 } );
 		$field_row->add_child( Term::Fabulous::Widget::Text->new( text => $MODE{$mode}{field} ), $_field );
 
 		my $options_row = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow() }, child_gap => 2 } );
 		if ( @_filters > 1 ) {
 			$_filter_choice = Term::Fabulous::Widget::Dropdown->new( options => [ map { $_->{label} } @_filters ], value => $_filters[0]{label} );
-			$_filter_choice->on( Change => sub ($event) { $weak_self->filter( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+			$_filter_choice->on( Change => sub ( $self, $event ) { $self->filter( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 			$options_row->add_child($_filter_choice);
 		}
 		$_hidden_box = Term::Fabulous::Widget::Checkbox->new( label => 'Show hidden files', checked => $show_hidden );
-		$_hidden_box->on( Change => sub ($event) { $weak_self->show_hidden( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
+		$_hidden_box->on( Change => sub ( $self, $event ) { $self->show_hidden( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		$options_row->add_child($_hidden_box);
 
 		# The list counts its header and the line below it as rows.
@@ -219,13 +219,12 @@ class Term::Fabulous::Widget::FileDialog
 	}
 
 	method _button_row () {
-		weaken( my $weak_self = $self );
 		my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-		foreach my $definition ( [ $MODE{$mode}{button}, ['primary'], sub { $weak_self->choose( $weak_self->typed ) } ], [ 'Cancel', [], sub { $weak_self->_cancel } ] ) {
+		foreach my $definition ( [ $MODE{$mode}{button}, ['primary'], sub ($self) { $self->choose( $self->typed ) } ], [ 'Cancel', [], sub ($self) { $self->_cancel } ] ) {
 			my ( $label, $classes, $action ) = @$definition;
 			my $button = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
 			$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
-			$button->on( Activate => sub ($event) { $action->(); return } );
+			$button->on( Activate => sub ( $self, $event ) { $action->($self); return }, owner => $self );
 			$row->add_child($button);
 		}
 		return $row;
@@ -468,7 +467,6 @@ class Term::Fabulous::Widget::FileDialog
 	# A question above the dialog, starting on Cancel: Replace answers
 	# with the path, Cancel or Escape leave the dialog open.
 	method _ask_to_replace ($path) {
-		weaken( my $weak_self = $self );
 		my $question = Term::Fabulous::Widget::Prompt->confirm(
 			$self->ui,
 			title   => 'Replace the file?',
@@ -478,10 +476,11 @@ class Term::Fabulous::Widget::FileDialog
 			z_index => $self->z_index + 1,
 		);
 		$question->on(
-			Answer => sub ($event) {
-				$weak_self->_answer($path) if $event->button eq 'ok' && $weak_self && $weak_self->is_open;
+			Answer => sub ( $self, $event ) {
+				$self->_answer($path) if $event->button eq 'ok' && $self->is_open;
 				return;
-			}
+			},
+			owner => $self
 		);
 		weaken( $_replace_question = $question );
 		return $self;

@@ -19,7 +19,7 @@ class Term::Fabulous::Widget::SegmentedControl
 {
 	use Clay::UI::Enum::Result;
 	use List::Util qw(first sum0);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(boolean non_negative_integer);
 	use Term::Fabulous::OptionList;
 	use Term::Fabulous::Roving qw(roving_target);
@@ -46,10 +46,9 @@ class Term::Fabulous::Widget::SegmentedControl
 		$self->value($value) if defined $value;
 		$self->selected_index($selected_index) if defined $selected_index;
 
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( MouseMove      => sub ($event) { $weak_self->_hover_at( $weak_self->_index_at($event) ) if $weak_self;                           return $continue } );
-		$self->on( OnHoverStopped => sub ($event) { $weak_self->_hover_at(undef) if $weak_self && refaddr( $event->target ) == refaddr($weak_self); return $continue } );
+		$self->on( MouseMove      => sub ( $self, $event ) { $self->_hover_at( $self->_index_at($event) );                           return $continue }, owner => $self );
+		$self->on( OnHoverStopped => sub ( $self, $event ) { $self->_hover_at(undef) if refaddr( $event->target ) == refaddr($self); return $continue }, owner => $self );
 	}
 
 	method _checked_separator ($glyph) {

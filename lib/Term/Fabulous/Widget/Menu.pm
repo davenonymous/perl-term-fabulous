@@ -53,12 +53,12 @@ class Term::Fabulous::Widget::Menu
 		die ref($self) . ": commands must be a Term::Fabulous::Commands, got " . describe($commands) if defined $commands && !( blessed $commands && $commands->isa('Term::Fabulous::Commands') );
 		@_items     = $self->_parsed_items($items);
 		$_highlight = $self->_first_enabled;
-		weaken( my $weak_self = $self );
 		$self->on(
-			MouseMove => sub ($event) {
-				$weak_self->_pointer_at($event) if refaddr( $event->target ) == refaddr($weak_self);
+			MouseMove => sub ( $self, $event ) {
+				$self->_pointer_at($event) if refaddr( $event->target ) == refaddr($self);
 				return Clay::UI::Enum::Result->CONTINUE;
-			}
+			},
+			owner => $self
 		);
 	}
 

@@ -21,7 +21,7 @@ class Term::Fabulous::Widget::Accordion::Item
 {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-	use Scalar::Util qw(blessed weaken);
+	use Scalar::Util qw(blessed);
 	use Term::Fabulous::Check qw(boolean optional string);
 	use Term::Fabulous::Theme;
 
@@ -53,11 +53,10 @@ class Term::Fabulous::Widget::Accordion::Item
 		$icon  = optional( \&string, $self, icon => $icon );
 		$self->layout( { %{ $self->layout }, layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), %{ $self->layout->{sizing} // {} } } } );
 
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
 		$_header = Term::Fabulous::Widget::Button->new( layout => { sizing => { width => sizing_grow() }, child_gap => 1 }, pressed_background_color => undef );
-		$_header->on( Activate => sub ($event) { $weak_self->_activated if $weak_self;   return } );
-		$_header->on( $_       => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
+		$_header->on( Activate => sub ( $self, $event ) { $self->_activated;   return },           owner => $self );
+		$_header->on( $_       => sub ( $self, $event ) { $self->refresh_look; return $continue }, owner => $self ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
 		$_body        = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow() } } );
 		$_toggle_text = Term::Fabulous::Widget::Text->new( text => '' );
 		$_icon_text   = Term::Fabulous::Widget::Text->new( text => $icon // '' );

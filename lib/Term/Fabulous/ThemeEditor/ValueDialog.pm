@@ -20,7 +20,6 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_ROOT CLAY_ATTACH_POINT_RIGHT_CENTER);
 	use Feature::Compat::Try;
 	use List::Util qw(any min);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(color);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Theme;
@@ -80,8 +79,7 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 		$message = Term::Fabulous::Widget::Text->new( text => '' );
 		$self->add_child( $message, $self->_buttons );
 
-		weaken( my $weak_self = $self );
-		$self->on( Close => sub ($event) { $weak_self->_closed; return Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( Close => sub ( $self, $event ) { $self->_closed; return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	method value () {
@@ -124,9 +122,8 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	method _name_field () {
 		my $field = Term::Fabulous::Widget::TextField->new( value => $current // '', placeholder => 'The theme\'s name', layout => { sizing => { width => sizing_grow() } } );
 		$field->editor->select_all;
-		weaken( my $weak_self = $self );
-		$field->on( Change => sub ($event) { $weak_self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
-		$field->on( Submit => sub ($event) { $weak_self->apply;                    return } );
+		$field->on( Change => sub ( $self, $event ) { $self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$field->on( Submit => sub ( $self, $event ) { $self->apply;                    return },                                  owner => $self );
 		return $field;
 	}
 
@@ -165,9 +162,8 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 			$list->cursor( $choices[$chosen][0] );
 			$list->set_selection( $choices[$chosen][0] );
 		}
-		weaken( my $weak_self = $self );
-		$list->on( CursorMove  => sub ($event) { $weak_self->_choose( $event->row_id ) if defined $event->row_id; return Clay::UI::Enum::Result->CONTINUE } );
-		$list->on( RowActivate => sub ($event) { $weak_self->apply;                                               return } );
+		$list->on( CursorMove  => sub ( $self, $event ) { $self->_choose( $event->row_id ) if defined $event->row_id; return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$list->on( RowActivate => sub ( $self, $event ) { $self->apply;                                               return },                                  owner => $self );
 		return framed( $list, $list_rows );    # no header
 	}
 
@@ -180,9 +176,8 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 			swatches  => @swatches ? \@swatches : undef,
 			list_rows => $list_rows,
 		);
-		weaken( my $weak_self = $self );
-		$picker->on( Change => sub ($event) { $weak_self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE } );
-		$picker->on( Submit => sub ($event) { $weak_self->apply;                    return } );
+		$picker->on( Change => sub ( $self, $event ) { $self->_choose( $event->value ); return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
+		$picker->on( Submit => sub ( $self, $event ) { $self->apply;                    return },                                  owner => $self );
 		return $picker;
 	}
 
@@ -201,15 +196,14 @@ class Term::Fabulous::ThemeEditor::ValueDialog :isa(Term::Fabulous::Widget::Dial
 	}
 
 	method _buttons () {
-		my $row = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-		weaken( my $weak_self = $self );
-		my @buttons = ( [ 'Apply', ['primary'], sub { $weak_self->apply } ], [ 'Reset to default', [], sub { $weak_self->reset } ], [ 'Cancel', [], sub { $weak_self->cancel } ] );
+		my $row     = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
+		my @buttons = ( [ 'Apply', ['primary'], sub ($self) { $self->apply } ], [ 'Reset to default', [], sub ($self) { $self->reset } ], [ 'Cancel', [], sub ($self) { $self->cancel } ] );
 		foreach my $definition (@buttons) {
 			my ( $label, $classes, $action ) = @$definition;
 			next if $label =~ /\AReset/ && !$is_set;
 			my $button = Term::Fabulous::Widget::Button->new( bordered => 1, classes => $classes, layout => { padding => { left => 1, right => 1 } } );
 			$button->add_child( Term::Fabulous::Widget::Text->new( text => $label ) );
-			$button->on( Activate => sub ($event) { $action->(); return } );
+			$button->on( Activate => sub ( $self, $event ) { $action->($self); return }, owner => $self );
 			$row->add_child($button);
 		}
 		return $row;

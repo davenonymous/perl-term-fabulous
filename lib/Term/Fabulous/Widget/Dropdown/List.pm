@@ -17,7 +17,6 @@ class Term::Fabulous::Widget::Dropdown::List
 {
 	use Clay::UI::Enum::Result;
 	use List::Util qw(max);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
 	use Term::Fabulous::Unicode qw(grapheme_clusters cluster_columns string_columns);
 	use Term::Fabulous::Viewport qw(clamp_offset reveal_range scroll_thumb);
@@ -30,11 +29,11 @@ class Term::Fabulous::Widget::Dropdown::List
 	field $top = 0;
 
 	ADJUST {
-		weaken( my $weak_self = $self );
 		$self->on(
-			Mouse => sub ($event) {
-				return $weak_self->_handle_mouse($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE;
-			}
+			Mouse => sub ( $self, $event ) {
+				return $self->_handle_mouse($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE;
+			},
+			owner => $self
 		);
 	}
 

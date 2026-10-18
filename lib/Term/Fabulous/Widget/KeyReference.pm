@@ -176,8 +176,7 @@ class Term::Fabulous::Widget::KeyReference
 	method _follow_resizes ($root) {
 		return if defined $_resize_root && refaddr($_resize_root) == refaddr($root);
 		weaken( $_resize_root = $root );
-		weaken( my $weak_self = $self );
-		$root->on( Resize => sub ($event) { $weak_self->_fit_height( $event->height ) if $weak_self && $weak_self->is_open && $event->is_post_event; return Clay::UI::Enum::Result->CONTINUE } );
+		$root->on( Resize => sub ( $self, $event ) { $self->_fit_height( $event->height ) if $self->is_open && $event->is_post_event; return Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 		return;
 	}
 
@@ -229,10 +228,9 @@ class Term::Fabulous::Widget::KeyReference
 	}
 
 	method _close_button () {
-		weaken( my $weak_self = $self );
 		my $close = Term::Fabulous::Widget::Button->new( bordered => 1, classes => ['primary'], layout => { padding => { left => 1, right => 1 } } );
 		$close->add_child( Term::Fabulous::Widget::Text->new( text => 'Close' ) );
-		$close->on( Activate => sub ($event) { $weak_self->close; return } );
+		$close->on( Activate => sub ( $self, $event ) { $self->close; return }, owner => $self );
 		return $close;
 	}
 }

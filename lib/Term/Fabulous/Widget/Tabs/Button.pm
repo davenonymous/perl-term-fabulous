@@ -20,7 +20,6 @@ class Term::Fabulous::Widget::Tabs::Button
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE CLAY_TEXT_WRAP_NEWLINES);
 	use List::Util qw(first);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Check qw(optional string);
 	use Term::Fabulous::Enum::BorderStyle;
 	use Term::Fabulous::Unicode qw(grapheme_clusters);
@@ -58,10 +57,9 @@ class Term::Fabulous::Widget::Tabs::Button
 		$_icon_text  = Term::Fabulous::Widget::Text->new( text => '' );
 		$_title_text = Term::Fabulous::Widget::Text->new( text => '' );
 
-		weaken( my $weak_self = $self );
 		my $continue = Clay::UI::Enum::Result->CONTINUE;
-		$self->on( Activate => sub ($event) { $weak_self->_activated if $weak_self;   return $continue } );
-		$self->on( $_       => sub ($event) { $weak_self->refresh_look if $weak_self; return $continue } ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
+		$self->on( Activate => sub ( $self, $event ) { $self->_activated;   return $continue }, owner => $self );
+		$self->on( $_       => sub ( $self, $event ) { $self->refresh_look; return $continue }, owner => $self ) foreach qw(OnFocus OnBlur OnHoverStart OnHoverStopped);
 		$self->refresh_look;
 	}
 

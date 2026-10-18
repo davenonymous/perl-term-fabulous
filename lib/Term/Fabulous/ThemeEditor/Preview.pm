@@ -135,8 +135,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 		}
 		$variant_box = $section{variants};
 
-		weaken( my $weak_self = $self );
-		$self->on( KeyPress => sub ($event) { return $weak_self->_scroll_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_scroll_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	sub _column (@kids) {
@@ -323,8 +322,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 
 	method _build_toast () {
 		my $show = _button('Show a toast');
-		weaken( my $weak_self = $self );
-		$show->on( Activate => sub ($event) { $weak_self->_show_toast; return } );
+		$show->on( Activate => sub ( $self, $event ) { $self->_show_toast; return }, owner => $self );
 		return _column(
 			(
 				map { Term::Fabulous::Widget::Toast->new( kind => $_->[0], title => $_->[1], message => $_->[2], closable => 0 ) } [ info => 'Info', 'Good to know.' ],
@@ -373,8 +371,7 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 
 	method _build_dialog () {
 		my $open = _button('Open a dialog');
-		weaken( my $weak_self = $self );
-		$open->on( Activate => sub ($event) { $weak_self->_open_dialog; return } );
+		$open->on( Activate => sub ( $self, $event ) { $self->_open_dialog; return }, owner => $self );
 		return $open;
 	}
 

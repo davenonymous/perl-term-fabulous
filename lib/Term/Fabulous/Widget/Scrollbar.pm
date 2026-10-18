@@ -48,8 +48,7 @@ class Term::Fabulous::Widget::Scrollbar :isa(Term::Fabulous::Widget::Display) :s
 			unless defined $follows && $follows->DOES('Clay::UI::Role::Layout::HasScroll');
 		weaken $follows;
 		one_of( $self, axis => $axis, keys %AXIS );
-		weaken( my $weak = $self );
-		$self->on( Mouse => sub ($event) { return $weak ? $weak->_on_mouse($event) : $CONTINUE } );
+		$self->on( Mouse => sub ( $self, $event ) { return $self->_on_mouse($event) }, owner => $self );
 	}
 
 	method axis () { return $axis }

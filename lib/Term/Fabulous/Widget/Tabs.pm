@@ -23,7 +23,7 @@ class Term::Fabulous::Widget::Tabs
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM);
 	use List::Util qw(first);
-	use Scalar::Util qw(blessed refaddr weaken);
+	use Scalar::Util qw(blessed refaddr);
 	use Term::Fabulous::Check qw(describe);
 	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Event::Select;
@@ -51,9 +51,8 @@ class Term::Fabulous::Widget::Tabs
 		$self->layout( { %$layout, sizing => { width => sizing_grow(), height => sizing_grow(), %{ $layout->{sizing} // {} } } } );
 		$self->_arrange;
 
-		weaken( my $weak_self = $self );
-		$_bar->on( Select   => sub ($event) { $weak_self->_tab_chosen($event) if $weak_self; return } );
-		$self->on( KeyPress => sub ($event) { return $weak_self && $weak_self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE } );
+		$_bar->on( Select   => sub ( $self, $event ) { $self->_tab_chosen($event); return },                                                                     owner => $self );
+		$self->on( KeyPress => sub ( $self, $event ) { return $self->_handle_key($event) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $self );
 	}
 
 	# ---------------------------------------------------------------------
