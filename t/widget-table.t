@@ -641,6 +641,24 @@ subtest 'looks' => sub {
 	is $ui->cell( 2, 4 )->[2] & 0xFFFFFF, 0x102030, 'every other row is striped';
 };
 
+subtest 'a line between two colors takes the table background' => sub {
+	my $table = Term::Fabulous::Widget::Table->new( id => 'lines', row_id => 'id', row_lines => 'Solid', rows => [ @PEOPLE[ 0 .. 2 ] ], columns => [ @COLUMNS[ 0, 1 ] ] );
+	$table->set_row_style( 2, { background_color => '#400000' } );
+	my $root = Term::Fabulous::Widget::Box->new;
+	$root->add_child($table);
+	my $ui = Term::Fabulous::Static->new( root => $root, width => 30, height => 10 );
+	$ui->draw;
+	my @lines    = $ui->render_lines( colors => 0 );
+	my ($bob)    = grep { $lines[$_] =~ /Bob/ } 0 .. $#lines;
+	my $column_x = index( $lines[$bob], "\x{2502}", 1 );
+	my $bg_at    = sub ( $x, $y ) { $ui->cell( $x, $y )->[2] & 0xFFFFFF };
+	is $bg_at->( $column_x, $bob ),     0x400000, 'a column line inside a colored row keeps its color';
+	is $bg_at->( $column_x, $bob - 1 ), 0x16191F, 'the junction above the row does not';
+	is $bg_at->( 2,         $bob - 1 ), 0x16191F, 'nor the row line above it';
+	is $bg_at->( 2,         $bob + 1 ), 0x16191F, 'nor the one below it';
+	is $bg_at->( 2,         2 ),        0x16191F, 'the line under the titles takes neither color';
+};
+
 subtest 'columns' => sub {
 	my ( $table, $h ) = table_ui();
 	$table->hide_columns('dept');

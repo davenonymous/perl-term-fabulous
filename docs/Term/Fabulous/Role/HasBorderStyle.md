@@ -170,8 +170,27 @@ composes the role. Unknown values die.
     [Term::Fabulous::Widget::Table](../Widget/Table.md) draws its outer frame this way, so a
     highlighted row ends at the frame.
 
-`border_corners` and `outer_border_sides` cannot be set from a KDL
-layout file.
+- `border_background_colors`
+
+    `undef` (the default) or a hash reference with any of the side names
+    and corner names above as keys, each a color (anything
+    [Term::Fabulous::Color](../Color.md) takes). The glyphs of a side or corner named
+    here are drawn on that color instead of the widget's own background (a
+    translucent color is blended over it); the others keep the widget's
+    background. A corner takes only the color named for it, not that of the
+    side it is drawn with. A side drawn on the outer background (see
+    `outer_border_sides`) ignores its color, and so does a corner drawn
+    like it. Unknown keys and invalid colors die.
+    [Term::Fabulous::Widget::Table](../Widget/Table.md) uses it for a line between two cells
+    of different backgrounds: the line is drawn on the table's background,
+    so neither cell's color spills onto it.
+
+    ```perl
+    border_background_colors => { top => '#16191f', top_left => '#16191f' },
+    ```
+
+`border_corners`, `outer_border_sides` and
+`border_background_colors` cannot be set from a KDL layout file.
 
 # METHODS
 
@@ -288,6 +307,29 @@ my $glyph = $box->border_corner_glyph('top_left');    # or undef
 
 The glyph drawn at one corner instead of the style's corner glyph, or
 `undef` when the style's glyph is drawn. Used by
+[Term::Fabulous::Render::Border](../Render/Border.md).
+
+## border\_background\_colors
+
+```perl
+my $colors = $box->border_background_colors;    # a copy, or undef
+$box->border_background_colors( { left => '#16191f' } );
+$box->border_background_colors(undef);          # the widget's own background again
+```
+
+Accessor for the `border_background_colors` parameter. The reader
+returns a new hash of `[ $r, $g, $b, $a ]` colors (or `undef`); the
+writer takes what the parameter takes, replaces all colors at once and
+returns the new value. The change shows in the next frame.
+
+## border\_background\_color\_of
+
+```perl
+my $color = $box->border_background_color_of('top_left');    # or undef
+```
+
+The background drawn under the glyphs of one side or corner instead of
+the widget's own, a [Term::Fabulous::Color](../Color.md), or `undef`. Used by
 [Term::Fabulous::Render::Border](../Render/Border.md).
 
 ## contribute\_border\_sides

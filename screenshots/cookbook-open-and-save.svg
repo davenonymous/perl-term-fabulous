@@ -22,10 +22,10 @@
 <rect x="30" y="96" width="54" height="378" fill="#121418"/>
 <rect x="84" y="96" width="540" height="90" fill="#1c212d"/>
 <rect x="624" y="96" width="54" height="378" fill="#121418"/>
-<rect x="84" y="186" width="36" height="36" fill="#1c212d"/>
-<rect x="120" y="186" width="459" height="36" fill="#242832"/>
-<rect x="579" y="186" width="45" height="36" fill="#1c212d"/>
-<rect x="84" y="222" width="540" height="36" fill="#1c212d"/>
+<rect x="84" y="186" width="36" height="18" fill="#1c212d"/>
+<rect x="120" y="186" width="459" height="18" fill="#242832"/>
+<rect x="579" y="186" width="45" height="18" fill="#1c212d"/>
+<rect x="84" y="204" width="540" height="54" fill="#1c212d"/>
 <rect x="84" y="258" width="36" height="18" fill="#1c212d"/>
 <rect x="120" y="258" width="459" height="18" fill="#343a48"/>
 <rect x="579" y="258" width="45" height="18" fill="#1c212d"/>

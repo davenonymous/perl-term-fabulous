@@ -19,14 +19,16 @@
 <rect x="16.5" y="16.5" width="711" height="579" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
 <rect x="498" y="96" width="99" height="18" fill="#242832"/>
-<rect x="57" y="114" width="108" height="36" fill="#242832"/>
-<rect x="282" y="114" width="108" height="36" fill="#242832"/>
-<rect x="57" y="276" width="108" height="36" fill="#242832"/>
-<rect x="282" y="276" width="108" height="36" fill="#242832"/>
-<rect x="507" y="276" width="108" height="36" fill="#242832"/>
+<rect x="57" y="114" width="108" height="18" fill="#242832"/>
+<rect x="282" y="114" width="108" height="18" fill="#242832"/>
+<rect x="57" y="276" width="108" height="18" fill="#242832"/>
+<rect x="282" y="276" width="108" height="18" fill="#242832"/>
+<rect x="507" y="276" width="108" height="18" fill="#242832"/>
 <rect x="48" y="420" width="117" height="36" fill="#2c3340"/>
-<rect x="498" y="420" width="153" height="54" fill="#242832"/>
+<rect x="498" y="420" width="153" height="36" fill="#242832"/>
 <rect x="282" y="438" width="99" height="18" fill="#2c3340"/>
+<rect x="498" y="456" width="9" height="18" fill="#242832"/>
+<rect x="642" y="456" width="9" height="18" fill="#242832"/>
 <rect x="57" y="104" width="108" height="1" fill="#586070"/>
 <rect x="115" y="104" width="1" height="91" fill="#586070"/>
 <rect x="277" y="104" width="1" height="109" fill="#586070"/>

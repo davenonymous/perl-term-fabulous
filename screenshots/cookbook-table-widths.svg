@@ -18,7 +18,7 @@
 <text class="title" x="525" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/table-widths.pl</text>
 <rect x="16.5" y="16.5" width="1017" height="363" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="57" y="96" width="927" height="36" fill="#242832"/>
+<rect x="57" y="96" width="927" height="18" fill="#242832"/>
 <rect x="57" y="132" width="927" height="36" fill="#343a48"/>
 <rect x="57" y="86" width="927" height="1" fill="#586070"/>
 <rect x="106" y="86" width="1" height="217" fill="#586070"/>

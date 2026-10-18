@@ -44,7 +44,7 @@ class Term::Fabulous::Widget::Table
 		CLAY_TEXT_WRAP_WORDS CLAY_TEXT_WRAP_NEWLINES CLAY_TEXT_WRAP_NONE
 		CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT
 	);
-	use List::Util qw(any first max min none);
+	use List::Util qw(all any first max min none);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of optional string);
 	use Term::Fabulous::Enum::BorderStyle;
@@ -822,8 +822,9 @@ class Term::Fabulous::Widget::Table
 
 	# Colors, lines and marks of every cell. The grid lines are worked out
 	# again only when something they depend on changed; a body line is
-	# dressed again only when its look or the lines changed, so moving the
-	# cursor dresses two lines.
+	# dressed again only when its look, the backgrounds of the lines next
+	# to it (see _line_backdrops) or the lines changed, so moving the
+	# cursor dresses the two lines and their neighbours.
 	method _dress ( $grid_columns, $lines ) {
 		my $follows_data = $self->_styles_follow_data($grid_columns);
 		my @header_rows  = ( ( @_header_cells ? [ \@_header_cells, 'header' ] : () ), ( @_filter_cells ? [ \@_filter_cells, 'filter' ] : () ) );
@@ -835,20 +836,16 @@ class Term::Fabulous::Widget::Table
 			$_borders_generation++;
 		}
 
-		foreach my $index ( 0 .. $#header_rows ) {
-			my ( $cells, $part ) = @{ $header_rows[$index] };
-			foreach my $column ( 0 .. $#$cells ) {
-				my $look = $part eq 'header' ? $self->_header_look( $column, $grid_columns->[$column] ) : $self->_filter_look( $cells->[$column], $grid_columns->[$column] );
-				$self->_dress_cell( $cells->[$column]{cell}, $look, $_borders->[$index][$column], \$cells->[$column]{dressed} );
-			}
-		}
-		$self->_mark_header($grid_columns) if @_header_cells;
+		my $column_count = scalar @$grid_columns;
+		my @header_looks = map {
+			my ( $cells, $part ) = @$_;
+			[ map { $part eq 'header' ? $self->_header_look( $_, $grid_columns->[$_] ) : $self->_filter_look( $cells->[$_], $grid_columns->[$_] ) } 0 .. $#$cells ]
+		} @header_rows;
 
 		my $focused    = $self->_has_focus_within;
 		my $cursor     = $model->cursor;
 		my $data_index = 0;
-		foreach my $index ( 0 .. $#$lines ) {
-			my $line  = $lines->[$index];
+		foreach my $line (@$lines) {
 			my $built = $_built{ $line->{key} };
 			my $state
 				= $focused               && !defined $_header_cursor && defined $cursor && $cursor eq $line->{key} ? 'cursor'
@@ -858,10 +855,76 @@ class Term::Fabulous::Widget::Table
 			my $stripe   = $line->{kind} eq 'row' && defined $self->stripe_color && $data_index++ % 2 ? 1 : 0;
 			my $look_key = join "\0", $_borders_generation, $state, $stripe, $self->_line_look_key($line);
 			next if defined $built->{look_key} && $built->{look_key} eq $look_key;
-			$built->{look_key} = $look_key;
-			$self->_dress_line( $built, $line, $grid_columns, $state, $stripe, $_borders->[ @header_rows + $index ] );
+			$built->{look_key}    = $look_key;
+			$built->{looks}       = $self->_line_looks( $line, $grid_columns, $state, $stripe );
+			$built->{backgrounds} = _backgrounds( $built->{looks}, $column_count );
+		}
+
+		my @backgrounds  = ( ( map { _backgrounds( $_, $column_count ) } @header_looks ), map { $_built{ $_->{key} }{backgrounds} } @$lines );
+		my $base         = $self->_base_background;
+		my $backdrops_of = sub ($at) {
+			my $borders = $_borders->[$at];
+			my @spans   = @$borders == $column_count ? map { [ $_, $_ ] } 0 .. $column_count - 1 : ( [ 0, $column_count - 1 ] );
+			return [ map { _line_backdrops( \@backgrounds, scalar @header_rows, $at, @{ $spans[$_] }, $borders->[$_], $base ) } 0 .. $#$borders ];
+		};
+
+		foreach my $index ( 0 .. $#header_rows ) {
+			my $cells     = $header_rows[$index][0];
+			my $backdrops = $backdrops_of->($index);
+			foreach my $column ( 0 .. $#$cells ) {
+				$self->_dress_cell( $cells->[$column]{cell}, $header_looks[$index][$column], $_borders->[$index][$column], $backdrops->[$column], \$cells->[$column]{dressed} );
+			}
+		}
+		$self->_mark_header($grid_columns) if @_header_cells;
+
+		my @background_keys = map { join "\x{1F}", @$_ } @backgrounds;
+		my $base_key        = _flat($base);
+		foreach my $index ( 0 .. $#$lines ) {
+			my ( $line, $at ) = ( $lines->[$index], @header_rows + $index );
+			my $built     = $_built{ $line->{key} };
+			my $dress_key = join "\0", $built->{look_key}, $base_key, map { $background_keys[$_] // '' } grep { $_ >= 0 } $at - 1, $at + 1;
+			next if defined $built->{dress_key} && $built->{dress_key} eq $dress_key;
+			$built->{dress_key} = $dress_key;
+			$self->_dress_line( $built, $line, $grid_columns, $built->{looks}, $_borders->[$at], $backdrops_of->($at) );
 		}
 		return;
+	}
+
+	# The background of every grid column of a line, as comparable keys: a
+	# line across the table has one look for all columns.
+	sub _backgrounds ( $looks, $column_count ) {
+		my @keys = map { _flat( $_->{background_color} ) } @$looks;
+		return @keys == 1 ? [ ( $keys[0] ) x $column_count ] : \@keys;
+	}
+
+	# A line between two cells of different backgrounds takes neither: the
+	# drawn sides and corners of a cell inside the frame whose cells around
+	# them do not all share one background get the table's background
+	# ($base). The line below the header rows always does, as the body
+	# scrolls under it. Takes the background keys of every line (header
+	# rows first) per grid column, the number of header rows, the cell (its
+	# line and first and last grid column) and its lines (from
+	# resolve_borders); returns a hash for border_background_colors, or
+	# undef when every line keeps the cell's own background.
+	sub _line_backdrops ( $backgrounds, $header_lines, $line, $first, $last, $border, $base ) {
+		my $sides      = $border->{sides};
+		my %inside     = ( top => $line > 0, bottom => $line < $#$backgrounds, left => $first > 0, right => $last < $#{ $backgrounds->[$line] } );
+		my %lines_of   = ( top => [ $line - 1, $line ], bottom => [ $line, $line + 1 ] );
+		my %columns_of = ( left => [ $first - 1, $first ], right => [ $last, $last + 1 ] );
+		my %backdrops;
+		foreach my $name (qw(top bottom left right top_left top_right bottom_left bottom_right)) {
+			my @parts = split /_/, $name;
+			next unless all { $sides->{$_} && $inside{$_} } @parts;
+			my ($across) = grep { $lines_of{$_} } @parts;
+			my ($along)  = grep { $columns_of{$_} } @parts;
+			my @lines    = defined $across ? @{ $lines_of{$across} }  : ($line);
+			my @columns  = defined $along  ? @{ $columns_of{$along} } : ( $first .. $last );
+			my @around   = map { @{ $backgrounds->[$_] }[@columns] } @lines;
+			my $scrolls  = defined $across && $lines[0] == $header_lines - 1;
+			next if !$scrolls && all { $_ eq $around[0] } @around;
+			$backdrops{$name} = $base;
+		}
+		return %backdrops ? \%backdrops : undef;
 	}
 
 	# What else a line's look depends on.
@@ -900,22 +963,30 @@ class Term::Fabulous::Widget::Table
 		);
 	}
 
-	method _dress_line ( $built, $line, $grid_columns, $state, $stripe, $borders ) {
+	# The look of every cell of a line: one per grid column for a data
+	# row, one for a line across the table.
+	method _line_looks ( $line, $grid_columns, $state, $stripe ) {
 		my $state_color = $self->_state_color($state);
-		if ( $line->{kind} eq 'row' ) {
-			my $id    = $line->{id};
-			my $row   = $self->_row_style_for($id);
-			my @looks = map {
+		return [ $line->{kind} eq 'group' ? $self->_group_look($state_color) : $self->_empty_look ] unless $line->{kind} eq 'row';
+		my $id  = $line->{id};
+		my $row = $self->_row_style_for($id);
+		return [
+			map {
 				my $cell = defined $grid_columns->[$_]{column} ? $self->_cell_style_for( $id, $grid_columns->[$_]{column} ) : {};
 				$self->_body_look( $state_color // ( $stripe ? $self->stripe_color : undef ), $row, $cell, $grid_columns->[$_]{column}, defined $state_color );
-			} 0 .. $#$grid_columns;
+			} 0 .. $#$grid_columns
+		];
+	}
+
+	method _dress_line ( $built, $line, $grid_columns, $looks, $borders, $backdrops ) {
+		if ( $line->{kind} eq 'row' ) {
 			$built->{dressed} //= [];
-			$self->_dress_cell( $built->{cells}[$_], $looks[$_], $borders->[$_], \$built->{dressed}[$_] ) foreach 0 .. $#looks;
-			$self->_mark_row( $built, $line, $grid_columns, \@looks );
+			$self->_dress_cell( $built->{cells}[$_], $looks->[$_], $borders->[$_], $backdrops->[$_], \$built->{dressed}[$_] ) foreach 0 .. $#$looks;
+			$self->_mark_row( $built, $line, $grid_columns, $looks );
 			return;
 		}
-		my $look = $line->{kind} eq 'group' ? $self->_group_look($state_color) : $self->_empty_look;
-		$self->_dress_cell( $built->{cells}[0], $look, $borders->[0], \$built->{dressed} );
+		my $look = $looks->[0];
+		$self->_dress_cell( $built->{cells}[0], $look, $borders->[0], $backdrops->[0], \$built->{dressed} );
 		if ( $line->{kind} eq 'group' ) {
 			$self->_refresh_group_label($built);
 			_set( $built->{toggle}, text => $line->{expanded} ? OPEN : CLOSED );
@@ -978,16 +1049,19 @@ class Term::Fabulous::Widget::Table
 		};
 	}
 
-	# Gives a cell its look and lines; $memo holds what it was given last
-	# time, so an unchanged cell costs one string comparison.
-	method _dress_cell ( $cell, $look, $border, $memo ) {
+	# Gives a cell its look and lines, and the background of the lines it
+	# draws between itself and cells of other backgrounds ($backdrops, see
+	# _line_backdrops); $memo holds what it was given last time, so an
+	# unchanged cell costs one string comparison.
+	method _dress_cell ( $cell, $look, $border, $backdrops, $memo ) {
 		my $sides      = $border->{sides};
 		my %properties = (
-			background_color   => $look->{background_color},
-			border_color       => $look->{border_color},
-			bordered           => { map { $_ => $sides->{$_} ? 1 : 0 } qw(top right bottom left) },
-			border_corners     => %{ $border->{corners} } ? $border->{corners} : undef,
-			outer_border_sides => $border->{outer},
+			background_color         => $look->{background_color},
+			border_background_colors => $backdrops,
+			border_color             => $look->{border_color},
+			bordered                 => { map { $_ => $sides->{$_} ? 1 : 0 } qw(top right bottom left) },
+			border_corners           => %{ $border->{corners} } ? $border->{corners} : undef,
+			outer_border_sides       => $border->{outer},
 			map { ( "border_style_$_" => $sides->{$_} ) } qw(top right bottom left),
 		);
 		my $signature = join "\x{1E}", map { "$_=" . ( defined $properties{$_} ? _flat( $properties{$_} ) : '' ) } sort keys %properties;

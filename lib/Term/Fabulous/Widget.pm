@@ -616,6 +616,14 @@ C<left>) whose glyphs are drawn on the background outside the widget
 instead of the widget's own. Default: C<[]>. See
 L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>.
 
+=item C<border_background_colors>
+
+C<undef> (the default) or a hash reference of colors under side names
+(C<top>, C<right>, C<bottom>, C<left>) and corner names (C<top_left>,
+...), each drawn under the glyphs of that side or corner instead of the
+widget's own background. See
+L<Term::Fabulous::Role::HasBorderStyle/border_background_colors>.
+
 =item C<width_group>
 
 =item C<height_group>

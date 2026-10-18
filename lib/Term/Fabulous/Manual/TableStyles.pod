@@ -333,11 +333,13 @@ table's own frame is the only one.
 =head2 Tables with colored backgrounds
 
 A thin line glyph (C<│>, C<─>) sits in the middle of its terminal cell,
-and the whole cell has one background color. So with colored cells
-(column titles on a background, striped rows, a highlighted row), the
-color of a cell next to a line also shows on the line's other side,
-half a cell beyond it: a highlighted row's color runs through the
-column lines, and the line under the titles sits inside the titles'
+and the whole cell has one background color. A line between cells of
+one color (the column lines of a highlighted row, the row lines of a
+colored column) takes that color, so the color runs through it. A line
+between cells of different colors (the line under the titles, the row
+lines above and below a highlighted row) takes the table's background
+(see L</Colors>) instead, so neither color reaches half a cell beyond
+it; so does every junction whose cells around it do not all share one
 color.
 
 For tables whose rows and titles have colors of their own, a frame in
@@ -369,8 +371,8 @@ the frame's cells, and the cells' colors fill the inner half up to the
 blocks; C<Inner> draws on the inner half,
 right next to the cells, with the background around the table on the
 outer half. Column lines can still be used with a block frame (they end
-at it), but they carry the cell colors as described at the start of
-this section.
+at it); they take the cell colors as described at the start of this
+section.
 The recipe
 L<A table with colored rows and titles|Term::Fabulous::Cookbook::TableStyles/A table with colored rows and titles (block frame, no grid lines)>
 has the complete program.

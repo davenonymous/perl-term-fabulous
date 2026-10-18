@@ -67,6 +67,12 @@ code 1, those with code 3 as code 2, and codes 1 and 2 stay. A corner is
 drawn this way, with the background of the cell beside the box, when
 the left or right side next to it is listed; otherwise it follows its
 top or bottom side.
+- A side or corner the widget names in `border_background_colors` (see
+["border\_background\_colors" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#border_background_colors)) has
+that color painted over the widget's own background under its glyphs
+(blended when the color is translucent); a corner gets only the color
+named for it, not that of its side. A side drawn on the parent's
+background, and a corner drawn like it, ignores the color.
 - Only cells inside the current clip area are painted.
 
 `$command` is a Clay render command hash (see

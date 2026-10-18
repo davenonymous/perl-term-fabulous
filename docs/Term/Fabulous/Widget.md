@@ -307,6 +307,14 @@ empty; add children afterwards with ["add\_child"](#add_child).
     instead of the widget's own. Default: `[]`. See
     ["outer\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#outer_border_sides).
 
+- `border_background_colors`
+
+    `undef` (the default) or a hash reference of colors under side names
+    (`top`, `right`, `bottom`, `left`) and corner names (`top_left`,
+    ...), each drawn under the glyphs of that side or corner instead of the
+    widget's own background. See
+    ["border\_background\_colors" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#border_background_colors).
+
 - `width_group`
 - `height_group`
 

@@ -735,8 +735,8 @@ returns it to the theme. See ["Borders" in Term::Fabulous::Theme](../Theme.md#bo
 
 ## Joining borders
 
-Two more parameters let a border join the lines around it. Both are set
-in Perl code only; KDL layout files have no property for them.
+Three more parameters let a border join the lines around it. They are
+set in Perl code only; KDL layout files have no property for them.
 
 - `border_corners`
 
@@ -753,6 +753,12 @@ in Perl code only; KDL layout files have no property for them.
     the widget's own, so the border looks like part of its surroundings and
     a colored widget starts inside it (the last panel in the picture of
     ["Borders and space"](#borders-and-space)).
+
+- `border_background_colors`
+
+    Draws some sides and corners on a background color of their own instead
+    of the widget's, for a line that two differently colored widgets share
+    and that should belong to neither.
 
 This box sits directly below a box that has a border on its left, right
 and top sides; its top corners join the side lines of the upper box, so

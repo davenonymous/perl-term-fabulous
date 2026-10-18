@@ -18,7 +18,7 @@
 <text class="title" x="390" y="33" text-anchor="middle" dominant-baseline="central" fill="#9aa3b5">perl examples/cookbook/document-widgets.pl 5.10</text>
 <rect x="16.5" y="16.5" width="747" height="489" rx="10" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
 <g shape-rendering="crispEdges">
-<rect x="66" y="96" width="576" height="36" fill="#242832"/>
+<rect x="66" y="96" width="576" height="18" fill="#242832"/>
 <rect x="597" y="150" width="36" height="18" fill="#e5c07b"/>
 <rect x="57" y="204" width="27" height="18" fill="#2c313c"/>
 <rect x="93" y="204" width="27" height="18" fill="#2c313c"/>
