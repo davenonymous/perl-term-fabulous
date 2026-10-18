@@ -262,6 +262,27 @@ subtest 'double clicks on the clock of the UI' => sub {
 	is $activated->(), [], 'nor two quick clicks on two lines';
 };
 
+subtest 'the column chooser stays on the screen' => sub {
+	my @columns = map { { key => "c$_", title => "Column $_" } } 1 .. 8;
+	my $table   = Term::Fabulous::Widget::Table->new(
+		id     => 'wide', row_id => 'id', columns => \@columns, rows => [ { id => 1 } ],
+		layout => { sizing => { width => sizing_grow(), height => sizing_fixed(5) } }
+	);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child( Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_fixed(15) } } ), $table );
+	my $ui = Term::Fabulous->new( root => $root, width => 40, height => 20, terminal => Term::Fabulous::Terminal::Memory->new( width => 40, height => 20 ) );
+	$ui->step;
+	is $ui->bounding_box($table)->{y}, 15, 'the table starts at row 15 of 20';
+	$table->open_column_chooser;
+	$ui->step;
+	my ($chooser) = grep { $_->isa('Term::Fabulous::Widget::Table::ColumnChooser') } @{ $table->children };
+	my $box = $ui->bounding_box($chooser);
+	is [ @{$box}{qw(y height)} ], [ 8, 12 ], 'the chooser of 12 rows moves up to end at the bottom of the screen';
+	is $box->{x} + $box->{width}, 40,        'at the right edge of the table';
+	my @lines = $ui->terminal->lines;
+	like $lines[18], qr/Esc closes/, 'its last line shows';
+};
+
 subtest 'mouse on trees and groups' => sub {
 	my ( $table, $h ) = table_ui( group_by => 'dept' );
 	click( $h, 4, 3 );

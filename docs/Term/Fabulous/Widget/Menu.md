@@ -133,8 +133,9 @@ to be under the pointer.
 everything else (dialogs included), and focuses it. At a point, the
 menu's top left corner is at that point. Below a widget, the menu
 starts at the widget's left edge, just below it, or just above it when
-there is no room below. Either way, the menu moves left and up as far
-as it must to stay on the screen. It finds its place again in every
+it does not fit below and there is more room above. Either way, the
+menu moves left and up as far as it must to stay on the screen (one
+rule for every popup, [Term::Fabulous::Placement](../Placement.md)). It finds its place again in every
 frame, so a menu that is open while the terminal shrinks stays on the
 screen. A menu does not scroll: one that is taller than the screen
 starts at the top row, and its last items are cut off. Keep menus
@@ -305,6 +306,17 @@ Handles a [Term::Fabulous::Event::KeyPress](../Event/KeyPress.md) as described u
 ["Keys"](#keys), and returns 1 when the menu used the key and 0 when not. A
 menu calls it for the keys it receives while it has the focus. An owner
 that keeps the focus itself, like a menu bar, passes its keys on with
+it.
+
+## popup\_position
+
+```perl
+my $position = $menu->popup_position;    # { x => 3, y => 2 }
+```
+
+Where an open menu floats in this frame, on the screen (see
+["POPUP MENUS"](#popup-menus) and ["show\_below"](#show_below)); undef for a menu that is neither
+open nor shown below a widget. The menu composes [Term::Fabulous::Role::Popup](../Role/Popup.md), which calls
 it.
 
 ## outer\_size

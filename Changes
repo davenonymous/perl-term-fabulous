@@ -1,6 +1,21 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Placement::place_popup is the one rule for
+          where a popup goes: below or above its anchor (flipping when it
+          does not fit and the other side has more room, reporting the
+          rows it has there) or at it, aligned left or right, and always
+          kept on the screen; TOPMOST_Z_INDEX is the z_index of popups.
+          Term::Fabulous::Role::Popup floats a widget from the root at
+          the position it works out, and checks after each frame whether
+          that frame moved it. The dropdown's list, popup menus and the
+          table's column chooser compose it. A
+          dropdown's list no longer runs off the right edge of the
+          screen, and a column chooser near the bottom of the screen
+          moves up instead of hiding its last check boxes; a dropdown's
+          list also stays on the screen when the terminal shrinks while
+          it is open, turning to the other side (with its arrow) when its
+          side has no room left.
         - Term::Fabulous counts clicks: every Mouse press has a
           click_count, 2 for the second press of a double click, 3 for a
           triple click, for presses of the same button in the same cell

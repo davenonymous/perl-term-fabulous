@@ -7,12 +7,14 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Popup;
 use Term::Fabulous::Widget::Display;
 
 our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::Dropdown::List
 	:isa(Term::Fabulous::Widget::Display)
+	:does(Term::Fabulous::Role::Popup)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -113,6 +115,19 @@ class Term::Fabulous::Widget::Dropdown::List
 		return 1;
 	}
 
+	method contribute_floating :override ($config) {
+		$self->SUPER::contribute_floating($config);
+		$self->float_popup($config) if defined $dropdown && defined $config->{floating};
+		return;
+	}
+
+	# Where the list floats in this frame (Term::Fabulous::Role::Popup):
+	# where the dropdown places it on the screen. Before the dropdown has
+	# a box, the list hangs from it as the dropdown attached it.
+	method popup_position () {
+		return defined $dropdown ? $dropdown->list_position : undef;
+	}
+
 	method _text_columns () {
 		return $self->columns - ( $self->_scrolls ? 1 : 0 );
 	}
@@ -178,8 +193,10 @@ Term::Fabulous::Widget::Dropdown::List - The option list of an open dropdown
 This class is internal to L<Term::Fabulous::Widget::Dropdown>.
 Applications never create a list themselves: the dropdown creates one
 each time it opens, adds it as a floating child of itself (so it is
-drawn over the other widgets, attached below or above the dropdown), and
-removes it when it closes.
+drawn over the other widgets), and removes it when it closes. In every
+frame the list floats where the dropdown places it
+(L<Term::Fabulous::Placement>): below or above the dropdown, attached to
+the root and kept on the screen.
 
 The list is a L<Term::Fabulous::Widget::Display> that paints the
 dropdown's options with a one-column margin on both sides, highlights
@@ -254,6 +271,14 @@ within the options. Returns the list.
 
 The index of the option shown at a row of the list's content (from 0),
 or C<undef> for a row without an option.
+
+=head2 popup_position
+
+	my $position = $list->popup_position;    # { x => 34, y => 6 }
+
+Where the list floats in this frame: the dropdown's
+L<list_position|Term::Fabulous::Widget::Dropdown/list_position>. The
+list composes L<Term::Fabulous::Role::Popup>, which calls it.
 
 =head2 paint, paint_key, natural_size
 

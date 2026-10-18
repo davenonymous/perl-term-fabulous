@@ -222,6 +222,7 @@ lib/Term/Fabulous/Manual/TableStyles.pod
 lib/Term/Fabulous/Manual/Tables.pod
 lib/Term/Fabulous/Manual/Troubleshooting.pod
 lib/Term/Fabulous/OptionList.pm
+lib/Term/Fabulous/Placement.pm
 lib/Term/Fabulous/Range.pm
 lib/Term/Fabulous/Render.pm
 lib/Term/Fabulous/Render/Attr.pm
@@ -240,6 +241,7 @@ lib/Term/Fabulous/Role/HasOptions.pm
 lib/Term/Fabulous/Role/HasRange.pm
 lib/Term/Fabulous/Role/HasSeries.pm
 lib/Term/Fabulous/Role/MarkedText.pm
+lib/Term/Fabulous/Role/Popup.pm
 lib/Term/Fabulous/Role/Terminal.pm
 lib/Term/Fabulous/Role/SearchContainer.pm
 lib/Term/Fabulous/Role/Searchable.pm
@@ -395,6 +397,7 @@ t/lib/InputTest.pm
 t/lifecycle.t
 t/line-steps.t
 t/option-list.t
+t/placement.t
 t/range.t
 t/render-attr.t
 t/render-border.t
@@ -403,6 +406,7 @@ t/render-frame-work.t
 t/render-frame.t
 t/render-rectangle.t
 t/render-text.t
+t/role-popup.t
 t/role-search-container.t
 t/roving.t
 t/screenshot-box-drawing.t

@@ -7,8 +7,10 @@ Term::Fabulous::Widget::Dropdown::List - The option list of an open dropdown
 This class is internal to [Term::Fabulous::Widget::Dropdown](../Dropdown.md).
 Applications never create a list themselves: the dropdown creates one
 each time it opens, adds it as a floating child of itself (so it is
-drawn over the other widgets, attached below or above the dropdown), and
-removes it when it closes.
+drawn over the other widgets), and removes it when it closes. In every
+frame the list floats where the dropdown places it
+([Term::Fabulous::Placement](../../Placement.md)): below or above the dropdown, attached to
+the root and kept on the screen.
 
 The list is a [Term::Fabulous::Widget::Display](../Display.md) that paints the
 dropdown's options with a one-column margin on both sides, highlights
@@ -91,6 +93,16 @@ my $index = $list->option_at_row($row);
 
 The index of the option shown at a row of the list's content (from 0),
 or `undef` for a row without an option.
+
+## popup\_position
+
+```perl
+my $position = $list->popup_position;    # { x => 34, y => 6 }
+```
+
+Where the list floats in this frame: the dropdown's
+[list\_position](../Dropdown.md#list_position). The
+list composes [Term::Fabulous::Role::Popup](../../Role/Popup.md), which calls it.
 
 ## paint, paint\_key, natural\_size
 

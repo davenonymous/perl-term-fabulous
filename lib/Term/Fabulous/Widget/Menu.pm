@@ -7,12 +7,14 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Popup;
 use Term::Fabulous::Widget::Input;
 
 our $VERSION = '0.03';
 
 class Term::Fabulous::Widget::Menu
 	:isa(Term::Fabulous::Widget::Input)
+	:does(Term::Fabulous::Role::Popup)
 	:strict(params)
 {
 	use Clay::UI::Enum::Result;
@@ -24,6 +26,7 @@ class Term::Fabulous::Widget::Menu
 	use Term::Fabulous::Command;
 	use Term::Fabulous::Event::Choose;
 	use Term::Fabulous::Event::Close;
+	use Term::Fabulous::Placement qw(place_popup TOPMOST_Z_INDEX);
 	use Term::Fabulous::Roving qw(roving_target);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_RELEASE);
 	use Term::Fabulous::Unicode qw(string_columns);
@@ -32,10 +35,6 @@ class Term::Fabulous::Widget::Menu
 	use constant SEPARATOR_GLYPH => "\x{2500}";
 	use constant CHECK_MARK      => "\x{2713}";
 	use constant KEYS_GAP        => 3;    # columns between the longest label and the keys
-
-	# The highest z_index Clay has (int16): an open menu belongs to the
-	# focused widget, so it floats over everything, a dialog included.
-	use constant Z_INDEX => 32767;
 
 	# PageUp and PageDown go to the ends of a menu, as Home and End do.
 	my %MOVE_KEY = ( PageUp => 'Home', PageDown => 'End' );
@@ -211,7 +210,7 @@ class Term::Fabulous::Widget::Menu
 		$_armed     = 0;
 		$_highlight = $self->_first_enabled;
 		weaken $_anchor->{below} if defined $_anchor->{below};
-		$self->floating( { attach_to => CLAY_ATTACH_TO_ROOT, offset => { x => 0, y => 0 }, z_index => Z_INDEX } );
+		$self->floating( { attach_to => CLAY_ATTACH_TO_ROOT, offset => { x => 0, y => 0 }, z_index => TOPMOST_Z_INDEX } );
 		$self->mark_changed;
 		return;
 	}
@@ -254,29 +253,35 @@ class Term::Fabulous::Widget::Menu
 		return ( $columns + $sides->{left} + $sides->{right}, $rows + $sides->{top} + $sides->{bottom} );
 	}
 
-	# Where the menu floats in this frame: at its anchor, kept on the
-	# screen. Below a widget it opens upwards when there is no room
-	# below; at a point it moves up until its last row is on the screen.
 	method contribute_floating :override ($config) {
 		$self->SUPER::contribute_floating($config);
-		return unless defined $_anchor && defined $config->{floating};
-		my $ui = $self->ui // return;
-		my ( $width, $height ) = $self->outer_size;
-		my ( $x, $y );
-		if ( exists $_anchor->{below} ) {
-			my $box = defined $_anchor->{below} ? $ui->bounding_box( $_anchor->{below} ) : undef;
-			$box //= { x => 0, y => 0, width => 0, height => 0 };
-			$x = $box->{x} + $_anchor->{column};
-			$y = $box->{y} + $box->{height};
-			$y = $box->{y} - $height if $y + $height > $ui->height && $box->{y} >= $height;
-		}
-		else {
-			( $x, $y ) = @{$_anchor}{qw(x y)};
-		}
-		$x                  = max( 0, min( $x, $ui->width - $width ) );
-		$y                  = max( 0, min( $y, $ui->height - $height ) );
-		$config->{floating} = { %{ $config->{floating} }, offset => { x => $x, y => $y } };
+		$self->float_popup($config) if defined $_anchor && defined $config->{floating};
 		return;
+	}
+
+	# Where the menu floats in this frame (Term::Fabulous::Placement,
+	# Term::Fabulous::Role::Popup): below its widget, or over it when
+	# there is no room below, or at its point; kept on the screen.
+	method popup_position () {
+		return undef unless defined $_anchor;
+		my $ui    = $self->ui // return undef;
+		my $place = place_popup(
+			anchor => $self->_anchor_box($ui),
+			size   => [ $self->outer_size ],
+			screen => [ $ui->width, $ui->height ],
+			prefer => exists $_anchor->{below} ? 'below' : 'at',
+		);
+		return { x => $place->{x}, y => $place->{y} };
+	}
+
+	# The box the menu opens from: its point, or its widget's (open
+	# checks that it was drawn; one that went away since leaves the top
+	# left corner) moved right by the column.
+	method _anchor_box ($ui) {
+		return { x => $_anchor->{x}, y => $_anchor->{y}, width => 0, height => 0 } unless exists $_anchor->{below};
+		my $box = defined $_anchor->{below} ? $ui->bounding_box( $_anchor->{below} ) : undef;
+		$box //= { x => 0, y => 0, width => 0, height => 0 };
+		return { %$box, x => $box->{x} + $_anchor->{column} };
 	}
 
 	# ---------------------------------------------------------------------
@@ -557,8 +562,9 @@ L</open> adds the menu to the root of the UI as a floating widget, over
 everything else (dialogs included), and focuses it. At a point, the
 menu's top left corner is at that point. Below a widget, the menu
 starts at the widget's left edge, just below it, or just above it when
-there is no room below. Either way, the menu moves left and up as far
-as it must to stay on the screen. It finds its place again in every
+it does not fit below and there is more room above. Either way, the
+menu moves left and up as far as it must to stay on the screen (one
+rule for every popup, L<Term::Fabulous::Placement>). It finds its place again in every
 frame, so a menu that is open while the terminal shrinks stays on the
 screen. A menu does not scroll: one that is taller than the screen
 starts at the top row, and its last items are cut off. Keep menus
@@ -725,6 +731,15 @@ Handles a L<Term::Fabulous::Event::KeyPress> as described under
 L</Keys>, and returns 1 when the menu used the key and 0 when not. A
 menu calls it for the keys it receives while it has the focus. An owner
 that keeps the focus itself, like a menu bar, passes its keys on with
+it.
+
+=head2 popup_position
+
+	my $position = $menu->popup_position;    # { x => 3, y => 2 }
+
+Where an open menu floats in this frame, on the screen (see
+L</POPUP MENUS> and L</show_below>); undef for a menu that is neither
+open nor shown below a widget. The menu composes L<Term::Fabulous::Role::Popup>, which calls
 it.
 
 =head2 outer_size

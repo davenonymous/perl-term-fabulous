@@ -5,7 +5,9 @@ Term::Fabulous::Widget::Table::ColumnChooser - The list where the user picks the
 # DESCRIPTION
 
 A box that floats over the top right corner of a
-[Term::Fabulous::Widget::Table](../Table.md) with a check box for every column:
+[Term::Fabulous::Widget::Table](../Table.md) (moved up or left as far as it takes to
+stay on the screen, see [Term::Fabulous::Placement](../../Placement.md)) with a check box
+for every column:
 checking or unchecking one (`Space`, `Enter` or a click) shows or
 hides the column at once. `Tab` and `Shift+Tab` move between the
 check boxes. `Escape` closes it, and so does moving the focus out of
@@ -77,6 +79,17 @@ The [Term::Fabulous::Widget::Checkbox](../Checkbox.md) widgets, one per column.
 ## focus\_first
 
 Gives the focus to the first check box.
+
+## popup\_position
+
+```perl
+my $position = $chooser->popup_position;    # { x => 52, y => 8 }
+```
+
+Where the chooser floats in this frame: over the top right corner of
+its table, kept on the screen ([Term::Fabulous::Placement](../../Placement.md)); undef
+before its first frame, when its size is not known. The chooser
+composes [Term::Fabulous::Role::Popup](../../Role/Popup.md), which calls it.
 
 # SEE ALSO
 

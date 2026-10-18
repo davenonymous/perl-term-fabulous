@@ -257,9 +257,11 @@ hides it; alpha 0 leaves it as it is.
 =item C<z_index>
 
 An integer from -32768 to 32767; other values die. Dialogs and other floating widgets with a higher value are
-drawn over those with a lower one. Default: 1000. The open list of a
-L<Term::Fabulous::Widget::Dropdown> floats over every z_index, so it is
-drawn over the dialog it is in.
+drawn over those with a lower one. Default: 1000. Popups (the open list
+of a L<Term::Fabulous::Widget::Dropdown>, a popup
+L<Term::Fabulous::Widget::Menu>, a table's column chooser) float at
+L<Term::Fabulous::Placement/TOPMOST_Z_INDEX>, so they are drawn over the
+dialog they are in.
 
 =item C<close_on_escape>
 

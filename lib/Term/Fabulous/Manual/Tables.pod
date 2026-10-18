@@ -632,7 +632,8 @@ The user can choose the columns, too. A right click on a column title,
 or C<c> while the keyboard is in the header (press C<Up> on the first
 line; see L<Term::Fabulous::Widget::Table/KEYS>), opens the I<column
 chooser>: a small list with a check box per column over the table's top
-right corner. Checking or unchecking a box shows or hides the column at
+right corner (moved up when the table is too close to the bottom of the
+screen for all of it). Checking or unchecking a box shows or hides the column at
 once and fires C<ColumnsChange>. C<Escape> closes the list, and so does
 moving the focus out of it. Your program can open and close it with
 C<open_column_chooser> and C<close_column_chooser>, for example from a

@@ -9,18 +9,20 @@ our $VERSION = '0.03';
 
 use Object::Pad 0.825;
 
+use Term::Fabulous::Role::Popup;
 use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Checkbox;
 use Term::Fabulous::Widget::Text;
 
-class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::Box) :strict(params) {
+class Term::Fabulous::Widget::Table::ColumnChooser
+	:isa(Term::Fabulous::Widget::Box)
+	:does(Term::Fabulous::Role::Popup)
+	:strict(params)
+{
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_RIGHT_TOP);
 	use Term::Fabulous::Enum::BorderStyle;
-
-	# The highest z_index Clay has: the chooser belongs to the focused
-	# table and floats over everything.
-	use constant Z_INDEX => 32767;
+	use Term::Fabulous::Placement qw(place_popup TOPMOST_Z_INDEX);
 
 	# [ key, title, visible ] per column, in order.
 	field $columns     :param;
@@ -37,7 +39,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 			unless ref $on_toggle eq 'CODE' && ref $on_close eq 'CODE';
 
 		$self->layout( { layout_direction => CLAY_TOP_TO_BOTTOM, padding => { left => 1, right => 1 } } );
-		$self->floating( { attach_to => CLAY_ATTACH_TO_PARENT, attach_points => { element => CLAY_ATTACH_POINT_RIGHT_TOP, parent => CLAY_ATTACH_POINT_RIGHT_TOP }, z_index => Z_INDEX } );
+		$self->floating( { attach_to => CLAY_ATTACH_TO_PARENT, attach_points => { element => CLAY_ATTACH_POINT_RIGHT_TOP, parent => CLAY_ATTACH_POINT_RIGHT_TOP }, z_index => TOPMOST_Z_INDEX } );
 		$self->add_child( Term::Fabulous::Widget::Text->new( text => 'Columns', text_color => $text_color, bold => 1 ) );
 		foreach my $entry (@$columns) {
 			my ( $key, $title, $visible ) = @$entry;
@@ -65,6 +67,26 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 			},
 			owner => $self
 		);
+	}
+
+	method contribute_floating :override ($config) {
+		$self->SUPER::contribute_floating($config);
+		$self->float_popup($config) if defined $config->{floating};
+		return;
+	}
+
+	# Where the chooser floats in this frame (Term::Fabulous::Placement,
+	# Term::Fabulous::Role::Popup): over the top right corner of the
+	# table, kept on the screen. Its size is known from its first frame
+	# on; in that frame it hangs from the table's corner as Clay attaches
+	# it.
+	method popup_position () {
+		my $ui    = $self->ui     // return undef;
+		my $table = $self->parent // return undef;
+		my ( $anchor, $own ) = ( $ui->bounding_box($table), $ui->bounding_box($self) );
+		return undef unless defined $anchor && defined $own;
+		my $place = place_popup( anchor => $anchor, size => [ @{$own}{qw(width height)} ], screen => [ $ui->width, $ui->height ], prefer => 'at', align => 'right' );
+		return { x => $place->{x}, y => $place->{y} };
 	}
 
 	method checkboxes () {
@@ -96,7 +118,9 @@ Term::Fabulous::Widget::Table::ColumnChooser - The list where the user picks the
 =head1 DESCRIPTION
 
 A box that floats over the top right corner of a
-L<Term::Fabulous::Widget::Table> with a check box for every column:
+L<Term::Fabulous::Widget::Table> (moved up or left as far as it takes to
+stay on the screen, see L<Term::Fabulous::Placement>) with a check box
+for every column:
 checking or unchecking one (C<Space>, C<Enter> or a click) shows or
 hides the column at once. C<Tab> and C<Shift+Tab> move between the
 check boxes. C<Escape> closes it, and so does moving the focus out of
@@ -172,6 +196,15 @@ The L<Term::Fabulous::Widget::Checkbox> widgets, one per column.
 =head2 focus_first
 
 Gives the focus to the first check box.
+
+=head2 popup_position
+
+	my $position = $chooser->popup_position;    # { x => 52, y => 8 }
+
+Where the chooser floats in this frame: over the top right corner of
+its table, kept on the screen (L<Term::Fabulous::Placement>); undef
+before its first frame, when its size is not known. The chooser
+composes L<Term::Fabulous::Role::Popup>, which calls it.
 
 =head1 SEE ALSO
 

@@ -1236,6 +1236,11 @@ Term::Fabulous, and programs do not use them directly.
     The arithmetic of a scrolled view: how far it can scroll, the offset
     that shows a row, the thumb of a scrollbar.
 
+- [Term::Fabulous::Placement](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Placement.md)
+
+    Where a popup goes on the screen: below, above or at its anchor, kept
+    on the screen; the z\_index of popups.
+
 - [Term::Fabulous::Widget::Dropdown::List](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/Dropdown/List.md)
 
     The list an open dropdown shows. Used internally by the dropdown.

@@ -1907,6 +1907,11 @@ scrolling, the cell of the cursor and the text under a click.
 The arithmetic of a scrolled view: how far it can scroll, the offset
 that shows a row, the thumb of a scrollbar.
 
+=item L<Term::Fabulous::Placement>
+
+Where a popup goes on the screen: below, above or at its anchor, kept
+on the screen; the z_index of popups.
+
 =item L<Term::Fabulous::Widget::Dropdown::List>
 
 The list an open dropdown shows. Used internally by the dropdown.

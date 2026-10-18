@@ -43,7 +43,11 @@ the dropdown, unless
 it does not fit there and there is more room above the dropdown; then it
 opens above. The list shows up to `max_visible_options` options at a
 time; when the terminal has less room on the chosen side, it shrinks to
-that room, but always shows at least one option. It scrolls through the
+that room, but always shows at least one option. A list wider than the
+room right of the dropdown moves left as far as it must to stay on the
+screen ([Term::Fabulous::Placement](../Placement.md)), and the list finds its place
+again in every frame, so it stays on the screen when the terminal
+shrinks while it is open. It scrolls through the
 rest and has a scrollbar when it scrolls, drawn like every scrollbar
 ([Term::Fabulous::Widget::Scrollbar](Scrollbar.md)) in the theme's
 `scrollbar.track` and `scrollbar.thumb` colors. Choosing an option
@@ -495,6 +499,19 @@ my $count = $self->option_count;
 ```
 
 The number of options.
+
+## list\_position
+
+```perl
+my $position = $self->list_position;    # { x => 5, y => 1 }
+```
+
+Where the open list floats in this frame, on the screen
+([Term::Fabulous::Placement](../Placement.md)): on the side it opened to, moved left or
+up as far as it must to stay on the screen; undef before the dropdown
+was drawn. A list that no longer fits on its side after the terminal
+changed size turns to the other side, and the arrow of the dropdown
+turns with it.
 
 ## layout\_properties
 

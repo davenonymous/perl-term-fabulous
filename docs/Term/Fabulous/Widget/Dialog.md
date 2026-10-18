@@ -103,9 +103,11 @@ plus:
 - `z_index`
 
     An integer from -32768 to 32767; other values die. Dialogs and other floating widgets with a higher value are
-    drawn over those with a lower one. Default: 1000. The open list of a
-    [Term::Fabulous::Widget::Dropdown](Dropdown.md) floats over every z\_index, so it is
-    drawn over the dialog it is in.
+    drawn over those with a lower one. Default: 1000. Popups (the open list
+    of a [Term::Fabulous::Widget::Dropdown](Dropdown.md), a popup
+    [Term::Fabulous::Widget::Menu](Menu.md), a table's column chooser) float at
+    ["TOPMOST\_Z\_INDEX" in Term::Fabulous::Placement](../Placement.md#topmost_z_index), so they are drawn over the
+    dialog they are in.
 
 - `close_on_escape`
 

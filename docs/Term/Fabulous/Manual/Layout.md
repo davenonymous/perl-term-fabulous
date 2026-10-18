@@ -693,6 +693,13 @@ floating widget, add and remove it, as the File button of the example
 does. `$widget->floating(undef)` puts a widget back into the
 normal layout.
 
+Clay places a floating widget where its attach points say, also when
+that is off the screen. The popups of Term::Fabulous (dropdown lists,
+menus, the column chooser of a table) are kept on the screen by
+[Term::Fabulous::Placement](../Placement.md): they work out their position from the box
+of their anchor and float from the root there, with
+[Term::Fabulous::Role::Popup](../Role/Popup.md). A popup of your own can do the same.
+
 ## Scrolling content
 
 A [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) is a box whose content may be
