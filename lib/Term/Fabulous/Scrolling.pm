@@ -27,13 +27,12 @@ sub _checked_count ( $function, $name, $value ) {
 }
 
 # Clay reports the viewport as the whole box of the container; the
-# content shows inside the padding of its declaration, which holds the
+# content shows inside the padding the frame declared, which holds the
 # border and the scrollbars too (see Term::Fabulous::Role::HasBorderStyle).
 sub inner_rows ( $ui, $widget ) {
 	_checked( inner_rows => $ui, $widget );
-	my $frame   = $ui->bounding_box($widget)            // return ();
-	my $padding = $widget->to_config->{layout}{padding} // {};
-	return ( $frame->{y} + ( $padding->{top} // 0 ), $frame->{y} + $frame->{height} - ( $padding->{bottom} // 0 ) );
+	my $content = $ui->content_box($widget) // return ();
+	return ( $content->{y}, $content->{y} + $content->{height} );
 }
 
 # A page is the rows the content shows less one, so that the last row
@@ -152,9 +151,10 @@ least one row.
 
 Clay reports the whole box of the container as its viewport, border
 included. To find the rows that show content, the module therefore
-takes the box from C<bounding_box> and subtracts the padding of the
-container's layout (from its C<to_config>), which is where
-Term::Fabulous reserves the room for the border and the scrollbars.
+takes the container's C<content_box> (L<Clay::UI/content_box>): its box
+in the last frame less the padding that frame declared for it, which is
+where Term::Fabulous reserves the room for the border and the
+scrollbars.
 
 =item *
 

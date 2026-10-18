@@ -736,16 +736,21 @@ See ["draw" in Term::Fabulous::Render](https://github.com/davenonymous/perl-term
 
 ```perl
 my $box   = $ui->bounding_box($widget);       # { x, y, width, height } in cells, or undef
+my $inner = $ui->content_box($widget);        # the same inside padding, border and scrollbars
 my $state = $ui->scroll_state($scroll_box);   # { position, viewport, content }
 $ui->scroll_to( $scroll_box, { y => -10 } );  # ten rows down from the top
 ```
 
-`bounding_box` returns where the last frame placed a widget.
+`bounding_box` returns where the last frame placed a widget, and
+`content_box` the part of that box inside the padding the frame
+declared, which in Term::Fabulous holds the border and the scrollbars
+too.
 `scroll_state` and `scroll_to` read and set the scroll position of a
 scroll container such as a [Term::Fabulous::Widget::ScrollBox](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget/ScrollBox.md), in
 cells: 0 at the top and left, negative when scrolled down or right.
 Inherited from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI); see ["bounding\_box" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#bounding_box),
-["scroll\_state" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_state) and ["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to), and the recipe
+["content\_box" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#content_box), ["scroll\_state" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_state) and
+["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to), and the recipe
 [Scroll a ScrollBox from code](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
 
 ## after\_draw

@@ -39,9 +39,10 @@ least one row.
 
     Clay reports the whole box of the container as its viewport, border
     included. To find the rows that show content, the module therefore
-    takes the box from `bounding_box` and subtracts the padding of the
-    container's layout (from its `to_config`), which is where
-    Term::Fabulous reserves the room for the border and the scrollbars.
+    takes the container's `content_box` (["content\_box" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#content_box)): its box
+    in the last frame less the padding that frame declared for it, which is
+    where Term::Fabulous reserves the room for the border and the
+    scrollbars.
 
 - Scrolling stops at the ends of the content. Every function that
 scrolls returns 1 when it moved the content and 0 when it did not, for

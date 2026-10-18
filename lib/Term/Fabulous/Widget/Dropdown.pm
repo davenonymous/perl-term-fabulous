@@ -197,9 +197,11 @@ class Term::Fabulous::Widget::Dropdown
 	}
 
 	# The width of the whole widget in the last frame (its natural width
-	# before the first one).
+	# before the first one). Without a frame only the declaration knows
+	# the insets.
 	method _box_width () {
-		my ( $left, undef, $right ) = $self->content_insets;
+		my ( $left, undef, $right ) = $self->_laid_out_insets;
+		( $left, undef, $right ) = $self->content_insets unless defined $left;
 		return $left + ( $self->columns || ( $self->natural_size )[0] ) + $right;
 	}
 
@@ -210,9 +212,9 @@ class Term::Fabulous::Widget::Dropdown
 		my $wanted = min( $option_list->count, $max_visible_options );
 		my $ui     = $self->ui;
 		my @origin = $self->content_origin;
-		return ( $wanted, 0 ) unless defined $ui && @origin;
+		my ( undef, $top, undef, $bottom ) = $self->_laid_out_insets;
+		return ( $wanted, 0 ) unless defined $ui && @origin && defined $top;
 
-		my ( undef, $top, undef, $bottom ) = $self->content_insets;
 		my $room_above = $origin[1] - $top;
 		my $room_below = $ui->height - ( $origin[1] + $self->rows + $bottom );
 		my $upwards    = $room_below < $wanted + 2 && $room_above > $room_below;

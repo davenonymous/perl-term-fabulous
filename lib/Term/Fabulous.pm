@@ -1372,15 +1372,20 @@ See L<Term::Fabulous::Render/draw>.
 =head2 bounding_box, scroll_state, scroll_to
 
 	my $box   = $ui->bounding_box($widget);       # { x, y, width, height } in cells, or undef
+	my $inner = $ui->content_box($widget);        # the same inside padding, border and scrollbars
 	my $state = $ui->scroll_state($scroll_box);   # { position, viewport, content }
 	$ui->scroll_to( $scroll_box, { y => -10 } );  # ten rows down from the top
 
-C<bounding_box> returns where the last frame placed a widget.
+C<bounding_box> returns where the last frame placed a widget, and
+C<content_box> the part of that box inside the padding the frame
+declared, which in Term::Fabulous holds the border and the scrollbars
+too.
 C<scroll_state> and C<scroll_to> read and set the scroll position of a
 scroll container such as a L<Term::Fabulous::Widget::ScrollBox>, in
 cells: 0 at the top and left, negative when scrolled down or right.
 Inherited from L<Clay::UI>; see L<Clay::UI/bounding_box>,
-L<Clay::UI/scroll_state> and L<Clay::UI/scroll_to>, and the recipe
+L<Clay::UI/content_box>, L<Clay::UI/scroll_state> and
+L<Clay::UI/scroll_to>, and the recipe
 L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
 
 =head2 after_draw

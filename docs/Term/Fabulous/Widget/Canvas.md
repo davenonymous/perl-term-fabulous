@@ -349,20 +349,26 @@ must be termbox2 attributes or `undef`, as ["cell"](#cell) returns them
 `Term::Fabulous::Render::Attr::cell_color_attr`). An `undef` glyph
 unsets the cell. Returns the canvas.
 
-# RENDERER INTERFACE
-
-These methods are called by [Term::Fabulous::Render::Canvas](../Render/Canvas.md) while a
-frame is drawn. Applications do not call them.
-
 ## content\_insets
 
 ```perl
 my ( $left, $top, $right, $bottom ) = $canvas->content_insets;
 ```
 
-The number of cells between the widget's outer box and its content box
-on each side: padding plus one cell where a border is drawn on the side
-(see ["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#drawn_border_sides)).
+The number of cells the widget's declaration puts between its outer
+box and its content box on each side, as its configuration says now:
+padding plus one cell where a border is drawn on the side (see
+["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../Role/HasBorderStyle.md#drawn_border_sides)). It is for
+a canvas that no frame has laid out yet, such as the natural width of
+a [Term::Fabulous::Widget::Dropdown](Dropdown.md) before its first frame. Once a
+frame laid the canvas out, the renderer and the subclasses take the
+insets of that frame from ["content\_box" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#content_box) instead, so a change
+made since that frame does not mix with its box.
+
+# RENDERER INTERFACE
+
+These methods are called by [Term::Fabulous::Render::Canvas](../Render/Canvas.md) while a
+frame is drawn. Applications do not call them.
 
 ## set\_content\_origin
 
