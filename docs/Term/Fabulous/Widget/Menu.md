@@ -230,8 +230,17 @@ $menu->close;
 
 Closes a popup menu: takes it off the screen, gives the focus back to
 the widget that had it when the menu opened (if the menu still had the
-focus and that widget can still take it) and fires `Close`. Closing a
-menu that is not open as a popup does nothing. Returns the menu.
+focus and that widget can still take it; see ["focus\_heir"](#focus_heir)) and fires
+`Close`. Closing a menu that is not open as a popup does nothing.
+Returns the menu.
+
+## focus\_heir
+
+The widget that had the focus when the popup opened (held weakly), or
+`undef` while the menu is not open as a popup. When the popup leaves
+the tree with the focus, the focus goes there if that widget can still
+take it (see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call it
+yourself.
 
 ## is\_open
 

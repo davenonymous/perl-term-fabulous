@@ -29,17 +29,28 @@ Backdrop alone when there are none;
 widgets and key bindings behind the dialog see none; it closes the
 dialog on `Escape`, when the dialog's `close_on_escape` is set;
 - takes the focus itself when the focused widget inside the dialog loses
-it without another widget getting it (it is disabled or removed, or
-the program focuses nothing), so keys and Tab stay inside the dialog.
-It learns about that from the `OnBlur` event bubbling up from the
-widget, so an `OnBlur` listener inside the dialog must let it bubble
-(return `Clay::UI::Enum::Result->CONTINUE`).
+it, so keys and Tab stay inside the dialog. A widget that is disabled
+or removed hands the focus on to its nearest ancestor that can take it
+(see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)), which is the Backdrop
+unless a widget inside the dialog is closer. When the program focuses
+nothing, the Backdrop learns about it from the `OnBlur` event bubbling
+up from the widget, so an `OnBlur` listener inside the dialog must let
+it bubble (return `Clay::UI::Enum::Result->CONTINUE`) for that;
+- gives the focus back to the widget that had it when the dialog opened
+when it leaves the screen with the dialog (see ["focus\_heir"](#focus_heir)).
 
 # METHODS
 
 ## dialog
 
 The [Term::Fabulous::Widget::Dialog](../Dialog.md) this Backdrop belongs to.
+
+## focus\_heir
+
+The widget that had the focus when the dialog opened (held weakly, so
+`undef` once it is gone). When the Backdrop leaves the tree with the
+focus inside it, the focus goes there if that widget can still take it
+(see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)).
 
 ## get\_next\_focus, get\_previous\_focus
 

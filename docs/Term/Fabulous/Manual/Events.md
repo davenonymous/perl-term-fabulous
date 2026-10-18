@@ -712,7 +712,8 @@ To take a widget out of the focus order, pass `can_focus => 0` to
 `new` (or `can_focus #false` in a layout file), or call
 `$widget->can_focus(0)` later; Tab skips it, a click does not focus
 it, and `set_focused_widget` dies for it. A widget that has the focus
-when it stops being able to take it loses the focus at once (`OnBlur`).
+when it stops being able to take it loses the focus at once (`OnBlur`)
+to its heir (see ["When the focused widget goes away"](#when-the-focused-widget-goes-away)).
 Disabled widgets (the inputs, the radio groups and the Buttons, through
 [Clay::UI::Role::Interaction::Disableable](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AInteraction%3A%3ADisableable)) cannot take the focus:
 while `$widget->disabled(1)` is in force, `can_focus` reads 0, and
@@ -751,6 +752,36 @@ dialog focuses the dialog's backdrop instead of a widget behind it, a
 focused widget that is disabled or removed hands the focus to the
 backdrop, and when the dialog closes the focus goes back to the widget
 that had it before.
+
+## When the focused widget goes away
+
+When the focused widget is removed from the tree (or a widget around
+it is), is disabled or can no longer take the focus, the focus goes to
+its _heir_, so the keys keep reaching the part of the screen the user
+was working in. Clay::UI walks up from the widget and stops at the first
+one that stays in the tree and can take the focus. A container on the
+way may name a widget of its own instead, with a `focus_heir` method
+(see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs) and, for your own widgets,
+["A container widget" in Term::Fabulous::Manual::CustomWidgets](CustomWidgets.md#a-container-widget)). The old
+widget gets `OnBlur`, then the heir gets `OnFocus`. Without an heir,
+nothing has the focus and the keys go to the root widget.
+
+The widgets of Term::Fabulous name these heirs:
+
+- a [Term::Fabulous::Widget::Tabs](../Widget/Tabs.md) its active tab, when the page with
+the focus is no longer shown, so `Ctrl+PageUp` and `Ctrl+PageDown`
+keep working;
+- an [Term::Fabulous::Widget::Accordion::Item](../Widget/Accordion/Item.md) its header, when it closes
+over the focused widget;
+- the backdrop of a [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) and a popup
+[Term::Fabulous::Widget::Menu](../Widget/Menu.md) the widget that had the focus before
+they opened, when they close.
+
+The other widgets need no name: a widget in an item of a
+[Term::Fabulous::Widget::VirtualList](../Widget/VirtualList.md) that scrolls out of the window
+hands the focus to the list, one in a cell of a
+[Term::Fabulous::Widget::Table](../Widget/Table.md) that is built again to the table, a
+widget inside an open dialog to the dialog's backdrop.
 
 ## Custom focus order
 

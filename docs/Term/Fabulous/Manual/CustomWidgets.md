@@ -141,6 +141,30 @@ the change themselves, so the next frame shows it. A container whose
 look depends on fields of its own must say so when they change; see
 ["Telling Term::Fabulous that something changed"](#telling-term-fabulous-that-something-changed).
 
+A container that takes children out of the tree while one of them may
+have the focus (it shows one page at a time, or collapses) can name who
+gets the focus then, with a method `focus_heir`. When the focused
+widget leaves the tree or can no longer take the focus, Clay::UI walks
+up from it: the first widget that stays and can take the focus gets
+it, unless a container on the way names a widget of its own first (see
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](Events.md#when-the-focused-widget-goes-away)).
+A pager whose pages share a row of buttons hands the focus to the
+button of the shown page:
+
+```text
+class My::Pager :isa(Term::Fabulous::Widget::Box) :strict(params) {
+        field @buttons;    # one Button per page, always in the tree
+        field $shown = 0;
+```
+
+```text
+        method focus_heir () { return $buttons[$shown] }
+}
+```
+
+Return `undef` to let the walk go on; a widget that cannot take the
+focus right now counts as `undef`.
+
 ## A widget that draws itself
 
 Derive from [Term::Fabulous::Widget::Display](../Widget/Display.md) for a widget that draws

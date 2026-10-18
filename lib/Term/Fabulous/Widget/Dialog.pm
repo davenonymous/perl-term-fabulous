@@ -35,7 +35,6 @@ class Term::Fabulous::Widget::Dialog
 	# dialog left open in a dropped UI is freed with it.
 	field $_backdrop;
 	field $_is_open = 0;
-	field $_focus_before;    # the widget focused when the dialog opened
 
 	# A dialog looks like a dialog unless told otherwise: a panel in the
 	# theme's dialog colors and border (dialog.border.enabled), laid out
@@ -99,10 +98,11 @@ class Term::Fabulous::Widget::Dialog
 		die "Term::Fabulous::Widget::Dialog: a dialog that is a child of another widget cannot open" if defined $self->parent;
 
 		my $interaction = $ui->interaction;
-		$_focus_before = $interaction->get_focused_widget;
-		weaken $_focus_before if defined $_focus_before;
-
-		my $backdrop = Term::Fabulous::Widget::Dialog::Backdrop->new( dialog => $self, z_index => $z_index );
+		my $backdrop    = Term::Fabulous::Widget::Dialog::Backdrop->new(
+			dialog       => $self,
+			z_index      => $z_index,
+			focus_before => $interaction->get_focused_widget,
+		);
 		$backdrop->add_child($self);
 		$ui->root->add_child($backdrop);
 		weaken( $_backdrop = $backdrop );
@@ -111,13 +111,13 @@ class Term::Fabulous::Widget::Dialog
 		return $self;
 	}
 
-	# The program may have taken the backdrop out of the tree already (with
-	# clear_children on the root, for example): then there is nothing to
-	# remove and no UI to give the focus back in, but Close still fires.
+	# Removing the backdrop gives the focus back: the backdrop names the
+	# widget that had it as its focus heir. The program may have taken the
+	# backdrop out of the tree already (with clear_children on the root,
+	# for example): then there is nothing to remove, but Close still fires.
 	method close () {
 		return $self unless $_is_open;
 		my $backdrop = $_backdrop;
-		my $ui       = $self->ui;
 		( $_is_open, $_backdrop ) = ( 0, undef );
 
 		if ( defined $backdrop ) {
@@ -125,18 +125,8 @@ class Term::Fabulous::Widget::Dialog
 			$holder->remove_child($backdrop) if defined $holder;
 			$backdrop->clear_children;
 		}
-		$self->_restore_focus($ui) if defined $ui;
 		$self->fire_event( Term::Fabulous::Event::Close->new );
 		return $self;
-	}
-
-	# The focus goes back to the widget that had it, if it still can take it.
-	method _restore_focus ($ui) {
-		my $previous = $_focus_before;
-		$_focus_before = undef;
-		return unless defined $previous && $ui->interaction->can_take_focus($previous);
-		$ui->interaction->set_focused_widget($previous);
-		return;
 	}
 }
 
@@ -215,8 +205,10 @@ Tab and Shift+Tab still move the focus;
 =item *
 
 the focus stays inside the dialog: when the focused widget is disabled
-or removed, the backdrop takes the focus (an C<OnBlur> listener inside
-the dialog must let the event bubble for that, see
+or removed, its nearest ancestor that can take the focus does, which
+is the backdrop unless a widget inside the dialog is closer, and when
+the program focuses nothing the backdrop takes it (an C<OnBlur>
+listener inside the dialog must let the event bubble for that, see
 L<Term::Fabulous::Widget::Dialog::Backdrop>);
 
 =item *
@@ -297,11 +289,13 @@ widget as a child. Returns the dialog.
 
 Closes the dialog: removes it from the screen, gives the focus back to
 the widget that had it when the dialog opened (if that widget still
-exists and can take the focus) and fires C<Close> on the dialog.
-Closing a closed dialog does nothing. A dialog whose backdrop the
-program took out of the tree itself (with C<clear_children> on the
-root, for example) is still open until C<close> is called; C<close>
-then only fires C<Close>. Returns the dialog.
+exists and can take the focus; the backdrop names it as its focus heir,
+see L<Term::Fabulous::Widget::Dialog::Backdrop/focus_heir>) and fires
+C<Close> on the dialog. Closing a closed dialog does nothing. A dialog
+whose backdrop the program took out of the tree itself (with
+C<clear_children> on the root, for example) is still open until
+C<close> is called; the focus went back when the backdrop left, and
+C<close> then only fires C<Close>. Returns the dialog.
 
 =head2 is_open
 

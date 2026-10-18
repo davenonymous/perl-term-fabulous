@@ -437,10 +437,11 @@ class Term::Fabulous::Widget::Table
 		return;
 	}
 
+	# A focused widget in a cell that is built again or removed hands the
+	# focus to its focus heir, the table.
 	method prepare_layout () {
-		my $focus_in_cell = $self->_focus_in_cell;
-		my @grid_columns  = $self->_grid_columns;
-		my @lines         = $self->_body_lines;
+		my @grid_columns = $self->_grid_columns;
+		my @lines        = $self->_body_lines;
 		$self->_prepare_width( \@grid_columns );
 		$self->_prepare_header( \@grid_columns );
 		$self->_prepare_body( \@grid_columns, \@lines );
@@ -448,18 +449,7 @@ class Term::Fabulous::Widget::Table
 		$self->_prepare_scrollbar;
 		$self->_prepare_pager;
 		$self->_prepare_scrolling;
-
-		# A focused widget in a cell that was built again or removed takes
-		# the focus with it; the table takes it back.
-		$self->_focus_self if $focus_in_cell && !$self->_has_focus_within;
 		return;
-	}
-
-	# Whether a widget inside one of the body's cells has the focus.
-	method _focus_in_cell () {
-		my $ui      = $self->ui                            // return 0;
-		my $focused = $ui->interaction->get_focused_widget // return 0;
-		return refaddr($focused) != refaddr($self) && $self->_region_of($focused) eq 'body' ? 1 : 0;
 	}
 
 	# The grids are as wide as their columns, unless a column grows (or is
@@ -1839,15 +1829,8 @@ class Term::Fabulous::Widget::Table
 		return $self unless defined $_chooser;
 		my $closing = $_chooser;
 		undef $_chooser;
-		my $refocus = $self->_focus_is_inside($closing);
-		$self->remove_child($closing);
-		$self->_focus_self if $refocus;
+		$self->remove_child($closing);    # a focus inside goes to its heir, the table
 		return $self;
-	}
-
-	method _focus_is_inside ($widget) {
-		my $ui = $self->ui // return 0;
-		return $ui->interaction->has_focus_within($widget);
 	}
 
 	method is_column_chooser_open () {

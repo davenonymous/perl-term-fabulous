@@ -185,7 +185,7 @@ class Term::Fabulous::Widget::KeyReference
 		my $interaction = defined $self->ui    ? $self->ui->interaction           : undef;
 		my $focused     = defined $interaction ? $interaction->get_focused_widget : undef;
 		$wants_compact ? $self->_arrange_compact : $self->_arrange_roomy;
-		$interaction->set_focused_widget($focused) if defined $focused && $interaction->can_take_focus($focused);    # moving the parts lost it
+		$interaction->set_focused_widget($focused) if defined $focused && $interaction->can_take_focus($focused);    # moving the parts handed it to a focus heir
 		return;
 	}
 

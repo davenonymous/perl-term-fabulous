@@ -227,9 +227,10 @@ and `Mouse` for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
 is attached. When its item is detached it loses the hover, like any
-removed widget, and the focus goes to the list, or to the nearest
-widget above it that can take the focus, so that the keys keep
-working where they did; without such a widget, nothing has the focus.
+removed widget, and the focus goes to its heir: the list, or the
+nearest widget above it that can take the focus (see
+["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)), so that the keys keep working
+where they did; without such a widget, nothing has the focus.
 A focused widget inside an item is scrolled into view like in every
 [ScrollBox](ScrollBox.md#focus).
 

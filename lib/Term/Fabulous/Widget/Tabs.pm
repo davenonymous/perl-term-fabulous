@@ -207,6 +207,14 @@ class Term::Fabulous::Widget::Tabs
 		return;
 	}
 
+	# Who takes the focus when the focus inside the Tabs is lost, for
+	# example with the page that held it (Clay::UI::Interaction's focus
+	# heirs): the active tab, so Ctrl+PageUp and Ctrl+PageDown keep
+	# working.
+	method focus_heir () {
+		return $_bar->active;
+	}
+
 	# A page changed its title, icon or disabled flag: its tab follows.
 	method _page_changed ($page) {
 		my $button = $self->_button_for($page);
@@ -553,8 +561,9 @@ Its index.
 	$tabs->select(undef);    # no page
 
 Shows a page from the program. Fires nothing. A tab that had the
-focus passes it on to the new active tab. Dies for an index outside
-the pages or a page of another Tabs. Returns the Tabs.
+focus passes it on to the new active tab, and so does the page that
+leaves (see L</focus_heir>). Dies for an index outside the pages or a
+page of another Tabs. Returns the Tabs.
 
 =head2 choose
 
@@ -563,6 +572,16 @@ the pages or a page of another Tabs. Returns the Tabs.
 Chooses a page as the user does: shows it, focuses its tab and fires
 C<Select> when the active page changed. A disabled page changes
 nothing. Returns the Tabs.
+
+=head2 focus_heir
+
+	my $tab = $tabs->focus_heir;
+
+The active tab (a L<Term::Fabulous::Widget::Tabs::Button>), or C<undef>
+without pages. When the widget with the focus leaves the Tabs (its page
+is no longer shown, or it is removed), the focus goes to this tab, so
+the keys keep reaching the Tabs (see
+L<Clay::UI::Interaction/Focus heirs>). You do not call it yourself.
 
 =head2 bar
 

@@ -216,21 +216,25 @@ class Term::Fabulous::Widget::Menu
 		return;
 	}
 
-	# Takes a popup off the screen and gives the focus back; Close fires.
-	# A close because the focus went elsewhere leaves the focus there.
+	# Takes a popup off the screen; Close fires. A popup that has the focus
+	# gives it back as it leaves, through its focus heir; a close because
+	# the focus went elsewhere leaves the focus there.
 	method close () {
 		return $self unless $_is_open;
-		my $ui        = $self->ui;
-		my $give_back = defined $ui && $self->is_focused ? $_focus_before : undef;
-		$_is_open      = 0;
-		$_focus_before = undef;
+		$_is_open = 0;
 		my $holder = $self->parent;
 		$holder->remove_child($self) if defined $holder;
+		$_focus_before = undef;
 		$self->floating(undef);
 		$_anchor = undef;
-		$ui->interaction->set_focused_widget($give_back) if defined $give_back && $ui->interaction->can_take_focus($give_back);
 		$self->fire_event( Term::Fabulous::Event::Close->new );
 		return $self;
+	}
+
+	# Who takes the focus when an open popup leaves with the focus: the
+	# widget that had it when the popup opened.
+	method focus_heir () {
+		return $_focus_before;
 	}
 
 	method focus_changed :override ($is_focused) {
@@ -656,8 +660,17 @@ widget. Returns the menu.
 
 Closes a popup menu: takes it off the screen, gives the focus back to
 the widget that had it when the menu opened (if the menu still had the
-focus and that widget can still take it) and fires C<Close>. Closing a
-menu that is not open as a popup does nothing. Returns the menu.
+focus and that widget can still take it; see L</focus_heir>) and fires
+C<Close>. Closing a menu that is not open as a popup does nothing.
+Returns the menu.
+
+=head2 focus_heir
+
+The widget that had the focus when the popup opened (held weakly), or
+C<undef> while the menu is not open as a popup. When the popup leaves
+the tree with the focus, the focus goes there if that widget can still
+take it (see L<Clay::UI::Interaction/Focus heirs>). You do not call it
+yourself.
 
 =head2 is_open
 

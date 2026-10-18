@@ -456,7 +456,9 @@ class Term::Fabulous::Widget::VirtualList
 
 	# Makes the column's children the spacers and the window: what leaves
 	# is detached, what enters is inserted where it belongs, what stays is
-	# not touched (so it keeps focus and hover).
+	# not touched (so it keeps focus and hover). A slot that leaves with
+	# the focus hands it to its focus heir, the list itself or the nearest
+	# ancestor that can take it, so the keys keep working where they did.
 	method _arrange () {
 		my @wanted;
 		if ( defined $_first ) {
@@ -467,9 +469,7 @@ class Term::Fabulous::Widget::VirtualList
 		$self->_size_spacers;
 
 		my %stays = map { refaddr($_) => 1 } @wanted;
-		my $heir  = $self->_focus_heir( \%stays );
 		$_column->remove_children_with( sub { !$stays{ refaddr $_ } } );
-		$self->_take_focus_back($heir) if defined $heir;
 
 		my @runs;    # [ $offset, @children ]: the entering children, run by run
 		foreach my $index ( 0 .. $#wanted ) {
@@ -482,26 +482,6 @@ class Term::Fabulous::Widget::VirtualList
 			my ( $offset, @children ) = @$run;
 			$_column->insert_children( $offset, @children );
 		}
-		return;
-	}
-
-	# The widget that takes the focus when a slot that holds it leaves: the
-	# list itself, or the nearest ancestor that can take it, so that the
-	# keys keep working where they did. undef when no leaving slot holds
-	# the focus, or nothing can take it.
-	method _focus_heir ($stays) {
-		my $ui          = $self->ui // return undef;
-		my $interaction = $ui->interaction;
-		my $focused     = $interaction->get_focused_widget // return undef;
-		return undef unless grep { !$stays->{ refaddr $_ } && $_->contains($focused) } @{ $_column->children };
-		return $self->closest( sub ($node) { $interaction->can_take_focus($node) } );
-	}
-
-	# Detaching the slot blurred the focus; nothing has it now.
-	method _take_focus_back ($heir) {
-		my $ui          = $self->ui // return;
-		my $interaction = $ui->interaction;
-		$interaction->set_focused_widget($heir) unless defined $interaction->get_focused_widget;
 		return;
 	}
 
@@ -782,9 +762,10 @@ and C<Mouse> for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
 is attached. When its item is detached it loses the hover, like any
-removed widget, and the focus goes to the list, or to the nearest
-widget above it that can take the focus, so that the keys keep
-working where they did; without such a widget, nothing has the focus.
+removed widget, and the focus goes to its heir: the list, or the
+nearest widget above it that can take the focus (see
+L<Clay::UI::Interaction/Focus heirs>), so that the keys keep working
+where they did; without such a widget, nothing has the focus.
 A focused widget inside an item is scrolled into view like in every
 L<ScrollBox|Term::Fabulous::Widget::ScrollBox/FOCUS>.
 

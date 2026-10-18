@@ -782,7 +782,8 @@ To take a widget out of the focus order, pass C<can_focus =E<gt> 0> to
 C<new> (or C<can_focus #false> in a layout file), or call
 C<< $widget->can_focus(0) >> later; Tab skips it, a click does not focus
 it, and C<set_focused_widget> dies for it. A widget that has the focus
-when it stops being able to take it loses the focus at once (C<OnBlur>).
+when it stops being able to take it loses the focus at once (C<OnBlur>)
+to its heir (see L</When the focused widget goes away>).
 Disabled widgets (the inputs, the radio groups and the Buttons, through
 L<Clay::UI::Role::Interaction::Disableable>) cannot take the focus:
 while C<< $widget->disabled(1) >> is in force, C<can_focus> reads 0, and
@@ -819,6 +820,48 @@ dialog focuses the dialog's backdrop instead of a widget behind it, a
 focused widget that is disabled or removed hands the focus to the
 backdrop, and when the dialog closes the focus goes back to the widget
 that had it before.
+
+=head2 When the focused widget goes away
+
+When the focused widget is removed from the tree (or a widget around
+it is), is disabled or can no longer take the focus, the focus goes to
+its I<heir>, so the keys keep reaching the part of the screen the user
+was working in. Clay::UI walks up from the widget and stops at the first
+one that stays in the tree and can take the focus. A container on the
+way may name a widget of its own instead, with a C<focus_heir> method
+(see L<Clay::UI::Interaction/Focus heirs> and, for your own widgets,
+L<Term::Fabulous::Manual::CustomWidgets/A container widget>). The old
+widget gets C<OnBlur>, then the heir gets C<OnFocus>. Without an heir,
+nothing has the focus and the keys go to the root widget.
+
+The widgets of Term::Fabulous name these heirs:
+
+=over
+
+=item *
+
+a L<Term::Fabulous::Widget::Tabs> its active tab, when the page with
+the focus is no longer shown, so C<Ctrl+PageUp> and C<Ctrl+PageDown>
+keep working;
+
+=item *
+
+an L<Term::Fabulous::Widget::Accordion::Item> its header, when it closes
+over the focused widget;
+
+=item *
+
+the backdrop of a L<Term::Fabulous::Widget::Dialog> and a popup
+L<Term::Fabulous::Widget::Menu> the widget that had the focus before
+they opened, when they close.
+
+=back
+
+The other widgets need no name: a widget in an item of a
+L<Term::Fabulous::Widget::VirtualList> that scrolls out of the window
+hands the focus to the list, one in a cell of a
+L<Term::Fabulous::Widget::Table> that is built again to the table, a
+widget inside an open dialog to the dialog's backdrop.
 
 =head2 Custom focus order
 

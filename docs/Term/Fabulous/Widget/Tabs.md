@@ -231,8 +231,9 @@ $tabs->select(undef);    # no page
 ```
 
 Shows a page from the program. Fires nothing. A tab that had the
-focus passes it on to the new active tab. Dies for an index outside
-the pages or a page of another Tabs. Returns the Tabs.
+focus passes it on to the new active tab, and so does the page that
+leaves (see ["focus\_heir"](#focus_heir)). Dies for an index outside the pages or a
+page of another Tabs. Returns the Tabs.
 
 ## choose
 
@@ -243,6 +244,18 @@ $tabs->choose($index);
 Chooses a page as the user does: shows it, focuses its tab and fires
 `Select` when the active page changed. A disabled page changes
 nothing. Returns the Tabs.
+
+## focus\_heir
+
+```perl
+my $tab = $tabs->focus_heir;
+```
+
+The active tab (a [Term::Fabulous::Widget::Tabs::Button](Tabs/Button.md)), or `undef`
+without pages. When the widget with the focus leaves the Tabs (its page
+is no longer shown, or it is removed), the focus goes to this tab, so
+the keys keep reaching the Tabs (see
+["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call it yourself.
 
 ## bar
 

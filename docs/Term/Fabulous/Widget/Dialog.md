@@ -56,8 +56,10 @@ and key bindings behind the dialog do not see them. Ctrl+C still ends
 the program (unless the UI was made with `stop_on_ctrl_c => 0`),
 Tab and Shift+Tab still move the focus;
 - the focus stays inside the dialog: when the focused widget is disabled
-or removed, the backdrop takes the focus (an `OnBlur` listener inside
-the dialog must let the event bubble for that, see
+or removed, its nearest ancestor that can take the focus does, which
+is the backdrop unless a widget inside the dialog is closer, and when
+the program focuses nothing the backdrop takes it (an `OnBlur`
+listener inside the dialog must let the event bubble for that, see
 [Term::Fabulous::Widget::Dialog::Backdrop](Dialog/Backdrop.md));
 - the widgets behind the dialog stay visible through the backdrop, but
 are neither hovered nor pressed.
@@ -135,11 +137,13 @@ $dialog->close;
 
 Closes the dialog: removes it from the screen, gives the focus back to
 the widget that had it when the dialog opened (if that widget still
-exists and can take the focus) and fires `Close` on the dialog.
-Closing a closed dialog does nothing. A dialog whose backdrop the
-program took out of the tree itself (with `clear_children` on the
-root, for example) is still open until `close` is called; `close`
-then only fires `Close`. Returns the dialog.
+exists and can take the focus; the backdrop names it as its focus heir,
+see ["focus\_heir" in Term::Fabulous::Widget::Dialog::Backdrop](Dialog/Backdrop.md#focus_heir)) and fires
+`Close` on the dialog. Closing a closed dialog does nothing. A dialog
+whose backdrop the program took out of the tree itself (with
+`clear_children` on the root, for example) is still open until
+`close` is called; the focus went back when the backdrop left, and
+`close` then only fires `Close`. Returns the dialog.
 
 ## is\_open
 

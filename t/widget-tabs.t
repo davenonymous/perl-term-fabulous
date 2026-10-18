@@ -171,6 +171,22 @@ subtest 'keys and clicks' => sub {
 	is scalar @$events, 8, 'choosing the active page again fires nothing';
 };
 
+subtest 'the active tab takes the focus of a page that leaves' => sub {
+	my ( $tabs, $terminal, $ui ) = tabs();
+	my $field = $tabs->page(0)->children->[1];
+	$ui->interaction->set_focused_widget($field);
+	$tabs->select(1);
+	$ui->step;
+	ref_is $ui->interaction->get_focused_widget, $tabs->bar->button(1), 'select hands the focus to the new active tab';
+	$terminal->press_key('Ctrl+PageUp');
+	$ui->step;
+	is $tabs->active_index, 0, 'and the next Ctrl+PageUp still reaches the Tabs';
+
+	$ui->interaction->set_focused_widget($field);
+	$tabs->remove_child( $tabs->page(0) );
+	ref_is $ui->interaction->get_focused_widget, $tabs->bar->active, 'removing the shown page hands it to the tab shown next';
+};
+
 subtest 'pages' => sub {
 	my ( $tabs, $terminal, $ui, $events ) = tabs();
 	my $page = $tabs->page(1);

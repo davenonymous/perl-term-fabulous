@@ -82,6 +82,13 @@ class Term::Fabulous::Widget::Accordion::Item
 	method header () { return $_header }
 	method body ()   { return $_body }
 
+	# Who takes the focus when the focus inside the item is lost, for
+	# example when it closes over a focused field (Clay::UI::Interaction's
+	# focus heirs): the header, where the user can open it again.
+	method focus_heir () {
+		return $_header;
+	}
+
 	# The item's children live in its body; the header is its own.
 	method add_child :override (@kids) {
 		return $self->SUPER::add_child(@kids) unless $_built;
@@ -358,8 +365,9 @@ header and, while open, the body), plus:
 
 Accessor. Writing opens or closes the item without an event and
 without regard to the accordion's C<multiple>; the accordion's
-L<Term::Fabulous::Widget::Accordion/open> keeps that rule. Returns 1 or
-0.
+L<Term::Fabulous::Widget::Accordion/open> keeps that rule. Closing an
+item whose body holds the focus moves the focus to its header (see
+L</focus_heir>). Returns 1 or 0.
 
 =head2 is_open
 
@@ -413,6 +421,15 @@ style it further.
 	my $box = $item->body;
 
 The body L<Term::Fabulous::Widget::Box>, also while the item is closed.
+
+=head2 focus_heir
+
+	my $header = $item->focus_heir;
+
+The L</header>. When the widget with the focus leaves the item (the
+item closes, or the widget is removed from its body), the focus goes to
+the header (see L<Clay::UI::Interaction/Focus heirs>). You do not call
+it yourself.
 
 =head2 accordion
 

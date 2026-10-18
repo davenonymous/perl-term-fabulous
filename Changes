@@ -1,6 +1,17 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - The focus no longer vanishes when the focused widget is
+          removed, disabled or hidden: it goes to its heir (Clay::UI
+          0.07 focus heirs), the nearest widget above it that can take
+          the focus, or the widget a container names with focus_heir.
+          Tabs names its active tab, so a field on a page that select
+          or choose hides no longer leaves Ctrl+PageUp and
+          Ctrl+PageDown without the Tabs; Accordion::Item names its
+          header when it closes over a focused field; a Dialog's
+          backdrop and a popup Menu name the widget that had the focus
+          before they opened. Before, nothing had the focus and the keys
+          went to the root widget.
         - A Text with wrap_mode CLAY_TEXT_WRAP_NONE stays on one line,
           as Clay::UI 0.07 lays it out: a "\n" in it is shown as the
           replacement character U+FFFD instead of starting a new line,

@@ -87,8 +87,9 @@ $item->open(1);
 
 Accessor. Writing opens or closes the item without an event and
 without regard to the accordion's `multiple`; the accordion's
-["open" in Term::Fabulous::Widget::Accordion](../Accordion.md#open) keeps that rule. Returns 1 or
-0.
+["open" in Term::Fabulous::Widget::Accordion](../Accordion.md#open) keeps that rule. Closing an
+item whose body holds the focus moves the focus to its header (see
+["focus\_heir"](#focus_heir)). Returns 1 or 0.
 
 ## is\_open
 
@@ -156,6 +157,17 @@ my $box = $item->body;
 ```
 
 The body [Term::Fabulous::Widget::Box](../Box.md), also while the item is closed.
+
+## focus\_heir
+
+```perl
+my $header = $item->focus_heir;
+```
+
+The ["header"](#header). When the widget with the focus leaves the item (the
+item closes, or the widget is removed from its body), the focus goes to
+the header (see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call
+it yourself.
 
 ## accordion
 

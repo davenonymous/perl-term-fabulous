@@ -116,6 +116,18 @@ subtest 'keys and clicks' => sub {
 	is $events->[-1], [ 0, 1, 'General' ], 'choose acts as the user does';
 };
 
+subtest 'closing an item over a focused field focuses its header' => sub {
+	my ( $accordion, $terminal, $ui ) = accordion();
+	my $item = $accordion->item(0);
+	$item->open(1);
+	$ui->interaction->set_focused_widget( $item->body->children->[1] );
+	$item->open(0);
+	ref_is $ui->interaction->get_focused_widget, $item->header, 'the header has the focus';
+	$terminal->press_key('Down');
+	$ui->step;
+	ok $accordion->item(1)->is_focused, 'and the next Down still reaches the accordion';
+};
+
 subtest 'looks' => sub {
 	my ( $accordion, $terminal, $ui ) = accordion( toggle_position => 'end', open_glyph => '-', closed_glyph => '+', item_borders => 1, body_indent => 0 );
 	$accordion->open(1);

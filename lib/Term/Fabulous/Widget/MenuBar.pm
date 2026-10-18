@@ -204,7 +204,9 @@ class Term::Fabulous::Widget::MenuBar
 	}
 
 	# Closes the open menu. The focus goes back to the widget that had it
-	# when the bar opened, unless it went elsewhere already.
+	# when the bar opened, unless it went elsewhere already. The bar gives
+	# it back itself: the bar holds the focus and stays in the tree, so
+	# no focus heir is asked when its menu leaves.
 	method close () {
 		return $self unless defined $_open;
 		my $menu      = $_menus[$_open]{menu};
