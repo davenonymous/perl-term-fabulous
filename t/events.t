@@ -522,6 +522,18 @@ subtest 'clicks on text fire TextClick, clicks on links LinkActivate' => sub {
 	is $rich->hovered_link, undef, 'and leaving it drops the hover';
 };
 
+subtest 'a click on either column of a wide character is on that character' => sub {
+	my $wide_root = Term::Fabulous::Widget::Box->new( background_color => [ 1, 1, 1, 255 ], layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	my $text      = Term::Fabulous::Widget::Text->new( text => "\x{3042}b" );
+	$wide_root->add_child($text);
+	my ($wide_ui) = memory_ui( root => $wide_root );
+	my @offsets;
+	$wide_root->on( TextClick => sub { push @offsets, $_[0]->offset; return } );
+	$wide_ui->step;
+	mouse( $wide_ui, key => TB_KEY_MOUSE_RIGHT, x => $_, y => 0 ) foreach 0 .. 2;
+	is \@offsets, [ 0, 0, 1 ], 'both columns of the wide character give its offset, the next column the next character';
+};
+
 subtest 'a focused Text moves between its links with the keyboard' => sub {
 	my $key_root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
 	my $rich     = Term::Fabulous::Widget::Text->new( markup => '[link=a]A[/] [link=b]B[/]' );

@@ -730,7 +730,7 @@ class Term::Fabulous::Theme :strict(params) {
 			my $token = $kid->name;
 			die "palette: unknown token '$token' (known: " . join( ', ', tokens() ) . ")" unless exists $PALETTE{$token};
 			die "palette: the token '$token' is set twice" if exists $palette{$token};
-			$palette{$token} = _single_string( $kid, "palette token '$token'" );
+			$palette{$token} = _single_string( $kid, "palette token '$token'", childless => 1 );
 		}
 		return \%palette;
 	}
@@ -792,9 +792,11 @@ class Term::Fabulous::Theme :strict(params) {
 		return $value->value;
 	}
 
-	sub _single_string ( $kid, $what ) {
+	# The one string argument of a node without properties (and, for a
+	# palette token, without children).
+	sub _single_string ( $kid, $what, %options ) {
 		my @args = $kid->args->@*;
-		die "$what needs exactly one string argument" unless @args == 1 && $args[0]->is_string && !$kid->props->@*;
+		die "$what needs exactly one string argument" unless @args == 1 && $args[0]->is_string && !$kid->props->@* && !( $options{childless} && $kid->children->@* );
 		return $args[0]->value;
 	}
 }

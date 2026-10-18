@@ -376,8 +376,8 @@ class Term::Fabulous::Widget::ColorPicker
 		die ref($self) . ": cannot turn alpha off while the value " . describe($chosen) . " is translucent"
 			if !$wanted && defined $_rgba && $_rgba->[3] != 255 && !defined $self->_swatch_of($chosen);
 		$alpha = $wanted;
-		$_column->add_child($_alpha_row) if $alpha     && !$_column->has_child($_alpha_row);
-		$_column->remove_child($_alpha_row) if !$alpha && $_column->has_child($_alpha_row);
+		$_column->add_child($_alpha_row) if $alpha && !$_column->has_child($_alpha_row);
+		$_column->remove_child($_alpha_row) unless $alpha;
 		$_field->placeholder( $self->_placeholder );
 		$_field->validate;
 		return $alpha;

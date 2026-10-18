@@ -136,11 +136,19 @@ class Term::Fabulous::Widget
 		my $height = $layout->{sizing}{height};
 		return $height->{min} if defined $height && $height->{type} == CLAY__SIZING_TYPE_FIXED;
 
-		my $padding = $layout->{padding} // {};
-		my $sides   = $self->_bordered_sides;
-		my $rows    = ( $padding->{top}  // 0 ) + ( $padding->{bottom} // 0 ) + ( $sides->{top}  ? 1 : 0 ) + ( $sides->{bottom} ? 1 : 0 );
-		my $frame   = ( $padding->{left} // 0 ) + ( $padding->{right}  // 0 ) + ( $sides->{left} ? 1 : 0 ) + ( $sides->{right}  ? 1 : 0 );
+		my $padding = $self->content_padding;
+		my $sides   = $self->drawn_border_sides;
+		my $rows    = $padding->{top} + $padding->{bottom} + $sides->{top} + $sides->{bottom};
+		my $frame   = $padding->{left} + $padding->{right} + $sides->{left} + $sides->{right};
 		return $rows + $self->estimated_content_rows( max( 1, $columns - $frame ) );
+	}
+
+	# The padding around the content, all four sides: the layout's. A
+	# widget that keeps more room of its own (a scroll box for its
+	# scrollbars) adds it.
+	method content_padding () {
+		my $padding = $self->layout->{padding} // {};
+		return { map { $_ => $padding->{$_} // 0 } qw(top right bottom left) };
 	}
 
 	# The rows the content inside the padding and the border takes, in
@@ -850,11 +858,23 @@ columns, before Clay has laid it out: a guess for a list that builds
 only the items near its viewport and needs the height of the others
 for its scrollbar (L<Term::Fabulous::Widget::VirtualList>,
 L<Term::Fabulous::Widget::DocumentView>). A fixed height in the layout
-is the answer; otherwise it is the padding and the border around what
+is the answer; otherwise it is the padding (L</content_padding>) and
+the border sides that are drawn (a C<Hidden> side takes no room, see
+L<Term::Fabulous::Role::HasBorderStyle/drawn_border_sides>) around what
 L</estimated_content_rows> says the content takes. Clay's layout
 corrects a guess that was off. C<$columns> must be a positive integer.
 L<Term::Fabulous::Widget::Text> has the same method, since a text is
 not a Widget.
+
+=head2 content_padding
+
+	my $padding = $widget->content_padding;    # { top => 1, right => 2, bottom => 1, left => 2 }
+
+The padding around the widget's content on all four sides, as a new
+hash: the C<padding> of its layout. A widget that keeps more room
+inside its border overrides it to add that room
+(L<Term::Fabulous::Widget::ScrollBox> adds a column or a row for each
+scrollbar it shows), so that L</estimated_rows> counts it.
 
 =head2 estimated_content_rows
 

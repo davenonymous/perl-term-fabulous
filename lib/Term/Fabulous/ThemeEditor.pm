@@ -757,7 +757,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			$self->_focus_settings;
 			return;
 		}
-		my $first = first { $_->can('can_focus') && $ui->interaction->can_take_focus($_) } $preview_root->descendants;
+		my ($first) = $ui->interaction->focusables( within => $preview_root );
 		$ui->interaction->set_focused_widget($first) if defined $first;
 		$status->message('In the preview: Tab moves between the widgets, PageUp and PageDown scroll, F6 goes back.');
 		return;
@@ -776,10 +776,12 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# The form's cursor moved: the preview shows the family of the row.
 	method _cursor_moved ($id) {
 		return unless defined $gallery && defined $id;
-		my $section = $form->section_of($id) // return;
-		my ( $kind, $family ) = $section =~ /\A#(\w+)(?::(\w+))?/;
-		my $target = $kind eq 'palette' ? 'palette' : $kind eq 'theme' ? 'palette' : $gallery->section_of_family($family);
-		$target = 'variants' if $kind eq 'variant';
+		my $info = $form->section_info( $form->section_of($id) ) // return;
+		my $kind = $info->{kind};
+		my $target
+			= $kind eq 'variant'                     ? 'variants'
+			: $kind eq 'palette' || $kind eq 'theme' ? 'palette'
+			:                                          $gallery->section_of_family( $info->{family} );
 		$gallery->show_section($target) if defined $target;
 		return;
 	}
@@ -956,8 +958,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		my $row     = $form->current                  // return;
 		my $section = $form->section_of( $row->{id} ) // return;
 		my @keys    = grep { defined $tab->document->setting($_) } $form->keys_in($section);
-		my $name    = $section =~ s/\A#\w+:?//r =~ s/:/[/r;
-		$name = $section eq '#theme' ? 'the theme node' : $section eq '#palette' ? 'the palette' : $section =~ /\A#variant/ ? "the variant $name]" : "the family $name";
+		my $info    = $form->section_info($section);
+		my %name_of = ( theme => 'the theme node', palette => 'the palette', variant => "the variant $info->{family}\[" . ( $info->{variant} // '' ) . ']', family => "the family $info->{family}" );
+		my $name    = $name_of{ $info->{kind} };
 		if ( !@keys ) {
 			$status->message("Nothing to reset: $name sets nothing.");
 			return;
@@ -1008,17 +1011,17 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	# ---------------------------------------------------------------------
 
 	method _current_variant () {
-		my $row     = $form->current                  // return undef;
-		my $section = $form->section_of( $row->{id} ) // return undef;
-		my ( $family, $variant ) = $section =~ /\A#variant:(\w+):(.+)\z/ or return undef;
-		return [ $family, $variant ];
+		my $row  = $form->current                                         // return undef;
+		my $info = $form->section_info( $form->section_of( $row->{id} ) ) // return undef;
+		return undef unless $info->{kind} eq 'variant';
+		return [ @{$info}{qw(family variant)} ];
 	}
 
 	method _ask_add_variant () {
-		my $tab      = $self->_writable_tab // return;
-		my $row      = $form->current;
-		my $section  = defined $row ? $form->section_of( $row->{id} ) // '' : '';
-		my ($family) = $section =~ /\A#(?:family|variant):(\w+)/;
+		my $tab    = $self->_writable_tab // return;
+		my $row    = $form->current;
+		my $info   = defined $row  ? $form->section_info( $form->section_of( $row->{id} ) ) : undef;
+		my $family = defined $info ? $info->{family}                                        : undef;
 		$self->_ask(
 			title   => 'Add variant',
 			message => 'A variant changes some settings of a family for the widgets whose [bold]classes[/] name it, such as a button made with classes => [\'primary\'].',

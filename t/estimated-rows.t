@@ -7,7 +7,9 @@ no warnings 'experimental::signatures';
 
 use Clay::XS qw(sizing_fixed sizing_grow CLAY_LEFT_TO_RIGHT CLAY_TOP_TO_BOTTOM);
 use Term::Fabulous::Widget::Box;
+use Term::Fabulous::Enum::BorderStyle;
 use Term::Fabulous::Widget::Divider;
+use Term::Fabulous::Widget::ScrollBox;
 use Term::Fabulous::Widget::Table;
 use Term::Fabulous::Widget::Text;
 
@@ -40,6 +42,22 @@ subtest 'a border, a fixed height and a display' => sub {
 	is( Term::Fabulous::Widget::Divider->new->estimated_rows(10),                                                      1, 'a display answers from its natural size' );
 	my $table = Term::Fabulous::Widget::Table->new( id => 'table', columns => [ { key => 'n', title => 'N' } ], rows => [ map { { id => $_, n => $_ } } 1 .. 5 ], page_size => 2 );
 	is $table->estimated_rows(20), 1 + 2 + 1, 'a table counts its header, the rows of its page and the pager';
+};
+
+subtest 'only the border sides that are drawn and the room of scrollbars count' => sub {
+	my $hidden = Term::Fabulous::Widget::Box->new( bordered => 1, border_style => Term::Fabulous::Enum::BorderStyle->Hidden );
+	$hidden->add_child( text('aaaa bbbb') );
+	is $hidden->estimated_rows(9), 1, 'a hidden border takes no room: the text fits in all nine columns, with no row above or below';
+	my $half = Term::Fabulous::Widget::Box->new( bordered => 1, border_style_top => Term::Fabulous::Enum::BorderStyle->Hidden );
+	$half->add_child( text('x') );
+	is $half->estimated_rows(10), 2, 'a hidden top side leaves the bottom one';
+
+	my $box = Term::Fabulous::Widget::ScrollBox->new( id => 'scrolled', horizontal => 1 );
+	$box->add_child( text('aaaa bbbb') );
+	is $box->content_padding, { top => 0, right => 1, bottom => 1, left => 0 }, 'a scroll box keeps a column and a row for its scrollbars';
+	is $box->estimated_rows(10), 3, 'which take room from the text and add a row';
+	$box->scrollbar(0);
+	is $box->estimated_rows(10), 1, 'without scrollbars the text fits';
 };
 
 done_testing;

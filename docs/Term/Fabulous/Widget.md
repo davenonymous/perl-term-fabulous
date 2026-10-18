@@ -586,11 +586,25 @@ columns, before Clay has laid it out: a guess for a list that builds
 only the items near its viewport and needs the height of the others
 for its scrollbar ([Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md),
 [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md)). A fixed height in the layout
-is the answer; otherwise it is the padding and the border around what
+is the answer; otherwise it is the padding (["content\_padding"](#content_padding)) and
+the border sides that are drawn (a `Hidden` side takes no room, see
+["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#drawn_border_sides)) around what
 ["estimated\_content\_rows"](#estimated_content_rows) says the content takes. Clay's layout
 corrects a guess that was off. `$columns` must be a positive integer.
 [Term::Fabulous::Widget::Text](Widget/Text.md) has the same method, since a text is
 not a Widget.
+
+## content\_padding
+
+```perl
+my $padding = $widget->content_padding;    # { top => 1, right => 2, bottom => 1, left => 2 }
+```
+
+The padding around the widget's content on all four sides, as a new
+hash: the `padding` of its layout. A widget that keeps more room
+inside its border overrides it to add that room
+([Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md) adds a column or a row for each
+scrollbar it shows), so that ["estimated\_rows"](#estimated_rows) counts it.
 
 ## estimated\_content\_rows
 

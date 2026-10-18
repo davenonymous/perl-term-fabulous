@@ -190,6 +190,18 @@ $box->scrollbar(0);
 Accessor for `scrollbar`, used like ["vertical"](#vertical). Switching the
 scrollbars off gives their cells back to the content in the next frame.
 
+## content\_padding
+
+```perl
+my $padding = $box->content_padding;
+```
+
+The padding of the layout plus a column at the right for a vertical
+scrollbar and a row at the bottom for a horizontal one, as the box
+lays out its content (see ["content\_padding" in Term::Fabulous::Widget](../Widget.md#content_padding)),
+so that its [estimated\_rows](../Widget.md#estimated_rows)
+counts the scrollbars.
+
 ## follow\_end
 
 ```perl

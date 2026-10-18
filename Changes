@@ -1,6 +1,19 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Widget::estimated_rows counts only the border sides that are
+          drawn (a Hidden side takes no room) and the room a ScrollBox
+          keeps for its scrollbars, through the new content_padding
+          (which ScrollBox extends), so a VirtualList or DocumentView no
+          longer guesses such items too tall or too short.
+        - A theme file whose palette token has child nodes is rejected
+          with "palette token '...' needs exactly one string argument",
+          as the theme editor's document always did; a test now runs
+          every invalid and valid sample through both readers.
+        - The theme editor's form keeps the kind, family and variant of
+          each section row (ThemeEditor::Form::section_info) instead of
+          the editor parsing them out of the row ids, and F6 focuses the
+          first widget of the preview the way Tab orders them.
         - Term::Fabulous::Command::plain_label is the label without a
           trailing "..." (menus keep label), and the class method
           Term::Fabulous::Widget::KeyReference->command_rows($group,

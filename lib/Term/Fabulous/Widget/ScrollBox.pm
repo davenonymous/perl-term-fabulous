@@ -102,9 +102,19 @@ class Term::Fabulous::Widget::ScrollBox
 
 	# The content keeps clear of the scrollbars: one column at the right
 	# for the vertical one, one row at the bottom for the horizontal one.
+	method _bar_sides () {
+		return map { $SIDE_OF_AXIS{$_} } grep { $self->_shows_bar($_) } sort keys %SIDE_OF_AXIS;
+	}
+
+	method content_padding :override () {
+		my $padding = $self->SUPER::content_padding;
+		$padding->{$_}++ foreach $self->_bar_sides;
+		return $padding;
+	}
+
 	method contribute_layout :override ($config) {
 		$self->SUPER::contribute_layout($config);
-		my @sides = map { $SIDE_OF_AXIS{$_} } grep { $self->_shows_bar($_) } sort keys %SIDE_OF_AXIS;
+		my @sides = $self->_bar_sides;
 		return unless @sides;
 		my %padding = %{ $config->{layout}{padding} // {} };
 		$padding{$_}      = ( $padding{$_} // 0 ) + 1 foreach @sides;
@@ -421,6 +431,16 @@ constructor parameter. The change shows in the next frame.
 
 Accessor for C<scrollbar>, used like L</vertical>. Switching the
 scrollbars off gives their cells back to the content in the next frame.
+
+=head2 content_padding
+
+	my $padding = $box->content_padding;
+
+The padding of the layout plus a column at the right for a vertical
+scrollbar and a row at the bottom for a horizontal one, as the box
+lays out its content (see L<Term::Fabulous::Widget/content_padding>),
+so that its L<estimated_rows|Term::Fabulous::Widget/estimated_rows>
+counts the scrollbars.
 
 =head2 follow_end
 

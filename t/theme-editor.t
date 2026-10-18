@@ -430,11 +430,29 @@ subtest 'variants' => sub {
 	$editor->ui->step;
 	ok $editor->form->has_row('button[danger].text'), 'a new variant shows in the form';
 	is [ $tab->document->variants ], [], 'without settings it is not in the file yet';
+	my $form = $editor->form;
+	is $form->section_info('#variant:button:danger'), { kind => 'variant', family => 'button', variant => 'danger' }, 'a variant section knows its family and name';
+	is $form->section_info('#palette'),               { kind => 'palette', family => undef,    variant => undef },    'the palette section has neither';
+	is [ $form->section_info('button.text'), $form->section_info('nothing') ], [ undef, undef ], 'a setting or an unknown id is no section';
+	$form->go_to('#variant:button:danger');
+	$editor->run_command('reset_section');
+	is $editor->status->message, 'Nothing to reset: the variant button[danger] sets nothing.', 'a section is named from what it knows';
 	$editor->set_setting( 'button[danger].text', 'danger' );
 	is [ $tab->document->variants ], [ [ 'button', 'danger' ] ], 'the first setting writes it';
 	$editor->form->go_to('button[danger].text');
 	$editor->run_command('remove_variant');
 	is [ $tab->document->variants ], [], 'Remove variant takes it out';
+};
+
+subtest 'F6 goes to the preview and back' => sub {
+	my ( $editor, $press ) = editor();
+	my $interaction = $editor->ui->interaction;
+	$press->('F6');
+	my $focused = $interaction->get_focused_widget;
+	ok defined $focused && !$editor->form->contains($focused), 'F6 focuses a widget of the preview';
+	like $editor->status->message, qr/\AIn the preview: /, 'and says how to get around there';
+	$press->('F6');
+	ok $editor->form->contains( $interaction->get_focused_widget ), 'F6 again goes back to the settings';
 };
 
 subtest 'recovery after a signal' => sub {

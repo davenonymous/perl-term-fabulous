@@ -115,8 +115,18 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 		return join ':', "#$kind", @names;
 	}
 
-	method _section_row ( $id, $label, @children ) {
-		return { id => $id, setting => $label, value => '', origin => '', swatch => '', section => 1, children => \@children };
+	# A section row knows what it is: its kind (theme, palette, family or
+	# variant), and the family and variant it is about.
+	method _section_row ( $place, $label, @children ) {
+		my ( $kind, $family, $variant ) = @{$place}{qw(kind family variant)};
+		return {
+			id      => section_id( $kind, grep { defined } $family, $variant ),
+			kind    => $kind,
+			family  => $family,
+			variant => $variant,
+			setting => $label,
+			value   => '', origin => '', swatch => '', section => 1, children => \@children,
+		};
 	}
 
 	method _setting_row ( $key, $label ) {
@@ -127,8 +137,8 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 	# those the user added without settings yet.
 	method _rows ( $document, @extra_variants ) {
 		my @rows = (
-			$self->_section_row( section_id('theme'),   'Theme',   map { $self->_setting_row( "theme.$_",   $_ ) } qw(name extends) ),
-			$self->_section_row( section_id('palette'), 'Palette', map { $self->_setting_row( "palette.$_", $_ ) } Term::Fabulous::Theme::tokens() ),
+			$self->_section_row( { kind => 'theme' },   'Theme',   map { $self->_setting_row( "theme.$_",   $_ ) } qw(name extends) ),
+			$self->_section_row( { kind => 'palette' }, 'Palette', map { $self->_setting_row( "palette.$_", $_ ) } Term::Fabulous::Theme::tokens() ),
 		);
 		my %variants;
 		push @{ $variants{ $_->[0] } }, $_->[1] foreach $document->variants, @extra_variants;
@@ -138,11 +148,11 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 			my @variant_rows = map {
 				my $variant = $_;
 				$self->_section_row(
-					section_id( 'variant', $family, $variant ), "variant $variant",
+					{ kind => 'variant', family => $family, variant => $variant }, "variant $variant",
 					map { $self->_setting_row( $_, $_ =~ s/\A\Q$family\E\[\Q$variant\E\]\.//r ) } slot_keys( $family, $variant )
 				)
 			} grep { !$seen{$_}++ } @{ $variants{$family} // [] };
-			push @rows, $self->_section_row( section_id( 'family', $family ), $family, @slots, @variant_rows );
+			push @rows, $self->_section_row( { kind => 'family', family => $family }, $family, @slots, @variant_rows );
 		}
 		return @rows;
 	}
@@ -276,6 +286,14 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 		return $row->{section} ? $id : $list->parent_of($id);
 	}
 
+	# What a section is about: { kind, family, variant }, undef for an id
+	# that is no section.
+	method section_info ($id) {
+		my $row = $shown{ $id // '' } // return undef;
+		return undef unless $row->{section};
+		return { map { $_ => $row->{$_} } qw(kind family variant) };
+	}
+
 	# The keys of the settings in a section (a family's include its
 	# variants').
 	method keys_in ($section) {
@@ -346,7 +364,7 @@ class Term::Fabulous::ThemeEditor::Form :isa(Term::Fabulous::Widget::Box) :stric
 	}
 
 	method hide_banner () {
-		$self->remove_child($banner) if $self->has_child($banner);
+		$self->remove_child($banner);
 		return $self;
 	}
 
@@ -434,6 +452,15 @@ C<section>), and its setting key.
 
 The section of a row, the setting keys inside a section, and whether
 a row exists.
+
+=head2 section_info
+
+	my $info = $form->section_info( $form->section_of($id) );    # { kind => 'variant', family => 'button', variant => 'primary' }
+
+What a section is about: its C<kind> (C<theme>, C<palette>, C<family>
+or C<variant>) and the C<family> and C<variant> it belongs to (C<undef>
+where the kind has none), as a new hash; C<undef> for an id that is no
+section.
 
 =head2 focus_list
 

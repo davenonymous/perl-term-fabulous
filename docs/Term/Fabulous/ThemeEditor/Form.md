@@ -60,6 +60,17 @@ The row under the cursor (a hash reference with `id` and `key` or
 The section of a row, the setting keys inside a section, and whether
 a row exists.
 
+## section\_info
+
+```perl
+my $info = $form->section_info( $form->section_of($id) );    # { kind => 'variant', family => 'button', variant => 'primary' }
+```
+
+What a section is about: its `kind` (`theme`, `palette`, `family`
+or `variant`) and the `family` and `variant` it belongs to (`undef`
+where the kind has none), as a new hash; `undef` for an id that is no
+section.
+
 ## focus\_list
 
 Gives the list the focus; the cursor goes to the first setting the list
