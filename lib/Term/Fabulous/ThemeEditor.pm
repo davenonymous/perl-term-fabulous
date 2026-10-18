@@ -344,15 +344,17 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			layout     => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } },
 		);
 		$holder->add_child($widget);
-		$holder->on( KeyPress => sub ( $holder, $event ) { return _scroll_by_key( $holder, $event ) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE }, owner => $holder );
-		return $holder;
-	}
 
-	# PageUp, PageDown, Ctrl+Home and Ctrl+End scroll a scroll box when the
-	# focused widget in it does not use them.
-	sub _scroll_by_key ( $box, $event ) {
-		my $ui = $box->ui // return 0;
-		return defined scroll_by_key( $ui, $box, $event->main_key_name, keys => 'pager' ) ? 1 : 0;
+		# PageUp, PageDown, Ctrl+Home and Ctrl+End scroll it when the
+		# focused widget in it does not use them.
+		$holder->on(
+			KeyPress => sub ( $holder, $event ) {
+				my $ui = $holder->ui // return Clay::UI::Enum::Result->CONTINUE;
+				return defined scroll_by_key( $ui, $holder, $event->main_key_name, keys => 'pager' ) ? Clay::UI::Enum::Result->HANDLED : Clay::UI::Enum::Result->CONTINUE;
+			},
+			owner => $holder
+		);
+		return $holder;
 	}
 
 	# ---------------------------------------------------------------------

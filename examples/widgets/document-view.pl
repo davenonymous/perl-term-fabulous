@@ -53,8 +53,10 @@ $document->list_item( "\x{2022}", 'and quotes, with a bar beside them.',        
 $document->paragraph( marked('A quoted paragraph looks like this, and may <italic>itself</italic> hold marks.'), quote => 1 );
 $document->heading( 2, 'Code' );
 $document->paragraph('The code blocks scroll sideways together with Left and Right, or with a horizontal wheel:');
-$document->code( join( "\n", 'my $view = Term::Fabulous::Widget::DocumentView->new(', '    id       => "document",', '    document => $document,    # from a parser of your format', ');' ),
-	language => 'perl' );
+$document->code(
+	join( "\n", 'my $view = Term::Fabulous::Widget::DocumentView->new(', '    id       => "document",', '    document => $document,    # from a parser of your format', ');' ),
+	language => 'perl'
+);
 $document->heading( 2, 'Links' );
 $document->paragraph(
 	marked(
