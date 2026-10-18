@@ -85,12 +85,15 @@ class Term::Fabulous::Widget::KeyReference
 	# Parameters
 	# ---------------------------------------------------------------------
 
-	# One row for every command with keys, in the group of the commands;
-	# a label that ends in "..." (it opens a dialog) is shown without it.
 	method _command_rows ($commands) {
 		return () unless defined $commands;
-		my @list = $self->_listed_commands($commands);
-		return map { [ $group, $_->keys_text, $_->label =~ s/\.\.\.\z//r ] } grep { $_->keys } @list;
+		return __CLASS__->command_rows( $group, $self->_listed_commands($commands) );
+	}
+
+	# One row of keys for every command that has keys: [ group, its keys,
+	# its plain label ].
+	method command_rows :common ( $in_group, @commands ) {
+		return map { [ $in_group, $_->keys_text, $_->plain_label ] } grep { $_->keys } @commands;
 	}
 
 	method _listed_commands ($commands) {
@@ -286,10 +289,11 @@ The rows come from two places, in this order:
 
 the commands of a L<Term::Fabulous::Commands> table (or a list of
 L<Term::Fabulous::Command> objects): one row for every command with
-keys, with the keys as a menu shows them (C<Ctrl+S, F2>) and the label
-of the command. A label that ends in C<...>, which in a menu means that
-the command opens a dialog, is shown without it. Commands without keys
-have no row. All of them are in one group, C<Everywhere> unless
+keys, with the keys as a menu shows them (C<Ctrl+S, F2>) and the
+L<plain_label|Term::Fabulous::Command/plain_label> of the command: a
+label that ends in C<...>, which in a menu means that the command opens
+a dialog, is shown without it. Commands without keys have no row (see
+L</command_rows>). All of them are in one group, C<Everywhere> unless
 C<group> names another one;
 
 =item *
@@ -409,6 +413,17 @@ it does not filter: filter the table with its C<search> as well.
 	my @ids = $reference->table->filtered_row_ids;
 
 The L<Term::Fabulous::Widget::Table> of the keys.
+
+=head2 command_rows
+
+	my @rows = Term::Fabulous::Widget::KeyReference->command_rows( 'Everywhere', $commands->commands );
+	# ( [ 'Everywhere', 'Ctrl+S, F2', 'Save' ], ... )
+
+A class method: the rows a key reference makes of commands, in the
+form of C<keys> (C<[ group, keys, action ]>): one for every command
+that has keys, with its C<keys_text> and its C<plain_label>, in the
+group given. A program that lists its keys elsewhere (a help page, the
+theme editor's C<key_list>) builds them with it.
 
 =head1 EVENTS
 

@@ -1,6 +1,12 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Term::Fabulous::Command::plain_label is the label without a
+          trailing "..." (menus keep label), and the class method
+          Term::Fabulous::Widget::KeyReference->command_rows($group,
+          @commands) builds the key rows of commands; the key reference
+          and the theme editor's key_list, commands and messages use them
+          instead of stripping the dots themselves.
         - Term::Fabulous::Widget::Table::Model has two options for
           trees in sections: open_when_filtered (a filtered or searched
           view shows every passing row with its parents open, without

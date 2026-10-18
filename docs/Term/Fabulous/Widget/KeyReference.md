@@ -45,10 +45,11 @@ The rows come from two places, in this order:
 
 - the commands of a [Term::Fabulous::Commands](../Commands.md) table (or a list of
 [Term::Fabulous::Command](../Command.md) objects): one row for every command with
-keys, with the keys as a menu shows them (`Ctrl+S, F2`) and the label
-of the command. A label that ends in `...`, which in a menu means that
-the command opens a dialog, is shown without it. Commands without keys
-have no row. All of them are in one group, `Everywhere` unless
+keys, with the keys as a menu shows them (`Ctrl+S, F2`) and the
+[plain\_label](../Command.md#plain_label) of the command: a
+label that ends in `...`, which in a menu means that the command opens
+a dialog, is shown without it. Commands without keys have no row (see
+["command\_rows"](#command_rows)). All of them are in one group, `Everywhere` unless
 `group` names another one;
 - the rows of `keys`, for the keys no command runs: the keys of a list,
 of a text area, of the dialogs of the program.
@@ -165,6 +166,19 @@ my @ids = $reference->table->filtered_row_ids;
 ```
 
 The [Term::Fabulous::Widget::Table](Table.md) of the keys.
+
+## command\_rows
+
+```perl
+my @rows = Term::Fabulous::Widget::KeyReference->command_rows( 'Everywhere', $commands->commands );
+# ( [ 'Everywhere', 'Ctrl+S, F2', 'Save' ], ... )
+```
+
+A class method: the rows a key reference makes of commands, in the
+form of `keys` (`[ group, keys, action ]`): one for every command
+that has keys, with its `keys_text` and its `plain_label`, in the
+group given. A program that lists its keys elsewhere (a help page, the
+theme editor's `key_list`) builds them with it.
 
 # EVENTS
 

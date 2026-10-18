@@ -108,6 +108,16 @@ say $command->label;
 
 The parameters of the same names.
 
+## plain\_label
+
+```perl
+say $command->plain_label;    # "Save as" for the label "Save as..."
+```
+
+The label without a trailing `...`, for the places that name the
+command outside a menu (a key reference, a status message). Menus show
+["label"](#label), whose `...` says that the command opens a dialog.
+
 ## keys
 
 ```perl

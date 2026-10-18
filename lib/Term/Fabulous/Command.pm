@@ -50,6 +50,12 @@ class Term::Fabulous::Command :strict(params) {
 		return @keys;
 	}
 
+	# The label where the command is named outside a menu: without the
+	# "..." that says it opens a dialog.
+	method plain_label () {
+		return $label =~ s/\.\.\.\z//r;
+	}
+
 	# The keys as a menu shows them.
 	method keys_text () {
 		return join ', ', @keys;
@@ -186,6 +192,14 @@ that.
 	say $command->label;
 
 The parameters of the same names.
+
+=head2 plain_label
+
+	say $command->plain_label;    # "Save as" for the label "Save as..."
+
+The label without a trailing C<...>, for the places that name the
+command outside a menu (a key reference, a status message). Menus show
+L</label>, whose C<...> says that the command opens a dialog.
 
 =head2 keys
 

@@ -769,7 +769,7 @@ say "$_->{id}: $_->{label} (@{ $_->{keys} })" foreach $editor->commands;
 
 Run a command by its id as its menu entry would (commands that ask, ask
 in a dialog); whether a command can run now; and every command with
-its label (without a trailing `...`) and keys, in the order of the
+its plain label (["plain\_label" in Term::Fabulous::Command](Command.md#plain_label)) and keys, in the order of the
 menus. `run_command` returns
 1 when the command ran, 0 when it could not run now; an unknown id
 dies.
@@ -782,7 +782,9 @@ foreach my $key ( $editor->key_list ) {
 }
 ```
 
-Every key of the editor, as the key reference (`F1`) lists it.
+Every key of the editor, as the key reference (`F1`) lists it: the
+rows of ["command\_rows" in Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md#command_rows) for its
+commands, then the keys that are no commands'.
 
 ## form, status
 

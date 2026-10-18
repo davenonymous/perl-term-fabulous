@@ -201,9 +201,9 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 		return $commands->command($id)->run;
 	}
 
-	# Every command: its id, its label in the menus and its keys.
+	# Every command: its id, its plain label and its keys.
 	method commands () {
-		return map { { id => $_->id, label => $_->label =~ s/\.\.\.\z//r, keys => [ $_->keys ] } } $commands->commands;
+		return map { { id => $_->id, label => $_->plain_label, keys => [ $_->keys ] } } $commands->commands;
 	}
 
 	method command_enabled ($id) {
@@ -824,7 +824,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 			find_next  => 'Find something first (Ctrl+F).',
 			next_error => 'The theme has no errors.',
 		);
-		$status->message( $why{$id} // ( $commands->command($id)->label =~ s/\.\.\.\z//r ) . ' is not available now.', 'warning' );
+		$status->message( $why{$id} // $commands->command($id)->plain_label . ' is not available now.', 'warning' );
 		return;
 	}
 
@@ -1574,8 +1574,7 @@ class Term::Fabulous::ThemeEditor :strict(params) {
 	}
 
 	method key_list () {
-		my @command_keys = map { [ COMMAND_GROUP, $_->keys_text, $_->label =~ s/\.\.\.\z//r ] } grep { $_->keys } $self->_commands_everywhere;
-		return ( @command_keys, _other_keys() );
+		return ( Term::Fabulous::Widget::KeyReference->command_rows( COMMAND_GROUP, $self->_commands_everywhere ), _other_keys() );
 	}
 
 	# The keys that are no commands' (and the form's commands, under The
@@ -2454,7 +2453,7 @@ changed, else 0.
 
 Run a command by its id as its menu entry would (commands that ask, ask
 in a dialog); whether a command can run now; and every command with
-its label (without a trailing C<...>) and keys, in the order of the
+its plain label (L<Term::Fabulous::Command/plain_label>) and keys, in the order of the
 menus. C<run_command> returns
 1 when the command ran, 0 when it could not run now; an unknown id
 dies.
@@ -2465,7 +2464,9 @@ dies.
 		my ( $where, $keys, $action ) = @$key;
 	}
 
-Every key of the editor, as the key reference (C<F1>) lists it.
+Every key of the editor, as the key reference (C<F1>) lists it: the
+rows of L<Term::Fabulous::Widget::KeyReference/command_rows> for its
+commands, then the keys that are no commands'.
 
 =head2 form, status
 
