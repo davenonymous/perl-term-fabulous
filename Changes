@@ -1,6 +1,20 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Work after a frame is bound to a widget: after_draw takes an
+          owner (held weakly, passed in, skipped once it is gone or out
+          of the UI), the new each_draw calls its code after every frame
+          until it returns true, its frames run out or its owner leaves,
+          with a name so that a new request replaces the old one, and
+          Term::Fabulous::Widget::each_frame registers such work for a
+          widget (work asked for before the widget is in a UI waits for
+          one). A callback that dies no longer drops the ones queued
+          after it. ScrollBox has reveal($widget, align => 'nearest' or
+          'top'), which waits for the widget's layout by itself, and
+          Scrolling's reveal_rows takes the same align. The widgets that
+          kept their own watchers and retry counters (ScrollBox,
+          VirtualList, DocumentView, Table, the column chooser and the
+          theme editor's preview) use them.
         - The focus no longer vanishes when the focused widget is
           removed, disabled or hidden: it goes to its heir (Clay::UI
           0.07 focus heirs), the nearest widget above it that can take

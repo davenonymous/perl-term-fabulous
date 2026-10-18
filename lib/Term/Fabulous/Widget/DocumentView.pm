@@ -63,12 +63,13 @@ class Term::Fabulous::Widget::DocumentView
 	# The selected link: { index, text, link, revision }, or undef.
 	field $selected;
 
-	# What the last ViewChange said, whether a frame is watched, the line
-	# of an item to bring into view ({ index, widget, key, offset, frames })
-	# and the widget to focus once its item is built ({ index, widget,
-	# frames }).
+	# What the last ViewChange said; the line of an item being brought
+	# into view ({ index, widget, key, offset }) and the widget to focus
+	# once its item is built ({ widget }). The frame work that follows a
+	# request holds it; these weak copies only tell which request is the
+	# current one, so setting one to undef cancels it, and it is undef
+	# again once its frame work ended.
 	field $reported = '';
-	field $watching = 0;
 	field $pending_reveal;
 	field $pending_focus;
 
@@ -318,17 +319,30 @@ class Term::Fabulous::Widget::DocumentView
 	# scroll_to_item until it has measured the item), and a widget may
 	# build the text only in the next frame (a table turns to a page), so
 	# the reveal is checked again after each of a few frames, until the
-	# line is in view (see _frame_done).
+	# line is in view. A new reveal replaces one still waiting.
 	method _reveal ( $index, $widget, $key, $offset ) {
-		$pending_reveal = { index => $index, widget => $widget, key => $key, offset => $offset, frames => REVEAL_FRAMES };
-		$pending_reveal = undef unless $self->_reveal_now;
+		my $request = { index => $index, widget => $widget, key => $key, offset => $offset };
+		$pending_reveal = undef;
+		return 1 unless $self->_reveal_line_now($request);
+		weaken( $pending_reveal = $request );
+		$self->_follow_frames( 'reveal line', sub ($view) { return $view->_continue_reveal($request) }, REVEAL_FRAMES );
 		return 1;
+	}
+
+	# True when the reveal is done: cancelled, replaced or in view.
+	method _continue_reveal ($request) {
+		return 1 unless _is_current( $pending_reveal, $request );
+		return $self->_reveal_line_now($request) ? 0 : 1;
+	}
+
+	sub _is_current ( $pending, $request ) {
+		return defined $pending && refaddr($pending) == refaddr($request) ? 1 : 0;
 	}
 
 	# One attempt: 1 when the view had to move or could not tell yet, 0
 	# when the line is in view.
-	method _reveal_now () {
-		my ( $index, $widget, $key, $offset ) = @{$pending_reveal}{qw(index widget key offset)};
+	method _reveal_line_now ($request) {
+		my ( $index, $widget, $key, $offset ) = @{$request}{qw(index widget key offset)};
 		my $ui    = $self->ui;
 		my $built = $slot_of{$index};
 		my $box   = defined $ui && defined $built ? $ui->bounding_box( $built->{slot} ) : undef;
@@ -704,22 +718,23 @@ class Term::Fabulous::Widget::DocumentView
 	method _focus_target ( $index, $widget ) {
 		my $interaction = $self->ui->interaction;
 		return $widget if $interaction->can_take_focus($widget);
-		$pending_focus = { index => $index, widget => $widget, frames => FOCUS_FRAMES };
-		weaken $pending_focus->{widget};
+		my $request = { widget => $widget };
+		weaken $request->{widget};
+		weaken( $pending_focus = $request );
+		$self->_follow_frames( focus => sub ($view) { return $view->_continue_focus($request) }, FOCUS_FRAMES );
 		$self->show_item($index);
 		return undef;
 	}
 
-	method _continue_focus () {
-		my $widget      = $pending_focus->{widget};
+	# True when the focus request is done: cancelled, replaced, its widget
+	# gone, or focused.
+	method _continue_focus ($request) {
+		return 1 unless _is_current( $pending_focus, $request );
+		my $widget      = $request->{widget} // return 1;
 		my $interaction = $self->ui->interaction;
-		if ( defined $widget && $interaction->can_take_focus($widget) ) {
-			$pending_focus = undef;
-			$interaction->set_focused_widget($widget);
-			return;
-		}
-		$pending_focus = undef if !defined $widget || --$pending_focus->{frames} <= 0;
-		return;
+		return 0 unless $interaction->can_take_focus($widget);
+		$interaction->set_focused_widget($widget);
+		return 1;
 	}
 
 	# ---------------------------------------------------------------------
@@ -782,32 +797,21 @@ class Term::Fabulous::Widget::DocumentView
 	method prepare_layout :override () {
 		$self->SUPER::count( $document->count ) if defined $document && $document->count != $self->SUPER::count;
 		$self->SUPER::prepare_layout;
-		$self->_watch_frames;
+		$self->_watch_report;
 		return;
 	}
 
-	method _watch_frames () {
-		my $ui = $self->ui;
-		return if $watching || !defined $ui || !$ui->can('after_draw');
-		weaken( my $weak_self = $self );
-		$ui->after_draw( sub { $weak_self->_frame_done if defined $weak_self; return } );
-		$watching = 1;
+	# Work after the next frames (each_frame), for at most $frames frames;
+	# the report comes after it, so that it tells what that work did.
+	method _follow_frames ( $name, $code, $frames ) {
+		$self->each_frame( $code, name => $name, frames => $frames );
+		$self->_watch_report;
 		return;
 	}
 
-	method _frame_done () {
-		$watching = 0;
-		return unless defined $self->ui;
-		$self->_continue_reveal if defined $pending_reveal;
-		$self->_continue_focus if defined $pending_focus;
-		$self->_report;
-		$self->_watch_frames;
-		return;
-	}
-
-	method _continue_reveal () {
-		my $moved = $self->_reveal_now;
-		$pending_reveal = undef unless $moved && --$pending_reveal->{frames} > 0;
+	# After every frame the view reports what it shows.
+	method _watch_report () {
+		$self->each_frame( sub ($view) { $view->_report; return 0 }, name => 'report' );
 		return;
 	}
 

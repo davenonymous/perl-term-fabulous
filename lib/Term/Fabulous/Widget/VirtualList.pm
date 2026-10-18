@@ -20,7 +20,7 @@ class Term::Fabulous::Widget::VirtualList
 	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Clay::XS qw(sizing_fit sizing_fixed sizing_grow CLAY_TOP_TO_BOTTOM CLAY_ALIGN_X_LEFT);
 	use List::Util qw(max min);
-	use Scalar::Util qw(refaddr weaken);
+	use Scalar::Util qw(refaddr);
 	use Term::Fabulous::Check qw(describe non_negative_integer optional);
 	use Term::Fabulous::Widget::Box;
 
@@ -56,11 +56,9 @@ class Term::Fabulous::Widget::VirtualList
 	field $_window_stale = 1;
 
 	# The item scroll_to_item wants at the top, until a frame shows it
-	# measured; the anchor rebuild took before it forgot the heights; and
-	# whether an after_draw callback is queued.
+	# measured; and the anchor rebuild took before it forgot the heights.
 	field $_target;
 	field $_kept_anchor;
-	field $_watching = 0;
 
 	ADJUST {
 		$count    = non_negative_integer( $self, count => $count );
@@ -340,7 +338,7 @@ class Term::Fabulous::Widget::VirtualList
 
 		$self->_choose_window( $top, $viewport );
 		$self->_arrange;
-		$self->_watch($ui);
+		$self->each_frame( sub ($list) { $list->_frame_drawn; return 0 }, name => 'window' );
 		return;
 	}
 
@@ -514,20 +512,10 @@ class Term::Fabulous::Widget::VirtualList
 	# After every frame the list checks whether the frame showed something
 	# it was not prepared for: a new width, items still unmeasured, or a
 	# position the window does not cover (reached by scroll_to or by Clay's
-	# own clamping). The callback stays queued while the list is in a UI.
-	method _watch ($ui) {
-		return if $_watching || !$ui->can('after_draw');
-		weaken( my $weak = $self );
-		$ui->after_draw( sub { $weak->_frame_drawn if defined $weak; return } );
-		$_watching = 1;
-		return;
-	}
-
+	# own clamping). Each preparation registers the check (each_frame), so
+	# it runs while the list is in a UI.
 	method _frame_drawn () {
-		$_watching = 0;
-		my $ui = $self->ui // return;
-		$self->request_prepare if $self->_needs_prepare($ui);
-		$self->_watch($ui);
+		$self->request_prepare if $self->_needs_prepare( $self->ui );
 		return;
 	}
 

@@ -23,13 +23,14 @@ class Term::Fabulous::Widget::ScrollBox
 		CLAY_POINTER_CAPTURE_MODE_PASSTHROUGH
 	);
 	use Clay::UI::Enum::Result;
+	use Clay::UI::Role::Layout::HasParent qw(is_widget);
 	use Scalar::Util qw(blessed refaddr weaken);
-	use Term::Fabulous::Check qw(boolean);
+	use Term::Fabulous::Check qw(boolean describe one_of positive_integer);
 	use Term::Fabulous::Scrolling qw(reveal_rows);
 	use Term::Fabulous::Widget::Scrollbar;
 
-	# A widget that got the focus before it was laid out is revealed after
-	# the frame that lays it out, or the one after that at the latest.
+	# A widget that is not laid out yet is revealed after the frame that
+	# lays it out, or the one after that at the latest.
 	use constant REVEAL_FRAMES => 2;
 
 	# The gutter floats over the whole box and is padded by its border: a
@@ -53,10 +54,6 @@ class Term::Fabulous::Widget::ScrollBox
 	field $scrollbar :param = 1;
 	field $_gutter;
 	field %_bar_by_axis;
-
-	# The widget whose box is scrolled into view once a frame has laid it
-	# out, and the frames left to wait for one.
-	field $_pending_reveal;
 
 	# Clay::UI stores these as given; the constructor takes any truth value.
 	sub BUILDARGS ( $class, %params ) {
@@ -144,36 +141,38 @@ class Term::Fabulous::Widget::ScrollBox
 	method thumb_color (@new) { return @new ? $self->set_look( thumb_color => $new[0] ) : $self->look_value('thumb_color') }
 
 	# ---------------------------------------------------------------------
-	# The focus: a descendant that gets it is brought into view
+	# Revealing a widget; a descendant that gets the focus is brought into
+	# view
 	# ---------------------------------------------------------------------
 
-	# The box of the widget that got the focus is revealed with the
-	# smallest move: from the last frame when it was laid out, else after
-	# the next frame.
-	method _focus_entered ($target) {
-		return unless blessed $target && refaddr($target) != refaddr($self) && $self->contains($target);
-		$_pending_reveal = { widget => $target, frames => REVEAL_FRAMES };
-		weaken $_pending_reveal->{widget};
-		$self->_reveal_pending;
-		return;
+	# Scrolls a widget inside the box into view: at once when the last
+	# frame laid it out, else after each frame until one has, for a few
+	# frames. A new reveal replaces one still waiting.
+	method reveal ( $widget, %options ) {
+		my @unknown = grep { $_ ne 'align' && $_ ne 'frames' } sort keys %options;
+		die ref($self) . ": reveal does not take @unknown (known: align frames)" if @unknown;
+		die ref($self) . ": reveal needs a widget inside the box, got " . describe($widget) unless is_widget($widget) && $self->contains($widget);
+		my $align  = one_of( $self, align => $options{align} // 'nearest', qw(nearest top) );
+		my $frames = positive_integer( $self, frames => $options{frames} // REVEAL_FRAMES );
+		return $self if $self->_reveal_widget_now( $widget, $align );
+
+		weaken $widget;
+		$self->each_frame( sub ($box) { return !defined $widget || $box->_reveal_widget_now( $widget, $align ) }, name => 'reveal', frames => $frames );
+		return $self;
 	}
 
-	method _reveal_pending () {
-		my $pending = $_pending_reveal // return;
-		my $ui      = $self->ui;
-		my $widget  = $pending->{widget};
-		my $box     = defined $ui && defined $widget ? $ui->bounding_box($widget) : undef;
-		if ( defined $box ) {
-			$_pending_reveal = undef;
-			reveal_rows( $ui, $self, $box->{y}, $box->{y} + $box->{height} );
-			return;
-		}
-		if ( !defined $ui || !defined $widget || --$pending->{frames} < 0 || !$ui->can('after_draw') ) {
-			$_pending_reveal = undef;
-			return;
-		}
-		weaken( my $weak_self = $self );
-		$ui->after_draw( sub { $weak_self->_reveal_pending if defined $weak_self; return } );
+	# One attempt: true once the widget has a box in the last frame and
+	# was scrolled into view.
+	method _reveal_widget_now ( $widget, $align ) {
+		my $ui  = $self->ui                  // return 0;
+		my $box = $ui->bounding_box($widget) // return 0;
+		reveal_rows( $ui, $self, $box->{y}, $box->{y} + $box->{height}, align => $align );
+		return 1;
+	}
+
+	method _focus_entered ($target) {
+		return unless blessed $target && refaddr($target) != refaddr($self) && $self->contains($target);
+		$self->reveal($target);
 		return;
 	}
 }
@@ -380,16 +379,38 @@ The children you added, as on any L<Term::Fabulous::Widget::Box>. The
 scrollbars are not among them, and C<clear_children> and the other
 removal methods leave them alone.
 
+=head2 reveal
+
+	$box->reveal($row);                     # the smallest move that shows it
+	$box->reveal( $section, align => 'top' );    # its first row at the top
+	$box->reveal( $row, frames => 8 );      # wait longer for its layout
+
+Scrolls a widget inside the box (at any depth) into view, vertically.
+With C<< align => 'nearest' >> (the default) the box moves the smallest
+way that shows the widget's whole box, or its top rows when it is
+taller than the viewport; with C<< align => 'top' >> the widget's first
+row goes to the top of the box, as far as the content allows (see
+L<Term::Fabulous::Scrolling/reveal_rows>).
+
+When the last frame laid the widget out, the box scrolls at once.
+Otherwise (the widget was only just added, its parent builds it in the
+next frame, or the box is not in a UI yet) it tries again after each
+frame until one has laid the widget out, for at most C<frames> frames
+(default 2), and gives up after that or when the widget is freed (see
+L<Term::Fabulous::Widget/each_frame>; a box in a plain L<Clay::UI>
+does not retry). A new C<reveal> replaces one still waiting. Dies for
+anything but a widget inside the box, another C<align>, a C<frames>
+that is not a positive integer, or another option. Returns the box.
+
 =head1 FOCUS
 
 A widget inside the box that gets the keyboard focus is scrolled into
 view: with Tab, a click, or L<Clay::UI::Interaction/set_focused_widget>,
-the box moves the smallest way that shows the widget's whole box, or
-its top rows when it is taller than the viewport, a text with links
-(L<Term::Fabulous::Widget::Text>) like any widget. A widget that gets
-the focus before it
-was ever laid out, right after it was added, is revealed after the
-frame that lays it out. Only the vertical direction is scrolled.
+the box reveals it with the smallest move (see L</reveal>), a text
+with links (L<Term::Fabulous::Widget::Text>) like any widget. A widget
+that gets the focus before it was ever laid out, right after it was
+added, is revealed after the frame that lays it out. Only the vertical
+direction is scrolled.
 
 The box itself has no keys and takes no focus; see
 L<Term::Fabulous::Scrolling> for scrolling it from a key handler.

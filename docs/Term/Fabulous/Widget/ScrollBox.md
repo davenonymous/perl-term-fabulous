@@ -206,16 +206,40 @@ The children you added, as on any [Term::Fabulous::Widget::Box](Box.md). The
 scrollbars are not among them, and `clear_children` and the other
 removal methods leave them alone.
 
+## reveal
+
+```perl
+$box->reveal($row);                     # the smallest move that shows it
+$box->reveal( $section, align => 'top' );    # its first row at the top
+$box->reveal( $row, frames => 8 );      # wait longer for its layout
+```
+
+Scrolls a widget inside the box (at any depth) into view, vertically.
+With `align => 'nearest'` (the default) the box moves the smallest
+way that shows the widget's whole box, or its top rows when it is
+taller than the viewport; with `align => 'top'` the widget's first
+row goes to the top of the box, as far as the content allows (see
+["reveal\_rows" in Term::Fabulous::Scrolling](../Scrolling.md#reveal_rows)).
+
+When the last frame laid the widget out, the box scrolls at once.
+Otherwise (the widget was only just added, its parent builds it in the
+next frame, or the box is not in a UI yet) it tries again after each
+frame until one has laid the widget out, for at most `frames` frames
+(default 2), and gives up after that or when the widget is freed (see
+["each\_frame" in Term::Fabulous::Widget](../Widget.md#each_frame); a box in a plain [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI)
+does not retry). A new `reveal` replaces one still waiting. Dies for
+anything but a widget inside the box, another `align`, a `frames`
+that is not a positive integer, or another option. Returns the box.
+
 # FOCUS
 
 A widget inside the box that gets the keyboard focus is scrolled into
 view: with Tab, a click, or ["set\_focused\_widget" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#set_focused_widget),
-the box moves the smallest way that shows the widget's whole box, or
-its top rows when it is taller than the viewport, a text with links
-([Term::Fabulous::Widget::Text](Text.md)) like any widget. A widget that gets
-the focus before it
-was ever laid out, right after it was added, is revealed after the
-frame that lays it out. Only the vertical direction is scrolled.
+the box reveals it with the smallest move (see ["reveal"](#reveal)), a text
+with links ([Term::Fabulous::Widget::Text](Text.md)) like any widget. A widget
+that gets the focus before it was ever laid out, right after it was
+added, is revealed after the frame that lays it out. Only the vertical
+direction is scrolled.
 
 The box itself has no keys and takes no focus; see
 [Term::Fabulous::Scrolling](../Scrolling.md) for scrolling it from a key handler.

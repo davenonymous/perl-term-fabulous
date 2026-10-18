@@ -498,6 +498,27 @@ it, except while `refresh` runs.
 `mark_changed`, and the frame that it makes due calls `paint` (see
 ["Painting" in Term::Fabulous::Widget::Display](../Widget/Display.md#painting)).
 
+## Work after a frame
+
+Some work needs the layout of a frame: where a child landed, how far
+the box scrolled. Register it with `each_frame` (see
+["each\_frame" in Term::Fabulous::Widget](../Widget.md#each_frame)): the code is called with the
+widget after every frame until it returns true, at most `frames`
+times, and never once the widget left the UI. The widget is passed in,
+so the closure keeps no reference to it, and a `name` makes a second
+request replace the first:
+
+```perl
+method show_later ($child) {
+        $self->each_frame( sub ($self) { return $self->child_is_placed($child) }, name => 'show', frames => 4 );
+        return $self;
+}
+```
+
+To scroll a child of a ScrollBox into view, call the box's
+[reveal](../Widget/ScrollBox.md#reveal), which waits for the
+child's layout by itself.
+
 ## Events of your own
 
 A widget can tell its users what happened with an event of its own,

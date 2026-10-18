@@ -396,6 +396,7 @@ t/range.t
 t/render-attr.t
 t/render-border.t
 t/render-canvas.t
+t/render-frame-work.t
 t/render-frame.t
 t/render-rectangle.t
 t/render-text.t

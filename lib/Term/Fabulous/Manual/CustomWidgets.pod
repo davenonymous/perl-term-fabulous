@@ -540,6 +540,25 @@ L<Term::Fabulous::Widget::Display/Painting>).
 
 =back
 
+=head2 Work after a frame
+
+Some work needs the layout of a frame: where a child landed, how far
+the box scrolled. Register it with C<each_frame> (see
+L<Term::Fabulous::Widget/each_frame>): the code is called with the
+widget after every frame until it returns true, at most C<frames>
+times, and never once the widget left the UI. The widget is passed in,
+so the closure keeps no reference to it, and a C<name> makes a second
+request replace the first:
+
+	method show_later ($child) {
+		$self->each_frame( sub ($self) { return $self->child_is_placed($child) }, name => 'show', frames => 4 );
+		return $self;
+	}
+
+To scroll a child of a ScrollBox into view, call the box's
+L<reveal|Term::Fabulous::Widget::ScrollBox/reveal>, which waits for the
+child's layout by itself.
+
 =head2 Events of your own
 
 A widget can tell its users what happened with an event of its own,

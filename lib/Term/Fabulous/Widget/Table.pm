@@ -45,7 +45,6 @@ class Term::Fabulous::Widget::Table
 		CLAY_TEXT_ALIGN_LEFT CLAY_TEXT_ALIGN_CENTER CLAY_TEXT_ALIGN_RIGHT
 	);
 	use List::Util qw(any first max min none);
-	use Term::Fabulous::Viewport qw(reveal_range);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Time::HiRes ();
 	use Term::Fabulous::Check qw(boolean border_style describe non_negative_integer one_of optional string);
@@ -204,8 +203,7 @@ class Term::Fabulous::Widget::Table
 	field $_hover_key;
 	field $_header_cursor;    # grid column index while the header has the keyboard, else undef
 	field @_last_press;    # ( time, line key ) of the last left press on a line
-	field $_reveal_cursor = 0;
-	field $_shown_page    = 0;
+	field $_shown_page = 0;
 
 	method theme_family :common () {
 		return 'table';
@@ -1103,40 +1101,28 @@ class Term::Fabulous::Widget::Table
 		return;
 	}
 
-	# A new page starts at the top; a cursor that moved is scrolled into
-	# view once the frame that lays its line out is drawn.
+	# A new page starts at the top.
 	method _prepare_scrolling () {
 		my $ui = $self->ui // return;
-		if ( $model->page != $_shown_page ) {
-			$_shown_page = $model->page;
-			$ui->scroll_to( $_body, { x => 0, y => 0 } );
-		}
-		return unless $_reveal_cursor;
-		$_reveal_cursor = 0;
-		weaken( my $weak = $self );
-		$ui->after_draw( sub { $weak->_scroll_cursor_into_view if $weak } ) if $ui->can('after_draw');
+		return if $model->page == $_shown_page;
+		$_shown_page = $model->page;
+		$ui->scroll_to( $_body, { x => 0, y => 0 } );
 		return;
 	}
 
-	# The rows of the body's content and viewport, how far it is scrolled
-	# (Clay keeps a negative position) and where a line lies in the
-	# content, in the last frame.
-	method _line_box ($key) {
-		my $ui     = $self->ui                               // return undef;
-		my $built  = $_built{ $key // '' }                   // return undef;
-		my $box    = $ui->bounding_box( $built->{cells}[0] ) // return undef;
-		my $state  = $ui->scroll_state($_body)               // return undef;
-		my $body   = $ui->bounding_box($_body)               // return undef;
-		my $offset = -$state->{position}{y};
-		my $from   = $box->{y} - $body->{y} + $offset;
-		return { content => $state->{content}{height}, viewport => $state->{viewport}{height}, offset => $offset, from => $from, to => $from + $box->{height} };
+	# A cursor that moved is scrolled into view once the frame that lays
+	# its line out is drawn: the line's cells may be new, or the last
+	# frame put them elsewhere (a sort, a new page). Before the table is
+	# in a UI, that is the first frame.
+	method _reveal_cursor_after_frame () {
+		$self->each_frame( sub ($table) { $table->_reveal_cursor_line; return 1 }, name => 'cursor' );
+		return;
 	}
 
-	method _scroll_cursor_into_view () {
-		my $ui     = $self->ui                          // return;
-		my $box    = $self->_line_box( $model->cursor ) // return;
-		my $offset = reveal_range( @{$box}{qw(content viewport offset from to)} );
-		$ui->scroll_to( $_body, { y => -$offset } ) if $offset != $box->{offset};
+	# The body reveals the first cell of the cursor's line.
+	method _reveal_cursor_line () {
+		my $built = $_built{ $model->cursor // '' } // return;
+		$_body->reveal( $built->{cells}[0] );
 		return;
 	}
 
@@ -1379,7 +1365,7 @@ class Term::Fabulous::Widget::Table
 
 	method _after_cursor_moved ( $moved, $page_before ) {
 		return unless $moved || $model->page != $page_before;
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		if ($moved) {
 			my $line = $model->line( $model->cursor );
@@ -1417,7 +1403,7 @@ class Term::Fabulous::Widget::Table
 
 	method _change_page_size ($size) {
 		return unless $model->set_page_size($size);
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		$self->_fire_page_change;
 		return;
@@ -1473,7 +1459,7 @@ class Term::Fabulous::Widget::Table
 
 	method _leave_header () {
 		$_header_cursor = undef;
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		return $HANDLED;
 	}
@@ -1507,7 +1493,7 @@ class Term::Fabulous::Widget::Table
 	method _sort_by_user ( $key, $add ) {
 		return unless $model->column($key)->sortable;
 		return unless $model->cycle_sort( $key, $add );
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		$self->fire_event( Term::Fabulous::Event::SortChange->new( sort => $model->sort_spec ) );
 		return;
@@ -1638,7 +1624,7 @@ class Term::Fabulous::Widget::Table
 		}
 		$model->set_filter( "column:$key" => $filter );
 		$model->expand_to_matches;
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		return $_filter_error{$key};
 	}
@@ -1851,7 +1837,7 @@ class Term::Fabulous::Widget::Table
 	}
 
 	method sort_by (@spec) {
-		$_reveal_cursor = 1 if $model->set_sort(@spec);
+		$self->_reveal_cursor_after_frame if $model->set_sort(@spec);
 		$self->_changed;
 		return $self;
 	}
@@ -1867,7 +1853,7 @@ class Term::Fabulous::Widget::Table
 			if defined $name && !ref $name && $name =~ /\Acolumn:/;
 		$model->set_filter( $name, $filter );
 		$model->expand_to_matches;
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		return $self;
 	}
@@ -1895,7 +1881,7 @@ class Term::Fabulous::Widget::Table
 		return $model->search unless @new;
 		$model->search( $new[0] );
 		$model->expand_to_matches;
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		return $self;
 	}
@@ -2121,7 +2107,7 @@ class Term::Fabulous::Widget::Table
 		die "Term::Fabulous::Widget::Table: row '$new[0]' is not shown (filtered out, or below a collapsed row or group)" unless defined $model->line_index($key);
 		$model->set_cursor($key);
 		$model->set_anchor($key);
-		$_reveal_cursor = 1;
+		$self->_reveal_cursor_after_frame;
 		$self->_changed;
 		return $self;
 	}

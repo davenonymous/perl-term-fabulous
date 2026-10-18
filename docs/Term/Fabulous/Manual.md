@@ -431,7 +431,9 @@ program, and the class pages with the reference.
 
 - Draw a frame now, or after the next frame
 
-    ["invalidate" in Term::Fabulous](../../../README.md#invalidate), ["after\_draw" in Term::Fabulous::Render](Render.md#after_draw).
+    ["invalidate" in Term::Fabulous](../../../README.md#invalidate), ["after\_draw" in Term::Fabulous::Render](Render.md#after_draw),
+    ["each\_draw" in Term::Fabulous::Render](Render.md#each_draw), ["each\_frame" in Term::Fabulous::Widget](Widget.md#each_frame),
+    ["reveal" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#reveal).
 
 ## Widgets, layout and the widget tree
 

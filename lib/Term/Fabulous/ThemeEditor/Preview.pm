@@ -461,30 +461,8 @@ class Term::Fabulous::ThemeEditor::Preview :isa(Term::Fabulous::Widget::Box) :st
 	# Scrolls the gallery so that a section starts at its top.
 	method show_section ($id) {
 		my $box = $section{$id} // return $self;
-		$self->_scroll_into_view( $box, 1 );
+		$gallery->reveal( $box, align => 'top' );
 		return $self;
-	}
-
-	method _scroll_into_view ( $widget, $to_top = 0 ) {
-		my $ui       = $self->ui                   // return;
-		my $view     = $ui->bounding_box($gallery) // return;
-		my $target   = $ui->bounding_box($widget)  // return;
-		my $state    = $ui->scroll_state($gallery) // return;
-		my $position = $state->{position}{y}       // 0;
-		my $top      = $view->{y};
-		my $bottom   = $view->{y} + $view->{height};
-		my $wanted   = $position;
-
-		if ( $to_top || $target->{y} < $top ) {
-			$wanted = $position - ( $target->{y} - $top );
-		}
-		elsif ( $target->{y} + $target->{height} > $bottom ) {
-			$wanted = $position - ( $target->{y} + min( $target->{height}, $view->{height} ) - $bottom );
-		}
-		my $lowest = min( 0, $view->{height} - ( $state->{content}{height} // 0 ) );
-		$wanted = max( $lowest, min( 0, $wanted ) );
-		$ui->scroll_to( $gallery, { y => $wanted } ) if $wanted != $position;
-		return;
 	}
 
 	# PageUp, PageDown, Ctrl+Home and Ctrl+End scroll the gallery when the

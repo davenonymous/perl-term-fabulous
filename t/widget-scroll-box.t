@@ -124,6 +124,33 @@ KDL
 	is [ $built->scrollbar, $built->thumb_color ], [ 0, [ 1, 2, 3, 255 ] ], 'scrollbar and the colors are KDL properties';
 };
 
+subtest 'reveal' => sub {
+	my ( $box, $h ) = box_ui(30);
+	my $ui    = $h->{ui};
+	my @lines = @{ $box->children };
+	ref_is $box->reveal( $lines[19] ), $box, 'returns the box';
+	$ui->step;
+	is $ui->bounding_box( $lines[19] )->{y}, 6, 'nearest: a line below the view lands on the last inner row';
+	$box->reveal( $lines[9], align => 'top' );
+	$ui->step;
+	is $ui->bounding_box( $lines[9] )->{y}, 1, 'top: its first row at the top of the view';
+	$box->reveal( $lines[28], align => 'top' );
+	$ui->step;
+	is [ $ui->bounding_box( $lines[28] )->{y}, $ui->bounding_box( $lines[-1] )->{y} ], [ 5, 6 ], 'as far as the content allows';
+
+	my $added = Term::Fabulous::Widget::Text->new( text => 'Line 31' );
+	$box->insert_children( 0, $added );
+	$box->reveal($added);
+	$ui->step;
+	$ui->step;
+	is $ui->bounding_box($added)->{y}, 1, 'a widget laid out one frame later is revealed after that frame';
+
+	like dies { $box->reveal( Term::Fabulous::Widget::Text->new( text => 'elsewhere' ) ) }, qr/reveal needs a widget inside the box/, 'a widget outside the box dies';
+	like dies { $box->reveal( $added, align  => 'bottom' ) }, qr/align must be/,                     'so does another align';
+	like dies { $box->reveal( $added, frames => 0 ) },        qr/frames must be a positive integer/, 'and frames that are not a positive integer';
+	like dies { $box->reveal( $added, slowly => 1 ) },        qr/reveal does not take slowly/,       'and another option';
+};
+
 subtest 'a focused descendant is scrolled into view' => sub {
 	require Term::Fabulous::Widget::Button;
 	my $box     = Term::Fabulous::Widget::ScrollBox->new( id => 'form', layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );

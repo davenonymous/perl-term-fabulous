@@ -109,17 +109,30 @@ otherwise.
 
 ```perl
 my $moved = reveal_rows( $ui, $widget, $from, $to );
+my $moved = reveal_rows( $ui, $widget, $from, $to, align => 'top' );
 ```
 
 Scrolls the rows from screen row `$from` up to, but not including,
-screen row `$to` into the container's inner rows (see ["inner\_rows"](#inner_rows)),
-with the smallest possible move. The content does not move when the
-rows are already in view. Rows above the view end up at its top, and
-rows below it end up at its bottom. When the rows are more than the
-view can show, their first row goes to the top (see
-["reveal\_range" in Term::Fabulous::Viewport](Viewport.md#reveal_range)). Both rows are screen
-coordinates, as ["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-scroll_state-scroll_to)
-reports them. Returns 1 when the content moved and 0 otherwise.
+screen row `$to` into the container's inner rows (see ["inner\_rows"](#inner_rows)).
+Both rows are screen coordinates, as
+["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-scroll_state-scroll_to) reports them.
+`align` says how:
+
+- `nearest` (the default)
+
+    With the smallest possible move. The content does not move when the
+    rows are already in view. Rows above the view end up at its top, and
+    rows below it end up at its bottom. When the rows are more than the
+    view can show, their first row goes to the top (see
+    ["reveal\_range" in Term::Fabulous::Viewport](Viewport.md#reveal_range)).
+
+- `top`
+
+    The first row goes to the top of the view, as far as the content
+    allows: near the end of the content, the content stops at its end.
+
+Another `align` or another option dies. Returns 1 when the content
+moved and 0 otherwise.
 
 ## inner\_rows
 

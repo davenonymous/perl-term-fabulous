@@ -515,7 +515,9 @@ L<Term::Fabulous::Manual::Programs/Errors and terminal restore>.
 
 =item Draw a frame now, or after the next frame
 
-L<Term::Fabulous/invalidate>, L<Term::Fabulous::Render/after_draw>.
+L<Term::Fabulous/invalidate>, L<Term::Fabulous::Render/after_draw>,
+L<Term::Fabulous::Render/each_draw>, L<Term::Fabulous::Widget/each_frame>,
+L<Term::Fabulous::Widget::ScrollBox/reveal>.
 
 =back
 

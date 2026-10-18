@@ -104,9 +104,9 @@ sub refresh_status () {
 	my $text    = sprintf 'Paragraphs %s of %d, %d built  |  Home End PgUp PgDn, Ctrl+C quits',
 		( defined $visible ? "$visible->{first}-$visible->{last}" : 'none' ), PARAGRAPHS, $built;
 	$status->text($text) if $text ne $status->text;
-	$ui->after_draw( \&refresh_status );
-	return;
+	return 0;    # keeps it for the next frame
 }
 refresh_status();
+$ui->each_draw( \&refresh_status );
 
 $ui->run;

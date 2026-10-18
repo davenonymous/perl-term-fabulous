@@ -493,6 +493,15 @@ subtest 'scrolling' => sub {
 	ok !( grep { /\bn1\b/ } @{ screen($h) } ), 'the first rows scrolled away';
 	keys_to( $h, 'Ctrl+Home' );
 	ok( ( grep { /\bn1\b/ } @{ screen($h) } ), 'and come back' );
+
+	my $early = Term::Fabulous::Widget::Table->new( id => 'early', row_id => 'id', columns => [@COLUMNS], rows => [ map { { id => $_, name => "n$_", dept => 'd', age => $_ } } 1 .. 30 ] );
+	$early->cursor(25);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($early);
+	my $terminal = Term::Fabulous::Terminal::Memory->new( width => 40, height => 10 );
+	my $ui       = Term::Fabulous->new( root => $root, width => 40, height => 10, terminal => $terminal );
+	$ui->step for 1 .. 2;
+	ok( ( grep { /\bn25\b/ } @{ screen( { terminal => $terminal } ) } ), 'a cursor set before the table was in a UI is scrolled into view after the first frame' );
 };
 
 subtest 'a growing column wraps its text instead of scrolling sideways' => sub {

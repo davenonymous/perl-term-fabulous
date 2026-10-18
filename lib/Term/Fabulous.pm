@@ -1377,13 +1377,20 @@ L<Clay::UI/content_box>, L<Clay::UI/scroll_state> and
 L<Clay::UI/scroll_to>, and the recipe
 L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>.
 
-=head2 after_draw
+=head2 after_draw, each_draw
 
 	$ui->after_draw( sub { ... } );
+	$ui->after_draw( sub ($widget) { ... }, owner => $widget );
+	$ui->each_draw( sub ($widget) { ...; return $done }, owner => $widget, name => 'retry', frames => 4 );
 
-Queues a code reference to call once after the next frame has been
-drawn, for work that needs the layout of that frame. See
-L<Term::Fabulous::Render/after_draw>.
+C<after_draw> queues a code reference to call once after the next frame
+has been drawn, for work that needs the layout of that frame;
+C<each_draw> registers one to call after every frame until it returns
+true, its C<frames> ran out or its owner left the UI. With an owner,
+the UI holds the widget weakly and passes it in. See
+L<Term::Fabulous::Render/after_draw> and
+L<Term::Fabulous::Render/each_draw>; widgets use
+L<Term::Fabulous::Widget/each_frame>.
 
 =head2 Other inherited methods
 

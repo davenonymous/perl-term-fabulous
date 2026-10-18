@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(inner_rows page_rows reveal_rows scroll_by_rows scroll_by_pa
 
 use List::Util qw(max min);
 use Scalar::Util qw(blessed);
-use Term::Fabulous::Check qw(describe);
+use Term::Fabulous::Check qw(describe one_of);
 use Term::Fabulous::Viewport qw(clamp_offset max_offset reveal_range);
 
 sub _checked ( $function, $ui, $widget ) {
@@ -78,18 +78,24 @@ sub scroll_to_end ( $ui, $widget ) {
 	return _scroll_to( $ui, $widget, $state, max_offset( $state->{content}{height}, $state->{viewport}{height} ) );
 }
 
-# Screen rows from $from to before $to into view, with the smallest move.
-# Viewport's reveal_range wants one coordinate system: the content's
-# rows, counted from the first row inside the padding, which shows the
-# inner rows from the offset on.
-sub reveal_rows ( $ui, $widget, $from, $to ) {
+# Screen rows from $from to before $to into view: with the smallest move
+# (align nearest), or with the first of them at the top (align top).
+# Viewport's functions want one coordinate system: the content's rows,
+# counted from the first row inside the padding, which shows the inner
+# rows from the offset on.
+sub reveal_rows ( $ui, $widget, $from, $to, %options ) {
 	_checked( reveal_rows => $ui, $widget );
+	my @unknown = grep { $_ ne 'align' } sort keys %options;
+	die "Term::Fabulous::Scrolling: reveal_rows does not take @unknown (known: align)" if @unknown;
+	my $align = one_of( 'Term::Fabulous::Scrolling: reveal_rows', align => $options{align} // 'nearest', qw(nearest top) );
 	my $state = $ui->scroll_state($widget) // return 0;
 	my ( $top, $bottom ) = inner_rows( $ui, $widget ) or return 0;
 	my $offset  = -$state->{position}{y};
 	my $inner   = $bottom - $top;
 	my $content = $state->{content}{height} - ( $state->{viewport}{height} - $inner );
-	return _scroll_to( $ui, $widget, $state, reveal_range( $content, $inner, $offset, $from - $top + $offset, $to - $top + $offset ) );
+	my ( $first, $end ) = ( $from - $top + $offset, $to - $top + $offset );
+	my $target = $align eq 'top' ? clamp_offset( $content, $inner, $first ) : reveal_range( $content, $inner, $offset, $first, $end );
+	return _scroll_to( $ui, $widget, $state, $target );
 }
 
 # How far down the content is scrolled, from 0 to 100; content that fits
@@ -221,16 +227,33 @@ otherwise.
 =head2 reveal_rows
 
 	my $moved = reveal_rows( $ui, $widget, $from, $to );
+	my $moved = reveal_rows( $ui, $widget, $from, $to, align => 'top' );
 
 Scrolls the rows from screen row C<$from> up to, but not including,
-screen row C<$to> into the container's inner rows (see L</inner_rows>),
-with the smallest possible move. The content does not move when the
+screen row C<$to> into the container's inner rows (see L</inner_rows>).
+Both rows are screen coordinates, as
+L<Term::Fabulous/"bounding_box, scroll_state, scroll_to"> reports them.
+C<align> says how:
+
+=over
+
+=item C<nearest> (the default)
+
+With the smallest possible move. The content does not move when the
 rows are already in view. Rows above the view end up at its top, and
 rows below it end up at its bottom. When the rows are more than the
 view can show, their first row goes to the top (see
-L<Term::Fabulous::Viewport/reveal_range>). Both rows are screen
-coordinates, as L<Term::Fabulous/"bounding_box, scroll_state, scroll_to">
-reports them. Returns 1 when the content moved and 0 otherwise.
+L<Term::Fabulous::Viewport/reveal_range>).
+
+=item C<top>
+
+The first row goes to the top of the view, as far as the content
+allows: near the end of the content, the content stops at its end.
+
+=back
+
+Another C<align> or another option dies. Returns 1 when the content
+moved and 0 otherwise.
 
 =head2 inner_rows
 

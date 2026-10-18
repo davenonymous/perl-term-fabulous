@@ -753,15 +753,22 @@ Inherited from [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI); see ["bounding
 ["scroll\_to" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#scroll_to), and the recipe
 [Scroll a ScrollBox from code](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
 
-## after\_draw
+## after\_draw, each\_draw
 
 ```perl
 $ui->after_draw( sub { ... } );
+$ui->after_draw( sub ($widget) { ... }, owner => $widget );
+$ui->each_draw( sub ($widget) { ...; return $done }, owner => $widget, name => 'retry', frames => 4 );
 ```
 
-Queues a code reference to call once after the next frame has been
-drawn, for work that needs the layout of that frame. See
-["after\_draw" in Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md#after_draw).
+`after_draw` queues a code reference to call once after the next frame
+has been drawn, for work that needs the layout of that frame;
+`each_draw` registers one to call after every frame until it returns
+true, its `frames` ran out or its owner left the UI. With an owner,
+the UI holds the widget weakly and passes it in. See
+["after\_draw" in Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md#after_draw) and
+["each\_draw" in Term::Fabulous::Render](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Render.md#each_draw); widgets use
+["each\_frame" in Term::Fabulous::Widget](https://github.com/davenonymous/perl-term-fabulous/blob/master/docs/Term/Fabulous/Widget.md#each_frame).
 
 ## Other inherited methods
 

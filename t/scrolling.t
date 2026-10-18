@@ -83,6 +83,17 @@ subtest 'revealing rows' => sub {
 	is moves( $ui, $box, sub { reveal_rows( $ui, $box, 2, 3 ) } ), [ 1, 1 ], 'one above comes down to the first row';
 };
 
+subtest 'revealing rows at the top' => sub {
+	my ( $ui, $box ) = scroll_box_ui();
+	$ui->step;
+	is moves( $ui, $box, sub { reveal_rows( $ui, $box, 6, 7, align => 'top' ) } ), [ 1, 2 ], 'a row in view moves up to the first inner row';
+	$ui->step;
+	is moves( $ui, $box, sub { reveal_rows( $ui, $box, 4,   5,   align => 'top' ) } ), [ 0, 2 ],  'the first inner row stays';
+	is moves( $ui, $box, sub { reveal_rows( $ui, $box, 100, 101, align => 'top' ) } ), [ 1, 24 ], 'near the end the content stops at its end';
+	like dies { reveal_rows( $ui, $box, 4, 5, align  => 'middle' ) }, qr/reveal_rows: align must be one of nearest, top, got 'middle'/, 'another align dies';
+	like dies { reveal_rows( $ui, $box, 4, 5, center => 1 ) },        qr/reveal_rows does not take center \(known: align\)/,            'and another option';
+};
+
 subtest 'the percentage' => sub {
 	my ( $ui, $box ) = scroll_box_ui();
 	$ui->step;

@@ -16,7 +16,6 @@ use Term::Fabulous::Widget::Text;
 class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::Box) :strict(params) {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(CLAY_TOP_TO_BOTTOM CLAY_ATTACH_TO_PARENT CLAY_ATTACH_POINT_RIGHT_TOP);
-	use Scalar::Util qw(weaken);
 	use Term::Fabulous::Enum::BorderStyle;
 
 	# The highest z_index Clay has: the chooser belongs to the focused
@@ -48,8 +47,6 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 		}
 		$self->add_child( @_boxes, Term::Fabulous::Widget::Text->new( text => 'Esc closes', text_color => $muted_color ) );
 
-		# The after_draw callback below must not keep the chooser alive.
-		weaken( my $weak_self = $self );
 		$self->on(
 			KeyPress => sub ($event) {
 				my $name = $event->main_key_name // return Clay::UI::Enum::Result->CONTINUE;
@@ -63,8 +60,7 @@ class Term::Fabulous::Widget::Table::ColumnChooser :isa(Term::Fabulous::Widget::
 		# the OnBlur, so the check waits for the frame.
 		$self->on(
 			OnBlur => sub ( $self, $event ) {
-				my $ui = $self->ui;
-				$ui->after_draw( sub { $weak_self->_close_unless_focused if $weak_self } ) if defined $ui && $ui->can('after_draw');
+				$self->each_frame( sub ($chooser) { $chooser->_close_unless_focused; return 1 }, name => 'close unless focused' );
 				return Clay::UI::Enum::Result->CONTINUE;
 			},
 			owner => $self

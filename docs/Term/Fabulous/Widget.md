@@ -938,6 +938,31 @@ call it themselves. Returns the widget. See
 ["mark\_changed" in Clay::UI::Role::Core::Element](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ACore%3A%3AElement#mark_changed) and
 [Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md).
 
+## each\_frame
+
+```perl
+$self->each_frame( sub ($self) { $self->check_layout; return 0 }, name => 'check' );
+$self->each_frame( sub ($self) { return $self->try_to_show_it }, name => 'show', frames => 4 );
+```
+
+For widget authors: work after frames. Registers `$code` with the UI's
+["each\_draw" in Term::Fabulous::Render](Render.md#each_draw), bound to the widget: it is called
+with the widget after every frame from the next one on, until it
+returns a true value, until `frames` calls were made (when given), or
+until the widget is freed or leaves the UI. A second registration with
+the same `name` replaces the first. `name` (a string) and `frames`
+(a positive integer) are the only options; another one, or anything
+but a code reference, dies. The closure gets the widget as its
+argument, so it need not capture it (which would keep the widget
+alive). For one call, return true or give `frames => 1`.
+
+Work asked for while the widget is in no UI waits: it is registered
+when the widget joins a UI (a name replaces waiting work of that name
+too), so a widget may ask for it from its constructor or from setters
+called before the UI is built. Returns 1, or 0 without registering
+anything when the widget's UI draws no frames (a plain [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI));
+waiting work is dropped when the widget joins such a UI.
+
 ## tree\_changed
 
 ```perl
@@ -959,7 +984,8 @@ change is complete (see
 forgets the looks it fetched, since its new place may be in a UI with
 another theme, and when that place is in a UI, calls
 [looks\_changed](Role/Themed.md#looks_changed) with all
-its looks. An override calls `$self->SUPER::tree_changed` first,
+its looks; it also hands that UI the work ["each\_frame"](#each_frame) kept while the
+widget was in no UI. An override calls `$self->SUPER::tree_changed` first,
 as [Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md) does to rebuild its items for
 the new place.
 

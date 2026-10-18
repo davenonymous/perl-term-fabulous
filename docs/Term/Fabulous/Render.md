@@ -169,9 +169,9 @@ order, hands a target that shows sixel the frame's pictures (see
 remembers this completely painted frame for the comparison in step 3 of
 the next frame. If painting died, this step is skipped and the next
 frame paints every canvas in full.
-6. Calls the code references queued with ["after\_draw"](#after_draw), in the order
-they were queued. If painting died, they stay queued for the next
-frame.
+6. Runs the work registered with ["after\_draw"](#after_draw) and ["each\_draw"](#each_draw), in
+the order it was registered. If painting died, it stays registered for
+the next frame.
 
 `scroll_cells` scrolls the scroll container under the pointer (see
 [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md)) by `[$columns, $rows]` cells
@@ -196,18 +196,61 @@ $ui->after_draw( sub {
         my $box = $ui->bounding_box($row) // return;
         ...;    # the geometry of the frame just drawn
 } );
+
+$ui->after_draw( sub ($chooser) { $chooser->close_unless_focused }, owner => $chooser );
 ```
 
-Queues a code reference that ["draw"](#draw) calls once, with no arguments,
-after the next frame has been painted completely. Use it for work that
-needs the layout of a frame that has not been drawn yet, for example to
-scroll a row into view that was only just added: Clay::UI's
-`bounding_box` and `scroll_state` then answer for that frame. A
-change the callback makes (a scroll position, a widget property) shows
-in the frame after it, which is due at once. A callback may queue
-another one; it runs after the following frame. Anything but a code
-reference dies. Returns the UI object. An exception from a callback
-leaves `draw` with it; the callbacks queued after it are dropped.
+Queues a code reference that ["draw"](#draw) calls once, after the next frame
+has been painted completely. Use it for work that needs the layout of a
+frame that has not been drawn yet, for example to scroll a row into
+view that was only just added: Clay::UI's `bounding_box` and
+`scroll_state` then answer for that frame. A change the callback makes
+(a scroll position, a widget property) shows in the frame after it,
+which is due at once. A callback may queue another one; it runs after
+the following frame.
+
+Without options the code is called with no arguments. With
+`owner => $widget` it is _owner-bound_: the UI holds the widget
+weakly and calls `$code->($widget)`, or skips the call when the
+widget has been freed or is no longer part of this UI by then (see
+["owns" in Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI#owns)). That is how a widget asks for work after a frame
+without a closure that keeps it alive. Widgets usually go through
+["each\_frame" in Term::Fabulous::Widget](Widget.md#each_frame).
+
+Anything but a code reference, an owner that is not a widget or
+another option dies. Returns the UI object. Every callback that is due
+runs even if an earlier one dies; the first exception then leaves
+`draw`.
+
+## each\_draw
+
+```perl
+$ui->each_draw( sub ($view) { $view->report_position; return 0 }, owner => $view, name => 'report' );
+$ui->each_draw( sub ($box) { return $box->try_again }, owner => $box, name => 'retry', frames => 8 );
+$ui->each_draw( \&refresh_status );
+```
+
+Registers a code reference that ["draw"](#draw) calls after every frame from
+the next one on, until the registration ends. It ends
+
+- when the code returns a true value (return 0 to keep it);
+- after `frames` calls, when `frames` is given: the code runs after the
+first `frames` frames drawn after the registration at most, whatever
+it returns. Without `frames` there is no limit;
+- for an owner-bound registration (`owner => $widget`, as for
+["after\_draw"](#after_draw)), when the owner has been freed or is no longer part of
+this UI, without a call;
+- when a callback dies (see ["after\_draw"](#after_draw));
+- when another registration with the same `name` and the same owner (or
+also without one) replaces it: the old one ends, the new one is queued
+last. Give a name to work a widget may ask for repeatedly, such as a
+retry, so that only the latest request runs.
+
+The code is called with the owner, or with no arguments without one.
+Registrations run in the order they were made, after-draw and
+each-draw work together. `name` must be a string and `frames` a
+positive integer; another option dies, as for ["after\_draw"](#after_draw). Returns
+the UI object.
 
 ## last\_frame
 

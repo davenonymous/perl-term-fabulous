@@ -17,7 +17,7 @@ class Term::Fabulous::Widget
 {
 	use Clay::XS qw(CLAY__SIZING_TYPE_FIXED);
 	use List::Util qw(first max);
-	use Term::Fabulous::Check qw(boolean class_names color positive_integer);
+	use Term::Fabulous::Check qw(boolean class_names color describe positive_integer string);
 	use Term::Fabulous::Theme;
 
 	my @COLOR_PARAMS = qw(background_color border_color);
@@ -28,6 +28,10 @@ class Term::Fabulous::Widget
 
 	field $classes             :param = [];
 	field $glyphs_show_through :param = 0;
+
+	# Work asked for with each_frame while the widget was in no UI, as
+	# [ code, { options } ]: handed to the UI the widget joins.
+	field @_waiting_frame_work;
 
 	# Clay::UI validates the colors before any ADJUST of this class runs,
 	# so they are converted while the arguments are still a plain list.
@@ -78,6 +82,43 @@ class Term::Fabulous::Widget
 	method _bordered_sides () {
 		my $sides = $self->look_value('bordered');
 		return ref $sides ? $sides : $sides ? \%EVERY_SIDE : \%NO_SIDE;
+	}
+
+	# ---------------------------------------------------------------------
+	# Work after a frame
+	# ---------------------------------------------------------------------
+
+	# The widget's own each_draw registration (Term::Fabulous::Render):
+	# called with the widget after every frame until the code returns
+	# true, the frames run out or the widget leaves the UI. Outside a UI
+	# the work waits until the widget joins one; false in a UI that draws
+	# no frames.
+	method each_frame ( $code, %options ) {
+		my @unknown = grep { $_ ne 'name' && $_ ne 'frames' } sort keys %options;
+		die ref($self) . ": each_frame does not take @unknown (known: name frames)" if @unknown;
+		die ref($self) . ": each_frame needs a code reference, got " . describe($code) unless ref $code eq 'CODE';
+		string( $self, name => $options{name} ) if exists $options{name};
+		positive_integer( $self, frames => $options{frames} ) if exists $options{frames};
+
+		my $ui = $self->ui;
+		if ( !defined $ui ) {
+			@_waiting_frame_work = grep { !defined $options{name} || ( $_->[1]{name} // '' ) ne $options{name} } @_waiting_frame_work if exists $options{name};
+			push @_waiting_frame_work, [ $code, {%options} ];
+			return 1;
+		}
+		return 0 unless $ui->can('each_draw');
+		$ui->each_draw( $code, %options, owner => $self );
+		return 1;
+	}
+
+	# The work that waited for a UI goes to the one the widget joined; a
+	# UI that draws no frames drops it.
+	method _hand_over_frame_work () {
+		my $ui      = $self->ui // return;
+		my @waiting = splice @_waiting_frame_work;
+		return unless $ui->can('each_draw');
+		$ui->each_draw( $_->[0], %{ $_->[1] }, owner => $self ) foreach @waiting;
+		return;
 	}
 
 	# ---------------------------------------------------------------------
@@ -173,6 +214,7 @@ class Term::Fabulous::Widget
 	method tree_changed :override () {
 		$self->SUPER::tree_changed;
 		$self->_forget_own_looks;
+		$self->_hand_over_frame_work;
 		return;
 	}
 
@@ -1108,6 +1150,29 @@ call it themselves. Returns the widget. See
 L<Clay::UI::Role::Core::Element/mark_changed> and
 L<Term::Fabulous::Manual::CustomWidgets>.
 
+=head2 each_frame
+
+	$self->each_frame( sub ($self) { $self->check_layout; return 0 }, name => 'check' );
+	$self->each_frame( sub ($self) { return $self->try_to_show_it }, name => 'show', frames => 4 );
+
+For widget authors: work after frames. Registers C<$code> with the UI's
+L<Term::Fabulous::Render/each_draw>, bound to the widget: it is called
+with the widget after every frame from the next one on, until it
+returns a true value, until C<frames> calls were made (when given), or
+until the widget is freed or leaves the UI. A second registration with
+the same C<name> replaces the first. C<name> (a string) and C<frames>
+(a positive integer) are the only options; another one, or anything
+but a code reference, dies. The closure gets the widget as its
+argument, so it need not capture it (which would keep the widget
+alive). For one call, return true or give C<< frames => 1 >>.
+
+Work asked for while the widget is in no UI waits: it is registered
+when the widget joins a UI (a name replaces waiting work of that name
+too), so a widget may ask for it from its constructor or from setters
+called before the UI is built. Returns 1, or 0 without registering
+anything when the widget's UI draws no frames (a plain L<Clay::UI>);
+waiting work is dropped when the widget joins such a UI.
+
 =head2 tree_changed
 
 	class My::Counter :isa(Term::Fabulous::Widget::Box) {
@@ -1127,7 +1192,8 @@ L<Clay::UI::Role::Layout::HasParent/tree_changed>). Here the widget
 forgets the looks it fetched, since its new place may be in a UI with
 another theme, and when that place is in a UI, calls
 L<looks_changed|Term::Fabulous::Role::Themed/looks_changed> with all
-its looks. An override calls C<< $self->SUPER::tree_changed >> first,
+its looks; it also hands that UI the work L</each_frame> kept while the
+widget was in no UI. An override calls C<< $self->SUPER::tree_changed >> first,
 as L<Term::Fabulous::Widget::VirtualList> does to rebuild its items for
 the new place.
 
