@@ -1,6 +1,12 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - Render::Geometry::cell_rect rounds every edge of a box to the
+          nearest cell instead of flooring it. A layout at fractional
+          positions (a percent-wide sidebar, say) gave two boxes that
+          meet edges of 70.9999 and 71, which floored to different
+          cells, so tables showed a blank column with broken lines
+          between two cells and a body one cell wider than its header.
         - Widget::Tabs and Tabs::Bar have active_padding, the cells the
           active tab grows toward the page beyond the other tabs; it was
           always one cell and is 0 by default now, so all tabs are the

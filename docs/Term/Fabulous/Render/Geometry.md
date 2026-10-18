@@ -8,7 +8,7 @@ cells, and step lines through a raster
 ```perl
 use Term::Fabulous::Render::Geometry qw(cell_rect intersect_cell_rects visible_cell_rect);
 
-my ( $x0, $y0, $x1, $y1 ) = cell_rect( { x => 1.7, y => 2, width => 3.6, height => 2 } );    # (1, 2, 5, 4)
+my ( $x0, $y0, $x1, $y1 ) = cell_rect( { x => 1.7, y => 2, width => 3.6, height => 2 } );    # (2, 2, 5, 4)
 my $both    = intersect_cell_rects( [ 0, 0, 10, 5 ], [ 8, 3, 12, 9 ] );                      # [8, 3, 10, 5]
 my @visible = visible_cell_rect( $command->{boundingBox}, $ui->clip_rect );
 ```
@@ -20,9 +20,13 @@ roles and the canvas widgets.
 
 Clay places boxes at fractional positions, which may be negative or
 reach past the viewport. Terminal output needs whole cells. These
-functions convert boxes to cells the same way everywhere: the left edge
-is `floor(x)`, the right edge `floor(x + width)`, and likewise for the
-top and bottom.
+functions convert boxes to cells the same way everywhere: every edge
+is rounded to the nearest cell (halves up), the left edge from `x`,
+the right edge from `x + width`, and likewise for the top and bottom.
+Boxes that meet, such as the cells of a table row, share an edge value
+up to the noise of Clay's single-precision floats, so rounding puts
+them on the same cell where flooring would open a blank column between
+an edge of 70.9999 and one of 71.
 
 Cell rectangles are written `[x0, y0, x1, y1]`: `x0`, `y0` is the
 top-left cell, and `x1`, `y1` are _exclusive_, so the rectangle
@@ -42,8 +46,9 @@ my ( $x0, $y0, $x1, $y1 ) = cell_rect($bbox);
 ```
 
 The cell rectangle of a Clay bounding box, a hash reference with `x`,
-`y`, `width` and `height`, as a list. It is not clipped, so it may
-lie partly or fully outside the viewport.
+`y`, `width` and `height`, as a list, each edge rounded to the
+nearest cell. It is not clipped, so it may lie partly or fully outside
+the viewport. A box narrower than half a cell may come out empty.
 
 ## intersect\_cell\_rects
 

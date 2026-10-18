@@ -372,6 +372,7 @@ src/termbox2.h
 src/tf_termbox.h
 t/background-below.t
 t/border-style.t
+t/cell-rect.t
 t/chart-curve.t
 t/chart-format.t
 t/chart-kdl.t
