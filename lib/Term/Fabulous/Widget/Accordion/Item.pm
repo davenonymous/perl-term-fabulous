@@ -13,7 +13,7 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Text;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::Accordion::Item
 	:isa(Term::Fabulous::Widget::Box)

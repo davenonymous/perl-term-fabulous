@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Exporter 'import';
 our @EXPORT_OK = qw(searchables_in nested_part nested_search_texts nested_search_revision nested_highlight_text nested_clear_text_highlights nested_reveal_text);

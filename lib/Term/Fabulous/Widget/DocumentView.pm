@@ -11,7 +11,7 @@ use Clay::UI::Role::Interaction::Focusable;
 use Clay::UI::Role::Interaction::HasFocusOrder;
 use Term::Fabulous::Widget::VirtualList;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::DocumentView
 	:isa(Term::Fabulous::Widget::VirtualList)
@@ -898,7 +898,7 @@ Term::Fabulous::Widget::DocumentView - A scrollable, searchable view of a docume
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-document-view.svg" alt="A framed document view scrolled to its Code section: a code block on a darker background, a paragraph with a selected link in inverse colors, a table of factories under the heading Any widget, every match of the word block highlighted, and a status line that names the selected link"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-document-view.svg" alt="A framed document view scrolled to its Code section: a code block on a darker background, a paragraph with a selected link in inverse colors, a table of factories under the heading Any widget, every match of the word block highlighted, and a status line that names the selected link"></p>
 
 =end html
 

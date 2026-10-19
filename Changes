@@ -1,6 +1,6 @@
 Revision history for Term::Fabulous
 
-0.04    not yet released
+0.04    2026-10-19
         - A Widget::DocumentView counts the items added to its document
           as soon as it is asked: count, show_item, scroll_to_bottom
           and a search reach an item added since the last frame instead

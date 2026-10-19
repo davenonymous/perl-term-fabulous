@@ -10,7 +10,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Role::HasRange;
 use Term::Fabulous::Widget::Input;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::StarRating
 	:isa(Term::Fabulous::Widget::Input)
@@ -318,7 +318,7 @@ Term::Fabulous::Widget::StarRating - Rate something with a row of stars
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-star-rating.svg" alt="Star ratings: a focused one with three of five stars, one with half stars and its value, a read-only one, one out of ten with a gap of zero, and a disabled one"></p>
 
 =end html
 

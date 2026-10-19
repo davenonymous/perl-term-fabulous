@@ -10,7 +10,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Role::Popup;
 use Term::Fabulous::Widget::Display;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::Dropdown::List
 	:isa(Term::Fabulous::Widget::Display)

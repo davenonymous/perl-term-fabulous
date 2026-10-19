@@ -10,7 +10,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Role::MarkedText;
 use Term::Fabulous::Widget::Display;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::CodeBlock
 	:isa(Term::Fabulous::Widget::Display)
@@ -305,7 +305,7 @@ Term::Fabulous::Widget::CodeBlock - Unwrapped code on its own background, clippe
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/widget-code-block.svg" alt="Three code blocks on a darker background: a short Perl snippet with a highlighted keyword and a colored variable, a block whose long lines are cut at the right edge with a mark, and the same block scrolled sideways with marks on both sides"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-code-block.svg" alt="Three code blocks on a darker background: a short Perl snippet with a highlighted keyword and a colored variable, a block whose long lines are cut at the right edge with a mark, and the same block scrolled sideways with marks on both sides"></p>
 
 =end html
 

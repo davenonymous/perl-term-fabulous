@@ -11,7 +11,7 @@ use Clay::UI::Role::Interaction::Focusable;
 use Clay::UI::Role::Interaction::HasFocusOrder;
 use Term::Fabulous::Widget::Box;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 class Term::Fabulous::Widget::Dialog::Backdrop
 	:isa(Term::Fabulous::Widget::Box)
