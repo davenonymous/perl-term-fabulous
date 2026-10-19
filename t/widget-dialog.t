@@ -233,8 +233,10 @@ subtest 'defaults and errors' => sub {
 	is $dialog->layout->{sizing}{width}, sizing_fixed(12), 'the given layout keys win';
 	my $fresh = Term::Fabulous::Widget::Dialog->new;
 	is [ $fresh->backdrop_color, $fresh->z_index, $fresh->close_on_escape ], [ [ 0, 0, 0, 128 ], 1000, 1 ], 'the dialog parameters';
-	like dies { $dialog->open('nope') }, qr/open needs the Term::Fabulous object/, 'open wants the UI';
-	like dies { Term::Fabulous::Widget::Dialog->new( z_index        => 'top' ) },  qr/z_index must be an integer/,                                                   'z_index is checked';
+	like dies { $dialog->open('nope') },                                           qr/open needs the Term::Fabulous object/,                        'open wants the UI';
+	like dies { Term::Fabulous::Widget::Dialog->new( z_index => 'top' ) },         qr/z_index must be an integer/,                                  'z_index is checked';
+	like dies { Term::Fabulous::Widget::Dialog->new( z_index => 40000 ) },         qr/z_index must be an integer from -32768 to 32767, got 40000/,  'z_index stays in the range Clay has';
+	like dies { $fresh->z_index(-40000) },                                         qr/z_index must be an integer from -32768 to 32767, got -40000/, 'also when it is set later';
 	like dies { Term::Fabulous::Widget::Dialog->new( backdrop_color => 'nope' ) }, qr/\ATerm::Fabulous::Widget::Dialog: backdrop_color must be a color, got 'nope'/, 'backdrop_color is checked';
 
 	my $child  = Term::Fabulous::Widget::Dialog->new;

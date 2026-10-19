@@ -170,6 +170,8 @@ class Term::Fabulous::Widget::Dropdown
 		my $visible = defined $placed ? max( 1, min( $wanted, $placed->{rows} - 2 ) ) : $wanted;
 		my $widest  = max map { string_columns( $_->{label} ) } $option_list->options;
 		my $width   = max( $self->_box_width, 2 + $widest + 2 + ( $visible < $option_list->count ? 1 : 0 ) );
+		my $ui      = $self->ui;
+		$width         = min( $width, $ui->width ) if defined $ui;    # never wider than the screen: the list cuts its labels
 		$opens_upwards = defined $placed ? $placed->{flipped} : 0;
 		@list_size     = ( $width, $visible + 2 );
 
@@ -422,7 +424,9 @@ opens above. The list shows up to C<max_visible_options> options at a
 time; when the terminal has less room on the chosen side, it shrinks to
 that room, but always shows at least one option. A list wider than the
 room right of the dropdown moves left as far as it must to stay on the
-screen (L<Term::Fabulous::Placement>), and the list finds its place
+screen (L<Term::Fabulous::Placement>); one wider than the screen is as
+wide as the screen and cuts its labels with an ellipsis
+(L<Term::Fabulous::Unicode/fit_columns>). The list finds its place
 again in every frame, so it stays on the screen when the terminal
 shrinks while it is open. It scrolls through the
 rest and has a scrollbar when it scrolls, drawn like every scrollbar

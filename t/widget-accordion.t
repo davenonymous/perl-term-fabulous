@@ -187,8 +187,10 @@ subtest 'a search reaches a closed item, and revealing a match opens it' => sub 
 	is $network->is_open, 0, 'the second item is closed';
 	my ($hostname) = grep { $_->[1] eq 'Hostname: example.org' } $network->search_texts;
 	is $hostname->[0], [ 0, undef ], 'the text of its body is among the texts, with its place in the body as the key';
+	$accordion->open(0);
 	my ($text) = @{ $network->reveal_text( $hostname->[0], 0 ) };
 	is [ $network->is_open, $text->text ], [ 1, 'Hostname: example.org' ], 'revealing it opens the item and names its text';
+	is [ map { $_->is_open } $accordion->items ], [ 0, 1, 0 ], 'and closes the item that was open, as the accordion opens one at a time';
 	$network->highlight_text( $hostname->[0], [ [ 0, 8, 'on accent' ] ] );
 	is $text->highlights->[0][1], 8, 'highlight_text reaches the text';
 	$network->clear_text_highlights;

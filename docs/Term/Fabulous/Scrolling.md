@@ -62,7 +62,9 @@ number; this module turns it around, so a program never needs to (see
 the height of the items it has not built only as an estimate, so
 ["scroll\_to\_start, scroll\_to\_end"](#scroll_to_start-scroll_to_end) send it to its first or last
 item (["scroll\_to\_item" in Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md#scroll_to_item)), which it
-measures on the way.
+measures on the way. Once that item is in view, they scroll to the end
+of the content like any container, so a last item taller than the view
+ends at the bottom of the view instead of starting at its top.
 - Clay keeps the scroll position in fractions of a row. A function
 compares the target position with the current one, both rounded to the
 nearest whole row; when they round to the same row, it does not scroll
@@ -131,9 +133,12 @@ my $moved = scroll_to_end( $ui, $widget );
 
 Scroll to the top of the content, or so far down that its last row is
 at the bottom of the view. Return 1 when the content moved and 0
-otherwise. A VirtualList is asked to show its first or last item
-instead; for it, 1 means it was asked, 0 that it already shows that end
-or has no items.
+otherwise. A VirtualList whose first or last item is out of view is
+asked to show that item instead, and 1 means it was asked; once the
+item is in view, the list scrolls to the end like any container (an
+item taller than the view takes a second call, after the frame that
+measured it, for example the next `follow_end` check or the next
+press of the key). 0 means the list is at that end or has no items.
 
 ## reveal\_rows
 

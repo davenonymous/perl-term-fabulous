@@ -41,7 +41,9 @@ subtest 'a border, a fixed height and a display' => sub {
 	is( Term::Fabulous::Widget::Box->new( layout => { sizing => { height => sizing_fixed(7) } } )->estimated_rows(10), 7, 'a fixed height is the answer' );
 	is( Term::Fabulous::Widget::Divider->new->estimated_rows(10),                                                      1, 'a display answers from its natural size' );
 	my $table = Term::Fabulous::Widget::Table->new( id => 'table', columns => [ { key => 'n', title => 'N' } ], rows => [ map { { id => $_, n => $_ } } 1 .. 5 ], page_size => 2 );
-	is $table->estimated_rows(20), 1 + 2 + 1, 'a table counts its header, the rows of its page and the pager';
+	is $table->estimated_rows(20), 1 + 1 + 1 + 2 + 1 + 1, 'a table counts its top line, header, header line, the rows of its page, its bottom and the pager';
+	my $bare = Term::Fabulous::Widget::Table->new( id => 'bare', columns => [ { key => 'n', title => 'N' } ], rows => [ map { { id => $_, n => $_ } } 1 .. 3 ], header => 0, border => 'none' );
+	is $bare->estimated_rows(20), 3, 'without a header and a frame, the rows alone';
 };
 
 subtest 'only the border sides that are drawn and the room of scrollbars count' => sub {

@@ -71,7 +71,7 @@ $root->on(
 		my $name = $event->main_key_name // return;
 		my $step = $name eq 'Right' ? 8 : $name eq 'Left' ? -8 : return;
 		foreach my $block ( $cut, $scrolled ) {
-			my $offset = $block->offset + $step;
+			my $offset = $block->shown_offset + $step;    # from where the block is, not past its longest line
 			$block->offset( $offset < 0 ? 0 : $offset );
 		}
 		return;

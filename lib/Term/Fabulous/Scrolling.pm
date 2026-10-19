@@ -120,7 +120,10 @@ sub scroll_to_end ( $ui, $widget ) {
 
 # A VirtualList builds only the items near its view and knows the height
 # of the others as an estimate, so its content height is one too: it is
-# sent to its first or last item, which it measures on the way.
+# sent to its first or last item, which it measures on the way. Once the
+# last item is in view, the end of the content is where the frame put
+# it, and the list scrolls there like any container: the start of an
+# item taller than the view is not its end.
 sub _is_list ($widget) {
 	return $widget->isa('Term::Fabulous::Widget::VirtualList') ? 1 : 0;
 }
@@ -129,7 +132,8 @@ sub _scroll_list_to ( $ui, $list, $state, $end ) {
 	my $count = $list->count or return 0;
 	my ( $index, $offset ) = $end eq 'start' ? ( 0, 0 ) : ( $count - 1, _max_offset($state) );
 	my $visible = $list->visible_items;
-	return 0 if int( _offset($state) + 0.5 ) == int( $offset + 0.5 ) && defined $visible && ( $end eq 'start' ? $visible->{first} : $visible->{last} ) == $index;
+	my $in_view = defined $visible && ( $end eq 'start' ? $visible->{first} : $visible->{last} ) == $index;
+	return _scroll_to( $ui, $list, $state, $offset ) if $in_view;
 	$list->scroll_to_item($index);
 	return 1;
 }
@@ -287,7 +291,9 @@ A L<Term::Fabulous::Widget::VirtualList> (a document view too) knows
 the height of the items it has not built only as an estimate, so
 L</"scroll_to_start, scroll_to_end"> send it to its first or last
 item (L<Term::Fabulous::Widget::VirtualList/scroll_to_item>), which it
-measures on the way.
+measures on the way. Once that item is in view, they scroll to the end
+of the content like any container, so a last item taller than the view
+ends at the bottom of the view instead of starting at its top.
 
 =item *
 
@@ -353,9 +359,12 @@ content moved and 0 otherwise.
 
 Scroll to the top of the content, or so far down that its last row is
 at the bottom of the view. Return 1 when the content moved and 0
-otherwise. A VirtualList is asked to show its first or last item
-instead; for it, 1 means it was asked, 0 that it already shows that end
-or has no items.
+otherwise. A VirtualList whose first or last item is out of view is
+asked to show that item instead, and 1 means it was asked; once the
+item is in view, the list scrolls to the end like any container (an
+item taller than the view takes a second call, after the frame that
+measured it, for example the next C<follow_end> check or the next
+press of the key). 0 means the list is at that end or has no items.
 
 =head2 reveal_rows
 

@@ -175,6 +175,31 @@ subtest 'a VirtualList goes to its first and last item' => sub {
 	is [ $list->visible_items->{first}, scroll_offset( $ui, $list ) ], [ 0, 0 ], 'shown at the top';
 };
 
+subtest 'a VirtualList whose last item is taller than the view ends at its bottom' => sub {
+	my $list = Term::Fabulous::Widget::VirtualList->new(
+		id    => 'list',
+		count => 20,
+		build => sub ($index) {
+			Term::Fabulous::Widget::Text->new( text => join "\n", map { "item $index line $_" } 1 .. ( $index == 19 ? 9 : 1 ) );
+		},
+		layout => { sizing => { width => sizing_grow(), height => sizing_fixed(5) } },
+	);
+	my $root = Term::Fabulous::Widget::Box->new( layout => { sizing => { width => sizing_grow(), height => sizing_grow() } } );
+	$root->add_child($list);
+	my $ui = Term::Fabulous->new( root => $root, width => 20, height => 8, terminal => Term::Fabulous::Terminal::Memory->new( width => 20, height => 8 ) );
+	$ui->step;
+	is scroll_to_end( $ui, $list ), 1, 'sent to its last item';
+	$ui->step for 1 .. 3;
+	is scroll_to_end( $ui, $list ), 1, 'the item is in view: the list is scrolled to its end';
+	$ui->step;
+	is [ scroll_offset( $ui, $list ), $list->visible_items->{last} ], [ max_scroll_offset( $ui, $list ), 19 ], 'the end of the last item is at the bottom';
+	is scroll_to_end( $ui, $list ),                                   0,                                       'and the list is at its end';
+	$list->follow_end(1);
+	$list->count(21);
+	ok lives { $ui->step for 1 .. 4 }, 'following the end settles';
+	is scroll_offset( $ui, $list ), max_scroll_offset( $ui, $list ), 'at the end';
+};
+
 subtest 'a ScrollBox follows its end' => sub {
 	my $box
 		= Term::Fabulous::Widget::ScrollBox->new( id => 'log', follow_end => 1, layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_fixed(4) } } );

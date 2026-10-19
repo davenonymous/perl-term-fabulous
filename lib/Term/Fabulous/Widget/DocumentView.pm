@@ -21,7 +21,7 @@ class Term::Fabulous::Widget::DocumentView
 {
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM);
-	use List::Util qw(first max min);
+	use List::Util qw(any first max min);
 	use Scalar::Util qw(blessed refaddr weaken);
 	use Term::Fabulous::Check qw(describe non_negative_integer);
 	use Term::Fabulous::Document;
@@ -161,7 +161,17 @@ class Term::Fabulous::Widget::DocumentView
 
 	method count :override (@new) {
 		die ref($self) . ": count cannot be set; it is the number of items of the document" if @new;
+		$self->_adopt_new_items;
 		return $self->SUPER::count;
+	}
+
+	# Items added to the document since the view last looked join the
+	# list: before a frame, and before anything that needs their indexes.
+	method _adopt_new_items () {
+		return unless defined $document;
+		my $count = $document->count;
+		$self->SUPER::count($count) if $count != $self->SUPER::count;
+		return;
 	}
 
 	# The items leave their slots, so that they can be shown again, in new
@@ -231,7 +241,18 @@ class Term::Fabulous::Widget::DocumentView
 		}
 		$slot_of{$index} = { slot => $slot, holder => $holder, item => $item, quotes => \@quotes };
 		$self->_color_quotes( $slot_of{$index} );
+		$self->_settle_code($index);
 		return $slot;
+	}
+
+	# The code blocks of an item built after the document was shown take
+	# what the others got then: the view's highlighter, for a code block
+	# of the document, and the offset the code is scrolled to.
+	method _settle_code ($index) {
+		my $item = $slot_of{$index}{item};
+		$item->highlighter($highlighter) if defined $highlighter && any { refaddr($_) == refaddr($item) } $self->_document_code;
+		$_->offset($code_offset) foreach $self->_built_code($index);
+		return;
 	}
 
 	method _color_quotes ($built) {
@@ -291,18 +312,19 @@ class Term::Fabulous::Widget::DocumentView
 	}
 
 	method scroll_to_top () {
-		return 0 unless $self->SUPER::count;
+		return 0 unless $self->count;
 		$self->scroll_to_item(0);
 		return 1;
 	}
 
 	method scroll_to_bottom () {
-		return 0 unless $self->SUPER::count;
-		$self->scroll_to_item( $self->SUPER::count - 1 );
+		my $count = $self->count or return 0;
+		$self->scroll_to_item( $count - 1 );
 		return 1;
 	}
 
 	method show_item ($index) {
+		$self->_adopt_new_items;
 		$self->scroll_to_item($index);
 		return $self;
 	}
@@ -786,9 +808,8 @@ class Term::Fabulous::Widget::DocumentView
 	# Frames: what the view shows is reported, reveals and the focus go on
 	# ---------------------------------------------------------------------
 
-	# Items added to the document since the last frame join the list.
 	method prepare_layout :override () {
-		$self->SUPER::count( $document->count ) if defined $document && $document->count != $self->SUPER::count;
+		$self->_adopt_new_items;
 		$self->SUPER::prepare_layout;
 		$self->_watch_report;
 		return;
@@ -1046,7 +1067,8 @@ document that another view shows dies.
 	$view->highlighter( sub ( $code, $language ) { ... } );
 
 Gets or sets the C<highlighter>, which goes to the code blocks of the
-document at once.
+document at once, and to a code block added later when the view builds
+it.
 
 =head2 indent
 

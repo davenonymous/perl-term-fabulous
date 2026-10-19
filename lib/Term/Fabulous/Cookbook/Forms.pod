@@ -629,10 +629,10 @@ Goal: a "Really quit?" dialog that opens over the screen when the user
 presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
-This recipe builds the dialog from its parts, which shows how a dialog
-works; its buttons have colors of their own. A dialog can also bring
-its own C<title> and C<buttons>, which answer with an C<Answer> event
-(see L<Term::Fabulous::Widget::Dialog/Title, buttons and the notice line>).
+The dialog brings its own C<title> and C<buttons>: pressing a button
+answers with its id through an C<Answer> event, and Escape answers
+C<cancel> (see
+L<Term::Fabulous::Widget::Dialog/Title, buttons and the notice line>).
 For a question with a few buttons, a
 L<Term::Fabulous::Widget::Prompt> does the same in one call: see the
 next recipe, L</Confirm before quitting (Prompt)>, and
@@ -649,11 +649,9 @@ This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 
 	use Term::Fabulous;
 	use Term::Fabulous::Widget::Box;
-	use Term::Fabulous::Widget::Button;
 	use Term::Fabulous::Widget::Dialog;
 	use Term::Fabulous::Widget::Text;
 	use Term::Fabulous::Widget::TextArea;
-	use Term::Fabulous::Enum::BorderStyle;
 	use Clay::UI::Enum::Result;
 	use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
@@ -675,28 +673,17 @@ This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 	my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
 	# The dialog is built once and opened as often as needed. Its look
-	# (border, background, padding) comes with the widget.
-	my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { sizing => { width => sizing_fixed(44) } } );
-
-	sub button ( $caption, $action ) {
-		my $button = Term::Fabulous::Widget::Button->new(
-			background_color => [ 43, 58, 85, 255 ],
-			bordered         => 1,
-			border_color     => [ 28, 33, 45, 255 ],    # the dialog background: only the focus shows
-			border_style     => Term::Fabulous::Enum::BorderStyle->Round,
-			layout           => { padding => { left => 1, right => 1 } },
-		);
-		$button->add_child( text($caption) );
-		$button->on( Activate => sub ($event) { $action->(); return } );
-		return $button;
-	}
-
-	my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-	$buttons->add_child(
-		button( 'Quit',   sub { $ui->loop->stop } ),
-		button( 'Cancel', sub { $dialog->close } ),
+	# (border, background, padding), its title and its buttons come with
+	# the widget; pressing a button answers with its id, Escape answers
+	# cancel.
+	my $dialog = Term::Fabulous::Widget::Dialog->new(
+		id      => 'confirm',
+		title   => 'Really quit?',
+		buttons => [ { id => 'quit', label => 'Quit', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
+		layout  => { sizing => { width => sizing_fixed(44) } },
 	);
-	$dialog->add_child( text('Really quit? Unsaved notes are lost.'), $buttons );
+	$dialog->add_child( text('Unsaved notes are lost.') );
+	$dialog->on( Answer => sub ($event) { $ui->loop->stop if $event->button eq 'quit'; return } );
 
 	$root->on(
 		KeyPress => sub ($event) {
@@ -727,19 +714,22 @@ outside it reach nothing behind it. See L<Term::Fabulous::Widget::Dialog>.
 
 =item *
 
-A button shows the focus only through its border, which turns blue
-(C<focus_border_color>). So the buttons get a rounded border in the
-color of the dialog's background, which does not stand out until the
-button has the focus. In the picture, the blue border shows that Enter would
-press Quit. See L<Term::Fabulous::Widget::Button/focus_border_color>.
+The dialog builds its buttons from the C<buttons> list: bordered
+buttons in a row below the content, the C<primary> one (Quit) in the
+theme's primary button colors. A button shows the focus through its
+border, which turns blue (C<focus_border_color>): in the picture, the
+blue border shows that Enter would press Quit. See
+L<Term::Fabulous::Widget::Button/focus_border_color>.
 
 =item *
 
-Escape closes the dialog (C<close_on_escape>, on by default), and so
-does C<< $dialog->close >>; the Cancel button calls it. Closing puts the
-focus back on the text area and fires
-L<Close|Term::Fabulous::Event::Close> on the dialog, then
-L<Answer|Term::Fabulous::Event::Answer> as dismissed.
+Pressing a button closes the dialog and fires
+L<Close|Term::Fabulous::Event::Close> on it, then
+L<Answer|Term::Fabulous::Event::Answer> with the button's id; the
+program stops only for C<quit>. Escape closes it too
+(C<close_on_escape>, on by default), and so does C<< $dialog->close >>:
+both answer C<cancel> as dismissed. Closing puts the focus back on the
+text area.
 
 =item *
 

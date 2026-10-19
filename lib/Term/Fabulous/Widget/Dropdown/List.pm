@@ -20,7 +20,7 @@ class Term::Fabulous::Widget::Dropdown::List
 	use Clay::UI::Enum::Result;
 	use List::Util qw(max);
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RELEASE TB_KEY_MOUSE_WHEEL_UP TB_KEY_MOUSE_WHEEL_DOWN);
-	use Term::Fabulous::Unicode qw(string_columns);
+	use Term::Fabulous::Unicode qw(fit_columns string_columns);
 	use Term::Fabulous::Viewport qw(clamp_offset reveal_range scroll_thumb);
 	use Term::Fabulous::Widget::Scrollbar;
 
@@ -160,7 +160,7 @@ class Term::Fabulous::Widget::Dropdown::List
 		foreach my $row ( 0 .. $#rows ) {
 			my ( $label, $fg, $bg ) = @{ $rows[$row] };
 			$self->put_attrs( $_, $row, ' ', undef, $bg ) foreach 0 .. $width - 1;
-			$self->paint_text( 1, $row, $label, $fg, $bg, $width - 1 );    # a column of margin on either side
+			$self->paint_text( 1, $row, fit_columns( $label, $width - 2 ), $fg, $bg, $width - 1 );    # a column of margin on either side
 		}
 		$self->_paint_scrollbar if $self->_scrolls;
 		return;

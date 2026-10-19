@@ -58,6 +58,7 @@ class Term::Fabulous::Widget::Table
 	use Term::Fabulous::Event::SelectionChange;
 	use Term::Fabulous::Event::SortChange;
 	use Term::Fabulous::Termbox qw(TB_KEY_MOUSE_LEFT TB_KEY_MOUSE_RIGHT TB_MOD_MOTION TB_MOD_SHIFT TB_MOD_CTRL TB_MOD_ALT);
+	use Term::Fabulous::Text::Marks;
 	use Term::Fabulous::Widget::Table::Borders qw(resolve_borders);
 	use Term::Fabulous::Widget::Table::Filter;
 	use Term::Fabulous::Widget::Table::Style qw(style_hash merge_styles);
@@ -2185,14 +2186,24 @@ class Term::Fabulous::Widget::Table
 
 	method page_count () { return $model->page_count }
 
-	# The rows the table takes before it is laid out: the header, the
-	# lines of the current page, and the pager when there are pages. The
-	# lines between rows are not counted.
+	# The rows the table takes before it is laid out: the header rows, the
+	# lines of the current page (or the one line that says there are
+	# none), the lines of the frame around them (the top, the line under
+	# the header rows and the bottom ledge, each when its style draws a
+	# line) and the pager when it shows. The lines between rows are not
+	# counted.
 	method estimated_content_rows :override ($columns) {
-		my $rows = scalar $model->page_lines;
-		$rows++ if $show_header;
-		$rows++ if $self->page_count > 1;
-		return max( 1, $rows );
+		my $header_rows = ( $show_header ? 1 : 0 ) + ( $filter_row ? 1 : 0 );
+		my $rows        = $header_rows + max( 1, scalar $model->page_lines );
+		$rows++ if _draws_line( $_line_style{border_top} );
+		$rows++ if $header_rows && _draws_line( $_line_style{header_line} // $_line_style{row_lines} );
+		$rows++ if _draws_line( $_line_style{border_bottom} );
+		$rows += $_pager->estimated_rows($columns) if $self->_pager_shown;
+		return $rows;
+	}
+
+	sub _draws_line ($style) {
+		return defined $style && $style->name ne 'Hidden' ? 1 : 0;
 	}
 
 	method page_size (@new) {
@@ -2670,6 +2681,10 @@ class Term::Fabulous::Widget::Table
 			nested_highlight_text( [ searchables_in($content) ], $nested, $ranges ) if defined $content;
 			return;
 		}
+
+		# The ranges are checked against the cell's text now, whether or
+		# not the row is built: the text the cell shows is the model's.
+		Term::Fabulous::Text::Marks->new( owner => ref($self), text => $model->display_of( $id, $column ) )->check_spans( highlight => $ranges );
 		$_text_highlights{$slot} = { ranges => $ranges, revision => $model->row_revision($id) };
 		my $text = defined $built ? $built->{text}{$column} : undef;
 		$text->highlights($ranges) if defined $text;
@@ -4049,8 +4064,11 @@ not built.
 
 Marks ranges of a cell's text, now and whenever the cell is built again
 (on another page, after sorting), until the row's data change or
-L</clear_text_highlights> is called. For a widget in a custom cell the
-highlights go to that widget whenever the cell is built.
+L</clear_text_highlights> is called. Offsets past the cell's text die
+at the call, also for a row that is not built. For a widget in a custom
+cell the highlights go to that widget whenever the cell is built, and
+the widget checks them then: its text exists only while the row is
+built.
 
 =head3 clear_text_highlights
 

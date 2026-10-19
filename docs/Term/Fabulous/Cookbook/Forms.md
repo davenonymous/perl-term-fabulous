@@ -493,10 +493,10 @@ Goal: a "Really quit?" dialog that opens over the screen when the user
 presses Ctrl+Q, keeps the keyboard focus inside itself, and closes on Escape
 or a button.
 
-This recipe builds the dialog from its parts, which shows how a dialog
-works; its buttons have colors of their own. A dialog can also bring
-its own `title` and `buttons`, which answer with an `Answer` event
-(see ["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#title-buttons-and-the-notice-line)).
+The dialog brings its own `title` and `buttons`: pressing a button
+answers with its id through an `Answer` event, and Escape answers
+`cancel` (see
+["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#title-buttons-and-the-notice-line)).
 For a question with a few buttons, a
 [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) does the same in one call: see the
 next recipe, ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt), and
@@ -512,11 +512,9 @@ no warnings 'experimental::signatures';
 
 use Term::Fabulous;
 use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::Button;
 use Term::Fabulous::Widget::Dialog;
 use Term::Fabulous::Widget::Text;
 use Term::Fabulous::Widget::TextArea;
-use Term::Fabulous::Enum::BorderStyle;
 use Clay::UI::Enum::Result;
 use Clay::XS qw(sizing_grow sizing_fixed CLAY_TOP_TO_BOTTOM);
 
@@ -538,28 +536,17 @@ $root->add_child( text('Type some notes. Ctrl+Q asks before quitting.'), $notes 
 my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
 
 # The dialog is built once and opened as often as needed. Its look
-# (border, background, padding) comes with the widget.
-my $dialog = Term::Fabulous::Widget::Dialog->new( id => 'confirm', layout => { sizing => { width => sizing_fixed(44) } } );
-
-sub button ( $caption, $action ) {
-        my $button = Term::Fabulous::Widget::Button->new(
-                background_color => [ 43, 58, 85, 255 ],
-                bordered         => 1,
-                border_color     => [ 28, 33, 45, 255 ],    # the dialog background: only the focus shows
-                border_style     => Term::Fabulous::Enum::BorderStyle->Round,
-                layout           => { padding => { left => 1, right => 1 } },
-        );
-        $button->add_child( text($caption) );
-        $button->on( Activate => sub ($event) { $action->(); return } );
-        return $button;
-}
-
-my $buttons = Term::Fabulous::Widget::Box->new( layout => { child_gap => 2 } );
-$buttons->add_child(
-        button( 'Quit',   sub { $ui->loop->stop } ),
-        button( 'Cancel', sub { $dialog->close } ),
+# (border, background, padding), its title and its buttons come with
+# the widget; pressing a button answers with its id, Escape answers
+# cancel.
+my $dialog = Term::Fabulous::Widget::Dialog->new(
+        id      => 'confirm',
+        title   => 'Really quit?',
+        buttons => [ { id => 'quit', label => 'Quit', primary => 1 }, { id => 'cancel', label => 'Cancel' } ],
+        layout  => { sizing => { width => sizing_fixed(44) } },
 );
-$dialog->add_child( text('Really quit? Unsaved notes are lost.'), $buttons );
+$dialog->add_child( text('Unsaved notes are lost.') );
+$dialog->on( Answer => sub ($event) { $ui->loop->stop if $event->button eq 'quit'; return } );
 
 $root->on(
         KeyPress => sub ($event) {
@@ -582,16 +569,19 @@ top of everything, behind a translucent backdrop that dims the rest.
 The first focusable widget inside it (the Quit button) gets the focus,
 Tab and Shift+Tab cycle through the dialog's widgets only, and clicks
 outside it reach nothing behind it. See [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md).
-- A button shows the focus only through its border, which turns blue
-(`focus_border_color`). So the buttons get a rounded border in the
-color of the dialog's background, which does not stand out until the
-button has the focus. In the picture, the blue border shows that Enter would
-press Quit. See ["focus\_border\_color" in Term::Fabulous::Widget::Button](../Widget/Button.md#focus_border_color).
-- Escape closes the dialog (`close_on_escape`, on by default), and so
-does `$dialog->close`; the Cancel button calls it. Closing puts the
-focus back on the text area and fires
-[Close](../Event/Close.md) on the dialog, then
-[Answer](../Event/Answer.md) as dismissed.
+- The dialog builds its buttons from the `buttons` list: bordered
+buttons in a row below the content, the `primary` one (Quit) in the
+theme's primary button colors. A button shows the focus through its
+border, which turns blue (`focus_border_color`): in the picture, the
+blue border shows that Enter would press Quit. See
+["focus\_border\_color" in Term::Fabulous::Widget::Button](../Widget/Button.md#focus_border_color).
+- Pressing a button closes the dialog and fires
+[Close](../Event/Close.md) on it, then
+[Answer](../Event/Answer.md) with the button's id; the
+program stops only for `quit`. Escape closes it too
+(`close_on_escape`, on by default), and so does `$dialog->close`:
+both answer `cancel` as dismissed. Closing puts the focus back on the
+text area.
 - The Ctrl+Q shortcut lives on the root. The text area types letters
 such as q itself, so they never reach the root, but it passes Ctrl+Q
 on. While the dialog is open, no key gets past it: the backdrop stops

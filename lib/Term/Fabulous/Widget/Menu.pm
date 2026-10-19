@@ -75,6 +75,11 @@ class Term::Fabulous::Widget::Menu
 		);
 	}
 
+	method keys_color                 (@new) { return @new ? $self->set_look( keys_color                 => $new[0] ) : $self->look_value('keys_color') }
+	method separator_color            (@new) { return @new ? $self->set_look( separator_color            => $new[0] ) : $self->look_value('separator_color') }
+	method highlight_text_color       (@new) { return @new ? $self->set_look( highlight_text_color       => $new[0] ) : $self->look_value('highlight_text_color') }
+	method highlight_background_color (@new) { return @new ? $self->set_look( highlight_background_color => $new[0] ) : $self->look_value('highlight_background_color') }
+
 	# ---------------------------------------------------------------------
 	# Items
 	# ---------------------------------------------------------------------

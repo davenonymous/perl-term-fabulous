@@ -735,6 +735,8 @@ subtest 'a search reaches every page, and revealing a match turns to its page' =
 		'in row order, column by column';
 	my $revision = $table->search_revision( [ 5, 'name' ] );
 	$table->highlight_text( [ 5, 'name' ], [ [ 0, 2, 'on accent' ] ] );
+	like dies { $table->highlight_text( [ 5, 'name' ], [ [ 0, 99, 'on accent' ] ] ) }, qr/highlight end 99 lies past the text \(3 characters\)/,
+		'offsets past the text of a row that is not built die at the call';
 	is $table->reveal_text( [ 5, 'name' ], 0 ), [ undef, undef ], 'before the table was prepared again, the cell has no widget yet';
 	$h->{ui}->step;
 	is [ $table->page, $table->cursor ], [ 3, 5 ], 'the page turned and the cursor is on the row';

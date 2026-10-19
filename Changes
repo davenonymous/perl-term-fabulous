@@ -1,6 +1,48 @@
 Revision history for Term::Fabulous
 
 0.04    not yet released
+        - A Widget::DocumentView counts the items added to its document
+          as soon as it is asked: count, show_item, scroll_to_bottom
+          and a search reach an item added since the last frame instead
+          of dying with "item N does not exist". A code block the
+          document gets after the view showed it takes the view's
+          highlighter and the sideways offset of the other code blocks
+          when the view builds it.
+        - Term::Fabulous::Scrolling's scroll_to_end (and End, G and
+          Ctrl+End of a document view, and a VirtualList with
+          follow_end) scrolls a VirtualList to the end of its content
+          once its last item is in view, so a last item taller than the
+          view ends at the bottom of the view instead of starting at
+          its top; before, such a list never reached its end and with
+          follow_end never settled.
+        - Widget::Table's highlight_text checks the offsets against the
+          cell's text at the call, also for a row that is not built;
+          before, offsets past the text died in the frame that built
+          the row. Its estimated_rows counts the lines of its frame
+          (the top, the line under the header rows, the bottom ledge)
+          and the filter row, so a DocumentView holding a table no
+          longer guesses it about three rows too short.
+        - Widget::Accordion::Item's reveal_text opens the item through
+          its accordion, so the item that was open closes unless
+          multiple are allowed; before, revealing a match left both
+          open.
+        - Widget::Menu has the documented keys_color, separator_color,
+          highlight_text_color and highlight_background_color
+          accessors.
+        - Widget::Dialog checks z_index against the range Clay has,
+          -32768 to 32767, in new and in the accessor, instead of dying
+          inside Clay::UI at open.
+        - A Widget::Dropdown's list is never wider than the screen and
+          cuts its labels with an ellipsis (fit_columns); before, a
+          list wider than the screen was cut at the right edge with no
+          mark.
+        - examples/widgets/dialog.pl and
+          examples/cookbook/confirm-dialog.pl use the dialog's own title,
+          buttons and Answer; examples/widgets/prompt.pl and
+          examples/cookbook/document-contents.pl escape with
+          Term::Fabulous::Text::Markup::escape_markup; the Right key of
+          examples/widgets/code-block.pl starts from shown_offset, so
+          Left reacts at once after scrolling past the longest line.
         - Render::Geometry::cell_rect rounds every edge of a box to the
           nearest cell instead of flooring it. A layout at fractional
           positions (a percent-wide sidebar, say) gave two boxes that

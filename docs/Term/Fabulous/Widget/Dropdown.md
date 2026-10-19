@@ -45,7 +45,9 @@ opens above. The list shows up to `max_visible_options` options at a
 time; when the terminal has less room on the chosen side, it shrinks to
 that room, but always shows at least one option. A list wider than the
 room right of the dropdown moves left as far as it must to stay on the
-screen ([Term::Fabulous::Placement](../Placement.md)), and the list finds its place
+screen ([Term::Fabulous::Placement](../Placement.md)); one wider than the screen is as
+wide as the screen and cuts its labels with an ellipsis
+(["fit\_columns" in Term::Fabulous::Unicode](../Unicode.md#fit_columns)). The list finds its place
 again in every frame, so it stays on the screen when the terminal
 shrinks while it is open. It scrolls through the
 rest and has a scrollbar when it scrolls, drawn like every scrollbar

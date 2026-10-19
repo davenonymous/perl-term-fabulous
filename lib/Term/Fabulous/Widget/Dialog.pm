@@ -26,8 +26,9 @@ class Term::Fabulous::Widget::Dialog
 	use Term::Fabulous::Widget::Button;
 	use Term::Fabulous::Widget::Text;
 
-	use constant DISMISSED  => 'cancel';    # the button a dismissed dialog answers with
-	use constant RIGHT_EDGE => -1;    # a dialog on the right keeps a column free at the edge
+	use constant DISMISSED      => 'cancel';    # the button a dismissed dialog answers with
+	use constant RIGHT_EDGE     => -1;    # a dialog on the right keeps a column free at the edge
+	use constant LOWEST_Z_INDEX => -32768;    # Clay's z_index is a 16-bit integer, up to TOPMOST_Z_INDEX
 
 	my %DEFAULT_LAYOUT = (
 		layout_direction => CLAY_TOP_TO_BOTTOM,
@@ -62,7 +63,7 @@ class Term::Fabulous::Widget::Dialog
 	}
 
 	ADJUST :params ( :$buttons = [] ) {
-		$z_index         = integer( $self, z_index => $z_index );
+		$z_index         = $self->_checked_z_index($z_index);
 		$close_on_escape = boolean( $self, close_on_escape => $close_on_escape );
 		$title           = string( $self, title => $title );
 		$notice_line     = one_of( $self, notice_line => $notice_line, qw(shown kept row) );
@@ -250,9 +251,15 @@ class Term::Fabulous::Widget::Dialog
 		return $self->set_look( backdrop_color => $new[0] );
 	}
 
+	method _checked_z_index ($value) {
+		$value = integer( $self, z_index => $value );
+		die ref($self) . ": z_index must be an integer from " . LOWEST_Z_INDEX . " to " . TOPMOST_Z_INDEX . ", got $value" if $value < LOWEST_Z_INDEX || $value > TOPMOST_Z_INDEX;
+		return $value;
+	}
+
 	method z_index (@new) {
 		return $z_index unless @new;
-		$z_index = integer( $self, z_index => $new[0] );
+		$z_index = $self->_checked_z_index( $new[0] );
 		$_backdrop->floating( { %{ $_backdrop->floating }, z_index => $z_index } ) if defined $_backdrop;
 		$self->_float_on_the_right if $placement eq 'right';
 		return $z_index;

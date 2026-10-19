@@ -209,6 +209,19 @@ subtest 'a list wider than the room on its right moves left' => sub {
 	like( ( $ui->terminal->lines )[2], qr/ A rather long option label here +\x{2502}\z/, 'and shows the whole label' );
 };
 
+subtest 'a list wider than the screen is as wide as the screen' => sub {
+	my $dropdown = Term::Fabulous::Widget::Dropdown->new(
+		options => [ 'An option label that is much wider than the forty columns of the screen', 'Short' ],
+		layout  => { sizing => { width => sizing_fixed(6) } }
+	);
+	my $ui = layout_ui($dropdown);
+	press( $dropdown, 'Enter' );
+	$ui->step;
+	my ($list) = @{ $dropdown->children };
+	is [ @{ $ui->bounding_box($list) }{qw(x width)} ], [ 0, 40 ], 'the list starts at the left edge and ends at the right one';
+	like( ( $ui->terminal->lines )[2], qr/\A\x{2502} An option label that is much wider \x{2026} \x{2502}\z/, 'and cuts its label with an ellipsis before the frame' );
+};
+
 subtest 'required means a selection' => sub {
 	my ( $dropdown, $ui ) = dropdown( required => 1 );
 	is $dropdown->error, 'Please fill in this field.', 'no selection is invalid';

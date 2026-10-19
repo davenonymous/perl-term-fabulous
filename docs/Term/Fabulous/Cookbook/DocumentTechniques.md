@@ -56,6 +56,7 @@ use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
 use My::Markdown;
 use Term::Fabulous;
 use Term::Fabulous::Layout;
+use Term::Fabulous::Text::Markup qw(escape_markup);
 
 my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
 use Term::Fabulous::Widget::Box as Box
@@ -99,7 +100,7 @@ sub show_contents ($current) {
         my @sections = $document->sections;
         my @lines    = map {
                 my $section = $sections[$_];
-                my $title   = $section->{title} =~ s/\[/\\[/gr;
+                my $title   = escape_markup( $section->{title} );
                 my $mark    = defined $current && $current == $_ ? '[bold]>[/] ' : '  ';
                 $mark . '  ' x ( $section->{level} - 1 ) . "[link=$_]$title\[/link]";
         } 0 .. $#sections;

@@ -1441,8 +1441,11 @@ $table->highlight_text( [ $id, $key ], [ [ $start, $end, 'on selection' ] ] );
 
 Marks ranges of a cell's text, now and whenever the cell is built again
 (on another page, after sorting), until the row's data change or
-["clear\_text\_highlights"](#clear_text_highlights) is called. For a widget in a custom cell the
-highlights go to that widget whenever the cell is built.
+["clear\_text\_highlights"](#clear_text_highlights) is called. Offsets past the cell's text die
+at the call, also for a row that is not built. For a widget in a custom
+cell the highlights go to that widget whenever the cell is built, and
+the widget checks them then: its text exists only while the row is
+built.
 
 ### clear\_text\_highlights
 

@@ -174,7 +174,8 @@ $view->highlighter( sub ( $code, $language ) { ... } );
 ```
 
 Gets or sets the `highlighter`, which goes to the code blocks of the
-document at once.
+document at once, and to a code block added later when the view builds
+it.
 
 ## indent
 

@@ -263,6 +263,31 @@ subtest 'code scrolls sideways' => sub {
 	is $view->code_offset, 3, 'so does the horizontal wheel, three columns a notch';
 };
 
+subtest 'items added later are known at once' => sub {
+	my $document = document( [ paragraph => 'First.' ] );
+	my ( $view, $h ) = document_ui( $document, 40, 8 );
+	$document->heading( 2, 'Later' );
+	is $view->count, 2, 'count sees the new item before a frame';
+	ok lives { $view->show_item( $document->find_section('Later') ) }, 'show_item reaches it';
+	$document->paragraph('Last.');
+	is $view->scroll_to_bottom, 1, 'scroll_to_bottom goes to the newest item';
+	$h->{ui}->step;
+	is $view->visible_items->{last}, 2, 'which the next frame shows';
+};
+
+subtest 'a code block added later takes the highlighter and the code offset' => sub {
+	my $document = document( [ code => join ' ', ('word') x 30 ], [ paragraph => 'Text.' ] );
+	my ( $view, $h ) = document_ui( $document, 40, 8 );
+	my $highlighter = sub ( $code, $language ) { [] };
+	$view->highlighter($highlighter);
+	press( $h, 'Right' );
+	my $late = $document->code('say 1;');
+	$view->show_item(2);
+	$h->{ui}->step;
+	ref_is $late->highlighter, $highlighter, 'the new block has the highlighter of the view';
+	is $late->offset, 8, 'and is scrolled sideways like the others';
+};
+
 subtest 'theme switch' => sub {
 	my ( $view, $h ) = document_ui( sample_document() );
 	$h->{ui}->theme('light');

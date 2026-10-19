@@ -51,6 +51,9 @@ subtest 'items and how they look' => sub {
 	is row_text( $menu, 3 ), " \x{2713} Wrap            ", 'a toggle that is on shows its check mark';
 	is $menu->highlighted,   0,                            'the first enabled item is highlighted';
 	ok $menu->bordered->{top}, 'a menu has a border from the theme';
+	ok( ( !grep { !defined $menu->$_ } qw(keys_color separator_color highlight_text_color highlight_background_color) ), 'the color accessors read the theme' );
+	$menu->separator_color('#ff0000');
+	ok $menu->has_look_override('separator_color'), 'and set a color of their own';
 };
 
 subtest 'keys move over enabled items and choose' => sub {

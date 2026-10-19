@@ -262,8 +262,11 @@ class Term::Fabulous::Widget::Accordion::Item
 		return searchables_in($_body);
 	}
 
+	# Opens the item the way its accordion opens one, so that the others
+	# close unless several may be open.
 	method reveal_part ($part) {
-		$self->open(1);
+		my $accordion = $self->accordion;
+		defined $accordion ? $accordion->open($self) : $self->open(1);
 		return;
 	}
 }
