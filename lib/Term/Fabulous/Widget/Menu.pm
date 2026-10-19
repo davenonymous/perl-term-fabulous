@@ -10,7 +10,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Role::Popup;
 use Term::Fabulous::Widget::Input;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 class Term::Fabulous::Widget::Menu
 	:isa(Term::Fabulous::Widget::Input)
@@ -450,7 +450,7 @@ in a menu bar or on its own
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-menu.svg" alt="A list of files with a context menu opened over budget.csv where it was right-clicked: Open with Enter, Rename... with F2, a line, Cut with Ctrl+X, a dimmed Paste with Ctrl+V, a line, and Show hidden files with a check mark and Alt+h. The pointer highlights Rename..."></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/widget-menu.svg" alt="A list of files with a context menu opened over budget.csv where it was right-clicked: Open with Enter, Rename... with F2, a line, Cut with Ctrl+X, a dimmed Paste with Ctrl+V, a line, and Show hidden files with a check mark and Alt+h. The pointer highlights Rename..."></p>
 
 =end html
 

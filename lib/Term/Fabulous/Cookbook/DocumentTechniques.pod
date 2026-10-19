@@ -159,7 +159,7 @@ This program is shipped as F<examples/cookbook/document-contents.pl>.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-document-contents.svg" alt="Two framed panes: on the left the headings of the snapback manual as links, indented by level, with a mark in front of Hooks; on the right the Hooks section with a Perl code block"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-document-contents.svg" alt="Two framed panes: on the left the headings of the snapback manual as links, indented by level, with a mark in front of Hooks; on the right the Hooks section with a Perl code block"></p>
 
 =end html
 
@@ -307,7 +307,7 @@ This program is shipped as F<examples/cookbook/code-highlighting.pl>.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-code-highlighting.svg" alt="Three code blocks with highlighted syntax: a Perl script with gray comments, purple keywords, red variables and green strings, whose long last line ends in a clip mark at the right edge; a shell command with a blue command name and an orange option; a configuration file with red keys"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-code-highlighting.svg" alt="Three code blocks with highlighted syntax: a Perl script with gray comments, purple keywords, red variables and green strings, whose long last line ends in a clip mark at the right edge; a shell command with a blue command name and an orange option; a configuration file with red keys"></p>
 
 =end html
 
@@ -316,7 +316,7 @@ together:
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-code-highlighting-scrolled.svg" alt="The same code blocks, the Perl script scrolled sixteen columns to the left with clip marks on the left of every line; the shorter shell and configuration lines did not move"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-code-highlighting-scrolled.svg" alt="The same code blocks, the Perl script scrolled sixteen columns to the left with clip marks on the left of every line; the shorter shell and configuration lines did not move"></p>
 
 =end html
 
@@ -469,7 +469,7 @@ This program is shipped as F<examples/cookbook/document-styles.pl>.
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-document-styles.svg" alt="A short manual in the light theme: a green first-level heading, key names such as Ctrl+S in bold on a gray background, an underlined word, a file name in blue and a phrase highlighted on a yellow background"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-document-styles.svg" alt="A short manual in the light theme: a green first-level heading, key names such as Ctrl+S in bold on a gray background, an underlined word, a file name in blue and a phrase highlighted on a yellow background"></p>
 
 =end html
 
@@ -629,7 +629,7 @@ the file named on its command line, or the source of the Markdown reader of L<Te
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-pager-keys.svg" alt="A Perl module in a scroll box, scrolled to 24 percent, with the line method _start_paragraph highlighted in yellow at the bottom; the status line shows the file name and the percentage"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-pager-keys.svg" alt="A Perl module in a scroll box, scrolled to 24 percent, with the line method _start_paragraph highlighted in yellow at the bottom; the status line shows the file name and the percentage"></p>
 
 =end html
 
@@ -750,7 +750,7 @@ named after it, or the release notes:
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/cookbook-document-widgets.svg" alt="The release notes of snapback scrolled to the table of releases, which shows its second page: the release 1.4 with the matched text 5.10 highlighted in its last column, the pager under the table, and the list of the release 2.1 below"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/cookbook-document-widgets.svg" alt="The release notes of snapback scrolled to the table of releases, which shows its second page: the release 1.4 with the matched text 5.10 highlighted in its last column, the pager under the table, and the list of the release 2.1 below"></p>
 
 =end html
 

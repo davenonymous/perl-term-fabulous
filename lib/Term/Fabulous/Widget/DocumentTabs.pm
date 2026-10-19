@@ -9,7 +9,7 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Display;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 class Term::Fabulous::Widget::DocumentTabs
 	:isa(Term::Fabulous::Widget::Display)
@@ -340,7 +340,7 @@ documents of a program
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-document-tabs.svg" alt="A row of document tabs at the top: notes.txt with a blue dot for unsaved changes, config.kdl with a red exclamation mark for errors, todo.md, and the active tab budget.csv in bold on a lighter background with a blue dot, each with a close mark, then an arrow to a hidden tab and a plus button. Below, the text of budget.csv, a dim line with the keys that switch, close and add tabs, and a status bar with the message Closed README.md."></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/widget-document-tabs.svg" alt="A row of document tabs at the top: notes.txt with a blue dot for unsaved changes, config.kdl with a red exclamation mark for errors, todo.md, and the active tab budget.csv in bold on a lighter background with a blue dot, each with a close mark, then an arrow to a hidden tab and a plus button. Below, the text of budget.csv, a dim line with the keys that switch, close and add tabs, and a status bar with the message Closed README.md."></p>
 
 =end html
 

@@ -9,7 +9,7 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Box;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 # A color chooser built from other widgets: a field for the color as
 # text, a sample of it, sliders for its channels (RGB or HSL, switched by
@@ -435,7 +435,7 @@ choosing a color
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-color-picker.svg" alt="Two color pickers. The upper one has a framed list of named swatches with color samples on the left, Orange selected, an empty field with a sample of the orange next to it, the RGB/HSL switch on RGB and the red, green, blue and alpha sliders at the orange. The lower one has no list and no alpha slider, its field shows #2e8b57 and its sliders show hue, saturation and lightness. Below each picker a line names the chosen value and its channels"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/widget-color-picker.svg" alt="Two color pickers. The upper one has a framed list of named swatches with color samples on the left, Orange selected, an empty field with a sample of the orange next to it, the RGB/HSL switch on RGB and the red, green, blue and alpha sliders at the orange. The lower one has no list and no alpha slider, its field shows #2e8b57 and its sliders show hue, saturation and lightness. Below each picker a line names the chosen value and its channels"></p>
 
 =end html
 

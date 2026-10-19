@@ -1,6 +1,6 @@
 Revision history for Term::Fabulous
 
-0.05    not yet released
+0.05    2026-10-19
         - Fix from CPAN Testers: on perls built with long doubles, a press
           exactly double_click_seconds after the one before continues
           the run of clicks, as documented; the difference of the two

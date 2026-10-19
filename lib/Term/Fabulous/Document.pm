@@ -9,7 +9,7 @@ use Object::Pad 0.825;
 
 use Term::Fabulous::Widget::Text;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 # The marker of a list item: a text a search passes over, since the
 # bullets and numbers of a list are not content.

@@ -7,7 +7,7 @@ no warnings 'experimental::signatures';
 
 use Object::Pad 0.825;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 class Term::Fabulous::Widget::Box
 	:isa(Term::Fabulous::Widget)
@@ -270,7 +270,7 @@ Term::Fabulous::Widget::Box - The general-purpose container widget
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/widget-box.svg" alt="A card with a title and body text, and three boxes labeled fit, grow and fixed(14)"></p>
 
 =end html
 

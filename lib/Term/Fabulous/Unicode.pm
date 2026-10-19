@@ -5,7 +5,7 @@ use warnings;
 use feature 'signatures';
 no warnings 'experimental::signatures';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use Exporter 'import';
 our @EXPORT_OK = qw(sanitize_text grapheme_clusters cluster_columns string_columns fit_columns terminal_is_utf8 ELLIPSIS);

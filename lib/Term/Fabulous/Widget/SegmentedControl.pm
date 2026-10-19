@@ -10,7 +10,7 @@ use Object::Pad 0.825;
 use Term::Fabulous::Role::HasOptions;
 use Term::Fabulous::Widget::Input;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 class Term::Fabulous::Widget::SegmentedControl
 	:isa(Term::Fabulous::Widget::Input)
@@ -291,7 +291,7 @@ shown side by side
 
 =begin html
 
-<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.04/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.05/screenshots/widget-segmented-control.svg" alt="Segmented controls: a focused one with Week selected, one stretched to the full width, one with a disabled segment, a vertical one, and a disabled one"></p>
 
 =end html
 

@@ -11,7 +11,7 @@ use Term::Fabulous::Widget::Box;
 use Term::Fabulous::Widget::Tabs::Button;
 use Term::Fabulous::Widget::Tabs::Line;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 class Term::Fabulous::Widget::Tabs::Bar
 	:isa(Term::Fabulous::Widget::Box)
