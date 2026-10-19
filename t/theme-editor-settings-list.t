@@ -74,10 +74,10 @@ sub sections () {
 
 subtest 'sections open and close, and the cursor moves with them' => sub {
 	my ( $list, $ui, $seen ) = settings_list( sections() );
-	is [ $list->filtered_row_ids ],        [qw(#button #table)],       'every section starts closed';
+	is [ $list->filtered_row_ids ],        [ '#button', '#table' ],    'every section starts closed';
 	is [ $list->cursor, $seen->{cursor} ], [ '#button', ['#button'] ], 'the cursor starts on the first row and says so';
 	$list->expand('#button');
-	is [ $list->filtered_row_ids ], [qw(#button button.color button.border #table)], 'an open section shows its rows';
+	is [ $list->filtered_row_ids ], [ '#button', 'button.color', 'button.border', '#table' ], 'an open section shows its rows';
 	$list->cursor('button.border');
 	is $list->cursor_index, 2, 'the cursor on a row of it';
 	$list->collapse('#button');
@@ -94,22 +94,22 @@ subtest 'a search shows the settings it finds with their sections' => sub {
 	my ( $list, $ui ) = settings_list( sections() );
 	$list->expand('#table');
 	$list->search('BLUE');
-	is [ $list->filtered_row_ids ], [qw(#button button.color button.border)], 'any case, the sections open, a section with nothing found gone';
+	is [ $list->filtered_row_ids ], [ '#button', 'button.color', 'button.border' ], 'any case, the sections open, a section with nothing found gone';
 	$list->search('button');
-	is [ $list->filtered_row_ids ], [qw(#button button.color button.border)], 'the id counts, a section does not match by itself';
+	is [ $list->filtered_row_ids ], [ '#button', 'button.color', 'button.border' ], 'the id counts, a section does not match by itself';
 	$list->search('table');
-	is [ $list->filtered_row_ids ], [qw(#table table.color)], 'only its settings bring a section';
+	is [ $list->filtered_row_ids ], [ '#table', 'table.color' ], 'only its settings bring a section';
 	$list->search('');
-	is [ $list->filtered_row_ids ], [qw(#button #table table.color)], 'after the search the sections are open as before';
+	is [ $list->filtered_row_ids ], [ '#button', '#table', 'table.color' ], 'after the search the sections are open as before';
 	like dies { $list->search('blue')->cursor('table.color') }, qr/the row 'table.color' is not shown \(a search or filter hides it\)/, 'a cursor on a hidden row dies';
 };
 
 subtest 'the only-set filter' => sub {
 	my ( $list, $ui ) = settings_list( sections() );
 	$list->filter( only_set => sub ($row) { $row->{set} } );
-	is [ $list->filtered_row_ids ], [qw(#button button.color)], 'only the settings that pass, in their open sections';
+	is [ $list->filtered_row_ids ], [ '#button', 'button.color' ], 'only the settings that pass, in their open sections';
 	$list->filter( only_set => undef );
-	is [ $list->filtered_row_ids ], [qw(#button #table)], 'undef removes it';
+	is [ $list->filtered_row_ids ], [ '#button', '#table' ], 'undef removes it';
 };
 
 subtest 'keys fold sections and move the cursor' => sub {
