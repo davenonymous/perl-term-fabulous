@@ -434,7 +434,11 @@ underline in the accent color, are in the picture of
 background and the underline of its words: the bold link on the page
 `links` stays bold. See ["Looks" in Term::Fabulous::Widget::Text](../Widget/Text.md#looks).
 - For many Texts that share one selection, as in a document viewer,
-see ["Links in a bigger widget" in Term::Fabulous::Widget::Text](../Widget/Text.md#links-in-a-bigger-widget).
+see ["Links in a bigger widget" in Term::Fabulous::Widget::Text](../Widget/Text.md#links-in-a-bigger-widget). A
+[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) does that for a whole
+document; the recipe
+["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
+follows its links.
 
 # React to a click on a word (TextClick)
 
@@ -472,7 +476,7 @@ my $root = Term::Fabulous::Widget::Box->new(
         },
 );
 
-# A plain Text and a Text, wrapped at 48 columns by the box around
+# A plain Text and one with a span, wrapped at 48 columns by the box around
 # them. A click on either fires TextClick on it.
 my $article = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(48) }, child_gap => 1 } );
 $article->add_child(
@@ -529,7 +533,6 @@ The picture shows the program after a left click on `terminal.` and a
 right click on the bold `span`.
 
 - A mouse button pressed on a character of a
-[Term::Fabulous::Widget::Text](../Widget/Text.md) or a
 [Term::Fabulous::Widget::Text](../Widget/Text.md) fires
 [TextClick](../Event/TextClick.md) on that text. Every
 button counts, the left, the middle and the right one; dragging,
@@ -542,14 +545,17 @@ strips what it does not want. On a blank it is `undef`.
 widget's text, counted in characters from 0, also on the second line of
 a wrapped text; `word_start` and `word_end` are the offsets of the
 word's first character and of the character after its last.
-- For a Text, `$event->spans` lists the spans under the pointer
-as `[ $start, $end, $style ]`, and `$event->link` is the target of
-the link there, if any.
+- For a text with spans (here the second one), `$event->spans`
+lists the spans under the pointer as `[ $start, $end, $style ]`, and
+`$event->link` is the target of the link there, if any.
 - `TextClick` bubbles, so a listener on any box around the texts hears
 every one of them; `$event->target` is the Text that was clicked.
 The `Mouse` event of the same press still goes to the box behind the
 text, before the `TextClick`, so programs that listen for `Mouse`
-see no change.
+see no change. A `Mouse` listener tells a double click from a single
+one with `$event->click_count`
+(["click\_count" in Term::Fabulous::Event::Mouse](../Event/Mouse.md#click_count)); `TextClick` does not
+carry it.
 
 # SEE ALSO
 

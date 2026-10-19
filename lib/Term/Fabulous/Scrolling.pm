@@ -46,8 +46,8 @@ sub page_rows ( $ui, $widget ) {
 }
 
 # Clay keeps the scroll position as a negative offset from the start of
-# the content, x for columns, y for rows; this module is the one place
-# that turns it into the positive offset everything else uses.
+# the content, x for columns, y for rows; this module turns it into a
+# positive offset, so a program never has to.
 my %AXIS = ( rows => [ y => 'height' ], columns => [ x => 'width' ] );
 
 sub _offset ( $state, $axis = 'rows' ) {
@@ -243,11 +243,12 @@ This module provides these moves for any scroll container, such as a
 L<Term::Fabulous::Widget::ScrollBox>, a
 L<Term::Fabulous::Widget::VirtualList> or a
 L<Term::Fabulous::Widget::DocumentView>.
-L<Term::Fabulous::Cookbook::Documents> has a recipe that scrolls a
-ScrollBox with pager keys using these functions.
+L<Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>
+is a recipe that scrolls a ScrollBox with pager keys using these
+functions.
 
 All scroll containers are scrolled the same way, with the UI's
-L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
+L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, content_box, scroll_state, scroll_to">
 methods, and this module applies the same rules to all of them:
 
 =over
@@ -300,8 +301,9 @@ and returns 0.
 Before the first frame has laid the container out, Clay knows neither
 its size nor its scroll position, so there is nothing to scroll. Until
 then the functions that scroll return 0 without doing anything,
-L</page_rows> and L</scrolled_percent> return C<undef>, and
-L</inner_rows> returns an empty list.
+L</page_rows>, L</scroll_offset>, L</max_scroll_offset> and
+L</scrolled_percent> return C<undef>, and L</inner_rows> returns an
+empty list.
 
 The calculations come from L<Term::Fabulous::Viewport>. The functions
 take the UI and the container as arguments rather than being methods of
@@ -315,8 +317,8 @@ into view, and for the percentage it reports.
 Nothing is exported by default. Every function takes the UI (a
 L<Term::Fabulous> object) and the scroll container as its first two
 arguments and dies when the UI cannot report scroll states or the
-container is not an object. Counts of rows and pages must be integers;
-a negative count scrolls up. Anything else dies.
+container is not an object. Counts of rows, columns and pages must be
+integers; a negative count scrolls up (or left). Anything else dies.
 
 =head2 scroll_by_rows
 
@@ -363,7 +365,7 @@ or has no items.
 Scrolls the rows from screen row C<$from> up to, but not including,
 screen row C<$to> into the container's inner rows (see L</inner_rows>).
 Both rows are screen coordinates, as
-L<Term::Fabulous/"bounding_box, scroll_state, scroll_to"> reports them.
+L<Term::Fabulous/"bounding_box, content_box, scroll_state, scroll_to"> reports them.
 C<align> says how:
 
 =over
@@ -470,8 +472,10 @@ container out.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Viewport>,
+L<Term::Fabulous::Cookbook::DocumentTechniques>, L<Term::Fabulous::Viewport>,
 L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Widget::VirtualList>,
-L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Manual::Events/SCROLLING>.
+L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Manual::Events/SCROLLING>,
+L<Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>,
+L<Term::Fabulous::Widget::ScrollBox/follow_end>.
 
 =cut

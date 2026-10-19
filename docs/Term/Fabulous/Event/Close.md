@@ -13,22 +13,23 @@ $dialog->on( Close => sub ($event) {
 
 # DESCRIPTION
 
-A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) fires `Close` on itself when it
-closes, whether the user pressed `Escape` or the program called
-`$dialog->close`. When the listeners run, the dialog is no longer
-part of the widget tree, and the keyboard focus has gone back to the
-widget that had it before the dialog opened, if that widget can still
-take the focus.
+A [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) (a Prompt, a FileDialog, a
+KeyReference included) fires `Close` on itself whenever it closes: when
+a button or the `answer` method answers it, when the user presses
+`Escape`, or when the program calls `$dialog->close`. `Answer`
+([Term::Fabulous::Event::Answer](Answer.md)) follows right after. When the
+listeners run, the dialog is no longer part of the widget tree, and the
+keyboard focus has gone back to the widget that had it before the dialog
+opened, if that widget can still take the focus.
 
 A [Term::Fabulous::Widget::Toast](../Widget/Toast.md) fires it on itself when it goes
 away: when its timeout runs out, when the user clicks its close mark,
 or when the program calls `$toast->hide`.
 
-A [Term::Fabulous::Widget::Menu](../Widget/Menu.md) that was opened as a popup fires it
-on itself when it closes: when the user chooses an item, presses
-`Escape` or moves the focus elsewhere, or when the program calls
-`$menu->close`. A [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) fires it like
-every dialog, before its `Answer`.
+A [Term::Fabulous::Widget::Menu](../Widget/Menu.md) that was opened as a popup fires it on
+itself when it closes: when the user chooses an item, presses `Escape`
+or moves the focus elsewhere, or when the program calls
+`$menu->close`.
 
 The event has no fields of its own; `$event->target` is the
 dialog, the toast or the menu. It is a [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent)

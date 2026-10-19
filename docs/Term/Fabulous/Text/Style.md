@@ -32,9 +32,9 @@ words, in the manner of Python's `rich` library, or given as a hash.
 This module turns both into one normalized hash, stacks such hashes
 (["compose\_styles"](#compose_styles)) and applies one to a look (["apply\_style"](#apply_style)). These
 two functions are the only place where style bits are combined:
-[Term::Fabulous::Widget::Text](../Widget/Text.md) composes the styles of nested spans
-with the first, and [Term::Fabulous::Render::Text](../Render/Text.md) paints each run of
-a line with the second.
+["runs" in Term::Fabulous::Text::Marks](Marks.md#runs) composes the styles of overlapping
+ranges with the first, and [Term::Fabulous::Render::Text](../Render/Text.md) and
+[Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) paint each run with the second.
 
 ## Style strings
 
@@ -86,15 +86,17 @@ The normalized form has exactly these keys:
 
 ```perl
 {
-        set        => $bits,            # style bits to set
-        clear      => $bits,            # style bits to clear
-        color      => $rgba | undef,    # [ r, g, b, a ], undef leaves the color alone
-        background => $rgba | undef,
+        set        => $bits,                     # style bits to set
+        clear      => $bits,                     # style bits to clear
+        color      => $rgba | $token | undef,    # [r, g, b, a] or a palette token's name;
+                                                 # undef leaves it alone
+        background => $rgba | $token | undef,
 }
 ```
 
 Colors are `[r, g, b, a]` with alpha 0 for the terminal's default
-color; `undef` means the style does not touch that color.
+color, or the name of a palette token (see ["Palette tokens"](#palette-tokens));
+`undef` means the style does not touch that color.
 
 # FUNCTIONS
 
@@ -119,9 +121,10 @@ my $style = style($string_or_hash);
 
 Returns a normalized style hash for a style string or a hash with any
 of the keys of ["Style hashes"](#style-hashes); missing keys are 0 or `undef`, and
-the colors may be in any format [Term::Fabulous::Color](../Color.md) accepts. The
-result is a new hash. Unknown keys, invalid bits (not a non-negative
-integer) and invalid colors die.
+the colors may be in any format [Term::Fabulous::Color](../Color.md) accepts, or a
+palette token's name, kept as it is. The result is a new hash.
+Unknown keys, invalid bits (not a non-negative integer) and invalid
+colors die.
 
 ## compose\_styles
 
@@ -162,8 +165,8 @@ The style with every palette token among its `color` and
 `background` replaced by the `[r, g, b, a]` the
 [theme](../Theme.md) gives it (`$theme->token`); a style
 without tokens comes back as it is. A token the theme does not know
-dies. [Term::Fabulous::Widget::Text](../Widget/Text.md) and
-[Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) call it when they paint.
+dies. ["runs" in Term::Fabulous::Text::Marks](Marks.md#runs) calls it with the theme the
+widget draws with.
 
 # SEE ALSO
 

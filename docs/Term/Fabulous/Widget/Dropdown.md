@@ -32,8 +32,8 @@ say $color->selected_label;          # 'Dark green'
 The picture shows three dropdowns: one without a selection, showing its
 placeholder; one with France selected; and a focused one whose list is
 open, with the selected option Green in the `accent_color` and the
-highlighted option Blue on the `accent_color`. The program is
-`examples/widgets/dropdown.pl`.
+highlighted option Blue on the theme's `dropdown.highlight.background`.
+The program is `examples/widgets/dropdown.pl`.
 
 A dropdown shows the label of the selected option (or a placeholder)
 and a small arrow. When the user opens it, the options appear in a list
@@ -140,8 +140,9 @@ Unknown parameters die.
 
     A color, as above. The text color of the highlighted option in the open
     list, which is painted on the theme's `dropdown.highlight.background`
-    (the accent). Default: the theme's `dropdown.highlight.text`,
-    `[16, 18, 22, 255]` in the dark theme, nearly black.
+    (or on the `accent_color` when the program gave one). Default: the
+    theme's `dropdown.highlight.text`, `[16, 18, 22, 255]` in the dark
+    theme, nearly black.
 
 - `background_color`
 
@@ -245,8 +246,8 @@ $dropdown->list_background_color([ 20, 20, 30, 255 ]);
 ```
 
 Accessor for the `list_background_color` parameter. Writing returns the
-new color as `[r, g, b, a]`; it takes effect the next time the list opens. An
-invalid color dies and leaves the old one.
+new color as `[r, g, b, a]`; an open list shows it in the next frame.
+An invalid color dies and leaves the old one.
 
 ## highlight\_text\_color
 
@@ -480,9 +481,11 @@ my ( $fg, $bg ) = $self->option_attrs($index);
 ```
 
 The termbox2 attributes of an option's row in the list: the
-`highlight_text_color` on the `accent_color` for the highlighted
-option, the `accent_color` for the selected one, the `text_color` for
-the others (`undef` background: the list background shows).
+`highlight_text_color` on the theme's `dropdown.highlight.background`
+(or on the `accent_color` when the program gave one) for the
+highlighted option, the `disabled_color` for a disabled one, the
+`accent_color` for the selected one, the `text_color` for the others
+(`undef` background: the list background shows).
 
 ## option\_label
 

@@ -43,10 +43,11 @@ Term::Fabulous::Widget::Table::Cell - A cell of a table
 =head1 DESCRIPTION
 
 The box L<Term::Fabulous::Widget::Table> puts around every cell it
-shows: header cells, filter fields, data cells, the cells that span
-the columns (group headers, the text of an empty table) and the empty
-cells of the ledges that draw the top of the frame (without column
-titles) and its bottom. It is a
+shows: header cells, filter fields, data cells, the cells that span the
+columns (group headers, the text of an empty table) and the empty cells
+of the I<ledges>, the rows that only draw the top of the frame (without
+column titles) or its bottom (see
+L<Term::Fabulous::Widget::Table::Borders/Who draws it>). It is a
 L<Term::Fabulous::Widget::Box> that composes
 L<Clay::UI::Role::Layout::GridCell>, so the table's grids size it as the
 cell of its column and row. The table gives it its background, padding

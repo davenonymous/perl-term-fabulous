@@ -192,7 +192,8 @@ it, so the preview shows the value in its true colors:
 
 Every choice shows in the preview while the dialog is open; a state
 such as `focused` or `hovered` shows on a widget of the preview that
-has the focus or is under the pointer (`F6` goes into the preview).
+has the focus or is under the pointer (`F6` goes into the preview, to
+its first widget in Tab order).
 `Apply` (or `Enter` in the list or a field) writes the value to the
 theme, `Reset to default` removes the setting, and `Cancel` or
 `Escape` leaves the theme as it was. A value the setting cannot take,
@@ -418,7 +419,8 @@ Text mode
 
 ```text
 The preview
-  F6                   Into the preview, back to the settings
+  F6                   Into the preview (its first widget in Tab
+                       order), back to the settings
   Tab, Shift+Tab       Between the widgets
   PageUp, PageDown     Scroll
   Ctrl+Home, Ctrl+End  To the top, to the end
@@ -549,11 +551,12 @@ Term::Fabulous::ThemeEditor->new(
 
 The widgets of the preview are yours: they can have listeners, change
 while the editor runs, and take the keyboard (`F6` goes into the
-preview). Give them no colors of their own where the theme should
-decide. The preview scrolls in both directions when it is larger than
-its pane, with the mouse wheel and with `PageUp`, `PageDown`,
-`Ctrl+Home` and `Ctrl+End`. Unlike the gallery, it does not scroll to
-the family of the setting under the form's cursor.
+preview, to its first widget in Tab order). Give them no colors of
+their own where the theme should decide. The preview scrolls in both
+directions when it is larger than its pane, with the mouse wheel and
+with `PageUp`, `PageDown`, `Ctrl+Home` and `Ctrl+End`. Unlike the
+gallery, it does not scroll to the family of the setting under the
+form's cursor.
 
 ## Using the theme
 

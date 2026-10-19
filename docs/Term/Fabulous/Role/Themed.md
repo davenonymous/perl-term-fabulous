@@ -277,7 +277,9 @@ no UI or in a UI that has no theme (a plain [Clay::UI](https://metacpan.org/pod/
 ["family\_look"](#family_look) and ["look\_value"](#look_value) read it; a widget that resolves
 styles or palette tokens itself ([Term::Fabulous::Text::Style](../Text/Style.md)) or
 builds a [Term::Fabulous::Document::Look](../Document/Look.md) asks it too, so that every
-part of the widget draws in one theme.
+part of the widget draws in one theme. A widget of your own asks it
+instead of `$ui->theme`; see
+["Colors from the theme" in Term::Fabulous::Manual::CustomWidgets](../Manual/CustomWidgets.md#colors-from-the-theme).
 
 ## family\_look
 

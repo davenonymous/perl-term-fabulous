@@ -226,18 +226,18 @@ In a KDL layout file:
 		underline #true
 	}
 
-These are the only text styles a Text widget has, and they apply to
-the whole text. For a bold word inside a sentence, a colored phrase or
-reverse video, use a Text.
+These styles apply to the whole text. For a bold word inside a
+sentence, a colored phrase or reverse video, give the Text spans or
+markup (see the next section).
 
 =head2 Styled spans inside one text
 
-A L<Term::Fabulous::Widget::Text> is a Text whose I<spans> give
+The I<spans> of a L<Term::Fabulous::Widget::Text> give
 ranges of its characters a look of their own: style bits (bold, italic,
 underline, reverse, dim, blink, strike, overline, conceal), a text
-color and a background. The text wraps and aligns exactly like a Text;
-a span simply continues on the next line. The shortest way to write
-one is markup in the syntax of Python's C<rich> library:
+color and a background. Spans do not change how the text wraps and
+aligns; a span simply continues on the next line. The shortest way to
+write one is markup in the syntax of Python's C<rich> library:
 
 	my $hint = Term::Fabulous::Widget::Text->new(
 		markup => 'Press [bold]Enter[/] to save, [bold #e06c75]Esc[/] to leave.',
@@ -251,6 +251,11 @@ or any color string of L<Term::Fabulous::Color>), C<on COLOR> for the
 background, and C<default> for the terminal's own color. See
 L<Term::Fabulous::Text::Style> for the words and
 L<Term::Fabulous::Text::Markup> for the tags.
+
+A color in a style may be a palette token of the theme, such as
+C<'bold accent on surface_low'>; it is looked up when the text paints,
+so a theme switch recolors it (see
+L<Term::Fabulous::Text::Style/Palette tokens>).
 
 Spans can also be given as character ranges, or added later:
 
@@ -277,6 +282,11 @@ The widget's own C<text_color>, C<bold>, C<italic> and C<underline> are
 the base look that the spans change. The program
 F<examples/widgets/rich-text.pl> shows markup, spans, every style word
 and a wrapped paragraph side by side.
+
+I<Highlights> are a layer of their own over the spans: ranges with a
+style, such as the matches a search marks, that are set and cleared
+without touching the spans (see
+L<Term::Fabulous::Widget::Text/highlights>).
 
 =head2 Links inside a text
 

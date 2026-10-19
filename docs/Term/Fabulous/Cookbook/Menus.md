@@ -627,6 +627,8 @@ text area uses `Ctrl+W` to delete a word). Their `enabled` code turns
 them off while no document is open.
 - When there are more tabs than fit, the row scrolls so that the active
 tab is always shown, and arrows at its ends lead to the hidden ones.
+A title that is wider than the row is cut and ends in an ellipsis
+(see ["fit\_columns" in Term::Fabulous::Unicode](../Unicode.md#fit_columns)).
 
 # SEE ALSO
 

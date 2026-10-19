@@ -5,10 +5,11 @@ Term::Fabulous::Widget::Table::Cell - A cell of a table
 # DESCRIPTION
 
 The box [Term::Fabulous::Widget::Table](../Table.md) puts around every cell it
-shows: header cells, filter fields, data cells, the cells that span
-the columns (group headers, the text of an empty table) and the empty
-cells of the ledges that draw the top of the frame (without column
-titles) and its bottom. It is a
+shows: header cells, filter fields, data cells, the cells that span the
+columns (group headers, the text of an empty table) and the empty cells
+of the _ledges_, the rows that only draw the top of the frame (without
+column titles) or its bottom (see
+["Who draws it" in Term::Fabulous::Widget::Table::Borders](Borders.md#who-draws-it)). It is a
 [Term::Fabulous::Widget::Box](../Box.md) that composes
 [Clay::UI::Role::Layout::GridCell](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AGridCell), so the table's grids size it as the
 cell of its column and row. The table gives it its background, padding

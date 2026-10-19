@@ -186,9 +186,9 @@ C<Term::Fabulous::Text::Markup:>.
 
 	my $markup = 'There is no file [bold]' . escape_markup($name) . '[/].';
 
-Returns C<$text> as markup that shows it as it is: every C<[> becomes
-C<\[>, so a file name, a user's input or an error message cannot open
-or close a tag. C<undef> and references die.
+Returns the given text as markup that shows it as it is: every C<[>
+becomes C<\[>, so a file name, a user's input or an error message
+cannot open or close a tag. C<undef> and references die.
 
 =head1 SEE ALSO
 

@@ -590,10 +590,11 @@ when a callback dies (see L</after_draw>);
 
 =item *
 
-when another registration with the same C<name> and the same owner (or
-also without one) replaces it: the old one ends, the new one is queued
-last. Give a name to work a widget may ask for repeatedly, such as a
-retry, so that only the latest request runs.
+when another registration with the same C<name> replaces it: one with
+the same owner, or, for a registration without an owner, another one
+without an owner. The old one ends, the new one is queued last. Give a
+name to work a widget may ask for repeatedly, such as a retry, so that
+only the latest request runs.
 
 =back
 

@@ -295,13 +295,13 @@ Term::Fabulous::Widget::Table::Borders - Work out the grid lines of a table
 	use Term::Fabulous::Enum::BorderStyle;
 	my $Solid = Term::Fabulous::Enum::BorderStyle->Solid;
 
-	my $cells = resolve_borders(
+	my $resolved = resolve_borders(
 		columns => 2,
 		header  => 1,
 		table   => { map( { $_ => $Solid } qw(border_top border_right border_bottom border_left column_lines) ) },
 		lines   => [ {}, {}, { spanning => 1 }, {} ],
 	);
-	my $first = $cells->[0][0];    # { sides => { top, left }, corners => { top_left => "\x{250C}" } }
+	my $first = $resolved->{lines}[0][0];    # { sides => { top, left }, corners => { top_left => "\x{250C}" } }
 
 =head1 DESCRIPTION
 
@@ -408,9 +408,10 @@ corner of a block-style frame is left out, see L</A frame in a block
 style>), and C<outer> lists the drawn sides of the outer frame of the
 table that are drawn on the background outside it (for
 L<Term::Fabulous::Role::HasBorderStyle/outer_border_sides>). C<gutter>
-is C<undef>, or with C<gutter> a hash of the same kind for each of the
-three strips of the scrollbar column, C<header>, C<body> and
-C<footer> (see L</The scrollbar column>).
+is C<undef> without the C<gutter> argument; with it, a hash with the
+keys C<header>, C<body> and C<footer>, one for each strip of the
+scrollbar column (see L</The scrollbar column>), each a hash like a
+cell's (C<sides>, C<corners>, C<outer>).
 
 =head1 SEE ALSO
 

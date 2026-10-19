@@ -778,8 +778,10 @@ L<Term::Fabulous::Manual::Layout> (widgets, the widget tree and
 layout), L<Term::Fabulous::Manual::Looks> (text, colors, borders),
 L<Term::Fabulous::Manual::Events> (events, keyboard, focus, mouse,
 scrolling), L<Term::Fabulous::Manual::Forms> (input widgets),
-L<Term::Fabulous::Manual::Feedback> (progress bars, spinners and
-toasts), L<Term::Fabulous::Manual::Charts> (canvases and charts),
+L<Term::Fabulous::Manual::Feedback> (progress bars, spinners, toasts,
+status bars, prompts and file dialogs), L<Term::Fabulous::Manual::Menus>
+(commands, menu bars, context menus and key references),
+L<Term::Fabulous::Manual::Charts> (canvases and charts),
 L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>
 and L<Term::Fabulous::Manual::TableStyles> (the table widget),
 L<Term::Fabulous::Manual::KDL> (layout files),
@@ -888,14 +890,15 @@ support: C<mouse> with a true value and C<inline> together die.
 
 =item C<double_click_seconds>
 
-A number of seconds, at least 0. Default: 0.4. A button press in the
-same cell as the press of the same button before it, at most this long
-after it (on the C<clock>), continues a run of clicks: the C<Mouse>
-event of a double click has a
-L<click_count|Term::Fabulous::Event::Mouse/click_count> of 2, a triple
-click 3. Every widget that tells double clicks apart (L<Term::Fabulous::Widget::Table>,
-L<Term::Fabulous::Widget::TextField>, L<Term::Fabulous::Widget::TextArea>)
-reads that count. Anything else dies.
+A number of seconds, at least 0; anything else dies. Default: 0.4. A
+press of the same button in the same cell as the press just before it,
+at most this long after it (on the C<clock>), continues a run of
+clicks, and any other press starts a new one. The C<Mouse> event of a
+double click has a
+L<click_count|Term::Fabulous::Event::Mouse/click_count> of 2, of a
+triple click 3; every widget that tells double clicks apart
+(L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::TextField>,
+L<Term::Fabulous::Widget::TextArea>) reads that count.
 
 =item C<kitty_keyboard>
 
@@ -1392,7 +1395,7 @@ not need it; see L</invalidate> to ask for a frame instead. With the
 real terminal, it only has a visible effect while the terminal is open.
 See L<Term::Fabulous::Render/draw>.
 
-=head2 bounding_box, scroll_state, scroll_to
+=head2 bounding_box, content_box, scroll_state, scroll_to
 
 	my $box   = $ui->bounding_box($widget);       # { x, y, width, height } in cells, or undef
 	my $inner = $ui->content_box($widget);        # the same inside padding, border and scrollbars
@@ -1406,6 +1409,9 @@ too.
 C<scroll_state> and C<scroll_to> read and set the scroll position of a
 scroll container such as a L<Term::Fabulous::Widget::ScrollBox>, in
 cells: 0 at the top and left, negative when scrolled down or right.
+L<Term::Fabulous::Scrolling> scrolls by rows, pages and to the ends and
+reports the position as positive rows (C<scroll_offset>), so a program
+need not flip the sign.
 Inherited from L<Clay::UI>; see L<Clay::UI/bounding_box>,
 L<Clay::UI/content_box>, L<Clay::UI/scroll_state> and
 L<Clay::UI/scroll_to>, and the recipe
@@ -1420,8 +1426,10 @@ L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/Scroll a Scrol
 C<after_draw> queues a code reference to call once after the next frame
 has been drawn, for work that needs the layout of that frame;
 C<each_draw> registers one to call after every frame until it returns
-true, its C<frames> ran out or its owner left the UI. With an owner,
-the UI holds the widget weakly and passes it in. See
+true, its C<frames> ran out, its owner was freed or left the UI, it
+died, or a later registration with the same C<name> (and the same
+owner, or none) replaced it. With an
+owner, the UI holds the widget weakly and passes it in. See
 L<Term::Fabulous::Render/after_draw> and
 L<Term::Fabulous::Render/each_draw>; widgets use
 L<Term::Fabulous::Widget/each_frame>.
@@ -1559,6 +1567,13 @@ L<Term::Fabulous::Widget::MenuBar> opens the menu without taking the
 focus from the text field the user was typing in, so the menu can give
 it back when it closes.
 
+When the focused widget is removed from the tree, disabled or hidden,
+the focus goes to its heir: the nearest widget above it that can take
+the focus, unless a container on the way names another with
+C<focus_heir> (a Tabs names its active tab, a closing Accordion::Item
+its header). See
+L<Term::Fabulous::Manual::Events/When the focused widget goes away>.
+
 See L<Term::Fabulous::Manual::Events/KEYBOARD> and
 L<Term::Fabulous::Manual::Events/FOCUS>.
 
@@ -1684,13 +1699,10 @@ The general container, with layout options, a background and a border.
 
 =item L<Term::Fabulous::Widget::Text>
 
-Shows text in one color; wraps and aligns it.
-
-=item L<Term::Fabulous::Widget::Text>
-
-A Text whose spans set bold, colors and other styles on ranges of it,
-from markup such as C<[bold]Enter[/]>, and whose links the user follows
-with a click or the keyboard.
+Shows text, wrapped and aligned. Its spans set bold, colors and other
+styles on ranges of it, from markup such as C<[bold]Enter[/]>,
+highlights mark search matches over them, and the user follows its
+links with a click or the keyboard.
 
 =item L<Term::Fabulous::Widget::Button>
 
@@ -1777,7 +1789,8 @@ Pages behind a row of tabs on any side, with horizontal or downward
 labels; the active tab joins the page's border.
 L<Term::Fabulous::Widget::Tabs::Bar> and
 L<Term::Fabulous::Widget::Tabs::Button> are the bar and its tabs, also
-usable on their own.
+usable on their own; L<Term::Fabulous::Widget::Tabs::Line> is the line
+that joins the bar to the page, used internally.
 
 =item L<Term::Fabulous::Widget::DocumentTabs>
 
@@ -1821,9 +1834,8 @@ animation helpers; derive from it to write your own.
 
 =item L<Term::Fabulous::Widget::Element>, L<Term::Fabulous::Widget::TextNode>
 
-The L<Clay::UI> roles behind Term::Fabulous::Widget,
-Term::Fabulous::Widget::Text and Term::Fabulous::Widget::Text.
-Used internally.
+The L<Clay::UI> roles behind Term::Fabulous::Widget and
+Term::Fabulous::Widget::Text. Used internally.
 
 =item L<Term::Fabulous::Widget::Dialog::Backdrop>
 
@@ -1906,11 +1918,6 @@ scrolling, the cell of the cursor and the text under a click.
 
 The arithmetic of a scrolled view: how far it can scroll, the offset
 that shows a row, the thumb of a scrollbar.
-
-=item L<Term::Fabulous::Placement>
-
-Where a popup goes on the screen: below, above or at its anchor, kept
-on the screen; the z_index of popups.
 
 =item L<Term::Fabulous::Widget::Dropdown::List>
 
@@ -2192,8 +2199,10 @@ made by the document's factories from text and marks, any other added
 as it is. A parser fills the document, and the view shows, searches
 and links it. L<Pod::Fabulous> reads POD this way.
 L<Term::Fabulous::Cookbook::Documents> has recipes for documents, from
-a Markdown reader built on L<Markdent> to tables and pictures inside a
-document.
+a Markdown reader built on L<Markdent> to links and search, and
+L<Term::Fabulous::Cookbook::DocumentTechniques> continues with a
+table of contents, syntax highlighting, styles, pager keys and tables
+and pictures inside a document.
 
 =over
 
@@ -2212,6 +2221,11 @@ theme.
 
 The texts a widget shows, for search and highlights, also those it
 builds only later or does not show (a table's other pages).
+
+=item L<Term::Fabulous::Role::SearchContainer>
+
+A container that lists the searchable widgets it holds, also those
+out of view, and shows the one with a match: tabs and accordion items.
 
 =item L<Term::Fabulous::Scrolling>
 
@@ -2274,6 +2288,12 @@ behind the spans of a Text.
 
 The C<[bold red]text[/]> markup of a Text.
 
+=item L<Term::Fabulous::Text::Marks>, L<Term::Fabulous::Role::MarkedText>
+
+The spans, highlights and links of one text, checked and cut into
+styled runs in one place, and the role through which Text and CodeBlock
+share the spans and highlights. Used internally.
+
 =back
 
 =head2 Themes
@@ -2321,6 +2341,23 @@ from layout files, or your own terminal or output class.
 =item L<Term::Fabulous::Role::CanParseLayout>
 
 Makes a widget class usable in KDL layout files.
+
+=item L<Term::Fabulous::Role::Themed>
+
+How a widget reads its colors, border styles and borders from the
+theme, and the theme it draws with (C<drawing_theme>); composed by
+every widget.
+
+=item L<Term::Fabulous::Placement>
+
+Where a popup goes on the screen: below, above or at its anchor, kept
+on the screen; the z_index of popups.
+
+=item L<Term::Fabulous::Role::Popup>
+
+Floats a widget from the root at the position Placement works out and
+moves it back when a frame moved it; composed by the dropdown's list,
+popup menus and the table's column chooser.
 
 =item L<Term::Fabulous::Check>
 

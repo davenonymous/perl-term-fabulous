@@ -1879,6 +1879,123 @@ The programs of [Term::Fabulous::Cookbook::Canvases](Cookbook/Canvases.md).
             <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-sixel-viewer.svg" alt="A detail of the Mandelbrot set, blue and white spirals with orange and dark red bands, scaled to fit a rounded frame on the dark screen in sixel graphics, with a help box of the four keys over the top of the picture, which leaves those cells out, and the keys above the frame"></p>
     </div>
 
+## Documents
+
+The programs of [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md): documents built
+in Perl and from Markdown, links and search. The Markdown reader of
+the last three, which two programs of the next group use too, is
+`examples/cookbook/lib/My/Markdown.pm`; the documents are in
+`examples/cookbook/documents`: the manual, the FAQ and the release
+notes of a fictional backup program, snapback.
+
+- `document-basics.pl`
+
+    ["Show a document built in Perl (Document, factories, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-factories-marks):
+    a manual page built with the factories of a document, with every
+    built-in mark kind and every factory but `rule`, in a document view.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-basics.svg" alt="A manual page in a document view: a first-level heading with a rule under it, a paragraph with bold, italic, file and struck-through text, a code block, two terms with their indented definitions, a bulleted list with a nested numbered list and a link, and a quote inside a quote with two bars on the left"></p>
+    </div>
+
+- `document-from-markup.pl`
+
+    ["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent):
+    shows the Markdown file named on its command line, or the manual of
+    snapback, read with the `My::Markdown` reader built on [Markdent](https://metacpan.org/pod/Markdent).
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-from-markup.svg" alt="The start of the snapback manual: the title snapback with a rule, a paragraph with bold and italic words, a paragraph with five underlined links, the heading Installation, a code block and a numbered list"></p>
+    </div>
+
+- `document-links.pl`
+
+    ["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate):
+    a small help browser whose links jump to sections and open other
+    pages, with Backspace to go back. The picture shows the FAQ, opened
+    from a link of the manual, after `l` selected its first link.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-links.svg" alt="The FAQ page of the snapback manual in a document view, opened from a link of the manual, with the link hook selected; the status bar shows the key hints, the page name faq.md, the section and 0%"></p>
+    </div>
+
+- `document-search.pl`
+
+    ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange):
+    a search like the one of `less`, with `n` and `N` and a line that
+    shows the current match, the section and the position. The picture
+    shows the manual after a search for `disk` and two presses of `n`.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-search.svg" alt="The snapback manual with every occurrence of the word disk highlighted, the current one in a stronger color; at the bottom the search field with the word disk and the text match 3 of 6, Installation, 15%"></p>
+    </div>
+
+## Document techniques
+
+The programs of [Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md): a
+table of contents, syntax highlighting, styles, pager keys and any
+widget in a document.
+
+- `document-contents.pl`
+
+    ["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl):
+    the headings of the document as links in a pane beside it, laid out
+    from a KDL description, with a mark that follows the reader. The
+    picture shows the program after three presses of `PageDown`.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-contents.svg" alt="Two framed panes: on the left the headings of the snapback manual as links, indented by level, with a mark in front of Hooks; on the right the Hooks section with a Perl code block"></p>
+    </div>
+
+- `code-highlighting.pl`
+
+    ["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock):
+    code blocks of three languages colored by a highlighter, scrolled
+    sideways together with `Left` and `Right`. The first picture shows
+    the program as it starts, the second after two presses of `Right`.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-code-highlighting.svg" alt="Three code blocks with highlighted syntax: a Perl script with gray comments, purple keywords, red variables and green strings, whose long last line ends in a clip mark at the right edge; a shell command with a blue command name and an orange option; a configuration file with red keys"></p>
+
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-code-highlighting-scrolled.svg" alt="The same code blocks, the Perl script scrolled sixteen columns to the left with clip marks on the left of every line; the shorter shell and configuration lines did not move"></p>
+    </div>
+
+- `document-styles.pl`
+
+    ["Change the styles of a document and add mark kinds (Look)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#change-the-styles-of-a-document-and-add-mark-kinds-look):
+    a look of its own with changed styles and new mark kinds for keys,
+    underlined text and a highlighter pen; F2 switches the theme and the
+    styles follow. The picture shows the light theme, after `F2`.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-styles.svg" alt="A short manual in the light theme: a green first-level heading, key names such as Ctrl+S in bold on a gray background, an underlined word, a file name in blue and a phrase highlighted on a yellow background"></p>
+    </div>
+
+- `pager-keys.pl`
+
+    ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling):
+    the source of a Perl module in a plain ScrollBox, scrolled with the
+    keys of `less`, with the percentage in a status line; `n` marks the
+    next `sub` or `method` line and brings it into view. The picture
+    shows the program after six presses of `n`.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-pager-keys.svg" alt="A Perl module in a scroll box, scrolled to 24 percent, with the line method _start_paragraph highlighted in yellow at the bottom; the status line shows the file name and the percentage"></p>
+    </div>
+
+- `document-widgets.pl`
+
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture):
+    the release notes of snapback with a picture and a table with pages
+    as items of the document, searched for the word named on the command
+    line. The picture shows the program started with the word `5.10`,
+    which the release 1.4 mentions in its row, on the table's second page,
+    and in its notes.
+
+    <div>
+            <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-widgets.svg" alt="The release notes of snapback scrolled to the table of releases, which shows its second page: the release 1.4 with the matched text 5.10 highlighted in its last column, the pager under the table, and the list of the release 2.1 below"></p>
+    </div>
+
 ## Output without a terminal
 
 The programs of [Term::Fabulous::Cookbook::Output](Cookbook/Output.md).

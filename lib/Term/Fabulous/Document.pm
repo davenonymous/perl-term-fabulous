@@ -12,7 +12,7 @@ use Term::Fabulous::Widget::Text;
 our $VERSION = '0.03';
 
 # The marker of a list item: a text a search passes over, since the
-# bullets and numbers of a list are no content.
+# bullets and numbers of a list are not content.
 class Term::Fabulous::Document::Marker :isa(Term::Fabulous::Widget::Text) :strict(params) {
 
 	method search_texts :override () {
@@ -414,6 +414,7 @@ sections and the layout a document view shows them with
 =head1 SYNOPSIS
 
 	use Term::Fabulous::Document;
+	use Term::Fabulous::Widget::DocumentView;
 	use Term::Fabulous::Widget::Table;
 
 	my $document = Term::Fabulous::Document->new( source => 'snapback.md' );
@@ -421,7 +422,7 @@ sections and the layout a document view shows them with
 	$document->paragraph( { text => 'Copies files to a backup disk.', marks => [ [ 0, 6, 'bold' ] ] } );
 	$document->heading( 2, 'Usage' );
 	$document->code( "snapback ~/Documents /mnt/backup", language => 'shell' );
-	$document->list_item( "\x{2022}", { markup => 'Keeps the last [code]14[/] backups.' } );
+	$document->list_item( "\x{2022}", { text => 'Keeps the last 14 backups.', marks => [ [ 15, 17, 'code' ] ] } );
 	$document->paragraph( { markup => 'See [link=faq.md]the FAQ[/].' } );
 
 	# Any widget is an item: a table, a picture, a form.
@@ -451,7 +452,13 @@ Every item belongs to the document while the document exists, and is
 shown by one view at a time: the view wraps each item in a box of its
 own (see L<Term::Fabulous::Widget::DocumentView/How items are shown>).
 
-Worked examples are in L<Term::Fabulous::Cookbook::Documents>.
+Worked examples are in L<Term::Fabulous::Cookbook::Documents> and
+L<Term::Fabulous::Cookbook::DocumentTechniques>:
+L<Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, factories, marks)>
+builds a document with the factories,
+L<Term::Fabulous::Cookbook::Documents/Turn Markdown into a document (Markdent)> is a reader, and
+L<Term::Fabulous::Cookbook::DocumentTechniques/Put any widget into a document (a table and a picture)> adds
+widgets of other kinds.
 
 =head2 Item options
 
@@ -548,6 +555,8 @@ L<LinkActivate|Term::Fabulous::Event::LinkActivate> hands back;
 
 =item * C<< { markup => $markup } >>: markup as
 L<Term::Fabulous::Text::Markup> reads it, styles and links included.
+Its tags are style strings and palette tokens, not the kinds of the
+look: C<[bold]> and C<[link=faq.md]> work, C<[code]> dies.
 
 =back
 
@@ -558,8 +567,9 @@ theme switch recolors the document without any work.
 
 Unless the C<gap> option says otherwise, a factory puts one blank row
 above its item, with two exceptions: none between the items of a list
-(an item whose C<position> is above 1 after an item), nor before the
-first item of a list nested in the item above it (indented deeper); and
+(a list item whose C<position> is above 1, right after another list
+item), nor before the first item of a list nested in the list item
+above it (indented deeper); and
 none between a term and the item after it, if that item is not a term
 and is indented deeper than the term, its definition.
 
@@ -569,7 +579,9 @@ and is indented deeper than the term, its definition.
 
 A heading of level 1 to 6, in the style of its level (C<heading1> to
 C<heading6>); a first-level heading has a horizontal rule under it. It
-is C<flush>, and starts a section with its text as the title.
+is C<flush>, and starts a section with its text as the title. Returns
+the Text, or for level 1 a L<Term::Fabulous::Widget::Box> that holds
+the Text and a L<Term::Fabulous::Widget::Divider>.
 
 =head2 paragraph
 
@@ -663,6 +675,9 @@ inside an item, say).
 The L<Term::Fabulous::Widget::Text> widgets of an item, the item itself
 included, in tree order (where its links are), and the widgets of the
 item that answer a search (L<Term::Fabulous::Role::Searchable/searchables_in>).
+The marker of a list item is one of its texts: a
+C<Term::Fabulous::Document::Marker>, a Text that a search passes over,
+since bullets and numbers are not content.
 
 =head2 code_blocks
 
@@ -680,6 +695,8 @@ highlighter.
 The sections in the order of the document, each as a new hash with the
 C<item> index it starts at, its C<level> and its C<title>, and their
 number.
+L<Term::Fabulous::Cookbook::DocumentTechniques/Show a table of contents beside the document (sections, KDL)>
+lists them beside the document.
 
 =head2 item_of_section, level_of_section, title_of_section
 
@@ -700,11 +717,14 @@ at or before it. C<undef> for an item before the first section.
 	my $index = $document->find_section('Methods');    # or undef
 
 The item a link to a section leads to. The name is compared, with
-whitespace squeezed, with the titles of the sections first, then with
-the anchors: exactly, then ignoring case, then as a title or anchor that
-starts with the name as a word (C<open> finds C<open FILEHANDLE,EXPR>),
-then the same ignoring case. C<undef> when nothing matches or the name
-is empty.
+whitespace squeezed, in four rounds: exactly, then ignoring case, then
+as a title or anchor that starts with the name as a word (C<open> finds
+C<open FILEHANDLE,EXPR>), then the same ignoring case. In each round
+the titles of the sections come before the anchors, so an anchor that
+matches exactly wins over a title that matches only when case is
+ignored. C<undef> when nothing matches or the name is empty.
+L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>
+uses it to follow a link to a section.
 
 =head2 find_text
 
@@ -717,7 +737,9 @@ items show, in the order of the document: the item, the widget that
 shows the text, the text's key (see
 L<Term::Fabulous::Role::Searchable/search_texts>) and the offsets of
 the match. A query without capital letters ignores case; it is text,
-not a pattern. Matches do not overlap.
+not a pattern. Matches do not overlap. The view's
+L<search|Term::Fabulous::Widget::DocumentView/search> builds on it; see
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>.
 
 =head2 source, look
 
@@ -733,6 +755,7 @@ time; giving it to a second one dies.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Document::Look>,
-L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Cookbook::Documents>.
+L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Cookbook::Documents>,
+L<Term::Fabulous::Cookbook::DocumentTechniques>.
 
 =cut

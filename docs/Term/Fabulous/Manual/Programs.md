@@ -62,6 +62,13 @@ application's clock and ask for a frame when their next one is due
 (["request\_frame\_at" in Term::Fabulous](../../../../README.md#request_frame_at)). A widget of your own can do the
 same; see ["ANIMATION" in Term::Fabulous::Widget::Display](../Widget/Display.md#animation).
 
+Work that needs the layout of a frame, such as reading where a widget
+was drawn, needs no timer either: `$ui->after_draw` calls code
+once after the next frame, and `$ui->each_draw` after every frame
+until it returns true (["after\_draw" in Term::Fabulous::Render](../Render.md#after_draw),
+["each\_draw" in Term::Fabulous::Render](../Render.md#each_draw)); a widget uses
+["each\_frame" in Term::Fabulous::Widget](../Widget.md#each_frame).
+
 The cookbook has complete programs: the recipes
 [Update the screen from a timer](../Cookbook/LiveData.md#update-the-screen-from-a-timer-a-clock)
 and [Show the output of a running command](../Cookbook/LiveData.md#show-the-output-of-a-running-command).
@@ -209,6 +216,11 @@ the loop do not run (call the code they would run from the test), and a
 resize is applied at once instead of after the size settled. Mouse
 events are dropped when the program runs without the mouse (as a real
 terminal would not send them), for example in inline mode.
+
+Pass `clock => sub { $now }` to `new` to control time (see
+["new" in Term::Fabulous](../../../../README.md#new)): clicks count as a double click only within
+`double_click_seconds` on that clock, and the dropdown's type-ahead
+and the animations move on with it.
 
 To test the key handling of a single widget in isolation, you can fire
 events at it directly with `fire_event`. Such an event goes to the

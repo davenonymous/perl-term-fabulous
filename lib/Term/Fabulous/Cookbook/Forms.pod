@@ -635,7 +635,8 @@ its own C<title> and C<buttons>, which answer with an C<Answer> event
 (see L<Term::Fabulous::Widget::Dialog/Title, buttons and the notice line>).
 For a question with a few buttons, a
 L<Term::Fabulous::Widget::Prompt> does the same in one call: see the
-next recipe, L</Confirm before quitting (Prompt)>.
+next recipe, L</Confirm before quitting (Prompt)>, and
+L<Term::Fabulous::Manual::Feedback/PROMPTS>.
 
 This program is shipped as F<examples/cookbook/confirm-dialog.pl>.
 
@@ -829,6 +830,7 @@ title, a message and two buttons, opens it, and returns it. The buttons
 have the ids C<ok> and C<cancel>, and C<ok> and C<cancel> set their
 labels. The prompt is a L<Term::Fabulous::Widget::Dialog>, so it keeps
 the focus while it is open, as the dialog of the previous recipe does.
+See L<Term::Fabulous::Manual::Feedback/PROMPTS>.
 
 =item *
 
@@ -942,7 +944,7 @@ This program is shipped as F<examples/cookbook/ask-prompt.pl>.
 C<< Term::Fabulous::Widget::Prompt->ask >> builds a prompt with one text
 field, named C<value>, and the buttons C<ok> and C<cancel>. The field
 starts with the text of C<value>, all of it selected, so typing
-replaces it.
+replaces it. See L<Term::Fabulous::Manual::Feedback/PROMPTS>.
 
 =item *
 
@@ -951,14 +953,17 @@ C<required> and C<validator> go to the text field and work as in a form
 must not be empty and must hold a whole number. C<Enter> in the field
 presses OK, and OK checks the field before it answers. While something
 is wrong, the prompt stays open, shows the label of the field and what
-is wrong with it in red, and puts the cursor back in the field.
+is wrong with it in the notice line above the buttons
+(L<Term::Fabulous::Widget::Dialog/notice>), in the theme's invalid
+input color, and puts the cursor back in the field.
 
 =item *
 
 C<check> runs after the field found nothing wrong. It gets the values
 of all fields, so it can check a range, as here, or compare two fields.
 It returns what is wrong, as a sentence, or C<undef> when everything is
-fine.
+fine. The prompt shows the sentence in the same notice line, without a
+label, as in the picture.
 
 =item *
 
@@ -1132,7 +1137,8 @@ statement. The dialog reports the result with an C<Answer> event
 (L<Term::Fabulous::Event::Answer>), as a prompt does: the button is the
 mode, C<open> or C<save>, and C<< $event->value('path') >> is the
 absolute path. C<Cancel> and C<Escape> answer C<cancel>, which the
-listeners simply ignore.
+listeners simply ignore. See
+L<Term::Fabulous::Manual::Feedback/FILE DIALOGS>.
 
 =item *
 

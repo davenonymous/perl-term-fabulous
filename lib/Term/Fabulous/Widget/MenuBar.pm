@@ -475,9 +475,9 @@ clicked.
 =head2 Where the menus go
 
 A menu opens just below its title. Near the right edge of the screen it
-moves left as far as it must to stay on the screen, and when there is
-no room below the bar, it opens above it. The menus float over every
-other widget, dialogs included.
+moves left as far as it must to stay on the screen, and when it does
+not fit below the bar and there is more room above, it opens above it.
+The menus float over every other widget, dialogs included.
 
 =head1 CONSTRUCTOR
 
@@ -628,6 +628,14 @@ Accessor for the parameter of the same name.
 =head2 caption_color, highlight_text_color, highlight_background_color
 
 Accessors for the colors.
+
+=head2 menu_chosen
+
+	$menu_bar->menu_chosen($menu);
+
+Called by a menu shown with L<Term::Fabulous::Widget::Menu/show_below>
+when an item was chosen: closes the bar if that menu is the open one.
+You do not call it yourself.
 
 =head1 EVENTS
 

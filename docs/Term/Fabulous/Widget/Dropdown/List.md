@@ -35,10 +35,10 @@ my $list = Term::Fabulous::Widget::Dropdown::List->new(
 );
 ```
 
-Called by the dropdown with these parameters, plus `background_color`,
-`border_color`, `bordered`, `border_style`, `layout` and
-`floating` (see ["floating" in Term::Fabulous::Widget](../../Widget.md#floating)). Unknown
-parameters die.
+Called by the dropdown with these parameters, plus `bordered`,
+`layout` and `floating` (see ["floating" in Term::Fabulous::Widget](../../Widget.md#floating)).
+Its background, border color and border style follow the dropdown when
+they are not given. Unknown parameters die.
 
 - `dropdown`
 
@@ -108,12 +108,12 @@ list composes [Term::Fabulous::Role::Popup](../../Role/Popup.md), which calls it
 
 The [Term::Fabulous::Widget::Display](../Display.md) interface. `paint` draws the
 visible options and, when the list scrolls, the scrollbar. The paint key
-adds the first option shown, what the shown rows display and the
-scrollbar's colors, so the list paints again whenever that changed, also
-when the change came from the dropdown (its colors, its highlight, its
-options). The natural size (the widest label with its margins and the
-scrollbar column, by `visible_rows`) is used only for an axis the
-dropdown leaves unsized; it always sizes both.
+adds the first option shown, the number of options and the label and
+colors of each shown row, so the list paints again whenever that
+changed, also when the change came from the dropdown (its colors, its
+highlight, its options). The natural size (the widest label with its
+margins and the scrollbar column, by `visible_rows`) is used only for
+an axis the dropdown leaves unsized; it always sizes both.
 
 # MOUSE
 

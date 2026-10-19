@@ -655,10 +655,13 @@ theme slot each of their colors reads.
 
 =head1 METHODS
 
-The methods fall into four groups: children (C<add_child> to C<ui>),
-events (C<on>, C<fire_event>, C<handlers_for>), layout and style
-accessors (C<layout> to C<height_group>) and states (C<add_state> to
-C<get_classes>).
+The methods fall into these groups: children (C<add_child> to
+C<contains>), events (C<on>, C<fire_event>, C<handlers_for>), row
+estimates for widget authors (C<estimated_rows> to
+C<estimated_content_rows>), layout and style accessors (C<layout> to
+C<height_group>), states (C<add_state> to C<get_classes>) and methods
+for widget authors (C<reset_look> to C<reverse_video>; programs use
+C<reset_look> too).
 
 States: every widget has a set of state names. C<hovered>, C<pressed>,
 C<focused> and C<disabled> are I<derived> states: they follow the
@@ -864,12 +867,12 @@ Mostly useful in tests.
 The rows the widget will take when it is laid out in that many
 columns, before Clay has laid it out: a guess for a list that builds
 only the items near its viewport and needs the height of the others
-for its scrollbar (L<Term::Fabulous::Widget::VirtualList>,
-L<Term::Fabulous::Widget::DocumentView>). A fixed height in the layout
-is the answer; otherwise it is the padding (L</content_padding>) and
-the border sides that are drawn (a C<Hidden> side takes no room, see
-L<Term::Fabulous::Role::HasBorderStyle/drawn_border_sides>) around what
-L</estimated_content_rows> says the content takes. Clay's layout
+for its scrollbar (a L<Term::Fabulous::Widget::DocumentView> asks its
+items). A fixed height in the layout is the answer; otherwise it is
+the padding (L</content_padding>) and the border sides that are drawn
+(a C<Hidden> side takes no room, see
+L<Term::Fabulous::Role::HasBorderStyle/drawn_border_sides>) around
+what L</estimated_content_rows> says the content takes. Clay's layout
 corrects a guess that was off. C<$columns> must be a positive integer.
 L<Term::Fabulous::Widget::Text> has the same method, since a text is
 not a Widget.
@@ -1187,12 +1190,16 @@ For widget authors: work after frames. Registers C<$code> with the UI's
 L<Term::Fabulous::Render/each_draw>, bound to the widget: it is called
 with the widget after every frame from the next one on, until it
 returns a true value, until C<frames> calls were made (when given), or
-until the widget is freed or leaves the UI. A second registration with
-the same C<name> replaces the first. C<name> (a string) and C<frames>
+until the widget is freed or leaves the UI. A second registration of
+this widget with the same C<name> replaces the first; names of
+different widgets do not clash. C<name> (a string) and C<frames>
 (a positive integer) are the only options; another one, or anything
 but a code reference, dies. The closure gets the widget as its
 argument, so it need not capture it (which would keep the widget
 alive). For one call, return true or give C<< frames => 1 >>.
+L<Term::Fabulous::Render/after_draw> makes one call, with
+C<< owner => $widget >> bound to the widget; the guide is
+L<Term::Fabulous::Manual::CustomWidgets/Work after a frame>.
 
 Work asked for while the widget is in no UI waits: it is registered
 when the widget joins a UI (a name replaces waiting work of that name
@@ -1200,6 +1207,24 @@ too), so a widget may ask for it from its constructor or from setters
 called before the UI is built. Returns 1, or 0 without registering
 anything when the widget's UI draws no frames (a plain L<Clay::UI>);
 waiting work is dropped when the widget joins such a UI.
+
+=head2 focus_heir
+
+The container of
+L<Term::Fabulous::Manual::CustomWidgets/A container widget>, which
+shows one of its buttons, defines it so:
+
+	method focus_heir () { return $buttons[$shown] }
+
+For widget authors: not defined here. A container that takes children
+out of the tree while one of them may have the focus can define
+C<focus_heir>, returning the widget that gets the focus then, or
+C<undef> to let the walk up the tree go on; see
+L<Term::Fabulous::Manual::Events/When the focused widget goes away>
+and L<Term::Fabulous::Manual::CustomWidgets/A container widget>.
+L<Term::Fabulous::Widget::Tabs>, L<Term::Fabulous::Widget::Accordion::Item>,
+L<Term::Fabulous::Widget::Menu> and
+L<Term::Fabulous::Widget::Dialog::Backdrop> define it.
 
 =head2 tree_changed
 

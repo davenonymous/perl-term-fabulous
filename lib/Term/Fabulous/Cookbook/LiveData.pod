@@ -210,11 +210,8 @@ pointer by three rows per notch. See L<Term::Fabulous::Manual::Events/SCROLLING>
 
 Widgets added with C<add_child> appear in the next frame, at the end
 of the box. The scroll position does not follow new lines
-automatically: the view stays where the user scrolled to.
-
-=item *
-
-To keep the newest line in view, see
+automatically: the view stays where the user scrolled to, unless the
+box has C<follow_end>, as in the next recipe,
 L</Scroll a ScrollBox from code (keep a log at the newest line)>.
 
 =item *
@@ -295,7 +292,7 @@ This program is shipped as F<examples/cookbook/follow-log.pl>.
 	);
 	$root->on(
 		KeyPress => sub ($event) {
-			my $action = $action_by_key{ $event->key_name // '' } or return;
+			my $action = $action_by_key{ $event->main_key_name // '' } or return;
 			$action->();
 			return;
 		}
@@ -342,9 +339,10 @@ the last row, here with C<End>.
 L<Term::Fabulous::Scrolling> moves the view by rows
 (C<scroll_by_rows>), by columns (C<scroll_by_columns>) and to the end
 (C<scroll_to_end>). The moves stop at the edges of the content and do
-nothing before the first frame has laid the box out. Positions it
-reports (C<scroll_offset>) are rows from the top, so a program needs
-no knowledge of how Clay keeps them.
+nothing before the first frame has laid the box out. For the full set
+of pager keys in one call, see
+L<scroll_by_key|Term::Fabulous::Scrolling/scroll_by_key> and the recipe
+L<Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>.
 
 =item *
 
@@ -365,10 +363,12 @@ and Right keys here.
 =item *
 
 To position the content entirely yourself, set the scroll box's
-C<child_offset> to C<< { x =E<gt> ..., y =E<gt> ... } >> (the same signs
-as the scroll position). While it is set, it alone decides what is
-shown; the wheel and C<scroll_to> still move the scroll position, which
-shows again once C<child_offset> is set back to C<undef>. See
+C<child_offset> to C<< { x =E<gt> ..., y =E<gt> ... } >> (negative
+values, as Clay keeps the scroll position:
+C<< { x =E<gt> 0, y =E<gt> -3 } >> shows the content from its fourth
+row). While it is set, it alone decides what is shown; the wheel and
+C<scroll_to> still move the scroll position, which shows again once
+C<child_offset> is set back to C<undef>. See
 L<Term::Fabulous::Widget::ScrollBox> and
 L<Term::Fabulous::Manual::Events/SCROLLING>.
 

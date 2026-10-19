@@ -176,8 +176,10 @@ my @rows = Term::Fabulous::Widget::KeyReference->command_rows( 'Everywhere', $co
 
 A class method: the rows a key reference makes of commands, in the
 form of `keys` (`[ group, keys, action ]`): one for every command
-that has keys, with its `keys_text` and its `plain_label`, in the
-group given. A program that lists its keys elsewhere (a help page, the
+that has keys, with its
+[keys\_text](../Command.md#keys_text) and its
+[plain\_label](../Command.md#plain_label), in the group
+given. A program that lists its keys elsewhere (a help page, the
 theme editor's `key_list`) builds them with it.
 
 # EVENTS
@@ -196,6 +198,9 @@ table, which a layout file cannot express.
 
 # SEE ALSO
 
-[Term::Fabulous::Commands](../Commands.md), [Term::Fabulous::Widget::Dialog](Dialog.md),
+[Term::Fabulous::Commands](../Commands.md), [Term::Fabulous::Command](../Command.md),
+[Term::Fabulous::Widget::Dialog](Dialog.md), [Term::Fabulous::Event::Answer](../Event/Answer.md),
 [Term::Fabulous::Widget::Table](Table.md), [Term::Fabulous::Widget::MenuBar](MenuBar.md),
-which shows the same commands in menus.
+which shows the same commands in menus,
+["KEY REFERENCES" in Term::Fabulous::Manual::Menus](../Manual/Menus.md#key-references),
+["Show the keys in a help screen (KeyReference)" in Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference).

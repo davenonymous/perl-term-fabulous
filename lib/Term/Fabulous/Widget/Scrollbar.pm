@@ -283,7 +283,7 @@ Accessor for the C<thumb_color> parameter, as L</track_color>.
 	my $position = $bar->position_at($cell);
 
 The scroll position along the axis (Clay's, 0 or negative; see
-L<Term::Fabulous/"bounding_box, scroll_state, scroll_to">) that centers
+L<Term::Fabulous/"bounding_box, content_box, scroll_state, scroll_to">) that centers
 the thumb on a cell of the track, counted from the top or the left, or
 C<undef> when there is nothing to scroll. A click on the scrollbar
 scrolls to this position.

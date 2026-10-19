@@ -541,9 +541,9 @@ Opening and closing sections.
 
 =head2 search, filter, filtered_row_ids
 
-The search text (rows whose texts hold it, in any case, with their
-sections), named filters (code that gets a row), and the ids of the
-rows shown.
+The search text (rows whose setting, value, origin or id hold it, in
+any case, with their sections), named filters (code that gets a row),
+and the ids of the rows shown.
 
 =head2 cursor, cursor_index
 

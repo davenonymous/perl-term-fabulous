@@ -77,11 +77,10 @@ listener inside the dialog must let the event bubble for that, see
 are neither hovered nor pressed.
 
 ["close"](#close) takes the dialog off the screen, puts the focus back on the
-widget that had it before (if that widget can still take the focus),
-and fires `Close`
-([Term::Fabulous::Event::Close](../Event/Close.md)) on the dialog. A closed dialog can be
-opened again, as often as needed, and keeps its children and their
-state in between.
+widget that had it before (if that widget can still take the focus), and
+fires `Close` ([Term::Fabulous::Event::Close](../Event/Close.md)) and then `Answer`
+(["Answers"](#answers)) on the dialog. A closed dialog can be opened again, as
+often as needed, and keeps its children and their state in between.
 
 ## Title, buttons and the notice line
 
@@ -102,10 +101,11 @@ dialog's ["values"](#values) and the values given. A dialog closed without an
 answer (`Escape`, or ["close"](#close) from the program) is _dismissed_: it
 answers with the button `cancel` and the dialog's ["values"](#values), and the
 event's `dismissed` is true. That is one rule for every dialog:
-[Term::Fabulous::Widget::Prompt](Prompt.md) reports its fields as its values,
-[Term::Fabulous::Widget::FileDialog](FileDialog.md) has none (its choice answers
-with the path), and a plain dialog has none. When the listeners run,
-the dialog is closed and the focus is back where it was.
+[Term::Fabulous::Widget::Prompt](Prompt.md) reports its fields as its values, and
+[Term::Fabulous::Widget::FileDialog](FileDialog.md) (its choice answers with the
+path), [Term::Fabulous::Widget::KeyReference](KeyReference.md) (its Close button answers
+`close`) and a plain dialog have none. When the listeners run, the
+dialog is closed and the focus is back where it was.
 
 A Dialog comes with a look from the theme's `dialog` family (a dark
 background and a round border in the accent blue in the built-in dark
@@ -383,7 +383,9 @@ a Dialog fires:
 
 Events from the widgets inside the dialog (`Activate` of a Button,
 `Submit` of a text field, `Change`, ...) bubble through the dialog as
-usual, so one listener on the dialog can handle them all.
+usual, so one listener on the dialog can handle them all. The
+`Activate` of the dialog's own `buttons` stops at the button, which
+calls ["press\_button"](#press_button).
 
 # KDL PROPERTIES
 
@@ -391,8 +393,9 @@ The properties of ["KDL PROPERTIES" in Term::Fabulous::Widget::Box](Box.md#kdl-p
 `backdrop_color` (a color string), `z_index` (an integer from -32768
 to 32767),
 `close_on_escape` (`#true` or `#false`), `title`, `notice_line`
-and `placement` (strings). The buttons come from Perl: they answer
-with events.
+and `placement` (strings). `buttons` is not a KDL property: a
+dialog from a layout file has no buttons of its own; give it Button
+children or build it in Perl.
 
 A Dialog is added to the widget tree only when it opens, and a Dialog
 that is a child of another widget cannot open. A layout file has only
@@ -421,7 +424,14 @@ $about->open($ui);
 # SEE ALSO
 
 [Term::Fabulous::Widget::Box](Box.md), [Term::Fabulous::Event::Close](../Event/Close.md),
+[Term::Fabulous::Event::Answer](../Event/Answer.md),
 [Term::Fabulous::Widget::Dialog::Backdrop](Dialog/Backdrop.md),
+[Term::Fabulous::Widget::Prompt](Prompt.md), [Term::Fabulous::Widget::FileDialog](FileDialog.md),
+[Term::Fabulous::Widget::KeyReference](KeyReference.md),
 ["FOCUS" in Term::Fabulous::Manual::Events](../Manual/Events.md#focus), ["floating" in Term::Fabulous::Widget](../Widget.md#floating),
+["A dialog of your own" in Term::Fabulous::Manual::CustomWidgets](../Manual/CustomWidgets.md#a-dialog-of-your-own),
 ["Ask a question in a dialog (Dialog widget)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget),
-["A login form (centered dialog, masked password)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#a-login-form-centered-dialog-masked-password).
+["A login form (centered dialog, masked password)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#a-login-form-centered-dialog-masked-password),
+["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#confirm-before-quitting-prompt),
+["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#open-and-save-a-file-filedialog),
+["Show the keys in a help screen (KeyReference)" in Term::Fabulous::Cookbook::Menus](../Cookbook/Menus.md#show-the-keys-in-a-help-screen-keyreference).

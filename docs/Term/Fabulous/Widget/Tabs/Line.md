@@ -20,7 +20,7 @@ it leaves free so that the tab and the page are one shape. With the
 bar's `page_border`, its ends are the corners of the page's border.
 
 The line reads where the tabs lie from the layout of the frame being
-drawn (["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../../README.md#bounding_box-scroll_state-scroll_to)), so it
+drawn (["bounding\_box, content\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)), so it
 follows them whatever sizes and alignment the bar gives them. It is a
 [Term::Fabulous::Widget::Display](../Display.md) and paints again when a tab moved,
 became active, got or lost the focus, or the bar changed its look.

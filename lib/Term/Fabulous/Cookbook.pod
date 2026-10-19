@@ -10,7 +10,7 @@ Term::Fabulous::Cookbook - Recipes for common Term::Fabulous tasks
 
 The cookbook is a collection of recipes: short, complete solutions to
 common tasks, each with a program you can run and change. The recipes
-are grouped by topic into sixteen pages. L</THE RECIPES> below lists
+are grouped by topic into seventeen pages. L</THE RECIPES> below lists
 every page with every recipe on it. Each page lists its own recipes at
 the top and links to the previous and the next page, so you can also
 read the cookbook from start to end.
@@ -517,7 +517,7 @@ L<Show a photo in sixel graphics (Sixel)|Term::Fabulous::Cookbook::Canvases/Show
 
 =item L<Term::Fabulous::Cookbook::Documents>
 
-Documents: build, show, search and style them, with any widget inside:
+Documents: build them in Perl and from Markdown, follow their links, search them:
 
 =over
 
@@ -537,25 +537,33 @@ L<Follow links: jump to sections, open other pages, go back (LinkActivate)|Term:
 
 L<Search a document and show the reader's position (search, ViewChange)|Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>
 
-=item *
+=back
 
-L<Show a table of contents beside the document (sections, KDL)|Term::Fabulous::Cookbook::Documents/Show a table of contents beside the document (sections, KDL)>
+=item L<Term::Fabulous::Cookbook::DocumentTechniques>
 
-=item *
+Documents, continued: a table of contents, syntax highlighting, styles, pager keys and any widget in a document:
 
-L<Highlight the syntax of code blocks (highlighter, CodeBlock)|Term::Fabulous::Cookbook::Documents/Highlight the syntax of code blocks (highlighter, CodeBlock)>
-
-=item *
-
-L<Change the styles of a document and add mark kinds (Look)|Term::Fabulous::Cookbook::Documents/Change the styles of a document and add mark kinds (Look)>
+=over
 
 =item *
 
-L<Scroll any scroll box like a pager (Term::Fabulous::Scrolling)|Term::Fabulous::Cookbook::Documents/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>
+L<Show a table of contents beside the document (sections, KDL)|Term::Fabulous::Cookbook::DocumentTechniques/Show a table of contents beside the document (sections, KDL)>
 
 =item *
 
-L<Put any widget into a document (a table and a picture)|Term::Fabulous::Cookbook::Documents/Put any widget into a document (a table and a picture)>
+L<Highlight the syntax of code blocks (highlighter, CodeBlock)|Term::Fabulous::Cookbook::DocumentTechniques/Highlight the syntax of code blocks (highlighter, CodeBlock)>
+
+=item *
+
+L<Change the styles of a document and add mark kinds (Look)|Term::Fabulous::Cookbook::DocumentTechniques/Change the styles of a document and add mark kinds (Look)>
+
+=item *
+
+L<Scroll any scroll box like a pager (Term::Fabulous::Scrolling)|Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>
+
+=item *
+
+L<Put any widget into a document (a table and a picture)|Term::Fabulous::Cookbook::DocumentTechniques/Put any widget into a document (a table and a picture)>
 
 =back
 

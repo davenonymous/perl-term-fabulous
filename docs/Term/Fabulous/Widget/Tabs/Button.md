@@ -21,12 +21,13 @@ $bar->add_child(
 
 A tab button is one tab of a [Term::Fabulous::Widget::Tabs::Bar](Bar.md): a
 [Term::Fabulous::Widget::Button](../Button.md) with a border on three sides, open
-toward the page, that shows a title and an optional icon. The bar
-makes one tab the _active_ one: it is open toward the page, so that
-it joins the page's border, grows `active_padding` cells that way,
-and its label is drawn in the bar's `active_text_color`. The other
-tabs are closed by the line of the bar and show their labels in
-`text_color`.
+toward the page, that shows a title and an optional icon. The bar makes
+one tab the _active_ one: it is open toward the page, so that it joins
+the page's border. It has `active_padding` more cells of padding on
+that side than the other tabs, so it rises that far out of the row, and
+its label is drawn in the `active_text_color` of its bar or, without a
+bar, of the theme it draws with. The other tabs are closed by the line
+of the bar and show their labels in `text_color`.
 
 The look (the side the bar is on, whether the label is written
 horizontally or downwards, the padding, the line style and the
@@ -131,11 +132,11 @@ behind its back. Returns the tab.
 my %look = Term::Fabulous::Widget::Tabs::Button->default_look;
 ```
 
-Class method: the look a tab shows outside a bar, as a hash of the
-bar's look parameters (`side`, `orientation`, `tab_padding`,
-`active_padding`, `line_style`, `line_color`, `text_color`,
-`active_text_color`, `active_bold`, `hover_background_color`,
-`focus_border_color`, `disabled_color`) and their defaults.
+Class method: the settings a tab uses outside a bar that are not
+themed, as a hash (`side`, `orientation`, `tab_padding`,
+`active_padding`, `active_bold`) with their defaults; the line style
+and the colors come from the `tabs` family of the theme the tab draws
+with.
 
 # EVENTS
 

@@ -14,10 +14,13 @@ $help->on( LinkActivate => sub ($event) {
 
 # DESCRIPTION
 
-A [Term::Fabulous::Widget::Text](../Widget/Text.md) fires `LinkActivate` on itself
-when the user follows one of its links, whichever way: a left click on
-the link, or `Enter` while the Text has the focus and a link is
-selected. `$rich_text->activate_link` fires it from code. The
+A [Term::Fabulous::Widget::Text](../Widget/Text.md) fires `LinkActivate` on itself when
+the user follows one of its links, whichever way: a left click on the
+link, or `Enter` while the Text has the focus and a link is selected.
+`$text->activate_link`
+(["activate\_link" in Term::Fabulous::Widget::Text](../Widget/Text.md#activate_link)) fires it from code; a
+widget that moves one selection across many texts follows links that way
+(see ["Links in a bigger widget" in Term::Fabulous::Widget::Text](../Widget/Text.md#links-in-a-bigger-widget)). The
 widget does not go anywhere itself: what a link means is the program's
 business, and `link` is the target the program gave it.
 

@@ -165,8 +165,8 @@ is stored by id. The mouse wheel scrolls the scroll box under the
 pointer by three rows per notch. See ["SCROLLING" in Term::Fabulous::Manual::Events](../Manual/Events.md#scrolling).
 - Widgets added with `add_child` appear in the next frame, at the end
 of the box. The scroll position does not follow new lines
-automatically: the view stays where the user scrolled to.
-- To keep the newest line in view, see
+automatically: the view stays where the user scrolled to, unless the
+box has `follow_end`, as in the next recipe,
 ["Scroll a ScrollBox from code (keep a log at the newest line)"](#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line).
 - `remove_child` removes the widgets it is given from the box. A
 removed widget can be added again, to the same box or another
@@ -241,7 +241,7 @@ my %action_by_key = (
 );
 $root->on(
         KeyPress => sub ($event) {
-                my $action = $action_by_key{ $event->key_name // '' } or return;
+                my $action = $action_by_key{ $event->main_key_name // '' } or return;
                 $action->();
                 return;
         }
@@ -280,9 +280,10 @@ the last row, here with `End`.
 - [Term::Fabulous::Scrolling](../Scrolling.md) moves the view by rows
 (`scroll_by_rows`), by columns (`scroll_by_columns`) and to the end
 (`scroll_to_end`). The moves stop at the edges of the content and do
-nothing before the first frame has laid the box out. Positions it
-reports (`scroll_offset`) are rows from the top, so a program needs
-no knowledge of how Clay keeps them.
+nothing before the first frame has laid the box out. For the full set
+of pager keys in one call, see
+[scroll\_by\_key](../Scrolling.md#scroll_by_key) and the recipe
+["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling).
 - `$ui->scroll_to( $scroll_box, { x => 0, y => 0 } )` sets
 the position directly, here the top left corner; an axis left out keeps
 its position. It makes a frame due, which shows the new position even
@@ -294,10 +295,12 @@ horizontal wheel (or a sideways tilt of the wheel) scrolls it by three
 columns per notch; for a mouse without one, add code such as the Left
 and Right keys here.
 - To position the content entirely yourself, set the scroll box's
-`child_offset` to `{ x => ..., y => ... }` (the same signs
-as the scroll position). While it is set, it alone decides what is
-shown; the wheel and `scroll_to` still move the scroll position, which
-shows again once `child_offset` is set back to `undef`. See
+`child_offset` to `{ x => ..., y => ... }` (negative
+values, as Clay keeps the scroll position:
+`{ x => 0, y => -3 }` shows the content from its fourth
+row). While it is set, it alone decides what is shown; the wheel and
+`scroll_to` still move the scroll position, which shows again once
+`child_offset` is set back to `undef`. See
 [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) and
 ["SCROLLING" in Term::Fabulous::Manual::Events](../Manual/Events.md#scrolling).
 

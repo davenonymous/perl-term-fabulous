@@ -47,7 +47,7 @@ viewport and keeps the widget it returns, so an item is built once. The
 widgets of the items above and below the attached ones are replaced by
 two invisible spacers as tall as those items would be, so the scrollbar,
 the mouse wheel and
-[scroll\_state and scroll\_to](../../../../README.md#bounding_box-scroll_state-scroll_to)
+[scroll\_state and scroll\_to](../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)
 see the whole list.
 
 How tall an item is becomes known when it was laid out once at the
@@ -60,9 +60,12 @@ A good estimate keeps the scrollbar's thumb steady; an exact one (the
 line count of a text that does not wrap, say) makes jumps impossible.
 
 Scrolling and the scrollbar work as on a ScrollBox. Keys do not scroll
-the list; ["scroll\_to\_item"](#scroll_to_item) and
-[scroll\_to](../../../../README.md#bounding_box-scroll_state-scroll_to)
-move it from code. A VirtualList needs an `id`, like every ScrollBox.
+the list by themselves; [Term::Fabulous::Scrolling](../Scrolling.md) (`scroll_by_key`,
+`scroll_to_start`, `scroll_to_end`), ["scroll\_to\_item"](#scroll_to_item) and
+[scroll\_to](../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)
+move it from code; [Term::Fabulous::Widget::DocumentView](DocumentView.md) is a
+VirtualList with keys. A VirtualList needs an `id`, like every
+ScrollBox.
 
 # CONSTRUCTOR
 
@@ -81,11 +84,10 @@ Unknown parameters die. A VirtualList takes every parameter of
     the index of an item, from 0 to `count - 1`, when the item comes near
     the viewport. It returns the item's widget: any widget without a
     parent, a [Term::Fabulous::Widget::Text](Text.md), a
-    [Term::Fabulous::Widget::Text](Text.md), a [Term::Fabulous::Widget::Box](Box.md)
-    with children, anything. The list keeps the widget and never calls
-    `build` for that index again until ["rebuild"](#rebuild). A return value that
-    is not a widget, a widget that has a parent, or the widget of another
-    item dies when the item is built.
+    [Term::Fabulous::Widget::Box](Box.md) with children, anything. The list keeps
+    the widget and never calls `build` for that index again until
+    ["rebuild"](#rebuild). A return value that is not a widget, a widget that has a
+    parent, or the widget of another item dies when the item is built.
 
 - `count`
 
@@ -98,7 +100,8 @@ Unknown parameters die. A VirtualList takes every parameter of
     or a code reference called as `$estimate->($index, $columns)` with
     the index of the item and the columns the items wrap to, which returns
     a non-negative integer. It is called once per item and width. Anything
-    else dies.
+    else dies. Before the list was first laid out, `$columns` is the
+    width of the UI.
 
 - `overscan`
 
@@ -174,10 +177,9 @@ my $widget = $list->item(42);
 The widget of an item, built now if the list has not built it yet. Dies
 for an index the list does not have. The widget is attached while the
 item is near the viewport and detached otherwise; it is the same object
-each time. A text widget (a [Term::Fabulous::Widget::Text](Text.md) or
-[Term::Fabulous::Widget::Text](Text.md)) is laid out inside a
-[Term::Fabulous::Widget::Box](Box.md) of its own, because a text has no box
-the list could measure; its `parent` is that box.
+each time. A text widget (a [Term::Fabulous::Widget::Text](Text.md)) is laid
+out inside a [Term::Fabulous::Widget::Box](Box.md) of its own, because a text
+has no box the list could measure; its `parent` is that box.
 
 ## scroll\_to\_item
 
@@ -227,11 +229,12 @@ and `Mouse` for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
 is attached. When its item is detached it loses the hover, like any
-removed widget, and the focus goes to its heir: the list, or the
-nearest widget above it that can take the focus (see
+removed widget, and the focus goes to its heir: the nearest widget above
+it that can take the focus (the list itself only when it takes the
+focus, as a [Term::Fabulous::Widget::DocumentView](DocumentView.md) does; see
 ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)), so that the keys keep working
-where they did; without such a widget, nothing has the focus.
-A focused widget inside an item is scrolled into view like in every
+where they did; without such a widget, nothing has the focus. A focused
+widget inside an item is scrolled into view like in every
 [ScrollBox](ScrollBox.md#focus).
 
 # KDL PROPERTIES
@@ -259,6 +262,7 @@ items until they are attached again.
 
 # SEE ALSO
 
-[Term::Fabulous::Widget::ScrollBox](ScrollBox.md), ["LIMITATIONS" in Term::Fabulous](../../../../README.md#limitations),
+[Term::Fabulous::Widget::ScrollBox](ScrollBox.md), [Term::Fabulous::Scrolling](../Scrolling.md),
+["LIMITATIONS" in Term::Fabulous](../../../../README.md#limitations),
 ["Scrolling content" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#scrolling-content), the example
 program `examples/widgets/virtual-list.pl`.

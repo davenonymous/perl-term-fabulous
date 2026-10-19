@@ -91,9 +91,9 @@ references die with a message starting with
 my $markup = 'There is no file [bold]' . escape_markup($name) . '[/].';
 ```
 
-Returns `$text` as markup that shows it as it is: every `[` becomes
-`\[`, so a file name, a user's input or an error message cannot open
-or close a tag. `undef` and references die.
+Returns the given text as markup that shows it as it is: every `[`
+becomes `\[`, so a file name, a user's input or an error message
+cannot open or close a tag. `undef` and references die.
 
 # SEE ALSO
 

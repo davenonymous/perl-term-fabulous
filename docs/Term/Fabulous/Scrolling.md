@@ -30,11 +30,12 @@ This module provides these moves for any scroll container, such as a
 [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md), a
 [Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md) or a
 [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md).
-[Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md) has a recipe that scrolls a
-ScrollBox with pager keys using these functions.
+["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
+is a recipe that scrolls a ScrollBox with pager keys using these
+functions.
 
 All scroll containers are scrolled the same way, with the UI's
-[scroll\_state and scroll\_to](../../../README.md#bounding_box-scroll_state-scroll_to)
+[scroll\_state and scroll\_to](../../../README.md#bounding_box-content_box-scroll_state-scroll_to)
 methods, and this module applies the same rules to all of them:
 
 - A _page_ is the number of rows the container shows inside its border,
@@ -70,8 +71,9 @@ and returns 0.
 Before the first frame has laid the container out, Clay knows neither
 its size nor its scroll position, so there is nothing to scroll. Until
 then the functions that scroll return 0 without doing anything,
-["page\_rows"](#page_rows) and ["scrolled\_percent"](#scrolled_percent) return `undef`, and
-["inner\_rows"](#inner_rows) returns an empty list.
+["page\_rows"](#page_rows), ["scroll\_offset"](#scroll_offset), ["max\_scroll\_offset"](#max_scroll_offset) and
+["scrolled\_percent"](#scrolled_percent) return `undef`, and ["inner\_rows"](#inner_rows) returns an
+empty list.
 
 The calculations come from [Term::Fabulous::Viewport](Viewport.md). The functions
 take the UI and the container as arguments rather than being methods of
@@ -85,8 +87,8 @@ into view, and for the percentage it reports.
 Nothing is exported by default. Every function takes the UI (a
 [Term::Fabulous](../../../README.md) object) and the scroll container as its first two
 arguments and dies when the UI cannot report scroll states or the
-container is not an object. Counts of rows and pages must be integers;
-a negative count scrolls up. Anything else dies.
+container is not an object. Counts of rows, columns and pages must be
+integers; a negative count scrolls up (or left). Anything else dies.
 
 ## scroll\_by\_rows
 
@@ -143,7 +145,7 @@ my $moved = reveal_rows( $ui, $widget, $from, $to, align => 'top' );
 Scrolls the rows from screen row `$from` up to, but not including,
 screen row `$to` into the container's inner rows (see ["inner\_rows"](#inner_rows)).
 Both rows are screen coordinates, as
-["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-scroll_state-scroll_to) reports them.
+["bounding\_box, content\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-content_box-scroll_state-scroll_to) reports them.
 `align` says how:
 
 - `nearest` (the default)
@@ -254,6 +256,8 @@ container out.
 
 # SEE ALSO
 
-[Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md), [Term::Fabulous::Viewport](Viewport.md),
+[Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md), [Term::Fabulous::Viewport](Viewport.md),
 [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md), [Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md),
-[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), ["SCROLLING" in Term::Fabulous::Manual::Events](Manual/Events.md#scrolling).
+[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), ["SCROLLING" in Term::Fabulous::Manual::Events](Manual/Events.md#scrolling),
+["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
+["follow\_end" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#follow_end).

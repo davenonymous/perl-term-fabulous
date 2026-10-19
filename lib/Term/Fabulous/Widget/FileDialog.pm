@@ -586,14 +586,15 @@ filter C<Notes> hides the files that are no notes.
 A file dialog is a L<Term::Fabulous::Widget::Dialog> that lists the
 folders and files of a folder and lets the user walk through the
 folders, pick an entry or type a name. Like a
-L<Term::Fabulous::Widget::Prompt>, it reports the result with one
+L<Term::Fabulous::Widget::Prompt>, it reports the answer with one
 event, L<Answer|Term::Fabulous::Event::Answer>, after it closed.
 
 From the top, it shows its title, the folder it lists, the list, a
 field for a name or a path (C<File>, or C<Name> in folder mode), a row
 with the filter dropdown and the C<Show hidden files> checkbox, the
-dialog's notice line, which says what is wrong while something is (at
-least one row, empty otherwise, so the dialog keeps its height:
+dialog's notice line, which says what is wrong while something is
+(always at least one row, so a one-row message does not change the
+dialog's height:
 C<< notice_line => 'row' >>, see
 L<Term::Fabulous::Widget::Dialog/notice_line>), and the buttons. The
 folder line shows as much of the end of the path as fits the width the
@@ -712,9 +713,10 @@ the file?>, with the buttons C<Replace> and C<Cancel>) that opens above
 the file dialog, which is dimmed behind it, with the focus on
 C<Cancel>. C<Replace> closes both and the file dialog answers.
 C<Cancel> or C<Escape> on the question puts the focus back into the
-file dialog, which stays open. Closing the file dialog from the
-program closes the question too. An untitled document has no
-C<current_file>, so saving it over any existing file asks.
+file dialog, which stays open. Closing or answering the file dialog
+from the program (L</close>, C<answer>) closes the question too.
+An untitled document has no C<current_file>, so saving it over any
+existing file asks.
 C<< confirm_overwrite => 0 >> never asks.
 
 =head2 Answers
@@ -893,29 +895,26 @@ dialog is closed.
 
 =head1 EVENTS
 
-Besides the events of every dialog, a file dialog fires:
-
-=over
-
-=item C<Answer> (L<Term::Fabulous::Event::Answer>)
-
-The user chose a file or a folder, or cancelled. Fired on the dialog
-after it closed and gave the focus back, once per opening; the
-dialog's C<Close> comes first. See L</Answers>.
-
-=back
+A file dialog fires the events of every dialog
+(L<Term::Fabulous::Widget::Dialog/EVENTS>): C<Close>, then C<Answer>
+(L<Term::Fabulous::Event::Answer>, see L</Answers>), once per opening.
+The C<Answer> says that the user chose a file or a folder, or
+cancelled; it is fired on the dialog after it closed and gave the focus
+back.
 
 The C<Change> events of the filter dropdown and the checkbox bubble
 through the dialog as usual.
 
 =head1 KDL PROPERTIES
 
-A file dialog is built in Perl only. Its answer comes as an event,
-which a layout file cannot express.
+A file dialog is built in Perl only: its paths are byte strings and
+its filters structured, which a layout file cannot pass to C<new>.
 
 =head1 SEE ALSO
 
 L<Term::Fabulous::Event::Answer>, L<Term::Fabulous::Widget::Dialog>,
-L<Term::Fabulous::Widget::Prompt>, L<Term::Fabulous::Widget::Table>.
+L<Term::Fabulous::Widget::Prompt>, L<Term::Fabulous::Widget::Table>,
+L<Term::Fabulous::Manual::Feedback/FILE DIALOGS>,
+L<Term::Fabulous::Cookbook::Forms/Open and save a file (FileDialog)>.
 
 =cut

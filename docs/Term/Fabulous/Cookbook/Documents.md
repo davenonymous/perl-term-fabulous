@@ -1,10 +1,10 @@
 # NAME
 
-Term::Fabulous::Cookbook::Documents - Recipes: show, search and fill documents
+Term::Fabulous::Cookbook::Documents - Recipes: build documents in Perl and from Markdown, follow links, search
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Canvases](Canvases.md). Next page: [Term::Fabulous::Cookbook::Output](Output.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Canvases](Canvases.md). Next page: [Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md).
 
 This page shows how to display long, structured text: a manual, a
 help file, release notes, anything with headings, paragraphs, lists and
@@ -37,10 +37,11 @@ indent and the quotes it is in. Headings start the _sections_ that a
 table of contents lists and links lead to.
 
 The first two recipes build documents, by hand and from Markdown with
-[Markdent](https://metacpan.org/pod/Markdent). The next ones use that reader to show what the view can
-do: links, search, a table of contents, syntax highlighting and styles
-of your own. The last recipe puts a table and a picture into a
-document, and searches into the table.
+[Markdent](https://metacpan.org/pod/Markdent). The next two use that reader to show what the view does
+with a document: follow its links and search its text. The next page,
+[Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md), continues with a table
+of contents, syntax highlighting, styles of your own, the keys of a
+pager for any scroll box, and a table and a picture inside a document.
 
 The recipes on this page:
 
@@ -48,11 +49,14 @@ The recipes on this page:
 - ["Turn Markdown into a document (Markdent)"](#turn-markdown-into-a-document-markdent)
 - ["Follow links: jump to sections, open other pages, go back (LinkActivate)"](#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
 - ["Search a document and show the reader's position (search, ViewChange)"](#search-a-document-and-show-the-reader-s-position-search-viewchange)
-- ["Show a table of contents beside the document (sections, KDL)"](#show-a-table-of-contents-beside-the-document-sections-kdl)
-- ["Highlight the syntax of code blocks (highlighter, CodeBlock)"](#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
-- ["Change the styles of a document and add mark kinds (Look)"](#change-the-styles-of-a-document-and-add-mark-kinds-look)
-- ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)"](#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
-- ["Put any widget into a document (a table and a picture)"](#put-any-widget-into-a-document-a-table-and-a-picture)
+
+The recipes of [Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md):
+
+- [Show a table of contents beside the document (sections, KDL)](DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl)
+- [Highlight the syntax of code blocks (highlighter, CodeBlock)](DocumentTechniques.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
+- [Change the styles of a document and add mark kinds (Look)](DocumentTechniques.md#change-the-styles-of-a-document-and-add-mark-kinds-look)
+- [Scroll any scroll box like a pager (Term::Fabulous::Scrolling)](DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)
+- [Put any widget into a document (a table and a picture)](DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture)
 
 # Show a document built in Perl (Document, factories, marks)
 
@@ -148,20 +152,25 @@ builds every text from pieces with the small `marked` function: it
 appends the pieces and records the offsets of each styled piece as it
 goes. A reader does the same while it removes the formatting from its
 source. A factory also takes `{ markup => '...' }`, the markup of
-[Term::Fabulous::Text::Markup](../Text/Markup.md).
+[Term::Fabulous::Text::Markup](../Text/Markup.md). Its tags are style strings and palette
+tokens, not the kinds of the look: `[bold]` and `[link=faq.md]` work,
+`[code]` and `[file]` die.
 - The built-in look has the mark kinds `bold`, `italic`, `strike`,
 `code` and `file` for formatting inside a paragraph, and
 `[ $start, $end, link =` $target \]> is a link. Its _target_ can be
 any defined value: a URL, the name of a section, a hash reference or an
 object of your program. The view hands it back unchanged when the user
-follows the link (see the next recipes). ["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds)
+follows the link (see
+["Follow links: jump to sections, open other pages, go back (LinkActivate)"](#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)).
+["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds)
 lists every kind and its colors; a kind the look does not know dies.
 - A [heading](../Document.md#heading) has a level from 1 to 6.
 Level 1 gets a rule under it. Headings are never indented, and each
 starts a section.
 - [code](../Document.md#code) keeps its lines and never wraps.
 Its optional `language` is passed to a syntax highlighter, if the view
-has one (see ["Highlight the syntax of code blocks (highlighter, CodeBlock)"](#highlight-the-syntax-of-code-blocks-highlighter-codeblock)).
+has one (see
+["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock)).
 - A [term](../Document.md#term) starts an entry of a definition
 list, and the paragraph after it is its definition. Indent the
 definition (here by 4 columns) and the factory puts it directly under
@@ -196,8 +205,10 @@ Goal: show a Markdown file. Reading Markdown is a solved problem:
 [Markdent](https://metacpan.org/pod/Markdent) from CPAN parses it, with the fenced code blocks and the
 struck-through text of the GitHub dialect and the tables of the Theory
 dialect. What remains is the part that belongs to this page: turning
-what Markdent found into the items of a document. The other recipes on this page use this reader to load their
-documents.
+what Markdent found into the items of a document. The next two recipes
+use this reader to load their documents, and so do the table of
+contents and the table-and-picture recipes of
+[Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md).
 
 The reader is shipped as `examples/cookbook/lib/My/Markdown.pm`. It
 needs Markdent, which you may have to install first
@@ -207,7 +218,8 @@ needs Markdent, which you may have to install first
 package My::Markdown;
 
 # Reads Markdown with Markdent and turns it into a Term::Fabulous::Document,
-# for the recipes of Term::Fabulous::Cookbook::Documents. Headings,
+# for the recipes of Term::Fabulous::Cookbook::Documents and
+# Term::Fabulous::Cookbook::DocumentTechniques. Headings,
 # paragraphs, list items, block quotes, code blocks and horizontal rules
 # become items through the factories of the document, with bold, italic
 # and struck-through text, code and links as marks. A table becomes a
@@ -626,16 +638,18 @@ item. Which event becomes which item:
     - `start_paragraph`: a [paragraph](../Document.md#paragraph),
     unless it is the first paragraph of a list item. That one is the text
     of the item. A paragraph that holds nothing but a picture becomes the
-    picture (see the last recipe).
+    picture (see
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture)).
     - `start_list_item`: a [list item](../Document.md#list_item).
     Its marker, `marker_width` and `position` come from the list it is
     in.
     - `code_block` (a fenced block) and `preformatted` (an indented one):
-    [code](../Document.md#code), with the word after the opening
-    fence as its `language`.
+    [code](../Document.md#code); a fenced block passes the word
+    after its opening fence as the `language`.
     - `horizontal_rule`: a [rule](../Document.md#rule).
     - `start_table` to `end_table`: a [Term::Fabulous::Widget::Table](../Widget/Table.md),
-    added with [add](../Document.md#add) (see the last recipe).
+    added with [add](../Document.md#add) (see
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture)).
     - `start_blockquote` and `end_blockquote`: no item of their own, but
     every item between them gets a `quote` one higher.
 - The text of an item arrives in pieces, between the events of its marks,
@@ -660,8 +674,8 @@ too. The blank rows between the items come from the factories.
 - `parse_file` passes the file name as the document's `source`, so the
 program can show it or open relative links from there, and its
 directory as the place the pictures are in.
-- Markdown has more than this: HTML is skipped (the text inside an
-inline tag stays). The reader knows nothing of the screen, and the
+- The reader leaves out HTML: an HTML block disappears, and of an inline
+tag only the text inside it stays. The reader knows nothing of the screen, and the
 view knows nothing of Markdown: the same view shows the documents of
 any reader.
 
@@ -797,11 +811,12 @@ A Markdown target cannot contain a space, so the pages write `%20`
 for one; this program decodes that, then splits the target at `#`
 into a file name and a section name.
 - [find\_section](../Document.md#find_section) turns a section
-name into the index of the item to show. It tries the titles of the
-sections first and then the anchors, the texts of the terms: first for
-an exact match, then ignoring case, then for a title or anchor that
-starts with the name. It returns `undef` when nothing
-matches, which the program reports instead of jumping.
+name into the index of the item to show. It compares the name in four
+rounds: exactly, ignoring case, as the start of a title or anchor
+(followed by a non-word character), and that again ignoring case.
+Within each round the section titles come before the anchors, the
+texts of the terms. It returns `undef` when nothing matches, which the
+program reports instead of jumping.
 - [show\_item](../Widget/DocumentView.md#show_item) scrolls
 the item to the top of the view in the next frame.
 [document](../Widget/DocumentView.md#document) replaces the
@@ -914,7 +929,7 @@ $ui->run;
 ```
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-search.svg" alt="The snapback manual with every occurrence of the word disk highlighted, the current one in a stronger color; at the bottom the search field with the word disk and the text match 3 of 6, Installation, 16%"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-search.svg" alt="The snapback manual with every occurrence of the word disk highlighted, the current one in a stronger color; at the bottom the search field with the word disk and the text match 3 of 6, Installation, 15%"></p>
 </div>
 
 The picture shows the manual after searching for `disk` and pressing
@@ -950,648 +965,12 @@ program registered on the view. The handler moves the focus to the
 starts the search. An `Escape` in the field returns the focus to the
 view without searching.
 
-# Show a table of contents beside the document (sections, KDL)
-
-Goal: a list of all headings beside the document. A click on a heading,
-or `Enter` on a selected one, shows its section; a mark in front of a
-heading follows the reader through the document. The layout comes from
-a KDL description.
-
-This program is shipped as `examples/cookbook/document-contents.pl`.
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
-
-use My::Markdown;
-use Term::Fabulous;
-use Term::Fabulous::Layout;
-
-my $root = Term::Fabulous::Layout->new( string => <<'KDL' )->build;
-use Term::Fabulous::Widget::Box as Box
-use Term::Fabulous::Widget::Text as Text
-use Term::Fabulous::Widget::DocumentView as DocumentView
-
-Box "root" {
-        sizing width=grow height=grow
-
-        Box "contents-pane" {
-                sizing width="fixed(34)" height=grow
-                padding left=1 right=1
-                border style=Round
-                bordered #true
-                Text "contents" { text ""; }
-        }
-
-        // The view is framed by a box around it rather than by a border of its
-        // own, as its documentation advises.
-        Box "page-pane" {
-                sizing width=grow height=grow
-                border style=Round
-                bordered #true
-                DocumentView "manual" {
-                        sizing width=grow height=grow
-                        padding left=1 right=1
-                        indent 2
-                }
-        }
-}
-KDL
-
-my $view     = $root->find_by_id('manual');
-my $contents = $root->find_by_id('contents');
-my $document = My::Markdown->parse_file("$FindBin::Bin/documents/snapback.md");
-$view->document($document);
-
-# One line per heading, indented by its level, each a link to its
-# section number; a mark in front of the section the reader is in.
-sub show_contents ($current) {
-        my @sections = $document->sections;
-        my @lines    = map {
-                my $section = $sections[$_];
-                my $title   = $section->{title} =~ s/\[/\\[/gr;
-                my $mark    = defined $current && $current == $_ ? '[bold]>[/] ' : '  ';
-                $mark . '  ' x ( $section->{level} - 1 ) . "[link=$_]$title\[/link]";
-        } 0 .. $#sections;
-        $contents->markup( join "\n", @lines );
-        return;
-}
-show_contents(undef);
-
-# The view reports the section at its top after every frame that shows
-# something new; the contents follow it.
-my $shown_section = -1;
-$view->on(
-        ViewChange => sub ($event) {
-                my $section = $event->section // -1;
-                return if $section == $shown_section;
-                $shown_section = $section;
-                show_contents( $event->section );
-                return;
-        }
-);
-
-# A click on a heading, or Enter on the selected one, shows its section.
-$contents->on(
-        LinkActivate => sub ($event) {
-                $view->show_item( $document->item_of_section( $event->link ) );
-                return;
-        }
-);
-
-my $ui = Term::Fabulous->new( root => $root, width => 100, height => 26 );
-$ui->interaction->set_focused_widget($view);
-$ui->run;
-```
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-contents.svg" alt="Two framed panes: on the left the headings of the snapback manual as links, indented by level, with a mark in front of Hooks; on the right the Hooks section with a Perl code block"></p>
-</div>
-
-The picture shows the program after three presses of `PageDown`.
-
-- A document numbers its sections from 0 in the order they appear: each
-starts at a heading and runs to the next one.
-[sections](../Document.md#sections) returns them as hashes
-with the `item` a section starts at, its `level` and its `title`,
-and [item\_of\_section](../Document.md#item_of_section) gives
-the item of one of them by its number.
-- `$event->section` of `ViewChange` is the number of the section
-the item at the top of the view belongs to, or `undef` above the
-first heading. The program rebuilds the contents only when this number
-changes, not after every scrolled row.
-- The contents are a [Text](../Widget/Text.md) written
-in markup: every heading is a link whose target is its section number.
-A heading that contains `[` is escaped as `\[`, so that the markup
-parser does not read it as a tag. A Text with links is a Tab stop:
-`Tab` moves the focus between the contents and the document, and in
-the contents `Left`, `Right` and `Enter` select and follow the
-links. Setting the markup keeps the focus.
-- The KDL layout uses the view like any other widget, after
-`use Term::Fabulous::Widget::DocumentView as DocumentView`. KDL can set
-`indent` and the properties of every scroll container; the document
-itself comes from the program, through
-[document](../Widget/DocumentView.md#document). See
-["KDL PROPERTIES" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#kdl-properties).
-- The view is framed by a box around it, not by a border of its own. In a
-scroll container, content scrolled under the container's own border
-shows its background in the border cells; a frame outside avoids that.
-
-# Highlight the syntax of code blocks (highlighter, CodeBlock)
-
-Goal: color the code blocks of a document by language, and scroll long
-lines sideways.
-
-This program is shipped as `examples/cookbook/code-highlighting.pl`.
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use Clay::XS qw(sizing_grow);
-use Term::Fabulous;
-use Term::Fabulous::Document;
-use Term::Fabulous::Widget::DocumentView;
-
-# The styles of the kinds of token, and for each language a pattern
-# that finds its tokens, one named group per kind.
-my %STYLE_OF = (
-        comment  => 'italic #7f848e',
-        string   => '#98c379',
-        variable => '#e06c75',
-        keyword  => 'bold #c678dd',
-        command  => 'bold #61afef',
-        option   => '#d19a66',
-        key      => '#e06c75',
-);
-my %TOKENS_OF = (
-        perl => qr{
-                  (?<comment>  \#.* )
-                | (?<string>   "(?:[^"\\]|\\.)*" | '(?:[^'\\]|\\.)*' )
-                | (?<variable> [\$\@%][\w:]+ )
-                | (?<keyword>  \b(?:my|our|use|sub|return|if|unless|foreach|while|or|and|die)\b )
-        }x,
-        shell => qr{
-                  (?<comment> \#.* )
-                | (?<option>  (?<=\s) --?[\w-]+ )
-                | (?<command> ^\w[\w-]* )
-        }xm,
-        ini => qr{
-                  (?<comment> ^\s*\#.* )
-                | (?<key>     ^\w+ (?=\s*=) )
-        }xm,
-);
-
-# A highlighter gets the code of a block and its language, and returns
-# spans [ start, end, style ] of character offsets into the code.
-sub highlight ( $code, $language ) {
-        my $tokens = $TOKENS_OF{ $language // '' } or return [];
-        my @spans;
-        while ( $code =~ /$tokens/g ) {
-                my ($kind) = keys %+;
-                push @spans, [ $-[0], $+[0], $STYLE_OF{$kind} ];
-        }
-        return \@spans;
-}
-
-# The code items name the language a highlighter gets. A parser takes
-# the language from the source, such as the word after ``` in Markdown.
-my $document = Term::Fabulous::Document->new;
-$document->heading( 2, 'Highlighted code' );
-$document->paragraph('Each code block names its language, and the highlighter colors its tokens. Left and Right scroll all code blocks sideways together.');
-$document->code( <<'PERL' =~ s/\n\z//r, language => 'perl' );
-#!/usr/bin/env perl
-use v5.32;
-use warnings;
-
-my ($backup) = @ARGV or die "usage: $0 BACKUP-DIRECTORY\n";
-say "snapback: new backup in $backup";    # a long comment that runs past the right edge of the view, to scroll to
-PERL
-$document->code( <<'SHELL' =~ s/\n\z//r, language => 'shell' );
-snapback --dry-run ~/Documents /mnt/backup    # lists, copies nothing
-SHELL
-$document->code( <<'INI' =~ s/\n\z//r, language => 'ini' );
-# ~/.snapback
-target = /mnt/backup
-keep   = 14
-INI
-
-my $view = Term::Fabulous::Widget::DocumentView->new(
-        id          => 'code',
-        document    => $document,
-        highlighter => \&highlight,
-        layout      => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
-);
-
-my $ui = Term::Fabulous->new( root => $view, width => 80, height => 24 );
-$ui->interaction->set_focused_widget($view);
-$ui->run;
-```
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-code-highlighting.svg" alt="Three code blocks with highlighted syntax: a Perl script with gray comments, purple keywords, red variables and green strings, whose long last line ends in a clip mark at the right edge; a shell command with a blue command name and an orange option; a configuration file with red keys"></p>
-</div>
-
-After two presses of `Right`, the code blocks are scrolled sideways
-together:
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-code-highlighting-scrolled.svg" alt="The same code blocks, the Perl script scrolled sixteen columns to the left with clip marks on the left of every line; the shorter shell and configuration lines did not move"></p>
-</div>
-
-- A _highlighter_ is a code reference that receives the code of a block
-and its language, and returns an array reference of spans
-`[ $start, $end, $style ]`: character offsets into the code and a style
-string such as `'bold #c678dd'` (see
-["Style strings" in Term::Fabulous::Text::Style](../Text/Style.md#style-strings)). Give it to the view with
-the `highlighter` parameter; the view passes it to every code block
-the document's [code](../Document.md#code) factory made.
-- Each code block calls the highlighter once and keeps the result until
-its code, its language or the highlighter changes, so scrolling does
-not run it again. A language it does not know gets `[]`, plain code.
-- This highlighter finds the tokens of a language with one regular
-expression with a named group per kind of token. Because the
-alternatives are tried left to right at each position, a `#` inside a
-string stays part of the string. For real syntax highlighting, a
-highlighter can use a proper tokenizer, such as [PPI](https://metacpan.org/pod/PPI) for Perl.
-- The language comes from the `language` the
-[code](../Document.md#code) factory was given. The program
-gives it directly; a parser takes it from the source, as
-`My::Markdown` does with the word after the opening fence of a code
-block (```` ```perl ````).
-- Code never wraps. A line wider than the view ends at its edge with a
-clip mark. `Left` and `Right` scroll all code blocks of the view
-sideways together, 8 columns at a time; a horizontal mouse wheel over
-a code block does the same. Each block moves only as far as its own longest line needs,
-so short blocks stay where they are. [scroll\_code](../Widget/DocumentView.md#scroll_code)
-does it from code.
-- The style strings here are fixed colors, which suit a dark theme. The
-highlighter is called with no access to the theme; to follow the
-theme, look the colors up with `$ui->theme->token('success')` (see
-["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)) and set a new highlighter after every
-theme switch.
-- [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) is also a widget on its own, for
-code outside a document. It takes the same `highlighter`, plus spans
-of the program's own.
-
-# Change the styles of a document and add mark kinds (Look)
-
-Goal: change how some kinds of text look, and add mark kinds of your
-own: keys shown like keycaps, underlined text, and a highlighter pen.
-F2 switches between the dark and the light theme, and the styles follow.
-
-This program is shipped as `examples/cookbook/document-styles.pl`.
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use Object::Pad 0.825;
-
-use Clay::UI::Enum::Result;
-use Clay::XS qw(sizing_grow);
-use Term::Fabulous;
-use Term::Fabulous::Document;
-use Term::Fabulous::Document::Look;
-use Term::Fabulous::Widget::DocumentView;
-
-# The styles of the document: two built-in kinds changed, three kinds
-# added. Colors are palette tokens of the theme, so the styles follow a
-# theme switch.
-class My::ManualLook :isa(Term::Fabulous::Document::Look) {
-
-        method recipes :common () {
-                return (
-                        $class->SUPER::recipes,
-                        heading1  => { words => 'bold', color => 'success' },
-                        code      => { color => 'accent' },
-                        key       => { words => 'bold', color => 'text_bright', background => 'surface_raised' },
-                        underline => { words => 'underline' },
-                        highlight => { color => 'text_inverse', background => 'warning' },
-                );
-        }
-}
-
-# A piece is a plain string or [ KIND => 'text' ].
-sub marked (@pieces) {
-        my ( $text, @marks ) = ('');
-        foreach my $piece (@pieces) {
-                my ( $kind, $words ) = ref $piece ? @$piece : ( undef, $piece );
-                my $start = length $text;
-                $text .= $words;
-                push @marks, [ $start, length $text, $kind ] if defined $kind;
-        }
-        return { text => $text, marks => \@marks };
-}
-
-# The document names the look its factories style the marks with; a
-# kind the look does not know dies at once.
-my $document = Term::Fabulous::Document->new( look => 'My::ManualLook' );
-$document->heading( 1, 'Keys of the editor' );
-$document->paragraph(
-        marked( 'Press ', [ key => 'Ctrl+S' ], ' to save the file and ', [ key => 'Ctrl+Q' ], ' to quit. Unsaved changes are ', [ underline => 'never' ], ' lost: the editor asks first.' ) );
-$document->paragraph(
-        marked( 'The settings live in ', [ code => '~/.editorrc' ], '. ', [ highlight => 'New in version 3:' ], ' ', [ key => 'F2' ], ' switches between the dark and the light theme.' ) );
-$document->heading( 2, 'Moving around' );
-$document->paragraph( marked( [ key => 'Home' ], ' and ', [ key => 'End' ], ' go to the start and the end of a line, ', [ bold => 'Ctrl' ], ' with them to the start and the end of the file.' ) );
-
-my $view = Term::Fabulous::Widget::DocumentView->new(
-        id       => 'manual',
-        document => $document,
-        indent   => 4,
-        layout   => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1, top => 1 } },
-);
-
-my $ui = Term::Fabulous->new( root => $view, width => 80, height => 24 );
-
-$view->on(
-        KeyPress => sub ($event) {
-                return Clay::UI::Enum::Result->CONTINUE unless ( $event->key_name // '' ) eq 'F2';
-                $ui->theme( $ui->theme->name eq 'dark' ? 'light' : 'dark' );
-                return;
-        }
-);
-
-$ui->interaction->set_focused_widget($view);
-$ui->run;
-```
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-styles.svg" alt="A short manual in the light theme: a green first-level heading, key names such as Ctrl+S in bold on a gray background, an underlined word, a file name in blue and a phrase highlighted on a yellow background"></p>
-</div>
-
-The picture shows the light theme, after `F2`.
-
-- A [look](../Document/Look.md) maps each kind to a style.
-Its class method [recipes](../Document/Look.md#recipes)
-returns a list of `kind => recipe` pairs. A recipe has up to three
-entries: `words`, style words such as `'bold italic'`; `color`, the
-text color; and `background`. Colors are _palette tokens_ of the
-theme, such as `accent` or `surface_raised` (see
-["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens)), not fixed colors, so a theme switch
-restyles the document.
-- The subclass returns the recipes of its parent followed by its own.
-Later pairs win, so `heading1` and `code` replace the built-in
-recipes, and `key`, `underline` and `highlight` are new. Keep the
-parent's recipes: the view uses kinds such as `heading2`, `marker`
-and `match` itself.
-- The document names its look:
-`Term::Fabulous::Document->new( look => 'My::ManualLook' )`. Its
-factories style every mark through it, so they accept the new kinds; a
-mark of a kind the look does not know dies at once, with the kinds it
-knows. The code blocks of the document paint with its `code_block`
-style too.
-- The styles of the marks are the recipes' palette tokens, which every
-text looks up in the theme when it paints. A theme switch with
-`$ui->theme(...)` therefore restyles the document by itself.
-- `indent => 4` indents the paragraphs by four columns instead of
-two. Headings are never indented.
-
-# Scroll any scroll box like a pager (Term::Fabulous::Scrolling)
-
-Goal: page through a text in a plain [ScrollBox](../Widget/ScrollBox.md)
-with the keys of a pager, show how far down the reader is, and bring a
-given line into view. The document view scrolls with the same
-functions, and so can any program.
-
-This program is shipped as `examples/cookbook/pager-keys.pl`. It shows
-the file named on its command line, or the reader of the second recipe.
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use FindBin;
-
-use Clay::UI::Enum::Result;
-use Clay::XS qw(sizing_grow CLAY_TOP_TO_BOTTOM CLAY_TEXT_WRAP_NONE);
-use List::Util qw(first);
-use Text::Tabs qw(expand);
-use Term::Fabulous;
-use Term::Fabulous::Scrolling qw(inner_rows reveal_rows scroll_by_key scroll_offset scrolled_percent);
-use Term::Fabulous::Widget::Box;
-use Term::Fabulous::Widget::ScrollBox;
-use Term::Fabulous::Widget::Text;
-
-use constant {
-        PLAIN  => [ 200, 210, 230, 255 ],
-        MARKED => [ 229, 192, 123, 255 ],
-};
-
-my $file = shift // "$FindBin::Bin/lib/My/Markdown.pm";
-open my $handle, '<:encoding(UTF-8)', $file or die "Cannot read $file: $!\n";
-chomp( my @lines = <$handle> );
-close $handle;
-$Text::Tabs::tabstop = 4;
-@lines               = expand(@lines);
-
-my $text = Term::Fabulous::Widget::ScrollBox->new(
-        id     => 'text',
-        layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
-);
-my @rows = map { Term::Fabulous::Widget::Text->new( text => length $_ ? $_ : "\x{A0}", wrap_mode => CLAY_TEXT_WRAP_NONE, text_color => PLAIN ) } @lines;
-$text->add_child(@rows);
-
-my $status = Term::Fabulous::Widget::Text->new( text => '', wrap_mode => CLAY_TEXT_WRAP_NONE, text_color => [ 150, 160, 180, 255 ] );
-my $root   = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_grow(), height => sizing_grow() } } );
-$root->add_child( $text, $status );
-
-my $ui = Term::Fabulous->new( root => $root, width => 80, height => 24 );
-
-# n marks the next line that starts a sub or a method and scrolls it
-# into view. reveal_rows takes screen rows: line $index of the text is
-# on the row where the content starts, plus $index, less how far the
-# text is scrolled (scroll_offset, in rows).
-my $marked = -1;
-
-sub mark_next_definition () {
-        my $next = first { $lines[$_] =~ /\A\s*(?:sub|method)\b/ } $marked + 1 .. $#lines;
-        return 0 unless defined $next;
-        $rows[$marked]->text_color(PLAIN) if $marked >= 0;
-        $rows[$next]->text_color(MARKED);
-        $marked = $next;
-        my ($top) = inner_rows( $ui, $text ) or return 1;    # nothing is laid out before the first frame
-        my $row = $top + $next - sprintf( '%.0f', scroll_offset( $ui, $text ) );
-        reveal_rows( $ui, $text, $row, $row + 1 );
-        return 1;
-}
-
-my $note = 'j k Space b g G scroll, n marks the next definition';
-
-sub show_status () {
-        my $percent = scrolled_percent( $ui, $text ) // 0;
-        $status->text( sprintf ' %s  %d%%  %s', $file =~ s{.*/}{}r, $percent, $note );
-        return;
-}
-show_status();
-
-# The keys of less (j k Space b g G, the arrows, PageUp, PageDown, Home
-# and End) scroll; scroll_by_key returns undef for any other key, else 1
-# when it moved the text and 0 when it could not, at the start or the
-# end. n marks the next definition.
-$root->on(
-        KeyPress => sub ($event) {
-                my $name  = $event->main_key_name // return Clay::UI::Enum::Result->CONTINUE;
-                my $moved = $name eq 'n' ? mark_next_definition() : scroll_by_key( $ui, $text, $name, keys => 'less' );
-                return Clay::UI::Enum::Result->CONTINUE unless defined $moved;
-                $note = $moved ? '' : 'Nothing more in that direction.';
-                show_status();
-                return;
-        }
-);
-
-# A frame that moved the text reports it; the percentage is that of
-# the frame just laid out.
-$text->on(
-        OnScroll => sub ($event) {
-                show_status();
-                return;
-        }
-);
-
-$ui->run;
-```
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-pager-keys.svg" alt="A Perl module in a scroll box, scrolled to 43 percent, with the line method _code_block highlighted in yellow at the bottom; the status line shows the file name and the percentage"></p>
-</div>
-
-The picture shows the program after six presses of `n`.
-
-- [Term::Fabulous::Scrolling](../Scrolling.md) moves the content of any scroll container
-(a ScrollBox, a VirtualList, a document view) by rows, by pages and to
-its ends. Each function takes the UI and the container, so it works on
-any container of any program.
-- [scroll\_by\_key](../Scrolling.md#scroll_by_key) knows the keys
-of pagers: `keys => 'less'` are those of `less` (`j`, `k`,
-`Space`, `b`, `g`, `G`, the arrows, `PageUp`, `PageDown`, `Home`
-and `End`), the ones a document view uses too; `keys =>
-'pager'` only `PageUp`, `PageDown`, `Ctrl+Home` and `Ctrl+End`,
-for a box whose arrow keys belong to the widgets inside it. It returns
-`undef` for a key it does not know, so the handler lets that key go
-on, and handles `n` itself.
-- A _page_ is the number of rows the container shows inside its border
-and padding, less one: the last row of a page stays in view as the first
-row of the next, as in `less`.
-- Every function that scrolls returns 1 when it moved the content and 0
-when it could not, at the top or the end; so does `scroll_by_key` for
-its keys. The program shows a note when a key did nothing. Before the first frame nothing is laid out: the
-functions that scroll return 0, and `scrolled_percent` returns
-`undef`, which the program shows as 0%.
-- [scrolled\_percent](../Scrolling.md#scrolled_percent) returns
-how far the content is scrolled, from 0 to 100. The program reads it in
-the handler of `OnScroll`, which the ScrollBox fires in every frame
-that moved its content.
-- [reveal\_rows](../Scrolling.md#reveal_rows) scrolls a range of
-_screen rows_, as the last frame laid them out, into view with the
-smallest movement. A widget that is out of view has no position on the
-screen (`$ui->bounding_box` returns `undef` for it), so the
-program computes the row itself: here every line is one row, so line
-`$index` is on the first row of the content plus `$index`, less
-[scroll\_offset](../Scrolling.md#scroll_offset), the number of
-rows the content is scrolled down.
-
-# Put any widget into a document (a table and a picture)
-
-Goal: show `examples/cookbook/documents/news.md`, the release notes of
-snapback, with the logo of the program as a picture and the releases as
-a table with pages, and find a word in a cell of the table that is on
-another page.
-
-The reader of the second recipe does the work: a paragraph that holds
-nothing but a picture becomes a box of a [Term::Fabulous::Widget::Image](../Widget/Image.md)
-and its caption, and a table becomes a [Term::Fabulous::Widget::Table](../Widget/Table.md).
-Both are added to the document with
-[add](../Document.md#add), like any widget:
-
-```perl
-$document->add( $figure, indent => $indent, quote => $quote );
-```
-
-The program is shipped as `examples/cookbook/document-widgets.pl`. It
-searches for the word named on its command line, and shows the file
-named after it, or the release notes:
-
-```perl
-use v5.32;
-use warnings;
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
-use FindBin;
-use lib "$FindBin::Bin/lib";    # where My/Markdown.pm lives
-
-use Clay::XS qw(sizing_grow);
-use My::Markdown;
-use Term::Fabulous;
-use Term::Fabulous::Widget::DocumentView;
-
-# A word to search for, if any, and the file to show.
-my ( $word, $file ) = @ARGV;
-my $document = My::Markdown->parse_file( $file // "$FindBin::Bin/documents/news.md", page_size => 3 );
-
-my $view = Term::Fabulous::Widget::DocumentView->new(
-        id       => 'news',
-        document => $document,
-        layout   => { sizing => { width => sizing_grow(), height => sizing_grow() }, padding => { left => 1, right => 1 } },
-);
-$view->search($word) if defined $word;
-
-my $ui = Term::Fabulous->new( root => $view, width => 80, height => 24 );
-$ui->interaction->set_focused_widget($view);
-$ui->run;
-```
-
-<div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/cookbook-document-widgets.svg" alt="The release notes of snapback scrolled to the table of releases, which shows its second page: the release 1.4 with the matched text 5.10 highlighted in its last column, the pager under the table, and the list of the release 2.1 below"></p>
-</div>
-
-The picture shows the program started with the word `5.10`, which only
-the fifth release mentions:
-
-```text
-perl examples/cookbook/document-widgets.pl 5.10
-```
-
-- An item is any widget without a parent. The view puts it into a slot of
-its own, a box that gives it its indent, the blank rows above it and
-its quote bars, and shows it as it is. A table keeps its own keys, its
-pages and its scrollbar.
-- The view searches through [Term::Fabulous::Role::Searchable](../Role/Searchable.md): every
-widget of an item that does the role answers for its own texts. A
-[Term::Fabulous::Widget::Text](../Widget/Text.md), the caption here, answers for its
-text. A table answers from its rows, not from the cells it shows, so a
-search finds the rows on every page and under collapsed rows; when the
-current match is in a row on another page, the table turns to that page
-and the view scrolls to the row. The match is a _highlight_ over the
-cell, which leaves the cell's own styles alone.
-- The view needs to know how tall an item is before it lays it out, to
-size its scrollbar. It asks the widget: a text counts its wrapped lines,
-a box adds up its children, a table its header and the rows of its
-page, and a picture the rows its layout gives it (see
-["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows)). A widget that cannot tell
-counts one row, and the scrollbar jumps a little when its item comes
-into view; the `rows` option of [add](../Document.md#add)
-tells the view the right number instead.
-- The table is focusable, so Tab reaches it: from the view, Tab goes to
-the first interactive widget at or below the top of the view, the next
-Tab to the next one, and past the last one out of the view; `Escape`
-gives the focus back to the view. A widget far below is brought into
-view first. See ["FOCUS" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#focus).
-- Texts with links anywhere in an item, the caption of a picture for
-instance, take part in `l` and `L` like the paragraphs of the
-document.
-
-Some directions from here:
-
-- **A form in a document.** A box with a
-[text field](../Widget/TextField.md) and a
-[button](../Widget/Button.md) is an item like any other; Tab
-reaches its fields in the order of the document.
-- **Footnotes.** Leave a marker such as `[1]` in the text, as a link
-whose target names the note, and add the notes as paragraphs at the
-end of the document.
-- **Widgets of your own.** A widget that shows text it builds only later,
-as a table does with its pages, does
-[Term::Fabulous::Role::Searchable](../Role/Searchable.md) to be found by a search; a container
-that holds searchable widgets out of view (pages, a collapsed body) does
-[Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md); one whose height is known
-before the layout overrides
-[estimated\_content\_rows](../Widget.md#estimated_content_rows).
-
-[Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a complete reader built the same way, for POD.
-
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Canvases](Canvases.md). Next page: [Term::Fabulous::Cookbook::Output](Output.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Canvases](Canvases.md). Next page: [Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md).
+
+[Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md) (the recipes that
+continue these), [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md),
+[Term::Fabulous::Document](../Document.md), [Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md),
+[Term::Fabulous::Event::ViewChange](../Event/ViewChange.md),
+["Documents" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#documents).

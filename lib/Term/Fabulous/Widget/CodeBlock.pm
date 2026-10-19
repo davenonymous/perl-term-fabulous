@@ -300,7 +300,7 @@ Term::Fabulous::Widget::CodeBlock - Unwrapped code on its own background, clippe
 	# Syntax highlighting: a function that turns the code into spans.
 	$code->highlighter( sub ( $text, $language ) { return [ my_highlighter( $text, $language ) ] } );
 
-	# Scroll the code eight columns to the left.
+	# Show the code eight columns further right: the lines move left.
 	$code->offset(8);
 
 =begin html
@@ -429,8 +429,10 @@ name of a loaded subclass of the look dies.
 =head1 METHODS
 
 The block has all methods of L<Term::Fabulous::Widget::Display>, plus
-the following. The accessors of the parameters return the current value
-when called without an argument. With an argument, they check the new
+the following. C<text_marks> and C<marks_changed> are the methods
+L<Term::Fabulous::Role::MarkedText> requires; programs do not call
+them. The accessors of the parameters return the current value when
+called without an argument. With an argument, they check the new
 value as L</new> does (an invalid value dies), set it, and return it;
 the change shows in the next frame.
 
@@ -439,8 +441,9 @@ the change shows in the next frame.
 	$code->code("print 42;\n");
 
 Gets or sets the code. Setting it also removes the program's spans
-(L</spans>), because their offsets refer to the old code, and makes the
-highlighter run again at the next paint.
+(L</spans>) and the highlights (L</highlights>), because their offsets
+refer to the old code, and makes the highlighter run again at the next
+paint.
 
 =head2 language
 
@@ -515,7 +518,8 @@ for callers that recorded offsets into it. Highlights leave it alone.
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
 
 The methods of L<Term::Fabulous::Role::Searchable>, which a code block
-does for its code (through L<Term::Fabulous::Role::MarkedText>): C<search_texts> returns C<[ undef, $code ]>,
+does for its code (through L<Term::Fabulous::Role::MarkedText>):
+C<search_texts> returns one entry, C<[ undef, $code ]>,
 C<search_revision> is L</content_revision>, C<highlight_text> sets
 L</highlights>, C<clear_text_highlights> clears them, and
 C<reveal_text> returns the widget itself and the line of the offset,
@@ -592,8 +596,9 @@ keywords:
 
 	$code->highlighter($highlighter);
 
-L<Term::Fabulous::Cookbook::Documents> has a recipe for adding syntax
-highlighting to a document view.
+L<Term::Fabulous::Cookbook::DocumentTechniques/Highlight the syntax of code blocks (highlighter, CodeBlock)>
+is a recipe that adds syntax highlighting to a document view and
+scrolls its code blocks sideways.
 
 =head1 KDL PROPERTIES
 
@@ -612,7 +617,7 @@ C<language>, C<offset> and C<look_class>:
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Cookbook::Documents>,
+L<Term::Fabulous::Cookbook::DocumentTechniques>,
 L<Term::Fabulous::Document>,
 L<Term::Fabulous::Widget::DocumentView>,
 L<Term::Fabulous::Widget::Display>, L<Term::Fabulous::Text::Style>.

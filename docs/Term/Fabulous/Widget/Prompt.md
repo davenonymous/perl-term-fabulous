@@ -98,14 +98,15 @@ the inputs, which check their values with their `required` and
 
 A button marked as _primary_ checks the values before it answers. If an
 input is not valid, the prompt stays open, shows the label of the field
-and what is wrong with its value in the notice line above the buttons
-(in the theme's `input.text.invalid` color), and
-moves the focus to that input. An input made of other widgets, such as a
-[Term::Fabulous::Widget::ColorPicker](ColorPicker.md), passes the focus to its first
-invalid part that can take it (the picker's text field), or else to the
-first focusable widget inside it. A `check` of the whole prompt runs
-after the inputs, for rules that involve more than one field. Buttons
-that are not primary, such as Cancel, answer without checking.
+(its name when it has none) and what is wrong with its value in the
+notice line above the buttons (in the theme's `input.text.invalid`
+color), and moves the focus to that input. An input made of other
+widgets, such as a [Term::Fabulous::Widget::ColorPicker](ColorPicker.md), passes the
+focus to its first invalid part that can take it (the picker's text
+field), or else to the first focusable widget inside it. A `check` of
+the whole prompt runs after the inputs, for rules that involve more than
+one field. Buttons that are not primary, such as Cancel, answer without
+checking.
 
 ## Keys
 
@@ -200,8 +201,9 @@ padding at the sides instead of one.
 
     A code reference that checks the values of the whole prompt, after the
     inputs found nothing wrong. It is called with a hash reference of the
-    values by field name and returns what is wrong, as a sentence the
-    prompt shows, or a false value when everything is fine:
+    values by field name and returns what is wrong, as a plain-text
+    sentence (not markup) the prompt shows in the notice line, or a false
+    value when everything is fine:
 
     ```perl
     check => sub ($values) {
@@ -315,27 +317,23 @@ Accessor for the parameter of the same name. Writing it changes the
 open prompt with the next frame. An empty string takes the message
 away. The title is the dialog's (["title" in Term::Fabulous::Widget::Dialog](Dialog.md#title)).
 
-`Enter` in a text field presses the
-[default\_button](Dialog.md#button-button_ids-is_primary-default_button).
-
 # EVENTS
 
-Besides the events of every dialog, a prompt fires:
-
-- `Answer` ([Term::Fabulous::Event::Answer](../Event/Answer.md))
-
-    The prompt was answered. Fired on the prompt after it closed and gave
-    the focus back, once per opening. The `Close` event of the dialog
-    comes first.
+A prompt fires the events of every dialog
+(["EVENTS" in Term::Fabulous::Widget::Dialog](Dialog.md#events)): `Close`, then `Answer`
+([Term::Fabulous::Event::Answer](../Event/Answer.md)) with the values of its fields, once
+per opening. The `Answer` is fired on the prompt after it closed and
+gave the focus back.
 
 The `Submit` of a text field inside the prompt presses the default
-button. The `Activate` events of the buttons and the `Change` events
-of the inputs bubble through the prompt as usual.
+button. The `Activate` of a button stops at the button, which answers
+(["answer"](#answer)). The `Change` events of the inputs bubble through the
+prompt as usual.
 
 # KDL PROPERTIES
 
-A prompt is built in Perl only. Its fields are widgets and its answer
-comes as an event, which a layout file cannot express. For a dialog
+A prompt is built in Perl only: its fields are widgets with their own
+parameters, which a layout file cannot pass to `new`. For a dialog
 from a layout file, see ["KDL PROPERTIES" in Term::Fabulous::Widget::Dialog](Dialog.md#kdl-properties).
 
 # SEE ALSO
@@ -344,4 +342,5 @@ from a layout file, see ["KDL PROPERTIES" in Term::Fabulous::Widget::Dialog](Dia
 ["PROMPTS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#prompts),
 ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#confirm-before-quitting-prompt),
 ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator),
+["Ask for a color (ColorPicker in a Prompt)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-for-a-color-colorpicker-in-a-prompt),
 [Term::Fabulous::Manual::Forms](../Manual/Forms.md) for checks of input values.

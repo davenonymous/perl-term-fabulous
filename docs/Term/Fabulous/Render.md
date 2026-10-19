@@ -241,10 +241,11 @@ it returns. Without `frames` there is no limit;
 ["after\_draw"](#after_draw)), when the owner has been freed or is no longer part of
 this UI, without a call;
 - when a callback dies (see ["after\_draw"](#after_draw));
-- when another registration with the same `name` and the same owner (or
-also without one) replaces it: the old one ends, the new one is queued
-last. Give a name to work a widget may ask for repeatedly, such as a
-retry, so that only the latest request runs.
+- when another registration with the same `name` replaces it: one with
+the same owner, or, for a registration without an owner, another one
+without an owner. The old one ends, the new one is queued last. Give a
+name to work a widget may ask for repeatedly, such as a retry, so that
+only the latest request runs.
 
 The code is called with the owner, or with no arguments without one.
 Registrations run in the order they were made, after-draw and

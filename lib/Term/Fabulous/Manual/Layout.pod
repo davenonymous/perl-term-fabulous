@@ -811,6 +811,18 @@ event and how to read and set the scroll position from code; the recipe
 L<Scroll a ScrollBox from code|Term::Fabulous::Cookbook::LiveData/Scroll a ScrollBox from code (keep a log at the newest line)>
 keeps a log at its newest line.
 
+With C<< follow_end =E<gt> 1 >>, a ScrollBox stays at the end of its
+content while the content grows; scrolling up stops following,
+scrolling back to the last row resumes it
+(L<Term::Fabulous::Widget::ScrollBox/follow_end>).
+C<< $box->reveal($widget) >> scrolls a widget inside it into view
+(L<Term::Fabulous::Widget::ScrollBox/reveal>), and a widget inside it
+that gets the focus is scrolled into view by itself. The box has no
+keys of its own; L<Term::Fabulous::Scrolling> scrolls it, or any other
+scroll container, by rows, by pages and to its ends, and gives it the
+keys of a pager (see
+L<Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>).
+
 A ScrollBox lays out every child in every frame, visible or not, and
 Clay measures every text it lays out (see
 L<Term::Fabulous/LIMITATIONS>), so a box with thousands of children
@@ -839,11 +851,12 @@ them, is shown by a L<Term::Fabulous::Widget::DocumentView>, a
 VirtualList of the items of a L<Term::Fabulous::Document>. A reader
 makes the document with its factories, which turn text and marks
 (bold, code, a link) into texts in the styles of the theme, and adds
-tables, pictures or forms as they are; the view wraps the paragraphs, scrolls with the keys, the wheel and the
-scrollbar, selects links with C<l> and C<L> and follows them with
-C<Enter> or a click, searches the text of every item, lets Tab reach the widgets inside, and
-reports what it shows after
-every frame with a L<ViewChange|Term::Fabulous::Event::ViewChange>:
+tables, pictures or forms as they are; the view wraps the paragraphs,
+scrolls with the keys, the wheel and the scrollbar, selects links with
+C<l> and C<L> and follows them with C<Enter> or a click, searches the
+text of every item, lets Tab reach the widgets inside, and fires a
+L<ViewChange|Term::Fabulous::Event::ViewChange> after every frame that
+shows something new:
 
 	my $view = Term::Fabulous::Widget::DocumentView->new(
 		id       => 'document',
@@ -861,9 +874,11 @@ every frame with a L<ViewChange|Term::Fabulous::Event::ViewChange>:
 The picture shows F<examples/widgets/document-view.pl>. Code is shown
 by L<Term::Fabulous::Widget::CodeBlock> widgets, which never wrap and
 scroll sideways together. L<Pod::Fabulous> is a reader built on the
-view. L<Term::Fabulous::Cookbook::Documents> has recipes for links,
-search, a table of contents, syntax highlighting and styles, and puts
-a table and a picture into a document.
+view. L<Term::Fabulous::Cookbook::Documents> has recipes that build
+documents in Perl and from Markdown, follow links and search;
+L<Term::Fabulous::Cookbook::DocumentTechniques> continues with a
+table of contents, syntax highlighting, styles and the keys of a pager,
+and puts a table and a picture inside a document.
 
 =head2 Equal sizes across the tree
 
@@ -1022,14 +1037,20 @@ no space and their widgets cannot take the focus:
 The tabs are drawn as boxes that join the border of the page: the
 active tab is open toward the page, so that the two are one shape,
 while the other tabs are closed by the page's line and look as if
-they stood behind it (C<active_padding> makes the active tab stand
-out of the row by that many cells). The user switches with a click,
-with C<Left>, C<Right>, C<Up>, C<Down>, C<Home> and C<End> while the
-active tab has the focus (only the active tab takes the focus, so
-C<Tab> stops at the bar once), and with C<Ctrl+PageUp> and
-C<Ctrl+PageDown> from anywhere inside the Tabs. The Tabs fires
-L<Term::Fabulous::Event::Select> for every change the user makes;
-C<select> changes the page from the program.
+they stood behind it (C<active_padding>, 0 by default, makes the
+active tab that many cells taller than the others (wider on a bar at
+the side), rising out of the row). The user switches with a click, with
+C<Left>, C<Right>, C<Up>, C<Down>, C<Home> and C<End> while the active
+tab has the focus (only the active tab takes the focus, so C<Tab> stops
+at the bar once), and with C<Ctrl+PageUp> and C<Ctrl+PageDown> from
+anywhere inside the Tabs. The Tabs fires L<Term::Fabulous::Event::Select>
+for every change the user makes; C<select> changes the page from the
+program. A search, such as a document view's, reaches the pages the
+Tabs does not show and selects the page with the match (see
+L<search_texts|Term::Fabulous::Widget::Tabs/"search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text">),
+and when the page of the focused widget is hidden, the focus goes to
+the active tab (see
+L<Term::Fabulous::Manual::Events/When the focused widget goes away>).
 
 The bar can be on any side of the page (C<side>), the labels can be
 written from left to right or downwards (C<orientation>), the tabs can

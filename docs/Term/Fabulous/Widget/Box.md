@@ -163,11 +163,12 @@ A Box has all methods of [Term::Fabulous::Widget](../Widget.md): children
 (`add_child`, `remove_child`, `children`, ...), events (`on`,
 `fire_event`), the search ["find\_by\_id" in Term::Fabulous::Widget](../Widget.md#find_by_id), the
 accessors `layout`, `floating`, `background_color`,
-`glyphs_show_through`, `border_color`, `bordered`, `border_style_top`,
-`border_style_right`, `border_style_bottom`, `border_style_left`,
-`width_group` and `height_group`, and the state methods. It adds
-nothing for applications; the methods in ["SUBCLASS INTERFACE"](#subclass-interface) are for
-widget authors.
+`glyphs_show_through`, `border_color`, `bordered`,
+`border_style_top`, `border_style_right`, `border_style_bottom`,
+`border_style_left`, `width_group` and `height_group`, and the state
+methods. It adds nothing of its own except how it estimates its rows
+(["estimated\_rows"](#estimated_rows)), which matters to widget authors, as do the methods
+in ["SUBCLASS INTERFACE"](#subclass-interface).
 
 ## estimated\_rows
 
@@ -176,11 +177,16 @@ my $rows = $box->estimated_rows($columns);
 ```
 
 The rows the box will take in that many columns, before Clay has laid
-it out (see ["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows)): its padding and
-border around its children's estimates. Children one under the other
-add up, with the child gap between them; side by side, a child with a
-fixed width gets that width, the others share the rest, and the
-tallest decides. A child without an estimate counts one row.
+it out (see ["estimated\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_rows)). A fixed height
+in the layout is the answer; otherwise it is its padding and border
+around its children's estimates. Children one under the other add up,
+with the child gap between them; side by side, a child with a fixed
+width gets that width, the others share the rest, and the tallest
+decides. In any other direction (stacked, wrapping) the tallest child
+decides; a box without children counts only its padding and border. A
+child without an estimate counts one row. Box does this in
+`estimated_content_rows` (see
+["estimated\_content\_rows" in Term::Fabulous::Widget](../Widget.md#estimated_content_rows)).
 
 # EVENTS
 

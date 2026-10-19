@@ -421,8 +421,10 @@ The L<Term::Fabulous::Widget::Table> of the keys.
 
 A class method: the rows a key reference makes of commands, in the
 form of C<keys> (C<[ group, keys, action ]>): one for every command
-that has keys, with its C<keys_text> and its C<plain_label>, in the
-group given. A program that lists its keys elsewhere (a help page, the
+that has keys, with its
+L<keys_text|Term::Fabulous::Command/keys_text> and its
+L<plain_label|Term::Fabulous::Command/plain_label>, in the group
+given. A program that lists its keys elsewhere (a help page, the
 theme editor's C<key_list>) builds them with it.
 
 =head1 EVENTS
@@ -441,8 +443,11 @@ table, which a layout file cannot express.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Commands>, L<Term::Fabulous::Widget::Dialog>,
+L<Term::Fabulous::Commands>, L<Term::Fabulous::Command>,
+L<Term::Fabulous::Widget::Dialog>, L<Term::Fabulous::Event::Answer>,
 L<Term::Fabulous::Widget::Table>, L<Term::Fabulous::Widget::MenuBar>,
-which shows the same commands in menus.
+which shows the same commands in menus,
+L<Term::Fabulous::Manual::Menus/KEY REFERENCES>,
+L<Term::Fabulous::Cookbook::Menus/Show the keys in a help screen (KeyReference)>.
 
 =cut

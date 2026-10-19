@@ -1,7 +1,8 @@
 package My::Markdown;
 
 # Reads Markdown with Markdent and turns it into a Term::Fabulous::Document,
-# for the recipes of Term::Fabulous::Cookbook::Documents. Headings,
+# for the recipes of Term::Fabulous::Cookbook::Documents and
+# Term::Fabulous::Cookbook::DocumentTechniques. Headings,
 # paragraphs, list items, block quotes, code blocks and horizontal rules
 # become items through the factories of the document, with bold, italic
 # and struck-through text, code and links as marks. A table becomes a

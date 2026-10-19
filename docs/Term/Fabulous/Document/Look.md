@@ -9,7 +9,7 @@ use Term::Fabulous::Document::Look;
 
 # The look of the theme a widget draws with:
 my $look = Term::Fabulous::Document::Look->of($widget);
-$rich_text->stylize( $look->style('code'), 4, 12 );
+$text->stylize( $look->style('code'), 4, 12 );
 
 # The look of a particular theme:
 my $light = Term::Fabulous::Document::Look->new( theme => Term::Fabulous::Theme->builtin('light') );
@@ -119,10 +119,11 @@ A document names the look class its factories style marks with:
 my $document = Term::Fabulous::Document->new( look => 'My::Look' );
 ```
 
-The view accepts only documents whose marks are links or have a kind
-that the look class lists in ["kinds"](#kinds), and its code blocks paint with
-the same class. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md)
-has a worked example that changes the styles of a document and adds
+The factories of the document die at once for a mark whose kind the
+look class does not list in ["kinds"](#kinds) (links need no kind), and the
+document's code blocks paint with the same class.
+["Change the styles of a document and add mark kinds (Look)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#change-the-styles-of-a-document-and-add-mark-kinds-look)
+is a worked example that changes the styles of a document and adds
 mark kinds this way.
 
 # CONSTRUCTORS
@@ -182,9 +183,9 @@ kinds, as described in ["Changing and adding kinds"](#changing-and-adding-kinds)
 my @kinds = Term::Fabulous::Document::Look->kinds;    # bold, clipped, code, ...
 ```
 
-Returns the names of all kinds of the class, sorted. The document view
-checks the mark kinds of every document it is given against this list
-and dies for a kind that is missing.
+Returns the names of all kinds of the class, sorted. The factories of
+[Term::Fabulous::Document](../Document.md) check the kind of every mark against this
+list (through ["token\_style"](#token_style)) and die for a kind that is missing.
 
 ## token\_style
 
@@ -223,6 +224,6 @@ message that lists the known kinds.
 
 # SEE ALSO
 
-[Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md), [Term::Fabulous::Text::Style](../Text/Style.md),
+[Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md), [Term::Fabulous::Text::Style](../Text/Style.md),
 [Term::Fabulous::Theme](../Theme.md), ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes),
 [Term::Fabulous::Document](../Document.md), [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md).

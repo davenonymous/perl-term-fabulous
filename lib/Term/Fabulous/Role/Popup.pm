@@ -84,13 +84,14 @@ A role for floating widgets that float over everything at a position
 they work out themselves (with L<Term::Fabulous::Placement>), from the
 boxes the last frame laid out: the list of a
 L<Term::Fabulous::Widget::Dropdown>, a L<Term::Fabulous::Widget::Menu>,
-a table's column chooser. The widget calls L</float_popup> from its
-C<contribute_floating>; the role attaches it to the root at the
-position, and after each frame checks whether the frame moved what the
-position depends on (an anchor that grew, a popup laid out for the
-first time). If so, it marks the widget changed, and the next frame
-puts it where it belongs. A popup therefore finds its place within two
-frames of any change, and stays put while nothing changes.
+a table's column chooser
+(L<Term::Fabulous::Widget::Table/open_column_chooser>). The widget calls
+L</float_popup> from its C<contribute_floating>; the role attaches it to
+the root at the position, and after each frame checks whether the frame
+moved what the position depends on (an anchor that grew, a popup laid
+out for the first time). If so, it marks the widget changed, and the
+next frame puts it where it belongs. A popup therefore finds its place
+within two frames of any change, and stays put while nothing changes.
 
 A widget composing the role needs C<each_frame> and C<mark_changed>, as
 every L<Term::Fabulous::Widget> has.
@@ -121,6 +122,9 @@ L</DESCRIPTION>). C<$config> must have a C<floating> hash.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Placement>, L<Term::Fabulous::Manual::Layout/Floating widgets>.
+L<Term::Fabulous::Placement>, L<Term::Fabulous::Widget::Dropdown>,
+L<Term::Fabulous::Widget::Menu>,
+L<Term::Fabulous::Widget::Table/open_column_chooser>,
+L<Term::Fabulous::Manual::Layout/Floating widgets>.
 
 =cut

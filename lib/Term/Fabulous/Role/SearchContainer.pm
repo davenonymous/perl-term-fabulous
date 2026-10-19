@@ -84,7 +84,7 @@ L<searchable|Term::Fabulous::Role::Searchable> for all of them: it lists
 its I<parts>, and the role provides every method of
 L<Term::Fabulous::Role::Searchable>, with keys of two parts, the index
 of a part and that part's own key (see
-L<Term::Fabulous::Role::Searchable/nested_search_texts>).
+L<Term::Fabulous::Role::Searchable/Nested keys>).
 
 The revision of a key names the part at the index as well, so a key
 that leads to another part after the parts changed reads as changed
@@ -132,6 +132,6 @@ and returns C<[ undef, undef ]>.
 
 L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Widget::Tabs>,
 L<Term::Fabulous::Widget::Accordion::Item>,
-L<Term::Fabulous::Manual::CustomWidgets>.
+L<Term::Fabulous::Manual::CustomWidgets/Widgets a search finds>.
 
 =cut

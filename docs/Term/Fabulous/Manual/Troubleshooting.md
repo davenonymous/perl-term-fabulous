@@ -39,9 +39,28 @@ wide characters are then misaligned. See
 
 ## My text does not show (invisible text)
 
-The default `text_color` of a Text widget is opaque black, which is
-invisible on a dark background. Always pass a `text_color`, or
-`[0, 0, 0, 0]` for the terminal's default text color. See ["TEXT" in Term::Fabulous::Manual::Looks](Looks.md#text).
+A Text widget takes the theme's text color unless it is given a
+`text_color`, so the text is invisible only when its `text_color`
+matches the background, for example a fixed dark color on a dark
+theme. Leave the `text_color` out, pick one that stands out from the
+background, or pass `[0, 0, 0, 0]` for the terminal's default text
+color. See ["TEXT" in Term::Fabulous::Manual::Looks](Looks.md#text).
+
+## A newline shows as a replacement character
+
+The Text has the `wrap_mode` `CLAY_TEXT_WRAP_NONE`, which keeps the
+whole text on one line and shows a `"\n"` as U+FFFD. Use
+`CLAY_TEXT_WRAP_NEWLINES` to break the text only at its newlines. See
+["Wrapping" in Term::Fabulous::Manual::Looks](Looks.md#wrapping).
+
+## A long line is cut off at the edge of its box
+
+A text with the `wrap_mode` `CLAY_TEXT_WRAP_NEWLINES` or
+`CLAY_TEXT_WRAP_NONE` keeps its width only while the widgets beside
+it can get narrower; after that it is cut off at its parent's edge.
+Put it in a [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md) with
+`horizontal => 1` to keep it whole and let the user scroll
+sideways. See ["Wrapping" in Term::Fabulous::Manual::Looks](Looks.md#wrapping).
 
 ## "the widget tree has more elements than max\_element\_count (8192) allows"
 
@@ -119,6 +138,33 @@ not. Call `mark_changed` on the widget after changing it, or
 Every Term::Fabulous class rejects constructor parameters it does not
 know, to catch typos. Check the spelling against the class's
 documentation.
+
+## "Unrecognised parameters for Term::Fabulous::Widget::Table constructor: 'double\_click\_seconds'"
+
+A table no longer has a `double_click_seconds` parameter: the time
+between the presses of a double click is set once for the whole
+program. Pass it to `Term::Fabulous->new` instead; see
+["new" in Term::Fabulous](../../../../README.md#new).
+
+## "Can't locate Term/Fabulous/Widget/RichText.pm"
+
+The classes Term::Fabulous::Widget::RichText and
+Term::Fabulous::Widget::FocusableText are gone. Use
+[Term::Fabulous::Widget::Text](../Widget/Text.md), which takes markup, spans and links
+itself (see ["Styled spans inside one text" in Term::Fabulous::Manual::Looks](Looks.md#styled-spans-inside-one-text)).
+After an upgrade with `make install`, the old `RichText.pm` may still
+be on disk; loading it then dies with `Already have a named constructor
+parameter called 'markup' inherited from Term::Fabulous::Widget::Text`.
+Delete the stale `Term/Fabulous/Widget/RichText.pm` and
+`FocusableText.pm` from the installed library.
+
+## "palette token '...' needs exactly one string argument"
+
+A theme file gives a palette token properties or child nodes, or more
+than one argument. A token takes exactly one string, its color, and
+nothing else: `accent "#5fafff"`. Earlier versions read such a file
+without complaint; the theme editor always rejected it. See
+["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens).
 
 ## The program dies with "is still attached to a parent"
 

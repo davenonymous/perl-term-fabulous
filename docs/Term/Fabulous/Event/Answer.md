@@ -114,5 +114,6 @@ it.
 # SEE ALSO
 
 ["Answers" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#answers), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md), [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md),
-[Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent),
+[Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md), [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent),
+["A dialog of your own" in Term::Fabulous::Manual::CustomWidgets](../Manual/CustomWidgets.md#a-dialog-of-your-own),
 ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](../Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator).

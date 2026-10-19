@@ -1142,8 +1142,8 @@ C<line> (counted from 1) and C<message>. A text that is not valid KDL
 has a single error, at the line where the KDL parser stopped, with a
 message that starts with C<KDL syntax:>. Otherwise every mistake of
 the theme is listed: an unknown node, token, family, slot or state, a
-value its slot cannot take, a setting given twice. Empty for a valid
-theme.
+node with the wrong arguments, properties or children, a value its
+slot cannot take, a setting given twice. Empty for a valid theme.
 
 =head2 is_valid
 

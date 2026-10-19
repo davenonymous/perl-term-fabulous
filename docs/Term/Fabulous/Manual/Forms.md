@@ -1049,6 +1049,12 @@ which checks its input on `Enter`;
 - [changing the Tab order](../Cookbook/Forms.md#change-the-tab-order-hasfocusorder);
 - [copying and pasting through the clipboard](../Cookbook/Forms.md#copy-and-paste-through-the-clipboard).
 
+The feedback page describes the dialogs these recipes use,
+[prompts](Feedback.md#prompts) and
+[file dialogs](Feedback.md#file-dialogs);
+["Answers" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#answers) describes the answers a
+dialog gives.
+
 To write an input widget of your own, see
 ["SUBCLASS INTERFACE" in Term::Fabulous::Widget::Input](../Widget/Input.md#subclass-interface) and
 [Term::Fabulous::Manual::CustomWidgets](CustomWidgets.md).

@@ -351,14 +351,15 @@ C<validator> parameters (see L<Term::Fabulous::Widget::Input/validator>).
 
 A button marked as I<primary> checks the values before it answers. If an
 input is not valid, the prompt stays open, shows the label of the field
-and what is wrong with its value in the notice line above the buttons
-(in the theme's C<input.text.invalid> color), and
-moves the focus to that input. An input made of other widgets, such as a
-L<Term::Fabulous::Widget::ColorPicker>, passes the focus to its first
-invalid part that can take it (the picker's text field), or else to the
-first focusable widget inside it. A C<check> of the whole prompt runs
-after the inputs, for rules that involve more than one field. Buttons
-that are not primary, such as Cancel, answer without checking.
+(its name when it has none) and what is wrong with its value in the
+notice line above the buttons (in the theme's C<input.text.invalid>
+color), and moves the focus to that input. An input made of other
+widgets, such as a L<Term::Fabulous::Widget::ColorPicker>, passes the
+focus to its first invalid part that can take it (the picker's text
+field), or else to the first focusable widget inside it. A C<check> of
+the whole prompt runs after the inputs, for rules that involve more than
+one field. Buttons that are not primary, such as Cancel, answer without
+checking.
 
 =head2 Keys
 
@@ -459,8 +460,9 @@ that is no field and no button dies, and so does one that is both.
 
 A code reference that checks the values of the whole prompt, after the
 inputs found nothing wrong. It is called with a hash reference of the
-values by field name and returns what is wrong, as a sentence the
-prompt shows, or a false value when everything is fine:
+values by field name and returns what is wrong, as a plain-text
+sentence (not markup) the prompt shows in the notice line, or a false
+value when everything is fine:
 
 	check => sub ($values) {
 		return 'The passwords differ.' if $values->{password} ne $values->{again};
@@ -556,31 +558,23 @@ Accessor for the parameter of the same name. Writing it changes the
 open prompt with the next frame. An empty string takes the message
 away. The title is the dialog's (L<Term::Fabulous::Widget::Dialog/title>).
 
-C<Enter> in a text field presses the
-L<default_button|Term::Fabulous::Widget::Dialog/button, button_ids, is_primary, default_button>.
-
 =head1 EVENTS
 
-Besides the events of every dialog, a prompt fires:
-
-=over
-
-=item C<Answer> (L<Term::Fabulous::Event::Answer>)
-
-The prompt was answered. Fired on the prompt after it closed and gave
-the focus back, once per opening. The C<Close> event of the dialog
-comes first.
-
-=back
+A prompt fires the events of every dialog
+(L<Term::Fabulous::Widget::Dialog/EVENTS>): C<Close>, then C<Answer>
+(L<Term::Fabulous::Event::Answer>) with the values of its fields, once
+per opening. The C<Answer> is fired on the prompt after it closed and
+gave the focus back.
 
 The C<Submit> of a text field inside the prompt presses the default
-button. The C<Activate> events of the buttons and the C<Change> events
-of the inputs bubble through the prompt as usual.
+button. The C<Activate> of a button stops at the button, which answers
+(L</answer>). The C<Change> events of the inputs bubble through the
+prompt as usual.
 
 =head1 KDL PROPERTIES
 
-A prompt is built in Perl only. Its fields are widgets and its answer
-comes as an event, which a layout file cannot express. For a dialog
+A prompt is built in Perl only: its fields are widgets with their own
+parameters, which a layout file cannot pass to C<new>. For a dialog
 from a layout file, see L<Term::Fabulous::Widget::Dialog/KDL PROPERTIES>.
 
 =head1 SEE ALSO
@@ -589,6 +583,7 @@ L<Term::Fabulous::Event::Answer>, L<Term::Fabulous::Widget::Dialog>,
 L<Term::Fabulous::Manual::Feedback/PROMPTS>,
 L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)>,
 L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>,
+L<Term::Fabulous::Cookbook::Forms/Ask for a color (ColorPicker in a Prompt)>,
 L<Term::Fabulous::Manual::Forms> for checks of input values.
 
 =cut

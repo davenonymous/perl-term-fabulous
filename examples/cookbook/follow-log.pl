@@ -60,7 +60,7 @@ my %action_by_key = (
 );
 $root->on(
 	KeyPress => sub ($event) {
-		my $action = $action_by_key{ $event->key_name // '' } or return;
+		my $action = $action_by_key{ $event->main_key_name // '' } or return;
 		$action->();
 		return;
 	}

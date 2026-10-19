@@ -57,7 +57,7 @@ The program is `examples/widgets/text.pl`.
     <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-rich-text.svg" alt="A hint with a bold Enter and a red Esc, a log line with a bold red error and an underlined file name, a row of the words bold, italic, underline, reverse, dim, strike and overline each in its style, a wrapped paragraph whose italic green span and highlighted span continue on the next line, and a line of three links: FAQ underlined in blue, guide selected in dark text on blue, perl.org hovered in white on gray"></p>
 </div>
 
-The program is `examples/widgets/rich-text.pl`. The last two rows show
+The program is `examples/widgets/rich-text.pl`. The `links` row shows
 links in their three looks: `FAQ` as every link looks, `guide`
 selected with Tab and Right, and `perl.org` under the mouse pointer.
 
@@ -65,9 +65,11 @@ selected with Tab and Right, and `perl.org` under the mouse pointer.
 
 A Text widget shows text inside its parent widget, usually a
 [Term::Fabulous::Widget::Box](Box.md). The layout makes it as wide as its
-longest line, wraps it at spaces when the parent is too narrow, and
-starts a new line at every `"\n"`. Text has a color but no background
-of its own: every cell shows the background that was painted below it.
+longest line and, in the default wrap mode, wraps it at spaces when
+the parent is too narrow and starts a new line at every `"\n"` (see
+`wrap_mode` under ["new"](#new) for the others). Text has a color but no
+background of its own: every cell shows the background that was
+painted below it.
 
 A Text widget is a leaf: it cannot have children, and it has no
 border, padding or background. To give text a background, a border or
@@ -94,14 +96,16 @@ string or hash of [Term::Fabulous::Text::Style](../Text/Style.md) (`'bold red on
 boundary inside a grapheme cluster (a letter with a combining accent,
 an emoji with a modifier) snaps to the cluster. A color in a style may
 be a palette token of the theme (`'bold accent'`): the text looks it
-up in its theme when it paints, so a theme switch recolors it.
+up in its theme when it paints, so a theme switch recolors it. See
+["Styled spans inside one text" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#styled-spans-inside-one-text).
 
 Markup writes the same thing inline: `[bold]Enter[/]`; see
 [Term::Fabulous::Text::Markup](../Text/Markup.md) for the syntax.
 
 _Highlights_ are a second set of ranges, painted over the spans and
 kept apart from them: what a search marks in a text, without touching
-the styles the program gave it (see ["highlights"](#highlights)).
+the styles the program gave it (see ["highlights"](#highlights) and
+[Term::Fabulous::Role::Searchable](../Role/Searchable.md)).
 
 A text can also have _links_: ranges of its text that point to a
 target and that the user can follow with the mouse or the keyboard
@@ -129,8 +133,9 @@ my $text = Term::Fabulous::Widget::Text->new(%parameters);
 ```
 
 All parameters are optional; unknown parameters die. Every parameter
-except `id`, `spans`, `links` and `can_focus` also has an accessor
-of the same name.
+also has a method of the same name: `id` and `links` only read
+(change the links with ["add\_link"](#add_link) and ["clear\_links"](#clear_links)), all others
+are accessors.
 
 - `text`
 
@@ -162,14 +167,14 @@ of the same name.
     foreground color. See ["COLORS" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#colors) and
     ["THEMES" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#themes).
 
+    Inside a disabled [Term::Fabulous::Widget::Button](Button.md), the text is drawn
+    in the button's `disabled_color` instead, whatever its `text_color`.
+
 - `classes`
 
     An array reference of strings. Default: `[]`. Names that select the
     theme's variants of the `text` family, as for
     ["classes" in Term::Fabulous::Widget](../Widget.md#classes).
-
-    Inside a disabled [Term::Fabulous::Widget::Button](Button.md), the text is drawn
-    in the button's `disabled_color` instead, whatever its `text_color`.
 
 - `bold`
 - `italic`
@@ -200,7 +205,9 @@ of the same name.
 
     A string in the markup syntax of [Term::Fabulous::Text::Markup](../Text/Markup.md), which
     gives the text, the spans and the links; it cannot be given together
-    with `text`, `spans` or `links`. Invalid markup dies.
+    with `text`, `spans` or `links`. Invalid markup dies. Put text
+    from outside (a file name, user input) into markup with
+    ["escape\_markup" in Term::Fabulous::Text::Markup](../Text/Markup.md#escape_markup).
 
 - `can_focus`
 
@@ -231,12 +238,12 @@ of the same name.
     still get narrower; after that it is cut off at the right edge of its
     parent (inside a box that scrolls sideways it keeps its width).
 
-    With every mode, only spaces are break points: a single word that is
-    wider than the space available, or text without spaces such as a
-    Japanese sentence, is never broken. With `CLAY_TEXT_WRAP_WORDS` it
-    runs past the right edge of its parent and is cut off only at the edge
-    of the terminal or of an enclosing [Term::Fabulous::Widget::ScrollBox](ScrollBox.md);
-    with the other modes it is cut off like any line. See
+    No mode breaks a word: a single word that is wider than the space
+    available, or text without spaces such as a Japanese sentence, is
+    never broken. With `CLAY_TEXT_WRAP_WORDS` it runs past the right
+    edge of its parent and is cut off only at the edge of the terminal or
+    of an enclosing [Term::Fabulous::Widget::ScrollBox](ScrollBox.md); with the other
+    modes it is cut off like any line. See
     ["Wrapping" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#wrapping).
 
 - `text_alignment`
@@ -440,7 +447,9 @@ the links with what the markup says, drops the highlights, and returns
 the markup. No link is selected or hovered afterwards. A text that has
 the focus keeps it when the new markup has links, and loses it when it
 has none. Invalid markup dies and leaves the widget as it was. The
-change shows in the next frame.
+change shows in the next frame. Put text from outside (a file name,
+user input) into markup with
+["escape\_markup" in Term::Fabulous::Text::Markup](../Text/Markup.md#escape_markup).
 
 ## spans
 
@@ -455,10 +464,12 @@ a palette token stays the token's name. The reader returns a copy.
 Writing replaces every span (the markup is then `undef`) and returns
 the new spans; invalid ranges or styles die (see
 ["set\_spans" in Term::Fabulous::Text::Marks](../Text/Marks.md#set_spans)). The change shows in the next
-frame. The same accessor, ["stylize"](#stylize), ["clear\_spans"](#clear_spans), ["highlights"](#highlights)
-and ["clear\_highlights"](#clear_highlights) are those of a
-[Term::Fabulous::Widget::CodeBlock](CodeBlock.md) (both from
-[Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)).
+frame. This accessor, ["stylize"](#stylize), ["clear\_spans"](#clear_spans), ["highlights"](#highlights),
+["clear\_highlights"](#clear_highlights) and ["content\_revision"](#content_revision) come from
+[Term::Fabulous::Role::MarkedText](../Role/MarkedText.md), which
+[Term::Fabulous::Widget::CodeBlock](CodeBlock.md) composes too. `text_marks`
+returns the widget's [Term::Fabulous::Text::Marks](../Text/Marks.md); `marks_changed`
+is the role's hook, not for programs.
 
 ## stylize
 
@@ -554,6 +565,8 @@ my $index = $text->link_at($offset);    # or undef
 ```
 
 The index of the link the character at `$offset` lies in, or `undef`.
+An offset that is not a non-negative integer dies; an offset at or past
+the end of the text gives `undef`.
 
 ## selected\_link
 
@@ -611,7 +624,7 @@ $text->hover_link(0);
 
 Called by [Term::Fabulous](../../../../README.md) when the pointer moves onto a link
 (`undef` when it leaves it). Gives the link its hovered look. Returns
-the widget.
+the widget. An index that is not a link dies.
 
 ## accepts\_focus
 
@@ -655,12 +668,14 @@ checked.
 ## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
 
 The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), which a Text does
-for its one text (through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)): `search_texts` returns `[ undef, $text ]`,
+for its one text (through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)):
+`search_texts` returns one entry, `[ undef, $text ]`,
 `search_revision` is ["content\_revision"](#content_revision), `highlight_text` sets
 ["highlights"](#highlights), `clear_text_highlights` clears them, and
 `reveal_text` returns the text itself with no row, since where a
 character lies is known once the text was painted (see
-["text\_rows" in Term::Fabulous::Render::Frame](../Render/Frame.md#text_rows)).
+["text\_rows" in Term::Fabulous::Render::Frame](../Render/Frame.md#text_rows)). The widget also has
+`search_serial` (see ["search\_serial" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#search_serial)).
 
 ## tree\_changed
 
@@ -702,8 +717,8 @@ into runs of one look, as
 `[ $characters, $set, $clear, $fg_attr, $bg_attr ]`: the number of
 characters, the termbox2 style bits the run's spans, highlights and
 link set and clear, and the text and background attributes they give
-it, `undef` where the base look stays. An empty list for a text
-without spans, highlights and links, which the renderer paints plain.
+it, `undef` where the base look stays. An empty array reference for a
+text without spans, highlights and links, which the renderer paints plain.
 The runs are computed once per change of the text, the spans, the
 highlights, the links, the selected or hovered link, or the theme.
 
@@ -715,6 +730,9 @@ or ["add\_link"](#add_link), such as an object of your program. The widget does
 not go anywhere itself; it tells the program which link the user
 followed with a [LinkActivate](../Event/LinkActivate.md)
 event, which bubbles from the text to its ancestors.
+["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links)
+builds a small help browser with them;
+["Links inside a text" in Term::Fabulous::Manual::Looks](../Manual/Looks.md#links-inside-a-text) shows their looks.
 
 ## Looks
 
@@ -814,7 +832,9 @@ mouse button is pressed on one of its characters, and `LinkActivate`
 ([Term::Fabulous::Event::LinkActivate](../Event/LinkActivate.md)) when a link is followed; both
 bubble to the widgets around the text. The recipe
 ["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick)
-looks up the clicked word. A Text can fire events of your own with
+looks up the clicked word, and
+["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links)
+follows the links. A Text can fire events of your own with
 `fire_event` ([Clay::UI::Role::Events::Emitter](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3AEvents%3A%3AEmitter)), and `on` adds
 listeners to it.
 
@@ -855,6 +875,10 @@ The node's argument (`"greeting"`) is the `id`. Inside the block:
     Exactly one argument: any color string [Term::Fabulous::Color](../Color.md)
     understands, such as `"#ffffff"`, `"rgb(255, 255, 255)"` or
     `"hsl(0, 0%, 100%)"`.
+
+- `classes "name" ...`
+
+    One or more strings; see the `classes` parameter of ["new"](#new).
 
 - `bold #true`
 - `italic #true`
@@ -900,9 +924,9 @@ The table of the properties a layout may set (see
 ["layout\_properties" in Term::Fabulous::Role::CanParseLayout](../Role/CanParseLayout.md#layout_properties)): `font_id`,
 `font_size`, `letter_spacing` and `line_height` are scalars,
 `text_color` is a color, `bold`, `italic` and `underline` are
-booleans, and `text`, `markup`, `wrap_mode` and `text_alignment`
-are structured properties the Text parses itself; see
-["KDL PROPERTIES"](#kdl-properties).
+booleans, and `classes`, `text`, `markup`, `wrap_mode` and
+`text_alignment` are structured properties the Text parses itself;
+see ["KDL PROPERTIES"](#kdl-properties).
 
 # SEE ALSO
 

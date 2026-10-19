@@ -499,7 +499,8 @@ its own `title` and `buttons`, which answer with an `Answer` event
 (see ["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#title-buttons-and-the-notice-line)).
 For a question with a few buttons, a
 [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md) does the same in one call: see the
-next recipe, ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt).
+next recipe, ["Confirm before quitting (Prompt)"](#confirm-before-quitting-prompt), and
+["PROMPTS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#prompts).
 
 This program is shipped as `examples/cookbook/confirm-dialog.pl`.
 
@@ -667,6 +668,7 @@ title, a message and two buttons, opens it, and returns it. The buttons
 have the ids `ok` and `cancel`, and `ok` and `cancel` set their
 labels. The prompt is a [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md), so it keeps
 the focus while it is open, as the dialog of the previous recipe does.
+See ["PROMPTS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#prompts).
 - `focus => 'cancel'` puts the focus on Keep writing, so a hasty
 `Enter` keeps the notes. Without it, the first button would start
 with the focus.
@@ -763,17 +765,20 @@ $ui->run;
 - `Term::Fabulous::Widget::Prompt->ask` builds a prompt with one text
 field, named `value`, and the buttons `ok` and `cancel`. The field
 starts with the text of `value`, all of it selected, so typing
-replaces it.
+replaces it. See ["PROMPTS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#prompts).
 - `required` and `validator` go to the text field and work as in a form
 (see ["Check the values of a form (required, validator)"](#check-the-values-of-a-form-required-validator)): the field
 must not be empty and must hold a whole number. `Enter` in the field
 presses OK, and OK checks the field before it answers. While something
 is wrong, the prompt stays open, shows the label of the field and what
-is wrong with it in red, and puts the cursor back in the field.
+is wrong with it in the notice line above the buttons
+(["notice" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#notice)), in the theme's invalid
+input color, and puts the cursor back in the field.
 - `check` runs after the field found nothing wrong. It gets the values
 of all fields, so it can check a range, as here, or compare two fields.
 It returns what is wrong, as a sentence, or `undef` when everything is
-fine.
+fine. The prompt shows the sentence in the same notice line, without a
+label, as in the picture.
 - `$event->value('value')` is the text of the field when the user
 pressed OK.
 
@@ -936,7 +941,8 @@ statement. The dialog reports the result with an `Answer` event
 ([Term::Fabulous::Event::Answer](../Event/Answer.md)), as a prompt does: the button is the
 mode, `open` or `save`, and `$event->value('path')` is the
 absolute path. `Cancel` and `Escape` answer `cancel`, which the
-listeners simply ignore.
+listeners simply ignore. See
+["FILE DIALOGS" in Term::Fabulous::Manual::Feedback](../Manual/Feedback.md#file-dialogs).
 - The path is a byte string, exactly what the file system uses, so it
 goes to `open` as it is. To show a file's name, `name_of` decodes it
 from UTF-8 (a byte that is no UTF-8 becomes `\xHH`).

@@ -9,13 +9,13 @@ use Term::Fabulous::Widget::Table::Borders qw(resolve_borders);
 use Term::Fabulous::Enum::BorderStyle;
 my $Solid = Term::Fabulous::Enum::BorderStyle->Solid;
 
-my $cells = resolve_borders(
+my $resolved = resolve_borders(
         columns => 2,
         header  => 1,
         table   => { map( { $_ => $Solid } qw(border_top border_right border_bottom border_left column_lines) ) },
         lines   => [ {}, {}, { spanning => 1 }, {} ],
 );
-my $first = $cells->[0][0];    # { sides => { top, left }, corners => { top_left => "\x{250C}" } }
+my $first = $resolved->{lines}[0][0];    # { sides => { top, left }, corners => { top_left => "\x{250C}" } }
 ```
 
 # DESCRIPTION
@@ -123,9 +123,10 @@ corner of a block-style frame is left out, see ["A frame in a block
 style"](#a-frame-in-a-block-style)), and `outer` lists the drawn sides of the outer frame of the
 table that are drawn on the background outside it (for
 ["outer\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](../../Role/HasBorderStyle.md#outer_border_sides)). `gutter`
-is `undef`, or with `gutter` a hash of the same kind for each of the
-three strips of the scrollbar column, `header`, `body` and
-`footer` (see ["The scrollbar column"](#the-scrollbar-column)).
+is `undef` without the `gutter` argument; with it, a hash with the
+keys `header`, `body` and `footer`, one for each strip of the
+scrollbar column (see ["The scrollbar column"](#the-scrollbar-column)), each a hash like a
+cell's (`sides`, `corners`, `outer`).
 
 # SEE ALSO
 

@@ -1905,7 +1905,8 @@ a field for the name, and the built-in themes to extend.
 
 Every choice shows in the preview while the dialog is open; a state
 such as C<focused> or C<hovered> shows on a widget of the preview that
-has the focus or is under the pointer (C<F6> goes into the preview).
+has the focus or is under the pointer (C<F6> goes into the preview, to
+its first widget in Tab order).
 C<Apply> (or C<Enter> in the list or a field) writes the value to the
 theme, C<Reset to default> removes the setting, and C<Cancel> or
 C<Escape> leaves the theme as it was. A value the setting cannot take,
@@ -2134,7 +2135,8 @@ dialog) do what that widget does; the others reach the editor.
 	  (and the keys of a text area: selection, Ctrl+A, Ctrl+U, Ctrl+K, ...)
 
 	The preview
-	  F6                   Into the preview, back to the settings
+	  F6                   Into the preview (its first widget in Tab
+	                       order), back to the settings
 	  Tab, Shift+Tab       Between the widgets
 	  PageUp, PageDown     Scroll
 	  Ctrl+Home, Ctrl+End  To the top, to the end
@@ -2262,11 +2264,12 @@ form, with the editor drawn in the light theme:
 
 The widgets of the preview are yours: they can have listeners, change
 while the editor runs, and take the keyboard (C<F6> goes into the
-preview). Give them no colors of their own where the theme should
-decide. The preview scrolls in both directions when it is larger than
-its pane, with the mouse wheel and with C<PageUp>, C<PageDown>,
-C<Ctrl+Home> and C<Ctrl+End>. Unlike the gallery, it does not scroll to
-the family of the setting under the form's cursor.
+preview, to its first widget in Tab order). Give them no colors of
+their own where the theme should decide. The preview scrolls in both
+directions when it is larger than its pane, with the mouse wheel and
+with C<PageUp>, C<PageDown>, C<Ctrl+Home> and C<Ctrl+End>. Unlike the
+gallery, it does not scroll to the family of the setting under the
+form's cursor.
 
 =head2 Using the theme
 

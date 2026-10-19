@@ -33,7 +33,7 @@ page, a closed body). Composing this role makes the container
 its _parts_, and the role provides every method of
 [Term::Fabulous::Role::Searchable](Searchable.md), with keys of two parts, the index
 of a part and that part's own key (see
-["nested\_search\_texts" in Term::Fabulous::Role::Searchable](Searchable.md#nested_search_texts)).
+["Nested keys" in Term::Fabulous::Role::Searchable](Searchable.md#nested-keys)).
 
 The revision of a key names the part at the index as well, so a key
 that leads to another part after the parts changed reads as changed
@@ -87,4 +87,4 @@ and returns `[ undef, undef ]`.
 
 [Term::Fabulous::Role::Searchable](Searchable.md), [Term::Fabulous::Widget::Tabs](../Widget/Tabs.md),
 [Term::Fabulous::Widget::Accordion::Item](../Widget/Accordion/Item.md),
-[Term::Fabulous::Manual::CustomWidgets](../Manual/CustomWidgets.md).
+["Widgets a search finds" in Term::Fabulous::Manual::CustomWidgets](../Manual/CustomWidgets.md#widgets-a-search-finds).

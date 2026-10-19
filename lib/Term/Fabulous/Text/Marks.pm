@@ -226,7 +226,8 @@ Term::Fabulous::Text::Marks - The spans, highlights and links of one text
 The marks of one text: the I<spans> a program styles it with, the
 I<highlights> a search paints over them, and the I<links>. Every range
 is C<[ $start, $end, ... ]> in characters, C<$end> excluded, checked
-against the text with one wording; styles are style hashes of
+against the text, with error messages worded alike for spans,
+highlights and links; styles are style hashes of
 L<Term::Fabulous::Text::Style>. Readers return copies.
 
 The marks count the changes of their content in L</content_revision>:
@@ -235,8 +236,9 @@ that marks what it found does not make the offsets it recorded stale.
 
 L</runs> cuts the text where ranges start and end and stacks the styles
 that cover each piece. L<Term::Fabulous::Widget::Text> and
-L<Term::Fabulous::Widget::CodeBlock> keep their marks here and turn the
-runs into the tuples their renderers paint with.
+L<Term::Fabulous::Widget::CodeBlock> keep their marks here, present them
+through L<Term::Fabulous::Role::MarkedText>, and turn the runs into the
+tuples their renderers paint with.
 
 Error messages start with the C<owner>, the class of the widget the
 marks belong to.
@@ -251,7 +253,11 @@ C<owner> (required) is the name the messages start with. C<text> is the
 string (default C<''>), C<spans> an array reference of
 C<[ $start, $end, $style ]> and C<links> one of
 C<[ $start, $end, $target ]> (both default empty). Dies as L</set_spans>
-and L</add_link> do. The content revision starts at 0.
+and L</add_link> do, and for C<links> that are not an array reference
+(C<links must be an array reference of [start, end, target], got ...>)
+or an entry that is not C<[ $start, $end, $target ]>
+(C<a link is [start, end, target], got ...>). The content revision
+starts at 0.
 
 =head1 METHODS
 
@@ -345,7 +351,7 @@ The number of links.
 	my $index = $marks->link_at($offset);
 
 The index of the link the character at the offset lies in, or
-C<undef>.
+C<undef>. An offset that is not a non-negative integer dies.
 
 =head2 add_link
 
@@ -376,12 +382,12 @@ in this order (see L<Term::Fabulous::Text::Style/compose_styles>): the
 C<under> ranges, the spans, the highlights, the C<over> ranges, each
 list in its own order; palette tokens are resolved against C<theme>
 (L<Term::Fabulous::Text::Style/resolve_style>). A piece no range covers
-has the neutral style. C<under> and C<over> are optional, checked
-ranges (L</check_spans>): a code block stacks its highlighter's spans
-under the program's, a text the looks of its links over the highlights.
-Empty ranges cover nothing. An empty text has no runs. The work is one
-sweep over the boundaries. Dies without a C<theme> or with another
-option.
+has the neutral style. C<under> and C<over> are optional and not checked
+here: pass ranges with normalized style hashes, as L</check_spans>
+returns them. A code block stacks its highlighter's spans under the
+program's, a text the looks of its links over the highlights. Empty
+ranges cover nothing. An empty text has no runs. The work is one sweep
+over the boundaries. Dies without a C<theme> or with another option.
 
 =head1 SEE ALSO
 

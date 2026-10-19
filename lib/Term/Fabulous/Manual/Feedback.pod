@@ -22,13 +22,14 @@ clock, without a timer of their own (see L</ANIMATION>).
 
 The section L</PROMPTS> is about the other direction: a prompt stops
 the user to ask a question, and reports the answer. L</FILE DIALOGS>
-are prompts of a special kind, which ask for a file to open or save,
-or for a folder.
+are dialogs of a special kind, which answer the same way as prompts
+and ask for a file to open or save, or for a folder.
 
 The reference pages are the class pages: L<Term::Fabulous::Widget::ProgressBar>,
 L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Toast>,
-L<Term::Fabulous::Widget::StatusBar>, L<Term::Fabulous::Widget::Prompt>
-and L<Term::Fabulous::Widget::FileDialog>.
+L<Term::Fabulous::Widget::StatusBar>, L<Term::Fabulous::Widget::Prompt>,
+L<Term::Fabulous::Widget::FileDialog> and the base class of every
+dialog, L<Term::Fabulous::Widget::Dialog>.
 The class the first two share, L<Term::Fabulous::Widget::Display>, is
 the base of every widget that paints itself from its own state, and
 the one to derive from for a feedback widget of your own
@@ -325,7 +326,7 @@ and files of a folder, with their sizes and the times they were last
 modified, and has a field for a name or a path. The user walks through
 the folders with C<Enter> and C<Backspace> or the mouse, picks an entry
 with the cursor, or types a name. Like a prompt, it opens over the
-screen, keeps the focus while it is open, and reports the result with
+screen, keeps the focus while it is open, and reports the answer with
 one C<Answer> event after it closed:
 
 =for highlighter language=perl
@@ -395,7 +396,8 @@ This page is part of L<Term::Fabulous::Manual>. Previous page: L<Term::Fabulous:
 The class pages: L<Term::Fabulous::Widget::ProgressBar>,
 L<Term::Fabulous::Widget::Spinner>, L<Term::Fabulous::Widget::Toast>,
 L<Term::Fabulous::Widget::StatusBar>, L<Term::Fabulous::Widget::Prompt>,
-L<Term::Fabulous::Widget::FileDialog>, L<Term::Fabulous::Widget::Display>.
+L<Term::Fabulous::Widget::FileDialog>, L<Term::Fabulous::Widget::Dialog>,
+L<Term::Fabulous::Widget::Display>.
 L<Term::Fabulous::Manual::Programs/Timers and other asynchronous work>
 for the timers that drive a bar, and
 L<Term::Fabulous::Cookbook::LiveData> for complete programs that update

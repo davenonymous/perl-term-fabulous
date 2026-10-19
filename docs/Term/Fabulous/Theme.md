@@ -226,19 +226,23 @@ text_input {
 }
 ```
 
-Inside a family node, `name "value"` sets the slot `name` and `name
-key="value"` sets the slot `name.key` for every property, so `border
-style=Round color="border"` sets `border.style` and `border.color`,
-and `border enabled=#true` sets `border.enabled`. A node named after a
-state holds the slots of that state. A `variant "NAME"` node holds the
-slots and states of a variant. `#null` means `none`. `border.enabled`
-takes `#true` or `#false` only; every other slot takes a string or
-`#null`. An unknown family, slot, state, token or style dies with the
-known names, and so does `none` or `#null` for a required slot (see
-["Values"](#values)). A palette token, or a slot of a family, state or variant,
-that is set twice in one document dies too (`palette: the token
-'accent' is set twice`, `button: the slot 'text.focused' is set
-twice`), also when the two settings are in two nodes of the same family.
+Inside a family node, `name "value"` sets the slot `name` and
+`name key="value"` sets the slot `name.key` for every property, so
+`border style=Round color="border"` sets `border.style` and
+`border.color`, and `border enabled=#true` sets `border.enabled`. A
+node named after a state holds the slots of that state. A
+`variant "NAME"` node holds the slots and states of a variant. `#null`
+means `none`. `border.enabled` takes `#true` or `#false` only; every
+other slot takes a string or `#null`. An unknown family, slot, state,
+token or style dies with the known names, and so does `none` or
+`#null` for a required slot (see ["Values"](#values)). A palette token takes
+exactly one string, its color, and no properties or children; anything
+else dies with
+`palette token 'accent' needs exactly one string argument`. A palette
+token, or a slot of a family, state or variant, that is set twice in one
+document dies too (`palette: the token 'accent' is set twice`,
+`button: the slot 'text.focused' is set twice`), also when the two
+settings are in two nodes of the same family.
 
 # CONSTRUCTORS
 

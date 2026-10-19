@@ -154,7 +154,8 @@ L<Term::Fabulous::Commands> table refer to the command by it.
 
 What a menu shows, a string. Required. End it with three dots
 (C<Save as...>) when the command asks for more before it does
-anything, as is the custom in menus.
+anything, as is the custom in menus. L</plain_label> gives the label
+without them.
 
 =item C<keys>
 
@@ -198,7 +199,8 @@ The parameters of the same names.
 	say $command->plain_label;    # "Save as" for the label "Save as..."
 
 The label without a trailing C<...>, for the places that name the
-command outside a menu (a key reference, a status message). Menus show
+command outside a menu (a key reference, a status message; see
+L<Term::Fabulous::Widget::KeyReference/command_rows>). Menus show
 L</label>, whose C<...> says that the command opens a dialog.
 
 =head2 keys

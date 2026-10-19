@@ -529,10 +529,10 @@ items, and going round at the ends.
 
 Highlight the first or the last item.
 
-=item a letter or digit
+=item a printable character
 
-Highlights the next enabled item whose label starts with it. The item
-does not run until C<Enter> or a click chooses it.
+Highlights the next enabled item whose label starts with it, ignoring
+case. The item does not run until C<Enter> or a click chooses it.
 
 =item C<Enter>, C<Space>
 

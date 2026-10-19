@@ -520,7 +520,11 @@ C<links> stays bold. See L<Term::Fabulous::Widget::Text/Looks>.
 =item *
 
 For many Texts that share one selection, as in a document viewer,
-see L<Term::Fabulous::Widget::Text/Links in a bigger widget>.
+see L<Term::Fabulous::Widget::Text/Links in a bigger widget>. A
+L<Term::Fabulous::Widget::DocumentView> does that for a whole
+document; the recipe
+L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>
+follows its links.
 
 =back
 
@@ -561,7 +565,7 @@ This program is shipped as F<examples/cookbook/click-a-word.pl>.
 		},
 	);
 
-	# A plain Text and a Text, wrapped at 48 columns by the box around
+	# A plain Text and one with a span, wrapped at 48 columns by the box around
 	# them. A click on either fires TextClick on it.
 	my $article = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(48) }, child_gap => 1 } );
 	$article->add_child(
@@ -623,7 +627,6 @@ right click on the bold C<span>.
 =item *
 
 A mouse button pressed on a character of a
-L<Term::Fabulous::Widget::Text> or a
 L<Term::Fabulous::Widget::Text> fires
 L<TextClick|Term::Fabulous::Event::TextClick> on that text. Every
 button counts, the left, the middle and the right one; dragging,
@@ -642,9 +645,9 @@ word's first character and of the character after its last.
 
 =item *
 
-For a Text, C<< $event->spans >> lists the spans under the pointer
-as C<[ $start, $end, $style ]>, and C<< $event->link >> is the target of
-the link there, if any.
+For a text with spans (here the second one), C<< $event->spans >>
+lists the spans under the pointer as C<[ $start, $end, $style ]>, and
+C<< $event->link >> is the target of the link there, if any.
 
 =item *
 
@@ -652,7 +655,10 @@ C<TextClick> bubbles, so a listener on any box around the texts hears
 every one of them; C<< $event->target >> is the Text that was clicked.
 The C<Mouse> event of the same press still goes to the box behind the
 text, before the C<TextClick>, so programs that listen for C<Mouse>
-see no change.
+see no change. A C<Mouse> listener tells a double click from a single
+one with C<< $event->click_count >>
+(L<Term::Fabulous::Event::Mouse/click_count>); C<TextClick> does not
+carry it.
 
 =back
 

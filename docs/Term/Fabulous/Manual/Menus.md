@@ -220,7 +220,8 @@ table of the program for that, and give the menu their ids.
 `open( $ui, x => ..., y => ... )` puts the menu's top left corner
 at a cell of the screen, usually where the user clicked.
 `open( $ui, below => $widget )` puts it below a widget, or above
-it when there is no room below. Either way, the menu moves left and up
+it when it does not fit below and there is more room above
+([Term::Fabulous::Placement](../Placement.md)). Either way, the menu moves left and up
 as far as it must to stay on the screen, also when the terminal
 shrinks while it is open. The picture shows the context menu of
 `examples/widgets/menu.pl`:
@@ -310,7 +311,10 @@ $commands->add( { id => 'keys', label => 'Keys...', keys => ['F1'], run => \&sho
 
 The commands are listed with their keys as the menus show them and
 with their labels, under the group `Everywhere` (or the `group` the
-program names). A label that ends in `...` is shown without it.
+program names). A label that ends in `...` is shown without it
+(["plain\_label" in Term::Fabulous::Command](../Command.md#plain_label);
+["command\_rows" in Term::Fabulous::Widget::KeyReference](../Widget/KeyReference.md#command_rows) builds such rows
+for a help page of your own).
 The rows are read from the table when the key reference is made. A
 program that makes a new one each time the user asks for it, as here,
 always lists the commands and keys it has now.

@@ -54,8 +54,7 @@ and return C<[ $r, $g, $b, $a ]>.
 	text_color                [220, 223, 228]  text of the data cells, of the filter fields and of
 	                                           the pager; the scrollbar's thumb
 	header_text_color         [235, 238, 243]  text of the column titles
-	header_background_color   [ 36,  40,  50]  background of the column titles, also behind the
-	                                           line below them
+	header_background_color   [ 36,  40,  50]  background of the column titles
 	group_text_color          [ 97, 175, 239]  text of group headers
 	group_background_color    [ 28,  32,  41]  background of group headers and the column chooser
 	cursor_color              [ 52,  58,  72]  background of the cursor's line (while focused), of
@@ -433,7 +432,12 @@ them, and the row above a group header draws the line between them. So
 C<< border_color >> in a row style colors the line above the row and
 the lines left of its cells. The top of the frame without column
 titles and its bottom belong to no row: the table draws them in its
-C<line_color>, and they stay while the rows scroll.
+C<line_color>, and they stay while the rows scroll. While the scrollbar
+column is shown, the frame's right side belongs to no row either and
+is drawn in the C<line_color> (see
+L<Term::Fabulous::Widget::Table::Borders/The scrollbar column>). Which
+cell draws which piece, in detail:
+L<Term::Fabulous::Widget::Table::Borders/Who draws it>.
 
 =head2 Cell padding
 
@@ -486,8 +490,9 @@ the table's background shows to their right. A table higher than its
 lines shows its background below the last line (or the pager).
 
 The rows scroll with the mouse wheel over them (a horizontal wheel, or
-a sideways tilt, scrolls sideways unless a column grows) and follow the cursor: when the
-cursor moves out of sight, the rows scroll until its line is visible.
+a sideways tilt, scrolls sideways unless a column is C<grow> or
+C<percent>) and follow the cursor: when the cursor moves out of sight,
+the rows scroll until its line is visible.
 A new page starts at its top. From Perl, C<< $table->scroll_to_row($id) >>
 moves the cursor to a row and scrolls it into view.
 

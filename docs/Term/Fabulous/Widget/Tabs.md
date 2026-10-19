@@ -25,23 +25,24 @@ $settings->select(1);    # from the program: fires nothing
 ```
 
 <div>
-    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, tabs with vertical labels along the left side, a tab bar at the bottom in the Heavy style, and tabs on the right without a page border"></p>
+    <p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/master/screenshots/widget-tabs.svg" alt="Four Tabs widgets: tabs along the top with the Network page shown and a disabled Licenses tab, a tab bar at the bottom in the Heavy style, tabs along the left side, and tabs with vertical labels without a page border"></p>
 </div>
 
 # DESCRIPTION
 
 The picture shows the Tabs widget in four forms: tabs along the top
-with its second page shown and a disabled tab, tabs with downward
-labels along the left side, a bar at the bottom in another line
-style, and tabs on the right without a border around the page. The
-program is `examples/widgets/tabs.pl`.
+with its second page shown and a disabled tab, a bar at the bottom in
+another line style, tabs along the left side, and tabs with downward
+labels without a border around the page. The program is
+`examples/widgets/tabs.pl`.
 
 A Tabs widget shows one of several pages at a time, chosen with the
 tabs of its bar. The bar is drawn as a row of boxes that join the
 border of the page: the active tab is open toward the page, so that it
 and the page are one shape, while the others are closed by the page's
 line and look as if they stood behind it (with `active_padding`, the
-active tab also stands out of the row by that many cells):
+active tab has that many more cells of padding on its page side and
+rises that many cells out of the row):
 
 ```text
  ╭─────────╮ ╭─────────╮ ╭───────╮
@@ -118,9 +119,11 @@ The look parameters are:
 
 - `active_padding`
 
-    A non-negative integer. Default: 0. The cells the active tab grows
-    toward the page beyond the other tabs, so that it stands out of the
-    row.
+    A non-negative integer. Default: 0. The cells of padding the active
+    tab has on its page side beyond the other tabs, so that it stands that
+    many cells taller (wider on a bar at the left or right) than the
+    others, rising out of the row; 0 keeps all tabs the same size. See
+    ["TABS" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#tabs).
 
 - `line_style`
 
@@ -237,9 +240,10 @@ $tabs->select(undef);    # no page
 ```
 
 Shows a page from the program. Fires nothing. A tab that had the
-focus passes it on to the new active tab, and so does the page that
-leaves (see ["focus\_heir"](#focus_heir)). Dies for an index outside the pages or a
-page of another Tabs. Returns the Tabs.
+focus passes it on to the new active tab, and a focused widget on the
+page that leaves hands it to the active tab (see ["focus\_heir"](#focus_heir)).
+Dies for an index outside the pages or a page of another Tabs. Returns
+the Tabs.
 
 ## choose
 
@@ -259,8 +263,10 @@ my $tab = $tabs->focus_heir;
 
 The active tab (a [Term::Fabulous::Widget::Tabs::Button](Tabs/Button.md)), or `undef`
 without pages. When the widget with the focus leaves the Tabs (its page
-is no longer shown, or it is removed), the focus goes to this tab, so
-the keys keep reaching the Tabs (see
+is no longer shown, or it is removed), the focus goes to this tab when
+it can take the focus (else to the nearest widget above the Tabs that
+can), so the keys keep reaching the Tabs (see
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](../Manual/Events.md#when-the-focused-widget-goes-away) and
 ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call it yourself.
 
 ## bar
@@ -428,7 +434,8 @@ The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), from
 [Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md): a Tabs answers for the
 searchable widgets of all its pages, the pages not shown included,
 with keys of the widget's index among them and the widget's own key
-(see ["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#nested_search_texts)).
+(see ["Nested keys" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#nested-keys)). `search_serial`
+comes from ["search\_serial" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#search_serial).
 `reveal_text` selects the page of the widget, without firing
 `Select`, and returns what the widget returns. The indices change when
 pages or their widgets are added or removed; `search_revision` then

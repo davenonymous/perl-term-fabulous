@@ -114,7 +114,7 @@ my $position = $bar->position_at($cell);
 ```
 
 The scroll position along the axis (Clay's, 0 or negative; see
-["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../README.md#bounding_box-scroll_state-scroll_to)) that centers
+["bounding\_box, content\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)) that centers
 the thumb on a cell of the track, counted from the top or the left, or
 `undef` when there is nothing to scroll. A click on the scrollbar
 scrolls to this position.

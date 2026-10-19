@@ -35,8 +35,10 @@ the page:
 ╭╯         ╰─┴─────────┴─┴───────┴───────╮
 ```
 
-With `active_padding`, the active tab is drawn that many cells larger
-toward the page and so stands out of the row:
+With `active_padding`, the active tab has that many more cells of
+padding on its page side, so it stands that many cells taller (wider
+on a bar at the left or right) than the others and rises out of the
+row:
 
 ```text
  ╭─────────╮
@@ -113,9 +115,11 @@ are optional; unknown parameters die.
 
 - `active_padding`
 
-    A non-negative integer. Default: 0. The cells the active tab grows
-    toward the page beyond the other tabs, so that it stands out of the
-    row; 0 keeps all tabs the same size.
+    A non-negative integer. Default: 0. The cells of padding the active
+    tab has on its page side beyond the other tabs, so that it stands that
+    many cells taller (wider on a bar at the left or right) than the
+    others, rising out of the row; 0 keeps all tabs the same size. See
+    ["TABS" in Term::Fabulous::Manual::Layout](../../Manual/Layout.md#tabs).
 
 - `line_style`
 

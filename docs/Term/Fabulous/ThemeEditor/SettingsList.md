@@ -64,9 +64,9 @@ Opening and closing sections.
 
 ## search, filter, filtered\_row\_ids
 
-The search text (rows whose texts hold it, in any case, with their
-sections), named filters (code that gets a row), and the ids of the
-rows shown.
+The search text (rows whose setting, value, origin or id hold it, in
+any case, with their sections), named filters (code that gets a row),
+and the ids of the rows shown.
 
 ## cursor, cursor\_index
 

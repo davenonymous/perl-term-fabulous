@@ -88,8 +88,8 @@ Term::Fabulous::Placement - Where a popup goes on the screen
 		screen => [ 40, 20 ],
 		prefer => 'below',
 	);
-	# { x => 20, y => 9, flipped => 1, rows => 15 }: over the field,
-	# moved left to stay on the screen
+	# { x => 20, y => 9, flipped => 1, rows => 15 }: above the field
+	# (too little room below), moved left to stay on the screen
 
 =head1 DESCRIPTION
 

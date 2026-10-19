@@ -6,7 +6,7 @@ termbox2 draws it
 # SYNOPSIS
 
 ```perl
-use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns fit_columns terminal_is_utf8);
+use Term::Fabulous::Unicode qw(sanitize_text grapheme_clusters cluster_columns string_columns fit_columns terminal_is_utf8 ELLIPSIS);
 
 my $columns  = string_columns("\x{3042}!");          # 3: a wide Hiragana letter and '!'
 my @clusters = grapheme_clusters("e\x{301}x");       # ("e\x{301}", "x"): e with a combining accent, x
@@ -166,6 +166,11 @@ The result is never wider than `$columns`. Dies with a message that
 starts with `Term::Fabulous::Unicode: fit_columns` when `$text` or
 `mark` is not a string, `$columns` is not a whole number, `cut` is
 neither `'end'` nor `'start'`, or another option is given.
+
+The status bar, the document tabs, chart texts, the `truncate` mutator
+(["truncate" in Term::Fabulous::Widget::Table::Mutator](Widget/Table/Mutator.md#truncate)), the file dialog's
+folder line and the theme editor's settings list cut their texts with
+it.
 
 ## ELLIPSIS
 

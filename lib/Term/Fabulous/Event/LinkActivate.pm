@@ -52,10 +52,13 @@ Text
 
 =head1 DESCRIPTION
 
-A L<Term::Fabulous::Widget::Text> fires C<LinkActivate> on itself
-when the user follows one of its links, whichever way: a left click on
-the link, or C<Enter> while the Text has the focus and a link is
-selected. C<< $rich_text->activate_link >> fires it from code. The
+A L<Term::Fabulous::Widget::Text> fires C<LinkActivate> on itself when
+the user follows one of its links, whichever way: a left click on the
+link, or C<Enter> while the Text has the focus and a link is selected.
+C<< $text->activate_link >>
+(L<Term::Fabulous::Widget::Text/activate_link>) fires it from code; a
+widget that moves one selection across many texts follows links that way
+(see L<Term::Fabulous::Widget::Text/Links in a bigger widget>). The
 widget does not go anywhere itself: what a link means is the program's
 business, and C<link> is the target the program gave it.
 

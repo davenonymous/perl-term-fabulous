@@ -219,10 +219,10 @@ for tests.
 		...
 	);
 
-Called by the dropdown with these parameters, plus C<background_color>,
-C<border_color>, C<bordered>, C<border_style>, C<layout> and
-C<floating> (see L<Term::Fabulous::Widget/floating>). Unknown
-parameters die.
+Called by the dropdown with these parameters, plus C<bordered>,
+C<layout> and C<floating> (see L<Term::Fabulous::Widget/floating>).
+Its background, border color and border style follow the dropdown when
+they are not given. Unknown parameters die.
 
 =over
 
@@ -284,12 +284,12 @@ list composes L<Term::Fabulous::Role::Popup>, which calls it.
 
 The L<Term::Fabulous::Widget::Display> interface. C<paint> draws the
 visible options and, when the list scrolls, the scrollbar. The paint key
-adds the first option shown, what the shown rows display and the
-scrollbar's colors, so the list paints again whenever that changed, also
-when the change came from the dropdown (its colors, its highlight, its
-options). The natural size (the widest label with its margins and the
-scrollbar column, by C<visible_rows>) is used only for an axis the
-dropdown leaves unsized; it always sizes both.
+adds the first option shown, the number of options and the label and
+colors of each shown row, so the list paints again whenever that
+changed, also when the change came from the dropdown (its colors, its
+highlight, its options). The natural size (the widest label with its
+margins and the scrollbar column, by C<visible_rows>) is used only for
+an axis the dropdown leaves unsized; it always sizes both.
 
 =head1 MOUSE
 

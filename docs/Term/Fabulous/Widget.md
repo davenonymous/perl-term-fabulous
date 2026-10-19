@@ -343,10 +343,13 @@ theme slot each of their colors reads.
 
 # METHODS
 
-The methods fall into four groups: children (`add_child` to `ui`),
-events (`on`, `fire_event`, `handlers_for`), layout and style
-accessors (`layout` to `height_group`) and states (`add_state` to
-`get_classes`).
+The methods fall into these groups: children (`add_child` to
+`contains`), events (`on`, `fire_event`, `handlers_for`), row
+estimates for widget authors (`estimated_rows` to
+`estimated_content_rows`), layout and style accessors (`layout` to
+`height_group`), states (`add_state` to `get_classes`) and methods
+for widget authors (`reset_look` to `reverse_video`; programs use
+`reset_look` too).
 
 States: every widget has a set of state names. `hovered`, `pressed`,
 `focused` and `disabled` are _derived_ states: they follow the
@@ -592,12 +595,12 @@ my $rows = $widget->estimated_rows($columns);
 The rows the widget will take when it is laid out in that many
 columns, before Clay has laid it out: a guess for a list that builds
 only the items near its viewport and needs the height of the others
-for its scrollbar ([Term::Fabulous::Widget::VirtualList](Widget/VirtualList.md),
-[Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md)). A fixed height in the layout
-is the answer; otherwise it is the padding (["content\_padding"](#content_padding)) and
-the border sides that are drawn (a `Hidden` side takes no room, see
-["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#drawn_border_sides)) around what
-["estimated\_content\_rows"](#estimated_content_rows) says the content takes. Clay's layout
+for its scrollbar (a [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md) asks its
+items). A fixed height in the layout is the answer; otherwise it is
+the padding (["content\_padding"](#content_padding)) and the border sides that are drawn
+(a `Hidden` side takes no room, see
+["drawn\_border\_sides" in Term::Fabulous::Role::HasBorderStyle](Role/HasBorderStyle.md#drawn_border_sides)) around
+what ["estimated\_content\_rows"](#estimated_content_rows) says the content takes. Clay's layout
 corrects a guess that was off. `$columns` must be a positive integer.
 [Term::Fabulous::Widget::Text](Widget/Text.md) has the same method, since a text is
 not a Widget.
@@ -971,12 +974,16 @@ For widget authors: work after frames. Registers `$code` with the UI's
 ["each\_draw" in Term::Fabulous::Render](Render.md#each_draw), bound to the widget: it is called
 with the widget after every frame from the next one on, until it
 returns a true value, until `frames` calls were made (when given), or
-until the widget is freed or leaves the UI. A second registration with
-the same `name` replaces the first. `name` (a string) and `frames`
+until the widget is freed or leaves the UI. A second registration of
+this widget with the same `name` replaces the first; names of
+different widgets do not clash. `name` (a string) and `frames`
 (a positive integer) are the only options; another one, or anything
 but a code reference, dies. The closure gets the widget as its
 argument, so it need not capture it (which would keep the widget
 alive). For one call, return true or give `frames => 1`.
+["after\_draw" in Term::Fabulous::Render](Render.md#after_draw) makes one call, with
+`owner => $widget` bound to the widget; the guide is
+["Work after a frame" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#work-after-a-frame).
 
 Work asked for while the widget is in no UI waits: it is registered
 when the widget joins a UI (a name replaces waiting work of that name
@@ -984,6 +991,26 @@ too), so a widget may ask for it from its constructor or from setters
 called before the UI is built. Returns 1, or 0 without registering
 anything when the widget's UI draws no frames (a plain [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI));
 waiting work is dropped when the widget joins such a UI.
+
+## focus\_heir
+
+The container of
+["A container widget" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#a-container-widget), which
+shows one of its buttons, defines it so:
+
+```perl
+method focus_heir () { return $buttons[$shown] }
+```
+
+For widget authors: not defined here. A container that takes children
+out of the tree while one of them may have the focus can define
+`focus_heir`, returning the widget that gets the focus then, or
+`undef` to let the walk up the tree go on; see
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](Manual/Events.md#when-the-focused-widget-goes-away)
+and ["A container widget" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#a-container-widget).
+[Term::Fabulous::Widget::Tabs](Widget/Tabs.md), [Term::Fabulous::Widget::Accordion::Item](Widget/Accordion/Item.md),
+[Term::Fabulous::Widget::Menu](Widget/Menu.md) and
+[Term::Fabulous::Widget::Dialog::Backdrop](Widget/Dialog/Backdrop.md) define it.
 
 ## tree\_changed
 

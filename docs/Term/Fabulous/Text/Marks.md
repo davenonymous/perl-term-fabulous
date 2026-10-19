@@ -27,7 +27,8 @@ foreach my $run ( @{ $marks->runs( theme => Term::Fabulous::Theme->default ) } )
 The marks of one text: the _spans_ a program styles it with, the
 _highlights_ a search paints over them, and the _links_. Every range
 is `[ $start, $end, ... ]` in characters, `$end` excluded, checked
-against the text with one wording; styles are style hashes of
+against the text, with error messages worded alike for spans,
+highlights and links; styles are style hashes of
 [Term::Fabulous::Text::Style](Style.md). Readers return copies.
 
 The marks count the changes of their content in ["content\_revision"](#content_revision):
@@ -36,8 +37,9 @@ that marks what it found does not make the offsets it recorded stale.
 
 ["runs"](#runs) cuts the text where ranges start and end and stacks the styles
 that cover each piece. [Term::Fabulous::Widget::Text](../Widget/Text.md) and
-[Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) keep their marks here and turn the
-runs into the tuples their renderers paint with.
+[Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) keep their marks here, present them
+through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md), and turn the runs into the
+tuples their renderers paint with.
 
 Error messages start with the `owner`, the class of the widget the
 marks belong to.
@@ -54,7 +56,11 @@ my $marks = Term::Fabulous::Text::Marks->new( owner => ref($self), text => $text
 string (default `''`), `spans` an array reference of
 `[ $start, $end, $style ]` and `links` one of
 `[ $start, $end, $target ]` (both default empty). Dies as ["set\_spans"](#set_spans)
-and ["add\_link"](#add_link) do. The content revision starts at 0.
+and ["add\_link"](#add_link) do, and for `links` that are not an array reference
+(`links must be an array reference of [start, end, target], got ...`)
+or an entry that is not `[ $start, $end, $target ]`
+(`a link is [start, end, target], got ...`). The content revision
+starts at 0.
 
 # METHODS
 
@@ -170,7 +176,7 @@ my $index = $marks->link_at($offset);
 ```
 
 The index of the link the character at the offset lies in, or
-`undef`.
+`undef`. An offset that is not a non-negative integer dies.
 
 ## add\_link
 
@@ -207,12 +213,12 @@ in this order (see ["compose\_styles" in Term::Fabulous::Text::Style](Style.md#c
 `under` ranges, the spans, the highlights, the `over` ranges, each
 list in its own order; palette tokens are resolved against `theme`
 (["resolve\_style" in Term::Fabulous::Text::Style](Style.md#resolve_style)). A piece no range covers
-has the neutral style. `under` and `over` are optional, checked
-ranges (["check\_spans"](#check_spans)): a code block stacks its highlighter's spans
-under the program's, a text the looks of its links over the highlights.
-Empty ranges cover nothing. An empty text has no runs. The work is one
-sweep over the boundaries. Dies without a `theme` or with another
-option.
+has the neutral style. `under` and `over` are optional and not checked
+here: pass ranges with normalized style hashes, as ["check\_spans"](#check_spans)
+returns them. A code block stacks its highlighter's spans under the
+program's, a text the looks of its links over the highlights. Empty
+ranges cover nothing. An empty text has no runs. The work is one sweep
+over the boundaries. Dies without a `theme` or with another option.
 
 # SEE ALSO
 

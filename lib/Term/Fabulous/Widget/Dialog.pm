@@ -459,11 +459,10 @@ are neither hovered nor pressed.
 =back
 
 L</close> takes the dialog off the screen, puts the focus back on the
-widget that had it before (if that widget can still take the focus),
-and fires C<Close>
-(L<Term::Fabulous::Event::Close>) on the dialog. A closed dialog can be
-opened again, as often as needed, and keeps its children and their
-state in between.
+widget that had it before (if that widget can still take the focus), and
+fires C<Close> (L<Term::Fabulous::Event::Close>) and then C<Answer>
+(L</Answers>) on the dialog. A closed dialog can be opened again, as
+often as needed, and keeps its children and their state in between.
 
 =head2 Title, buttons and the notice line
 
@@ -484,10 +483,11 @@ dialog's L</values> and the values given. A dialog closed without an
 answer (C<Escape>, or L</close> from the program) is I<dismissed>: it
 answers with the button C<cancel> and the dialog's L</values>, and the
 event's C<dismissed> is true. That is one rule for every dialog:
-L<Term::Fabulous::Widget::Prompt> reports its fields as its values,
-L<Term::Fabulous::Widget::FileDialog> has none (its choice answers
-with the path), and a plain dialog has none. When the listeners run,
-the dialog is closed and the focus is back where it was.
+L<Term::Fabulous::Widget::Prompt> reports its fields as its values, and
+L<Term::Fabulous::Widget::FileDialog> (its choice answers with the
+path), L<Term::Fabulous::Widget::KeyReference> (its Close button answers
+C<close>) and a plain dialog have none. When the listeners run, the
+dialog is closed and the focus is back where it was.
 
 A Dialog comes with a look from the theme's C<dialog> family (a dark
 background and a round border in the accent blue in the built-in dark
@@ -741,7 +741,9 @@ values, or C<cancel> as dismissed (see L</Answers>).
 
 Events from the widgets inside the dialog (C<Activate> of a Button,
 C<Submit> of a text field, C<Change>, ...) bubble through the dialog as
-usual, so one listener on the dialog can handle them all.
+usual, so one listener on the dialog can handle them all. The
+C<Activate> of the dialog's own C<buttons> stops at the button, which
+calls L</press_button>.
 
 =head1 KDL PROPERTIES
 
@@ -749,8 +751,9 @@ The properties of L<Term::Fabulous::Widget::Box/KDL PROPERTIES>, plus
 C<backdrop_color> (a color string), C<z_index> (an integer from -32768
 to 32767),
 C<close_on_escape> (C<#true> or C<#false>), C<title>, C<notice_line>
-and C<placement> (strings). The buttons come from Perl: they answer
-with events.
+and C<placement> (strings). C<buttons> is not a KDL property: a
+dialog from a layout file has no buttons of its own; give it Button
+children or build it in Perl.
 
 A Dialog is added to the widget tree only when it opens, and a Dialog
 that is a child of another widget cannot open. A layout file has only
@@ -779,9 +782,16 @@ open the dialog from Perl:
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Box>, L<Term::Fabulous::Event::Close>,
+L<Term::Fabulous::Event::Answer>,
 L<Term::Fabulous::Widget::Dialog::Backdrop>,
+L<Term::Fabulous::Widget::Prompt>, L<Term::Fabulous::Widget::FileDialog>,
+L<Term::Fabulous::Widget::KeyReference>,
 L<Term::Fabulous::Manual::Events/FOCUS>, L<Term::Fabulous::Widget/floating>,
+L<Term::Fabulous::Manual::CustomWidgets/A dialog of your own>,
 L<Term::Fabulous::Cookbook::Forms/Ask a question in a dialog (Dialog widget)>,
-L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>.
+L<Term::Fabulous::Cookbook::Forms/A login form (centered dialog, masked password)>,
+L<Term::Fabulous::Cookbook::Forms/Confirm before quitting (Prompt)>,
+L<Term::Fabulous::Cookbook::Forms/Open and save a file (FileDialog)>,
+L<Term::Fabulous::Cookbook::Menus/Show the keys in a help screen (KeyReference)>.
 
 =cut

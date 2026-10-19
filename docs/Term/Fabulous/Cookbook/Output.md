@@ -4,7 +4,7 @@ Term::Fabulous::Cookbook::Output - Recipes: reports and tests without a terminal
 
 # DESCRIPTION
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Documents](Documents.md). Next page: [Term::Fabulous::Cookbook::Extending](Extending.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md). Next page: [Term::Fabulous::Cookbook::Extending](Extending.md).
 
 This page shows two uses of Term::Fabulous without an interactive
 terminal: printing a widget tree as text, for reports in pipes, files
@@ -211,4 +211,4 @@ nothing around them happens (no focus, no Tab, no hit-testing). See
 
 # SEE ALSO
 
-This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::Documents](Documents.md). Next page: [Term::Fabulous::Cookbook::Extending](Extending.md).
+This page is part of [Term::Fabulous::Cookbook](../Cookbook.md). Previous page: [Term::Fabulous::Cookbook::DocumentTechniques](DocumentTechniques.md). Next page: [Term::Fabulous::Cookbook::Extending](Extending.md).

@@ -125,8 +125,11 @@ search paints over them. Both keep these in a
 L<Term::Fabulous::Text::Marks> and present the same methods through
 this role, which also answers L<Term::Fabulous::Role::Searchable> for
 the one text (its key is C<undef>). A widget that composes it provides
-L</text_marks>, L</marks_changed> and C<reveal_text>, which differs
+L</text_marks>, L</marks_changed> and L</reveal_text>, which differs
 from widget to widget.
+
+The I<marks> are those of L<Term::Fabulous::Text::Marks>; this role
+handles the spans and highlights; the widget handles its links itself.
 
 =head1 REQUIRED METHODS
 
@@ -142,7 +145,17 @@ The L<Term::Fabulous::Text::Marks> of the text the widget shows.
 
 Called after the role changed the marks: C<$is_content> is 1 after the
 spans changed, 0 after the highlights did. The widget drops what it made
-from the old marks (its runs) and draws a frame.
+from the old marks (its runs) and makes the next frame paint again (a
+Text drops its runs and bumps the revision of L<Clay::UI::Revision>; a
+CodeBlock, like the SYNOPSIS, calls C<mark_changed>).
+
+=head2 reveal_text
+
+	method reveal_text ( $key, $offset ) { ... }
+
+The C<reveal_text> of L<Term::Fabulous::Role::Searchable/reveal_text>: a
+Text returns C<[ $self, undef ]>, a CodeBlock C<[ $self, $line ]> with
+the line of the offset.
 
 =head1 PROVIDED METHODS
 
@@ -186,9 +199,10 @@ with the highlights.
 
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights
 
-The methods of L<Term::Fabulous::Role::Searchable> for the one text:
-its key is C<undef>, its revision is L</content_revision>, and
-C<highlight_text> sets L</highlights>.
+The methods of L<Term::Fabulous::Role::Searchable> for the one text: its
+key is C<undef>, its revision is L</content_revision>, and
+C<highlight_text> sets L</highlights>. C<search_serial> comes from
+L<Term::Fabulous::Role::Searchable/search_serial>.
 
 =head1 SEE ALSO
 

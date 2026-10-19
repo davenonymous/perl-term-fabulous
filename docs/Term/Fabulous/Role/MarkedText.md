@@ -39,8 +39,11 @@ search paints over them. Both keep these in a
 [Term::Fabulous::Text::Marks](../Text/Marks.md) and present the same methods through
 this role, which also answers [Term::Fabulous::Role::Searchable](Searchable.md) for
 the one text (its key is `undef`). A widget that composes it provides
-["text\_marks"](#text_marks), ["marks\_changed"](#marks_changed) and `reveal_text`, which differs
+["text\_marks"](#text_marks), ["marks\_changed"](#marks_changed) and ["reveal\_text"](#reveal_text), which differs
 from widget to widget.
+
+The _marks_ are those of [Term::Fabulous::Text::Marks](../Text/Marks.md); this role
+handles the spans and highlights; the widget handles its links itself.
 
 # REQUIRED METHODS
 
@@ -60,7 +63,19 @@ method marks_changed ($is_content) { ... }
 
 Called after the role changed the marks: `$is_content` is 1 after the
 spans changed, 0 after the highlights did. The widget drops what it made
-from the old marks (its runs) and draws a frame.
+from the old marks (its runs) and makes the next frame paint again (a
+Text drops its runs and bumps the revision of [Clay::UI::Revision](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARevision); a
+CodeBlock, like the SYNOPSIS, calls `mark_changed`).
+
+## reveal\_text
+
+```perl
+method reveal_text ( $key, $offset ) { ... }
+```
+
+The `reveal_text` of ["reveal\_text" in Term::Fabulous::Role::Searchable](Searchable.md#reveal_text): a
+Text returns `[ $self, undef ]`, a CodeBlock `[ $self, $line ]` with
+the line of the offset.
 
 # PROVIDED METHODS
 
@@ -110,9 +125,10 @@ with the highlights.
 
 ## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights
 
-The methods of [Term::Fabulous::Role::Searchable](Searchable.md) for the one text:
-its key is `undef`, its revision is ["content\_revision"](#content_revision), and
-`highlight_text` sets ["highlights"](#highlights).
+The methods of [Term::Fabulous::Role::Searchable](Searchable.md) for the one text: its
+key is `undef`, its revision is ["content\_revision"](#content_revision), and
+`highlight_text` sets ["highlights"](#highlights). `search_serial` comes from
+["search\_serial" in Term::Fabulous::Role::Searchable](Searchable.md#search_serial).
 
 # SEE ALSO
 

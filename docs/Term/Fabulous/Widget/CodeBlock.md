@@ -18,7 +18,7 @@ $code->spans( [ [ 0, 2, 'bold #c678dd' ] ] );
 # Syntax highlighting: a function that turns the code into spans.
 $code->highlighter( sub ( $text, $language ) { return [ my_highlighter( $text, $language ) ] } );
 
-# Scroll the code eight columns to the left.
+# Show the code eight columns further right: the lines move left.
 $code->offset(8);
 ```
 
@@ -135,8 +135,10 @@ message that names the parameter.
 # METHODS
 
 The block has all methods of [Term::Fabulous::Widget::Display](Display.md), plus
-the following. The accessors of the parameters return the current value
-when called without an argument. With an argument, they check the new
+the following. `text_marks` and `marks_changed` are the methods
+[Term::Fabulous::Role::MarkedText](../Role/MarkedText.md) requires; programs do not call
+them. The accessors of the parameters return the current value when
+called without an argument. With an argument, they check the new
 value as ["new"](#new) does (an invalid value dies), set it, and return it;
 the change shows in the next frame.
 
@@ -147,8 +149,9 @@ $code->code("print 42;\n");
 ```
 
 Gets or sets the code. Setting it also removes the program's spans
-(["spans"](#spans)), because their offsets refer to the old code, and makes the
-highlighter run again at the next paint.
+(["spans"](#spans)) and the highlights (["highlights"](#highlights)), because their offsets
+refer to the old code, and makes the highlighter run again at the next
+paint.
 
 ## language
 
@@ -239,7 +242,8 @@ for callers that recorded offsets into it. Highlights leave it alone.
 ## search\_texts, search\_revision, highlight\_text, clear\_text\_highlights, reveal\_text
 
 The methods of [Term::Fabulous::Role::Searchable](../Role/Searchable.md), which a code block
-does for its code (through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)): `search_texts` returns `[ undef, $code ]`,
+does for its code (through [Term::Fabulous::Role::MarkedText](../Role/MarkedText.md)):
+`search_texts` returns one entry, `[ undef, $code ]`,
 `search_revision` is ["content\_revision"](#content_revision), `highlight_text` sets
 ["highlights"](#highlights), `clear_text_highlights` clears them, and
 `reveal_text` returns the widget itself and the line of the offset,
@@ -330,8 +334,9 @@ my $highlighter = sub ( $code, $language ) {
 $code->highlighter($highlighter);
 ```
 
-[Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has a recipe for adding syntax
-highlighting to a document view.
+["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock)
+is a recipe that adds syntax highlighting to a document view and
+scrolls its code blocks sideways.
 
 # KDL PROPERTIES
 
@@ -350,7 +355,7 @@ CodeBlock "example" {
 
 # SEE ALSO
 
-[Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md),
+[Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md),
 [Term::Fabulous::Document](../Document.md),
 [Term::Fabulous::Widget::DocumentView](DocumentView.md),
 [Term::Fabulous::Widget::Display](Display.md), [Term::Fabulous::Text::Style](../Text/Style.md).

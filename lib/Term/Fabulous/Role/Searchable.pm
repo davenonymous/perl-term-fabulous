@@ -124,6 +124,10 @@ such as a L<table|Term::Fabulous::Widget::Table> with cells on other
 pages, does it from its own data, so that a search reaches text that
 is not on the screen. L<Term::Fabulous::Widget::DocumentView> searches
 its items through this role.
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>
+shows a search over a document;
+L<Term::Fabulous::Manual::CustomWidgets/Widgets a search finds> shows
+how to make a widget of your own searchable.
 
 The role declares the methods below, which a class that composes it
 defines, and provides L</search_serial>. A widget that holds other
@@ -131,8 +135,9 @@ searchable widgets and answers for them composes
 L<Term::Fabulous::Role::SearchContainer> instead, which provides the
 methods.
 
-Keys are only valid together with their revision: a caller that keeps a
-key (a search that remembers its matches) keeps the
+A I<key> names one text of the widget (see L</search_texts>). Keys are
+only valid together with their revision: a caller that keeps a key (a
+search that remembers its matches) keeps the
 L</search_revision> it read with it, and compares the two before it
 uses the key again; when the revision differs, the text changed and the
 caller searches again.
@@ -177,14 +182,15 @@ Removes every highlight of every text of the widget.
 
 	my ( $shown, $row ) = @{ $widget->reveal_text( $key, $offset ) };
 
-Makes the text named by the key visible inside the widget, as far as
-the widget can: a table turns to the page of the row, a tab control
+Makes the text named by the key visible inside the widget, as far as the
+widget can: a table turns to the page of the row, a tab control
 activates the page. Returns an array reference of two values, each of
-which may be C<undef>: the L<Term::Fabulous::Widget::Text> that shows
-the text, once it exists, and the row within the widget on which the
-character at the offset lies, when the widget knows it before a layout
-(a code block knows its line). A caller that scrolls the widget into
-view uses the row, else the text widget's painted lines, else the
+which may be C<undef>: the widget that shows the text (a Text inside the
+widget, such as a table's cell, or the widget itself, as a Text or a
+CodeBlock returns), once it exists, and the row within the widget on
+which the character at the offset lies, when the widget knows it before
+a layout (a code block knows its line). A caller that scrolls the widget
+into view uses the row, else the text widget's painted lines, else the
 widget's own box.
 
 =head1 PROVIDED METHODS
@@ -242,8 +248,8 @@ The texts of all the widgets, in order, with nested keys.
 
 	my $revision = nested_search_revision( \@widgets, $key );
 
-The revision of the widget at the index and its own revision,
-C<"$serial:$revision"> (see L</search_serial>): when another widget comes
+The L</search_serial> of the widget at the index and that widget's own
+revision of the text, C<"$serial:$revision">: when another widget comes
 to the index (a page was removed before it), the revision changes, so a
 caller that compares revisions searches again instead of using the key.
 C<'gone'> for a key whose index is past the list.
@@ -270,7 +276,11 @@ The widget's C<reveal_text>; C<[ undef, undef ]> for a key past the list.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Role::SearchContainer>,
-L<Term::Fabulous::Widget::Text>, L<Term::Fabulous::Widget::CodeBlock>,
-L<Term::Fabulous::Widget::DocumentView>.
+L<Term::Fabulous::Role::MarkedText>, L<Term::Fabulous::Widget::Text>,
+L<Term::Fabulous::Widget::CodeBlock>, L<Term::Fabulous::Widget::Table>,
+L<Term::Fabulous::Widget::Tabs>,
+L<Term::Fabulous::Widget::Accordion::Item>,
+L<Term::Fabulous::Widget::DocumentView>,
+L<Term::Fabulous::Manual::CustomWidgets/Widgets a search finds>.
 
 =cut

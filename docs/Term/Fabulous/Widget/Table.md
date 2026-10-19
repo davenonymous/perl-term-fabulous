@@ -1188,8 +1188,11 @@ Accessor for the `group_style` style hash, like `header_style`.
 
 The line accessors below take a line style name, a
 [Term::Fabulous::Enum::BorderStyle](../Enum/BorderStyle.md) object, `'none'` or `undef` (see
-["Lines between and around the cells" in Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md#lines-between-and-around-the-cells)). They return the style as an
-object (the `Hidden` style for `'none'`), or `undef` for no line.
+["Lines between and around the cells" in Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md#lines-between-and-around-the-cells)).
+They return the style as an object (the `Hidden` style for `'none'`),
+or `undef` for no line. [Term::Fabulous::Widget::Table::Borders](Table/Borders.md)
+explains how the lines are worked out, who draws which side, and the
+scrollbar column.
 
 ### border
 
@@ -1320,7 +1323,8 @@ The text shown in an empty table, and the pager's count.
 ### line\_color
 
 Every line that no style gives a `border_color`, and the scrollbar's
-track.
+track; while the scrollbar column is shown, also the right side of the
+frame.
 
 ### stripe\_color
 
@@ -1407,6 +1411,7 @@ below collapsed rows and groups.
 
 ```perl
 my @entries = $table->search_texts;    # ( [ [ $id, $key ], $text ], ... )
+                                       # [ $id, $key, $index, $inner ] in a custom cell
 ```
 
 The text of every visible column of every row the filters let through,
@@ -1454,12 +1459,15 @@ my ( $text, $row ) = @{ $table->reveal_text( [ $id, $key ], $offset ) };
 ```
 
 Shows the row: expands the rows and the groups above it, and moves the
-cursor to it, which turns to its page, scrolls the body to it and fires
-`CursorMove`; the selection does not change. Returns the cell's
+cursor to it, which turns to its page and scrolls the body to it; it
+fires no event and the selection does not change. Returns the cell's
 [Text](Text.md) once the row is built, which is
-after the next frame when the page turned, else `undef`; the row is
-always `undef`. A row the filters keep out cannot be shown and gives
-`undef` too.
+after the next frame when the page turned, else `undef`; the second
+value (the row of the offset, see
+["reveal\_text" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#reveal_text)) is `undef` for a text
+cell. For a key into a custom cell, both values are those the widget
+inside returns, once the row is built. A row the filters keep out cannot
+be shown and gives `undef` too.
 
 ## Widgets of the table
 
@@ -1612,7 +1620,8 @@ plain click selects only that row; `Ctrl`+click or `Alt`+click
 selects or deselects it and keeps the others; `Shift`+click selects
 the range from where the range started to that row; a click into the
 selection column selects or deselects that row and keeps the others.
-- **Double click on a row** (two clicks on the same line, a
+- **Double click on a row** (two presses of the left button on the same
+character of a line, without moving the pointer, a
 [click\_count](../Event/Mouse.md#click_count) of 2 within the
 UI's [double\_click\_seconds](../../../../README.md#double_click_seconds)): each
 click does what a click does (moves the cursor, selects), then the
@@ -1628,8 +1637,9 @@ does what `Ctrl+A` does on the rows (see ["Selection" in Term::Fabulous::Manual:
 - **Click or drag on the scrollbar**: scrolls so that the thumb is
 centered where the pointer is.
 - **Wheel**: scrolls the rows up and down; a horizontal wheel scrolls them
-sideways, and the titles follow (not while a column is `grow` or
-`percent`: such a table wraps the text of its columns instead).
+sideways, and the titles and the bottom of the frame follow (not while
+a column is `grow` or `percent`: such a table wraps the text of its
+columns instead).
 - **Pointer over a row**: with `hover => 1`, the line under the
 pointer is drawn in the `hover_color`.
 - **Click on an input in a cell**: goes to the input; the table moves its
@@ -1864,6 +1874,8 @@ there.
 [Term::Fabulous::Widget::Table::Model](Table/Model.md), [Term::Fabulous::Widget::Table::Style](Table/Style.md),
 [Term::Fabulous::Widget::Table::Borders](Table/Borders.md), [Term::Fabulous::Widget::Table::Pager](Table/Pager.md),
 [Term::Fabulous::Widget::Table::ColumnChooser](Table/ColumnChooser.md),
+[Term::Fabulous::Widget::Table::EdgeView](Table/EdgeView.md),
+[Term::Fabulous::Widget::Table::Cell](Table/Cell.md),
 [Term::Fabulous::Manual::Tables](../Manual/Tables.md), [Term::Fabulous::Manual::TableRows](../Manual/TableRows.md),
 [Term::Fabulous::Manual::TableStyles](../Manual/TableStyles.md), [Term::Fabulous::Cookbook::Tables](../Cookbook/Tables.md),
 [Term::Fabulous::Cookbook::TableRows](../Cookbook/TableRows.md), [Term::Fabulous::Cookbook::TableStyles](../Cookbook/TableStyles.md),

@@ -115,7 +115,7 @@ Term::Fabulous::Document::Look - Styles for each kind of document text, taken fr
 
 	# The look of the theme a widget draws with:
 	my $look = Term::Fabulous::Document::Look->of($widget);
-	$rich_text->stylize( $look->style('code'), 4, 12 );
+	$text->stylize( $look->style('code'), 4, 12 );
 
 	# The look of a particular theme:
 	my $light = Term::Fabulous::Document::Look->new( theme => Term::Fabulous::Theme->builtin('light') );
@@ -230,10 +230,11 @@ A document names the look class its factories style marks with:
 
 	my $document = Term::Fabulous::Document->new( look => 'My::Look' );
 
-The view accepts only documents whose marks are links or have a kind
-that the look class lists in L</kinds>, and its code blocks paint with
-the same class. L<Term::Fabulous::Cookbook::Documents>
-has a worked example that changes the styles of a document and adds
+The factories of the document die at once for a mark whose kind the
+look class does not list in L</kinds> (links need no kind), and the
+document's code blocks paint with the same class.
+L<Term::Fabulous::Cookbook::DocumentTechniques/Change the styles of a document and add mark kinds (Look)>
+is a worked example that changes the styles of a document and adds
 mark kinds this way.
 
 =head1 CONSTRUCTORS
@@ -285,9 +286,9 @@ kinds, as described in L</Changing and adding kinds>.
 
 	my @kinds = Term::Fabulous::Document::Look->kinds;    # bold, clipped, code, ...
 
-Returns the names of all kinds of the class, sorted. The document view
-checks the mark kinds of every document it is given against this list
-and dies for a kind that is missing.
+Returns the names of all kinds of the class, sorted. The factories of
+L<Term::Fabulous::Document> check the kind of every mark against this
+list (through L</token_style>) and die for a kind that is missing.
 
 =head2 token_style
 
@@ -320,7 +321,7 @@ message that lists the known kinds.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Text::Style>,
+L<Term::Fabulous::Cookbook::DocumentTechniques>, L<Term::Fabulous::Text::Style>,
 L<Term::Fabulous::Theme>, L<Term::Fabulous::Manual::Looks/THEMES>,
 L<Term::Fabulous::Document>, L<Term::Fabulous::Widget::DocumentView>.
 

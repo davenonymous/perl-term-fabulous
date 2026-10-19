@@ -19,7 +19,13 @@ after a frame in which what it shows differs from what it reported
 last: for example, the user scrolled, selected another link or
 searched, or the program gave the view another document. The event
 carries a summary of the view with everything a status line or a table
-of contents needs, so their listeners do not have to query the view.
+of contents needs, so their listeners do not have to query the view;
+["view\_state" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#view_state) returns the same
+fields at any time.
+["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange)
+feeds a status line from it, and
+["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl)
+moves a mark through a table of contents.
 
 The view learns what a frame showed only after the frame has been
 drawn. The event therefore arrives after the frame it describes, and
@@ -140,4 +146,9 @@ match while there are matches.
 
 # SEE ALSO
 
-[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md), [Term::Fabulous::Manual::Events](../Manual/Events.md).
+[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md),
+["view\_state" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#view_state),
+["sections, section\_count" in Term::Fabulous::Document](../Document.md#sections-section_count),
+[Term::Fabulous::Manual::Events](../Manual/Events.md),
+["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange),
+["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl).

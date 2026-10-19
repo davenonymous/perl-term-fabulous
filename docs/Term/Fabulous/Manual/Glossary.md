@@ -24,6 +24,12 @@ belongs to, such as (table) or (KDL).
 
     A widget's parent, the parent's parent, and so on up to the root.
 
+- anchor (document)
+
+    A name in a document that links can lead to besides the section
+    titles, such as the text of a term; an item's `anchor` option sets
+    it. See ["Item options" in Term::Fabulous::Document](../Document.md#item-options).
+
 - application object
 
     The [Term::Fabulous](../../../../README.md) object of a program: it holds the widget tree,
@@ -75,6 +81,13 @@ belongs to, such as (table) or (KDL).
 - Clay
 
     The layout engine Term::Fabulous uses; see [Clay::XS](https://metacpan.org/pod/Clay%3A%3AXS) and [Clay::UI](https://metacpan.org/pod/Clay%3A%3AUI).
+
+- click count
+
+    The place of a button press in a run of quick clicks of the same
+    button in the same cell: 1 for a single click, 2 for a double click, 3
+    for a triple click; releases, drags and the wheel have 1. See
+    ["click\_count" in Term::Fabulous::Event::Mouse](../Event/Mouse.md#click_count).
 
 - column, row
     1. The horizontal and vertical position of a terminal cell or a canvas
@@ -131,6 +144,20 @@ belongs to, such as (table) or (KDL).
     The text a table cell shows: its raw value after the column's mutators.
     See ["DISPLAY TEXT AND MUTATORS" in Term::Fabulous::Manual::Tables](Tables.md#display-text-and-mutators).
 
+- document
+
+    What a [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) shows: a
+    [Term::Fabulous::Document](../Document.md), an ordered list of items with the
+    sections and anchors that links lead to, made by a parser from POD,
+    Markdown or another format. See
+    ["Documents" in Term::Fabulous::Manual::Layout](Layout.md#documents).
+
+- drawing theme
+
+    The [Term::Fabulous::Theme](../Theme.md) a widget draws with: the one its UI gives
+    it, which may differ per subtree, or the default theme while the widget
+    is in no UI. See ["drawing\_theme" in Term::Fabulous::Role::Themed](../Role/Themed.md#drawing_theme).
+
 - event
 
     Something that happened, as an object: a key press, a click, a changed
@@ -157,6 +184,14 @@ belongs to, such as (table) or (KDL).
 
     Which widget receives key presses. See ["FOCUS" in Term::Fabulous::Manual::Events](Events.md#focus).
 
+- focus heir
+
+    The widget that gets the focus when the focused widget goes away: the
+    nearest widget above it that can take the focus, or one a container
+    on the way names with its `focus_heir` method, such as the active tab
+    of a Tabs. See
+    ["When the focused widget goes away" in Term::Fabulous::Manual::Events](Events.md#when-the-focused-widget-goes-away).
+
 - frame
     1. One complete layout and drawing of the screen. [Term::Fabulous](../../../../README.md) checks
     30 times per second whether a frame is needed and draws one when
@@ -176,6 +211,13 @@ belongs to, such as (table) or (KDL).
     (`group_by`), and the line above them that shows the value and the
     number of rows; the user opens and closes a group there. See
     ["GROUPING" in Term::Fabulous::Manual::TableRows](TableRows.md#grouping).
+
+- highlight (text)
+
+    A range of a text with a style, painted over the spans and under the
+    links and kept apart from them, so that a search can mark its matches
+    and clear them again without touching the spans. See
+    ["highlights" in Term::Fabulous::Widget::Text](../Widget/Text.md#highlights).
 
 - hoverable, pressable, focusable
 
@@ -199,6 +241,13 @@ belongs to, such as (table) or (KDL).
     pressed, and moves the focus from code. See
     ["Moving the focus" in Term::Fabulous::Manual::Events](Events.md#moving-the-focus).
 
+- item (document)
+
+    One entry of a document, a widget that had no parent when it was
+    added: a heading, a paragraph, a list item, code, or any other widget such as a table or a
+    form, with options that say how the view lays it out. See
+    ["Item options" in Term::Fabulous::Document](../Document.md#item-options).
+
 - KDL
 
     A configuration language ([https://kdl.dev](https://kdl.dev)) in which widget trees can
@@ -210,6 +259,13 @@ belongs to, such as (table) or (KDL).
     `Ctrl+Left`, as the method
     [`key_name`](../Event/KeyPress.md#key_name) of a KeyPress
     event returns it. See ["Key names" in Term::Fabulous::Manual::Events](Events.md#key-names).
+
+- kind (document look)
+
+    The name of one style of a document's look, such as `bold`, `code`,
+    `heading1` or `match`. A mark names the kind of its text; the view
+    and the code blocks ask for the other kinds by name. See
+    ["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds).
 
 - kitty keyboard protocol
 
@@ -227,10 +283,40 @@ belongs to, such as (table) or (KDL).
     One entry of a table's view: a data row or a group header. Pages count
     lines. See ["Table terms" in Term::Fabulous::Manual::Tables](Tables.md#table-terms).
 
+- link (text)
+
+    A range of a [Term::Fabulous::Widget::Text](../Widget/Text.md) with a target, which the
+    user follows with a click or with `Enter`; the text then fires
+    [LinkActivate](../Event/LinkActivate.md) and leaves the
+    rest to the program. See ["LINKS" in Term::Fabulous::Widget::Text](../Widget/Text.md#links).
+
 - listener
 
     A code reference registered with `$widget->on( $event_name => $code )`.
     See ["Listening to events" in Term::Fabulous::Manual::Events](Events.md#listening-to-events).
+
+- look (document)
+
+    A [Term::Fabulous::Document::Look](../Document/Look.md): the style of every kind (see
+    [kind](#kind-document-look)) a document and its view use, its
+    colors taken from the palette tokens of the theme,
+    so that a theme switch restyles the document. See
+    ["KINDS" in Term::Fabulous::Document::Look](../Document/Look.md#kinds).
+
+- mark
+
+    The word has three meanings:
+
+    1. (document) What a parser records about a range of a text: the kind of
+    formatting it had in the source, `[ $start, $end, $kind ]`, or a link
+    with its target. The document's look turns a mark of a kind into a
+    span; a link mark becomes a link of the Text. See
+    ["FACTORIES" in Term::Fabulous::Document](../Document.md#factories).
+    2. (document view) The selected link and the search matches, drawn over
+    the items' own styles. See
+    ["Marks" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#marks).
+    3. (text) The spans, highlights and links of one text, as
+    [Term::Fabulous::Text::Marks](../Text/Marks.md) keeps them for a Text or a CodeBlock.
 
 - mnemonic
 
@@ -265,7 +351,17 @@ belongs to, such as (table) or (KDL).
 
     The bar below a table with pages: buttons to turn the pages, the page
     number, a list of page sizes and a count of the lines. See
-    ["PAGES" in Term::Fabulous::Manual::TableRows](TableRows.md#pages).
+    ["PAGES" in Term::Fabulous::Manual::TableRows](TableRows.md#pages). Not the same as the pager
+    keys.
+
+- pager keys
+
+    The keys a pager scrolls with, which a program hands to
+    [scroll\_by\_key](../Scrolling.md#scroll_by_key) of
+    [Term::Fabulous::Scrolling](../Scrolling.md) for any scroll container: PageUp,
+    PageDown, Ctrl+Home and Ctrl+End (the set `pager`), or, as in
+    `less`, Up or `j`, Down or `k`, PageUp or `b`, PageDown or
+    `Space`, Home or `g` and End or `G` (the set `less`).
 
 - palette (chart)
 
@@ -273,11 +369,22 @@ belongs to, such as (table) or (KDL).
     `default`, `classic`, `pastel`, `vivid` or colors of your own. See
     ["Colors, palettes and themes" in Term::Fabulous::Manual::Charts](Charts.md#colors-palettes-and-themes).
 
+- palette token
+
+    A named color of a theme's palette; see [token (theme)](#token-theme).
+
 - pixel (PixelCanvas)
 
     Half a terminal cell: a [Term::Fabulous::Widget::PixelCanvas](../Widget/PixelCanvas.md) shows two
     pixels per cell, one above the other. See
     ["Drawing pixels" in Term::Fabulous::Manual::Charts](Charts.md#drawing-pixels).
+
+- popup
+
+    A widget that floats over everything at a position it works out from
+    the box of its anchor and the size of the screen: the list of a
+    dropdown, a menu opened as a popup, a table's column chooser. See
+    [Term::Fabulous::Role::Popup](../Role/Popup.md) and [Term::Fabulous::Placement](../Placement.md).
 
 - property (KDL)
 
@@ -300,6 +407,13 @@ belongs to, such as (table) or (KDL).
 
     The name of a row of a [Term::Fabulous::Widget::Table](../Widget/Table.md), used by every
     method and event. See ["Row ids" in Term::Fabulous::Manual::Tables](Tables.md#row-ids).
+
+- section (document)
+
+    A part of a document that starts at an item with a level from 1 to 6
+    and a title, usually a heading. Sections make the table of contents
+    and the position a document view reports. See
+    ["sections, section\_count" in Term::Fabulous::Document](../Document.md#sections-section_count).
 
 - selection (table)
 
@@ -330,9 +444,22 @@ belongs to, such as (table) or (KDL).
     value. The slices are the chart's series. See
     ["Series and data" in Term::Fabulous::Manual::Charts](Charts.md#series-and-data).
 
+- slot (document view)
+
+    The box a document view shows one item in: it gives the item its gap,
+    its indent and its quote bars. See
+    ["How items are shown" in Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md#how-items-are-shown).
+
 - slot (theme)
 
     One part of a widget family that a theme decides, a color, a border style or whether there is a border: `button.border.color`, `input.placeholder`, `divider.line.style`, `text_input.border.enabled`. A slot has a value for the normal state and may have one for each state the widget shows (`focused`, `disabled`, ...). It defaults to a token, a style name, or `true` or `false`. See ["Families, slots and states" in Term::Fabulous::Theme](../Theme.md#families-slots-and-states).
+
+- span (text)
+
+    A range of a [Term::Fabulous::Widget::Text](../Widget/Text.md) with a style of its own,
+    such as `[ 0, 6, 'bold red' ]`, written as markup or given as
+    character ranges. See
+    ["Styled spans inside one text" in Term::Fabulous::Manual::Looks](Looks.md#styled-spans-inside-one-text).
 
 - style hash (table)
 
@@ -396,7 +523,7 @@ belongs to, such as (table) or (KDL).
 
 - token (theme)
 
-    A named color of a theme's palette, such as `accent`, `surface` or `text`, which the slots default to. The `background` token is the screen behind the widgets, which every frame paints first. See ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens).
+    A named color of a theme's palette, such as `accent`, `surface` or `text`, which the slots default to. The `background` token is the screen behind the widgets, which every frame paints first. A style string accepts a token as a color (`'bold accent on surface_low'`), looked up when the text paints. See ["Tokens" in Term::Fabulous::Theme](../Theme.md#tokens) and ["Palette tokens" in Term::Fabulous::Text::Style](../Text/Style.md#palette-tokens).
 
 - tree row, child row (table)
 

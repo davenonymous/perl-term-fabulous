@@ -159,6 +159,7 @@ lib/Term/Fabulous/Cookbook/ChartStyles.pod
 lib/Term/Fabulous/Cookbook/ChartTechniques.pod
 lib/Term/Fabulous/Cookbook/Charts.pod
 lib/Term/Fabulous/Cookbook/Documents.pod
+lib/Term/Fabulous/Cookbook/DocumentTechniques.pod
 lib/Term/Fabulous/Cookbook/Extending.pod
 lib/Term/Fabulous/Cookbook/Forms.pod
 lib/Term/Fabulous/Cookbook/GettingStarted.pod

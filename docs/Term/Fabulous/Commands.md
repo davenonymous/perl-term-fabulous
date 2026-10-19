@@ -103,7 +103,9 @@ foreach my $command ( $commands->commands ) {
 ```
 
 Every command, in the order they were added. A list of keys for a
-help screen comes from here.
+help screen comes from here, or from
+["command\_rows" in Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md#command_rows), which makes the
+rows of a key reference from it.
 
 ## command\_for\_key
 
@@ -143,4 +145,4 @@ table.
 
 [Term::Fabulous::Command](Command.md), [Term::Fabulous::Widget::MenuBar](Widget/MenuBar.md),
 [Term::Fabulous::Widget::Menu](Widget/Menu.md), [Term::Fabulous::Manual::Menus](Manual/Menus.md),
-[Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md).
+[Term::Fabulous::Cookbook::Menus](Cookbook/Menus.md), [Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md).

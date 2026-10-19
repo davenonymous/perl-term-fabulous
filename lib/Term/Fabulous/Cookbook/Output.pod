@@ -8,7 +8,7 @@ Term::Fabulous::Cookbook::Output - Recipes: reports and tests without a terminal
 
 =head1 DESCRIPTION
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Documents>. Next page: L<Term::Fabulous::Cookbook::Extending>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::DocumentTechniques>. Next page: L<Term::Fabulous::Cookbook::Extending>.
 
 This page shows two uses of Term::Fabulous without an interactive
 terminal: printing a widget tree as text, for reports in pipes, files
@@ -261,6 +261,6 @@ L<Term::Fabulous::Manual::Programs/TESTING>.
 
 =head1 SEE ALSO
 
-This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::Documents>. Next page: L<Term::Fabulous::Cookbook::Extending>.
+This page is part of L<Term::Fabulous::Cookbook>. Previous page: L<Term::Fabulous::Cookbook::DocumentTechniques>. Next page: L<Term::Fabulous::Cookbook::Extending>.
 
 =cut

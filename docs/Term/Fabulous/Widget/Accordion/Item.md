@@ -89,7 +89,9 @@ Accessor. Writing opens or closes the item without an event and
 without regard to the accordion's `multiple`; the accordion's
 ["open" in Term::Fabulous::Widget::Accordion](../Accordion.md#open) keeps that rule. Closing an
 item whose body holds the focus moves the focus to its header (see
-["focus\_heir"](#focus_heir)). Returns 1 or 0.
+["focus\_heir"](#focus_heir) and
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](../../Manual/Events.md#when-the-focused-widget-goes-away)).
+Returns 1 or 0.
 
 ## is\_open
 
@@ -166,8 +168,10 @@ my $header = $item->focus_heir;
 
 The ["header"](#header). When the widget with the focus leaves the item (the
 item closes, or the widget is removed from its body), the focus goes to
-the header (see ["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call
-it yourself.
+the header when it can take the focus, else to the nearest widget above
+the item that can (see
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](../../Manual/Events.md#when-the-focused-widget-goes-away) and
+["Focus heirs" in Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction#Focus-heirs)). You do not call it yourself.
 
 ## accordion
 
@@ -198,9 +202,11 @@ The methods of [Term::Fabulous::Role::Searchable](../../Role/Searchable.md), fro
 [Term::Fabulous::Role::SearchContainer](../../Role/SearchContainer.md): an item answers for the
 searchable widgets of its body, open or closed, with keys of the
 widget's index among them and the widget's own key (see
-["nested\_search\_texts" in Term::Fabulous::Role::Searchable](../../Role/Searchable.md#nested_search_texts)).
-`reveal_text` opens the item, without firing `Select`, and returns
-what the widget returns.
+["Nested keys" in Term::Fabulous::Role::Searchable](../../Role/Searchable.md#nested-keys)). `search_serial` comes
+from ["search\_serial" in Term::Fabulous::Role::Searchable](../../Role/Searchable.md#search_serial).
+`reveal_text` opens the item as ["open" in Term::Fabulous::Widget::Accordion](../Accordion.md#open)
+does, without firing `Select`, so in an accordion that opens one item
+at a time the others close, and returns what the widget returns.
 
 ## searchable\_parts, reveal\_part
 

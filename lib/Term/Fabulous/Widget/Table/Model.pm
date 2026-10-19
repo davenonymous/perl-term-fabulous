@@ -1285,7 +1285,8 @@ by the sort; rows that compare equal keep their data order.
 
 The lines are listed: each group header, then its contents unless it is
 collapsed; each row, then its children if it is expanded (or, with
-C<open_when_filtered>, if the view is filtered).
+C<open_when_filtered>, if the view is filtered; rows inside a collapsed
+group stay hidden).
 
 =item 5.
 
@@ -1308,7 +1309,8 @@ the row or the column changes, so mutators run once per cell.
 		only_leaves_match  => 0,       # rows with children pass only as ancestors?
 	);
 
-The table makes its model from its own parameters of the same names;
+The table makes its model from its parameters C<row_id>,
+C<children_key>, C<page_size> and C<tree_expanded> (as C<expand_new>);
 see L<Term::Fabulous::Widget::Table/new>. C<open_when_filtered> and
 C<only_leaves_match> are options of a model used on its own (the theme
 editor's settings list is one); a table leaves them off.
@@ -1362,7 +1364,8 @@ Returns 1 or 0; writing affects only rows added later.
 Accessor for the C<open_when_filtered> parameter. With 1, a view that
 is filtered or searched (see L</is_filtered>) shows every passing row:
 rows with passing children are open in it (their lines say
-C<expanded>), whatever their own expansion. The expansion itself does
+C<expanded>), whatever their own expansion; it opens only tree rows
+(rows inside a collapsed group stay hidden). The expansion itself does
 not change, so the view is back as it was when the filters are gone.
 Returns 1 or 0; default 0. A settings list in sections uses it, so that
 a search shows what it found.

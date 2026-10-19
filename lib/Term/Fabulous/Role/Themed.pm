@@ -589,7 +589,9 @@ no UI or in a UI that has no theme (a plain L<Clay::UI>). L</look>,
 L</family_look> and L</look_value> read it; a widget that resolves
 styles or palette tokens itself (L<Term::Fabulous::Text::Style>) or
 builds a L<Term::Fabulous::Document::Look> asks it too, so that every
-part of the widget draws in one theme.
+part of the widget draws in one theme. A widget of your own asks it
+instead of C<< $ui->theme >>; see
+L<Term::Fabulous::Manual::CustomWidgets/Colors from the theme>.
 
 =head2 family_look
 

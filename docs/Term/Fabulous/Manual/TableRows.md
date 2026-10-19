@@ -933,11 +933,11 @@ $table->on( RowActivate => sub ($event) {
 ```
 
 `Enter` on a group header opens or closes the group instead. Two
-clicks on the same line count as a double click when they are at most
-the UI's [double\_click\_seconds](../../../../README.md#double_click_seconds)
-apart (default 0.4). `Enter` in a widget inside
-a cell, and double clicks on input widgets in cells, do not activate
-the row.
+presses of the left button on the same character of a line (without
+moving the pointer) count as a double click when they are at most the
+UI's [double\_click\_seconds](../../../../README.md#double_click_seconds) apart
+(default 0.4). `Enter` in a widget inside a cell, and double clicks
+on input widgets in cells, do not activate the row.
 
 # SEE ALSO
 

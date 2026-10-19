@@ -67,7 +67,8 @@ unless a widget under the pointer used the notch to scroll itself (see
 ["CAVEATS"](#caveats)). The scroll position is
 clamped, so the content cannot be scrolled past its first or last row.
 The position is applied when the next frame is drawn. Keys do not
-scroll a ScrollBox.
+scroll a ScrollBox by themselves; a key handler can, with
+["scroll\_by\_key" in Term::Fabulous::Scrolling](../Scrolling.md#scroll_by_key).
 
 The content is clipped to the whole box, border included: scrolled
 content passes under the border, which is drawn on top of it. Content
@@ -144,7 +145,7 @@ end or with the keys of a pager, use [Term::Fabulous::Scrolling](../Scrolling.md
 keep a log at its newest line, turn on ["follow\_end"](#follow_end). The recipe
 [Scroll a ScrollBox from code](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
 shows both in a complete program. Underneath, these use the methods
-[scroll\_state and scroll\_to](../../../../README.md#bounding_box-scroll_state-scroll_to)
+[scroll\_state and scroll\_to](../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)
 of the application object.
 
 A ScrollBox has all methods of [Term::Fabulous::Widget](../Widget.md) plus these
@@ -214,7 +215,7 @@ follows the end of its content:
 
 - a box that shows the last row follows;
 - a box that follows and was not scrolled up since the last frame, but
-no longer shows the last row (the content grew, or the box got lower),
+no longer shows the last row (the content grew, or the box got shorter),
 is scrolled to the end
 (["scroll\_to\_start, scroll\_to\_end" in Term::Fabulous::Scrolling](../Scrolling.md#scroll_to_start-scroll_to_end)). The
 new content shows one frame after the frame that laid it out, which is
@@ -225,6 +226,11 @@ last row: the user reads older content undisturbed, and scrolling back
 to the end resumes.
 
 Turning it on starts following at once. Writing returns the new value.
+
+The recipes
+["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
+and ["Show the output of a running command" in Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md#show-the-output-of-a-running-command)
+use it.
 
 ## track\_color, thumb\_color
 
@@ -294,8 +300,11 @@ The box itself has no keys and takes no focus; see
 
     Fired on the ScrollBox in every frame in which its scroll position
     changed. `$event->delta_y` is how far the content moved, in rows:
-    negative when the user scrolled down (the content moved up), positive
-    when scrolled up. `$event->delta_x` is the same for columns.
+    negative when the content was scrolled down (the content moved up), by
+    the user or from code, and positive when it was scrolled up; this is
+    the opposite sign of a change of
+    [scroll\_offset](../Scrolling.md#scroll_offset).
+    `$event->delta_x` is the same for columns.
     While `child_offset` is set, `OnScroll` still reports the movement of
     the hidden scroll position that the wheel moves, even though the
     content does not move.
@@ -345,6 +354,8 @@ is empty and shows the content beneath.
 
 ["SCROLLING" in Term::Fabulous::Manual::Events](../Manual/Events.md#scrolling),
 ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
+[Term::Fabulous::Scrolling](../Scrolling.md),
+["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling),
 [Term::Fabulous::Widget::VirtualList](VirtualList.md) for thousands of children,
 [Term::Fabulous::Widget::Scrollbar](Scrollbar.md), [Term::Fabulous::Widget::Box](Box.md),
 [Clay::UI::Role::Layout::HasScroll](https://metacpan.org/pod/Clay%3A%3AUI%3A%3ARole%3A%3ALayout%3A%3AHasScroll), the example program

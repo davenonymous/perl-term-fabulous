@@ -18,13 +18,14 @@ clock, without a timer of their own (see ["ANIMATION"](#animation)).
 
 The section ["PROMPTS"](#prompts) is about the other direction: a prompt stops
 the user to ask a question, and reports the answer. ["FILE DIALOGS"](#file-dialogs)
-are prompts of a special kind, which ask for a file to open or save,
-or for a folder.
+are dialogs of a special kind, which answer the same way as prompts
+and ask for a file to open or save, or for a folder.
 
 The reference pages are the class pages: [Term::Fabulous::Widget::ProgressBar](../Widget/ProgressBar.md),
 [Term::Fabulous::Widget::Spinner](../Widget/Spinner.md), [Term::Fabulous::Widget::Toast](../Widget/Toast.md),
-[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md)
-and [Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md).
+[Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md),
+[Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md) and the base class of every
+dialog, [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md).
 The class the first two share, [Term::Fabulous::Widget::Display](../Widget/Display.md), is
 the base of every widget that paints itself from its own state, and
 the one to derive from for a feedback widget of your own
@@ -295,7 +296,7 @@ and files of a folder, with their sizes and the times they were last
 modified, and has a field for a name or a path. The user walks through
 the folders with `Enter` and `Backspace` or the mouse, picks an entry
 with the cursor, or types a name. Like a prompt, it opens over the
-screen, keeps the focus while it is open, and reports the result with
+screen, keeps the focus while it is open, and reports the answer with
 one `Answer` event after it closed:
 
 ```perl
@@ -363,7 +364,8 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 The class pages: [Term::Fabulous::Widget::ProgressBar](../Widget/ProgressBar.md),
 [Term::Fabulous::Widget::Spinner](../Widget/Spinner.md), [Term::Fabulous::Widget::Toast](../Widget/Toast.md),
 [Term::Fabulous::Widget::StatusBar](../Widget/StatusBar.md), [Term::Fabulous::Widget::Prompt](../Widget/Prompt.md),
-[Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md), [Term::Fabulous::Widget::Display](../Widget/Display.md).
+[Term::Fabulous::Widget::FileDialog](../Widget/FileDialog.md), [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md),
+[Term::Fabulous::Widget::Display](../Widget/Display.md).
 ["Timers and other asynchronous work" in Term::Fabulous::Manual::Programs](Programs.md#timers-and-other-asynchronous-work)
 for the timers that drive a bar, and
 [Term::Fabulous::Cookbook::LiveData](../Cookbook/LiveData.md) for complete programs that update

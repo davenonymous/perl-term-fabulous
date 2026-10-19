@@ -363,7 +363,9 @@ Accessor. Writing opens or closes the item without an event and
 without regard to the accordion's C<multiple>; the accordion's
 L<Term::Fabulous::Widget::Accordion/open> keeps that rule. Closing an
 item whose body holds the focus moves the focus to its header (see
-L</focus_heir>). Returns 1 or 0.
+L</focus_heir> and
+L<Term::Fabulous::Manual::Events/When the focused widget goes away>).
+Returns 1 or 0.
 
 =head2 is_open
 
@@ -424,8 +426,10 @@ The body L<Term::Fabulous::Widget::Box>, also while the item is closed.
 
 The L</header>. When the widget with the focus leaves the item (the
 item closes, or the widget is removed from its body), the focus goes to
-the header (see L<Clay::UI::Interaction/Focus heirs>). You do not call
-it yourself.
+the header when it can take the focus, else to the nearest widget above
+the item that can (see
+L<Term::Fabulous::Manual::Events/When the focused widget goes away> and
+L<Clay::UI::Interaction/Focus heirs>). You do not call it yourself.
 
 =head2 accordion
 
@@ -450,9 +454,11 @@ The methods of L<Term::Fabulous::Role::Searchable>, from
 L<Term::Fabulous::Role::SearchContainer>: an item answers for the
 searchable widgets of its body, open or closed, with keys of the
 widget's index among them and the widget's own key (see
-L<Term::Fabulous::Role::Searchable/nested_search_texts>).
-C<reveal_text> opens the item, without firing C<Select>, and returns
-what the widget returns.
+L<Term::Fabulous::Role::Searchable/Nested keys>). C<search_serial> comes
+from L<Term::Fabulous::Role::Searchable/search_serial>.
+C<reveal_text> opens the item as L<Term::Fabulous::Widget::Accordion/open>
+does, without firing C<Select>, so in an accordion that opens one item
+at a time the others close, and returns what the widget returns.
 
 =head2 searchable_parts, reveal_part
 

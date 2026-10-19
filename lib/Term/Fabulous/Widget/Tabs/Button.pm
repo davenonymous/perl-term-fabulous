@@ -213,12 +213,13 @@ bar
 
 A tab button is one tab of a L<Term::Fabulous::Widget::Tabs::Bar>: a
 L<Term::Fabulous::Widget::Button> with a border on three sides, open
-toward the page, that shows a title and an optional icon. The bar
-makes one tab the I<active> one: it is open toward the page, so that
-it joins the page's border, grows C<active_padding> cells that way,
-and its label is drawn in the bar's C<active_text_color>. The other
-tabs are closed by the line of the bar and show their labels in
-C<text_color>.
+toward the page, that shows a title and an optional icon. The bar makes
+one tab the I<active> one: it is open toward the page, so that it joins
+the page's border. It has C<active_padding> more cells of padding on
+that side than the other tabs, so it rises that far out of the row, and
+its label is drawn in the C<active_text_color> of its bar or, without a
+bar, of the theme it draws with. The other tabs are closed by the line
+of the bar and show their labels in C<text_color>.
 
 The look (the side the bar is on, whether the label is written
 horizontally or downwards, the padding, the line style and the
@@ -311,11 +312,11 @@ behind its back. Returns the tab.
 
 	my %look = Term::Fabulous::Widget::Tabs::Button->default_look;
 
-Class method: the look a tab shows outside a bar, as a hash of the
-bar's look parameters (C<side>, C<orientation>, C<tab_padding>,
-C<active_padding>, C<line_style>, C<line_color>, C<text_color>,
-C<active_text_color>, C<active_bold>, C<hover_background_color>,
-C<focus_border_color>, C<disabled_color>) and their defaults.
+Class method: the settings a tab uses outside a bar that are not
+themed, as a hash (C<side>, C<orientation>, C<tab_padding>,
+C<active_padding>, C<active_bold>) with their defaults; the line style
+and the colors come from the C<tabs> family of the theme the tab draws
+with.
 
 =head1 EVENTS
 

@@ -10,10 +10,13 @@ This page explains how to write widget classes of your own: a container
 with a fixed structure (derived from Box), a widget that draws itself
 (derived from Display), an input widget (derived from Input) and a box
 that takes the focus and reacts to the mouse (a Box with the Clay::UI
-interaction roles). It lists the methods each base class lets you
-override, explains how a widget tells Term::Fabulous that it must be
-drawn again, and shows how to fire events of your own, how to make a
-widget usable from KDL layout files and how to test it.
+interaction roles), a dialog (derived from Dialog) and a popup. It
+lists the methods each base class lets you override, explains how a
+widget names its focus heir, how it tells Term::Fabulous that it must
+be drawn again, how it does work after a frame and how it tells its
+height before the layout, and shows how to make widgets a search
+finds, how to fire events of your own, how to make a widget usable
+from KDL layout files and how to test it.
 
 Complete programs are in the cookbook, on
 [Term::Fabulous::Cookbook::Extending](../Cookbook/Extending.md):
@@ -57,6 +60,19 @@ widget classes. Choose the base class by what the widget does:
 
     for a dialog with a title, buttons and an answer of its own. See
     ["A dialog of your own"](#a-dialog-of-your-own).
+
+- [Term::Fabulous::Role::Popup](../Role/Popup.md) with [Term::Fabulous::Placement](../Placement.md)
+
+    for a widget that floats over everything next to another one, like a
+    dropdown's list. The widget works out its place in
+    [popup\_position](../Role/Popup.md#popup_position)
+    ([place\_popup](../Placement.md#place_popup) puts it next to
+    its anchor and keeps it on the screen), calls
+    [float\_popup](../Role/Popup.md#float_popup) from its
+    `contribute_floating`, and is made with
+    `floating => { z_index => TOPMOST_Z_INDEX }` (see
+    [TOPMOST\_Z\_INDEX](../Placement.md#topmost_z_index)). See the
+    SYNOPSIS of [Term::Fabulous::Role::Popup](../Role/Popup.md).
 
 - Any built-in widget
 
@@ -529,16 +545,54 @@ method show_later ($child) {
 }
 ```
 
+Work asked for with `each_frame` before the widget is in a UI waits
+until it joins one, so a constructor or a setter called before the UI
+is built may ask for it. For one call after the next frame, the UI's
+[after\_draw](../Render.md#after_draw) takes
+`owner => $self` and calls the code once with the widget.
+
 To scroll a child of a ScrollBox into view, call the box's
 [reveal](../Widget/ScrollBox.md#reveal), which waits for the
 child's layout by itself.
+
+## Height before layout
+
+A list that builds only the items near its viewport needs the height
+of the others before Clay lays them out, for its scrollbar: a
+[Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) asks its items with
+[estimated\_rows](../Widget.md#estimated_rows). With a fixed
+height in its layout, `estimated_rows` returns that height; otherwise
+it asks
+[estimated\_content\_rows](../Widget.md#estimated_content_rows)
+how many rows the content takes in the columns left inside the padding
+and the border, and adds the padding
+([content\_padding](../Widget.md#content_padding)) and the
+drawn border sides. That is one row, unless the class knows better: a
+Box combines its children's estimates (children below each other add
+up, children side by side take the tallest), a Display answers from its
+`natural_size`, a Table counts its header and the rows of its page. A
+widget that knows how tall its content is overrides
+`estimated_content_rows($columns)`:
+
+```perl
+method estimated_content_rows :override ($columns) {
+        return scalar @lines;    # a field of the widget: one row per line
+}
+```
+
+A widget that keeps room of its own inside its border, as a ScrollBox
+does for its scrollbars, overrides `content_padding` to add that room
+(calling SUPER), so that the estimate counts it. Clay's layout corrects a guess that was off.
 
 ## Widgets a search finds
 
 A [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) searches the widgets of its
 items that do [Term::Fabulous::Role::Searchable](../Role/Searchable.md); Text and CodeBlock
 do it for their text, a Table from its rows. A widget of your own that
-shows text it builds only later does the role itself. A container that
+shows text it builds only later does the role itself: it provides
+`search_texts`, `search_revision`, `highlight_text`,
+`clear_text_highlights` and `reveal_text` (see
+["REQUIRED METHODS" in Term::Fabulous::Role::Searchable](../Role/Searchable.md#required-methods)). A container that
 holds searchable widgets which are not always in the tree (pages,
 a collapsible body) composes [Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md)
 instead: it lists them in `searchable_parts` and makes one visible in
@@ -570,8 +624,10 @@ A subclass of [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md) declares its
 buttons and adds its content; the dialog draws the title, the row of
 buttons and the notice line, and reports every way of closing with one
 [Answer](../Event/Answer.md) event. A button that should do
-more than answer is handled in `press_button`, the inputs the answer
-carries come from `values`:
+more than answer is handled in
+[press\_button](../Widget/Dialog.md#press_button), the inputs
+the answer carries come from
+[values](../Widget/Dialog.md#values):
 
 ```perl
 use Term::Fabulous::Widget::Dialog;
@@ -588,6 +644,9 @@ class My::RenameDialog :isa(Term::Fabulous::Widget::Dialog) {
 
         ADJUST {
                 $self->add_child($field);
+
+                # Enter in the field presses the default button, Rename.
+                $self->on( Submit => sub ( $self, $event ) { $self->press_button( $self->default_button ); return }, owner => $self );
         }
 
         method values :override () { return { name => $field->value } }
@@ -601,9 +660,13 @@ class My::RenameDialog :isa(Term::Fabulous::Widget::Dialog) {
 ```
 
 `Escape` and `close` answer `cancel` as dismissed, with the values
-too. The dialog puts its title first and the notice line and buttons
-last when it opens (`place_parts`), so the children added in `ADJUST`
-end up between them.
+too. A dialog does not press a button for `Enter` in a text field by
+itself: the `Submit` listener in `ADJUST` presses the
+[default\_button](../Widget/Dialog.md#button-button_ids-is_primary-default_button).
+The dialog puts its title first and the notice line and buttons last
+when it opens
+([place\_parts](../Widget/Dialog.md#place_parts)), so the
+children added in `ADJUST` end up between them.
 
 ## Events of your own
 
@@ -686,5 +749,10 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 [Term::Fabulous::Cookbook::Extending](../Cookbook/Extending.md), [Term::Fabulous::Widget::Box](../Widget/Box.md),
 [Term::Fabulous::Widget::Canvas](../Widget/Canvas.md), [Term::Fabulous::Widget::Display](../Widget/Display.md),
 [Term::Fabulous::Widget::Input](../Widget/Input.md),
-[Term::Fabulous::Widget::Button](../Widget/Button.md), [Term::Fabulous::Role::CanParseLayout](../Role/CanParseLayout.md),
+[Term::Fabulous::Widget::Button](../Widget/Button.md), [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md),
+[Term::Fabulous::Role::CanParseLayout](../Role/CanParseLayout.md),
+[Term::Fabulous::Role::Searchable](../Role/Searchable.md),
+[Term::Fabulous::Role::SearchContainer](../Role/SearchContainer.md),
+[Term::Fabulous::Role::Themed](../Role/Themed.md), [Term::Fabulous::Role::Popup](../Role/Popup.md),
+[Term::Fabulous::Placement](../Placement.md), ["each\_frame" in Term::Fabulous::Widget](../Widget.md#each_frame),
 [Term::Fabulous::Manual::Events](Events.md).

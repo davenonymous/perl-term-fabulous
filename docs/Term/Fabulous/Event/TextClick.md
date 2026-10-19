@@ -18,11 +18,10 @@ $panel->on( TextClick => sub ($event) {
 # DESCRIPTION
 
 [Term::Fabulous](../../../../README.md) fires `TextClick` on a [Term::Fabulous::Widget::Text](../Widget/Text.md)
-(a [Term::Fabulous::Widget::Text](../Widget/Text.md) too) when a mouse button is
-pressed on one of its characters: the topmost thing painted in the
-cell under the pointer in the last frame is a line of the text, and
-the cell holds a character (not the empty rest of the line). Drags,
-releases and the wheel fire none.
+when a mouse button is pressed on one of its characters: the topmost
+thing painted in the cell under the pointer in the last frame is a
+line of the text, and the cell holds a character (not the empty rest
+of the line). Drags, releases and the wheel fire none.
 
 It comes after the `Mouse` event of the same press, which goes to the
 widget around the text as always (see

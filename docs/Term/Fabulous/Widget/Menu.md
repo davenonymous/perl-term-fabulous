@@ -102,10 +102,10 @@ always shows the program's state.
 
     Highlight the first or the last item.
 
-- a letter or digit
+- a printable character
 
-    Highlights the next enabled item whose label starts with it. The item
-    does not run until `Enter` or a click chooses it.
+    Highlights the next enabled item whose label starts with it, ignoring
+    case. The item does not run until `Enter` or a click chooses it.
 
 - `Enter`, `Space`
 

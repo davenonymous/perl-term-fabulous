@@ -665,7 +665,7 @@ The program is F<examples/widgets/text.pl>.
 
 =end html
 
-The program is F<examples/widgets/rich-text.pl>. The last two rows show
+The program is F<examples/widgets/rich-text.pl>. The C<links> row shows
 links in their three looks: C<FAQ> as every link looks, C<guide>
 selected with Tab and Right, and C<perl.org> under the mouse pointer.
 
@@ -673,9 +673,11 @@ selected with Tab and Right, and C<perl.org> under the mouse pointer.
 
 A Text widget shows text inside its parent widget, usually a
 L<Term::Fabulous::Widget::Box>. The layout makes it as wide as its
-longest line, wraps it at spaces when the parent is too narrow, and
-starts a new line at every C<"\n">. Text has a color but no background
-of its own: every cell shows the background that was painted below it.
+longest line and, in the default wrap mode, wraps it at spaces when
+the parent is too narrow and starts a new line at every C<"\n"> (see
+C<wrap_mode> under L</new> for the others). Text has a color but no
+background of its own: every cell shows the background that was
+painted below it.
 
 A Text widget is a leaf: it cannot have children, and it has no
 border, padding or background. To give text a background, a border or
@@ -702,14 +704,16 @@ string or hash of L<Term::Fabulous::Text::Style> (C<'bold red on
 boundary inside a grapheme cluster (a letter with a combining accent,
 an emoji with a modifier) snaps to the cluster. A color in a style may
 be a palette token of the theme (C<'bold accent'>): the text looks it
-up in its theme when it paints, so a theme switch recolors it.
+up in its theme when it paints, so a theme switch recolors it. See
+L<Term::Fabulous::Manual::Looks/Styled spans inside one text>.
 
 Markup writes the same thing inline: C<[bold]Enter[/]>; see
 L<Term::Fabulous::Text::Markup> for the syntax.
 
 I<Highlights> are a second set of ranges, painted over the spans and
 kept apart from them: what a search marks in a text, without touching
-the styles the program gave it (see L</highlights>).
+the styles the program gave it (see L</highlights> and
+L<Term::Fabulous::Role::Searchable>).
 
 A text can also have I<links>: ranges of its text that point to a
 target and that the user can follow with the mouse or the keyboard
@@ -737,8 +741,9 @@ later, which tells it where every wrapped line starts in the text.
 	my $text = Term::Fabulous::Widget::Text->new(%parameters);
 
 All parameters are optional; unknown parameters die. Every parameter
-except C<id>, C<spans>, C<links> and C<can_focus> also has an accessor
-of the same name.
+also has a method of the same name: C<id> and C<links> only read
+(change the links with L</add_link> and L</clear_links>), all others
+are accessors.
 
 =over
 
@@ -772,14 +777,14 @@ text look. Pass C<[0, 0, 0, 0]> (alpha 0) for the terminal's default
 foreground color. See L<Term::Fabulous::Manual::Looks/COLORS> and
 L<Term::Fabulous::Manual::Looks/THEMES>.
 
+Inside a disabled L<Term::Fabulous::Widget::Button>, the text is drawn
+in the button's C<disabled_color> instead, whatever its C<text_color>.
+
 =item C<classes>
 
 An array reference of strings. Default: C<[]>. Names that select the
 theme's variants of the C<text> family, as for
 L<Term::Fabulous::Widget/classes>.
-
-Inside a disabled L<Term::Fabulous::Widget::Button>, the text is drawn
-in the button's C<disabled_color> instead, whatever its C<text_color>.
 
 =item C<bold>
 
@@ -812,7 +817,9 @@ kept as it is. Links must not overlap. Anything else dies.
 
 A string in the markup syntax of L<Term::Fabulous::Text::Markup>, which
 gives the text, the spans and the links; it cannot be given together
-with C<text>, C<spans> or C<links>. Invalid markup dies.
+with C<text>, C<spans> or C<links>. Invalid markup dies. Put text
+from outside (a file name, user input) into markup with
+L<Term::Fabulous::Text::Markup/escape_markup>.
 
 =item C<can_focus>
 
@@ -843,12 +850,12 @@ that is not broken keeps its width as long as the widgets beside it can
 still get narrower; after that it is cut off at the right edge of its
 parent (inside a box that scrolls sideways it keeps its width).
 
-With every mode, only spaces are break points: a single word that is
-wider than the space available, or text without spaces such as a
-Japanese sentence, is never broken. With C<CLAY_TEXT_WRAP_WORDS> it
-runs past the right edge of its parent and is cut off only at the edge
-of the terminal or of an enclosing L<Term::Fabulous::Widget::ScrollBox>;
-with the other modes it is cut off like any line. See
+No mode breaks a word: a single word that is wider than the space
+available, or text without spaces such as a Japanese sentence, is
+never broken. With C<CLAY_TEXT_WRAP_WORDS> it runs past the right
+edge of its parent and is cut off only at the edge of the terminal or
+of an enclosing L<Term::Fabulous::Widget::ScrollBox>; with the other
+modes it is cut off like any line. See
 L<Term::Fabulous::Manual::Looks/Wrapping>.
 
 =item C<text_alignment>
@@ -1024,7 +1031,9 @@ the links with what the markup says, drops the highlights, and returns
 the markup. No link is selected or hovered afterwards. A text that has
 the focus keeps it when the new markup has links, and loses it when it
 has none. Invalid markup dies and leaves the widget as it was. The
-change shows in the next frame.
+change shows in the next frame. Put text from outside (a file name,
+user input) into markup with
+L<Term::Fabulous::Text::Markup/escape_markup>.
 
 =head2 spans
 
@@ -1037,10 +1046,12 @@ a palette token stays the token's name. The reader returns a copy.
 Writing replaces every span (the markup is then C<undef>) and returns
 the new spans; invalid ranges or styles die (see
 L<Term::Fabulous::Text::Marks/set_spans>). The change shows in the next
-frame. The same accessor, L</stylize>, L</clear_spans>, L</highlights>
-and L</clear_highlights> are those of a
-L<Term::Fabulous::Widget::CodeBlock> (both from
-L<Term::Fabulous::Role::MarkedText>).
+frame. This accessor, L</stylize>, L</clear_spans>, L</highlights>,
+L</clear_highlights> and L</content_revision> come from
+L<Term::Fabulous::Role::MarkedText>, which
+L<Term::Fabulous::Widget::CodeBlock> composes too. C<text_marks>
+returns the widget's L<Term::Fabulous::Text::Marks>; C<marks_changed>
+is the role's hook, not for programs.
 
 =head2 stylize
 
@@ -1118,6 +1129,8 @@ Returns the widget. A text that has the focus loses it.
 	my $index = $text->link_at($offset);    # or undef
 
 The index of the link the character at C<$offset> lies in, or C<undef>.
+An offset that is not a non-negative integer dies; an offset at or past
+the end of the text gives C<undef>.
 
 =head2 selected_link
 
@@ -1163,7 +1176,7 @@ The index of the link under the mouse pointer, or C<undef>.
 
 Called by L<Term::Fabulous> when the pointer moves onto a link
 (C<undef> when it leaves it). Gives the link its hovered look. Returns
-the widget.
+the widget. An index that is not a link dies.
 
 =head2 accepts_focus
 
@@ -1201,12 +1214,14 @@ checked.
 =head2 search_texts, search_revision, highlight_text, clear_text_highlights, reveal_text
 
 The methods of L<Term::Fabulous::Role::Searchable>, which a Text does
-for its one text (through L<Term::Fabulous::Role::MarkedText>): C<search_texts> returns C<[ undef, $text ]>,
+for its one text (through L<Term::Fabulous::Role::MarkedText>):
+C<search_texts> returns one entry, C<[ undef, $text ]>,
 C<search_revision> is L</content_revision>, C<highlight_text> sets
 L</highlights>, C<clear_text_highlights> clears them, and
 C<reveal_text> returns the text itself with no row, since where a
 character lies is known once the text was painted (see
-L<Term::Fabulous::Render::Frame/text_rows>).
+L<Term::Fabulous::Render::Frame/text_rows>). The widget also has
+C<search_serial> (see L<Term::Fabulous::Role::Searchable/search_serial>).
 
 =head2 tree_changed
 
@@ -1244,8 +1259,8 @@ into runs of one look, as
 C<[ $characters, $set, $clear, $fg_attr, $bg_attr ]>: the number of
 characters, the termbox2 style bits the run's spans, highlights and
 link set and clear, and the text and background attributes they give
-it, C<undef> where the base look stays. An empty list for a text
-without spans, highlights and links, which the renderer paints plain.
+it, C<undef> where the base look stays. An empty array reference for a
+text without spans, highlights and links, which the renderer paints plain.
 The runs are computed once per change of the text, the spans, the
 highlights, the links, the selected or hovered link, or the theme.
 
@@ -1257,6 +1272,9 @@ or L</add_link>, such as an object of your program. The widget does
 not go anywhere itself; it tells the program which link the user
 followed with a L<LinkActivate|Term::Fabulous::Event::LinkActivate>
 event, which bubbles from the text to its ancestors.
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>
+builds a small help browser with them;
+L<Term::Fabulous::Manual::Looks/Links inside a text> shows their looks.
 
 =head2 Looks
 
@@ -1358,7 +1376,9 @@ mouse button is pressed on one of its characters, and C<LinkActivate>
 (L<Term::Fabulous::Event::LinkActivate>) when a link is followed; both
 bubble to the widgets around the text. The recipe
 L<Term::Fabulous::Cookbook::KeyboardAndMouse/React to a click on a word (TextClick)>
-looks up the clicked word. A Text can fire events of your own with
+looks up the clicked word, and
+L<Term::Fabulous::Cookbook::KeyboardAndMouse/Follow links in a text (Text links)>
+follows the links. A Text can fire events of your own with
 C<fire_event> (L<Clay::UI::Role::Events::Emitter>), and C<on> adds
 listeners to it.
 
@@ -1401,6 +1421,10 @@ markup.
 Exactly one argument: any color string L<Term::Fabulous::Color>
 understands, such as C<"#ffffff">, C<"rgb(255, 255, 255)"> or
 C<"hsl(0, 0%, 100%)">.
+
+=item C<classes "name" ...>
+
+One or more strings; see the C<classes> parameter of L</new>.
 
 =item C<bold #true>
 
@@ -1453,9 +1477,9 @@ The table of the properties a layout may set (see
 L<Term::Fabulous::Role::CanParseLayout/layout_properties>): C<font_id>,
 C<font_size>, C<letter_spacing> and C<line_height> are scalars,
 C<text_color> is a color, C<bold>, C<italic> and C<underline> are
-booleans, and C<text>, C<markup>, C<wrap_mode> and C<text_alignment>
-are structured properties the Text parses itself; see
-L</KDL PROPERTIES>.
+booleans, and C<classes>, C<text>, C<markup>, C<wrap_mode> and
+C<text_alignment> are structured properties the Text parses itself;
+see L</KDL PROPERTIES>.
 
 =head1 SEE ALSO
 

@@ -175,9 +175,9 @@ words, in the manner of Python's C<rich> library, or given as a hash.
 This module turns both into one normalized hash, stacks such hashes
 (L</compose_styles>) and applies one to a look (L</apply_style>). These
 two functions are the only place where style bits are combined:
-L<Term::Fabulous::Widget::Text> composes the styles of nested spans
-with the first, and L<Term::Fabulous::Render::Text> paints each run of
-a line with the second.
+L<Term::Fabulous::Text::Marks/runs> composes the styles of overlapping
+ranges with the first, and L<Term::Fabulous::Render::Text> and
+L<Term::Fabulous::Widget::CodeBlock> paint each run with the second.
 
 =head2 Style strings
 
@@ -232,14 +232,16 @@ token.
 The normalized form has exactly these keys:
 
 	{
-		set        => $bits,            # style bits to set
-		clear      => $bits,            # style bits to clear
-		color      => $rgba | undef,    # [ r, g, b, a ], undef leaves the color alone
-		background => $rgba | undef,
+		set        => $bits,                     # style bits to set
+		clear      => $bits,                     # style bits to clear
+		color      => $rgba | $token | undef,    # [r, g, b, a] or a palette token's name;
+		                                         # undef leaves it alone
+		background => $rgba | $token | undef,
 	}
 
 Colors are C<[r, g, b, a]> with alpha 0 for the terminal's default
-color; C<undef> means the style does not touch that color.
+color, or the name of a palette token (see L</Palette tokens>);
+C<undef> means the style does not touch that color.
 
 =head1 FUNCTIONS
 
@@ -260,9 +262,10 @@ C<Term::Fabulous::Text::Style:>.
 
 Returns a normalized style hash for a style string or a hash with any
 of the keys of L</Style hashes>; missing keys are 0 or C<undef>, and
-the colors may be in any format L<Term::Fabulous::Color> accepts. The
-result is a new hash. Unknown keys, invalid bits (not a non-negative
-integer) and invalid colors die.
+the colors may be in any format L<Term::Fabulous::Color> accepts, or a
+palette token's name, kept as it is. The result is a new hash.
+Unknown keys, invalid bits (not a non-negative integer) and invalid
+colors die.
 
 =head2 compose_styles
 
@@ -297,8 +300,8 @@ The style with every palette token among its C<color> and
 C<background> replaced by the C<[r, g, b, a]> the
 L<theme|Term::Fabulous::Theme> gives it (C<< $theme->token >>); a style
 without tokens comes back as it is. A token the theme does not know
-dies. L<Term::Fabulous::Widget::Text> and
-L<Term::Fabulous::Widget::CodeBlock> call it when they paint.
+dies. L<Term::Fabulous::Text::Marks/runs> calls it with the theme the
+widget draws with.
 
 =head1 SEE ALSO
 

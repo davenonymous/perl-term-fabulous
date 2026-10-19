@@ -28,7 +28,7 @@ my $root = Term::Fabulous::Widget::Box->new(
 	},
 );
 
-# A plain Text and a Text, wrapped at 48 columns by the box around
+# A plain Text and one with a span, wrapped at 48 columns by the box around
 # them. A click on either fires TextClick on it.
 my $article = Term::Fabulous::Widget::Box->new( layout => { layout_direction => CLAY_TOP_TO_BOTTOM, sizing => { width => sizing_fixed(48) }, child_gap => 1 } );
 $article->add_child(

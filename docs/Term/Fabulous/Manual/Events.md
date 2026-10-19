@@ -169,6 +169,9 @@ the sections below it describe each event.
 | Select          | Accordion, Tabs, DocumentTabs    | yes              |
 | TabClose        | the DocumentTabs                 | yes              |
 | TabAdd          | the DocumentTabs                 | yes              |
+| TextClick       | the Text                         | yes              |
+| LinkActivate    | the Text                         | yes              |
+| ViewChange      | the DocumentView                 | yes              |
 | SeriesHover     | the chart                        | yes              |
 | OnFocus, OnBlur | the widget                       | yes              |
 | OnPress         | innermost pressable widget       | yes              |
@@ -314,9 +317,10 @@ the sections below it describe each event.
     closed and gave the focus back, so only listeners on it see it. Fields:
     `button`, the id of the button (`cancel` for Escape; for a file
     dialog `open`, `save`, `choose` or `cancel`), `values`, the
-    dialog's values (a prompt's fields; for a file dialog `path`, the
-    chosen path) also when it was dismissed, and `dismissed`, true when no
-    button answered (see ["Answers" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#answers)).
+    dialog's values, also when it was dismissed (a prompt's fields; a file
+    dialog has none, and its choice adds `path`, the chosen path), and
+    `dismissed`, true when no button answered (see
+    ["Answers" in Term::Fabulous::Widget::Dialog](../Widget/Dialog.md#answers)).
 
 - `Choose` ([Term::Fabulous::Event::Choose](../Event/Choose.md))
 
@@ -357,7 +361,7 @@ the sections below it describe each event.
 - `TextClick` ([Term::Fabulous::Event::TextClick](../Event/TextClick.md))
 
     A mouse button was pressed on a character of a
-    [Term::Fabulous::Widget::Text](../Widget/Text.md) or [Term::Fabulous::Widget::Text](../Widget/Text.md).
+    [Term::Fabulous::Widget::Text](../Widget/Text.md).
     Fired on the text, after the `Mouse` event of the press. Fields:
     `button`, `x`, `y`, `offset`, `word`, `word_start`, `word_end`,
     `spans`, `link`, `link_index`. See ["Clicks on text and links"](#clicks-on-text-and-links).
@@ -366,9 +370,19 @@ the sections below it describe each event.
 
     The user followed a link of a [Term::Fabulous::Widget::Text](../Widget/Text.md):
     clicked it, or pressed `Enter` while the Text had the focus and
-    the link was selected. Also fired by `$rich_text->activate_link`.
+    the link was selected. Also fired by `$text->activate_link`.
     Fired on the Text. Fields: `link` (the link's target), `index`,
     `start`, `end`.
+
+- `ViewChange` ([Term::Fabulous::Event::ViewChange](../Event/ViewChange.md))
+
+    What a [Term::Fabulous::Widget::DocumentView](../Widget/DocumentView.md) shows changed: the user
+    scrolled, selected another link or searched, or the program gave the
+    view another document. Fired on the view after every frame that shows
+    something new. Fields: `top` and `bottom` (the items at the edges of
+    the view), `section`, `section_title`, `percent`, `link` (the target
+    of the selected link), `query`, `match` and `matches`. See
+    ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange).
 
 - `SeriesHover` ([Term::Fabulous::Event::SeriesHover](../Event/SeriesHover.md))
 
@@ -781,9 +795,10 @@ they opened, when they close.
 
 The other widgets need no name: a widget in an item of a
 [Term::Fabulous::Widget::VirtualList](../Widget/VirtualList.md) that scrolls out of the window
-hands the focus to the list, one in a cell of a
-[Term::Fabulous::Widget::Table](../Widget/Table.md) that is built again to the table, a
-widget inside an open dialog to the dialog's backdrop.
+hands the focus to the list, when the list can take it (a DocumentView
+can), else to the nearest widget above it that can; one in a cell of a
+[Term::Fabulous::Widget::Table](../Widget/Table.md) that is built again, to the table; a
+widget inside an open dialog, to the dialog's backdrop.
 
 ## Custom focus order
 
@@ -899,7 +914,8 @@ Every report with a button or the wheel becomes a `Mouse` event
     `double_click_seconds` (a parameter of ["new" in Term::Fabulous](../../../../README.md#new), default
     0.4) after the press before it, measured on the UI's clock
     (["now" in Term::Fabulous](../../../../README.md#now)), so a test with its own `clock` can click
-    quickly or slowly. Every other event has 1.
+    quickly or slowly. Every other Mouse event (a release, a drag, the
+    wheel) has 1.
 
 A report of the pointer moving with no button held becomes a
 `MouseMove` event ([Term::Fabulous::Event::MouseMove](../Event/MouseMove.md)) with `x`, `y`
@@ -979,9 +995,8 @@ button; not a drag, a release or the wheel) fires `TextClick` on the
 [Term::Fabulous::Widget::Text](../Widget/Text.md) after the `Mouse` event, which still
 goes to the widget behind the text. The event says which character was
 clicked (`offset` in the text, also on a wrapped line), the word it
-belongs to, and for a [Term::Fabulous::Widget::Text](../Widget/Text.md) the spans and
-the link there. It bubbles, so a container can react to clicks on any
-text inside it:
+belongs to, and the spans and the link there. It bubbles, so a
+container can react to clicks on any text inside it:
 
 ```perl
 $article->on(
@@ -1042,14 +1057,32 @@ wheel) scrolls it by three columns per notch.
 
 - The scroll box fires `OnScroll` when its position changed.
 - Adding children does not move the view; it stays where the user scrolled
-to. To read or set the scroll position from code, ask the application
-object: `$ui->scroll_state($box)` returns
-`{ position, viewport, content }`, and
-`$ui->scroll_to( $box, { y => -10 } )` scrolls ten rows down from
-the top (see ["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../README.md#bounding_box-scroll_state-scroll_to)).
+to, unless the box has `follow_end => 1` (see below). To read or
+set the scroll position, ask the application object:
+`$ui->scroll_state($box)` returns `{ position, viewport, content }`,
+and `$ui->scroll_to( $box, { y => -10 } )` scrolls ten rows down from
+the top (see ["bounding\_box, content\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../../README.md#bounding_box-content_box-scroll_state-scroll_to)).
 The recipe
 [Scroll a ScrollBox from code](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
-uses them to keep a log at its newest line.
+keeps a log at its newest line with `follow_end` and scrolls it with
+[Term::Fabulous::Scrolling](../Scrolling.md) and `scroll_to`.
+- With `follow_end => 1`, the box stays at the end of its content
+while the content grows, as a log viewer does. Scrolling up stops
+following, and scrolling back to the last row resumes it (see
+["follow\_end" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#follow_end)).
+- `$box->reveal($widget)` scrolls a widget inside the box into view
+with the smallest move; `$box->reveal( $widget, align => 'top' )`
+puts its first row at the top of the box (see
+["reveal" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#reveal)). A widget inside the box
+that gets the focus, with Tab, a click or from code, is scrolled into
+view the same way (see ["FOCUS" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#focus)).
+- [Term::Fabulous::Scrolling](../Scrolling.md) scrolls any scroll container (a
+ScrollBox, a VirtualList, a document view) from code:
+`scroll_by_rows`, `scroll_by_pages`, `scroll_to_start` and
+`scroll_to_end` move it and return 1 when the content moved (for a
+VirtualList, `scroll_to_start` and `scroll_to_end` return 1 when it
+was asked to move); `scroll_offset` reports the position as positive
+rows, 0 at the top (see ["FUNCTIONS" in Term::Fabulous::Scrolling](../Scrolling.md#functions)).
 - A scrollbar in the last column inside the border shows how far the box
 is scrolled, and one in the last row when it scrolls sideways; the
 content keeps clear of them. A click on a scrollbar scrolls so that the
@@ -1063,8 +1096,10 @@ and `thumb_color` color them (see
 set it back to `undef` to give control back to the mouse wheel. See
 [Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md).
 
-There is no keyboard scrolling for ScrollBox. A
-[Term::Fabulous::Widget::TextArea](../Widget/TextArea.md) scrolls its own text, with keys,
+A ScrollBox has no keys of its own; give it the keys of a pager with
+[scroll\_by\_key](../Scrolling.md#scroll_by_key) (see
+["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)).
+A [Term::Fabulous::Widget::TextArea](../Widget/TextArea.md) scrolls its own text, with keys,
 wheel and a scrollbar; the scroll box around it scrolls only when the
 area is already at its end. A [Term::Fabulous::Widget::Table](../Widget/Table.md) scrolls its rows
 with the keys, the wheel and its own scrollbar.
@@ -1076,4 +1111,6 @@ This page is part of [Term::Fabulous::Manual](../Manual.md). Previous page: [Ter
 [Term::Fabulous::Cookbook::KeyboardAndMouse](../Cookbook/KeyboardAndMouse.md),
 [Term::Fabulous::Event::KeyPress](../Event/KeyPress.md), [Term::Fabulous::Event::Mouse](../Event/Mouse.md),
 [Term::Fabulous::Widget::Button](../Widget/Button.md), [Term::Fabulous::Widget::Dialog](../Widget/Dialog.md),
-[Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent), [Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction).
+[Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md), [Term::Fabulous::Scrolling](../Scrolling.md),
+["LINKS" in Term::Fabulous::Widget::Text](../Widget/Text.md#links), [Clay::UI::Events::Event](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AEvents%3A%3AEvent),
+[Clay::UI::Interaction](https://metacpan.org/pod/Clay%3A%3AUI%3A%3AInteraction).

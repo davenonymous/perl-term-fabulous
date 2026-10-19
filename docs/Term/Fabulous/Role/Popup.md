@@ -40,13 +40,14 @@ A role for floating widgets that float over everything at a position
 they work out themselves (with [Term::Fabulous::Placement](../Placement.md)), from the
 boxes the last frame laid out: the list of a
 [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md), a [Term::Fabulous::Widget::Menu](../Widget/Menu.md),
-a table's column chooser. The widget calls ["float\_popup"](#float_popup) from its
-`contribute_floating`; the role attaches it to the root at the
-position, and after each frame checks whether the frame moved what the
-position depends on (an anchor that grew, a popup laid out for the
-first time). If so, it marks the widget changed, and the next frame
-puts it where it belongs. A popup therefore finds its place within two
-frames of any change, and stays put while nothing changes.
+a table's column chooser
+(["open\_column\_chooser" in Term::Fabulous::Widget::Table](../Widget/Table.md#open_column_chooser)). The widget calls
+["float\_popup"](#float_popup) from its `contribute_floating`; the role attaches it to
+the root at the position, and after each frame checks whether the frame
+moved what the position depends on (an anchor that grew, a popup laid
+out for the first time). If so, it marks the widget changed, and the
+next frame puts it where it belongs. A popup therefore finds its place
+within two frames of any change, and stays put while nothing changes.
 
 A widget composing the role needs `each_frame` and `mark_changed`, as
 every [Term::Fabulous::Widget](../Widget.md) has.
@@ -81,4 +82,7 @@ way, the position is checked again after the frame (see
 
 # SEE ALSO
 
-[Term::Fabulous::Placement](../Placement.md), ["Floating widgets" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#floating-widgets).
+[Term::Fabulous::Placement](../Placement.md), [Term::Fabulous::Widget::Dropdown](../Widget/Dropdown.md),
+[Term::Fabulous::Widget::Menu](../Widget/Menu.md),
+["open\_column\_chooser" in Term::Fabulous::Widget::Table](../Widget/Table.md#open_column_chooser),
+["Floating widgets" in Term::Fabulous::Manual::Layout](../Manual/Layout.md#floating-widgets).

@@ -587,7 +587,7 @@ viewport and keeps the widget it returns, so an item is built once. The
 widgets of the items above and below the attached ones are replaced by
 two invisible spacers as tall as those items would be, so the scrollbar,
 the mouse wheel and
-L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
+L<scroll_state and scroll_to|Term::Fabulous/"bounding_box, content_box, scroll_state, scroll_to">
 see the whole list.
 
 How tall an item is becomes known when it was laid out once at the
@@ -600,9 +600,12 @@ A good estimate keeps the scrollbar's thumb steady; an exact one (the
 line count of a text that does not wrap, say) makes jumps impossible.
 
 Scrolling and the scrollbar work as on a ScrollBox. Keys do not scroll
-the list; L</scroll_to_item> and
-L<scroll_to|Term::Fabulous/"bounding_box, scroll_state, scroll_to">
-move it from code. A VirtualList needs an C<id>, like every ScrollBox.
+the list by themselves; L<Term::Fabulous::Scrolling> (C<scroll_by_key>,
+C<scroll_to_start>, C<scroll_to_end>), L</scroll_to_item> and
+L<scroll_to|Term::Fabulous/"bounding_box, content_box, scroll_state, scroll_to">
+move it from code; L<Term::Fabulous::Widget::DocumentView> is a
+VirtualList with keys. A VirtualList needs an C<id>, like every
+ScrollBox.
 
 =head1 CONSTRUCTOR
 
@@ -621,11 +624,10 @@ B<Required>. A code reference called as C<< $build->($index) >> with
 the index of an item, from 0 to C<count - 1>, when the item comes near
 the viewport. It returns the item's widget: any widget without a
 parent, a L<Term::Fabulous::Widget::Text>, a
-L<Term::Fabulous::Widget::Text>, a L<Term::Fabulous::Widget::Box>
-with children, anything. The list keeps the widget and never calls
-C<build> for that index again until L</rebuild>. A return value that
-is not a widget, a widget that has a parent, or the widget of another
-item dies when the item is built.
+L<Term::Fabulous::Widget::Box> with children, anything. The list keeps
+the widget and never calls C<build> for that index again until
+L</rebuild>. A return value that is not a widget, a widget that has a
+parent, or the widget of another item dies when the item is built.
 
 =item C<count>
 
@@ -638,7 +640,8 @@ an item takes before it was laid out: a number of rows for every item,
 or a code reference called as C<< $estimate->($index, $columns) >> with
 the index of the item and the columns the items wrap to, which returns
 a non-negative integer. It is called once per item and width. Anything
-else dies.
+else dies. Before the list was first laid out, C<$columns> is the
+width of the UI.
 
 =item C<overscan>
 
@@ -706,10 +709,9 @@ the item at the top of the viewport stays there. Returns the list.
 The widget of an item, built now if the list has not built it yet. Dies
 for an index the list does not have. The widget is attached while the
 item is near the viewport and detached otherwise; it is the same object
-each time. A text widget (a L<Term::Fabulous::Widget::Text> or
-L<Term::Fabulous::Widget::Text>) is laid out inside a
-L<Term::Fabulous::Widget::Box> of its own, because a text has no box
-the list could measure; its C<parent> is that box.
+each time. A text widget (a L<Term::Fabulous::Widget::Text>) is laid
+out inside a L<Term::Fabulous::Widget::Box> of its own, because a text
+has no box the list could measure; its C<parent> is that box.
 
 =head2 scroll_to_item
 
@@ -751,11 +753,12 @@ and C<Mouse> for wheel notches and clicks.
 
 A widget inside an item receives events like any widget while the item
 is attached. When its item is detached it loses the hover, like any
-removed widget, and the focus goes to its heir: the list, or the
-nearest widget above it that can take the focus (see
+removed widget, and the focus goes to its heir: the nearest widget above
+it that can take the focus (the list itself only when it takes the
+focus, as a L<Term::Fabulous::Widget::DocumentView> does; see
 L<Clay::UI::Interaction/Focus heirs>), so that the keys keep working
-where they did; without such a widget, nothing has the focus.
-A focused widget inside an item is scrolled into view like in every
+where they did; without such a widget, nothing has the focus. A focused
+widget inside an item is scrolled into view like in every
 L<ScrollBox|Term::Fabulous::Widget::ScrollBox/FOCUS>.
 
 =head1 KDL PROPERTIES
@@ -783,7 +786,8 @@ items until they are attached again.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous/LIMITATIONS>,
+L<Term::Fabulous::Widget::ScrollBox>, L<Term::Fabulous::Scrolling>,
+L<Term::Fabulous/LIMITATIONS>,
 L<Term::Fabulous::Manual::Layout/Scrolling content>, the example
 program F<examples/widgets/virtual-list.pl>.
 

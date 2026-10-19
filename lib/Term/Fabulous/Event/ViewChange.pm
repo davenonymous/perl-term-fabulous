@@ -72,7 +72,13 @@ after a frame in which what it shows differs from what it reported
 last: for example, the user scrolled, selected another link or
 searched, or the program gave the view another document. The event
 carries a summary of the view with everything a status line or a table
-of contents needs, so their listeners do not have to query the view.
+of contents needs, so their listeners do not have to query the view;
+L<Term::Fabulous::Widget::DocumentView/view_state> returns the same
+fields at any time.
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>
+feeds a status line from it, and
+L<Term::Fabulous::Cookbook::DocumentTechniques/Show a table of contents beside the document (sections, KDL)>
+moves a mark through a table of contents.
 
 The view learns what a frame showed only after the frame has been
 drawn. The event therefore arrives after the frame it describes, and
@@ -193,6 +199,11 @@ match while there are matches.
 
 =head1 SEE ALSO
 
-L<Term::Fabulous::Widget::DocumentView>, L<Term::Fabulous::Manual::Events>.
+L<Term::Fabulous::Widget::DocumentView>,
+L<Term::Fabulous::Widget::DocumentView/view_state>,
+L<Term::Fabulous::Document/"sections, section_count">,
+L<Term::Fabulous::Manual::Events>,
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>,
+L<Term::Fabulous::Cookbook::DocumentTechniques/Show a table of contents beside the document (sections, KDL)>.
 
 =cut

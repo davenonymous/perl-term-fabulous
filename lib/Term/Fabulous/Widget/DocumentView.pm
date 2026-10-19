@@ -409,8 +409,10 @@ class Term::Fabulous::Widget::DocumentView
 		return 1;
 	}
 
-	# A notch of the horizontal wheel anywhere over the view scrolls the
-	# code, while it can move; at the end, the notch goes on.
+	# A notch of the horizontal wheel over a code block scrolls the code,
+	# while it can move; at the end, the notch goes on. Texts and blank
+	# rows take no mouse events, so a notch over them reaches the view
+	# only when the view is the root widget.
 	method _wheel ($event) {
 		my $key       = $event->key;
 		my $direction = $key == TF_KEY_MOUSE_WHEEL_LEFT ? -1 : $key == TF_KEY_MOUSE_WHEEL_RIGHT ? 1 : 0;
@@ -895,7 +897,9 @@ The view does not know the format the document was made from.
 L<Pod::Fabulous> uses it to show POD; worked examples for showing
 documents, following links, searching, building a table of contents
 and putting any widget into a document are in
-L<Term::Fabulous::Cookbook::Documents>.
+L<Term::Fabulous::Cookbook::Documents> and
+L<Term::Fabulous::Cookbook::DocumentTechniques>; the manual introduces
+documents in L<Term::Fabulous::Manual::Layout/Documents>.
 
 The view is a L<Term::Fabulous::Widget::VirtualList>: it attaches only
 the items near the visible area. A document with thousands of items
@@ -906,11 +910,11 @@ L<Clay::UI::Role::Interaction::Focusable>, so it takes the keyboard
 focus, and L<Clay::UI::Role::Interaction::HasFocusOrder>, so it decides
 where Tab goes inside it (see L</FOCUS>).
 
-To draw a frame around the view, place it inside a bordered Box rather
-than giving the view a border of its own. A scroll container's own
-border is drawn over its content, so content scrolled under it shows
-its background in the border cells; a Box around the view avoids
-that.
+A border of the view's own (C<< bordered => 1 >>) is drawn over its
+content, as the border of every scroll container is: a row scrolled
+half under it shows its background in the border cells. A bordered Box
+around the view avoids that; F<examples/widgets/document-view.pl>
+gives the view a border of its own anyway, to stay short.
 
 =head2 How items are shown
 
@@ -1000,7 +1004,7 @@ parameters and invalid values die. The additional parameters are:
 =item C<document>
 
 The L<Term::Fabulous::Document> to show, or C<undef> (the default) for
-an empty view. A document another view shows dies.
+an empty view. Setting a document that another view shows dies.
 
 =item C<highlighter>
 
@@ -1022,7 +1026,9 @@ The view has all methods of L<Term::Fabulous::Widget::VirtualList>,
 plus the following. Unless stated otherwise, the methods that scroll,
 select or search return 1 when they changed something and 0 when there
 was nothing to change, so a key binding can tell whether the key had an
-effect.
+effect. C<Left>, C<Right>, C<l>, C<L>, C<Enter>, C<n>, C<N> and
+C<Escape> are bound to these methods; the scrolling keys go through
+L<Term::Fabulous::Scrolling/scroll_by_key>.
 
 =head2 document
 
@@ -1032,7 +1038,8 @@ effect.
 Gets or sets the document. A new document starts at its top, without a
 search or a selected link, its code not scrolled sideways, and a
 L<ViewChange|/EVENTS> follows its first frame. The items of the old
-document leave their slots, so another view can show it.
+document leave their slots, so another view can show it. Setting a
+document that another view shows dies.
 
 =head2 highlighter
 
@@ -1068,25 +1075,28 @@ L<Term::Fabulous::Scrolling> does.
 
 =head2 scroll_to_top, scroll_to_bottom
 
-Show the first or the last item. Return 0 for an empty document.
+Show the first or the last item. Return 1 whenever the document has
+items, even when the view is there already, and 0 for an empty
+document.
 
 =head2 show_item
 
-	$view->show_item( $document->find_section('SEE ALSO') );
+	my $index = $document->find_section('SEE ALSO');
+	$view->show_item($index) if defined $index;
 
 Scrolls the item with that index to the top of the view, in the next
-frame. Returns the view.
+frame. Returns the view. An index outside the document dies.
 
 =head2 top_item
 
 	my $index = $view->top_item;    # or undef
 
 The index of the item at the top of the view, or C<undef> before the
-first frame.
+first frame and for an empty document.
 
 =head2 scroll_code
 
-	$view->scroll_code(8);    # 8 columns to the right
+	$view->scroll_code(8);    # shows the code 8 columns further right
 
 Scrolls every code block sideways by that many columns, together, as
 far as the widest code block in view allows. Code blocks out of view
@@ -1101,8 +1111,10 @@ How far the code blocks are scrolled sideways.
 =head2 select_next_link, select_previous_link
 
 Select the link after (before) the selected one, from the texts of the
-items in tree order. Without a selected link in view, the first (last)
-link of the items in view is selected. The selection stops at the first
+items in tree order. Without a selected link in view, the first link at
+or after the top item in view (the last link at or before the bottom
+item) is selected, scrolling to it when it lies outside the view. The
+selection stops at the first
 and the last link of the document. The line of the link is scrolled
 into view. A link in content a widget builds later (a table cell on
 another page) becomes selectable once it is built.
@@ -1169,7 +1181,11 @@ any of them dies.
 =head1 KEYS
 
 While the view or a widget inside it has the focus, the view handles
-these keys, when the focused widget does not use them first:
+these keys, when the focused widget does not use them first. The
+scrolling keys are the C<less> set of
+L<Term::Fabulous::Scrolling/scroll_by_key>, which
+L<Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>
+gives to a plain ScrollBox:
 
 =for highlighter language=text
 
@@ -1215,6 +1231,8 @@ Texts with links are no Tab stops inside the view: C<l> and C<L> select
 the links of all texts. When a text takes the focus anyway, from a
 click on it, the view takes the focus back, and the text's first link,
 or the link clicked, becomes the selected link.
+L<Term::Fabulous::Cookbook::DocumentTechniques/Put any widget into a document (a table and a picture)> shows
+Tab reaching a table inside a document.
 
 =head1 MOUSE
 
@@ -1222,11 +1240,11 @@ The mouse wheel and the scrollbar scroll the view vertically, as in
 every L<Term::Fabulous::Widget::ScrollBox>. The horizontal wheel (or
 tilting the wheel sideways) scrolls the code blocks three columns per
 notch, as L</scroll_code> does, while the pointer is over a code block.
-(When the view is the root widget of the UI, anywhere over the view
-works: mouse events go to the widget whose painted cells are under the
-pointer, and the blank rows and the texts belong to no painted widget.)
-Once the code cannot scroll further in that direction, the event is
-passed on to the enclosing widgets. A click on a text or on a code
+Texts and blank rows do not receive mouse events, so a notch over them
+goes to the widget the view is in, not to the view; only when the view
+is the root widget of the UI does a notch anywhere over it scroll the
+code. Once the code cannot scroll further in that direction, the event
+is passed on to the enclosing widgets. A click on a text or on a code
 block focuses the view; a click on an interactive widget focuses that
 widget.
 
@@ -1249,6 +1267,8 @@ text of the link fires it, and it bubbles up through the view; when
 that text is not in the view at the moment (its item scrolled out of
 the window), the view fires it itself. C<< $event->link >> is the
 target of the link, exactly as the document holds it.
+L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>
+builds a help browser on it.
 
 =item C<ViewChange> (L<Term::Fabulous::Event::ViewChange>)
 
@@ -1257,6 +1277,8 @@ L</view_state> returns differs from the one the view reported last, for
 example because the user scrolled, selected a link or searched. It also
 fires after the first frame of a new document. A link target that is a
 reference counts as changed only when it is a different reference.
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>
+shows a status line fed by it.
 
 =item The events of L<Term::Fabulous::Widget::VirtualList>
 
@@ -1284,7 +1306,7 @@ The document is given in Perl, with L</document>.
 
 L<Term::Fabulous::Document>, L<Term::Fabulous::Document::Look>,
 L<Term::Fabulous::Role::Searchable>, L<Term::Fabulous::Event::ViewChange>,
-L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Widget::VirtualList>,
-L<Pod::Fabulous>.
+L<Term::Fabulous::Cookbook::Documents>, L<Term::Fabulous::Cookbook::DocumentTechniques>,
+L<Term::Fabulous::Widget::VirtualList>, L<Pod::Fabulous>.
 
 =cut

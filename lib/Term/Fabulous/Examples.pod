@@ -2251,6 +2251,149 @@ L<Imager::File::SIXEL> and a terminal that shows sixel graphics.
 
 =back
 
+=head2 Documents
+
+The programs of L<Term::Fabulous::Cookbook::Documents>: documents built
+in Perl and from Markdown, links and search. The Markdown reader of
+the last three, which two programs of the next group use too, is
+F<examples/cookbook/lib/My/Markdown.pm>; the documents are in
+F<examples/cookbook/documents>: the manual, the FAQ and the release
+notes of a fictional backup program, snapback.
+
+=over
+
+=item F<document-basics.pl>
+
+L<Term::Fabulous::Cookbook::Documents/Show a document built in Perl (Document, factories, marks)>:
+a manual page built with the factories of a document, with every
+built-in mark kind and every factory but C<rule>, in a document view.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-basics.svg" alt="A manual page in a document view: a first-level heading with a rule under it, a paragraph with bold, italic, file and struck-through text, a code block, two terms with their indented definitions, a bulleted list with a nested numbered list and a link, and a quote inside a quote with two bars on the left"></p>
+
+=end html
+
+=item F<document-from-markup.pl>
+
+L<Term::Fabulous::Cookbook::Documents/Turn Markdown into a document (Markdent)>:
+shows the Markdown file named on its command line, or the manual of
+snapback, read with the F<My::Markdown> reader built on L<Markdent>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-from-markup.svg" alt="The start of the snapback manual: the title snapback with a rule, a paragraph with bold and italic words, a paragraph with five underlined links, the heading Installation, a code block and a numbered list"></p>
+
+=end html
+
+=item F<document-links.pl>
+
+L<Term::Fabulous::Cookbook::Documents/Follow links: jump to sections, open other pages, go back (LinkActivate)>:
+a small help browser whose links jump to sections and open other
+pages, with Backspace to go back. The picture shows the FAQ, opened
+from a link of the manual, after C<l> selected its first link.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-links.svg" alt="The FAQ page of the snapback manual in a document view, opened from a link of the manual, with the link hook selected; the status bar shows the key hints, the page name faq.md, the section and 0%"></p>
+
+=end html
+
+=item F<document-search.pl>
+
+L<Term::Fabulous::Cookbook::Documents/Search a document and show the reader's position (search, ViewChange)>:
+a search like the one of C<less>, with C<n> and C<N> and a line that
+shows the current match, the section and the position. The picture
+shows the manual after a search for C<disk> and two presses of C<n>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-search.svg" alt="The snapback manual with every occurrence of the word disk highlighted, the current one in a stronger color; at the bottom the search field with the word disk and the text match 3 of 6, Installation, 15%"></p>
+
+=end html
+
+=back
+
+=head2 Document techniques
+
+The programs of L<Term::Fabulous::Cookbook::DocumentTechniques>: a
+table of contents, syntax highlighting, styles, pager keys and any
+widget in a document.
+
+=over
+
+=item F<document-contents.pl>
+
+L<Term::Fabulous::Cookbook::DocumentTechniques/Show a table of contents beside the document (sections, KDL)>:
+the headings of the document as links in a pane beside it, laid out
+from a KDL description, with a mark that follows the reader. The
+picture shows the program after three presses of C<PageDown>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-contents.svg" alt="Two framed panes: on the left the headings of the snapback manual as links, indented by level, with a mark in front of Hooks; on the right the Hooks section with a Perl code block"></p>
+
+=end html
+
+=item F<code-highlighting.pl>
+
+L<Term::Fabulous::Cookbook::DocumentTechniques/Highlight the syntax of code blocks (highlighter, CodeBlock)>:
+code blocks of three languages colored by a highlighter, scrolled
+sideways together with C<Left> and C<Right>. The first picture shows
+the program as it starts, the second after two presses of C<Right>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-code-highlighting.svg" alt="Three code blocks with highlighted syntax: a Perl script with gray comments, purple keywords, red variables and green strings, whose long last line ends in a clip mark at the right edge; a shell command with a blue command name and an orange option; a configuration file with red keys"></p>
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-code-highlighting-scrolled.svg" alt="The same code blocks, the Perl script scrolled sixteen columns to the left with clip marks on the left of every line; the shorter shell and configuration lines did not move"></p>
+
+=end html
+
+=item F<document-styles.pl>
+
+L<Term::Fabulous::Cookbook::DocumentTechniques/Change the styles of a document and add mark kinds (Look)>:
+a look of its own with changed styles and new mark kinds for keys,
+underlined text and a highlighter pen; F2 switches the theme and the
+styles follow. The picture shows the light theme, after C<F2>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-styles.svg" alt="A short manual in the light theme: a green first-level heading, key names such as Ctrl+S in bold on a gray background, an underlined word, a file name in blue and a phrase highlighted on a yellow background"></p>
+
+=end html
+
+=item F<pager-keys.pl>
+
+L<Term::Fabulous::Cookbook::DocumentTechniques/Scroll any scroll box like a pager (Term::Fabulous::Scrolling)>:
+the source of a Perl module in a plain ScrollBox, scrolled with the
+keys of C<less>, with the percentage in a status line; C<n> marks the
+next C<sub> or C<method> line and brings it into view. The picture
+shows the program after six presses of C<n>.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-pager-keys.svg" alt="A Perl module in a scroll box, scrolled to 24 percent, with the line method _start_paragraph highlighted in yellow at the bottom; the status line shows the file name and the percentage"></p>
+
+=end html
+
+=item F<document-widgets.pl>
+
+L<Term::Fabulous::Cookbook::DocumentTechniques/Put any widget into a document (a table and a picture)>:
+the release notes of snapback with a picture and a table with pages
+as items of the document, searched for the word named on the command
+line. The picture shows the program started with the word C<5.10>,
+which the release 1.4 mentions in its row, on the table's second page,
+and in its notes.
+
+=begin html
+
+<p><img src="https://raw.githubusercontent.com/davenonymous/perl-term-fabulous/v0.03/screenshots/cookbook-document-widgets.svg" alt="The release notes of snapback scrolled to the table of releases, which shows its second page: the release 1.4 with the matched text 5.10 highlighted in its last column, the pager under the table, and the list of the release 2.1 below"></p>
+
+=end html
+
+=back
+
 =head2 Output without a terminal
 
 The programs of L<Term::Fabulous::Cookbook::Output>.

@@ -69,7 +69,8 @@ Unknown parameters die.
 
     What a menu shows, a string. Required. End it with three dots
     (`Save as...`) when the command asks for more before it does
-    anything, as is the custom in menus.
+    anything, as is the custom in menus. ["plain\_label"](#plain_label) gives the label
+    without them.
 
 - `keys`
 
@@ -115,7 +116,8 @@ say $command->plain_label;    # "Save as" for the label "Save as..."
 ```
 
 The label without a trailing `...`, for the places that name the
-command outside a menu (a key reference, a status message). Menus show
+command outside a menu (a key reference, a status message; see
+["command\_rows" in Term::Fabulous::Widget::KeyReference](Widget/KeyReference.md#command_rows)). Menus show
 ["label"](#label), whose `...` says that the command opens a dialog.
 
 ## keys

@@ -36,7 +36,7 @@ The manual is one of four kinds of documentation:
 
     Recipes: complete, runnable programs for common tasks, each with a
     picture and notes on the lines that matter. Its index page lists every
-    recipe; the recipes themselves are on sixteen topic pages, from
+    recipe; the recipes themselves are on seventeen topic pages, from
     [Term::Fabulous::Cookbook::GettingStarted](Cookbook/GettingStarted.md) to
     [Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md).
 
@@ -91,14 +91,15 @@ The manual has these pages, in reading order:
 
     The widgets and the widget tree, widget ids, and how the layout engine
     sizes and places widgets: direction, sizing, padding, gaps, alignment,
-    flow and stack layouts, floating widgets and equal sizes across the
-    tree. Dividers between widgets, accordions whose sections open and
-    close, tabs, and the tabs of the open documents of a program.
+    flow and stack layouts, floating widgets, scrolling content, documents
+    (the document view) and equal sizes across the tree. Dividers between
+    widgets, accordions whose sections open and close, tabs, and the tabs
+    of the open documents of a program.
 
 - [Term::Fabulous::Manual::Looks](Manual/Looks.md)
 
-    Text (character strings, wrapping, alignment, wide characters and
-    emoji), colors (formats, alpha, the terminal's default colors, lighter
+    Text (character strings, wrapping, alignment, styled spans and links
+    inside a text, wide characters and emoji), colors (formats, alpha, the terminal's default colors, lighter
     and darker colors), borders and themes.
 
 - [Term::Fabulous::Manual::Events](Manual/Events.md)
@@ -429,11 +430,11 @@ program, and the class pages with the reference.
 
     ["Errors and terminal restore" in Term::Fabulous::Manual::Programs](Manual/Programs.md#errors-and-terminal-restore).
 
-- Draw a frame now, or after the next frame
+- Ask for a new frame; run code after the next frame or after every frame
 
-    ["invalidate" in Term::Fabulous](../../../README.md#invalidate), ["after\_draw" in Term::Fabulous::Render](Render.md#after_draw),
-    ["each\_draw" in Term::Fabulous::Render](Render.md#each_draw), ["each\_frame" in Term::Fabulous::Widget](Widget.md#each_frame),
-    ["reveal" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#reveal).
+    ["invalidate" in Term::Fabulous](../../../README.md#invalidate), ["request\_frame\_at" in Term::Fabulous](../../../README.md#request_frame_at),
+    ["draw" in Term::Fabulous](../../../README.md#draw), ["after\_draw, each\_draw" in Term::Fabulous](../../../README.md#after_draw-each_draw),
+    ["after\_draw" in Term::Fabulous::Render](Render.md#after_draw), ["each\_draw" in Term::Fabulous::Render](Render.md#each_draw).
 
 ## Widgets, layout and the widget tree
 
@@ -477,28 +478,45 @@ program, and the class pages with the reference.
 
     ["Changing the layout at run time" in Term::Fabulous::Manual::Layout](Manual/Layout.md#changing-the-layout-at-run-time).
 
-- Scroll content that is larger than its box; scroll it from code
+- Scroll content that is larger than its box; scroll it from code; pager keys; follow the end of a log
 
     ["Scrolling content" in Term::Fabulous::Manual::Layout](Manual/Layout.md#scrolling-content),
     ["SCROLLING" in Term::Fabulous::Manual::Events](Manual/Events.md#scrolling),
     [Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md),
-    ["bounding\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-scroll_state-scroll_to),
+    ["follow\_end" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#follow_end),
+    ["reveal" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#reveal),
+    [Term::Fabulous::Scrolling](Scrolling.md),
+    ["bounding\_box, content\_box, scroll\_state, scroll\_to" in Term::Fabulous](../../../README.md#bounding_box-content_box-scroll_state-scroll_to),
     ["Add lines to a scrolling log (ScrollBox)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#add-lines-to-a-scrolling-log-scrollbox),
     ["Scroll a ScrollBox from code (keep a log at the newest line)" in Term::Fabulous::Cookbook::LiveData](Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line),
-    ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling).
+    ["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling).
 
 - Show a long document of headings, paragraphs, lists, quotes, code, links and any widgets; scroll it with the keys, follow its links, search it
 
     ["Documents" in Term::Fabulous::Manual::Layout](Manual/Layout.md#documents),
     [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), [Term::Fabulous::Document](Document.md),
     [Term::Fabulous::Widget::CodeBlock](Widget/CodeBlock.md), [Term::Fabulous::Event::ViewChange](Event/ViewChange.md),
-    ["Documents" in Term::Fabulous](../../../README.md#documents), and the recipes of [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md):
+    ["Documents" in Term::Fabulous](../../../README.md#documents), and the recipes of
+    [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md) and
+    [Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md):
     ["Show a document built in Perl (Document, factories, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-factories-marks),
     ["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate),
     ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange),
-    ["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-table-of-contents-beside-the-document-sections-kdl),
-    ["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock),
-    ["Change the styles of a document and add mark kinds (Look)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#change-the-styles-of-a-document-and-add-mark-kinds-look).
+    ["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl),
+    ["Highlight the syntax of code blocks (highlighter, CodeBlock)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#highlight-the-syntax-of-code-blocks-highlighter-codeblock),
+    ["Change the styles of a document and add mark kinds (Look)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#change-the-styles-of-a-document-and-add-mark-kinds-look),
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture).
+
+- Search the text of any widget and highlight the matches
+
+    [Term::Fabulous::Role::Searchable](Role/Searchable.md),
+    [Term::Fabulous::Role::SearchContainer](Role/SearchContainer.md),
+    ["search" in Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md#search),
+    ["highlights" in Term::Fabulous::Widget::Text](Widget/Text.md#highlights),
+    ["find\_text" in Term::Fabulous::Document](Document.md#find_text),
+    ["Widgets a search finds" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#widgets-a-search-finds),
+    ["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange),
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture).
 
 - Mark widgets with states and classes and style them by those
 
@@ -534,6 +552,26 @@ program, and the class pages with the reference.
     ["Bold, italic and underline" in Term::Fabulous::Manual::Looks](Manual/Looks.md#bold-italic-and-underline),
     [Term::Fabulous::Widget::Text](Widget/Text.md),
     ["Wrap, align and space text" in Term::Fabulous::Cookbook::GettingStarted](Cookbook/GettingStarted.md#wrap-align-and-space-text).
+
+- Bold words, colors and other styles inside one text (spans, markup); palette tokens in styles; put user text into markup safely
+
+    ["Styled spans inside one text" in Term::Fabulous::Manual::Looks](Manual/Looks.md#styled-spans-inside-one-text),
+    ["spans" in Term::Fabulous::Widget::Text](Widget/Text.md#spans), ["markup" in Term::Fabulous::Widget::Text](Widget/Text.md#markup),
+    [Term::Fabulous::Text::Markup](Text/Markup.md), ["escape\_markup" in Term::Fabulous::Text::Markup](Text/Markup.md#escape_markup),
+    [Term::Fabulous::Text::Style](Text/Style.md).
+
+- Links in a text; react to a click on a word
+
+    ["Links inside a text" in Term::Fabulous::Manual::Looks](Manual/Looks.md#links-inside-a-text),
+    ["Clicks on text and links" in Term::Fabulous::Manual::Events](Manual/Events.md#clicks-on-text-and-links),
+    ["LINKS" in Term::Fabulous::Widget::Text](Widget/Text.md#links),
+    [Term::Fabulous::Event::LinkActivate](Event/LinkActivate.md), [Term::Fabulous::Event::TextClick](Event/TextClick.md),
+    ["Follow links in a text (Text links)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#follow-links-in-a-text-text-links),
+    ["React to a click on a word (TextClick)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#react-to-a-click-on-a-word-textclick).
+
+- Cut a text to a number of columns, with an ellipsis
+
+    ["fit\_columns" in Term::Fabulous::Unicode](Unicode.md#fit_columns).
 
 - Non-ASCII text, wide characters, emoji, combining characters
 
@@ -619,6 +657,18 @@ program, and the class pages with the reference.
     [Term::Fabulous::Widget::Button](Widget/Button.md),
     ["Add buttons for the mouse and the keyboard (Button)" in Term::Fabulous::Cookbook::KeyboardAndMouse](Cookbook/KeyboardAndMouse.md#add-buttons-for-the-mouse-and-the-keyboard-button).
 
+- Double and triple clicks
+
+    ["Mouse events" in Term::Fabulous::Manual::Events](Manual/Events.md#mouse-events),
+    ["click\_count" in Term::Fabulous::Event::Mouse](Event/Mouse.md#click_count),
+    ["new" in Term::Fabulous](../../../README.md#new) (`double_click_seconds`).
+
+- Where the focus goes when the focused widget is removed, hidden or disabled (focus heirs)
+
+    ["When the focused widget goes away" in Term::Fabulous::Manual::Events](Manual/Events.md#when-the-focused-widget-goes-away),
+    ["KEYBOARD AND FOCUS" in Term::Fabulous](../../../README.md#keyboard-and-focus),
+    ["focus\_heir" in Term::Fabulous::Widget::Tabs](Widget/Tabs.md#focus_heir).
+
 - Low-level mouse handling: buttons, dragging, pointer movement
 
     ["MOUSE" in Term::Fabulous::Manual::Events](Manual/Events.md#mouse), [Term::Fabulous::Event::Mouse](Event/Mouse.md),
@@ -634,24 +684,6 @@ program, and the class pages with the reference.
 
     ["new" in Term::Fabulous](../../../README.md#new) (`mouse`),
     ["Let the terminal handle the mouse (select and copy text)" in Term::Fabulous::Cookbook::GettingStarted](Cookbook/GettingStarted.md#let-the-terminal-handle-the-mouse-select-and-copy-text).
-
-- Dialogs and modal windows
-
-    [Term::Fabulous::Widget::Dialog](Widget/Dialog.md),
-    ["Ask a question in a dialog (Dialog widget)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget).
-
-- Ask a question, ask for a value, say that something happened (prompts)
-
-    ["PROMPTS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#prompts),
-    [Term::Fabulous::Widget::Prompt](Widget/Prompt.md),
-    ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#confirm-before-quitting-prompt),
-    ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator).
-
-- Ask for a file to open or save, or for a folder (file dialogs)
-
-    ["FILE DIALOGS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#file-dialogs),
-    [Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md),
-    ["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#open-and-save-a-file-filedialog).
 
 - Keep a widget from taking the focus when it is clicked (toolbars)
 
@@ -708,7 +740,27 @@ program, and the class pages with the reference.
 
     ["Checking input" in Term::Fabulous::Manual::Forms](Manual/Forms.md#checking-input).
 
-## Progress and feedback
+## Progress, feedback and dialogs
+
+- Dialogs and modal windows: a title, buttons, a notice line, the answer
+
+    [Term::Fabulous::Widget::Dialog](Widget/Dialog.md),
+    ["Title, buttons and the notice line" in Term::Fabulous::Widget::Dialog](Widget/Dialog.md#title-buttons-and-the-notice-line),
+    ["Answers" in Term::Fabulous::Widget::Dialog](Widget/Dialog.md#answers), [Term::Fabulous::Event::Answer](Event/Answer.md),
+    ["Ask a question in a dialog (Dialog widget)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-a-question-in-a-dialog-dialog-widget).
+
+- Ask a question, ask for a value, say that something happened (prompts)
+
+    ["PROMPTS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#prompts),
+    [Term::Fabulous::Widget::Prompt](Widget/Prompt.md),
+    ["Confirm before quitting (Prompt)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#confirm-before-quitting-prompt),
+    ["Ask for a number and check it (Prompt, validator)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#ask-for-a-number-and-check-it-prompt-validator).
+
+- Ask for a file to open or save, or for a folder (file dialogs)
+
+    ["FILE DIALOGS" in Term::Fabulous::Manual::Feedback](Manual/Feedback.md#file-dialogs),
+    [Term::Fabulous::Widget::FileDialog](Widget/FileDialog.md),
+    ["Open and save a file (FileDialog)" in Term::Fabulous::Cookbook::Forms](Cookbook/Forms.md#open-and-save-a-file-filedialog).
 
 - Show how much of a task is done; a bar for a task of unknown extent
 
@@ -972,6 +1024,30 @@ program, and the class pages with the reference.
     [Term::Fabulous::Widget::Input](Widget/Input.md),
     ["Write a custom input widget (a toggle switch)" in Term::Fabulous::Cookbook::Extending](Cookbook/Extending.md#write-a-custom-input-widget-a-toggle-switch).
 
+- Colors from the theme in a widget of your own
+
+    ["Colors from the theme" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#colors-from-the-theme),
+    ["drawing\_theme" in Term::Fabulous::Role::Themed](Role/Themed.md#drawing_theme).
+
+- Work after a frame in a widget of your own
+
+    ["Work after a frame" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#work-after-a-frame),
+    ["each\_frame" in Term::Fabulous::Widget](Widget.md#each_frame),
+    ["reveal" in Term::Fabulous::Widget::ScrollBox](Widget/ScrollBox.md#reveal).
+
+- Tell a list the height of a widget before its layout (estimated\_rows)
+
+    ["Height before layout" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#height-before-layout),
+    ["estimated\_rows" in Term::Fabulous::Widget](Widget.md#estimated_rows),
+    ["estimated\_content\_rows" in Term::Fabulous::Widget](Widget.md#estimated_content_rows),
+    ["content\_padding" in Term::Fabulous::Widget](Widget.md#content_padding).
+
+- Dialogs and popups of your own
+
+    ["A dialog of your own" in Term::Fabulous::Manual::CustomWidgets](Manual/CustomWidgets.md#a-dialog-of-your-own),
+    [Term::Fabulous::Widget::Dialog](Widget/Dialog.md),
+    [Term::Fabulous::Role::Popup](Role/Popup.md), [Term::Fabulous::Placement](Placement.md).
+
 - Use your own widgets in KDL layout files
 
     [Term::Fabulous::Role::CanParseLayout](Role/CanParseLayout.md),
@@ -982,7 +1058,7 @@ program, and the class pages with the reference.
     ["FACTORIES" in Term::Fabulous::Document](Document.md#factories), [Term::Fabulous::Document::Look](Document/Look.md),
     [Term::Fabulous::Role::Searchable](Role/Searchable.md), [Term::Fabulous::Role::SearchContainer](Role/SearchContainer.md),
     ["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent),
-    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#put-any-widget-into-a-document-a-table-and-a-picture).
+    ["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture).
 
 - Check property values the way the built-in widgets do
 

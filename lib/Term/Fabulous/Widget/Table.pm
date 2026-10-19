@@ -3830,8 +3830,11 @@ Accessor for the C<group_style> style hash, like C<header_style>.
 
 The line accessors below take a line style name, a
 L<Term::Fabulous::Enum::BorderStyle> object, C<'none'> or C<undef> (see
-L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>). They return the style as an
-object (the C<Hidden> style for C<'none'>), or C<undef> for no line.
+L<Term::Fabulous::Manual::TableStyles/Lines between and around the cells>).
+They return the style as an object (the C<Hidden> style for C<'none'>),
+or C<undef> for no line. L<Term::Fabulous::Widget::Table::Borders>
+explains how the lines are worked out, who draws which side, and the
+scrollbar column.
 
 =head3 border
 
@@ -3948,7 +3951,8 @@ The text shown in an empty table, and the pager's count.
 =head3 line_color
 
 Every line that no style gives a C<border_color>, and the scrollbar's
-track.
+track; while the scrollbar column is shown, also the right side of the
+frame.
 
 =head3 stripe_color
 
@@ -4020,6 +4024,7 @@ below collapsed rows and groups.
 =head3 search_texts
 
 	my @entries = $table->search_texts;    # ( [ [ $id, $key ], $text ], ... )
+	                                       # [ $id, $key, $index, $inner ] in a custom cell
 
 The text of every visible column of every row the filters let through,
 in the order of the rows and the columns, as the cells show it
@@ -4058,12 +4063,15 @@ Removes every highlight of every cell.
 	my ( $text, $row ) = @{ $table->reveal_text( [ $id, $key ], $offset ) };
 
 Shows the row: expands the rows and the groups above it, and moves the
-cursor to it, which turns to its page, scrolls the body to it and fires
-C<CursorMove>; the selection does not change. Returns the cell's
+cursor to it, which turns to its page and scrolls the body to it; it
+fires no event and the selection does not change. Returns the cell's
 L<Text|Term::Fabulous::Widget::Text> once the row is built, which is
-after the next frame when the page turned, else C<undef>; the row is
-always C<undef>. A row the filters keep out cannot be shown and gives
-C<undef> too.
+after the next frame when the page turned, else C<undef>; the second
+value (the row of the offset, see
+L<Term::Fabulous::Role::Searchable/reveal_text>) is C<undef> for a text
+cell. For a key into a custom cell, both values are those the widget
+inside returns, once the row is built. A row the filters keep out cannot
+be shown and gives C<undef> too.
 
 =head2 Widgets of the table
 
@@ -4211,7 +4219,8 @@ selection column selects or deselects that row and keeps the others.
 
 =item *
 
-B<Double click on a row> (two clicks on the same line, a
+B<Double click on a row> (two presses of the left button on the same
+character of a line, without moving the pointer, a
 L<click_count|Term::Fabulous::Event::Mouse/click_count> of 2 within the
 UI's L<double_click_seconds|Term::Fabulous/double_click_seconds>): each
 click does what a click does (moves the cursor, selects), then the
@@ -4242,8 +4251,9 @@ centered where the pointer is.
 =item *
 
 B<Wheel>: scrolls the rows up and down; a horizontal wheel scrolls them
-sideways, and the titles follow (not while a column is C<grow> or
-C<percent>: such a table wraps the text of its columns instead).
+sideways, and the titles and the bottom of the frame follow (not while
+a column is C<grow> or C<percent>: such a table wraps the text of its
+columns instead).
 
 =item *
 
@@ -4530,6 +4540,8 @@ L<Term::Fabulous::Widget::Table::Filter>, L<Term::Fabulous::Widget::Table::Value
 L<Term::Fabulous::Widget::Table::Model>, L<Term::Fabulous::Widget::Table::Style>,
 L<Term::Fabulous::Widget::Table::Borders>, L<Term::Fabulous::Widget::Table::Pager>,
 L<Term::Fabulous::Widget::Table::ColumnChooser>,
+L<Term::Fabulous::Widget::Table::EdgeView>,
+L<Term::Fabulous::Widget::Table::Cell>,
 L<Term::Fabulous::Manual::Tables>, L<Term::Fabulous::Manual::TableRows>,
 L<Term::Fabulous::Manual::TableStyles>, L<Term::Fabulous::Cookbook::Tables>,
 L<Term::Fabulous::Cookbook::TableRows>, L<Term::Fabulous::Cookbook::TableStyles>,

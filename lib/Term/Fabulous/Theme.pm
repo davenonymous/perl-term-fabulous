@@ -1050,19 +1050,23 @@ node, a C<palette> node and one node per family, all optional:
 		focused { background "focus_background" }
 	}
 
-Inside a family node, C<name "value"> sets the slot C<name> and C<name
-key="value"> sets the slot C<name.key> for every property, so C<border
-style=Round color="border"> sets C<border.style> and C<border.color>,
-and C<border enabled=#true> sets C<border.enabled>. A node named after a
-state holds the slots of that state. A C<variant "NAME"> node holds the
-slots and states of a variant. C<#null> means C<none>. C<border.enabled>
-takes C<#true> or C<#false> only; every other slot takes a string or
-C<#null>. An unknown family, slot, state, token or style dies with the
-known names, and so does C<none> or C<#null> for a required slot (see
-L</Values>). A palette token, or a slot of a family, state or variant,
-that is set twice in one document dies too (C<palette: the token
-'accent' is set twice>, C<button: the slot 'text.focused' is set
-twice>), also when the two settings are in two nodes of the same family.
+Inside a family node, C<name "value"> sets the slot C<name> and
+C<name key="value"> sets the slot C<name.key> for every property, so
+C<border style=Round color="border"> sets C<border.style> and
+C<border.color>, and C<border enabled=#true> sets C<border.enabled>. A
+node named after a state holds the slots of that state. A
+C<variant "NAME"> node holds the slots and states of a variant. C<#null>
+means C<none>. C<border.enabled> takes C<#true> or C<#false> only; every
+other slot takes a string or C<#null>. An unknown family, slot, state,
+token or style dies with the known names, and so does C<none> or
+C<#null> for a required slot (see L</Values>). A palette token takes
+exactly one string, its color, and no properties or children; anything
+else dies with
+C<palette token 'accent' needs exactly one string argument>. A palette
+token, or a slot of a family, state or variant, that is set twice in one
+document dies too (C<palette: the token 'accent' is set twice>,
+C<button: the slot 'text.focused' is set twice>), also when the two
+settings are in two nodes of the same family.
 
 =head1 CONSTRUCTORS
 

@@ -129,22 +129,23 @@ values die.
     'percent(25)'   a quarter of the table's width
     ```
 
-    The width includes the cell padding. Header cells, the filter field
-    and every cell of the column are sized together, so the column is as
-    wide as the widest of them (within the limits). A `grow` or
-    `percent` column needs a table with a width of its own, and stops the
-    table from scrolling sideways: when the table is too narrow, its
-    columns get narrower and their text wraps; see
-    ["Column widths" in Term::Fabulous::Manual::Tables](../../Manual/Tables.md#column-widths).
+    The width includes the cell padding. Header cells, the filter field and
+    every cell of the column are sized together, so the column is as wide as
+    the widest of them (within the limits). A `grow` or `percent` column
+    needs a table with a width of its own, and stops the table from
+    scrolling sideways: when the table is too narrow, the table's `fit` and
+    `grow` columns get narrower, down to their longest word, and their text
+    wraps; see ["Column widths" in Term::Fabulous::Manual::Tables](../../Manual/Tables.md#column-widths).
 
 - `wrap`
 
-    `'words'` (the default), `'newlines'` or `'none'`: how the text of
-    a default cell breaks into lines when the column is narrower than the
-    text (see ["wrap\_mode" in Term::Fabulous::Widget::Text](../Text.md#wrap_mode)). Rows grow to the
-    height of their tallest cell. With `'newlines'` and `'none'`, a line
-    keeps its width while the other columns can still get narrower; then it
-    is cut off inside the cell padding, a single long word too.
+    `'words'` (the default), `'newlines'` or `'none'`: how the text of a
+    default cell breaks into lines when the column is narrower than the text
+    (see ["wrap\_mode" in Term::Fabulous::Widget::Text](../Text.md#wrap_mode)). Rows grow to the height
+    of their tallest cell. In a table with a `grow` or `percent` column, a
+    line with `'newlines'` or `'none'` keeps its width while the other
+    columns can still get narrower; then it is cut off inside the cell
+    padding, a single long word too. Other tables scroll sideways instead.
 
 - `sortable`
 

@@ -523,15 +523,17 @@ wrap => 'none'        # never; text that does not fit is cut off
 ```
 
 Wrapping needs a limit on the column's width (`'fit(0, 30)'`,
-`'fixed(12)'`, `'grow'`, `'percent(25)'`); a plain `fit` column is
-always as wide as its longest line. Text with newlines is several lines
-high in every mode but `none`. Text that is not wrapped keeps its
-width as long as the other columns can get narrower, down to their
-longest word; after that it is cut off inside the cell padding, even a
-single long word such as a URL or a path, so a `grow` or `percent`
-column keeps to the table's width. A cell widget (see ["CELL WIDGETS"](#cell-widgets))
-can be any number of lines high, too. The column title wraps the same
-way as the column's cells.
+`'fixed(12)'`, `'grow'`, `'percent(25)'`). A `fit` column also
+wraps in a table that has a `grow` or `percent` column, because such
+a table squeezes its `fit` columns; elsewhere a plain `fit` column is
+as wide as its longest line. Text with newlines is several lines high
+in every mode but `none`. Text that is not wrapped keeps its width as
+long as the other columns can get narrower, down to their longest word;
+after that it is cut off inside the cell padding, even a single long
+word such as a URL or a path, so a `grow` or `percent` column keeps
+to the table's width. A cell widget (see ["CELL WIDGETS"](#cell-widgets)) can be any
+number of lines high, too. The column title wraps the same way as the
+column's cells.
 
 ```perl
 { key => 'description', title => 'Description', width => 'fit(0, 36)' }    # wraps at 36 cells

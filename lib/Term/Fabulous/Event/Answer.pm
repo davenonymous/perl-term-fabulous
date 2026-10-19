@@ -153,7 +153,8 @@ it.
 =head1 SEE ALSO
 
 L<Term::Fabulous::Widget::Dialog/Answers>, L<Term::Fabulous::Widget::Prompt>, L<Term::Fabulous::Widget::FileDialog>,
-L<Clay::UI::Events::Event>,
+L<Term::Fabulous::Widget::KeyReference>, L<Clay::UI::Events::Event>,
+L<Term::Fabulous::Manual::CustomWidgets/A dialog of your own>,
 L<Term::Fabulous::Cookbook::Forms/Ask for a number and check it (Prompt, validator)>.
 
 =cut

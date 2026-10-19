@@ -743,6 +743,18 @@ event and how to read and set the scroll position from code; the recipe
 [Scroll a ScrollBox from code](../Cookbook/LiveData.md#scroll-a-scrollbox-from-code-keep-a-log-at-the-newest-line)
 keeps a log at its newest line.
 
+With `follow_end => 1`, a ScrollBox stays at the end of its
+content while the content grows; scrolling up stops following,
+scrolling back to the last row resumes it
+(["follow\_end" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#follow_end)).
+`$box->reveal($widget)` scrolls a widget inside it into view
+(["reveal" in Term::Fabulous::Widget::ScrollBox](../Widget/ScrollBox.md#reveal)), and a widget inside it
+that gets the focus is scrolled into view by itself. The box has no
+keys of its own; [Term::Fabulous::Scrolling](../Scrolling.md) scrolls it, or any other
+scroll container, by rows, by pages and to its ends, and gives it the
+keys of a pager (see
+["Scroll any scroll box like a pager (Term::Fabulous::Scrolling)" in Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md#scroll-any-scroll-box-like-a-pager-term-fabulous-scrolling)).
+
 A ScrollBox lays out every child in every frame, visible or not, and
 Clay measures every text it lays out (see
 ["LIMITATIONS" in Term::Fabulous](../../../../README.md#limitations)), so a box with thousands of children
@@ -771,11 +783,12 @@ them, is shown by a [Term::Fabulous::Widget::DocumentView](../Widget/DocumentVie
 VirtualList of the items of a [Term::Fabulous::Document](../Document.md). A reader
 makes the document with its factories, which turn text and marks
 (bold, code, a link) into texts in the styles of the theme, and adds
-tables, pictures or forms as they are; the view wraps the paragraphs, scrolls with the keys, the wheel and the
-scrollbar, selects links with `l` and `L` and follows them with
-`Enter` or a click, searches the text of every item, lets Tab reach the widgets inside, and
-reports what it shows after
-every frame with a [ViewChange](../Event/ViewChange.md):
+tables, pictures or forms as they are; the view wraps the paragraphs,
+scrolls with the keys, the wheel and the scrollbar, selects links with
+`l` and `L` and follows them with `Enter` or a click, searches the
+text of every item, lets Tab reach the widgets inside, and fires a
+[ViewChange](../Event/ViewChange.md) after every frame that
+shows something new:
 
 ```perl
 my $view = Term::Fabulous::Widget::DocumentView->new(
@@ -793,9 +806,11 @@ $view->on( LinkActivate => sub ($event) { open_page( $event->link ); return } );
 The picture shows `examples/widgets/document-view.pl`. Code is shown
 by [Term::Fabulous::Widget::CodeBlock](../Widget/CodeBlock.md) widgets, which never wrap and
 scroll sideways together. [Pod::Fabulous](https://metacpan.org/pod/Pod%3A%3AFabulous) is a reader built on the
-view. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has recipes for links,
-search, a table of contents, syntax highlighting and styles, and puts
-a table and a picture into a document.
+view. [Term::Fabulous::Cookbook::Documents](../Cookbook/Documents.md) has recipes that build
+documents in Perl and from Markdown, follow links and search;
+[Term::Fabulous::Cookbook::DocumentTechniques](../Cookbook/DocumentTechniques.md) continues with a
+table of contents, syntax highlighting, styles and the keys of a pager,
+and puts a table and a picture inside a document.
 
 ## Equal sizes across the tree
 
@@ -954,14 +969,20 @@ foreach my $section ( [ General => \@general_rows ], [ Network => \@network_rows
 The tabs are drawn as boxes that join the border of the page: the
 active tab is open toward the page, so that the two are one shape,
 while the other tabs are closed by the page's line and look as if
-they stood behind it (`active_padding` makes the active tab stand
-out of the row by that many cells). The user switches with a click,
-with `Left`, `Right`, `Up`, `Down`, `Home` and `End` while the
-active tab has the focus (only the active tab takes the focus, so
-`Tab` stops at the bar once), and with `Ctrl+PageUp` and
-`Ctrl+PageDown` from anywhere inside the Tabs. The Tabs fires
-[Term::Fabulous::Event::Select](../Event/Select.md) for every change the user makes;
-`select` changes the page from the program.
+they stood behind it (`active_padding`, 0 by default, makes the
+active tab that many cells taller than the others (wider on a bar at
+the side), rising out of the row). The user switches with a click, with
+`Left`, `Right`, `Up`, `Down`, `Home` and `End` while the active
+tab has the focus (only the active tab takes the focus, so `Tab` stops
+at the bar once), and with `Ctrl+PageUp` and `Ctrl+PageDown` from
+anywhere inside the Tabs. The Tabs fires [Term::Fabulous::Event::Select](../Event/Select.md)
+for every change the user makes; `select` changes the page from the
+program. A search, such as a document view's, reaches the pages the
+Tabs does not show and selects the page with the match (see
+[search\_texts](../Widget/Tabs.md#search_texts-search_revision-highlight_text-clear_text_highlights-reveal_text)),
+and when the page of the focused widget is hidden, the focus goes to
+the active tab (see
+["When the focused widget goes away" in Term::Fabulous::Manual::Events](Events.md#when-the-focused-widget-goes-away)).
 
 The bar can be on any side of the page (`side`), the labels can be
 written from left to right or downwards (`orientation`), the tabs can

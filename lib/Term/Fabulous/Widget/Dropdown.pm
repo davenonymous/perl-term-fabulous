@@ -409,8 +409,8 @@ list that opens
 The picture shows three dropdowns: one without a selection, showing its
 placeholder; one with France selected; and a focused one whose list is
 open, with the selected option Green in the C<accent_color> and the
-highlighted option Blue on the C<accent_color>. The program is
-F<examples/widgets/dropdown.pl>.
+highlighted option Blue on the theme's C<dropdown.highlight.background>.
+The program is F<examples/widgets/dropdown.pl>.
 
 A dropdown shows the label of the selected option (or a placeholder)
 and a small arrow. When the user opens it, the options appear in a list
@@ -529,8 +529,9 @@ theme, a very dark gray.
 
 A color, as above. The text color of the highlighted option in the open
 list, which is painted on the theme's C<dropdown.highlight.background>
-(the accent). Default: the theme's C<dropdown.highlight.text>,
-C<[16, 18, 22, 255]> in the dark theme, nearly black.
+(or on the C<accent_color> when the program gave one). Default: the
+theme's C<dropdown.highlight.text>, C<[16, 18, 22, 255]> in the dark
+theme, nearly black.
 
 =item C<background_color>
 
@@ -620,8 +621,8 @@ and leaves the old one.
 	$dropdown->list_background_color([ 20, 20, 30, 255 ]);
 
 Accessor for the C<list_background_color> parameter. Writing returns the
-new color as C<[r, g, b, a]>; it takes effect the next time the list opens. An
-invalid color dies and leaves the old one.
+new color as C<[r, g, b, a]>; an open list shows it in the next frame.
+An invalid color dies and leaves the old one.
 
 =head2 highlight_text_color
 
@@ -863,9 +864,11 @@ options look.
 	my ( $fg, $bg ) = $self->option_attrs($index);
 
 The termbox2 attributes of an option's row in the list: the
-C<highlight_text_color> on the C<accent_color> for the highlighted
-option, the C<accent_color> for the selected one, the C<text_color> for
-the others (C<undef> background: the list background shows).
+C<highlight_text_color> on the theme's C<dropdown.highlight.background>
+(or on the C<accent_color> when the program gave one) for the
+highlighted option, the C<disabled_color> for a disabled one, the
+C<accent_color> for the selected one, the C<text_color> for the others
+(C<undef> background: the list background shows).
 
 =head2 option_label
 

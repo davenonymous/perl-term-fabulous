@@ -1163,6 +1163,12 @@ L<copying and pasting through the clipboard|Term::Fabulous::Cookbook::Forms/Copy
 
 =back
 
+The feedback page describes the dialogs these recipes use,
+L<prompts|Term::Fabulous::Manual::Feedback/PROMPTS> and
+L<file dialogs|Term::Fabulous::Manual::Feedback/FILE DIALOGS>;
+L<Term::Fabulous::Widget::Dialog/Answers> describes the answers a
+dialog gives.
+
 To write an input widget of your own, see
 L<Term::Fabulous::Widget::Input/SUBCLASS INTERFACE> and
 L<Term::Fabulous::Manual::CustomWidgets>.

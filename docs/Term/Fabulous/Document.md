@@ -7,6 +7,7 @@ sections and the layout a document view shows them with
 
 ```perl
 use Term::Fabulous::Document;
+use Term::Fabulous::Widget::DocumentView;
 use Term::Fabulous::Widget::Table;
 
 my $document = Term::Fabulous::Document->new( source => 'snapback.md' );
@@ -14,7 +15,7 @@ $document->heading( 1, 'snapback' );
 $document->paragraph( { text => 'Copies files to a backup disk.', marks => [ [ 0, 6, 'bold' ] ] } );
 $document->heading( 2, 'Usage' );
 $document->code( "snapback ~/Documents /mnt/backup", language => 'shell' );
-$document->list_item( "\x{2022}", { markup => 'Keeps the last [code]14[/] backups.' } );
+$document->list_item( "\x{2022}", { text => 'Keeps the last 14 backups.', marks => [ [ 15, 17, 'code' ] ] } );
 $document->paragraph( { markup => 'See [link=faq.md]the FAQ[/].' } );
 
 # Any widget is an item: a table, a picture, a form.
@@ -45,7 +46,13 @@ Every item belongs to the document while the document exists, and is
 shown by one view at a time: the view wraps each item in a box of its
 own (see ["How items are shown" in Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md#how-items-are-shown)).
 
-Worked examples are in [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md).
+Worked examples are in [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md) and
+[Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md):
+["Show a document built in Perl (Document, factories, marks)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#show-a-document-built-in-perl-document-factories-marks)
+builds a document with the factories,
+["Turn Markdown into a document (Markdent)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#turn-markdown-into-a-document-markdent) is a reader, and
+["Put any widget into a document (a table and a picture)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#put-any-widget-into-a-document-a-table-and-a-picture) adds
+widgets of other kinds.
 
 ## Item options
 
@@ -132,6 +139,8 @@ or `link` with a target, any defined value that
 [LinkActivate](Event/LinkActivate.md) hands back;
 - `{ markup => $markup }`: markup as
 [Term::Fabulous::Text::Markup](Text/Markup.md) reads it, styles and links included.
+Its tags are style strings and palette tokens, not the kinds of the
+look: `[bold]` and `[link=faq.md]` work, `[code]` dies.
 
 Marks may overlap, links may not. A kind the look does not know, a mark
 past the text and an invalid shape die. The styles are palette tokens
@@ -140,8 +149,9 @@ theme switch recolors the document without any work.
 
 Unless the `gap` option says otherwise, a factory puts one blank row
 above its item, with two exceptions: none between the items of a list
-(an item whose `position` is above 1 after an item), nor before the
-first item of a list nested in the item above it (indented deeper); and
+(a list item whose `position` is above 1, right after another list
+item), nor before the first item of a list nested in the list item
+above it (indented deeper); and
 none between a term and the item after it, if that item is not a term
 and is indented deeper than the term, its definition.
 
@@ -153,7 +163,9 @@ my $widget = $document->heading( $level, $text, %options );
 
 A heading of level 1 to 6, in the style of its level (`heading1` to
 `heading6`); a first-level heading has a horizontal rule under it. It
-is `flush`, and starts a section with its text as the title.
+is `flush`, and starts a section with its text as the title. Returns
+the Text, or for level 1 a [Term::Fabulous::Widget::Box](Widget/Box.md) that holds
+the Text and a [Term::Fabulous::Widget::Divider](Widget/Divider.md).
 
 ## paragraph
 
@@ -269,6 +281,9 @@ my @searchables = $document->searchables($index);
 The [Term::Fabulous::Widget::Text](Widget/Text.md) widgets of an item, the item itself
 included, in tree order (where its links are), and the widgets of the
 item that answer a search (["searchables\_in" in Term::Fabulous::Role::Searchable](Role/Searchable.md#searchables_in)).
+The marker of a list item is one of its texts: a
+`Term::Fabulous::Document::Marker`, a Text that a search passes over,
+since bullets and numbers are not content.
 
 ## code\_blocks
 
@@ -290,6 +305,8 @@ foreach my $section ( $document->sections ) {
 The sections in the order of the document, each as a new hash with the
 `item` index it starts at, its `level` and its `title`, and their
 number.
+["Show a table of contents beside the document (sections, KDL)" in Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md#show-a-table-of-contents-beside-the-document-sections-kdl)
+lists them beside the document.
 
 ## item\_of\_section, level\_of\_section, title\_of\_section
 
@@ -316,11 +333,14 @@ my $index = $document->find_section('Methods');    # or undef
 ```
 
 The item a link to a section leads to. The name is compared, with
-whitespace squeezed, with the titles of the sections first, then with
-the anchors: exactly, then ignoring case, then as a title or anchor that
-starts with the name as a word (`open` finds `open FILEHANDLE,EXPR`),
-then the same ignoring case. `undef` when nothing matches or the name
-is empty.
+whitespace squeezed, in four rounds: exactly, then ignoring case, then
+as a title or anchor that starts with the name as a word (`open` finds
+`open FILEHANDLE,EXPR`), then the same ignoring case. In each round
+the titles of the sections come before the anchors, so an anchor that
+matches exactly wins over a title that matches only when case is
+ignored. `undef` when nothing matches or the name is empty.
+["Follow links: jump to sections, open other pages, go back (LinkActivate)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#follow-links-jump-to-sections-open-other-pages-go-back-linkactivate)
+uses it to follow a link to a section.
 
 ## find\_text
 
@@ -335,7 +355,9 @@ items show, in the order of the document: the item, the widget that
 shows the text, the text's key (see
 ["search\_texts" in Term::Fabulous::Role::Searchable](Role/Searchable.md#search_texts)) and the offsets of
 the match. A query without capital letters ignores case; it is text,
-not a pattern. Matches do not overlap.
+not a pattern. Matches do not overlap. The view's
+[search](Widget/DocumentView.md#search) builds on it; see
+["Search a document and show the reader's position (search, ViewChange)" in Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md#search-a-document-and-show-the-reader-s-position-search-viewchange).
 
 ## source, look
 
@@ -353,4 +375,5 @@ time; giving it to a second one dies.
 # SEE ALSO
 
 [Term::Fabulous::Widget::DocumentView](Widget/DocumentView.md), [Term::Fabulous::Document::Look](Document/Look.md),
-[Term::Fabulous::Role::Searchable](Role/Searchable.md), [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md).
+[Term::Fabulous::Role::Searchable](Role/Searchable.md), [Term::Fabulous::Cookbook::Documents](Cookbook/Documents.md),
+[Term::Fabulous::Cookbook::DocumentTechniques](Cookbook/DocumentTechniques.md).

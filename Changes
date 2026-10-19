@@ -233,12 +233,13 @@ Revision history for Term::Fabulous
           Term::Fabulous::Widget::CodeBlock and
           Term::Fabulous::Event::ViewChange. Extracted from Pod::Fabulous,
           so that readers for other formats share them.
-        - Term::Fabulous::Cookbook::Documents, a new cookbook page: build
-          a document in Perl and from Markdown read with Markdent, follow
-          links, search, show a table of contents, highlight code, change
-          the styles and add mark kinds, page through any scroll box, and
-          put a table and a picture into a document and search into the
-          table.
+        - Two new cookbook pages. Term::Fabulous::Cookbook::Documents
+          builds a document in Perl and from Markdown read with Markdent,
+          follows links and searches;
+          Term::Fabulous::Cookbook::DocumentTechniques shows a table of
+          contents, highlights code, changes the styles and adds mark
+          kinds, pages through any scroll box, and puts a table and a
+          picture into a document and searches into the table.
         - Fixes from CPAN Testers: on perls built with long doubles, the
           labels of a radar chart at a quarter turn no longer land one
           row off (Term::Fabulous::Chart::Radial::point_at returns whole

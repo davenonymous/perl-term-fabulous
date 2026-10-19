@@ -2,8 +2,9 @@
 
 # Term::Fabulous::Widget::VirtualList: a document of fifty thousand
 # paragraphs, built paragraph by paragraph as the viewport reaches them.
-# Scroll with the mouse wheel or the scrollbar; Home, End, PageUp and
-# PageDown jump. The status line counts the paragraphs built so far.
+# Scroll with the mouse wheel, the scrollbar or the keys of less: Up and
+# Down or j and k, PageUp and PageDown or b and Space, Home and End or g
+# and G. The status line counts the paragraphs built so far.
 # Ctrl+C quits.
 #
 #     perl examples/widgets/virtual-list.pl
@@ -91,7 +92,7 @@ $root->on(
 # frame follows only when the text changed.
 sub refresh_status () {
 	my $visible = $document->visible_items;
-	my $text    = sprintf 'Paragraphs %s of %d, %d built  |  Home End PgUp PgDn, Ctrl+C quits',
+	my $text    = sprintf 'Paragraphs %s of %d, %d built  |  keys of less, Ctrl+C quits',
 		( defined $visible ? "$visible->{first}-$visible->{last}" : 'none' ), PARAGRAPHS, $built;
 	$status->text($text) if $text ne $status->text;
 	return 0;    # keeps it for the next frame
