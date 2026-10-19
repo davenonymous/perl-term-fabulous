@@ -72,7 +72,7 @@ WriteMakefile(
 	},
 	PREREQ_PM => {
 		'Clay::UI'                        => '0.07',
-		'Clay::XS'                        => '0.05',
+		'Clay::XS'                        => '0.07',
 		'Encode'                          => '0',
 		'Exporter'                        => '0',
 		'Feature::Compat::Try'            => '0',

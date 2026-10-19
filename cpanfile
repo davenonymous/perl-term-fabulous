@@ -1,7 +1,7 @@
 requires 'perl', '5.032001';
 
 requires 'Clay::UI', '0.07';    # focus_after and entry hooks, text bounding boxes, cut-off text, content boxes, tree navigation, owner-bound listeners; ships Clay::XS
-requires 'Clay::XS', '0.05';    # stringOffset in text render commands
+requires 'Clay::XS', '0.07';    # stringOffset in text render commands
 requires 'Encode';
 requires 'Exporter';
 requires 'Feature::Compat::Try';
