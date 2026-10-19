@@ -59,6 +59,11 @@ class Term::Fabulous
 	# frame would never settle.
 	use constant MAX_FRAME_BATCHES_PER_STEP => 100;
 
+	# How far past double_click_seconds, in seconds, a press still counts
+	# as within it: the difference of two clock readings on the boundary
+	# carries the rounding noise of the platform's floating point.
+	use constant CLICK_INTERVAL_TOLERANCE => 1e-9;
+
 	field $inline                           :param :reader = undef;    # the rows of the inline region, or undef for the full screen
 	field $mouse                            :param :reader = undef;
 	field $double_click_seconds             :param :reader = 0.4;
@@ -462,10 +467,13 @@ class Term::Fabulous
 	# A press of the same button in the same cell at most
 	# double_click_seconds after the one before continues its run of
 	# clicks; any other press starts a new run. Returns the press's place
-	# in its run, 1 for a single click.
+	# in its run, 1 for a single click. A press a rounding error past the
+	# interval still continues the run, so a clock exactly on the boundary
+	# counts the same on every platform (long doubles round 1000.4 - 1000
+	# above 0.4).
 	method _count_press ( $key, $x, $y ) {
 		my ( $now, $last ) = ( $self->now, $_last_press );
-		my $continues = defined $last && $last->{key} == $key && $last->{x} == $x && $last->{y} == $y && $now - $last->{at} <= $double_click_seconds;
+		my $continues = defined $last && $last->{key} == $key && $last->{x} == $x && $last->{y} == $y && $now - $last->{at} <= $double_click_seconds + CLICK_INTERVAL_TOLERANCE;
 		$_last_press = { key => $key, x => $x, y => $y, at => $now, count => $continues ? $last->{count} + 1 : 1 };
 		return $_last_press->{count};
 	}

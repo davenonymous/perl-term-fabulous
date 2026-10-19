@@ -1,5 +1,12 @@
 Revision history for Term::Fabulous
 
+0.05    not yet released
+        - Fix from CPAN Testers: on perls built with long doubles, a press
+          exactly double_click_seconds after the one before continues
+          the run of clicks, as documented; the difference of the two
+          clock readings rounded a hair above the interval there and
+          started a new run.
+
 0.04    2026-10-19
         - A Widget::DocumentView counts the items added to its document
           as soon as it is asked: count, show_item, scroll_to_bottom
