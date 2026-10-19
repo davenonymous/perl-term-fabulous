@@ -97,6 +97,68 @@ jobs:
         if: failure()
         run: prove -vb t
 
+  # CPAN Testers also run perls built with other floating-point formats,
+  # and the 80-bit x87 long double (-Duselongdouble) has caught rounding
+  # bugs that plain doubles hide. actions-setup-perl ships no such perl,
+  # so this job builds one from source, once per version and format, and
+  # caches it.
+  test-nv:
+    name: Perl ${{ matrix.perl }} with ${{ matrix.nv }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        perl:
+          - '5.44.0'
+        nv:
+          - longdouble
+          - quadmath
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore the built Perl
+        id: perl
+        uses: actions/cache@v4
+        with:
+          path: ~/perl-${{ matrix.nv }}
+          key: perl-${{ matrix.perl }}-${{ matrix.nv }}-${{ runner.os }}-${{ runner.arch }}
+
+      - name: Build Perl ${{ matrix.perl }} with -Duse${{ matrix.nv }}
+        if: steps.perl.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://www.cpan.org/src/5.0/perl-${{ matrix.perl }}.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          cd "$RUNNER_TEMP/perl-${{ matrix.perl }}"
+          ./Configure -des -Dprefix="$HOME/perl-${{ matrix.nv }}" -Duse${{ matrix.nv }}
+          make -j"$(nproc)"
+          make install
+          curl -sSL https://cpanmin.us | "$HOME/perl-${{ matrix.nv }}/bin/perl" - --notest App::cpanminus
+
+      - name: Put the built Perl first in PATH
+        run: echo "$HOME/perl-${{ matrix.nv }}/bin" >> "$GITHUB_PATH"
+
+      - name: Show Perl configuration
+        run: perl -V
+
+      - name: Install declared dependencies
+        run: cpanm --installdeps --notest --verbose .
+
+      - name: Configure
+        run: perl Makefile.PL
+
+      - name: Build
+        run: make
+
+      - name: Test
+        env:
+          HARNESS_OPTIONS: j4
+        run: make test
+
+      - name: Verbose test re-run on failure
+        if: failure()
+        run: prove -vb t
+
   release-checks:
     name: Distribution check
     runs-on: ubuntu-latest
