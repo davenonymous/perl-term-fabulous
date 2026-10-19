@@ -174,7 +174,8 @@ Where a number lies in the range, from 0 at `min` to 1 at `max`.
 my $on_grid = $range->snapped($number);
 ```
 
-The grid value nearest to a number, limited to the range; without a
+The grid value nearest to a number, limited to the range; a number
+halfway between two grid values goes to the higher one. Without a
 step, the number limited to the range.
 
 ## top\_value

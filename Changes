@@ -6,6 +6,11 @@ Revision history for Term::Fabulous
           the run of clicks, as documented; the difference of the two
           clock readings rounded a hair above the interval there and
           started a new run.
+        - A Term::Fabulous::Range snaps a number exactly halfway between
+          two grid values to the higher one on every perl (0.35 with a
+          step of 0.1 gives 0.4); before, the rounding noise of the
+          division by the step decided, and perls built with long
+          doubles went up where the others went down.
 
 0.04    2026-10-19
         - A Widget::DocumentView counts the items added to its document
